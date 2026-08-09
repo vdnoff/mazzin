@@ -78,7 +78,22 @@
         "modern",
         "wood"
       ],
-      "blurb": "Placeholder blurb — warm woods and honest textures, kept calm by clean modern lines. Real copy lands in Phase 2."
+      "blurb": "Warm timber and honest texture held in check by clean modern lines — comfortable without ever tipping into fussy.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            { "name": "Oat Linen", "hex": "#E5DAC8" },
+            { "name": "Weathered Oak", "hex": "#8B6F4E" },
+            { "name": "Burnt Clay", "hex": "#A45A34" }
+          ],
+          "line": "Oat linen keeps it light, weathered oak does the warming, and a burnt clay accent stops the whole thing going soft."
+        },
+        "mistakes": "Never let the wood tones match exactly — a room where every timber agrees reads like a showroom, and the way out of it is to",
+        "materials": "Timber and stone need one cold element between them or the room turns muddy, and the surface that does that job best is",
+        "shopping": "The table matters more than the cabinetry in this style, and the proportion almost everyone gets wrong on it is",
+        "dna": "Your choices sit closer to the modern half than you would guess, and the place that shows up most clearly is",
+        "splurge": "Spend on the timber and save on anything you can paint, because the one element that ages badly here is"
+      }
     },
     {
       "id": "minimalist",
@@ -89,7 +104,22 @@
         "cool",
         "stone"
       ],
-      "blurb": "Placeholder blurb — nothing on the counter, everything in its place, light doing most of the decorating. Real copy lands in Phase 2."
+      "blurb": "Nothing on the counter, everything in its place, and daylight doing most of the decorating.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            { "name": "Chalk White", "hex": "#F4F4F2" },
+            { "name": "Pale Concrete", "hex": "#D5D6D2" },
+            { "name": "Graphite", "hex": "#3A3D42" }
+          ],
+          "line": "Chalk white does the bulk, pale concrete carries the only texture, and graphite appears once — on the handles, nowhere else."
+        },
+        "mistakes": "Never solve storage with more cabinetry — minimalism fails at the exact moment the counter fills up, and the actual fix is",
+        "materials": "Matte over gloss on every surface but one, and the single exception that keeps the room from going flat is",
+        "shopping": "Buy the tap last and spend more than feels sensible on it, because in a room this quiet the only thing left to look at is",
+        "dna": "Your picks run cooler than the average minimalist's, which puts the influence underneath them closer to",
+        "splurge": "Spend on the joinery and save on the appliances, because the detail that separates minimal from bare is"
+      }
     },
     {
       "id": "industrial",
@@ -101,7 +131,22 @@
         "wood",
         "stone"
       ],
-      "blurb": "Placeholder blurb — raw metal, dark tones and exposed structure worn on purpose. Real copy lands in Phase 2."
+      "blurb": "Raw metal, dark surfaces and structure worn on purpose — your kitchen doesn't hide how it's built.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            { "name": "Iron Black", "hex": "#2B2B2B" },
+            { "name": "Smoked Oak", "hex": "#5C4A38" },
+            { "name": "Zinc Grey", "hex": "#8A8D91" }
+          ],
+          "line": "Iron black holds the frame, smoked oak warms it back up, and zinc grey keeps those two from fighting each other."
+        },
+        "mistakes": "Never buy the pre-distressed version of anything — real wear reads instantly, and the fake kind is why most industrial kitchens look like a",
+        "materials": "Steel, smoked oak and concrete only work in one ratio, and it isn't equal thirds — the dominant surface should be",
+        "shopping": "Buy the lighting before anything else, because here the fixtures are the architecture, and the one worth the money is",
+        "dna": "Your picks lean harder into structure than into surface, which means the second influence running underneath them is",
+        "splurge": "Spend on the extraction hood and nowhere near the cabinet carcasses, because the one thing nobody can fake in this style is"
+      }
     },
     {
       "id": "classic",
@@ -112,7 +157,22 @@
         "bright",
         "stone"
       ],
-      "blurb": "Placeholder blurb — shaker doors, timeless proportions and materials that age well. Real copy lands in Phase 2."
+      "blurb": "Shaker doors, honest proportions and materials chosen to look better in ten years than they do today.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            { "name": "Bone White", "hex": "#ECE4D6" },
+            { "name": "Aged Brass", "hex": "#B08D57" },
+            { "name": "Walnut Shadow", "hex": "#5A4632" }
+          ],
+          "line": "Bone white on the cabinetry, aged brass on everything you actually touch, and walnut shadow keeping the room from floating away."
+        },
+        "mistakes": "Never mix more than two metals — classic kitchens survive decades on restraint alone, and the pairing that always works is",
+        "materials": "Marble looks right and behaves badly, so the surface that gives you the same line without the anxiety is",
+        "shopping": "Hardware is where a classic kitchen is won or lost, and the one detail worth ordering samples of before you commit is",
+        "dna": "Your answers read classic but with a warmer bias than most, which points the secondary influence toward",
+        "splurge": "Spend on the doors and save on the worktop, because the element people put their hands on every single day is"
+      }
     }
   ],
   "analyzing": {
@@ -126,28 +186,11 @@
         "title": "Your Color Palette",
         "enabled": true,
         "preview": [
-          "Placeholder line one — the three anchor colors your picks keep circling back to.",
-          "Placeholder line two — the accent that ties them together without shouting.",
-          "Placeholder line three — exact paint and finish codes to hand your fitter."
+          "Each one is specified by finish as well as by colour, because the same pigment reads differently in matte than it does in satin.",
+          "The report gives the exact codes, the sheen level for every surface, and the order to apply them in."
         ],
         "reveal": {
-          "mode": "visible",
-          "visible": "Warm neutrals anchored by soft white — your picks circle three colors: bone white for the bulk, pale oak for warmth, and a graphite accent used sparingly. The exact paint codes and finishes are in your full report."
-        }
-      },
-      {
-        "id": "materials",
-        "title": "Materials & Combinations",
-        "enabled": true,
-        "preview": [
-          "Placeholder line one — which worktop actually survives your style.",
-          "Placeholder line two — pairings that work and two that never do.",
-          "Placeholder line three — the finish to specify for handles and taps."
-        ],
-        "reveal": {
-          "mode": "teaser",
-          "visible": "Matte quartz worktops over flat-front cabinetry is your combination — but the pairing rule that makes it work is",
-          "blur": "the one most people get backwards: never let two surfaces share a finish unless they also share an undertone. Your full report names the exact quartz, the splashback that sits under it, and the two combinations to avoid entirely."
+          "mode": "visible"
         }
       },
       {
@@ -155,14 +198,23 @@
         "title": "The 5 Mistakes People With Your Style Make",
         "enabled": true,
         "preview": [
-          "Placeholder line one — the one that costs the most to undo later.",
-          "Placeholder line two — the shortcut that reads cheap within a year.",
-          "Placeholder line three — the detail almost everybody gets backwards."
+          "It sounds obvious written down, and it is still the thing that costs people the most to undo once the units are in.",
+          "The remaining four are ranked by what they cost to fix, cheapest correction first."
         ],
         "reveal": {
-          "mode": "hook",
-          "hook": "Never buy the",
-          "blur": "worktop before you have seen it under your own kitchen light — it is the single most expensive thing to undo, and four out of five people do it in the wrong order. The remaining four mistakes, and the fix for each, are in your full report."
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "materials",
+        "title": "Materials & Combinations",
+        "enabled": true,
+        "preview": [
+          "Get that ratio right and the rest of the room falls into place around it without much effort at all.",
+          "The report names the products, the two combinations to avoid entirely, and what to ask a supplier for."
+        ],
+        "reveal": {
+          "mode": "locked"
         }
       },
       {
@@ -170,9 +222,8 @@
         "title": "Get the Look: Your Shopping List",
         "enabled": true,
         "preview": [
-          "Placeholder line one — the pieces that carry the whole room.",
-          "Placeholder line two — the two things worth buying first.",
-          "Placeholder line three — what to skip entirely."
+          "Everything else can wait until the room is in and you can see what it actually still needs.",
+          "The list is ordered by how much each item changes the room, not by what happens to be cheapest."
         ],
         "reveal": {
           "mode": "locked"
@@ -183,9 +234,8 @@
         "title": "Your Style DNA Breakdown",
         "enabled": true,
         "preview": [
-          "Placeholder line one — your dominant style and how strongly it reads.",
-          "Placeholder line two — the secondary influence hiding in your choices.",
-          "Placeholder line three — the tension between them, and how to resolve it."
+          "It shows up in the choices you made quickly, far more than in the ones you sat and deliberated over.",
+          "The breakdown scores both influences and explains exactly where they pull against each other."
         ],
         "reveal": {
           "mode": "locked"
@@ -196,9 +246,8 @@
         "title": "What to Splurge On vs. Where to Save",
         "enabled": true,
         "preview": [
-          "Placeholder line one — the single line item worth overspending on.",
-          "Placeholder line two — where the expensive option changes nothing.",
-          "Placeholder line three — a rough budget split that holds up."
+          "The difference is invisible in a showroom and obvious after two years of using the room every day.",
+          "The report splits the budget line by line, with a sensible floor and ceiling for each one."
         ],
         "reveal": {
           "mode": "locked"

@@ -13,6 +13,8 @@
   var HOLD_MS = 1650;           // ring -> badge -> reaction, then the pair goes
   var HOLD_REDUCED_MS = 500;    // same beats, no animation, for reduced motion
   var REACTION_DELAY_MS = 200;  // lands just after the check badge
+  var CONFETTI_COUNT = 24;
+  var CONFETTI_LIFE_MS = 2200;  // longest particle plus its delay, then cleared
   var REPORT_MAX_TRIES = 30;
 
   var cfg = null;
@@ -29,6 +31,8 @@
   var preloaded = {};        // img src -> already requested
   var winnerStyleId = null; // set when the result is computed
   var picking = false;      // true through the selection hold; taps ignored
+  var confettiDone = false; // the burst fires once per session, never again
+  var unlockedContent = null;   // report shown after returning from Stripe
   var lastReaction = null;  // never show the same line twice running
   var paywallTracked = false;
 
@@ -365,28 +369,14 @@
   // --- result --------------------------------------------------------------
 
   function computeWinner() {
-    // The winner's raw share of the summed style scores never reaches the
-    // bottom of the clamp — tags are shared between styles, so a four-style
-    // funnel floors that share near 1/4. Normalize against that floor first,
-    // then scale into 55..95.
     var best = cfg.styles[0];
     var bestScore = -1;
-    var total = 0;
-
     cfg.styles.forEach(function (s) {
       var sc = 0;
       s.tags.forEach(function (t) { sc += scores[t] || 0; });
-      total += sc;
       if (sc > bestScore) { bestScore = sc; best = s; }
     });
-
-    var floor = 1 / cfg.styles.length;
-    var pct = 55;
-    if (total > 0 && floor < 1) {
-      pct = Math.round(55 + 40 * ((bestScore / total) - floor) / (1 - floor));
-    }
-    pct = Math.max(55, Math.min(95, pct));
-    return { style: best, percent: pct };
+    return best;
   }
 
   function styleById(id) {
@@ -429,47 +419,52 @@
     return lines;
   }
 
-  function renderLockedReport() {
+  function renderLockedReport(style) {
     var sections = (cfg.report && cfg.report.sections) || [];
+    var reveals = (style && style.reveals) || {};
     el.report.innerHTML = "";
 
     sections.forEach(function (sec) {
       if (sec.enabled === false) return;
-      var reveal = sec.reveal || {};
-      var mode = reveal.mode || "locked";     // unknown modes stay locked
+      var mode = (sec.reveal && sec.reveal.mode) || "locked";
+      var reveal = reveals[sec.id];
       var row = rowNode(sec.title, mode);
       var body = row.lastChild;
 
-      if (mode === "visible") {
-        body.appendChild(para(reveal.visible || "", "crisp"));
-      } else if (mode === "teaser") {
-        // First line reads straight; the rest softens downward behind a mask.
-        body.appendChild(para(reveal.visible || "", "crisp"));
-        body.appendChild(para(reveal.blur || fillerLines(sec, 1)[0], "veil veil-down"));
-        body.appendChild(lockNode());
-      } else if (mode === "hook") {
-        // A few crisp words, then the sentence dissolves as it runs on.
-        var line = document.createElement("p");
-        line.className = "crisp";
-        line.appendChild(document.createTextNode((reveal.hook || "") + " "));
-        var rest = document.createElement("span");
-        rest.className = "veil veil-right";
-        rest.textContent = reveal.blur || fillerLines(sec, 1)[0];
-        line.appendChild(rest);
-        body.appendChild(line);
-        body.appendChild(lockNode());
+      if (mode === "visible" && reveal && reveal.colors) {
+        body.appendChild(swatchList(reveal.colors));
+        body.appendChild(para(reveal.line || "", "palette-line"));
       } else {
+        // Uniform from here down: one crisp sentence that stops mid-thought,
+        // then the paragraph it was going to become, dissolving.
+        if (typeof reveal === "string" && reveal) {
+          body.appendChild(para(reveal, "crisp"));
+        }
         var block = document.createElement("div");
         block.className = "veil veil-down";
-        fillerLines(sec, 3).forEach(function (t) { block.appendChild(para(t)); });
+        fillerLines(sec, 2).forEach(function (t) { block.appendChild(para(t)); });
         body.appendChild(block);
         body.appendChild(lockNode());
       }
 
-      // The whole row is a shortcut to the thing that unlocks it.
       row.addEventListener("click", focusCta);
       el.report.appendChild(row);
     });
+  }
+
+  function swatchList(colors) {
+    var list = document.createElement("ul");
+    list.className = "swatches";
+    colors.forEach(function (c) {
+      var li = document.createElement("li");
+      var dot = document.createElement("span");
+      dot.className = "swatch";
+      dot.style.backgroundColor = c.hex;
+      li.appendChild(dot);
+      li.appendChild(document.createTextNode(c.name));
+      list.appendChild(li);
+    });
+    return list;
   }
 
   function lockNode() {
@@ -544,19 +539,51 @@
 
     setTimeout(function () {
       var win = computeWinner();
-      winnerStyleId = win.style.id;
+      winnerStyleId = win.id;
       el.analyzing.hidden = true;
       el.resultBody.hidden = false;
-      el.resultName.textContent = win.style.name;
-      el.resultMatch.textContent = win.percent + "% match";
-      el.resultMatch.hidden = false;
-      el.resultBlurb.textContent = win.style.blurb || "";
+      el.resultName.textContent = win.name;
+      el.resultBlurb.textContent = win.blurb || "";
       el.cta.textContent = cfg.pricing.cta;
       renderCtaNote();
-      renderLockedReport();
+      renderLockedReport(win);
       track("result_view");
       watchCta();
+      celebrate();
     }, cfg.analyzing.duration_ms);
+  }
+
+  // A single small burst when the result lands. Purely decorative, never
+  // repeated, and skipped outright when motion is unwelcome.
+  function celebrate() {
+    if (confettiDone || prefersReducedMotion()) return;
+    confettiDone = true;
+
+    var host = el.resultBody;
+    if (!host) return;
+    var field = document.createElement("div");
+    field.className = "confetti";
+    field.setAttribute("aria-hidden", "true");
+
+    var colors = ["#C05621", "#FDF1E7", "#D4A853"];
+    for (var i = 0; i < CONFETTI_COUNT; i++) {
+      var bit = document.createElement("i");
+      var size = 4 + Math.round(Math.random() * 2);          // 4-6px
+      bit.style.left = (Math.random() * 100).toFixed(2) + "%";
+      bit.style.width = size + "px";
+      bit.style.height = size + "px";
+      bit.style.backgroundColor = colors[i % colors.length];
+      bit.style.setProperty("--drift", (Math.random() * 48 - 24).toFixed(1) + "px");
+      bit.style.setProperty("--spin", Math.round(Math.random() * 360 - 180) + "deg");
+      bit.style.animationDuration = (1.2 + Math.random() * 0.4).toFixed(2) + "s";
+      bit.style.animationDelay = (Math.random() * 0.25).toFixed(2) + "s";
+      field.appendChild(bit);
+    }
+
+    host.appendChild(field);
+    setTimeout(function () {
+      if (field.parentNode) field.parentNode.removeChild(field);
+    }, CONFETTI_LIFE_MS);
   }
 
   // --- unlocked (post-Stripe) view ----------------------------------------
@@ -573,11 +600,20 @@
     el.cta.hidden = true;
     if (el.ctaNote) el.ctaNote.hidden = true;
 
-    var style = styleById(content.style_id);
-    el.resultName.textContent = content.style_name || (style && style.name) || "";
-    el.resultMatch.hidden = true;   // the match percent is not part of the purchase record
-    el.resultBlurb.textContent = (style && style.blurb) || "";
+    unlockedContent = content;
+    el.resultName.textContent = content.style_name || "";
+    applyStyleCopy();
     renderUnlockedReport(content);
+  }
+
+  // The report can land before the funnel config does, and the blurb only
+  // exists in the config — so fill it in whenever either side arrives.
+  function applyStyleCopy() {
+    if (!unlockedContent) return;
+    var style = styleById(unlockedContent.style_id);
+    if (!style) return;
+    if (!el.resultName.textContent) el.resultName.textContent = style.name || "";
+    el.resultBlurb.textContent = style.blurb || "";
   }
 
   function pollReport(cs, tries) {
@@ -688,7 +724,10 @@
     el.analyzingDots = $("analyzing-dots");
     el.resultBody = $("result-body");
     el.resultName = $("result-name");
-    el.resultMatch = $("result-match");
+    // The match percent was retired in 2c.2; the shell markup still declares
+    // the node, so take it out of the document rather than leave it hanging.
+    var stale = $("result-match");
+    if (stale && stale.parentNode) stale.parentNode.removeChild(stale);
     el.resultBlurb = $("result-blurb");
     el.report = $("report");
     el.cta = $("cta");
@@ -755,7 +794,8 @@
         cfg = data;
         document.title = (cfg.meta && cfg.meta.title) || document.title;
         wire();
-        if (!unlocked) startQuiz();
+        if (unlocked) applyStyleCopy();
+        else startQuiz();
       })
       .catch(function () {
         if (!unlocked) el.headline.textContent = "This quiz is unavailable right now.";
