@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Mazzin</title>
+<link rel="preload" href="/static/fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/static/fonts/fraunces-latin-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/static/css/mazzin.css">
 </head>
 <body>
@@ -14,18 +16,19 @@
   <section id="screen-swipe" class="screen is-active">
     <header class="swipe-top">
       <div class="progress-row">
-        <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
+        <div class="pips" id="pips" aria-hidden="true"></div>
         <span class="progress-label" id="progress-label"></span>
+      </div>
+      <div class="lead">
+        <p class="kicker" id="swipe-headline"></p>
+        <p class="subtext" id="swipe-subtext"></p>
+        <h1 class="caption" id="swipe-caption"></h1>
       </div>
     </header>
 
-    <div class="swipe-bottom">
-      <p class="subtext" id="swipe-subtext"></p>
-      <h1 class="headline" id="swipe-headline"></h1>
-      <div class="stage" id="stage">
-        <p class="caption" id="swipe-caption"></p>
-        <div class="cards" id="cards"></div>
-      </div>
+    <div class="stage" id="stage">
+      <div class="cards" id="cards"></div>
+      <p class="tap-hint" id="tap-hint"><span class="tap-dot" aria-hidden="true"></span>Tap your choice</p>
     </div>
   </section>
 

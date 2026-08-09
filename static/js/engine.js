@@ -6,10 +6,12 @@
   "use strict";
 
   var PAYMENTS_ENABLED = true;
-  var SLIDE_MS = 160;
+  var SLIDE_OUT_MS = 160;       // outgoing pair
+  var CARD_STAGGER_MS = 40;     // left card leads
+  var TAP_HINT_STEPS = 2;       // hint retires once the idea has landed
   var REPORT_POLL_MS = 2000;
   var PRELOAD_TIMEOUT_MS = 800;
-  var PICK_FEEDBACK_MS = 150;   // choice registers visibly before the slide
+  var PICK_FEEDBACK_MS = 165;   // choice registers visibly before the slide
   var REPORT_MAX_TRIES = 30;
 
   var cfg = null;
@@ -186,10 +188,11 @@
 
   // --- swipe screen --------------------------------------------------------
 
-  function cardNode(item) {
+  function cardNode(item, index) {
     var card = document.createElement("button");
     card.type = "button";
     card.className = "card";
+    card.style.setProperty("--i", index);
     card.setAttribute("aria-label", "Choose " + item.id);
 
     var img = document.createElement("img");
@@ -229,24 +232,48 @@
 
   function renderPair() {
     el.cards.innerHTML = "";
-    el.cards.classList.remove("is-picking");
-    pair.forEach(function (item) {
+    el.cards.classList.remove("is-picking", "is-leaving");
+    pair.forEach(function (item, i) {
       seen[item.id] = true;
-      el.cards.appendChild(cardNode(item));
+      el.cards.appendChild(cardNode(item, i));
     });
-    el.caption.textContent = captionFor(pair);
-    el.stage.classList.remove("slide-out");
-    el.stage.classList.add("slide-in");
-    setTimeout(function () { el.stage.classList.remove("slide-in"); }, SLIDE_MS);
+    setCaption(captionFor(pair));
     renderProgress();
     prepareNext();
+  }
+
+  // The caption only moves when it actually changes — a new layer of the
+  // gallery — so the motion means something.
+  function setCaption(text) {
+    if (text === el.caption.textContent) return;
+    el.caption.textContent = text;
+    el.caption.classList.remove("is-enter");
+    void el.caption.offsetWidth;        // restart the animation
+    el.caption.classList.add("is-enter");
   }
 
   function renderProgress() {
     var total = cfg.swipe.pairs_count;
     var current = Math.min(step + 1, total);
-    el.progressBar.style.width = ((step / total) * 100).toFixed(1) + "%";
+
+    if (el.pips.childElementCount !== total) {
+      el.pips.innerHTML = "";
+      for (var i = 0; i < total; i++) {
+        var pip = document.createElement("span");
+        pip.className = "pip";
+        el.pips.appendChild(pip);
+      }
+    }
+    for (var j = 0; j < total; j++) {
+      var node = el.pips.children[j];
+      // Adding is-done re-triggers its pop animation, so only completed pips
+      // that were not already done will pop.
+      node.classList.toggle("is-done", j < step);
+      node.classList.toggle("is-current", j === step);
+    }
+
     el.progressLabel.textContent = current + " of " + total;
+    el.tapHint.classList.toggle("is-gone", step >= TAP_HINT_STEPS);
   }
 
   function choose(item, card) {
@@ -265,17 +292,13 @@
     renderProgress();
 
     setTimeout(function () {
-      el.stage.classList.add("slide-out");
+      el.cards.classList.add("is-leaving");
       setTimeout(function () {
-        if (step >= cfg.swipe.pairs_count) {
-          el.progressBar.style.width = "100%";
-          startResult();
-          return;
-        }
+        if (step >= cfg.swipe.pairs_count) { startResult(); return; }
         if (!next) { startResult(); return; }
         pair = next;
         renderPair();
-      }, SLIDE_MS);
+      }, SLIDE_OUT_MS + CARD_STAGGER_MS);
     }, PICK_FEEDBACK_MS);
   }
 
@@ -518,12 +541,12 @@
 
   function cache() {
     el.cards = $("cards");
-    el.progressBar = $("progress-bar");
+    el.pips = $("pips");
+    el.tapHint = $("tap-hint");
     el.progressLabel = $("progress-label");
     el.headline = $("swipe-headline");
     el.subtext = $("swipe-subtext");
     el.caption = $("swipe-caption");
-    el.stage = $("stage");
     el.analyzing = $("analyzing");
     el.analyzingText = $("analyzing-text");
     el.analyzingDots = $("analyzing-dots");
