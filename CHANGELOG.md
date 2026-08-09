@@ -51,3 +51,6 @@ bottom.
 
 ## 2026-08-09 — claude/fix-deploy-robustness
 - fix: deploy robustness
+
+## 2026-08-09 — claude/phase2c3-gradient-blur
+- Phase 2c.3: gradient dissolve
