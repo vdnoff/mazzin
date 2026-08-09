@@ -13,7 +13,15 @@
   var HOLD_MS = 1650;           // ring -> badge -> reaction, then the pair goes
   var HOLD_REDUCED_MS = 500;    // same beats, no animation, for reduced motion
   var REACTION_DELAY_MS = 200;  // lands just after the check badge
-  var FADE_LINES = 2.5;         // line heights the crisp text takes to dissolve
+  // The blur curve is anchored to the trigger phrase's own line boxes: one
+  // line of softening leads into it, the trigger itself lands in the
+  // barely-readable band, and one line later nothing is legible. The opacity
+  // each stop carries lives in the CSS gradient; these are only the offsets.
+  //
+  // Stops sit on line CENTRES, not line boundaries. A stop on a boundary is
+  // the average of the two lines it divides, so every line ends up reading
+  // half the value it was meant to.
+  var HALF = 0.5;
   var CONFETTI_COUNT = 24;
   var CONFETTI_LIFE_MS = 2200;  // longest particle plus its delay, then cleared
   var REPORT_MAX_TRIES = 30;
@@ -436,11 +444,16 @@
         body.appendChild(swatchList(reveal.colors));
         body.appendChild(para(reveal.line || "", "palette-line"));
       } else {
-        // One flowing paragraph that starts as the style's sentence and loses
-        // focus as it runs on into filler.
-        body.appendChild(dissolveNode(
-          typeof reveal === "string" ? reveal : "",
-          fillerLines(sec, 2).join(" ")));
+        // One flowing paragraph: the setup reads clean, the trigger phrase
+        // lands just inside the blur, and the rest is filler nobody can read.
+        var setup = "", trigger = "";
+        if (reveal && typeof reveal === "object") {
+          setup = reveal.setup || "";
+          trigger = reveal.trigger || "";
+        } else if (typeof reveal === "string") {
+          setup = reveal;
+        }
+        body.appendChild(dissolveNode(setup, trigger, runOn(fillerLines(sec, 2))));
       }
 
       row.addEventListener("click", focusCta);
@@ -469,49 +482,107 @@
     return list;
   }
 
+  // Filler sentences read as filler the moment you see a capital letter start
+  // a new one, even through a blur. Dropping the first one's capital lets the
+  // whole block keep running on out of the trigger phrase.
+  function runOn(lines) {
+    var joined = lines.join(" ");
+    if (/^[A-Z][a-z]/.test(joined)) {
+      joined = joined.charAt(0).toLowerCase() + joined.slice(1);
+    }
+    return joined;
+  }
+
   // Two identical text layers stacked pixel for pixel: a blurred one in flow
   // that sets the height, and a crisp one on top. Opposed gradient masks
   // cross-fade between them, so the same sentence appears to lose focus part
   // way down instead of stopping at a visible seam.
   //
-  // Everything past the reveal sentence is filler on BOTH layers — the real
-  // section copy is never in the document, so there is nothing to lift out of
-  // devtools or a selection.
-  function dissolveNode(lede, rest) {
+  // Everything past the setup is filler on BOTH layers — the real section copy
+  // is never in the document, so there is nothing to lift out of devtools or a
+  // selection. The trigger is written to be the payoff the reader wants, and
+  // it is placed where it is legible only if you work at it.
+  function dissolveNode(setup, trigger, rest) {
     var wrap = document.createElement("div");
     wrap.className = "dissolve";
-    wrap.appendChild(dissolveLayer("dissolve-blur", lede, rest, true));
-    wrap.appendChild(dissolveLayer("dissolve-crisp", lede, rest, false));
+    wrap.appendChild(dissolveLayer("dissolve-blur", setup, trigger, rest, true));
+    wrap.appendChild(dissolveLayer("dissolve-crisp", setup, trigger, rest, false));
     wrap.appendChild(lockNode());
     return wrap;
   }
 
-  function dissolveLayer(cls, lede, rest, hidden) {
+  function dissolveLayer(cls, setup, trigger, rest, hidden) {
     var p = document.createElement("p");
     p.className = "dissolve-layer " + cls;
     if (hidden) p.setAttribute("aria-hidden", "true");
-    var span = document.createElement("span");
-    span.className = "lede";
-    span.textContent = lede;
-    p.appendChild(span);
-    p.appendChild(document.createTextNode(rest ? " " + rest : ""));
+    appendPart(p, "setup", setup);
+    appendPart(p, "trigger", trigger);
+    appendPart(p, null, rest);
     return p;
   }
 
-  // Where the crisp layer starts giving way, measured rather than guessed:
-  // the bottom of the reveal sentence's last line box.
+  // Parts are separated by a single space and empty ones contribute nothing,
+  // so the two layers can never drift apart on whitespace alone.
+  function appendPart(p, cls, text) {
+    if (!text) return;
+    if (p.firstChild) p.appendChild(document.createTextNode(" "));
+    if (!cls) {
+      p.appendChild(document.createTextNode(text));
+      return;
+    }
+    var span = document.createElement("span");
+    span.className = cls;
+    span.textContent = text;
+    p.appendChild(span);
+  }
+
+  // Where the curve sits, measured rather than guessed. Writing T for the line
+  // the trigger phrase STARTS on, the four stops sit one line apart, centred
+  // on T:
+  //
+  //   f0  centre of T-2   crisp
+  //   f1  centre of T-1   ~40% gone  (the run-up line softens)
+  //   f2  centre of T     ~75% gone  (barely readable — the hook)
+  //   f3  centre of T+1   nothing left
+  //
+  // Anchoring to where the trigger starts rather than to the whole phrase is
+  // what makes the reading identical across widths: a trigger that fits one
+  // line on a 390 and wraps to two on a 360 still puts its opening at exactly
+  // 75%, instead of the wrap quietly deciding how much of the payoff shows.
   function layoutDissolve(wrap) {
     var crisp = wrap.querySelector(".dissolve-crisp");
     if (!crisp) return;
-    var lede = crisp.querySelector(".lede");
-    var rects = lede ? lede.getClientRects() : [];
-    var lineH = parseFloat(getComputedStyle(crisp).lineHeight) || 20;
-    var start = rects.length
-      ? rects[rects.length - 1].bottom - crisp.getBoundingClientRect().top
-      : 0;
-    start = Math.max(0, Math.round(start));
-    wrap.style.setProperty("--fade-start", start + "px");
-    wrap.style.setProperty("--fade-end", Math.round(start + lineH * FADE_LINES) + "px");
+    var lineH = parseFloat(getComputedStyle(crisp).lineHeight) || 21;
+    var top = crisp.getBoundingClientRect().top;
+    var trigger = spanTop(crisp.querySelector(".trigger"), top);
+
+    // A section with no trigger phrase still has to dissolve somewhere: fall
+    // back to starting at the line after the setup.
+    if (trigger === null) {
+      var setup = spanBottom(crisp.querySelector(".setup"), top);
+      trigger = setup === null ? lineH : setup;
+    }
+
+    // Stops are left unclamped on purpose. When a reflow puts the trigger near
+    // the top of the block the leading stops go negative, and a negative stop
+    // is exactly right: the gradient starts partway along its ramp instead of
+    // restarting at full crisp and steepening.
+    var centre = trigger + lineH * HALF;
+    for (var i = 0; i < 4; i++) {
+      wrap.style.setProperty("--f" + i, Math.round(centre + (i - 2) * lineH) + "px");
+    }
+  }
+
+  // Top of a span's first line box / bottom of its last, relative to the
+  // paragraph. Null when the span is absent or has not been laid out.
+  function spanTop(span, top) {
+    var rects = span ? span.getClientRects() : [];
+    return rects.length ? rects[0].top - top : null;
+  }
+
+  function spanBottom(span, top) {
+    var rects = span ? span.getClientRects() : [];
+    return rects.length ? rects[rects.length - 1].bottom - top : null;
   }
 
   function layoutDissolves() {
