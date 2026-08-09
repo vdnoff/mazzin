@@ -13,6 +13,7 @@
   var HOLD_MS = 1650;           // ring -> badge -> reaction, then the pair goes
   var HOLD_REDUCED_MS = 500;    // same beats, no animation, for reduced motion
   var REACTION_DELAY_MS = 200;  // lands just after the check badge
+  var FADE_LINES = 2.5;         // line heights the crisp text takes to dissolve
   var CONFETTI_COUNT = 24;
   var CONFETTI_LIFE_MS = 2200;  // longest particle plus its delay, then cleared
   var REPORT_MAX_TRIES = 30;
@@ -435,27 +436,22 @@
         body.appendChild(swatchList(reveal.colors));
         body.appendChild(para(reveal.line || "", "palette-line"));
       } else {
-        // Uniform from here down: one crisp sentence that stops mid-thought,
-        // then the paragraph it was going to become, dissolving.
-        if (typeof reveal === "string" && reveal) {
-          body.appendChild(para(reveal, "crisp"));
-        }
-        // The lock sits centred over the blurred block, so it needs a
-        // positioned wrapper of exactly that block's size.
-        var veiled = document.createElement("div");
-        veiled.className = "veiled";
-
-        var block = document.createElement("div");
-        block.className = "veil veil-down";
-        fillerLines(sec, 2).forEach(function (t) { block.appendChild(para(t)); });
-        veiled.appendChild(block);
-        veiled.appendChild(lockNode());
-        body.appendChild(veiled);
+        // One flowing paragraph that starts as the style's sentence and loses
+        // focus as it runs on into filler.
+        body.appendChild(dissolveNode(
+          typeof reveal === "string" ? reveal : "",
+          fillerLines(sec, 2).join(" ")));
       }
 
       row.addEventListener("click", focusCta);
       el.report.appendChild(row);
     });
+
+    layoutDissolves();
+    // A font swap changes the metrics the mask was measured against.
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(layoutDissolves);
+    }
   }
 
   function swatchList(colors) {
@@ -471,6 +467,57 @@
       list.appendChild(li);
     });
     return list;
+  }
+
+  // Two identical text layers stacked pixel for pixel: a blurred one in flow
+  // that sets the height, and a crisp one on top. Opposed gradient masks
+  // cross-fade between them, so the same sentence appears to lose focus part
+  // way down instead of stopping at a visible seam.
+  //
+  // Everything past the reveal sentence is filler on BOTH layers — the real
+  // section copy is never in the document, so there is nothing to lift out of
+  // devtools or a selection.
+  function dissolveNode(lede, rest) {
+    var wrap = document.createElement("div");
+    wrap.className = "dissolve";
+    wrap.appendChild(dissolveLayer("dissolve-blur", lede, rest, true));
+    wrap.appendChild(dissolveLayer("dissolve-crisp", lede, rest, false));
+    wrap.appendChild(lockNode());
+    return wrap;
+  }
+
+  function dissolveLayer(cls, lede, rest, hidden) {
+    var p = document.createElement("p");
+    p.className = "dissolve-layer " + cls;
+    if (hidden) p.setAttribute("aria-hidden", "true");
+    var span = document.createElement("span");
+    span.className = "lede";
+    span.textContent = lede;
+    p.appendChild(span);
+    p.appendChild(document.createTextNode(rest ? " " + rest : ""));
+    return p;
+  }
+
+  // Where the crisp layer starts giving way, measured rather than guessed:
+  // the bottom of the reveal sentence's last line box.
+  function layoutDissolve(wrap) {
+    var crisp = wrap.querySelector(".dissolve-crisp");
+    if (!crisp) return;
+    var lede = crisp.querySelector(".lede");
+    var rects = lede ? lede.getClientRects() : [];
+    var lineH = parseFloat(getComputedStyle(crisp).lineHeight) || 20;
+    var start = rects.length
+      ? rects[rects.length - 1].bottom - crisp.getBoundingClientRect().top
+      : 0;
+    start = Math.max(0, Math.round(start));
+    wrap.style.setProperty("--fade-start", start + "px");
+    wrap.style.setProperty("--fade-end", Math.round(start + lineH * FADE_LINES) + "px");
+  }
+
+  function layoutDissolves() {
+    if (!el.report) return;
+    var all = el.report.querySelectorAll(".dissolve");
+    for (var i = 0; i < all.length; i++) layoutDissolve(all[i]);
   }
 
   function lockNode() {
@@ -755,6 +802,13 @@
     el.withdrawalCheck.addEventListener("change", updatePayButton);
     el.payButton.addEventListener("click", startCheckout);
     el.paywallBack.addEventListener("click", function () { show("screen-result"); });
+
+    // Rewrapped text moves the seam; re-measure when the box changes.
+    var resizeTimer = null;
+    window.addEventListener("resize", function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(layoutDissolves, 120);
+    });
   }
 
   function startQuiz() {
