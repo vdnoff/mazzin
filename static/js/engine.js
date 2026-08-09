@@ -196,18 +196,10 @@
   // --- result --------------------------------------------------------------
 
   function computeWinner() {
-    // Percent is the winner's share of the summed style scores, not of the
-    // raw tag counts.
-    //
-    // NOTE: with the current kitchen config this still lands under 55 every
-    // time (measured range 25.7%-54.8% over 3000 simulated runs), so the
-    // clamp keeps pinning the display to 55%. Tags are shared between styles,
-    // so the denominator here is larger than the raw tag total, not smaller.
-    // To actually spread the number, normalize the winner's share against the
-    // 1/styles.length floor before scaling into the clamp:
-    //   var floor = 1 / cfg.styles.length;
-    //   pct = Math.round(55 + 40 * ((bestScore / total) - floor) / (1 - floor));
-    // That measures 55-71 with < 1% pinned at the floor. Left as specified.
+    // The winner's raw share of the summed style scores never reaches the
+    // bottom of the clamp — tags are shared between styles, so a four-style
+    // funnel floors that share near 1/4. Normalize against that floor first,
+    // then scale into 55..95.
     var best = cfg.styles[0];
     var bestScore = -1;
     var total = 0;
@@ -219,7 +211,11 @@
       if (sc > bestScore) { bestScore = sc; best = s; }
     });
 
-    var pct = total > 0 ? Math.round((100 * bestScore) / total) : 55;
+    var floor = 1 / cfg.styles.length;
+    var pct = 55;
+    if (total > 0 && floor < 1) {
+      pct = Math.round(55 + 40 * ((bestScore / total) - floor) / (1 - floor));
+    }
     pct = Math.max(55, Math.min(95, pct));
     return { style: best, percent: pct };
   }
