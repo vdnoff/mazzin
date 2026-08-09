@@ -88,11 +88,26 @@
           ],
           "line": "Oat linen keeps it light, weathered oak does the warming, and a burnt clay accent stops the whole thing going soft."
         },
-        "mistakes": "Never let the wood tones match exactly — a room where every timber agrees reads like a showroom, and the way out of it is to",
-        "materials": "Timber and stone need one cold element between them or the room turns muddy, and the surface that does that job best is",
-        "shopping": "The table matters more than the cabinetry in this style, and the proportion almost everyone gets wrong on it is",
-        "dna": "Your choices sit closer to the modern half than you would guess, and the place that shows up most clearly is",
-        "splurge": "Spend on the timber and save on anything you can paint, because the one element that ages badly here is"
+        "mistakes": {
+          "setup": "Never let the wood tones in a room match each other exactly, and the way out is",
+          "trigger": "to age one piece past the rest,"
+        },
+        "materials": {
+          "setup": "Timber and stone turn muddy without one cold element between them, and it is",
+          "trigger": "brushed steel, and only there,"
+        },
+        "shopping": {
+          "setup": "The table matters more than the cabinetry, and the number people get wrong is",
+          "trigger": "its height, not its length,"
+        },
+        "dna": {
+          "setup": "Your choices sit closer to the modern half than you would guess, and it shows",
+          "trigger": "in the pairs you skipped fast,"
+        },
+        "splurge": {
+          "setup": "Spend on the timber and save on anything you can paint, and what ages worst is",
+          "trigger": "the worktop edge, by winter two,"
+        }
       }
     },
     {
@@ -114,11 +129,26 @@
           ],
           "line": "Chalk white does the bulk, pale concrete carries the only texture, and graphite appears once — on the handles, nowhere else."
         },
-        "mistakes": "Never solve storage with more cabinetry — minimalism fails at the exact moment the counter fills up, and the actual fix is",
-        "materials": "Matte over gloss on every surface but one, and the single exception that keeps the room from going flat is",
-        "shopping": "Buy the tap last and spend more than feels sensible on it, because in a room this quiet the only thing left to look at is",
-        "dna": "Your picks run cooler than the average minimalist's, which puts the influence underneath them closer to",
-        "splurge": "Spend on the joinery and save on the appliances, because the detail that separates minimal from bare is"
+        "mistakes": {
+          "setup": "Never solve a storage problem with more cabinetry, because the real fix is",
+          "trigger": "one drawer you never fill,"
+        },
+        "materials": {
+          "setup": "Matte over gloss on every surface but one, and the exception that matters is",
+          "trigger": "the splashback, honed stone,"
+        },
+        "shopping": {
+          "setup": "Buy the tap last and overspend on it, because in a quiet room the eye lands on",
+          "trigger": "the only thing that moves,"
+        },
+        "dna": {
+          "setup": "Your picks run cooler than the average minimalist's, which puts you nearer",
+          "trigger": "Scandinavian than Japanese,"
+        },
+        "splurge": {
+          "setup": "Spend on the joinery, save on appliances, and what separates minimal from bare is",
+          "trigger": "a two millimetre shadow gap,"
+        }
       }
     },
     {
@@ -141,11 +171,26 @@
           ],
           "line": "Iron black holds the frame, smoked oak warms it back up, and zinc grey keeps those two from fighting each other."
         },
-        "mistakes": "Never buy the pre-distressed version of anything — real wear reads instantly, and the fake kind is why most industrial kitchens look like a",
-        "materials": "Steel, smoked oak and concrete only work in one ratio, and it isn't equal thirds — the dominant surface should be",
-        "shopping": "Buy the lighting before anything else, because here the fixtures are the architecture, and the one worth the money is",
-        "dna": "Your picks lean harder into structure than into surface, which means the second influence running underneath them is",
-        "splurge": "Spend on the extraction hood and nowhere near the cabinet carcasses, because the one thing nobody can fake in this style is"
+        "mistakes": {
+          "setup": "Never buy the pre-distressed version of anything — the giveaway is",
+          "trigger": "the repeat in the pattern,"
+        },
+        "materials": {
+          "setup": "Steel, oak and concrete work in one ratio, and the dominant surface should be",
+          "trigger": "the darkest one, at sixty percent,"
+        },
+        "shopping": {
+          "setup": "Buy the lighting first, because in this style the fixtures are the architecture and",
+          "trigger": "the pendant over the island,"
+        },
+        "dna": {
+          "setup": "Your picks lean into structure over surface, so the influence beneath is",
+          "trigger": "warehouse, not workshop,"
+        },
+        "splurge": {
+          "setup": "Spend on the extraction, not the carcasses, because the thing nobody fakes is",
+          "trigger": "the weight of the hardware,"
+        }
       }
     },
     {
@@ -167,11 +212,26 @@
           ],
           "line": "Bone white on the cabinetry, aged brass on everything you actually touch, and walnut shadow keeping the room from floating away."
         },
-        "mistakes": "Never mix more than two metals — classic kitchens survive decades on restraint alone, and the pairing that always works is",
-        "materials": "Marble looks right and behaves badly, so the surface that gives you the same line without the anxiety is",
-        "shopping": "Hardware is where a classic kitchen is won or lost, and the one detail worth ordering samples of before you commit is",
-        "dna": "Your answers read classic but with a warmer bias than most, which points the secondary influence toward",
-        "splurge": "Spend on the doors and save on the worktop, because the element people put their hands on every single day is"
+        "mistakes": {
+          "setup": "Never mix more than two metals in one room, and the pairing that always works is",
+          "trigger": "brass with nickel, never black,"
+        },
+        "materials": {
+          "setup": "Marble looks right and behaves badly, so the surface to use instead is",
+          "trigger": "honed quartzite, softly veined,"
+        },
+        "shopping": {
+          "setup": "Hardware is where a classic kitchen is won or lost, and the one detail to sample is",
+          "trigger": "the knurling, under your light,"
+        },
+        "dna": {
+          "setup": "Your answers read classic with a warmer bias than most, which points you",
+          "trigger": "toward English country, not French,"
+        },
+        "splurge": {
+          "setup": "Spend on the doors and save on the worktop, because what you touch daily is",
+          "trigger": "the door frame, not the top,"
+        }
       }
     }
   ],
