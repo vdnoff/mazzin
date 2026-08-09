@@ -30,3 +30,6 @@ bottom.
 
 ## 2026-08-09 — claude/phase2b3-swipe-polish
 - Phase 2b.3: swipe visual polish
+
+## 2026-08-09 — claude/phase2b4-rhythm-selection
+- Phase 2b.4: rhythm + selection moment
