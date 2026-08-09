@@ -36,3 +36,6 @@ bottom.
 
 ## 2026-08-09 — claude/phase2b5-reactions
 - Phase 2b.5: reactions + transitions
+
+## 2026-08-09 — claude/phase2b6-chip-spacing
+- Phase 2b.6: chip + spacing fixes
