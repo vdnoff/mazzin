@@ -112,7 +112,9 @@ def checkout():
                     },
                 }
             ],
-            payment_method_types=["card"],
+            # No payment_method_types: the account runs Managed Payments,
+            # which rejects the parameter and picks the methods itself.
+            # Wallets surface on their own when the device supports them.
             success_url="%s/%s?cs={CHECKOUT_SESSION_ID}" % (config.BASE_URL, slug),
             cancel_url="%s/%s?canceled=1" % (config.BASE_URL, slug),
             metadata={
