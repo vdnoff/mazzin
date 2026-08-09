@@ -39,3 +39,6 @@ bottom.
 
 ## 2026-08-09 — claude/phase2b6-chip-spacing
 - Phase 2b.6: chip + spacing fixes
+
+## 2026-08-09 — claude/phase2b8-hint-entrance
+- Phase 2b.8: hint + entrance polish
