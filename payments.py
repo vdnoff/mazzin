@@ -112,9 +112,12 @@ def checkout():
                     },
                 }
             ],
-            # No payment_method_types: the account runs Managed Payments,
-            # which rejects the parameter and picks the methods itself.
-            # Wallets surface on their own when the device supports them.
+            # Managed Payments is on by default for the account but wants a
+            # product tax code we do not have — the tax model is a Phase 2
+            # decision — so it is switched off per session. No
+            # payment_method_types either: Stripe still picks the methods, and
+            # wallets surface on their own when the device supports them.
+            managed_payments={"enabled": False},
             success_url="%s/%s?cs={CHECKOUT_SESSION_ID}" % (config.BASE_URL, slug),
             cancel_url="%s/%s?canceled=1" % (config.BASE_URL, slug),
             metadata={
@@ -157,10 +160,24 @@ def stripe_webhook():
         log.error("STRIPE_WEBHOOK_SECRET is not configured")
         return jsonify({}), 400
 
+    # Verify the signature with the SDK, then parse the payload ourselves.
+    # stripe.Webhook.construct_event returns an Event object whose shape has
+    # changed across SDK majors — it stopped being a dict in 15.x, so `.get()`
+    # on it raises. A plain dict keeps this handler independent of that.
     try:
-        event = stripe.Webhook.construct_event(
-            payload, signature, config.STRIPE_WEBHOOK_SECRET
+        # verify_header interpolates the payload into the signed string with
+        # %s, so bytes would hash as their repr. Decode first, exactly as
+        # construct_event does internally.
+        raw = payload.decode("utf-8") if isinstance(payload, bytes) else payload
+        stripe.WebhookSignature.verify_header(
+            raw,
+            signature,
+            config.STRIPE_WEBHOOK_SECRET,
+            stripe.Webhook.DEFAULT_TOLERANCE,
         )
+        event = json.loads(raw)
+        if not isinstance(event, dict):
+            raise ValueError("event is not an object")
     except Exception as exc:
         # Signature failures are routine (probes, retries after a key rotation).
         # Log the exception class, never the payload.
