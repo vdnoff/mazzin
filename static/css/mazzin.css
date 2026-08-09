@@ -457,6 +457,17 @@ body {
   color: var(--ink);
 }
 
+/* Second line of the post-payment loading state. Deliberately on the UI stack
+   rather than the brand one: its first fallback is a system font, so it paints
+   on the first frame instead of waiting for the webfonts. */
+.analyzing-note {
+  margin: -6px 0 18px;
+  font-family: var(--ui);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
 .dots { display: flex; gap: 6px; justify-content: center; }
 
 .dots span {
@@ -561,6 +572,48 @@ body {
 .row-body p:last-child { margin-bottom: 0; }
 
 .crisp { color: #3d424c; }
+
+/* --- unlocked report (stacked) --------------------------------------------- */
+
+/* The locked view above keeps its two-column table: a short title beside a
+   truncated reveal is what makes a row read as withheld. Paid, it stops being
+   a teaser and becomes a document, so the title gets its own line and rule and
+   the prose runs the full width underneath. */
+.report-unlocked { padding: 22px 18px; }
+
+.report-unlocked .section + .section {
+  margin-top: 18px;
+  padding-top: 18px;              /* 36px between sections, line centred in it */
+  border-top: 1px solid var(--line);
+}
+
+.section-title {
+  margin: 0 0 14px;
+  font-family: var(--brand);
+  font-optical-sizing: auto;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.section-title::after {
+  content: "";
+  display: block;
+  width: 34px;
+  height: 3px;
+  margin-top: 10px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.report-unlocked .section-body {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.65;
+  color: #3d424c;
+}
 
 /* Two stacked copies of the same paragraph. The blurred one sits in flow and
    sets the height; the crisp one is absolutely positioned over it at the same

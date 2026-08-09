@@ -49,7 +49,7 @@ INSERT_PURCHASE_EVENT_SQL = (
 )
 
 SELECT_PURCHASE_SQL = (
-    "SELECT id, funnel, session_id, result_style, status FROM purchases "
+    "SELECT id, funnel, session_id, result_style, status, email FROM purchases "
     "WHERE checkout_session = %s LIMIT 1"
 )
 
@@ -214,10 +214,25 @@ def _read_tag_scores(cfg, packed):
     return _clean_tag_scores(cfg, raw)
 
 
-def _record_side_effects(purchase_id, slug, session_id, result_style, tag_scores):
-    """Report + server-side purchase event. Never fatal to the webhook."""
+def _record_side_effects(purchase_id, slug, session_id, result_style, tag_scores,
+                         email=None, checkout_session=None):
+    """Report + emailed PDF + server-side purchase event.
+
+    The email is hung off the report's `on_final` hook rather than sent after
+    the call returns. That hook fires once the content is settled — after a
+    late model call has had its chance to upgrade the row — so the PDF carries
+    the best version rather than whatever existed at the budget cutoff. When
+    nothing is outstanding it fires inline and the mail goes immediately.
+    """
+
+    def deliver(content):
+        reports.send_report_email(purchase_id, email, content, checkout_session)
+
     try:
-        reports.generate_report(purchase_id, slug, result_style, tag_scores)
+        reports.generate_report(
+            purchase_id, slug, result_style, tag_scores,
+            on_final=deliver if email else None,
+        )
     except Exception:
         log.exception("report generation failed for purchase %s", purchase_id)
 
@@ -321,11 +336,28 @@ def stripe_webhook():
     tag_scores = _read_tag_scores(
         config.load_funnel(slug), metadata.get("tag_scores")
     )
-    _record_side_effects(purchase_id, slug, session_id, result_style, tag_scores)
+    _record_side_effects(
+        purchase_id, slug, session_id, result_style, tag_scores,
+        email=details.get("email"), checkout_session=session.get("id"),
+    )
     return jsonify({"status": "ok"}), 200
 
 
 # --- GET /api/report -------------------------------------------------------
+
+
+def _mask_email(address):
+    """`j***@gmail.com`, or None when there is nothing safe to show.
+
+    Enough for someone to recognise which inbox to check and not enough to be
+    worth harvesting. The full address never leaves the database.
+    """
+    if not isinstance(address, str) or address.count("@") != 1:
+        return None
+    local, _, domain = address.partition("@")
+    if not local or not domain:
+        return None
+    return "%s***@%s" % (local[0], domain)
 
 
 @bp.get("/api/report")
@@ -339,12 +371,19 @@ def report():
         # Webhook has not landed yet — the client keeps polling.
         return jsonify({"status": "pending"}), 202
 
+    body = {"status": "pending"}
+    masked = _mask_email(purchase.get("email"))
+    if masked:
+        body["email_masked"] = masked
+
     row = database.query_one(SELECT_REPORT_SQL, (purchase["id"],))
     if not row:
-        return jsonify({"status": "pending"}), 202
+        return jsonify(body), 202
 
     content = row["content"]
     if isinstance(content, (str, bytes)):
         content = json.loads(content)
 
-    return jsonify({"status": "ready", "report": content}), 200
+    body["status"] = "ready"
+    body["report"] = content
+    return jsonify(body), 200
