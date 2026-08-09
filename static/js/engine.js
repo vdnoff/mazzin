@@ -8,11 +8,11 @@
   var PAYMENTS_ENABLED = true;
   var SLIDE_OUT_MS = 160;       // outgoing pair
   var CARD_STAGGER_MS = 40;     // left card leads
-  var TAP_HINT_STEPS = 2;       // hint retires once the idea has landed
   var REPORT_POLL_MS = 2000;
   var PRELOAD_TIMEOUT_MS = 800;
-  var HOLD_MS = 560;            // let the choice land before anything moves
-  var HOLD_REDUCED_MS = 300;    // same beat, no animation, for reduced motion
+  var HOLD_MS = 1150;           // ring -> badge -> reaction, then the pair goes
+  var HOLD_REDUCED_MS = 500;    // same beats, no animation, for reduced motion
+  var REACTION_DELAY_MS = 200;  // lands just after the check badge
   var REPORT_MAX_TRIES = 30;
 
   var cfg = null;
@@ -29,6 +29,7 @@
   var preloaded = {};        // img src -> already requested
   var winnerStyleId = null; // set when the result is computed
   var picking = false;      // true through the selection hold; taps ignored
+  var lastReaction = null;  // never show the same line twice running
   var paywallTracked = false;
 
   var el = {};
@@ -275,7 +276,47 @@
     }
 
     el.progressLabel.textContent = current + " of " + total;
-    el.tapHint.classList.toggle("is-gone", step >= TAP_HINT_STEPS);
+  }
+
+  // The tag the chosen card has and the rejected one does not is what the tap
+  // actually revealed — a shared tag would have been picked either way.
+  function reactionFor(chosen, rejected) {
+    var map = (cfg.swipe && cfg.swipe.reactions) || {};
+    var rejectedTags = (rejected && rejected.tags) || [];
+    var known = chosen.tags.filter(function (t) { return map[t]; });
+    var differentiating = known.filter(function (t) {
+      return rejectedTags.indexOf(t) === -1;
+    });
+    var pool = differentiating.length ? differentiating : known;
+    if (!pool.length) return "";
+
+    // Rotate by step so a repeated tag pairing does not always read the same.
+    var texts = pool.map(function (t) { return map[t]; });
+    var pick = texts[(step - 1) % texts.length];
+    if (pick === lastReaction) {
+      for (var i = 0; i < texts.length; i++) {
+        if (texts[i] !== lastReaction) { pick = texts[i]; break; }
+      }
+    }
+    lastReaction = pick;
+    return pick;
+  }
+
+  function showReaction(text, card) {
+    if (!text) return;
+    var chip = document.createElement("div");
+    chip.className = "reaction " +
+      (el.cards.firstChild === card ? "is-left" : "is-right");
+    chip.setAttribute("role", "status");
+    chip.appendChild(document.createTextNode(text));
+    var tick = document.createElement("span");
+    tick.className = "tick";
+    tick.setAttribute("aria-hidden", "true");
+    tick.textContent = "\u2713";
+    chip.appendChild(tick);
+    el.cards.appendChild(chip);
+    // next frame, so the entry animation actually runs
+    requestAnimationFrame(function () { chip.classList.add("is-in"); });
   }
 
   function prefersReducedMotion() {
@@ -287,6 +328,7 @@
     if (picking || !pair.length) return;   // one tap per pair
     picking = true;
     var next = pending[item.id] || null;   // resolved and preloaded already
+    var rejected = pair[0] === item ? pair[1] : pair[0];
     item.tags.forEach(function (t) { scores[t] = (scores[t] || 0) + 1; });
     step += 1;
     track("swipe", step);
@@ -297,6 +339,8 @@
     if (card) {
       card.classList.add("is-chosen");
       el.cards.classList.add("is-picking");
+      var reaction = reactionFor(item, rejected);
+      setTimeout(function () { showReaction(reaction, card); }, REACTION_DELAY_MS);
     }
     renderProgress();
 
