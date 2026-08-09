@@ -9,6 +9,7 @@
   var SLIDE_MS = 160;
   var REPORT_POLL_MS = 2000;
   var PRELOAD_TIMEOUT_MS = 800;
+  var PICK_FEEDBACK_MS = 150;   // choice registers visibly before the slide
   var REPORT_MAX_TRIES = 30;
 
   var cfg = null;
@@ -205,19 +206,38 @@
     img.src = item.img;
 
     card.appendChild(img);
-    card.addEventListener("click", function () { choose(item); });
+
+    var check = document.createElement("span");
+    check.className = "check";
+    check.setAttribute("aria-hidden", "true");
+    check.textContent = "\u2713";
+    card.appendChild(check);
+
+    card.addEventListener("click", function () { choose(item, card); });
     return card;
+  }
+
+  // Captions are keyed by image-id prefix (k1/k2/k3) — one per gallery layer.
+  function captionFor(items) {
+    var captions = (cfg.swipe && cfg.swipe.captions) || {};
+    for (var i = 0; i < items.length; i++) {
+      var key = String(items[i].id).slice(0, 2);
+      if (captions[key]) return captions[key];
+    }
+    return "";
   }
 
   function renderPair() {
     el.cards.innerHTML = "";
+    el.cards.classList.remove("is-picking");
     pair.forEach(function (item) {
       seen[item.id] = true;
       el.cards.appendChild(cardNode(item));
     });
-    el.cards.classList.remove("slide-out");
-    el.cards.classList.add("slide-in");
-    setTimeout(function () { el.cards.classList.remove("slide-in"); }, SLIDE_MS);
+    el.caption.textContent = captionFor(pair);
+    el.stage.classList.remove("slide-out");
+    el.stage.classList.add("slide-in");
+    setTimeout(function () { el.stage.classList.remove("slide-in"); }, SLIDE_MS);
     renderProgress();
     prepareNext();
   }
@@ -229,7 +249,7 @@
     el.progressLabel.textContent = current + " of " + total;
   }
 
-  function choose(item) {
+  function choose(item, card) {
     if (!pair.length) return;
     var next = pending[item.id] || null;   // resolved and preloaded already
     item.tags.forEach(function (t) { scores[t] = (scores[t] || 0) + 1; });
@@ -237,17 +257,26 @@
     track("swipe", step);
     pair = [];
 
-    el.cards.classList.add("slide-out");
+    // Show the choice landing before anything moves.
+    if (card) {
+      card.classList.add("is-chosen");
+      el.cards.classList.add("is-picking");
+    }
+    renderProgress();
+
     setTimeout(function () {
-      if (step >= cfg.swipe.pairs_count) {
-        el.progressBar.style.width = "100%";
-        startResult();
-        return;
-      }
-      if (!next) { startResult(); return; }
-      pair = next;
-      renderPair();
-    }, SLIDE_MS);
+      el.stage.classList.add("slide-out");
+      setTimeout(function () {
+        if (step >= cfg.swipe.pairs_count) {
+          el.progressBar.style.width = "100%";
+          startResult();
+          return;
+        }
+        if (!next) { startResult(); return; }
+        pair = next;
+        renderPair();
+      }, SLIDE_MS);
+    }, PICK_FEEDBACK_MS);
   }
 
   // --- result --------------------------------------------------------------
@@ -492,6 +521,9 @@
     el.progressBar = $("progress-bar");
     el.progressLabel = $("progress-label");
     el.headline = $("swipe-headline");
+    el.subtext = $("swipe-subtext");
+    el.caption = $("swipe-caption");
+    el.stage = $("stage");
     el.analyzing = $("analyzing");
     el.analyzingText = $("analyzing-text");
     el.analyzingDots = $("analyzing-dots");
@@ -526,6 +558,7 @@
     cfg.swipe.gallery.forEach(function (g) { byId[g.id] = g; });
 
     el.headline.textContent = cfg.swipe.headline;
+    el.subtext.textContent = cfg.swipe.subtext || "";
 
     var first = (cfg.swipe.pairing && cfg.swipe.pairing.first_pair) || [];
     var a = byId[first[0]];

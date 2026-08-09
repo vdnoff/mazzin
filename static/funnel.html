@@ -12,10 +12,21 @@
 <main id="app">
 
   <section id="screen-swipe" class="screen is-active">
-    <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
-    <p class="progress-label" id="progress-label"></p>
-    <h1 class="headline" id="swipe-headline"></h1>
-    <div class="cards" id="cards"></div>
+    <header class="swipe-top">
+      <div class="progress-row">
+        <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
+        <span class="progress-label" id="progress-label"></span>
+      </div>
+    </header>
+
+    <div class="swipe-bottom">
+      <p class="subtext" id="swipe-subtext"></p>
+      <h1 class="headline" id="swipe-headline"></h1>
+      <div class="stage" id="stage">
+        <p class="caption" id="swipe-caption"></p>
+        <div class="cards" id="cards"></div>
+      </div>
+    </div>
   </section>
 
   <section id="screen-result" class="screen" aria-live="polite">
