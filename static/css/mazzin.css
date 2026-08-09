@@ -562,36 +562,65 @@ body {
 
 .crisp { color: #3d424c; }
 
-/* Blur behind a gradient mask, so the text dissolves rather than hitting a
-   hard edge. veil-down softens toward the bottom of a block; veil-right
-   carries a sentence off to the side mid-line. */
-.veil {
-  filter: blur(4.5px);
+/* Two stacked copies of the same paragraph. The blurred one sits in flow and
+   sets the height; the crisp one is absolutely positioned over it at the same
+   width, so both wrap identically. Their masks are exact opposites, which
+   makes the pair cross-fade: sharp at the top, soft through the transition
+   zone, unreadable below it, with no seam anywhere.
+
+   -webkit- prefixes are not optional here — iOS Safari still needs them for
+   mask-image, and an unprefixed-only rule leaves both layers fully painted
+   and the whole effect broken on the one platform this product targets. */
+.dissolve {
+  position: relative;
+  --fade-start: 0px;
+  --fade-end: 56px;
   user-select: none;
-  pointer-events: none;
+  -webkit-user-select: none;
+}
+
+.dissolve-layer {
+  margin: 0;
   color: #3d424c;
 }
 
-.veil-down {
-  display: block;
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.12));
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.12));
+.dissolve-blur {
+  filter: blur(4.5px);
+  -webkit-mask-image: linear-gradient(to bottom,
+    transparent 0, transparent var(--fade-start), #000 var(--fade-end));
+  mask-image: linear-gradient(to bottom,
+    transparent 0, transparent var(--fade-start), #000 var(--fade-end));
 }
 
-.veil-right {
-  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.1) 70%);
-  mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.1) 70%);
+.dissolve-crisp {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  -webkit-mask-image: linear-gradient(to bottom,
+    #000 0, #000 var(--fade-start), transparent var(--fade-end));
+  mask-image: linear-gradient(to bottom,
+    #000 0, #000 var(--fade-start), transparent var(--fade-end));
 }
 
-.veiled { position: relative; }
+.dissolve-blur,
+.dissolve-crisp {
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
 
 /* Drawn rather than set, so it takes the accent colour — an emoji padlock
    would render in its own palette. Centred over the blurred block rather
    than parked underneath it. */
 .row-lock {
+  /* Centred in the unreadable zone — between where the dissolve finishes and
+     the bottom of the block. */
   position: absolute;
-  top: 50%;
+  top: calc(var(--fade-end) / 2 + 50%);
   left: 50%;
+  z-index: 2;
   width: 13px;
   height: 10px;
   margin: 0;
