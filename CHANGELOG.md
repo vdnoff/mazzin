@@ -27,3 +27,6 @@ bottom.
 
 ## 2026-08-09 — claude/phase2b2-swipe-design
 - Phase 2b.2: swipe redesign
+
+## 2026-08-09 — claude/phase2b3-swipe-polish
+- Phase 2b.3: swipe visual polish
