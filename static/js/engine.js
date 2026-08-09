@@ -440,11 +440,17 @@
         if (typeof reveal === "string" && reveal) {
           body.appendChild(para(reveal, "crisp"));
         }
+        // The lock sits centred over the blurred block, so it needs a
+        // positioned wrapper of exactly that block's size.
+        var veiled = document.createElement("div");
+        veiled.className = "veiled";
+
         var block = document.createElement("div");
         block.className = "veil veil-down";
         fillerLines(sec, 2).forEach(function (t) { block.appendChild(para(t)); });
-        body.appendChild(block);
-        body.appendChild(lockNode());
+        veiled.appendChild(block);
+        veiled.appendChild(lockNode());
+        body.appendChild(veiled);
       }
 
       row.addEventListener("click", focusCta);

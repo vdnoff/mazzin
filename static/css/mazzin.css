@@ -583,17 +583,22 @@ body {
   mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.1) 70%);
 }
 
+.veiled { position: relative; }
+
 /* Drawn rather than set, so it takes the accent colour — an emoji padlock
-   would render in its own palette. */
+   would render in its own palette. Centred over the blurred block rather
+   than parked underneath it. */
 .row-lock {
-  position: relative;
-  display: block;
-  width: 11px;
-  height: 9px;
-  margin: 14px 0 2px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 13px;
+  height: 10px;
+  margin: 0;
+  transform: translate(-50%, -50%);
   border-radius: 2px;
   background: var(--accent);
-  opacity: 0.55;
+  opacity: 0.9;
 }
 
 .row-lock::before {
@@ -601,8 +606,8 @@ body {
   position: absolute;
   left: 50%;
   bottom: 100%;
-  width: 7px;
-  height: 5px;
+  width: 8px;
+  height: 6px;
   transform: translateX(-50%);
   border: 1.5px solid var(--accent);
   border-bottom: 0;
