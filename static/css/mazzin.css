@@ -168,9 +168,14 @@ body {
   text-wrap: balance;
 }
 
-/* Whatever the cards cannot absorb collects here, so the pair and its hint
-   stay planted at the bottom of the screen instead of floating mid-column. */
-.caption { margin-bottom: auto; }
+/* Free height is split evenly between here and below the tap hint, so the
+   cards block sits centred in the zone under the caption rather than pushed
+   to one end. The 12px minimum rides inside the box as padding so both
+   measured gaps stay identical. */
+.caption {
+  padding-bottom: 12px;
+  margin-bottom: auto;
+}
 
 .caption.is-enter { animation: caption-in 250ms var(--ease-ios) both; }
 
@@ -194,7 +199,6 @@ body {
   flex: 1 1 auto;
   min-height: min(66vw, 40vh);
   max-height: min(60vh, 94vw);
-  margin-top: clamp(12px, 2vh, 28px);
 }
 
 .card {
@@ -316,17 +320,36 @@ body {
 
 /* Straddles the top edge of the chosen card — half over the photograph, half
    above it. It lives in .cards rather than inside .card because the card
-   clips its own overflow. */
+   clips its own overflow.
+
+   The outer element spans the whole row and pads away the half it does not
+   belong to, so the pill's available width is always exactly one card. An
+   earlier version offset it with `left: 75%`, which silently capped the
+   right-hand chip's shrink-to-fit at the distance to the row's edge and
+   wrapped it onto four lines. */
 .reaction {
   position: absolute;
   top: 0;
+  left: 0;
+  width: 100%;
   z-index: 3;
   display: flex;
-  align-items: center;
-  gap: 6px;
-  max-width: calc(50% - 6px);
-  padding: 8px 14px;
-  border-radius: 999px;
+  justify-content: center;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.reaction.is-left { padding-right: calc(50% + 5px); }
+.reaction.is-right { padding-left: calc(50% + 5px); }
+
+.reaction-pill {
+  /* 96% of a card. Measured against all twelve reaction strings: 78% forced
+     "Character over polish", "Never goes out of style" and "Moody. Bold
+     choice" onto three lines, and 94% was the narrowest that held every one
+     of them to two without shrinking the 17px type. */
+  max-width: 96%;
+  padding: 10px 18px;
+  border-radius: 22px;
   background: #fff;
   box-shadow: 0 6px 18px rgba(22, 24, 29, 0.16);
   font-family: var(--brand);
@@ -336,35 +359,34 @@ body {
   line-height: 1.2;
   color: var(--accent);
   text-align: center;
-  white-space: nowrap;
   opacity: 0;
-  transform: translate(-50%, -50%) scale(0.8);
-  transform-origin: center;
-  pointer-events: none;
+  transform: scale(0.8);
 }
 
-.reaction.is-left { left: 25%; }
-.reaction.is-right { left: 75%; }
+/* Inline so it trails the last line instead of sitting beside a wrapped block. */
+.reaction .tick {
+  margin-left: 6px;
+  font-family: var(--ui);
+  font-size: 13px;
+}
 
-.reaction .tick { font-family: var(--ui); font-size: 13px; }
-
-.reaction.is-in {
+.reaction.is-in .reaction-pill {
   animation: reaction-in 200ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 @keyframes reaction-in {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 /* Leaves with the pair it belongs to. */
-.cards.is-leaving .reaction {
+.cards.is-leaving .reaction-pill {
   animation: reaction-out 160ms ease forwards;
 }
 
 @keyframes reaction-out {
-  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  to { opacity: 0; transform: translate(-50%, -50%) scale(0.94); }
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.94); }
 }
 
 /* --- tap hint -------------------------------------------------------------- */
@@ -376,8 +398,9 @@ body {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  height: 30px;
-  margin: 14px 0 0;
+  min-height: 30px;
+  margin: 14px 0 auto;
+  padding-bottom: 12px;
   font-size: 15px;
   font-weight: 500;
   color: var(--muted);
@@ -404,8 +427,8 @@ body {
   .card.is-chosen .check { animation: none; opacity: 1; transform: scale(1); }
   .cards.is-leaving .card { animation: fade-out 160ms ease both; }
   .caption.is-enter { animation: fade-in 200ms ease both; }
-  .reaction.is-in { animation: none; opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  .cards.is-leaving .reaction { animation: fade-out 160ms ease forwards; }
+  .reaction.is-in .reaction-pill { animation: none; opacity: 1; transform: scale(1); }
+  .cards.is-leaving .reaction-pill { animation: fade-out 160ms ease forwards; }
   .pip.is-done, .pip.is-current, .tap-dot { animation: none; }
   @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
   @keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }

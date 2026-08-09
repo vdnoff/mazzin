@@ -10,7 +10,7 @@
   var CARD_STAGGER_MS = 40;     // left card leads
   var REPORT_POLL_MS = 2000;
   var PRELOAD_TIMEOUT_MS = 800;
-  var HOLD_MS = 1150;           // ring -> badge -> reaction, then the pair goes
+  var HOLD_MS = 1650;           // ring -> badge -> reaction, then the pair goes
   var HOLD_REDUCED_MS = 500;    // same beats, no animation, for reduced motion
   var REACTION_DELAY_MS = 200;  // lands just after the check badge
   var REPORT_MAX_TRIES = 30;
@@ -308,12 +308,18 @@
     chip.className = "reaction " +
       (el.cards.firstChild === card ? "is-left" : "is-right");
     chip.setAttribute("role", "status");
-    chip.appendChild(document.createTextNode(text));
+
+    // The pill is a separate box so its width is measured against one card,
+    // independent of where the outer element sits in the row.
+    var pill = document.createElement("div");
+    pill.className = "reaction-pill";
+    pill.appendChild(document.createTextNode(text));
     var tick = document.createElement("span");
     tick.className = "tick";
     tick.setAttribute("aria-hidden", "true");
     tick.textContent = "\u2713";
-    chip.appendChild(tick);
+    pill.appendChild(tick);
+    chip.appendChild(pill);
     el.cards.appendChild(chip);
     // next frame, so the entry animation actually runs
     requestAnimationFrame(function () { chip.classList.add("is-in"); });
