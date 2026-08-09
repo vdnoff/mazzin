@@ -48,3 +48,6 @@ bottom.
 
 ## 2026-08-09 — claude/phase2c2-result-content
 - Phase 2c.2: result content
+
+## 2026-08-09 — claude/fix-deploy-robustness
+- fix: deploy robustness
