@@ -57,3 +57,6 @@ bottom.
 
 ## 2026-08-09 — claude/phase2c4-blur-curve
 - Phase 2c.4: blur curve
+
+## 2026-08-09 — claude/phase2c5-real-reports
+- Phase 2c.5: real reports (hybrid LLM)
