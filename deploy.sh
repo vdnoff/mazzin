@@ -23,6 +23,30 @@ die() { echo "${RED}ERROR:${NC} $*" >&2; exit 1; }
 info() { echo "${GREEN}==>${NC} $*"; }
 warn() { echo "${YELLOW}!!${NC} $*"; }
 
+# Read one key out of .env as a literal string.
+#
+# .env is never sourced. Sourcing runs the file as shell, which both aborts
+# under `set -u` on any value referencing an unset name and silently mangles
+# values containing `$` — and our database name is literally FarvaGO$mazzin,
+# which a sourced .env would truncate to FarvaGO. Reading the line ourselves
+# keeps the value exactly as written and leaves the Stripe keys out of the
+# environment of every child process.
+#
+# Handles a leading `export `, surrounding single or double quotes, and CRLF
+# line endings. Inline `# comments` after a value are NOT stripped — a `#` is
+# treated as part of the value, since passwords may contain one.
+env_value() {
+  local key="$1" file="$REPO_DIR/.env" value
+  [ -f "$file" ] || return 0
+  value=$(sed -n "s/^[[:space:]]*\(export[[:space:]]\{1,\}\)\{0,1\}${key}=//p" "$file" | tail -n 1)
+  value=${value%$'\r'}
+  case "$value" in
+    '"'*'"') value=${value#\"}; value=${value%\"} ;;
+    "'"*"'") value=${value#\'}; value=${value%\'} ;;
+  esac
+  printf '%s' "$value"
+}
+
 BRANCH="${1:-}"
 DESCRIPTION="${2:-}"
 
@@ -72,16 +96,16 @@ mkdir -p "$BACKUP_DIR"
 STAMP=$(date +%Y%m%d)
 BACKUP_FILE="$BACKUP_DIR/mazzin_${STAMP}.sql.gz"
 
-if [ -f "$REPO_DIR/.env" ]; then
-  # shellcheck disable=SC1091
-  set -a; . "$REPO_DIR/.env"; set +a
-fi
+DB_HOST=""; DB_USER=""; DB_PASSWORD=""; DB_NAME=""
+for key in DB_HOST DB_USER DB_PASSWORD DB_NAME; do
+  printf -v "$key" '%s' "$(env_value "$key")"
+done
 
-if [ -n "${DB_HOST:-}" ] && [ -n "${DB_USER:-}" ] && [ -n "${DB_NAME:-}" ]; then
+if [ -n "$DB_HOST" ] && [ -n "$DB_USER" ] && [ -n "$DB_NAME" ]; then
   if [ -f "$BACKUP_FILE" ]; then
     info "Backup for $STAMP already exists — skipping"
   else
-    mysqldump -h "$DB_HOST" -u "$DB_USER" -p"${DB_PASSWORD:-}" \
+    mysqldump -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASSWORD" \
       --single-transaction --quick "$DB_NAME" 2>/dev/null | gzip > "$BACKUP_FILE" \
       || die "mysqldump failed — aborting before touching main"
     info "Backup written: $BACKUP_FILE"
