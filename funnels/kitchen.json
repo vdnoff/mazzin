@@ -50,19 +50,19 @@
     {
       "id": "minimalist",
       "name": "Minimalist",
-      "tags": ["minimal", "bright", "cool", "modern"],
+      "tags": ["minimal", "bright", "modern"],
       "blurb": "Placeholder blurb — nothing on the counter, everything in its place, light doing most of the decorating. Real copy lands in Phase 2."
     },
     {
       "id": "industrial",
       "name": "Industrial",
-      "tags": ["industrial", "dark", "cool"],
+      "tags": ["industrial", "dark", "cool", "wood"],
       "blurb": "Placeholder blurb — raw metal, dark tones and exposed structure worn on purpose. Real copy lands in Phase 2."
     },
     {
       "id": "classic",
       "name": "Classic",
-      "tags": ["classic", "warm", "wood"],
+      "tags": ["classic", "warm", "bright"],
       "blurb": "Placeholder blurb — shaker doors, timeless proportions and materials that age well. Real copy lands in Phase 2."
     }
   ],
