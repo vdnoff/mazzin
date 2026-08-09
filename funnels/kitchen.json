@@ -9,6 +9,12 @@
   "swipe": {
     "pairs_count": 9,
     "headline": "Which kitchen feels more like you?",
+    "subtext": "Every choice shapes what you see next",
+    "captions": {
+      "k1": "Tap the kitchen you'd cook in",
+      "k2": "Which details speak to you?",
+      "k3": "Which materials would you touch?"
+    },
     "gallery": [
       { "id": "k101", "img": "/static/galleries/kitchen/k101.webp", "tags": ["rustic", "warm", "wood"] },
       { "id": "k102", "img": "/static/galleries/kitchen/k102.webp", "tags": ["rustic", "dark", "wood"] },
