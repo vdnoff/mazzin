@@ -24,3 +24,6 @@ bottom.
 
 ## 2026-08-09 — claude/phase2b-gallery
 - Phase 2b: real kitchen gallery
+
+## 2026-08-09 — claude/phase2b2-swipe-design
+- Phase 2b.2: swipe redesign
