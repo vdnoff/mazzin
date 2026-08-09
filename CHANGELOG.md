@@ -63,3 +63,6 @@ bottom.
 
 ## 2026-08-09 — claude/phase2d-report-layout-email
 - Phase 2d: layout + PDF email + late upgrade
+
+## 2026-08-09 — claude/phase2e-report-experience
+- Phase 2e: report experience
