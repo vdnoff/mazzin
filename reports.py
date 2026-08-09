@@ -68,26 +68,193 @@ TEMPERATURE = 0.7
 # section from an empty string or a one-line apology.
 MIN_BODY_CHARS = 200
 
-# Words per section. Everything is 90-140 except `mistakes`, which has to carry
-# five mistakes AND five fixes — at 140 words that is fourteen words per item,
-# which produces telegraphic copy that fails the usefulness bar the rest of
-# this module exists to hold. It gets the room the content actually needs.
-WORDS = {
-    "palette": "90-140",
-    "materials": "90-140",
-    "mistakes": "170-220",
-    "shopping": "90-140",
-    "dna": "90-140",
-    "splurge": "90-140",
+# Report content schema. "-2" carries typed section data; "-1" was flat prose
+# and is still rendered by both the client and the PDF, because rows written
+# before this shipped are still being served.
+SCHEMA = "2"
+
+# Cached per-style rows are tagged with the schema that produced them. A row
+# from an older schema is a cache miss, not a broken render.
+CACHE_SCHEMA = SCHEMA
+
+HEX_RE = re.compile(r"^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
+VERDICTS = ("works", "avoid")
+
+
+def _text(value, least=2, most=600):
+    """A usable string, or None. Model output is never trusted by length alone."""
+    if not isinstance(value, str):
+        return None
+    value = value.strip()
+    return value if least <= len(value) <= most else None
+
+
+def _hex(value):
+    """`#rrggbb`, or None.
+
+    This lands in a CSS background and in the PDF, so nothing but six hex
+    digits ever gets through — a colour is the one field the model supplies
+    that becomes markup rather than text.
+    """
+    if not isinstance(value, str):
+        return None
+    match = HEX_RE.match(value.strip())
+    if not match:
+        return None
+    digits = match.group(1).lower()
+    if len(digits) == 3:
+        digits = "".join(c * 2 for c in digits)
+    return "#" + digits
+
+
+def _items(value, low, high):
+    return value if isinstance(value, list) and low <= len(value) <= high else None
+
+
+def _v_palette(d):
+    colors = _items(d.get("colors"), 3, 4)
+    intro = _text(d.get("intro"), 20)
+    rule = _text(d.get("closing_rule"), 15)
+    if not (colors and intro and rule):
+        return None
+    out = []
+    for c in colors:
+        if not isinstance(c, dict):
+            return None
+        row = {
+            "name": _text(c.get("name"), 2, 60),
+            "hex": _hex(c.get("hex")),
+            "role": _text(c.get("role"), 2, 80),
+            "finish": _text(c.get("finish"), 2, 80),
+            "where": _text(c.get("where"), 2, 200),
+        }
+        if not all(row.values()):
+            return None
+        out.append(row)
+    return {"intro": intro, "colors": out, "closing_rule": rule}
+
+
+def _v_mistakes(d):
+    items = _items(d.get("items"), 4, 6)
+    if not items:
+        return None
+    out = []
+    for m in items:
+        if not isinstance(m, dict):
+            return None
+        row = {
+            "title": _text(m.get("title"), 3, 90),
+            "body": _text(m.get("body"), 30),
+            "fix": _text(m.get("fix"), 10, 300),
+        }
+        if not all(row.values()):
+            return None
+        out.append(row)
+    return {"items": out}
+
+
+def _v_materials(d):
+    pairs = _items(d.get("pairs"), 3, 4)
+    intro = _text(d.get("intro"), 20)
+    rule = _text(d.get("rule"), 15)
+    if not (pairs and intro and rule):
+        return None
+    out = []
+    for p in pairs:
+        if not isinstance(p, dict):
+            return None
+        verdict = p.get("verdict")
+        verdict = verdict.strip().lower() if isinstance(verdict, str) else None
+        row = {
+            "combo": _text(p.get("combo"), 3, 90),
+            "verdict": verdict if verdict in VERDICTS else None,
+            "why": _text(p.get("why"), 15),
+        }
+        if not all(row.values()):
+            return None
+        out.append(row)
+    # A page of nothing but "works" is a list, not a judgement.
+    if not any(p["verdict"] == "avoid" for p in out):
+        return None
+    return {"intro": intro, "pairs": out, "rule": rule}
+
+
+def _v_shopping(d):
+    items = _items(d.get("items"), 5, 7)
+    skip = _items(d.get("skip"), 1, 2)
+    if not (items and skip):
+        return None
+    out = []
+    for i in items:
+        if not isinstance(i, dict):
+            return None
+        row = {"name": _text(i.get("name"), 2, 90),
+               "priority_note": _text(i.get("priority_note"), 10, 300)}
+        if not all(row.values()):
+            return None
+        out.append(row)
+    skips = []
+    for s in skip:
+        if not isinstance(s, dict):
+            return None
+        row = {"name": _text(s.get("name"), 2, 90), "why": _text(s.get("why"), 10, 300)}
+        if not all(row.values()):
+            return None
+        skips.append(row)
+    return {"items": out, "skip": skips}
+
+
+def _v_dna(d):
+    narrative = d.get("narrative")
+    if isinstance(narrative, str):                 # tolerate one blob
+        narrative = [p.strip() for p in narrative.split("\n\n") if p.strip()]
+    narrative = _items(narrative, 1, 3)
+    if not narrative or not all(_text(p, 40) for p in narrative):
+        return None
+    implications = _items(d.get("implications"), 2, 2)
+    if not implications or not all(_text(p, 10, 300) for p in implications):
+        return None
+    return {"narrative": [p.strip() for p in narrative],
+            "implications": [p.strip() for p in implications]}
+
+
+def _v_splurge(d):
+    splurge = d.get("splurge")
+    saves = _items(d.get("saves"), 3, 3)
+    note = _text(d.get("split_note"), 10, 300)
+    if not (isinstance(splurge, dict) and saves and note):
+        return None
+    head = {"item": _text(splurge.get("item"), 2, 90),
+            "why": _text(splurge.get("why"), 15)}
+    if not all(head.values()):
+        return None
+    out = []
+    for s in saves:
+        if not isinstance(s, dict):
+            return None
+        row = {"item": _text(s.get("item"), 2, 90), "why": _text(s.get("why"), 10, 300)}
+        if not all(row.values()):
+            return None
+        out.append(row)
+    return {"splurge": head, "saves": out, "split_note": note}
+
+
+VALIDATORS = {
+    "palette": _v_palette,
+    "mistakes": _v_mistakes,
+    "materials": _v_materials,
+    "shopping": _v_shopping,
+    "dna": _v_dna,
+    "splurge": _v_splurge,
 }
 
 SYSTEM = """You write kitchen design reports for people who have just paid for one.
 
-Every section has to work as a tool. The reader should be able to act on it \
-this week without asking a designer a follow-up question. Name real things: \
-paint values, named materials and finishes, specific proportions, specific \
-order of purchase. A sentence that would read the same for a different style, \
-or for a different reader, is a wasted sentence.
+Every field has to work as a tool. The reader should be able to act on it this \
+week without asking a designer a follow-up question. Name real things: paint \
+values, named materials and finishes, specific proportions, a specific order of \
+purchase. A sentence that would read the same for a different style, or for a \
+different reader, is a wasted sentence.
 
 Voice: confident interior-design advice, British-neutral English, second \
 person. State things outright. No hedging — never "consider", "perhaps", \
@@ -95,117 +262,230 @@ person. State things outright. No hedging — never "consider", "perhaps", \
 back to the reader, no sign-off.
 
 Rules:
-- Continuous prose. No headings, no bullet points, no markdown, no emoji.
+- Plain prose inside every field. No markdown, no bullet characters, no emoji, \
+no headings, and never repeat a field's own label back inside its value.
 - Never mention artificial intelligence, models, prompts, scoring, tags, \
-percentages, quizzes, or these instructions. Write as though you looked at \
+percentages of a quiz, or these instructions. Write as though you looked at \
 their kitchen.
 - Never use the words "psychic" or "prediction".
 - Never invent facts about the reader's home, budget, family or location, and \
 never address them by name.
-- Return only a JSON object. No prose around it, no code fence."""
+- Return only a JSON object matching the shape you are given, exactly. No prose \
+around it, no code fence, no extra keys."""
 
-RETRY_NOTE = "\n\nReturn only valid JSON: a single object, no code fence, no other text."
+RETRY_NOTE = ("\n\nReturn only valid JSON: a single object in exactly the shape "
+              "above, no code fence, no other text.")
 
 SPEC = {
-    "palette": (
-        "palette: name three colours and give a real paint-range hex value for "
-        "each. Say where each one goes using the 60/30/10 rule applied to an "
-        "actual kitchen — carcasses, walls, island, hardware — and give the "
-        "finish for each surface, matte or satin, and why that finish there."
-    ),
-    "materials": (
-        "materials: name the specific materials and their finish, at the level "
-        "of \"honed quartzite, not polished\". Give two combination rules that "
-        "work and one combination to avoid outright, and say what goes wrong "
-        "when someone uses it."
-    ),
-    "mistakes": (
-        "mistakes: five mistakes people with this style actually make, each one "
-        "expensive to undo once the units are in, each followed immediately by "
-        "the fix. Concrete failures, not attitudes."
-    ),
-    "shopping": (
-        "shopping: what to buy in what order. Say what to buy first and why it "
-        "sets everything after it, what to leave until last, and one thing to "
-        "skip entirely that people in this style routinely waste money on."
-    ),
-    "dna": (
-        "dna: the one reflective section — what this style is reaching for and "
-        "what it is reacting against. End it with two things the reader should "
-        "actually do differently as a result, stated as instructions."
-    ),
-    "splurge": (
-        "splurge: one thing to overspend on and exactly why it is that one, "
-        "three things to buy cheaply without anyone noticing, and a rough "
-        "percentage split of the budget across the two."
-    ),
+    "palette": '''"palette": {
+  "intro": "1-2 sentences on what this palette is doing and why it suits them",
+  "colors": [        // exactly 3, or 4 if the fourth earns it, split 60/30/10
+    {"name": "the colour's name",
+     "hex": "#RRGGBB — a real paint-range value, six hex digits",
+     "role": "its share under the 60/30/10 rule and the job it does there, e.g. 60% - walls and cabinet bulk",
+     "finish": "matte, satin or eggshell, and nothing else",
+     "where": "the exact surfaces it goes on"}
+  ],
+  "closing_rule": "one sentence of sheen or finish advice, e.g. what to keep off gloss"
+}''',
+    "mistakes": '''"mistakes": {
+  "items": [                       // exactly 5, each expensive once the units are in
+    {"title": "3-6 words, punchy, no full stop",
+     "body": "2-3 sentences on what goes wrong and what it costs",
+     "fix": "one imperative sentence — what to do instead"}
+  ]
+}''',
+    "materials": '''"materials": {
+  "intro": "1-2 sentences on how materials behave in this style",
+  "pairs": [                       // 3 or 4, at least one of them an "avoid"
+    {"combo": "the two or three materials, named with their finish",
+     "verdict": "works" or "avoid" — exactly one of those two words,
+     "why": "1-2 sentences on what happens when you use it"}
+  ],
+  "rule": "one sentence they can carry into a showroom"
+}''',
+    "shopping": '''"shopping": {
+  "items": [                       // 5-7, in buying order, first purchase first
+    {"name": "the thing to buy",
+     "priority_note": "one sentence on why it sits here in the order"}
+  ],
+  "skip": [                        // 1-2 things people in this style waste money on
+    {"name": "the thing to skip", "why": "one sentence"}
+  ]
+}''',
+    "dna": '''"dna": {
+  "narrative": ["first short paragraph", "second short paragraph"],
+  "implications": ["one thing to do differently", "a second thing to do differently"]
+}''',
+    "splurge": '''"splurge": {
+  "splurge": {"item": "the one thing to overspend on", "why": "1-2 sentences"},
+  "saves": [                       // exactly 3
+    {"item": "what to buy cheaply", "why": "one sentence on why nobody notices"}
+  ],
+  "split_note": "a rough budget split across the two, in a sentence"
+}''',
 }
 
-# Body templates keyed by section id, used whenever generation cannot deliver.
-# These are what a paying customer reads on the worst day this service has, so
-# they carry real advice for the style and never mention being a fallback.
-BODIES = {
-    "palette": (
-        "Your {name} palette leans on three colours that showed up again and "
-        "again in the rooms you picked. The base carries the walls and the "
-        "bulk of the cabinetry, so it stays quiet on purpose. The second "
-        "colour does the work on the island and the joinery. The accent is "
-        "the one you use sparingly — hardware, a stool, a single wall. Keep "
-        "the base matte and let the accent be the only thing with any sheen."
-    ),
-    "mistakes": (
-        "Every {name} kitchen goes wrong in roughly the same five places. The "
-        "expensive one is committing to a finish before seeing it under your "
-        "own light, so order samples and live with them for a week. The common "
-        "one is matching everything, which flattens the room instead of calming "
-        "it — break the set with one piece that is older or darker than the "
-        "rest. The third is buying the statement piece first and building "
-        "around it; buy it last, once the room can tell you what it needs."
-    ),
-    "materials": (
-        "{name} rooms live or die on the worktop, and yours has two sensible "
-        "options and one that only looks right in photographs. Pair the "
-        "counter with a splashback that shares its undertone rather than its "
-        "colour, or the two will fight each other under warm light. Keep "
-        "metals to two finishes at most across the whole room, and let the one "
-        "you touch every day be the better of the two."
-    ),
-    "shopping": (
-        "Three pieces carry a {name} kitchen and the rest is supporting cast. "
-        "Buy the lighting and the hardware first — they change the room "
-        "immediately and cost the least to get right. Leave the seating until "
-        "the cabinetry is in, because proportions shift once it lands and a "
-        "stool that measured well on paper will sit wrong. Skip the matching "
-        "accessory set; it is the fastest way to make a considered room look "
-        "bought."
-    ),
-    "dna": (
-        "Your answers read as {name}, but not purely — no one's ever do. There "
-        "is a clear secondary influence sitting underneath your picks, showing "
-        "up in the textures you kept choosing rather than in the shapes. The "
-        "tension between the two is what will make the room look considered "
-        "rather than copied. Lean into it: let the dominant style set the "
-        "layout and let the secondary one set the materials."
-    ),
-    "splurge": (
-        "In a {name} kitchen exactly one line item rewards overspending, and "
-        "it is not the appliances. Everything touched daily deserves the "
-        "budget — the handles, the tap, the worktop edge. Everything merely "
-        "looked at deserves the cheaper version done well. The savings come "
-        "from the cabinetry carcasses, where nobody can tell the difference "
-        "once the doors are on. Roughly seventy per cent into what you touch, "
-        "thirty into what you see."
-    ),
+# Hand-written fallbacks, in the same shape the model returns. These are what a
+# paying customer reads on the service's worst day, so they carry real advice
+# and never mention being a fallback.
+STUBS = {
+    "palette": {
+        "intro": "A {name} palette works on three colours and a strict split: "
+                 "one quiet colour doing the bulk, one carrying the joinery, "
+                 "and one appearing rarely enough to still register.",
+        "colors": [
+            {"name": "Warm Chalk", "hex": "#EDE8E0",
+             "role": "60% - walls and cabinet bulk",
+             "finish": "matte",
+             "where": "Walls, ceiling and the run of tall units."},
+            {"name": "Deep Clay", "hex": "#8B6F4E",
+             "role": "30% - island and lower joinery",
+             "finish": "eggshell",
+             "where": "The island, the lower doors and any open shelving."},
+            {"name": "Burnt Ochre", "hex": "#A45A34",
+             "role": "10% - hardware and one accent",
+             "finish": "satin",
+             "where": "Handles, a single stool, or the inside of one cabinet."},
+        ],
+        "closing_rule": "Keep the bulk matte and let the accent be the only "
+                        "surface in the room with any sheen — gloss on the "
+                        "large runs will show every fingerprint by month two.",
+    },
+    "mistakes": {
+        "items": [
+            {"title": "Choosing a finish under showroom light",
+             "body": "Showroom lighting is colour-corrected and twice as "
+                     "bright as a domestic kitchen. A finish chosen there "
+                     "reads several shades cooler once it is on your wall, "
+                     "and repainting fitted units is not a weekend job.",
+             "fix": "Order samples and live with them for a full week before "
+                    "committing."},
+            {"title": "Matching everything",
+             "body": "When every timber, metal and stone agrees, the room "
+                     "flattens instead of calming. A {name} kitchen needs one "
+                     "element that is visibly older, darker or rougher than "
+                     "the rest to give the eye somewhere to land.",
+             "fix": "Break the set with one deliberately mismatched piece."},
+            {"title": "Buying the statement piece first",
+             "body": "A light fitting or a range cooker bought early becomes a "
+                     "constraint everything else has to work around, usually "
+                     "at the cost of the layout.",
+             "fix": "Buy the statement piece last, once the room can tell you "
+                    "what it needs."},
+            {"title": "Solving storage with more cabinetry",
+             "body": "The instinct when counters fill up is to add units. That "
+                     "buys a month and costs the proportions of the room "
+                     "permanently, because the wall runs stop breathing.",
+             "fix": "Empty one drawer and keep it empty rather than adding a "
+                    "cupboard."},
+            {"title": "Skimping on the worktop edge",
+             "body": "The edge profile is the detail your hands and hips meet "
+                     "every day, and a cheap one chips within two winters. "
+                     "Replacing it means replacing the whole surface.",
+             "fix": "Spend the upgrade on the edge detail, not the surface "
+                    "area."},
+        ],
+    },
+    "materials": {
+        "intro": "A {name} room lives or dies on how its surfaces behave "
+                 "together under warm evening light, not on how they "
+                 "photograph individually.",
+        "pairs": [
+            {"combo": "Honed stone worktop with a matching honed splashback",
+             "verdict": "works",
+             "why": "Sharing the finish rather than the colour lets the two "
+                    "read as one surface without looking like a slab kit."},
+            {"combo": "Timber joinery with one cold element between it and stone",
+             "verdict": "works",
+             "why": "Without something cold in between, timber and stone turn "
+                    "muddy where they meet."},
+            {"combo": "Polished stone with high-gloss cabinetry",
+             "verdict": "avoid",
+             "why": "Two reflective surfaces facing each other double every "
+                    "smear and leave nowhere for the eye to rest."},
+        ],
+        "rule": "Keep metals to two finishes across the whole room, and make "
+                "the one you touch daily the better of the two.",
+    },
+    "shopping": {
+        "items": [
+            {"name": "Lighting",
+             "priority_note": "It changes the room more than anything else and "
+                              "costs the least to get right."},
+            {"name": "Hardware",
+             "priority_note": "Handles set the register of the whole kitchen "
+                              "and are cheap to change your mind about."},
+            {"name": "The tap",
+             "priority_note": "It is the one moving object in the room, so it "
+                              "carries more attention than its price suggests."},
+            {"name": "Worktop",
+             "priority_note": "Order it once the cabinetry is set, so the edge "
+                              "detail can respond to the actual runs."},
+            {"name": "Splashback",
+             "priority_note": "It has to answer the worktop, so it follows it "
+                              "rather than leading."},
+            {"name": "Seating",
+             "priority_note": "Leave it until the room is in — proportions "
+                              "shift once the units land."},
+        ],
+        "skip": [
+            {"name": "The matching accessory set",
+             "why": "It is the fastest way to make a considered room look "
+                    "bought all at once."},
+        ],
+    },
+    "dna": {
+        "narrative": [
+            "Your answers read as {name}, but not purely — no one's ever do. "
+            "There is a clear secondary influence sitting underneath your "
+            "picks, showing up in the textures you kept choosing rather than "
+            "in the shapes.",
+            "The tension between the two is what will make the room look "
+            "considered rather than copied. Rooms that commit entirely to one "
+            "reference always read as a showroom; the ones that hold two in "
+            "balance read as somebody's.",
+        ],
+        "implications": [
+            "Let the dominant style set the layout and the secondary one set "
+            "the materials.",
+            "When a decision is close, take the option that belongs to the "
+            "quieter of your two influences.",
+        ],
+    },
+    "splurge": {
+        "splurge": {
+            "item": "The things your hands meet daily",
+            "why": "Handles, the tap and the worktop edge are touched a dozen "
+                   "times a day, and cheap versions announce themselves "
+                   "through the hand long before the eye.",
+        },
+        "saves": [
+            {"item": "Cabinet carcasses",
+             "why": "Once the doors are on, nobody can tell what is behind "
+                    "them."},
+            {"item": "Interior fittings",
+             "why": "Drawer organisers cost a fraction from a generic supplier "
+                    "and perform identically."},
+            {"item": "Decorative accessories",
+             "why": "They are the easiest thing to upgrade later and the "
+                    "easiest to overspend on now."},
+        ],
+        "split_note": "Roughly seventy per cent of the budget into what you "
+                      "touch, thirty into what you only look at.",
+    },
 }
 
-GENERIC_BODY = (
-    "This part of your {name} report covers what most people get wrong once "
-    "the big decisions are already made. Work outwards from the surfaces you "
-    "touch every day: get those right and the room forgives a great deal "
-    "elsewhere. Where two options look equally good on paper, take the one "
-    "that will still look deliberate in five years rather than the one that "
-    "photographs better today."
-)
+
+def _fill(value, name):
+    """Template {name} through a nested stub structure."""
+    if isinstance(value, str):
+        return value.format(name=name)
+    if isinstance(value, list):
+        return [_fill(v, name) for v in value]
+    if isinstance(value, dict):
+        return dict((k, _fill(v, name)) for k, v in value.items())
+    return value
 
 
 def _style(cfg, result_style):
@@ -225,14 +505,12 @@ def _style_name(cfg, result_style):
 
 
 def _sections_block(ids):
-    lines = ["Write these sections. Word counts are firm."]
-    for section_id in ids:
-        lines.append("- %s (%s words)" % (SPEC[section_id], WORDS[section_id]))
-    lines.append(
-        'Return a JSON object with exactly the keys %s, each one a single '
-        "string of prose." % ", ".join('"%s"' % s for s in ids)
+    return "\n\n".join(
+        ["Return exactly this JSON object. Every key is required."]
+        + [SPEC[section_id] for section_id in ids]
+        + ["Wrap those in one object: {%s}."
+           % ", ".join('"%s": {...}' % s for s in ids)]
     )
-    return "\n".join(lines)
 
 
 def _style_block(style, name):
@@ -317,7 +595,13 @@ FENCE_RE = re.compile(r"^\s*```(?:json)?|```\s*$", re.IGNORECASE)
 
 
 def _parse(text, want):
-    """The model's JSON as {section_id: body}, or None if it is unusable."""
+    """The model's JSON as {section_id: data}, or None if it is unusable.
+
+    Every section is validated against its own shape rather than checked for
+    length. A section that is the wrong shape fails the whole group, which
+    sends it to the retry and then to the stub — a half-built swatch list on a
+    paid report is worse than a hand-written one.
+    """
     if not text:
         return None
     body = FENCE_RE.sub("", text.strip()).strip()
@@ -334,9 +618,12 @@ def _parse(text, want):
     out = {}
     for key in want:
         value = data.get(key)
-        if not isinstance(value, str) or len(value.strip()) < MIN_BODY_CHARS:
+        if not isinstance(value, dict):
             return None
-        out[key] = value.strip()
+        clean = VALIDATORS[key](value)
+        if clean is None:
+            return None
+        out[key] = clean
     return out
 
 
@@ -388,7 +675,11 @@ def _collect(futures, started):
 
 
 def _read_cache(funnel_slug, result_style):
-    """The cached per-style sections, or None unless the whole set is there."""
+    """Cached per-style sections, or None unless the whole set is current.
+
+    A row written under an older schema is a miss, not a broken render: it is
+    regenerated and overwritten on the next purchase of that style.
+    """
     try:
         rows = database.query_all(SELECT_SECTIONS_SQL, (funnel_slug, result_style))
     except Exception:
@@ -396,6 +687,7 @@ def _read_cache(funnel_slug, result_style):
         return None
 
     out = {}
+    stale = 0
     for row in rows or []:
         content = row.get("content")
         if isinstance(content, (str, bytes)):
@@ -403,17 +695,29 @@ def _read_cache(funnel_slug, result_style):
                 content = json.loads(content)
             except ValueError:
                 continue
-        body = (content or {}).get("body")
-        if isinstance(body, str) and len(body) >= MIN_BODY_CHARS:
-            out[row.get("section_id")] = body
+        if not isinstance(content, dict):
+            continue
+        if content.get("v") != CACHE_SCHEMA:
+            stale += 1
+            continue
+        section_id = row.get("section_id")
+        data = content.get("data")
+        if section_id in VALIDATORS and isinstance(data, dict):
+            clean = VALIDATORS[section_id](data)
+            if clean is not None:
+                out[section_id] = clean
+
+    if stale:
+        log.info("style sections for %s/%s are schema %s — regenerating %d",
+                 funnel_slug, result_style, CACHE_SCHEMA, stale)
 
     if all(section_id in out for section_id in CACHED):
-        return {section_id: out[section_id] for section_id in CACHED}
+        return dict((section_id, out[section_id]) for section_id in CACHED)
     return None
 
 
-def _write_cache(funnel_slug, result_style, bodies):
-    for section_id, body in bodies.items():
+def _write_cache(funnel_slug, result_style, sections):
+    for section_id, data in sections.items():
         try:
             database.execute(
                 UPSERT_SECTION_SQL,
@@ -421,7 +725,8 @@ def _write_cache(funnel_slug, result_style, bodies):
                     funnel_slug,
                     result_style,
                     section_id,
-                    json.dumps({"body": body}, separators=(",", ":")),
+                    json.dumps({"v": CACHE_SCHEMA, "data": data},
+                               separators=(",", ":")),
                 ),
             )
         except Exception:
@@ -433,29 +738,30 @@ def _write_cache(funnel_slug, result_style, bodies):
 # --- entry point -----------------------------------------------------------
 
 
-def _assemble(cfg, funnel_slug, result_style, name, bodies, paths):
-    """The stored content dict for whatever bodies we have so far."""
+def _assemble(cfg, funnel_slug, result_style, name, sections_data, paths):
+    """The stored content dict for whatever section data we have so far."""
     sections = []
     for section in cfg.get("report", {}).get("sections", []):
         if section.get("enabled") is False:
             continue
         section_id = section.get("id")
-        body = bodies.get(section_id)
-        if not body:
-            body = BODIES.get(section_id, GENERIC_BODY).format(name=name)
+        data = sections_data.get(section_id)
+        if not data:
+            data = _fill(STUBS.get(section_id), name) if section_id in STUBS else None
         sections.append(
             {
                 "id": section_id,
                 "title": section.get("title"),
-                "body": body,
+                "data": data,
             }
         )
 
-    # "llm-1" means every section is real copy. A report carrying any stub
-    # section stays "stub-1", so regeneration tooling can find it later.
+    # "llm" means every section is real copy; a report carrying any stub stays
+    # "stub" so regeneration tooling can find it. The suffix is the schema, so
+    # a renderer knows which shape it is holding.
     complete = all(path != "stub" for path in paths.values())
     return {
-        "version": "llm-1" if complete else "stub-1",
+        "version": ("llm-" if complete else "stub-") + SCHEMA,
         "funnel": funnel_slug,
         "style_id": result_style,
         "style_name": name,
@@ -482,7 +788,7 @@ def _finish_late(job):
     polling gets the real report and the emailed PDF carries it too.
     """
     deadline = time.monotonic() + config.REPORT_UPGRADE_MAX_S
-    bodies = dict(job["bodies"])
+    built = dict(job["built"])
     paths = dict(job["paths"])
     upgraded = False
 
@@ -493,7 +799,7 @@ def _finish_late(job):
             got = None
         if not got:
             continue
-        bodies.update(got)
+        built.update(got)
         paths[key] = "llm"
         upgraded = True
         if key == "cached":
@@ -504,7 +810,7 @@ def _finish_late(job):
     content = job["content"]
     if upgraded:
         content = _assemble(job["cfg"], job["funnel"], job["style_id"],
-                            job["name"], bodies, paths)
+                            job["name"], built, paths)
         try:
             database.execute(
                 UPDATE_REPORT_SQL,
@@ -555,21 +861,21 @@ def generate_report(purchase_id, funnel_slug, result_style, tag_scores=None,
 
     results = _collect(futures, started) if futures else {}
 
-    bodies = {}
+    built = {}
     paths = {"personal": "stub", "cached": "stub"}
     if results.get("personal"):
-        bodies.update(results["personal"])
+        built.update(results["personal"])
         paths["personal"] = "llm"
 
     if cached is not None:
-        bodies.update(cached)
+        built.update(cached)
         paths["cached"] = "cache"
     elif results.get("cached"):
-        bodies.update(results["cached"])
+        built.update(results["cached"])
         paths["cached"] = "llm"
         _write_cache(funnel_slug, result_style, results["cached"])
 
-    content = _assemble(cfg, funnel_slug, result_style, name, bodies, paths)
+    content = _assemble(cfg, funnel_slug, result_style, name, built, paths)
 
     database.execute(
         INSERT_SQL, (purchase_id, json.dumps(content, separators=(",", ":")))
@@ -588,7 +894,7 @@ def generate_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     if leftover:
         job = {
             "purchase_id": purchase_id, "cfg": cfg, "funnel": funnel_slug,
-            "style_id": result_style, "name": name, "bodies": bodies,
+            "style_id": result_style, "name": name, "built": built,
             "paths": paths, "content": content, "leftover": leftover,
             "pool": pool, "on_final": on_final,
         }
@@ -647,7 +953,10 @@ body { font-family: %(sans)s; font-size: 11pt; line-height: 1.65; color: #3d424c
 .rule { width: 46mm; height: 1.2mm; background: #C05621; border-radius: 0.6mm; }
 .cover-note { margin: 8mm 0 0; font-size: 10pt; color: #6b7280; }
 
-.section { break-inside: avoid-page; margin: 0 0 11mm; }
+/* Sections flow across pages; only the individual cards stay whole, so a
+   swatch or a numbered mistake is never split down the middle. */
+.section { margin: 0 0 11mm; }
+.section-title { break-after: avoid-page; }
 .section-title {
   margin: 0 0 3mm;
   font-family: %(serif)s;
@@ -665,7 +974,76 @@ body { font-family: %(sans)s; font-size: 11pt; line-height: 1.65; color: #3d424c
   background: #C05621;
   border-radius: 0.5mm;
 }
-.section p { margin: 0; }
+.section p { margin: 0 0 2mm; }
+.section p:last-child { margin-bottom: 0; }
+
+.intro { margin: 0 0 4mm; }
+.callout {
+  margin: 4mm 0 0;
+  padding: 2.5mm 0 2.5mm 4mm;
+  border-left: 0.9mm solid #C05621;
+  color: #16181d;
+}
+
+/* palette */
+.swatch { display: flex; margin: 0 0 3mm; break-inside: avoid-page; }
+.dot {
+  display: inline-block;
+  width: 7mm; height: 7mm;
+  margin-right: 4mm;
+  border-radius: 50%%;
+  border: 0.25mm solid rgba(22, 24, 29, 0.12);
+}
+.swatch-text b { color: #16181d; }
+.swatch-text span { display: block; }
+.hex { display: inline !important; margin-left: 1.5mm; font-size: 9pt; color: #9aa0a6; }
+.meta { font-size: 9.5pt; color: #C05621; }
+.where { font-size: 10pt; }
+
+/* numbered: mistakes and the shopping order */
+.numbered { display: flex; margin: 0 0 4mm; break-inside: avoid-page; }
+.num {
+  flex: none;
+  width: 8mm;
+  font-family: %(serif)s;
+  font-size: 14pt;
+  font-weight: 600;
+  color: #C05621;
+}
+.numbered b { color: #16181d; }
+.fix { color: #C05621; }
+
+/* materials */
+.verdict { margin: 0 0 3.5mm; break-inside: avoid-page; }
+.verdict b { color: #16181d; }
+.badge {
+  display: inline-block;
+  padding: 0.5mm 1.8mm;
+  border-radius: 1mm;
+  font-size: 7.5pt;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  vertical-align: 0.4mm;
+}
+.badge.works { background: #FDF1E7; color: #C05621; }
+.badge.avoid { background: #FBEAE9; color: #B3261E; }
+
+/* shopping skip block */
+.skip { margin: 4mm 0 0; padding-top: 3mm; border-top: 0.2mm solid #e5e7eb; }
+.skip b { color: #16181d; }
+.struck { text-decoration: line-through; color: #9aa0a6 !important; }
+
+/* splurge */
+.splurge {
+  padding: 3mm 4mm;
+  margin: 0 0 3mm;
+  border: 0.3mm solid #C05621;
+  border-radius: 1.5mm;
+  break-inside: avoid-page;
+}
+.splurge b { color: #C05621; }
+.saves b { color: #16181d; }
+.implication { color: #16181d; }
 """
 
 # The webfonts ship with the site; if WeasyPrint cannot use the variable woff2
@@ -682,8 +1060,102 @@ PDF_FONTS = {
 }
 
 
+def _e(value):
+    return html.escape(value or "")
+
+
+def _pdf_palette(d):
+    rows = "".join(
+        '<div class="swatch"><span class="dot" style="background:%s"></span>'
+        '<div class="swatch-text"><b>%s</b> <span class="hex">%s</span>'
+        '<span class="meta">%s &middot; %s</span><span class="where">%s</span>'
+        "</div></div>"
+        % (_e(c["hex"]), _e(c["name"]), _e(c["hex"]), _e(c["role"]),
+           _e(c["finish"]), _e(c["where"]))
+        for c in d["colors"]
+    )
+    return ('<p class="intro">%s</p>%s<p class="callout">%s</p>'
+            % (_e(d["intro"]), rows, _e(d["closing_rule"])))
+
+
+def _pdf_mistakes(d):
+    return "".join(
+        '<div class="numbered"><span class="num">%d</span>'
+        '<div><b>%s</b><p>%s</p><p class="fix">Fix: %s</p></div></div>'
+        % (i + 1, _e(m["title"]), _e(m["body"]), _e(m["fix"]))
+        for i, m in enumerate(d["items"])
+    )
+
+
+def _pdf_materials(d):
+    rows = "".join(
+        '<div class="verdict"><b>%s</b> <span class="badge %s">%s</span>'
+        "<p>%s</p></div>"
+        % (_e(p["combo"]), p["verdict"], p["verdict"].upper(), _e(p["why"]))
+        for p in d["pairs"]
+    )
+    return ('<p class="intro">%s</p>%s<p class="callout">%s</p>'
+            % (_e(d["intro"]), rows, _e(d["rule"])))
+
+
+def _pdf_shopping(d):
+    items = "".join(
+        '<div class="numbered"><span class="num">%d</span>'
+        "<div><b>%s</b><p>%s</p></div></div>"
+        % (i + 1, _e(it["name"]), _e(it["priority_note"]))
+        for i, it in enumerate(d["items"])
+    )
+    skips = "".join(
+        "<p><b class='struck'>%s</b> %s</p>" % (_e(s["name"]), _e(s["why"]))
+        for s in d["skip"]
+    )
+    return '%s<div class="skip"><b>Skip</b>%s</div>' % (items, skips)
+
+
+def _pdf_dna(d):
+    paras = "".join("<p>%s</p>" % _e(p) for p in d["narrative"])
+    lines = "".join('<p class="implication">&rarr; %s</p>' % _e(p)
+                    for p in d["implications"])
+    return paras + lines
+
+
+def _pdf_splurge(d):
+    saves = "".join("<p><b>%s</b> %s</p>" % (_e(s["item"]), _e(s["why"]))
+                    for s in d["saves"])
+    return ('<div class="splurge"><b>Splurge &mdash; %s</b><p>%s</p></div>'
+            '<div class="saves"><b>Save</b>%s</div>'
+            '<p class="callout">%s</p>'
+            % (_e(d["splurge"]["item"]), _e(d["splurge"]["why"]), saves,
+               _e(d["split_note"])))
+
+
+PDF_BODY = {
+    "palette": _pdf_palette,
+    "mistakes": _pdf_mistakes,
+    "materials": _pdf_materials,
+    "shopping": _pdf_shopping,
+    "dna": _pdf_dna,
+    "splurge": _pdf_splurge,
+}
+
+
+def _pdf_section_body(section, structured):
+    """The inner HTML for one section, whichever schema it came in on."""
+    if structured:
+        data = section.get("data")
+        builder = PDF_BODY.get(section.get("id"))
+        if builder and isinstance(data, dict):
+            try:
+                return builder(data)
+            except Exception:
+                log.exception("pdf section %s failed", section.get("id"))
+    # Schema 1, or a section that arrived without usable data.
+    return "<p>%s</p>" % _e(section.get("body"))
+
+
 def _pdf_html(content):
-    name = html.escape(content.get("style_name") or "Your style")
+    name = _e(content.get("style_name") or "Your style")
+    structured = str(content.get("version") or "").endswith("-" + SCHEMA)
     blocks = [
         '<section class="cover">',
         '<p class="kicker">Mazzin</p>',
@@ -697,11 +1169,8 @@ def _pdf_html(content):
     for section in content.get("sections") or []:
         blocks.append(
             '<div class="section"><h2 class="section-title">%s'
-            '<span class="bar"></span></h2><p>%s</p></div>'
-            % (
-                html.escape(section.get("title") or ""),
-                html.escape(section.get("body") or ""),
-            )
+            '<span class="bar"></span></h2>%s</div>'
+            % (_e(section.get("title")), _pdf_section_body(section, structured))
         )
     return (
         '<!doctype html><html lang="en"><head><meta charset="utf-8">'

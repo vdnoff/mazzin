@@ -26,6 +26,7 @@
   var CONFETTI_LIFE_MS = 2200;  // longest particle plus its delay, then cleared
   var REPORT_MAX_TRIES = 30;
   var CS_RE = /^cs_[A-Za-z0-9_]{1,250}$/;   // Stripe checkout session id
+  var REVEAL_THRESHOLD = 0.15;  // how much of a section must be in view to play
 
   var cfg = null;
   var slug = location.pathname.split("/")[1] || "";
@@ -611,25 +612,258 @@
     el.cta.classList.add("is-nudged");
   }
 
+  function elm(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  // Items inside a section stagger off their index; the section's own reveal
+  // drives the delay, so nothing animates until it is actually on screen.
+  function item(tag, cls, index) {
+    var node = elm(tag, cls + " reveal-item");
+    node.style.setProperty("--i", index);
+    return node;
+  }
+
+  // --- typed section bodies (schema 2) -------------------------------------
+
+  function paletteBody(d) {
+    var frag = document.createDocumentFragment();
+    frag.appendChild(elm("p", "section-intro", d.intro));
+
+    var list = elm("ul", "swatch-list");
+    (d.colors || []).forEach(function (c, i) {
+      var li = item("li", "swatch-row", i);
+      var dot = elm("span", "swatch-dot");
+      // Validated to #rrggbb server-side before it was ever stored.
+      dot.style.backgroundColor = c.hex;
+      li.appendChild(dot);
+
+      var text = elm("div", "swatch-text");
+      var head = elm("p", "swatch-name", c.name);
+      head.appendChild(elm("span", "swatch-hex", c.hex));
+      text.appendChild(head);
+      text.appendChild(elm("p", "swatch-role", c.role + " \u00B7 " + c.finish));
+      text.appendChild(elm("p", "swatch-where", c.where));
+      li.appendChild(text);
+      list.appendChild(li);
+    });
+    frag.appendChild(list);
+    frag.appendChild(elm("p", "callout", d.closing_rule));
+    return frag;
+  }
+
+  function mistakesBody(d) {
+    var list = elm("ol", "mistake-list");
+    (d.items || []).forEach(function (m, i) {
+      var li = item("li", "mistake", i);
+      li.appendChild(elm("span", "mistake-num", String(i + 1)));
+      var box = elm("div", "mistake-text");
+      box.appendChild(elm("h3", "mistake-title", m.title));
+      box.appendChild(elm("p", "mistake-body", m.body));
+      box.appendChild(elm("p", "mistake-fix", "\u2192 Fix: " + m.fix));
+      li.appendChild(box);
+      list.appendChild(li);
+    });
+    return list;
+  }
+
+  function materialsBody(d) {
+    var frag = document.createDocumentFragment();
+    frag.appendChild(elm("p", "section-intro", d.intro));
+
+    var list = elm("ul", "verdict-list");
+    (d.pairs || []).forEach(function (p, i) {
+      var li = item("li", "verdict", i);
+      var head = elm("p", "verdict-head");
+      head.appendChild(elm("span", "verdict-combo", p.combo));
+      head.appendChild(elm("span", "badge badge-" + p.verdict, p.verdict));
+      li.appendChild(head);
+      li.appendChild(elm("p", "verdict-why", p.why));
+      list.appendChild(li);
+    });
+    frag.appendChild(list);
+    frag.appendChild(elm("p", "callout", d.rule));
+    return frag;
+  }
+
+  function shoppingBody(d) {
+    var frag = document.createDocumentFragment();
+    var list = elm("ol", "buy-list");
+    (d.items || []).forEach(function (buy, i) {
+      var li = item("li", "buy", i);
+      li.appendChild(elm("span", "buy-num", String(i + 1)));
+      var box = elm("div", "buy-text");
+      box.appendChild(elm("p", "buy-name", buy.name));
+      box.appendChild(elm("p", "buy-note", buy.priority_note));
+      li.appendChild(box);
+      list.appendChild(li);
+    });
+    frag.appendChild(list);
+
+    if ((d.skip || []).length) {
+      var skip = elm("div", "skip-block");
+      skip.appendChild(elm("p", "skip-label", "Skip"));
+      d.skip.forEach(function (s) {
+        var row = elm("p", "skip-row");
+        row.appendChild(elm("span", "skip-name", s.name));
+        row.appendChild(document.createTextNode(" " + s.why));
+        skip.appendChild(row);
+      });
+      frag.appendChild(skip);
+    }
+    return frag;
+  }
+
+  function dnaBody(d) {
+    var frag = document.createDocumentFragment();
+    (d.narrative || []).forEach(function (para_) {
+      frag.appendChild(elm("p", "section-body", para_));
+    });
+    var list = elm("ul", "implications");
+    (d.implications || []).forEach(function (line, i) {
+      var li = item("li", "implication", i);
+      li.textContent = line;
+      list.appendChild(li);
+    });
+    frag.appendChild(list);
+    return frag;
+  }
+
+  function splurgeBody(d) {
+    var frag = document.createDocumentFragment();
+    var split = elm("div", "split");
+
+    var up = item("div", "splurge-card", 0);
+    up.appendChild(elm("p", "split-label", "Splurge"));
+    up.appendChild(elm("p", "splurge-item", d.splurge.item));
+    up.appendChild(elm("p", "splurge-why", d.splurge.why));
+    split.appendChild(up);
+
+    var down = item("div", "save-card", 1);
+    down.appendChild(elm("p", "split-label", "Save"));
+    var saves = elm("ul", "save-list");
+    (d.saves || []).forEach(function (s) {
+      var li = elm("li", "save");
+      li.appendChild(elm("span", "save-item", s.item));
+      li.appendChild(document.createTextNode(" " + s.why));
+      saves.appendChild(li);
+    });
+    down.appendChild(saves);
+    split.appendChild(down);
+
+    frag.appendChild(split);
+    frag.appendChild(elm("p", "split-note", d.split_note));
+    return frag;
+  }
+
+  var SECTION_BODY = {
+    palette: paletteBody,
+    mistakes: mistakesBody,
+    materials: materialsBody,
+    shopping: shoppingBody,
+    dna: dnaBody,
+    splurge: splurgeBody
+  };
+
   // Paid view. The two-column table is a teaser device — a short title beside
-  // a truncated reveal is what makes the locked rows read as withheld. Once it
-  // is bought it is a document, so it gets a document's shape: a heading with
-  // its own rule, and the prose full width underneath.
+  // a truncated reveal is what makes a locked row read as withheld. Once it is
+  // bought it is a document, so each section gets a heading with its own rule
+  // and a body shaped like its content: swatches, numbered cards, verdicts.
+  //
+  // Schema 1 reports predate the typed data and still exist in the database,
+  // so they fall through to the prose renderer they were written for.
   function renderUnlockedReport(content) {
     el.report.innerHTML = "";
     el.report.classList.add("report-unlocked");
-    (content.sections || []).forEach(function (sec) {
-      var block = document.createElement("article");
-      block.className = "section";
+    var typed = /-2$/.test(content.version || "");
 
-      var head = document.createElement("h2");
-      head.className = "section-title";
-      head.textContent = sec.title || "";
+    (content.sections || []).forEach(function (sec, index) {
+      var block = elm("article", "section");
+      if (index === 0) block.classList.add("is-hero");
+
+      var head = elm("h2", "section-title", sec.title || "");
       block.appendChild(head);
 
-      block.appendChild(para(sec.body || "", "section-body"));
+      var build = typed && SECTION_BODY[sec.id];
+      if (build && sec.data) {
+        try {
+          block.appendChild(build(sec.data));
+        } catch (e) {
+          block.appendChild(para(sec.body || "", "section-body"));
+        }
+      } else {
+        block.appendChild(para(sec.body || "", "section-body"));
+      }
       el.report.appendChild(block);
     });
+
+    revealReport();
+  }
+
+  // --- reveals -------------------------------------------------------------
+
+  // The title lands first, then each section as it comes into view. The first
+  // section is already on screen at render, so its observer fires straight
+  // away and the opening plays as one sequence: title, rule, then swatches.
+  //
+  // Only transform and opacity animate, and each section is unobserved the
+  // moment it has played — this runs once, not on every scroll.
+  function revealReport() {
+    var heads = [el.resultKicker, el.resultName, el.resultBlurb];
+    heads.forEach(function (node, i) {
+      if (!node) return;
+      node.classList.add("reveal-head");
+      node.style.setProperty("--i", i);
+    });
+
+    var sections = el.report.querySelectorAll(".section");
+    var i;
+
+    if (!window.IntersectionObserver || prefersReducedMotion()) {
+      for (i = 0; i < heads.length; i++) {
+        if (heads[i]) heads[i].classList.add("is-revealed");
+      }
+      for (i = 0; i < sections.length; i++) {
+        sections[i].classList.add("is-revealed");
+      }
+      return;
+    }
+
+    // Next frame, so the starting state is painted before the transition.
+    requestAnimationFrame(function () {
+      for (var h = 0; h < heads.length; h++) {
+        if (heads[h]) heads[h].classList.add("is-revealed");
+      }
+    });
+
+    var io;
+
+    function reveal(node) {
+      if (node.classList.contains("is-revealed")) return;
+      node.classList.add("is-revealed");
+      io.unobserve(node);
+    }
+
+    io = new IntersectionObserver(function (entries) {
+      // A jump — a restored scroll position, an anchor, a hard flick — can
+      // carry a section from below the fold to above it without ever
+      // intersecting, and an unrevealed section is invisible. Anything now
+      // scrolled past has to play too, or someone has paid for a blank gap.
+      // Measure first, then write, so nothing is read back mid-mutation.
+      var passed = [];
+      for (var p = 0; p < sections.length; p++) {
+        if (sections[p].getBoundingClientRect().bottom < 0) passed.push(sections[p]);
+      }
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) reveal(entry.target);
+      });
+      passed.forEach(reveal);
+    }, { threshold: REVEAL_THRESHOLD });
+
+    for (i = 0; i < sections.length; i++) io.observe(sections[i]);
   }
 
   // One line of context immediately above the button, built here so the shell
@@ -889,6 +1123,9 @@
     el.analyzingText = $("analyzing-text");
     el.analyzingDots = $("analyzing-dots");
     el.resultBody = $("result-body");
+    // The kicker carries no id in the shell markup; it is only ever needed
+    // here, to join the title block's reveal.
+    el.resultKicker = document.querySelector(".result-kicker");
     el.resultName = $("result-name");
     // The match percent was retired in 2c.2; the shell markup still declares
     // the node, so take it out of the document rather than leave it hanging.
