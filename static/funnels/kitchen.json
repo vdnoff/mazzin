@@ -15,6 +15,20 @@
       "k2": "Which details speak to you?",
       "k3": "Which materials would you touch?"
     },
+    "reactions": {
+      "dark": "Moody. Bold choice",
+      "bright": "You love the light",
+      "warm": "Warmth wins",
+      "cool": "Cool and composed",
+      "wood": "Natural textures",
+      "stone": "Stone. Timeless",
+      "metal": "Raw and honest",
+      "rustic": "Character over polish",
+      "modern": "Clean lines",
+      "minimal": "Less is more",
+      "industrial": "Edge and grit",
+      "classic": "Never goes out of style"
+    },
     "gallery": [
       { "id": "k101", "img": "/static/galleries/kitchen/k101.webp", "tags": ["rustic", "warm", "wood"] },
       { "id": "k102", "img": "/static/galleries/kitchen/k102.webp", "tags": ["rustic", "dark", "wood"] },
