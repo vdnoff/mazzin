@@ -11,7 +11,8 @@
   var TAP_HINT_STEPS = 2;       // hint retires once the idea has landed
   var REPORT_POLL_MS = 2000;
   var PRELOAD_TIMEOUT_MS = 800;
-  var PICK_FEEDBACK_MS = 165;   // choice registers visibly before the slide
+  var HOLD_MS = 560;            // let the choice land before anything moves
+  var HOLD_REDUCED_MS = 300;    // same beat, no animation, for reduced motion
   var REPORT_MAX_TRIES = 30;
 
   var cfg = null;
@@ -27,6 +28,7 @@
   var pending = {};          // tapped image id -> the pair that follows it
   var preloaded = {};        // img src -> already requested
   var winnerStyleId = null; // set when the result is computed
+  var picking = false;      // true through the selection hold; taps ignored
   var paywallTracked = false;
 
   var el = {};
@@ -276,15 +278,22 @@
     el.tapHint.classList.toggle("is-gone", step >= TAP_HINT_STEPS);
   }
 
+  function prefersReducedMotion() {
+    return !!(window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }
+
   function choose(item, card) {
-    if (!pair.length) return;
+    if (picking || !pair.length) return;   // one tap per pair
+    picking = true;
     var next = pending[item.id] || null;   // resolved and preloaded already
     item.tags.forEach(function (t) { scores[t] = (scores[t] || 0) + 1; });
     step += 1;
     track("swipe", step);
     pair = [];
 
-    // Show the choice landing before anything moves.
+    // Show the choice landing, and hold it, before anything moves. Tracking
+    // already fired above at tap time — the hold must not shift analytics.
     if (card) {
       card.classList.add("is-chosen");
       el.cards.classList.add("is-picking");
@@ -294,12 +303,13 @@
     setTimeout(function () {
       el.cards.classList.add("is-leaving");
       setTimeout(function () {
+        picking = false;
         if (step >= cfg.swipe.pairs_count) { startResult(); return; }
         if (!next) { startResult(); return; }
         pair = next;
         renderPair();
       }, SLIDE_OUT_MS + CARD_STAGGER_MS);
-    }, PICK_FEEDBACK_MS);
+    }, prefersReducedMotion() ? HOLD_REDUCED_MS : HOLD_MS);
   }
 
   // --- result --------------------------------------------------------------
