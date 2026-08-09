@@ -12,3 +12,6 @@ bottom.
 
 ## 2026-08-09 — claude/fix-managed-payments
 - fix: Managed Payments compatibility
+
+## 2026-08-09 — claude/fix-managed-payments-2
+- fix: disable Managed Payments per session
