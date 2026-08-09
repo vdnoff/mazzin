@@ -268,6 +268,19 @@ body {
   color: #b3261e;
 }
 
+.legal-links {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 22px 0 0;
+  font-size: 12px;
+}
+
+.legal-links a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
 .link-back {
   display: block;
   width: 100%;
