@@ -60,3 +60,6 @@ bottom.
 
 ## 2026-08-09 — claude/phase2c5-real-reports
 - Phase 2c.5: real reports (hybrid LLM)
+
+## 2026-08-09 — claude/phase2d-report-layout-email
+- Phase 2d: layout + PDF email + late upgrade
