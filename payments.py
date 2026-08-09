@@ -62,6 +62,67 @@ def _style_ids(cfg):
     return {s.get("id") for s in cfg.get("styles", [])}
 
 
+def _gallery_tags(cfg):
+    """Every tag the gallery can actually award. The client cannot invent one."""
+    tags = set()
+    for item in ((cfg.get("swipe") or {}).get("gallery") or []):
+        tags.update(item.get("tags") or [])
+    return tags
+
+
+# Stripe metadata values are strings capped at 500 characters.
+METADATA_VALUE_MAX = 500
+TAG_SCORE_MAX = 30
+
+
+def _clean_tag_scores(cfg, raw):
+    """The client's tag scores, or None if they are not usable.
+
+    Scores only steer report copy, so a bad shape is dropped rather than
+    failing the checkout — an older client that sends nothing at all is the
+    same case as one that sends nonsense.
+    """
+    if not isinstance(raw, dict) or not raw:
+        return None
+
+    known = _gallery_tags(cfg)
+    clean = {}
+    for tag, score in raw.items():
+        if tag not in known:
+            return None
+        # bool is an int subclass; it is not a score.
+        if not isinstance(score, int) or isinstance(score, bool):
+            return None
+        if score < 0 or score > TAG_SCORE_MAX:
+            return None
+        clean[tag] = score
+    return clean or None
+
+
+def _tag_scores_metadata(scores):
+    """Compact JSON for Stripe metadata, or None if it will not fit."""
+    if not scores:
+        return None
+    packed = json.dumps(scores, separators=(",", ":"), sort_keys=True)
+    if len(packed) > METADATA_VALUE_MAX:
+        log.warning("tag_scores too large for metadata (%d chars) — dropped",
+                    len(packed))
+        return None
+    return packed
+
+
+def _metadata(slug, session_id, result_style, tag_scores):
+    """Checkout session metadata. Absent keys are absent, never empty strings."""
+    data = {
+        "funnel": slug,
+        "session_id": session_id,
+        "result_style": result_style,
+    }
+    if tag_scores:
+        data["tag_scores"] = tag_scores
+    return data
+
+
 # --- POST /api/checkout ----------------------------------------------------
 
 
@@ -92,6 +153,9 @@ def checkout():
         log.error("funnel %s has no usable price", slug)
         return jsonify({}), 502
 
+    # Steers the report copy only — never the price, never whether we fulfil.
+    tag_scores = _tag_scores_metadata(_clean_tag_scores(cfg, body.get("tag_scores")))
+
     title = (cfg.get("meta") or {}).get("title") or slug
     product_name = "%s — Full Style Report" % title
 
@@ -120,11 +184,7 @@ def checkout():
             managed_payments={"enabled": False},
             success_url="%s/%s?cs={CHECKOUT_SESSION_ID}" % (config.BASE_URL, slug),
             cancel_url="%s/%s?canceled=1" % (config.BASE_URL, slug),
-            metadata={
-                "funnel": slug,
-                "session_id": session_id,
-                "result_style": result_style,
-            },
+            metadata=_metadata(slug, session_id, result_style, tag_scores),
             customer_creation="if_required",
         )
     except Exception:
@@ -138,10 +198,26 @@ def checkout():
 # --- POST /api/stripe/webhook ----------------------------------------------
 
 
-def _record_side_effects(purchase_id, slug, session_id, result_style):
-    """Report stub + server-side purchase event. Never fatal to the webhook."""
+def _read_tag_scores(cfg, packed):
+    """Tag scores back out of Stripe metadata. Anything odd becomes None.
+
+    Metadata is round-tripped through Stripe, so it is re-validated here rather
+    than trusted: this is still client-originated data, and a webhook is not a
+    place to discover that.
+    """
+    if not isinstance(packed, str) or not packed:
+        return None
     try:
-        reports.generate_report(purchase_id, slug, result_style)
+        raw = json.loads(packed)
+    except ValueError:
+        return None
+    return _clean_tag_scores(cfg, raw)
+
+
+def _record_side_effects(purchase_id, slug, session_id, result_style, tag_scores):
+    """Report + server-side purchase event. Never fatal to the webhook."""
+    try:
+        reports.generate_report(purchase_id, slug, result_style, tag_scores)
     except Exception:
         log.exception("report generation failed for purchase %s", purchase_id)
 
@@ -242,7 +318,10 @@ def stripe_webhook():
         return jsonify({}), 500
 
     log.info("purchase %s recorded for funnel %s", purchase_id, slug)
-    _record_side_effects(purchase_id, slug, session_id, result_style)
+    tag_scores = _read_tag_scores(
+        config.load_funnel(slug), metadata.get("tag_scores")
+    )
+    _record_side_effects(purchase_id, slug, session_id, result_style, tag_scores)
     return jsonify({"status": "ok"}), 200
 
 

@@ -801,7 +801,10 @@
       body: JSON.stringify({
         funnel: slug,
         session_id: sessionId,
-        result_style: winnerStyleId
+        result_style: winnerStyleId,
+        // Raw tag counts, so the report can be written around what this person
+        // actually kept choosing. The server re-validates every key.
+        tag_scores: scores
       })
     })
       .then(function (r) { return r.ok ? r.json() : null; })

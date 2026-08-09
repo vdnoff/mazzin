@@ -25,6 +25,19 @@ STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
 
+# --- Report generation ----------------------------------------------------
+# An empty key is a kill switch, not an error: reports fall back to the stub
+# templates and the purchase still delivers.
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
+
+# Per-call HTTP timeout, and the wall-clock budget for the whole of report
+# generation. The budget is the smaller of the two on purpose: the webhook has
+# to answer Stripe long before a single slow call would give up, so generation
+# is abandoned at the budget and the stub is stored instead.
+ANTHROPIC_TIMEOUT_S = float(os.getenv("ANTHROPIC_TIMEOUT_S", "30"))
+REPORT_BUDGET_S = float(os.getenv("REPORT_BUDGET_S", "20"))
+
 # --- App ------------------------------------------------------------------
 BASE_URL = os.getenv("BASE_URL", "https://mazzin.com")
 
