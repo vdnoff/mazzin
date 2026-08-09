@@ -21,3 +21,6 @@ bottom.
 
 ## 2026-08-09 — claude/phase2a-pages
 - Phase 2a: facade pages and legal texts
+
+## 2026-08-09 — claude/phase2b-gallery
+- Phase 2b: real kitchen gallery
