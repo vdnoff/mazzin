@@ -615,6 +615,348 @@ body {
   color: #3d424c;
 }
 
+.report-unlocked .section-body + .section-body { margin-top: 12px; }
+
+.section-intro {
+  margin: 0 0 16px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* The one-line rule each section closes on. */
+.callout {
+  margin: 18px 0 0;
+  padding: 12px 0 12px 14px;
+  border-left: 3px solid var(--accent);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+/* --- palette swatches ------------------------------------------------------ */
+
+.swatch-list { list-style: none; margin: 0; padding: 0; }
+
+/* `.swatch` is already the locked view's 12px dot, so the paid view's rows
+   carry their own name rather than fighting it. */
+.swatch-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.swatch-row:last-child { margin-bottom: 0; }
+
+.swatch-dot {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(22, 24, 29, 0.12);
+}
+
+.swatch-text { min-width: 0; }
+
+.swatch-name {
+  margin: 0 0 2px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.swatch-hex {
+  margin-left: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.swatch-role {
+  margin: 0 0 3px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+}
+
+.swatch-where { margin: 0; font-size: 14px; line-height: 1.5; color: #3d424c; }
+
+/* --- numbered cards: mistakes and the buying order ------------------------- */
+
+.mistake-list,
+.buy-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mistake,
+.buy {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.mistake:last-child,
+.buy:last-child { margin-bottom: 0; }
+
+.mistake-num,
+.buy-num {
+  flex: none;
+  width: 28px;
+  font-family: var(--brand);
+  font-optical-sizing: auto;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+}
+
+.buy-num { font-size: 22px; }
+
+.mistake-text,
+.buy-text { min-width: 0; }
+
+.mistake-title {
+  margin: 0 0 5px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.mistake-body,
+.buy-note {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #3d424c;
+}
+
+.mistake-fix {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 500;
+  color: var(--accent);
+}
+
+.buy-name {
+  margin: 0 0 2px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.skip-block {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.skip-label {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.skip-row {
+  margin: 0 0 4px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #3d424c;
+}
+
+.skip-name {
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+/* --- material verdicts ----------------------------------------------------- */
+
+.verdict-list { list-style: none; margin: 0; padding: 0; }
+.verdict { margin-bottom: 16px; }
+.verdict:last-child { margin-bottom: 0; }
+
+.verdict-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 4px;
+}
+
+.verdict-combo {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.badge {
+  flex: none;
+  padding: 3px 7px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.badge-works { background: var(--accent-soft); color: var(--accent); }
+.badge-avoid { background: #FBEAE9; color: #B3261E; }
+
+.verdict-why { margin: 0; font-size: 15px; line-height: 1.6; color: #3d424c; }
+
+/* --- dna implications ------------------------------------------------------ */
+
+.implications { list-style: none; margin: 18px 0 0; padding: 0; }
+
+.implication {
+  position: relative;
+  margin-bottom: 8px;
+  padding-left: 24px;
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.implication:last-child { margin-bottom: 0; }
+
+.implication::before {
+  content: "\2192";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+/* --- splurge vs save ------------------------------------------------------- */
+
+/* Stacked on a phone; side by side only where there is genuinely room. */
+.split { display: grid; gap: 12px; }
+
+@media (min-width: 560px) {
+  .split { grid-template-columns: 1fr 1fr; align-items: start; }
+}
+
+.splurge-card {
+  padding: 14px;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  background: var(--accent-soft);
+}
+
+.save-card {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.split-label {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.splurge-card .split-label { color: var(--accent); }
+
+.splurge-item {
+  margin: 0 0 5px;
+  font-family: var(--brand);
+  font-optical-sizing: auto;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.splurge-why { margin: 0; font-size: 14px; line-height: 1.55; color: #3d424c; }
+
+.save-list { list-style: none; margin: 0; padding: 0; }
+
+.save {
+  margin-bottom: 8px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #3d424c;
+}
+
+.save:last-child { margin-bottom: 0; }
+.save-item { font-weight: 600; color: var(--ink); }
+
+.split-note {
+  margin: 14px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* --- reveals ---------------------------------------------------------------
+
+   Sections arrive as they enter the viewport, their contents a beat behind.
+   Only opacity and transform move — nothing here can force a layout — and the
+   observer drops each section once it has played, so this costs nothing on
+   subsequent scrolling. */
+
+.report-unlocked .section,
+.reveal-head,
+.reveal-item {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 450ms var(--ease-settle), transform 450ms var(--ease-settle);
+}
+
+.reveal-head { transition-delay: calc(var(--i, 0) * 70ms); }
+
+.report-unlocked .section.is-revealed,
+.reveal-head.is-revealed,
+.is-revealed .reveal-item {
+  opacity: 1;
+  transform: none;
+}
+
+/* The section leads; its items follow one after another. The opening section
+   is already on screen when the report renders, so it plays on arrival with a
+   wider stagger — that first run of swatches is the moment the report has to
+   feel worth paying for. */
+.is-revealed .reveal-item {
+  transition-delay: calc(120ms + var(--i, 0) * 60ms);
+}
+
+.section.is-hero.is-revealed .reveal-item {
+  transition-delay: calc(260ms + var(--i, 0) * 80ms);
+}
+
+/* The rule under each title draws itself in rather than fading. */
+.report-unlocked .section-title::after {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 450ms var(--ease-settle) 120ms;
+}
+
+.report-unlocked .section.is-revealed .section-title::after { transform: scaleX(1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .report-unlocked .section,
+  .reveal-head,
+  .reveal-item,
+  .report-unlocked .section-title::after {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 /* Two stacked copies of the same paragraph. The blurred one sits in flow and
    sets the height; the crisp one is absolutely positioned over it at the same
    width, so both wrap identically. Their masks are exact complements, which
