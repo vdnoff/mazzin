@@ -21,7 +21,7 @@
   <section id="screen-result" class="screen" aria-live="polite">
     <div id="analyzing" class="analyzing">
       <p class="analyzing-text" id="analyzing-text"></p>
-      <div class="dots" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="dots" id="analyzing-dots" aria-hidden="true"><span></span><span></span><span></span></div>
     </div>
 
     <div id="result-body" hidden>
@@ -46,7 +46,8 @@
       <span id="withdrawal-text"></span>
     </label>
 
-    <button class="cta" id="pay-button" type="button" disabled>Payments coming in Phase 1b</button>
+    <button class="cta" id="pay-button" type="button" disabled>Pay</button>
+    <p class="pay-error" id="pay-error" role="alert" hidden></p>
     <button class="link-back" id="paywall-back" type="button">Back</button>
   </section>
 

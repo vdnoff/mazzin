@@ -12,6 +12,10 @@
 
 * { box-sizing: border-box; }
 
+/* The UA's [hidden] rule loses to any author `display`, and several elements
+   below set one. Keep the attribute authoritative — engine.js toggles it. */
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   padding: 0;
@@ -190,6 +194,12 @@ body {
   line-height: 1.5;
 }
 
+.section-body {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
 .lock {
   position: absolute;
   inset: 0;
@@ -250,6 +260,13 @@ body {
 }
 
 .withdrawal input { margin-top: 2px; flex: 0 0 auto; }
+
+.pay-error {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #b3261e;
+}
 
 .link-back {
   display: block;

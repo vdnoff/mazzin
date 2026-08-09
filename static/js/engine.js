@@ -1,11 +1,14 @@
 /* Mazzin swipe engine — vanilla, no deps, one IIFE.
- * Boot -> swipe pairs -> analyzing -> result + locked report -> paywall.
- * Payments are Phase 1b; the pay button stays disabled behind a flag. */
+ * Boot -> swipe pairs -> analyzing -> result + locked report -> Stripe.
+ * Returning from Stripe with ?cs=<checkout_session> skips the quiz and
+ * renders the unlocked report once the webhook has landed. */
 (function () {
   "use strict";
 
-  var PAYMENTS_ENABLED = false; // flip in Phase 1b
+  var PAYMENTS_ENABLED = true;
   var SLIDE_MS = 160;
+  var REPORT_POLL_MS = 2000;
+  var REPORT_MAX_TRIES = 30;
 
   var cfg = null;
   var slug = location.pathname.split("/")[1] || "";
@@ -17,6 +20,7 @@
   var pair = [];            // current [imgA, imgB]
   var step = 0;             // pairs completed
   var byId = {};
+  var winnerStyleId = null; // set when the result is computed
   var paywallTracked = false;
 
   var el = {};
@@ -45,11 +49,10 @@
     return v;
   }
 
-  function readAttribution() {
-    var p = new URLSearchParams(location.search);
+  function readAttribution(params) {
     var out = {};
     ["subid", "utm_source", "utm_campaign", "utm_content", "utm_term"].forEach(function (k) {
-      var v = p.get(k);
+      var v = params.get(k);
       if (v) out[k] = v;
     });
     return out;
@@ -193,35 +196,54 @@
   // --- result --------------------------------------------------------------
 
   function computeWinner() {
-    var total = 0;
-    for (var t in scores) total += scores[t];
-
+    // The winner's raw share of the summed style scores never reaches the
+    // bottom of the clamp — tags are shared between styles, so a four-style
+    // funnel floors that share near 1/4. Normalize against that floor first,
+    // then scale into 55..95.
     var best = cfg.styles[0];
     var bestScore = -1;
+    var total = 0;
+
     cfg.styles.forEach(function (s) {
       var sc = 0;
       s.tags.forEach(function (t) { sc += scores[t] || 0; });
+      total += sc;
       if (sc > bestScore) { bestScore = sc; best = s; }
     });
 
-    var pct = total > 0 ? Math.round((100 * bestScore) / total) : 55;
+    var floor = 1 / cfg.styles.length;
+    var pct = 55;
+    if (total > 0 && floor < 1) {
+      pct = Math.round(55 + 40 * ((bestScore / total) - floor) / (1 - floor));
+    }
     pct = Math.max(55, Math.min(95, pct));
     return { style: best, percent: pct };
   }
 
-  function renderReport() {
+  function styleById(id) {
+    for (var i = 0; cfg && i < cfg.styles.length; i++) {
+      if (cfg.styles[i].id === id) return cfg.styles[i];
+    }
+    return null;
+  }
+
+  function sectionNode(title) {
+    var wrap = document.createElement("div");
+    wrap.className = "section";
+    var h = document.createElement("h2");
+    h.className = "section-title";
+    h.textContent = title;
+    wrap.appendChild(h);
+    return wrap;
+  }
+
+  function renderLockedReport() {
     var sections = (cfg.report && cfg.report.sections) || [];
     el.report.innerHTML = "";
     sections.forEach(function (sec) {
       if (sec.enabled === false) return;
 
-      var wrap = document.createElement("div");
-      wrap.className = "section";
-
-      var h = document.createElement("h2");
-      h.className = "section-title";
-      h.textContent = sec.title;
-      wrap.appendChild(h);
+      var wrap = sectionNode(sec.title);
 
       var locked = document.createElement("div");
       locked.className = "locked";
@@ -242,6 +264,18 @@
       locked.appendChild(lock);
 
       wrap.appendChild(locked);
+      el.report.appendChild(wrap);
+    });
+  }
+
+  function renderUnlockedReport(content) {
+    el.report.innerHTML = "";
+    (content.sections || []).forEach(function (sec) {
+      var wrap = sectionNode(sec.title);
+      var p = document.createElement("p");
+      p.className = "section-body";
+      p.textContent = sec.body || "";
+      wrap.appendChild(p);
       el.report.appendChild(wrap);
     });
   }
@@ -268,16 +302,69 @@
 
     setTimeout(function () {
       var win = computeWinner();
+      winnerStyleId = win.style.id;
       el.analyzing.hidden = true;
       el.resultBody.hidden = false;
       el.resultName.textContent = win.style.name;
       el.resultMatch.textContent = win.percent + "% match";
+      el.resultMatch.hidden = false;
       el.resultBlurb.textContent = win.style.blurb || "";
       el.cta.textContent = cfg.pricing.cta;
-      renderReport();
+      renderLockedReport();
       track("result_view");
       watchCta();
     }, cfg.analyzing.duration_ms);
+  }
+
+  // --- unlocked (post-Stripe) view ----------------------------------------
+
+  function showReportMessage(text) {
+    el.analyzing.hidden = false;
+    el.analyzingText.textContent = text;
+    el.analyzingDots.hidden = true;
+  }
+
+  function renderUnlocked(content) {
+    el.analyzing.hidden = true;
+    el.resultBody.hidden = false;
+    el.cta.hidden = true;
+
+    var style = styleById(content.style_id);
+    el.resultName.textContent = content.style_name || (style && style.name) || "";
+    el.resultMatch.hidden = true;   // the match percent is not part of the purchase record
+    el.resultBlurb.textContent = (style && style.blurb) || "";
+    renderUnlockedReport(content);
+  }
+
+  function pollReport(cs, tries) {
+    function retry() {
+      if (tries + 1 >= REPORT_MAX_TRIES) {
+        showReportMessage("Your report is being prepared — check back in a minute.");
+        return;
+      }
+      setTimeout(function () { pollReport(cs, tries + 1); }, REPORT_POLL_MS);
+    }
+
+    fetch("/api/report?cs=" + encodeURIComponent(cs), { cache: "no-store" })
+      .then(function (r) { return r.status === 200 ? r.json() : null; })
+      .then(function (data) {
+        if (data && data.status === "ready" && data.report) {
+          renderUnlocked(data.report);
+          return;
+        }
+        retry();
+      })
+      .catch(retry);
+  }
+
+  function startUnlocked(cs) {
+    show("screen-result");
+    el.resultBody.hidden = true;
+    el.cta.hidden = true;
+    el.analyzing.hidden = false;
+    el.analyzingDots.hidden = false;
+    el.analyzingText.textContent = "Preparing your report...";
+    pollReport(cs, 0);
   }
 
   // --- paywall -------------------------------------------------------------
@@ -296,6 +383,37 @@
       : "Payments coming in Phase 1b";
   }
 
+  function startCheckout() {
+    if (!PAYMENTS_ENABLED || !el.withdrawalCheck.checked) return;
+
+    el.payError.hidden = true;
+    el.payButton.disabled = true;
+    el.payButton.textContent = "Redirecting...";
+
+    fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        funnel: slug,
+        session_id: sessionId,
+        result_style: winnerStyleId
+      })
+    })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (data && data.url) {
+          location.href = data.url;
+          return;
+        }
+        throw new Error("no url");
+      })
+      .catch(function () {
+        el.payError.textContent = "Could not start checkout. Please try again.";
+        el.payError.hidden = false;
+        updatePayButton();
+      });
+  }
+
   function renderPaywall() {
     el.benefits.innerHTML = "";
     (cfg.checkout.benefits || []).forEach(function (b) {
@@ -306,6 +424,7 @@
     el.price.textContent = formatPrice();
     el.withdrawalText.textContent = cfg.checkout.eu_withdrawal_text || "";
     el.withdrawalCheck.checked = false;
+    el.payError.hidden = true;
     updatePayButton();
   }
 
@@ -318,6 +437,7 @@
     el.headline = $("swipe-headline");
     el.analyzing = $("analyzing");
     el.analyzingText = $("analyzing-text");
+    el.analyzingDots = $("analyzing-dots");
     el.resultBody = $("result-body");
     el.resultName = $("result-name");
     el.resultMatch = $("result-match");
@@ -329,6 +449,7 @@
     el.withdrawalCheck = $("withdrawal-check");
     el.withdrawalText = $("withdrawal-text");
     el.payButton = $("pay-button");
+    el.payError = $("pay-error");
     el.paywallBack = $("paywall-back");
   }
 
@@ -339,14 +460,14 @@
       show("screen-paywall");
     });
     el.withdrawalCheck.addEventListener("change", updatePayButton);
+    el.payButton.addEventListener("click", startCheckout);
     el.paywallBack.addEventListener("click", function () { show("screen-result"); });
   }
 
-  function start() {
+  function startQuiz() {
     byId = {};
     cfg.swipe.gallery.forEach(function (g) { byId[g.id] = g; });
 
-    document.title = (cfg.meta && cfg.meta.title) || document.title;
     el.headline.textContent = cfg.swipe.headline;
 
     var first = (cfg.swipe.pairing && cfg.swipe.pairing.first_pair) || [];
@@ -358,6 +479,7 @@
       b = pool[1];
     }
     pair = [a, b];
+    show("screen-swipe");
     renderPair();
     track("funnel_start");
   }
@@ -365,15 +487,29 @@
   function boot() {
     cache();
     sessionId = getSessionId();
-    attribution = readAttribution();
+
+    var params = new URLSearchParams(location.search);
+    attribution = readAttribution(params);
+
+    // After the Stripe redirect sessionStorage may be empty (new tab on some
+    // devices), so the cs param alone has to be enough to render the report.
+    var cs = params.get("cs");
+    var unlocked = !!(cs && /^cs_[A-Za-z0-9_]{1,250}$/.test(cs));
+
+    if (unlocked) startUnlocked(cs);
 
     if (!/^[a-z0-9_-]{1,32}$/.test(slug)) return;
 
     fetch("/static/funnels/" + slug + ".json", { cache: "no-cache" })
       .then(function (r) { if (!r.ok) throw new Error("config"); return r.json(); })
-      .then(function (data) { cfg = data; wire(); start(); })
+      .then(function (data) {
+        cfg = data;
+        document.title = (cfg.meta && cfg.meta.title) || document.title;
+        wire();
+        if (!unlocked) startQuiz();
+      })
       .catch(function () {
-        el.headline.textContent = "This quiz is unavailable right now.";
+        if (!unlocked) el.headline.textContent = "This quiz is unavailable right now.";
       });
   }
 
