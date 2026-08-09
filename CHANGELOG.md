@@ -42,3 +42,6 @@ bottom.
 
 ## 2026-08-09 — claude/phase2b8-hint-entrance
 - Phase 2b.8: hint + entrance polish
+
+## 2026-08-09 — claude/phase2c1-result-redesign
+- Phase 2c.1: result progressive reveal
