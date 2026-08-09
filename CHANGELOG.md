@@ -9,3 +9,6 @@ bottom.
 
 ## 2026-08-09 — claude/phase1b-payments
 - Phase 1b: Stripe test payments, webhook, report stub, PyMySQL
+
+## 2026-08-09 — claude/fix-managed-payments
+- fix: Managed Payments compatibility
