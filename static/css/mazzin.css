@@ -1,0 +1,264 @@
+/* Mazzin — mobile portrait only. Dark-on-light, minimal.
+   Real design lands later; this is scaffolding that doesn't look broken. */
+
+:root {
+  --ink: #16181d;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --bg: #ffffff;
+  --accent: #16181d;
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.screen { display: none; }
+.screen.is-active { display: block; }
+
+/* --- swipe --------------------------------------------------------------- */
+
+.progress {
+  height: 4px;
+  background: var(--line);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 200ms ease;
+}
+
+.progress-label {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.headline {
+  margin: 12px 0 16px;
+  font-size: 21px;
+  line-height: 1.25;
+  font-weight: 650;
+}
+
+.cards {
+  display: flex;
+  gap: 4%;
+  align-items: stretch;
+  transition: opacity 160ms ease, transform 160ms ease;
+  will-change: opacity, transform;
+}
+
+.cards.slide-in { animation: slide-in 160ms ease-out; }
+.cards.slide-out { opacity: 0; transform: translateX(-6%); }
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateX(6%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.card {
+  flex: 0 0 48%;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  overflow: hidden;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 90ms ease;
+}
+
+.card:active { transform: scale(0.97); }
+
+.card-img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+}
+
+.card-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #d9dbe0;
+  color: #6b7280;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+}
+
+/* --- analyzing ----------------------------------------------------------- */
+
+.analyzing {
+  padding: 25vh 0 0;
+  text-align: center;
+}
+
+.analyzing-text {
+  margin: 0 0 14px;
+  font-size: 17px;
+  color: var(--muted);
+}
+
+.dots { display: flex; gap: 6px; justify-content: center; }
+
+.dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 1s infinite ease-in-out;
+}
+
+.dots span:nth-child(2) { animation-delay: 0.15s; }
+.dots span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.25; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-3px); }
+}
+
+/* --- result -------------------------------------------------------------- */
+
+.result-kicker {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.result-name {
+  margin: 4px 0 2px;
+  font-size: 28px;
+  line-height: 1.15;
+}
+
+.result-match {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.result-blurb {
+  margin: 0 0 24px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* --- locked report ------------------------------------------------------- */
+
+.section { margin: 0 0 20px; }
+
+.section-title {
+  margin: 0 0 8px;
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.locked { position: relative; }
+
+.blurred {
+  filter: blur(4.5px);
+  opacity: 0.75;
+  user-select: none;
+  pointer-events: none;
+}
+
+.blurred p {
+  margin: 0 0 6px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.lock {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* --- CTA / paywall ------------------------------------------------------- */
+
+.cta {
+  display: block;
+  width: 100%;
+  margin: 24px 0 0;
+  padding: 16px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 650;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 90ms ease;
+}
+
+.cta:active { transform: scale(0.98); }
+
+.cta:disabled {
+  background: #c8cad0;
+  cursor: default;
+  transform: none;
+}
+
+.benefits {
+  margin: 16px 0;
+  padding: 0 0 0 20px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.price {
+  margin: 16px 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.withdrawal {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 16px 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.withdrawal input { margin-top: 2px; flex: 0 0 auto; }
+
+.link-back {
+  display: block;
+  width: 100%;
+  margin: 14px 0 0;
+  padding: 12px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+}

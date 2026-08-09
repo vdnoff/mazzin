@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Mazzin</title>
+<link rel="stylesheet" href="/static/css/mazzin.css">
+</head>
+<body>
+
+<main id="app">
+
+  <section id="screen-swipe" class="screen is-active">
+    <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
+    <p class="progress-label" id="progress-label"></p>
+    <h1 class="headline" id="swipe-headline"></h1>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <section id="screen-result" class="screen" aria-live="polite">
+    <div id="analyzing" class="analyzing">
+      <p class="analyzing-text" id="analyzing-text"></p>
+      <div class="dots" aria-hidden="true"><span></span><span></span><span></span></div>
+    </div>
+
+    <div id="result-body" hidden>
+      <p class="result-kicker">Your perfect style is</p>
+      <h1 class="result-name" id="result-name"></h1>
+      <p class="result-match" id="result-match"></p>
+      <p class="result-blurb" id="result-blurb"></p>
+
+      <div class="report" id="report"></div>
+
+      <button class="cta" id="cta" type="button"></button>
+    </div>
+  </section>
+
+  <section id="screen-paywall" class="screen">
+    <h1 class="headline" id="paywall-headline">Unlock your full report</h1>
+    <ul class="benefits" id="benefits"></ul>
+    <p class="price" id="price"></p>
+
+    <label class="withdrawal">
+      <input type="checkbox" id="withdrawal-check">
+      <span id="withdrawal-text"></span>
+    </label>
+
+    <button class="cta" id="pay-button" type="button" disabled>Payments coming in Phase 1b</button>
+    <button class="link-back" id="paywall-back" type="button">Back</button>
+  </section>
+
+</main>
+
+<script src="/static/js/engine.js"></script>
+</body>
+</html>

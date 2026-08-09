@@ -1,0 +1,150 @@
+{
+  "slug": "kitchen",
+  "funnel_id": "kitchen_v1",
+  "locale": "en",
+  "meta": {
+    "title": "What's Your Kitchen Style?",
+    "og_image": "/static/galleries/kitchen/og.webp"
+  },
+  "swipe": {
+    "pairs_count": 9,
+    "headline": "Which kitchen feels more like you?",
+    "gallery": [
+      { "id": "k001", "img": "/static/galleries/kitchen/k001.webp", "tags": ["rustic", "wood", "warm"] },
+      { "id": "k002", "img": "/static/galleries/kitchen/k002.webp", "tags": ["modern", "minimal", "bright"] },
+      { "id": "k003", "img": "/static/galleries/kitchen/k003.webp", "tags": ["industrial", "dark", "cool"] },
+      { "id": "k004", "img": "/static/galleries/kitchen/k004.webp", "tags": ["classic", "wood", "warm"] },
+      { "id": "k005", "img": "/static/galleries/kitchen/k005.webp", "tags": ["minimal", "bright", "cool"] },
+      { "id": "k006", "img": "/static/galleries/kitchen/k006.webp", "tags": ["rustic", "warm", "dark"] },
+      { "id": "k007", "img": "/static/galleries/kitchen/k007.webp", "tags": ["modern", "cool", "bright"] },
+      { "id": "k008", "img": "/static/galleries/kitchen/k008.webp", "tags": ["industrial", "dark", "wood"] },
+      { "id": "k009", "img": "/static/galleries/kitchen/k009.webp", "tags": ["classic", "warm", "bright"] },
+      { "id": "k010", "img": "/static/galleries/kitchen/k010.webp", "tags": ["minimal", "modern", "cool"] },
+      { "id": "k011", "img": "/static/galleries/kitchen/k011.webp", "tags": ["rustic", "wood", "dark"] },
+      { "id": "k012", "img": "/static/galleries/kitchen/k012.webp", "tags": ["industrial", "cool", "minimal"] },
+      { "id": "k013", "img": "/static/galleries/kitchen/k013.webp", "tags": ["classic", "dark", "wood"] },
+      { "id": "k014", "img": "/static/galleries/kitchen/k014.webp", "tags": ["modern", "bright", "warm"] },
+      { "id": "k015", "img": "/static/galleries/kitchen/k015.webp", "tags": ["rustic", "warm", "bright"] },
+      { "id": "k016", "img": "/static/galleries/kitchen/k016.webp", "tags": ["minimal", "cool", "dark"] },
+      { "id": "k017", "img": "/static/galleries/kitchen/k017.webp", "tags": ["industrial", "wood", "dark"] },
+      { "id": "k018", "img": "/static/galleries/kitchen/k018.webp", "tags": ["classic", "bright", "warm"] },
+      { "id": "k019", "img": "/static/galleries/kitchen/k019.webp", "tags": ["modern", "minimal", "cool"] },
+      { "id": "k020", "img": "/static/galleries/kitchen/k020.webp", "tags": ["rustic", "wood", "warm"] },
+      { "id": "k021", "img": "/static/galleries/kitchen/k021.webp", "tags": ["industrial", "dark", "cool"] },
+      { "id": "k022", "img": "/static/galleries/kitchen/k022.webp", "tags": ["classic", "wood", "dark"] },
+      { "id": "k023", "img": "/static/galleries/kitchen/k023.webp", "tags": ["minimal", "bright", "warm"] },
+      { "id": "k024", "img": "/static/galleries/kitchen/k024.webp", "tags": ["modern", "cool", "wood"] }
+    ],
+    "pairing": {
+      "strategy": "tag_follow",
+      "first_pair": ["k001", "k002"]
+    }
+  },
+  "styles": [
+    {
+      "id": "modern_rustic",
+      "name": "Modern Rustic",
+      "tags": ["rustic", "wood", "warm"],
+      "blurb": "Placeholder blurb — warm woods and honest textures, kept calm by clean modern lines. Real copy lands in Phase 2."
+    },
+    {
+      "id": "minimalist",
+      "name": "Minimalist",
+      "tags": ["minimal", "bright", "cool"],
+      "blurb": "Placeholder blurb — nothing on the counter, everything in its place, light doing most of the decorating. Real copy lands in Phase 2."
+    },
+    {
+      "id": "industrial",
+      "name": "Industrial",
+      "tags": ["industrial", "dark", "cool"],
+      "blurb": "Placeholder blurb — raw metal, dark tones and exposed structure worn on purpose. Real copy lands in Phase 2."
+    },
+    {
+      "id": "classic",
+      "name": "Classic",
+      "tags": ["classic", "warm", "wood"],
+      "blurb": "Placeholder blurb — shaker doors, timeless proportions and materials that age well. Real copy lands in Phase 2."
+    }
+  ],
+  "analyzing": {
+    "duration_ms": 2500,
+    "text": "Analyzing your choices"
+  },
+  "report": {
+    "sections": [
+      {
+        "id": "palette",
+        "title": "Your Color Palette",
+        "enabled": true,
+        "preview": [
+          "Placeholder line one — the three anchor colors your picks keep circling back to.",
+          "Placeholder line two — the accent that ties them together without shouting.",
+          "Placeholder line three — exact paint and finish codes to hand your fitter."
+        ]
+      },
+      {
+        "id": "mistakes",
+        "title": "The 5 Mistakes People With Your Style Make",
+        "enabled": true,
+        "preview": [
+          "Placeholder line one — the one that costs the most to undo later.",
+          "Placeholder line two — the shortcut that reads cheap within a year.",
+          "Placeholder line three — the detail almost everybody gets backwards."
+        ]
+      },
+      {
+        "id": "materials",
+        "title": "Materials & Combinations",
+        "enabled": true,
+        "preview": [
+          "Placeholder line one — which worktop actually survives your style.",
+          "Placeholder line two — pairings that work and two that never do.",
+          "Placeholder line three — the finish to specify for handles and taps."
+        ]
+      },
+      {
+        "id": "shopping",
+        "title": "Get the Look: Your Shopping List",
+        "enabled": true,
+        "preview": [
+          "Placeholder line one — the pieces that carry the whole room.",
+          "Placeholder line two — the two things worth buying first.",
+          "Placeholder line three — what to skip entirely."
+        ]
+      },
+      {
+        "id": "dna",
+        "title": "Your Style DNA Breakdown",
+        "enabled": true,
+        "preview": [
+          "Placeholder line one — your dominant style and how strongly it reads.",
+          "Placeholder line two — the secondary influence hiding in your choices.",
+          "Placeholder line three — the tension between them, and how to resolve it."
+        ]
+      },
+      {
+        "id": "splurge",
+        "title": "What to Splurge On vs. Where to Save",
+        "enabled": true,
+        "preview": [
+          "Placeholder line one — the single line item worth overspending on.",
+          "Placeholder line two — where the expensive option changes nothing.",
+          "Placeholder line three — a rough budget split that holds up."
+        ]
+      }
+    ]
+  },
+  "pricing": {
+    "amount_cents": 300,
+    "currency": "usd",
+    "cta": "Unlock my full report"
+  },
+  "checkout": {
+    "benefits": [
+      "Your complete style breakdown, all six sections unlocked",
+      "Exact colors, materials and finishes to specify",
+      "A shopping list you can use today"
+    ],
+    "eu_withdrawal_text": "I agree that my report is delivered immediately and I lose my 14-day right of withdrawal once it is unlocked."
+  }
+}
