@@ -15,3 +15,6 @@ bottom.
 
 ## 2026-08-09 — claude/fix-managed-payments-2
 - fix: disable Managed Payments per session
+
+## 2026-08-09 — claude/fix-style-balance
+- fix: style win distribution balance
