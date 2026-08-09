@@ -13,15 +13,36 @@ REPO_DIR="$HOME/mazzin"
 LOCK_FILE="$REPO_DIR/.deploy.lock"
 BACKUP_DIR="$HOME/mazzin_backups"
 WSGI_FILE="/var/www/mazzin_com_wsgi.py"
-ERROR_LOG="$HOME/logs/mazzin.com.error.log"
+ERROR_LOG="/var/log/mazzin.com.error.log"
 BASE_URL="https://mazzin.com"
-LOCK_MAX_AGE=600   # seconds
+LOCK_MAX_AGE=600         # seconds
+HEALTH_ATTEMPTS=3        # a cold start after the WSGI reload is not a failure
+HEALTH_RETRY_WAIT=5      # seconds between attempts
 
 RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'; NC=$'\033[0m'
 
 die() { echo "${RED}ERROR:${NC} $*" >&2; exit 1; }
 info() { echo "${GREEN}==>${NC} $*"; }
 warn() { echo "${YELLOW}!!${NC} $*"; }
+
+probe() {
+  curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$1"
+}
+
+# curl reports 000 when it got no HTTP response at all — a timeout or a
+# refused connection. That is a different situation from the app answering
+# with an error code, and on this host it usually just means the first
+# request after a reload is still paying for the cold start.
+# $1 code, $2 label, $3 "1" when another attempt follows
+describe_code() {
+  if [ "$1" != "000" ]; then
+    echo "$2=HTTP $1"
+  elif [ "${3:-0}" = "1" ]; then
+    echo "$2=no response (curl 000) — likely transient; retrying"
+  else
+    echo "$2=no response (curl 000)"
+  fi
+}
 
 # Read one key out of .env as a literal string.
 #
@@ -120,9 +141,32 @@ info "Checking out main"
 git checkout main || die "cannot checkout main"
 git pull origin main || die "git pull failed"
 
+PRE_MERGE=$(git rev-parse HEAD)
+
 info "Merging $BRANCH"
 git merge --no-ff "origin/$BRANCH" -m "Merge $BRANCH: $DESCRIPTION" \
   || die "merge conflict — resolve manually, nothing has been deployed"
+
+# Dependencies are never installed automatically — that is a decision for a
+# human at a shell, not for a deploy script running unattended.
+REQS_CHANGED=0
+if ! git diff --quiet "$PRE_MERGE" HEAD -- requirements.txt; then
+  REQS_CHANGED=1
+  echo ""
+  echo "${YELLOW}##############################################################${NC}"
+  echo "${YELLOW}#  requirements.txt CHANGED IN THIS MERGE                     #${NC}"
+  echo "${YELLOW}#                                                            #${NC}"
+  echo "${YELLOW}#  Nothing has been installed. Run this, then reload:         #${NC}"
+  echo "${YELLOW}#                                                            #${NC}"
+  echo "${YELLOW}#    workon mazzin && pip install -r requirements.txt         #${NC}"
+  echo "${YELLOW}#                                                            #${NC}"
+  echo "${YELLOW}#  Until you do, the health check below may fail on a         #${NC}"
+  echo "${YELLOW}#  missing or outdated package.                               #${NC}"
+  echo "${YELLOW}##############################################################${NC}"
+  echo ""
+  git --no-pager diff "$PRE_MERGE" HEAD -- requirements.txt | sed -n '5,40p'
+  echo ""
+fi
 
 # --- static sync + reload -------------------------------------------------
 info "Syncing funnel configs to static/"
@@ -135,20 +179,43 @@ sleep 5
 
 # --- health check ---------------------------------------------------------
 info "Health check"
-HEALTH_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$BASE_URL/health")
-FUNNEL_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$BASE_URL/kitchen")
 
-if [ "$HEALTH_CODE" != "200" ] || [ "$FUNNEL_CODE" != "200" ]; then
-  echo "${RED}HEALTH CHECK FAILED${NC} (/health=$HEALTH_CODE /kitchen=$FUNNEL_CODE)"
+HEALTH_OK=0
+ATTEMPT=1
+while [ "$ATTEMPT" -le "$HEALTH_ATTEMPTS" ]; do
+  HEALTH_CODE=$(probe "$BASE_URL/health")
+  FUNNEL_CODE=$(probe "$BASE_URL/kitchen")
+
+  if [ "$HEALTH_CODE" = "200" ] && [ "$FUNNEL_CODE" = "200" ]; then
+    HEALTH_OK=1
+    info "Health check OK on attempt $ATTEMPT (/health=200 /kitchen=200)"
+    break
+  fi
+
+  MORE=0
+  [ "$ATTEMPT" -lt "$HEALTH_ATTEMPTS" ] && MORE=1
+  warn "Attempt $ATTEMPT/$HEALTH_ATTEMPTS: $(describe_code "$HEALTH_CODE" /health "$MORE"), $(describe_code "$FUNNEL_CODE" /kitchen "$MORE")"
+  if [ "$MORE" -eq 1 ]; then
+    sleep "$HEALTH_RETRY_WAIT"
+  fi
+  ATTEMPT=$((ATTEMPT + 1))
+done
+
+if [ "$HEALTH_OK" -ne 1 ]; then
+  echo "${RED}HEALTH CHECK FAILED${NC} after $HEALTH_ATTEMPTS attempts (/health=$HEALTH_CODE /kitchen=$FUNNEL_CODE)"
+  if [ "$REQS_CHANGED" -eq 1 ]; then
+    echo "${YELLOW}requirements.txt changed in this merge — missing dependencies are the"
+    echo "first thing to rule out. Install them and re-run this script.${NC}"
+  fi
   echo "--- error log tail ---"
   tail -30 "$ERROR_LOG" 2>/dev/null || echo "(no error log at $ERROR_LOG)"
   echo "----------------------"
   echo "${RED}main has been merged locally but NOT pushed.${NC}"
-  echo "Run: ~/mazzin/rollback.sh"
+  echo "If the site is actually serving, re-run this script — the merge is"
+  echo "already in place, so it will re-check and finish the deploy."
+  echo "Otherwise: ~/mazzin/rollback.sh"
   exit 1
 fi
-
-info "Health check OK (/health=200 /kitchen=200)"
 
 # --- publish --------------------------------------------------------------
 info "Pushing main"
@@ -176,3 +243,6 @@ echo "${YELLOW}Reminders:${NC}"
 echo "  1. Sync Project Knowledge"
 echo "  2. Cloudflare purge if static changed"
 echo "  3. Test on PHONE"
+if [ "$REQS_CHANGED" -eq 1 ]; then
+  echo "  4. ${YELLOW}requirements.txt changed — run: workon mazzin && pip install -r requirements.txt, then reload${NC}"
+fi

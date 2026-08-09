@@ -9,7 +9,7 @@ set -uo pipefail
 
 REPO_DIR="$HOME/mazzin"
 WSGI_FILE="/var/www/mazzin_com_wsgi.py"
-ERROR_LOG="$HOME/logs/mazzin.com.error.log"
+ERROR_LOG="/var/log/mazzin.com.error.log"
 BASE_URL="https://mazzin.com"
 
 RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'; NC=$'\033[0m'
