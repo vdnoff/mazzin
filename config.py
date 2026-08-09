@@ -36,6 +36,9 @@ SLUG_RE = re.compile(r"^[a-z0-9_-]{1,32}$")
 # Cache-Control for the /<slug> HTML shell. Short for now; raised later.
 FUNNEL_HTML_MAX_AGE = 300
 
+# Facade and legal pages change rarely.
+PAGE_HTML_MAX_AGE = 3600
+
 
 def valid_slug(slug):
     """True if `slug` is safe to use as a filename component."""

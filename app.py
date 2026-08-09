@@ -32,12 +32,29 @@ def health():
     return {"status": "ok"}
 
 
-@app.get("/")
-def index():
-    return (
-        "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
-        "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-        "<title>Mazzin</title></head><body><h1>Mazzin</h1></body></html>"
+# Facade + legal pages. Static files under static/pages/, routed here only so
+# the URLs stay clean. Registered before /<slug> so they win the match.
+PAGES = {
+    "/": "home.html",
+    "/about": "about.html",
+    "/terms": "terms.html",
+    "/privacy": "privacy.html",
+    "/refund": "refund.html",
+}
+
+
+def _page(filename):
+    resp = send_from_directory(os.path.join(config.STATIC_DIR, "pages"), filename)
+    resp.headers["Cache-Control"] = "public, max-age=%d" % config.PAGE_HTML_MAX_AGE
+    return resp
+
+
+for _rule, _file in PAGES.items():
+    app.add_url_rule(
+        _rule,
+        endpoint="page_" + _file.split(".")[0],
+        view_func=(lambda f=_file: _page(f)),
+        methods=["GET"],
     )
 
 
