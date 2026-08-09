@@ -22,15 +22,16 @@ free style result, sees a partially-locked report, hits a paywall.
 |---|---|---|
 | `app.py` | Routing, blueprint registration, `/health` | Business logic, DB queries beyond `SELECT 1` |
 | `config.py` | Env vars, paths, `load_funnel()`, slug validation | DB, Stripe calls |
-| `database.py` | MySQL connections, `execute` / `query_all` / `query_one` | Query construction for callers, ORM anything |
+| `database.py` | MySQL (PyMySQL) connections, `execute` / `query_all` / `query_one` | Query construction for callers, ORM anything |
 | `tracking.py` | `POST /api/track` — validate + one INSERT | Reads, joins, anything slow |
-| `schema.sql` | Table definitions | — |
+| `payments.py` | `POST /api/checkout`, `POST /api/stripe/webhook`, `GET /api/report` | Trusting a client-supplied amount, report copy |
+| `reports.py` | `generate_report()` — builds and stores report content | HTTP routes, Stripe calls |
+| `schema.sql` | Table definitions (from scratch) | Being edited after a migration ships |
+| `schema_migrations.sql` | Append-only `ALTER`s applied on top of `schema.sql` | Being rewritten or reordered |
 | `funnels/*.json` | Funnel content, styles, pricing, copy | — |
-| `static/js/engine.js` | Swipe UX, scoring, screens, tracking calls | Payment logic (Phase 1b) |
+| `static/js/engine.js` | Swipe UX, scoring, screens, tracking calls, checkout redirect + report polling | Holding payment state it can't prove |
 | `static/css/mazzin.css` | Mobile portrait styling | Desktop layout |
 | `deploy.sh` / `rollback.sh` | Server deploy + recovery | Being run from anywhere but the server |
-
-Phase 1b adds `payments.py` and `reports.py`. They do not exist yet.
 
 ## Rules
 
@@ -47,6 +48,20 @@ Phase 1b adds `payments.py` and `reports.py`. They do not exist yet.
 6. **No PII in logs.** No emails, no session payloads, no raw request bodies.
    `/api/track` returns a bare 400 on bad input and logs nothing about it.
 7. **Mobile portrait only.** Desktop layout is not a goal.
+8. **`schema.sql` is history, not a worksheet.** Schema changes go into
+   `schema_migrations.sql` as appended `ALTER` statements and are applied by
+   hand on the server.
+
+## Environment
+
+- **Python 3.13.**
+- **Server virtualenv is `mazzin`** at `/home/FarvaGO/.virtualenvs/mazzin`.
+  Every `pip install` on the server happens inside it — never system-wide,
+  never in another virtualenv.
+- **DB driver is PyMySQL.** `mysql-connector-python` is gone; do not
+  reintroduce it.
+- Stripe runs in **test mode**. Keys live in `.env` and are never hardcoded
+  or committed.
 
 ## Local check
 

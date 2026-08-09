@@ -12,12 +12,14 @@ from flask import Flask, send_from_directory
 
 import config
 import database
+from payments import bp as payments_bp
 from tracking import bp as tracking_bp
 
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 app.register_blueprint(tracking_bp)
+app.register_blueprint(payments_bp)
 
 
 @app.get("/health")
