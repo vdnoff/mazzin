@@ -33,3 +33,6 @@ bottom.
 
 ## 2026-08-09 — claude/phase2b4-rhythm-selection
 - Phase 2b.4: rhythm + selection moment
+
+## 2026-08-09 — claude/phase2b5-reactions
+- Phase 2b.5: reactions + transitions
