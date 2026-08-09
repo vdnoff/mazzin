@@ -8,6 +8,7 @@
   var PAYMENTS_ENABLED = true;
   var SLIDE_MS = 160;
   var REPORT_POLL_MS = 2000;
+  var PRELOAD_TIMEOUT_MS = 800;
   var REPORT_MAX_TRIES = 30;
 
   var cfg = null;
@@ -20,6 +21,8 @@
   var pair = [];            // current [imgA, imgB]
   var step = 0;             // pairs completed
   var byId = {};
+  var pending = {};          // tapped image id -> the pair that follows it
+  var preloaded = {};        // img src -> already requested
   var winnerStyleId = null; // set when the result is computed
   var paywallTracked = false;
 
@@ -94,10 +97,18 @@
 
   // --- pairing -------------------------------------------------------------
 
-  function topTags() {
-    return Object.keys(scores).sort(function (a, b) {
-      return scores[b] - scores[a] || (a < b ? -1 : 1);
+  function rankTags(map) {
+    return Object.keys(map).sort(function (a, b) {
+      return map[b] - map[a] || (a < b ? -1 : 1);
     });
+  }
+
+  // Scores as they would stand if `item` were the next tap.
+  function scoresWith(item) {
+    var m = {}, k;
+    for (k in scores) m[k] = scores[k];
+    item.tags.forEach(function (t) { m[t] = (m[t] || 0) + 1; });
+    return m;
   }
 
   function unseen() {
@@ -116,15 +127,60 @@
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
-  function nextPair() {
+  function nextPairFrom(map) {
     var pool = unseen();
     if (pool.length < 2) return null;
 
-    var ranked = topTags();
+    var ranked = rankTags(map);
     var a = pickByTag(pool, ranked[0]) || pickRandom(pool);
     var rest = pool.filter(function (g) { return g.id !== a.id; });
     var b = pickByTag(rest, ranked[1]) || pickRandom(rest);
     return [a, b];
+  }
+
+  // --- preloading ----------------------------------------------------------
+
+  function preload(src) {
+    if (!src || preloaded[src]) return;
+    preloaded[src] = true;
+    var img = new Image();
+    img.src = src;
+  }
+
+  // Wait for both images, or PRELOAD_TIMEOUT_MS, whichever comes first — a
+  // slow image must never hold the quiz hostage.
+  function preloadPair(items, done) {
+    var remaining = items.length;
+    var fired = false;
+    function finish() {
+      if (fired) return;
+      fired = true;
+      clearTimeout(timer);
+      done();
+    }
+    var timer = setTimeout(finish, PRELOAD_TIMEOUT_MS);
+    items.forEach(function (item) {
+      preloaded[item.img] = true;
+      var img = new Image();
+      img.onload = img.onerror = function () {
+        remaining -= 1;
+        if (remaining <= 0) finish();
+      };
+      img.src = item.img;
+    });
+  }
+
+  // The pair that follows depends on which card is tapped, so resolve both
+  // branches now and warm their images while the current pair is on screen.
+  // Whichever the user picks, its images are already in cache.
+  function prepareNext() {
+    pending = {};
+    if (step + 1 >= cfg.swipe.pairs_count) return;
+    pair.forEach(function (item) {
+      var next = nextPairFrom(scoresWith(item));
+      pending[item.id] = next;
+      if (next) next.forEach(function (g) { preload(g.img); });
+    });
   }
 
   // --- swipe screen --------------------------------------------------------
@@ -163,6 +219,7 @@
     el.cards.classList.add("slide-in");
     setTimeout(function () { el.cards.classList.remove("slide-in"); }, SLIDE_MS);
     renderProgress();
+    prepareNext();
   }
 
   function renderProgress() {
@@ -174,6 +231,7 @@
 
   function choose(item) {
     if (!pair.length) return;
+    var next = pending[item.id] || null;   // resolved and preloaded already
     item.tags.forEach(function (t) { scores[t] = (scores[t] || 0) + 1; });
     step += 1;
     track("swipe", step);
@@ -186,7 +244,6 @@
         startResult();
         return;
       }
-      var next = nextPair();
       if (!next) { startResult(); return; }
       pair = next;
       renderPair();
@@ -480,8 +537,8 @@
     }
     pair = [a, b];
     show("screen-swipe");
-    renderPair();
     track("funnel_start");
+    preloadPair(pair, renderPair);
   }
 
   function boot() {
