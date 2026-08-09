@@ -396,57 +396,130 @@
     return null;
   }
 
-  function sectionNode(title) {
-    var wrap = document.createElement("div");
-    wrap.className = "section";
-    var h = document.createElement("h2");
-    h.className = "section-title";
-    h.textContent = title;
-    wrap.appendChild(h);
-    return wrap;
+  // Every report row is the same two-column shape: title on the left, whatever
+  // the reveal ladder allows on the right.
+  function rowNode(title, mode) {
+    var row = document.createElement("div");
+    row.className = "row";
+    if (mode) row.setAttribute("data-mode", mode);
+
+    var head = document.createElement("h2");
+    head.className = "row-title";
+    head.textContent = title;
+    row.appendChild(head);
+
+    var body = document.createElement("div");
+    body.className = "row-body";
+    row.appendChild(body);
+    return row;
+  }
+
+  function para(text, className) {
+    var p = document.createElement("p");
+    if (className) p.className = className;
+    p.textContent = text;
+    return p;
+  }
+
+  // Filler for the blurred parts. Real copy never reaches these, so the
+  // section's own preview lines stand in.
+  function fillerLines(sec, count) {
+    var lines = (sec.preview || []).slice(0, count);
+    while (lines.length < count) lines.push(lines[0] || "");
+    return lines;
   }
 
   function renderLockedReport() {
     var sections = (cfg.report && cfg.report.sections) || [];
     el.report.innerHTML = "";
+
     sections.forEach(function (sec) {
       if (sec.enabled === false) return;
+      var reveal = sec.reveal || {};
+      var mode = reveal.mode || "locked";     // unknown modes stay locked
+      var row = rowNode(sec.title, mode);
+      var body = row.lastChild;
 
-      var wrap = sectionNode(sec.title);
+      if (mode === "visible") {
+        body.appendChild(para(reveal.visible || "", "crisp"));
+      } else if (mode === "teaser") {
+        // First line reads straight; the rest softens downward behind a mask.
+        body.appendChild(para(reveal.visible || "", "crisp"));
+        body.appendChild(para(reveal.blur || fillerLines(sec, 1)[0], "veil veil-down"));
+        body.appendChild(lockNode());
+      } else if (mode === "hook") {
+        // A few crisp words, then the sentence dissolves as it runs on.
+        var line = document.createElement("p");
+        line.className = "crisp";
+        line.appendChild(document.createTextNode((reveal.hook || "") + " "));
+        var rest = document.createElement("span");
+        rest.className = "veil veil-right";
+        rest.textContent = reveal.blur || fillerLines(sec, 1)[0];
+        line.appendChild(rest);
+        body.appendChild(line);
+        body.appendChild(lockNode());
+      } else {
+        var block = document.createElement("div");
+        block.className = "veil veil-down";
+        fillerLines(sec, 3).forEach(function (t) { block.appendChild(para(t)); });
+        body.appendChild(block);
+        body.appendChild(lockNode());
+      }
 
-      var locked = document.createElement("div");
-      locked.className = "locked";
-
-      var lines = document.createElement("div");
-      lines.className = "blurred";
-      (sec.preview || ["", "", ""]).slice(0, 3).forEach(function (line) {
-        var p = document.createElement("p");
-        p.textContent = line;
-        lines.appendChild(p);
-      });
-      locked.appendChild(lines);
-
-      var lock = document.createElement("div");
-      lock.className = "lock";
-      lock.textContent = "🔒";
-      lock.setAttribute("aria-label", "Locked");
-      locked.appendChild(lock);
-
-      wrap.appendChild(locked);
-      el.report.appendChild(wrap);
+      // The whole row is a shortcut to the thing that unlocks it.
+      row.addEventListener("click", focusCta);
+      el.report.appendChild(row);
     });
+  }
+
+  function lockNode() {
+    var lock = document.createElement("span");
+    lock.className = "row-lock";
+    lock.setAttribute("role", "img");
+    lock.setAttribute("aria-label", "Locked");
+    return lock;
+  }
+
+  function focusCta() {
+    if (!el.cta || el.cta.hidden) return;
+    if (el.cta.scrollIntoView) {
+      el.cta.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    el.cta.classList.remove("is-nudged");
+    void el.cta.offsetWidth;
+    el.cta.classList.add("is-nudged");
   }
 
   function renderUnlockedReport(content) {
     el.report.innerHTML = "";
     (content.sections || []).forEach(function (sec) {
-      var wrap = sectionNode(sec.title);
-      var p = document.createElement("p");
-      p.className = "section-body";
-      p.textContent = sec.body || "";
-      wrap.appendChild(p);
-      el.report.appendChild(wrap);
+      var row = rowNode(sec.title, "visible");
+      row.lastChild.appendChild(para(sec.body || "", "crisp section-body"));
+      el.report.appendChild(row);
     });
+  }
+
+  // One line of context immediately above the button, built here so the shell
+  // markup stays a plain container.
+  function renderCtaNote() {
+    var sections = ((cfg.report && cfg.report.sections) || [])
+      .filter(function (sec) { return sec.enabled !== false; });
+    var note = el.ctaNote;
+    if (!note) {
+      note = document.createElement("p");
+      note.className = "cta-note";
+      note.id = "cta-note";
+      el.cta.parentNode.insertBefore(note, el.cta);
+      el.ctaNote = note;
+    }
+    note.textContent = "Unlock all " + numberWord(sections.length) + " sections \u00B7 " +
+      formatPrice();
+  }
+
+  function numberWord(n) {
+    var words = ["zero", "one", "two", "three", "four", "five", "six",
+                 "seven", "eight", "nine", "ten"];
+    return words[n] || String(n);
   }
 
   function watchCta() {
@@ -479,6 +552,7 @@
       el.resultMatch.hidden = false;
       el.resultBlurb.textContent = win.style.blurb || "";
       el.cta.textContent = cfg.pricing.cta;
+      renderCtaNote();
       renderLockedReport();
       track("result_view");
       watchCta();
@@ -497,6 +571,7 @@
     el.analyzing.hidden = true;
     el.resultBody.hidden = false;
     el.cta.hidden = true;
+    if (el.ctaNote) el.ctaNote.hidden = true;
 
     var style = styleById(content.style_id);
     el.resultName.textContent = content.style_name || (style && style.name) || "";
@@ -530,6 +605,7 @@
     show("screen-result");
     el.resultBody.hidden = true;
     el.cta.hidden = true;
+    if (el.ctaNote) el.ctaNote.hidden = true;
     el.analyzing.hidden = false;
     el.analyzingDots.hidden = false;
     el.analyzingText.textContent = "Preparing your report...";

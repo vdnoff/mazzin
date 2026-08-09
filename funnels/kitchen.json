@@ -63,32 +63,55 @@
     ],
     "pairing": {
       "strategy": "tag_follow",
-      "first_pair": ["k101", "k105"]
+      "first_pair": [
+        "k101",
+        "k105"
+      ]
     }
   },
   "styles": [
     {
       "id": "modern_rustic",
       "name": "Modern Rustic",
-      "tags": ["rustic", "modern", "wood"],
+      "tags": [
+        "rustic",
+        "modern",
+        "wood"
+      ],
       "blurb": "Placeholder blurb — warm woods and honest textures, kept calm by clean modern lines. Real copy lands in Phase 2."
     },
     {
       "id": "minimalist",
       "name": "Minimalist",
-      "tags": ["minimal", "modern", "cool", "stone"],
+      "tags": [
+        "minimal",
+        "modern",
+        "cool",
+        "stone"
+      ],
       "blurb": "Placeholder blurb — nothing on the counter, everything in its place, light doing most of the decorating. Real copy lands in Phase 2."
     },
     {
       "id": "industrial",
       "name": "Industrial",
-      "tags": ["industrial", "dark", "metal", "wood", "stone"],
+      "tags": [
+        "industrial",
+        "dark",
+        "metal",
+        "wood",
+        "stone"
+      ],
       "blurb": "Placeholder blurb — raw metal, dark tones and exposed structure worn on purpose. Real copy lands in Phase 2."
     },
     {
       "id": "classic",
       "name": "Classic",
-      "tags": ["classic", "warm", "bright", "stone"],
+      "tags": [
+        "classic",
+        "warm",
+        "bright",
+        "stone"
+      ],
       "blurb": "Placeholder blurb — shaker doors, timeless proportions and materials that age well. Real copy lands in Phase 2."
     }
   ],
@@ -106,17 +129,11 @@
           "Placeholder line one — the three anchor colors your picks keep circling back to.",
           "Placeholder line two — the accent that ties them together without shouting.",
           "Placeholder line three — exact paint and finish codes to hand your fitter."
-        ]
-      },
-      {
-        "id": "mistakes",
-        "title": "The 5 Mistakes People With Your Style Make",
-        "enabled": true,
-        "preview": [
-          "Placeholder line one — the one that costs the most to undo later.",
-          "Placeholder line two — the shortcut that reads cheap within a year.",
-          "Placeholder line three — the detail almost everybody gets backwards."
-        ]
+        ],
+        "reveal": {
+          "mode": "visible",
+          "visible": "Warm neutrals anchored by soft white — your picks circle three colors: bone white for the bulk, pale oak for warmth, and a graphite accent used sparingly. The exact paint codes and finishes are in your full report."
+        }
       },
       {
         "id": "materials",
@@ -126,7 +143,27 @@
           "Placeholder line one — which worktop actually survives your style.",
           "Placeholder line two — pairings that work and two that never do.",
           "Placeholder line three — the finish to specify for handles and taps."
-        ]
+        ],
+        "reveal": {
+          "mode": "teaser",
+          "visible": "Matte quartz worktops over flat-front cabinetry is your combination — but the pairing rule that makes it work is",
+          "blur": "the one most people get backwards: never let two surfaces share a finish unless they also share an undertone. Your full report names the exact quartz, the splashback that sits under it, and the two combinations to avoid entirely."
+        }
+      },
+      {
+        "id": "mistakes",
+        "title": "The 5 Mistakes People With Your Style Make",
+        "enabled": true,
+        "preview": [
+          "Placeholder line one — the one that costs the most to undo later.",
+          "Placeholder line two — the shortcut that reads cheap within a year.",
+          "Placeholder line three — the detail almost everybody gets backwards."
+        ],
+        "reveal": {
+          "mode": "hook",
+          "hook": "Never buy the",
+          "blur": "worktop before you have seen it under your own kitchen light — it is the single most expensive thing to undo, and four out of five people do it in the wrong order. The remaining four mistakes, and the fix for each, are in your full report."
+        }
       },
       {
         "id": "shopping",
@@ -136,7 +173,10 @@
           "Placeholder line one — the pieces that carry the whole room.",
           "Placeholder line two — the two things worth buying first.",
           "Placeholder line three — what to skip entirely."
-        ]
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
       },
       {
         "id": "dna",
@@ -146,7 +186,10 @@
           "Placeholder line one — your dominant style and how strongly it reads.",
           "Placeholder line two — the secondary influence hiding in your choices.",
           "Placeholder line three — the tension between them, and how to resolve it."
-        ]
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
       },
       {
         "id": "splurge",
@@ -156,7 +199,10 @@
           "Placeholder line one — the single line item worth overspending on.",
           "Placeholder line two — where the expensive option changes nothing.",
           "Placeholder line three — a rough budget split that holds up."
-        ]
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
       }
     ]
   },
