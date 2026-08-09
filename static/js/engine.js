@@ -25,6 +25,7 @@
   var CONFETTI_COUNT = 24;
   var CONFETTI_LIFE_MS = 2200;  // longest particle plus its delay, then cleared
   var REPORT_MAX_TRIES = 30;
+  var CS_RE = /^cs_[A-Za-z0-9_]{1,250}$/;   // Stripe checkout session id
 
   var cfg = null;
   var slug = location.pathname.split("/")[1] || "";
@@ -42,6 +43,7 @@
   var picking = false;      // true through the selection hold; taps ignored
   var confettiDone = false; // the burst fires once per session, never again
   var unlockedContent = null;   // report shown after returning from Stripe
+  var unlockedStarted = false;  // the loading state is shown once, as early as possible
   var lastReaction = null;  // never show the same line twice running
   var paywallTracked = false;
 
@@ -609,12 +611,24 @@
     el.cta.classList.add("is-nudged");
   }
 
+  // Paid view. The two-column table is a teaser device — a short title beside
+  // a truncated reveal is what makes the locked rows read as withheld. Once it
+  // is bought it is a document, so it gets a document's shape: a heading with
+  // its own rule, and the prose full width underneath.
   function renderUnlockedReport(content) {
     el.report.innerHTML = "";
+    el.report.classList.add("report-unlocked");
     (content.sections || []).forEach(function (sec) {
-      var row = rowNode(sec.title, "visible");
-      row.lastChild.appendChild(para(sec.body || "", "crisp section-body"));
-      el.report.appendChild(row);
+      var block = document.createElement("article");
+      block.className = "section";
+
+      var head = document.createElement("h2");
+      head.className = "section-title";
+      head.textContent = sec.title || "";
+      block.appendChild(head);
+
+      block.appendChild(para(sec.body || "", "section-body"));
+      el.report.appendChild(block);
     });
   }
 
@@ -716,6 +730,8 @@
     el.analyzing.hidden = false;
     el.analyzingText.textContent = text;
     el.analyzingDots.hidden = true;
+    // We gave up polling, so stop promising mail we cannot see the state of.
+    if (el.analyzingNote) el.analyzingNote.hidden = true;
   }
 
   function renderUnlocked(content) {
@@ -740,6 +756,24 @@
     el.resultBlurb.textContent = style.blurb || "";
   }
 
+  // Second line of the loading state, built here so the shell markup stays a
+  // plain container. It starts generic and gains the address once /api/report
+  // tells us which inbox the PDF is going to.
+  function setEmailNote(masked) {
+    var note = el.analyzingNote;
+    if (!note) {
+      note = document.createElement("p");
+      note.className = "analyzing-note";
+      note.id = "analyzing-note";
+      el.analyzing.insertBefore(note, el.analyzingDots);
+      el.analyzingNote = note;
+    }
+    note.hidden = false;
+    note.textContent = masked
+      ? "We’re also emailing you a PDF copy to " + masked + "."
+      : "We’re also emailing you a PDF copy.";
+  }
+
   function pollReport(cs, tries) {
     function retry() {
       if (tries + 1 >= REPORT_MAX_TRIES) {
@@ -750,8 +784,10 @@
     }
 
     fetch("/api/report?cs=" + encodeURIComponent(cs), { cache: "no-store" })
-      .then(function (r) { return r.status === 200 ? r.json() : null; })
+      // 202 carries the pending body, and the masked address with it.
+      .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
+        if (data && data.email_masked) setEmailNote(data.email_masked);
         if (data && data.status === "ready" && data.report) {
           renderUnlocked(data.report);
           return;
@@ -762,13 +798,16 @@
   }
 
   function startUnlocked(cs) {
+    if (unlockedStarted) return;
+    unlockedStarted = true;
     show("screen-result");
     el.resultBody.hidden = true;
     el.cta.hidden = true;
     if (el.ctaNote) el.ctaNote.hidden = true;
     el.analyzing.hidden = false;
     el.analyzingDots.hidden = false;
-    el.analyzingText.textContent = "Preparing your report...";
+    el.analyzingText.textContent = "Preparing your personalized report…";
+    setEmailNote(null);
     pollReport(cs, 0);
   }
 
@@ -916,9 +955,9 @@
     // After the Stripe redirect sessionStorage may be empty (new tab on some
     // devices), so the cs param alone has to be enough to render the report.
     var cs = params.get("cs");
-    var unlocked = !!(cs && /^cs_[A-Za-z0-9_]{1,250}$/.test(cs));
+    var unlocked = !!(cs && CS_RE.test(cs));
 
-    if (unlocked) startUnlocked(cs);
+    if (unlocked) startUnlocked(cs);   // no-op when the early path got there first
 
     if (!/^[a-z0-9_-]{1,32}$/.test(slug)) return;
 
@@ -934,6 +973,22 @@
       .catch(function () {
         if (!unlocked) el.headline.textContent = "This quiz is unavailable right now.";
       });
+  }
+
+  // Someone coming back from Stripe has already paid; the first thing they see
+  // must be their report loading, not a flash of the quiz they finished. This
+  // runs at script execution — the shell above it is parsed, DOMContentLoaded
+  // has not fired and the config fetch has not been issued. The copy renders in
+  // the system fallback of the font stack, so it does not wait on the webfonts
+  // either.
+  try {
+    var early = new URLSearchParams(location.search).get("cs");
+    if (early && CS_RE.test(early)) {
+      cache();
+      startUnlocked(early);
+    }
+  } catch (e) {
+    // Any surprise here is not worth losing the quiz over; boot() re-checks.
   }
 
   if (document.readyState === "loading") {

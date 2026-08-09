@@ -3,3 +3,5 @@ PyMySQL==1.2.0
 python-dotenv==1.0.1
 stripe==15.4.0
 anthropic==0.121.0
+requests==2.34.2
+weasyprint==69.0

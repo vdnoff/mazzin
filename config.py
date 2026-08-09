@@ -38,6 +38,18 @@ ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
 ANTHROPIC_TIMEOUT_S = float(os.getenv("ANTHROPIC_TIMEOUT_S", "30"))
 REPORT_BUDGET_S = float(os.getenv("REPORT_BUDGET_S", "20"))
 
+# A call still running when the budget expires is no longer waited on, but it
+# is no longer thrown away either: it finishes in the background and upgrades
+# the stored report. This is the ceiling on that background wait.
+REPORT_UPGRADE_MAX_S = float(os.getenv("REPORT_UPGRADE_MAX_S", "60"))
+
+# --- Email delivery -------------------------------------------------------
+# An empty key is a kill switch: no PDF is built and no email is sent, and
+# every other part of the purchase still works.
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+RESEND_TIMEOUT_S = float(os.getenv("RESEND_TIMEOUT_S", "15"))
+EMAIL_FROM = os.getenv("EMAIL_FROM", "Mazzin <reports@mazzin.com>")
+
 # --- App ------------------------------------------------------------------
 BASE_URL = os.getenv("BASE_URL", "https://mazzin.com")
 
