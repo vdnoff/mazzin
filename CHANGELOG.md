@@ -54,3 +54,6 @@ bottom.
 
 ## 2026-08-09 — claude/phase2c3-gradient-blur
 - Phase 2c.3: gradient dissolve
+
+## 2026-08-09 — claude/phase2c4-blur-curve
+- Phase 2c.4: blur curve
