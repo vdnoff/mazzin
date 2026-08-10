@@ -30,6 +30,14 @@
   var REPORT_MAX_TRIES = 100;
   var CS_RE = /^cs_[A-Za-z0-9_]{1,250}$/;   // Stripe checkout session id
   var REVEAL_THRESHOLD = 0.15;  // how much of a section must be in view to play
+  var GENERATING_MS = 3000;     // rotation of the in-report "still writing" card
+  // The report can be rendered before the funnel config has loaded, so the
+  // card needs copy of its own to open with. Config wins once it arrives.
+  var GENERATING_FALLBACK = [
+    "Comparing your choices against thousands of kitchens…",
+    "Searching for the combinations that fit you…",
+    "Almost there — writing your recommendations…"
+  ];
   var STATUS_MS = 2500;         // how long each loading line holds
   var STATUS_LINES = [
     "Confirming your payment\u2026",
@@ -58,6 +66,8 @@
   var rendered = {};            // section id -> its node, so polls only append
   var sectionIO = null;         // one observer, outliving any single render
   var statusTimer = null;
+  var analyzingTimer = null;    // free-result screen, between swipe and reveal
+  var generatingTimer = null;   // the card under a report that is still filling
   var lastReaction = null;  // never show the same line twice running
   var paywallTracked = false;
 
@@ -411,24 +421,6 @@
     return null;
   }
 
-  // Every report row is the same two-column shape: title on the left, whatever
-  // the reveal ladder allows on the right.
-  function rowNode(title, mode) {
-    var row = document.createElement("div");
-    row.className = "row";
-    if (mode) row.setAttribute("data-mode", mode);
-
-    var head = document.createElement("h2");
-    head.className = "row-title";
-    head.textContent = title;
-    row.appendChild(head);
-
-    var body = document.createElement("div");
-    body.className = "row-body";
-    row.appendChild(body);
-    return row;
-  }
-
   function para(text, className) {
     var p = document.createElement("p");
     if (className) p.className = className;
@@ -444,36 +436,40 @@
     return lines;
   }
 
+  // The preview is the paid document with the copy taken out of it, not a
+  // different object: same stacked sections, same titles and rules, same
+  // swatch cards. What you are buying should be recognisable from what you
+  // are looking at, so the only difference a reader can point to is that
+  // most of the words are behind a blur.
   function renderLockedReport(style) {
     var sections = (cfg.report && cfg.report.sections) || [];
     var reveals = (style && style.reveals) || {};
     el.report.innerHTML = "";
+    el.report.classList.add("report-preview");
+
+    // Ranked once for the whole report, then dealt out two at a time: five
+    // sections showing the same two frames reads as a bug, not as a teaser.
+    var pool = styleShots(style);
+    var taken = 0;
 
     sections.forEach(function (sec) {
       if (sec.enabled === false) return;
       var mode = (sec.reveal && sec.reveal.mode) || "locked";
       var reveal = reveals[sec.id];
-      var row = rowNode(sec.title, mode);
-      var body = row.lastChild;
+
+      var block = elm("article", "section");
+      block.setAttribute("data-mode", mode);
+      block.appendChild(elm("h2", "section-title", sec.title || ""));
 
       if (mode === "visible" && reveal && reveal.colors) {
-        body.appendChild(swatchList(reveal.colors));
-        body.appendChild(para(reveal.line || "", "palette-line"));
+        block.appendChild(previewPalette(reveal));
       } else {
-        // One flowing paragraph: the setup reads clean, the trigger phrase
-        // lands just inside the blur, and the rest is filler nobody can read.
-        var setup = "", trigger = "";
-        if (reveal && typeof reveal === "object") {
-          setup = reveal.setup || "";
-          trigger = reveal.trigger || "";
-        } else if (typeof reveal === "string") {
-          setup = reveal;
-        }
-        body.appendChild(dissolveNode(setup, trigger, runOn(fillerLines(sec, 2))));
+        block.appendChild(previewLocked(sec, reveal, pool, taken));
+        taken += 2;
       }
 
-      row.addEventListener("click", focusCta);
-      el.report.appendChild(row);
+      block.addEventListener("click", focusCta);
+      el.report.appendChild(block);
     });
 
     layoutDissolves();
@@ -483,19 +479,93 @@
     }
   }
 
-  function swatchList(colors) {
-    var list = document.createElement("ul");
-    list.className = "swatches";
-    colors.forEach(function (c) {
-      var li = document.createElement("li");
-      var dot = document.createElement("span");
-      dot.className = "swatch";
+  // The one section delivered in full, and it is delivered in the paid shape:
+  // real hex circles, the name and the code beside them. This is the sample,
+  // so it has to be the actual product rather than a summary of it.
+  function previewPalette(reveal) {
+    var frag = document.createDocumentFragment();
+    var list = elm("ul", "swatch-list");
+
+    (reveal.colors || []).forEach(function (c) {
+      var li = elm("li", "swatch-row");
+      var dot = elm("span", "swatch-dot");
       dot.style.backgroundColor = c.hex;
       li.appendChild(dot);
-      li.appendChild(document.createTextNode(c.name));
+
+      var text = elm("div", "swatch-text");
+      var head = elm("p", "swatch-name", c.name);
+      head.appendChild(elm("span", "swatch-hex", c.hex));
+      text.appendChild(head);
+      li.appendChild(text);
       list.appendChild(li);
     });
-    return list;
+
+    frag.appendChild(list);
+    if (reveal.line) frag.appendChild(elm("p", "callout", reveal.line));
+    return frag;
+  }
+
+  // A blurred paragraph says the words are withheld. It says nothing about
+  // whether there is anything to look at, and a report that is only prose is
+  // a harder thing to want — so the strip under it carries the same withheld
+  // treatment on images from the reader's own style.
+  function previewLocked(sec, reveal, pool, from) {
+    var body = elm("div", "locked-body");
+
+    // One flowing paragraph: the setup reads clean, the trigger phrase lands
+    // just inside the blur, and the rest is filler nobody can read.
+    var setup = "", trigger = "";
+    if (reveal && typeof reveal === "object") {
+      setup = reveal.setup || "";
+      trigger = reveal.trigger || "";
+    } else if (typeof reveal === "string") {
+      setup = reveal;
+    }
+    body.appendChild(dissolveNode(setup, trigger, runOn(fillerLines(sec, 2))));
+
+    var strip = previewStrip(pool, from);
+    if (strip) body.appendChild(strip);
+    return body;
+  }
+
+  function previewStrip(pool, from) {
+    if (!pool.length) return null;
+    var shots = [pool[from % pool.length], pool[(from + 1) % pool.length]];
+
+    var strip = elm("div", "preview-strip");
+    strip.setAttribute("aria-hidden", "true");
+    shots.forEach(function (item) {
+      var frame = elm("span", "preview-thumb");
+      var img = document.createElement("img");
+      img.src = item.img;
+      img.alt = "";
+      img.loading = "lazy";
+      img.draggable = false;
+      frame.appendChild(img);
+      strip.appendChild(frame);
+    });
+    strip.appendChild(lockNode());
+    return strip;
+  }
+
+  // Gallery images sharing tags with the winning style, best match first, so
+  // the strip under a Modern Rustic report is blurred wood rather than blurred
+  // anything. Deterministic: the same style always deals the same order.
+  function styleShots(style) {
+    var tags = (style && style.tags) || [];
+    var gallery = (cfg.swipe && cfg.swipe.gallery) || [];
+    if (!tags.length || !gallery.length) return [];
+
+    return gallery
+      .map(function (g, i) {
+        var hits = (g.tags || []).filter(function (t) {
+          return tags.indexOf(t) !== -1;
+        }).length;
+        return { item: g, hits: hits, i: i };
+      })
+      .filter(function (g) { return g.hits > 0; })
+      .sort(function (a, b) { return b.hits - a.hits || a.i - b.i; })
+      .map(function (g) { return g.item; });
   }
 
   // Filler sentences read as filler the moment you see a capital letter start
@@ -523,7 +593,6 @@
     wrap.className = "dissolve";
     wrap.appendChild(dissolveLayer("dissolve-blur", setup, trigger, rest, true));
     wrap.appendChild(dissolveLayer("dissolve-crisp", setup, trigger, rest, false));
-    wrap.appendChild(lockNode());
     return wrap;
   }
 
@@ -813,6 +882,9 @@
   // Schema 1 reports predate the typed data and still exist in the database,
   // so they fall through to the prose renderer they were written for.
   function renderUnlockedReport(content) {
+    // The two share section classes, so the preview's must not survive into
+    // the paid view — it would leave paid sections wired to the paywall.
+    el.report.classList.remove("report-preview");
     el.report.classList.add("report-unlocked");
     var typed = isTyped(content.version);
     var list = content.sections || [];
@@ -955,10 +1027,12 @@
     el.analyzingText.textContent = cfg.analyzing.text;
     el.analyzing.hidden = false;
     el.resultBody.hidden = true;
+    startAnalyzing();
 
     setTimeout(function () {
       var win = computeWinner();
       winnerStyleId = win.id;
+      stopAnalyzing();
       el.analyzing.hidden = true;
       el.resultBody.hidden = false;
       el.resultName.textContent = win.name;
@@ -970,6 +1044,42 @@
       watchCta();
       celebrate();
     }, cfg.analyzing.duration_ms);
+  }
+
+  // The wait before the result is the one moment the reader has nothing to do,
+  // and a row of dots says only "something is happening". Naming the steps —
+  // their own choices, then the comparison, then the verdict — makes the same
+  // wait read as work being done on their behalf. The messages divide the
+  // configured duration between them, so the screen never cuts away mid-line.
+  function startAnalyzing() {
+    var lines = (cfg.analyzing && cfg.analyzing.messages) || [];
+    var bar = el.analyzingBar;
+    if (!bar) {
+      bar = elm("div", "analyzing-bar");
+      bar.setAttribute("aria-hidden", "true");
+      bar.appendChild(elm("span", "analyzing-bar-fill"));
+      el.analyzing.insertBefore(bar, el.analyzingDots);
+      el.analyzingBar = bar;
+    }
+    bar.hidden = false;
+
+    if (!lines.length) return;
+    el.analyzingText.textContent = lines[0];
+    if (lines.length < 2 || prefersReducedMotion()) return;
+
+    var hold = Math.max(600, (cfg.analyzing.duration_ms || 2500) / lines.length);
+    var i = 0;
+    analyzingTimer = setInterval(function () {
+      i += 1;
+      if (i >= lines.length) { stopAnalyzing(); return; }
+      el.analyzingText.textContent = lines[i];
+    }, hold);
+  }
+
+  function stopAnalyzing() {
+    if (analyzingTimer) clearInterval(analyzingTimer);
+    analyzingTimer = null;
+    if (el.analyzingBar) el.analyzingBar.hidden = true;
   }
 
   // A single small burst when the result lands. Purely decorative, never
@@ -1019,7 +1129,7 @@
 
   // Called on every poll that carries sections. The first one swaps the
   // loading state for the report; the rest only append what is new.
-  function renderUnlocked(content) {
+  function renderUnlocked(content, complete) {
     unlockedContent = content;
 
     if (!unlockedShown) {
@@ -1035,6 +1145,52 @@
 
     applyStyleCopy();
     renderUnlockedReport(content);
+    if (complete) stopGenerating();
+    else startGenerating();
+  }
+
+  // Sections arrive one at a time, and a report that stops growing looks
+  // finished. This sits under the last one that has landed and says, in as
+  // many words, that more is still being written — then takes itself out of
+  // the document the moment the report is whole.
+  function startGenerating() {
+    var card = el.generating;
+    if (!card) {
+      card = elm("div", "generating");
+      card.id = "generating";
+      card.setAttribute("aria-live", "polite");
+      card.appendChild(elm("span", "generating-shimmer"));
+      card.appendChild(elm("p", "generating-text", generatingLines()[0]));
+      el.generating = card;
+    }
+    // Always re-append: sections are added above it, and the card belongs
+    // under the last one.
+    el.report.appendChild(card);
+
+    if (generatingTimer || prefersReducedMotion()) return;
+    var i = 0;
+    generatingTimer = setInterval(function () {
+      // Read the pool each tick: the report can arrive before the config does,
+      // and the copy should improve the moment it lands.
+      var lines = generatingLines();
+      i = (i + 1) % lines.length;
+      var text = card.querySelector(".generating-text");
+      if (text) text.textContent = lines[i];
+    }, GENERATING_MS);
+  }
+
+  function stopGenerating() {
+    if (generatingTimer) clearInterval(generatingTimer);
+    generatingTimer = null;
+    if (el.generating && el.generating.parentNode) {
+      el.generating.parentNode.removeChild(el.generating);
+    }
+    el.generating = null;
+  }
+
+  function generatingLines() {
+    var lines = cfg && cfg.report && cfg.report.generating_messages;
+    return (lines && lines.length) ? lines : GENERATING_FALLBACK;
   }
 
   // The report can land before the funnel config does, and the blurb only
@@ -1105,6 +1261,9 @@
       if (tries + 1 >= REPORT_MAX_TRIES) {
         // Once sections are on screen the report is readable and giving up is
         // silent — replacing it with a "come back later" would be a downgrade.
+        // The generating card does have to go: we have stopped looking, so it
+        // would be promising work nobody is watching for.
+        stopGenerating();
         if (!unlockedShown) {
           showReportMessage("Your report is being prepared — check back in a minute.");
         }
@@ -1121,10 +1280,11 @@
 
         var report = data && data.report;
         var sections = (report && report.sections) || [];
-        if (sections.length) renderUnlocked(report);
+        var done = !!(data && data.complete && sections.length);
+        if (sections.length) renderUnlocked(report, done);
 
         // The row exists and is still filling up, or it exists and is done.
-        if (data && data.complete && sections.length) return;
+        if (done) return;
         retry();
       })
       .catch(retry);

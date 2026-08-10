@@ -65,9 +65,6 @@ MAX_TOKENS = 2000          # the cached group, which is three sections at once
 SECTION_TOKENS = 700       # one personalised section on its own
 TEMPERATURE = 0.7
 
-# Three personalised calls plus, on a cold style, the cached group.
-MAX_PARALLEL = 4
-
 # A 90-word section is ~500 characters. This only has to separate a real
 # section from an empty string or a one-line apology.
 MIN_BODY_CHARS = 200
@@ -606,6 +603,39 @@ def _api():
     return _client
 
 
+# --- the in-flight limit ---------------------------------------------------
+
+# The cap belongs here rather than on the thread pool alone, because a retry
+# is a second call from a thread that already has a worker slot. Rebuilt only
+# when the configured size changes, which outside tests is never.
+_gate = None
+_gate_size = 0
+_gate_lock = threading.Lock()
+
+
+def _limiter():
+    global _gate, _gate_size
+    size = max(1, int(config.LLM_MAX_CONCURRENCY or 1))
+    with _gate_lock:
+        if _gate is None or _gate_size != size:
+            _gate = threading.BoundedSemaphore(size)
+            _gate_size = size
+        return _gate
+
+
+def _timeout_class():
+    """The SDK's timeout error, or None when the SDK is not installed.
+
+    Resolved lazily for the same reason the client is: the package may be
+    missing between a deploy and a human running pip.
+    """
+    try:
+        import anthropic
+    except ImportError:
+        return None
+    return getattr(anthropic, "APITimeoutError", None)
+
+
 FENCE_RE = re.compile(r"^\s*```(?:json)?|```\s*$", re.IGNORECASE)
 
 
@@ -643,16 +673,39 @@ def _parse(text, want):
 
 
 def _ask(client, prompt, max_tokens):
-    message = client.messages.create(
-        model=config.ANTHROPIC_MODEL,
-        max_tokens=max_tokens,
-        temperature=TEMPERATURE,
-        system=SYSTEM,
-        messages=[{"role": "user", "content": prompt}],
-    )
+    gate = _limiter()
+    gate.acquire()
+    try:
+        message = client.messages.create(
+            model=config.ANTHROPIC_MODEL,
+            max_tokens=max_tokens,
+            temperature=TEMPERATURE,
+            system=SYSTEM,
+            messages=[{"role": "user", "content": prompt}],
+        )
+    finally:
+        gate.release()
     return "".join(
         block.text for block in message.content if block.type == "text"
     )
+
+
+def _attempt(client, prompt, max_tokens, label):
+    """One prompt, retried once if it times out.
+
+    A timeout is the one failure worth repeating immediately: it means the
+    connection never produced anything, so there is no half-answer to salvage
+    and nothing was spent on output. Every other error goes straight up — a
+    rejection or a bad request will fail the same way twice.
+    """
+    timeout = _timeout_class()
+    try:
+        return _ask(client, prompt, max_tokens)
+    except Exception as exc:
+        if timeout is None or not isinstance(exc, timeout):
+            raise
+        log.warning("section %s timed out — retrying once", label)
+    return _ask(client, prompt, max_tokens)
 
 
 def _generate(client, prompt, want, max_tokens=MAX_TOKENS):
@@ -661,9 +714,11 @@ def _generate(client, prompt, want, max_tokens=MAX_TOKENS):
     A single personalised section needs a fraction of the room a six-section
     call did, so the caller sizes the budget to what it asked for.
     """
-    parsed = _parse(_ask(client, prompt, max_tokens), want)
+    label = "+".join(want)
+    parsed = _parse(_attempt(client, prompt, max_tokens, label), want)
     if parsed is None:
-        parsed = _parse(_ask(client, prompt + RETRY_NOTE, max_tokens), want)
+        parsed = _parse(_attempt(client, prompt + RETRY_NOTE, max_tokens, label),
+                        want)
     return parsed
 
 
@@ -902,6 +957,14 @@ def _run(job):
     _fire(job["on_final"], content, job["purchase_id"])
 
 
+def _personal_order(cfg):
+    """The personalised sections, in the order the report displays them."""
+    ordered = [s.get("id") for s in cfg.get("report", {}).get("sections", [])
+               if s.get("id") in PERSONAL]
+    # A config that has dropped or renamed one still has to generate the rest.
+    return ordered + [i for i in PERSONAL if i not in ordered]
+
+
 def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                  on_final=None):
     """Persist an empty report and generate into it in the background.
@@ -940,10 +1003,15 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     tasks = []
     pool = None
     if client is not None:
-        # Palette first: it is the section the opening of the report is built
-        # around, so it is the one worth having soonest.
-        pool = concurrent.futures.ThreadPoolExecutor(max_workers=MAX_PARALLEL)
-        for section_id in PERSONAL:
+        # Fewer workers than tasks, on purpose: the pool size is the priority
+        # mechanism. Submission order decides what runs first, so generating in
+        # the funnel's own section order fills the report from the top down —
+        # the palette, which the opening is built around, is never waiting
+        # behind a section the reader has not scrolled to yet. The cached group
+        # goes last because it is the one nobody is looking at first.
+        pool = concurrent.futures.ThreadPoolExecutor(
+            max_workers=max(1, int(config.LLM_MAX_CONCURRENCY or 1)))
+        for section_id in _personal_order(cfg):
             tasks.append({
                 "ids": (section_id,), "cache": False,
                 "future": pool.submit(
