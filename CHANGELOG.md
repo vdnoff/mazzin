@@ -102,3 +102,6 @@ bottom.
 
 ## 2026-08-10 — claude/phase4a-adaptive-engine
 - Phase 4a: adaptive engine
+
+## 2026-08-10 — claude/phase4b-content
+- Phase 4B: 12-step adaptive quiz
