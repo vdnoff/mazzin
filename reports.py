@@ -61,15 +61,49 @@ UPSERT_SECTION_SQL = (
 PERSONAL = ("palette", "materials", "mistakes")
 CACHED = ("shopping", "dna", "splurge")
 
-MAX_TOKENS = 2000          # the cached group, which is three sections at once
-SECTION_TOKENS = 700       # one personalised section on its own
 TEMPERATURE = 0.7
+
+# Output room, per section, sized from each section's own shape rather than
+# from the smallest one. A section written to the standard the system prompt
+# demands is not short: seven shopping items with a sentence each, indented,
+# is about 600 tokens before the model has written anything wasteful, and the
+# validator will accept up to about 1030. A flat 700 put `shopping` at its
+# ceiling on every single call, and a response that runs out of room is
+# unterminated JSON — which failed parsing, failed the retry, and stubbed.
+#
+# Raising a cap costs nothing that is not used: output is billed by what the
+# model writes, not by what it was allowed to write.
+SECTION_TOKENS = 900       # default for one section on its own
+SECTION_TOKEN_BUDGET = {
+    "palette": 900,        # 3-4 colours x 5 fields, plus intro and rule
+    "mistakes": 1200,      # 4-6 items x title, body and fix
+    "materials": 900,      # 3-4 pairs, plus intro and rule
+    "shopping": 1400,      # 5-7 items plus 1-2 skips — the largest shape
+    "dna": 700,            # two short paragraphs and two implications
+    "splurge": 900,        # one splurge, three saves, one note
+}
+
+
+def _section_tokens(section_id):
+    return SECTION_TOKEN_BUDGET.get(section_id, SECTION_TOKENS)
+
+
+def _group_tokens(ids):
+    """Room for a call that asks for several sections at once."""
+    return sum(_section_tokens(i) for i in ids) or SECTION_TOKENS
+
+
+# Kept as the ceiling for anything that asks for the whole report in one call.
+MAX_TOKENS = sum(SECTION_TOKEN_BUDGET.values())
 
 # The offline warmer's own limits. Nothing is waiting on it, so it is patient
 # where the request path is not: a long per-call timeout and real retries in
 # place of the request path's one.
 WARM_TIMEOUT_S = 180.0
 WARM_RETRIES = 3
+# Offline, so the room a section gets is not rationed against a buyer waiting
+# on it. Doubling the request-path budget costs nothing unless it is used.
+WARM_TOKEN_FACTOR = 2
 
 # A 90-word section is ~500 characters. This only has to separate a real
 # section from an empty string or a one-line apology.
@@ -694,6 +728,11 @@ def _api():
     return _client
 
 
+def _warm_tokens(section_id):
+    """What one section is allowed offline. Same shape, more room."""
+    return _section_tokens(section_id) * WARM_TOKEN_FACTOR
+
+
 def _warm_api():
     """A client for offline warming, or None when generation is switched off.
 
@@ -753,6 +792,52 @@ def _timeout_class():
 FENCE_RE = re.compile(r"^\s*```(?:json)?|```\s*$", re.IGNORECASE)
 
 
+def _parse_detail(text, want):
+    """(parsed, reason). `reason` is None on success, else why it was refused.
+
+    The reason is diagnostic only and is built from field names, offsets and
+    exception classes — never from the model's words. It exists because a
+    section that fails here fails silently otherwise: the caller sees None and
+    has no way to tell a truncated answer from a reshaped one.
+    """
+    if not text:
+        return None, "empty response"
+    body = FENCE_RE.sub("", text.strip()).strip()
+    start, end = body.find("{"), body.rfind("}")
+    if start < 0 or end <= start:
+        # A response cut off mid-object never gets its closing brace, so this
+        # is what truncation looks like by the time it reaches us.
+        return None, ("no closing brace — response ends unterminated"
+                      if start >= 0 else "no JSON object in response")
+    try:
+        data = json.loads(body[start:end + 1])
+    except ValueError as exc:
+        at = getattr(exc, "pos", None)
+        # A response that ran out of room breaks at its own end, and the last
+        # `}` we could find is from some earlier item — so the decode fails
+        # near the tail rather than in the middle. Saying which it is turns a
+        # log line into a diagnosis: run out of room, or came back malformed.
+        tail = isinstance(at, int) and (end + 1 - start) - at < 200
+        return None, ("invalid JSON (%s at char %s of %d)%s"
+                      % (type(exc).__name__, at, len(body),
+                         " — breaks at the end, looks truncated" if tail else ""))
+    if not isinstance(data, dict):
+        return None, "top level is %s, not an object" % type(data).__name__
+
+    out = {}
+    for key in want:
+        value = data.get(key)
+        if value is None:
+            return None, "key %r missing" % key
+        if not isinstance(value, dict):
+            return None, "key %r is %s, not an object" % (key, type(value).__name__)
+        clean = VALIDATORS[key](value)
+        if clean is None:
+            return None, "key %r failed its validator (shape drift)" % key
+        out[key] = clean
+    return out, None
+
+
 def _parse(text, want):
     """The model's JSON as {section_id: data}, or None if it is unusable.
 
@@ -761,32 +846,16 @@ def _parse(text, want):
     sends it to the retry and then to the stub — a half-built swatch list on a
     paid report is worse than a hand-written one.
     """
-    if not text:
-        return None
-    body = FENCE_RE.sub("", text.strip()).strip()
-    start, end = body.find("{"), body.rfind("}")
-    if start < 0 or end <= start:
-        return None
-    try:
-        data = json.loads(body[start:end + 1])
-    except ValueError:
-        return None
-    if not isinstance(data, dict):
-        return None
-
-    out = {}
-    for key in want:
-        value = data.get(key)
-        if not isinstance(value, dict):
-            return None
-        clean = VALIDATORS[key](value)
-        if clean is None:
-            return None
-        out[key] = clean
-    return out
+    return _parse_detail(text, want)[0]
 
 
 def _ask(client, prompt, max_tokens):
+    """(text, stop_reason). The stop reason is how truncation announces itself.
+
+    `max_tokens` there means the model was still writing when it ran out of
+    room, which is the difference between "the answer was wrong" and "we did
+    not let it finish" — and the two need opposite fixes.
+    """
     gate = _limiter()
     gate.acquire()
     try:
@@ -799,9 +868,10 @@ def _ask(client, prompt, max_tokens):
         )
     finally:
         gate.release()
-    return "".join(
+    text = "".join(
         block.text for block in message.content if block.type == "text"
     )
+    return text, getattr(message, "stop_reason", None)
 
 
 def _attempt(client, prompt, max_tokens, label):
@@ -822,17 +892,32 @@ def _attempt(client, prompt, max_tokens, label):
     return _ask(client, prompt, max_tokens)
 
 
-def _generate(client, prompt, want, max_tokens=MAX_TOKENS):
+def _generate(client, prompt, want, max_tokens=None):
     """One section group. Returns {section_id: body}, or None.
 
     A single personalised section needs a fraction of the room a six-section
-    call did, so the caller sizes the budget to what it asked for.
+    call did, so the budget is sized to what was asked for.
+
+    Both refusals are logged. Returning None quietly was how a section could
+    fail on every attempt for weeks with nothing in the log to say whether it
+    was being cut off or coming back reshaped.
     """
     label = "+".join(want)
-    parsed = _parse(_attempt(client, prompt, max_tokens, label), want)
+    if max_tokens is None:
+        max_tokens = _group_tokens(want)
+
+    text, stop = _attempt(client, prompt, max_tokens, label)
+    parsed, why = _parse_detail(text, want)
+    if parsed is not None:
+        return parsed
+    log.warning("section %s unusable: %s (%d chars, stop=%s, cap=%d) — retrying",
+                label, why, len(text or ""), stop, max_tokens)
+
+    text, stop = _attempt(client, prompt + RETRY_NOTE, max_tokens, label)
+    parsed, why = _parse_detail(text, want)
     if parsed is None:
-        parsed = _parse(_attempt(client, prompt + RETRY_NOTE, max_tokens, label),
-                        want)
+        log.warning("section %s given up: %s (%d chars, stop=%s, cap=%d)",
+                    label, why, len(text or ""), stop, max_tokens)
     return parsed
 
 
@@ -1153,14 +1238,14 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                     _generate, client,
                     _section_prompt(style, name, tag_scores, section_id,
                                     cfg, choices),
-                    (section_id,), SECTION_TOKENS),
+                    (section_id,), _section_tokens(section_id)),
             })
         if cached is None:
             tasks.append({
                 "ids": CACHED, "cache": True,
                 "future": pool.submit(_generate, client,
                                       _cached_prompt(style, name), CACHED,
-                                      MAX_TOKENS),
+                                      _group_tokens(CACHED)),
             })
     job["tasks"] = tasks
     job["pool"] = pool
@@ -1254,7 +1339,7 @@ def warm_style_cache(funnel_slug, style_id, client=None):
     for section_id in missing:
         try:
             got = _generate(client, _cached_prompt(style, name, (section_id,)),
-                            (section_id,), SECTION_TOKENS)
+                            (section_id,), _warm_tokens(section_id))
         except Exception as exc:
             log.warning("warm %s/%s/%s failed: %s", funnel_slug, style_id,
                         section_id, type(exc).__name__)
