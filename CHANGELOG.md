@@ -72,3 +72,6 @@ bottom.
 
 ## 2026-08-10 — claude/phase2g-polish-stability
 - Phase 2g: stability + exclusivity
+
+## 2026-08-10 — claude/phase3a-themed-steps
+- Phase 3a: themed swipe steps
