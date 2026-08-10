@@ -81,3 +81,6 @@ bottom.
 
 ## 2026-08-10 — claude/phase3b-choice-palette
 - Phase 3b: choice-derived palette
+
+## 2026-08-10 — claude/fix-shopping-section
+- fix: shopping section
