@@ -38,6 +38,13 @@ ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
 ANTHROPIC_TIMEOUT_S = float(os.getenv("ANTHROPIC_TIMEOUT_S", "30"))
 REPORT_BUDGET_S = float(os.getenv("REPORT_BUDGET_S", "20"))
 
+# How many model calls may be in flight at once. Four was timing three sections
+# out at a time in production: the host's egress proxy does not sustain that
+# many long-lived HTTPS connections in parallel, and the failure mode is a
+# timeout rather than a rejection, so it costs the whole budget before it shows.
+# Two is what it carries reliably.
+LLM_MAX_CONCURRENCY = int(os.getenv("LLM_MAX_CONCURRENCY", "2"))
+
 # A call still running when the budget expires is no longer waited on, but it
 # is no longer thrown away either: it finishes in the background and upgrades
 # the stored report. This is the ceiling on that background wait.

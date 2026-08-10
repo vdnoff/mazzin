@@ -237,9 +237,20 @@
   ],
   "analyzing": {
     "duration_ms": 2500,
-    "text": "Analyzing your choices"
+    "text": "Analyzing your choices",
+    "messages": [
+      "Analyzing your 9 choices…",
+      "Comparing against thousands of kitchens…",
+      "Isolating your style signature…"
+    ]
   },
   "report": {
+    "generating_messages": [
+      "Our AI is comparing your choices against thousands of kitchens…",
+      "Searching for the combinations that fit YOU…",
+      "Cross-referencing your material picks…",
+      "Almost there — writing your recommendations…"
+    ],
     "sections": [
       {
         "id": "palette",
