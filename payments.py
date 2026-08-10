@@ -62,6 +62,30 @@ def _style_ids(cfg):
     return {s.get("id") for s in cfg.get("styles", [])}
 
 
+def _step_images(cfg):
+    """Every image any step can show, across all of its pairs.
+
+    A step owns several pairs from 3d on, and the reader is given exactly one
+    of them — but which one is decided in the browser, so every variant is a
+    legitimate answer and all of them have to validate. A step still carrying a
+    bare `images` list is read as its own single pair, so a funnel that has not
+    been converted keeps working rather than silently rejecting every payload
+    it is sent.
+    """
+    for step in ((cfg.get("swipe") or {}).get("steps") or []):
+        if not isinstance(step, dict):
+            continue
+        pairs = step.get("pairs")
+        if not (isinstance(pairs, list) and pairs):
+            pairs = [{"images": step.get("images") or []}]
+        for pair in pairs:
+            if not isinstance(pair, dict):
+                continue
+            for item in (pair.get("images") or []):
+                if isinstance(item, dict):
+                    yield item
+
+
 def _gallery_tags(cfg):
     """Every tag the quiz can actually award. The client cannot invent one.
 
@@ -72,9 +96,8 @@ def _gallery_tags(cfg):
     """
     swipe = cfg.get("swipe") or {}
     tags = set()
-    for step in (swipe.get("steps") or []):
-        for item in (step.get("images") or []):
-            tags.update(item.get("tags") or [])
+    for item in _step_images(cfg):
+        tags.update(item.get("tags") or [])
     for item in (swipe.get("gallery") or []):
         tags.update(item.get("tags") or [])
     return tags
@@ -125,13 +148,9 @@ def _tag_scores_metadata(scores):
 
 
 def _step_image_ids(cfg):
-    """Every image id the quiz can hand back, in step order."""
-    out = []
-    for step in ((cfg.get("swipe") or {}).get("steps") or []):
-        for item in (step.get("images") or []):
-            if isinstance(item.get("id"), str):
-                out.append(item["id"])
-    return out
+    """Every image id the quiz can hand back, across every pair of every step."""
+    return [item["id"] for item in _step_images(cfg)
+            if isinstance(item.get("id"), str)]
 
 
 def _clean_choices(cfg, raw):

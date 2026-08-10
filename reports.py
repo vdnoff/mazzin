@@ -1046,8 +1046,14 @@ def _choice_lines(cfg, choices):
         return []
     by_id = {}
     for step in (cfg.get("swipe") or {}).get("steps") or []:
-        for item in step.get("images") or []:
-            by_id[item.get("id")] = (step, item)
+        # A step owns several pairs from 3d on and the browser shows one of
+        # them, so every variant has to be findable here — a chosen image this
+        # could not name would drop out of the sequence silently and take its
+        # colours with it. A bare `images` list is the pre-3d shape.
+        pairs = step.get("pairs") or [{"images": step.get("images") or []}]
+        for pair in pairs:
+            for item in (pair.get("images") or []):
+                by_id[item.get("id")] = (step, item)
 
     lines = []
     for n, image_id in enumerate(choices, 1):

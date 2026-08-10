@@ -53,6 +53,7 @@
   var scores = {};          // tag -> count
   var chosen = [];          // image ids, in the order they were tapped
   var pair = [];            // current [imgA, imgB]
+  var shownPairs = {};      // step index -> {id, images} drawn for this run
   var step = 0;             // pairs completed
   var preloaded = {};        // img src -> already requested
   var winnerStyleId = null; // set when the result is computed
@@ -105,9 +106,10 @@
 
   // --- tracking ------------------------------------------------------------
 
-  function track(event, stepNo) {
+  function track(event, stepNo, extra) {
     var body = { funnel: slug, session_id: sessionId, event: event };
     if (stepNo) body.step = stepNo;
+    if (extra) body.extra = extra;
     for (var k in attribution) body[k] = attribution[k];
 
     var json = JSON.stringify(body);
@@ -149,15 +151,53 @@
     return steps[index] || null;
   }
 
-  // The pair a step shows, with the sides shuffled. Which image is on the left
-  // is not part of the question, and leaving it fixed would let a habitual
-  // left-tapper score the same way every run.
-  function pairFor(index) {
-    var st = stepAt(index);
-    var images = (st && st.images) || [];
+  // A step now owns several pairs asking the same question with different
+  // photographs, and one of them is drawn per run. The step is still the unit
+  // of meaning — what varies underneath it is which images made the argument,
+  // which is the thing worth measuring.
+  //
+  // A step that still carries a bare `images` list is read as its own single
+  // pair. engine.js and the funnel JSON are separate files behind a CDN, so
+  // the two can be cached a version apart for a while after a deploy; the
+  // fallback is what stops that window breaking the quiz.
+  function pairsOf(st) {
+    if (!st) return [];
+    if (st.pairs && st.pairs.length) return st.pairs;
+    if (st.images && st.images.length >= 2) {
+      return [{ id: "p1", images: st.images }];
+    }
+    return [];
+  }
+
+  // One pair, sides shuffled. Which image is on the left is not part of the
+  // question, and leaving it fixed would let a habitual left-tapper score the
+  // same way every run.
+  function pickPair(index) {
+    var pairs = pairsOf(stepAt(index));
+    if (!pairs.length) return null;
+    var pick = pairs[Math.floor(Math.random() * pairs.length)] || {};
+    var images = (pick.images || []).slice(0, 2);
     if (images.length < 2) return null;
-    var pair2 = images.slice(0, 2);
-    return Math.random() < 0.5 ? pair2 : [pair2[1], pair2[0]];
+    return {
+      id: pick.id || "p1",
+      images: Math.random() < 0.5 ? images : [images[1], images[0]]
+    };
+  }
+
+  // Drawn once per step and remembered. Preloading needs to know which two
+  // images are coming before the reader gets there, and the swipe event needs
+  // to name the same pair afterwards — rolling the dice twice would warm one
+  // pair and show another.
+  function shownAt(index) {
+    if (!Object.prototype.hasOwnProperty.call(shownPairs, index)) {
+      shownPairs[index] = pickPair(index);
+    }
+    return shownPairs[index];
+  }
+
+  function pairFor(index) {
+    var picked = shownAt(index);
+    return picked ? picked.images : null;
   }
 
   // --- preloading ----------------------------------------------------------
@@ -193,11 +233,13 @@
   }
 
   // The next step is the next step whatever the reader taps, so there is one
-  // set of images to warm rather than a branch per card.
+  // set of images to warm rather than a branch per card. Drawing the pair here
+  // rather than at render time keeps that true now that a step has several:
+  // two images are warmed, not every variant of the step.
   function prepareNext() {
-    var next = stepAt(step + 1);
+    var next = shownAt(step + 1);
     if (!next) return;
-    (next.images || []).forEach(function (g) { preload(g.img); });
+    next.images.forEach(function (g) { preload(g.img); });
   }
 
   // --- swipe screen --------------------------------------------------------
@@ -308,13 +350,30 @@
       window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   }
 
+  // Which pair was on screen and which side won. `shown` is in display order
+  // rather than config order, because "the left one always wins" is a thing
+  // worth being able to see in the readout. Nothing here is anyone's data —
+  // it is which of our own photographs we put in front of them.
+  function swipeExtra(index, item) {
+    var st = stepAt(index);
+    var picked = shownAt(index);
+    if (!st || !picked || !st.id) return null;
+    return {
+      pair: st.id + ":" + picked.id,
+      shown: picked.images.map(function (g) { return g.id; }),
+      chosen: item.id
+    };
+  }
+
   function choose(item, card) {
     if (picking || !pair.length) return;   // one tap per pair
     picking = true;
+    // Read before the counter moves: this describes the step just answered.
+    var extra = swipeExtra(step, item);
     item.tags.forEach(function (t) { scores[t] = (scores[t] || 0) + 1; });
     chosen.push(item.id);
     step += 1;
-    track("swipe", step);
+    track("swipe", step, extra);
     pair = [];
 
     // Show the choice landing, and hold it, before anything moves. Tracking
