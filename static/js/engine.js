@@ -464,7 +464,13 @@
     picking = true;
     // Read before the counter moves: this describes the step just answered.
     var extra = swipeExtra(step, item);
-    item.tags.forEach(function (t) { scores[t] = (scores[t] || 0) + 1; });
+    // A normal step asks what they want and scores the answer up. An inverse
+    // step asks what they would never have, and the honest weight of "not
+    // this" is smaller than the weight of "this" — a rejection narrows the
+    // field, it does not choose. Half a point off, so a tag can end slightly
+    // negative if the only thing anyone said about it was no.
+    var weight = (stepAt(step) || {}).scoring === "inverse" ? -0.5 : 1;
+    item.tags.forEach(function (t) { scores[t] = (scores[t] || 0) + weight; });
     chosen.push(item.id);
     step += 1;
     track("swipe", step, extra);
@@ -573,9 +579,13 @@
 
   // --- result --------------------------------------------------------------
 
+  // The floor is -Infinity, not -1. With an inverse step in the sequence a
+  // style's total can legitimately be negative, and a floor of -1 would have
+  // quietly handed every one of those runs to whichever style happens to be
+  // first in the config rather than to the one that scored highest.
   function computeWinner() {
     var best = cfg.styles[0];
-    var bestScore = -1;
+    var bestScore = -Infinity;
     cfg.styles.forEach(function (s) {
       var sc = 0;
       s.tags.forEach(function (t) { sc += scores[t] || 0; });
