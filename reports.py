@@ -156,8 +156,48 @@ def _items(value, low, high):
     return value if isinstance(value, list) and low <= len(value) <= high else None
 
 
+def _first(d, *keys):
+    """The first of several spellings a model might use for one field.
+
+    Aliases only — a value still has to pass the same length and type rules.
+    `priority` for `priority_note` is the model being terse, not the model
+    sending something different.
+    """
+    for key in keys:
+        if isinstance(d, dict) and key in d:
+            return d[key]
+    return None
+
+
+def _row(value, name_keys, body_keys):
+    """One list entry as a dict, coercing a bare string into the named field.
+
+    A model that answers with ["Worktop stone", "Brass tap"] has given a real
+    shopping list with the reasons left off. That is worth keeping — the
+    alternative is a generic stub — so the string becomes the name and the
+    body is left empty rather than invented.
+    """
+    if isinstance(value, str):
+        return {"name": value, "body": ""}
+    if not isinstance(value, dict):
+        return None
+    return {"name": _first(value, *name_keys), "body": _first(value, *body_keys)}
+
+
+def _unwrap(section_id, value):
+    """Strip one layer of `{"shopping": {"shopping": {...}}}` if it is there.
+
+    Models re-wrap the key they were asked to produce often enough that
+    refusing it costs a good answer for a formatting habit.
+    """
+    while (isinstance(value, dict) and len(value) == 1
+           and section_id in value and isinstance(value[section_id], dict)):
+        value = value[section_id]
+    return value
+
+
 def _v_palette(d):
-    colors = _items(d.get("colors"), 3, 4)
+    colors = _items(_first(d, "colors", "colours", "palette"), 3, 5)
     intro = _text(d.get("intro"), 20)
     rule = _text(d.get("closing_rule"), 15)
     if not (colors and intro and rule):
@@ -199,7 +239,7 @@ def _v_mistakes(d):
 
 
 def _v_materials(d):
-    pairs = _items(d.get("pairs"), 3, 4)
+    pairs = _items(_first(d, "pairs", "combinations", "combos"), 3, 5)
     intro = _text(d.get("intro"), 20)
     rule = _text(d.get("rule"), 15)
     if not (pairs and intro and rule):
@@ -225,38 +265,47 @@ def _v_materials(d):
 
 
 def _v_shopping(d):
-    items = _items(d.get("items"), 5, 7)
-    skip = _items(d.get("skip"), 1, 2)
+    # 4-8 rather than 5-7: a list one short of the ask is still a shopping
+    # list, and the stub that replaces it is worse than an off-by-one.
+    items = _items(_first(d, "items", "list", "buy"), 4, 8)
+    skip = _items(_first(d, "skip", "skips", "avoid"), 1, 3)
     if not (items and skip):
         return None
     out = []
     for i in items:
-        if not isinstance(i, dict):
+        row = _row(i, ("name", "item", "thing"),
+                   ("priority_note", "priority", "note", "why", "reason"))
+        if not row:
             return None
-        row = {"name": _text(i.get("name"), 2, 90),
-               "priority_note": _text(i.get("priority_note"), 10, 300)}
-        if not all(row.values()):
+        name = _text(row["name"], 2, 90)
+        # The note may be empty only because the entry arrived as a bare
+        # string; a present-but-unusable note is still a refusal.
+        note = "" if row["body"] == "" else _text(row["body"], 10, 300)
+        if not name or note is None:
             return None
-        out.append(row)
+        out.append({"name": name, "priority_note": note})
     skips = []
     for s in skip:
-        if not isinstance(s, dict):
+        row = _row(s, ("name", "item", "thing"), ("why", "reason", "note"))
+        if not row:
             return None
-        row = {"name": _text(s.get("name"), 2, 90), "why": _text(s.get("why"), 10, 300)}
-        if not all(row.values()):
+        name = _text(row["name"], 2, 90)
+        why = "" if row["body"] == "" else _text(row["body"], 10, 300)
+        if not name or why is None:
             return None
-        skips.append(row)
+        skips.append({"name": name, "why": why})
     return {"items": out, "skip": skips}
 
 
 def _v_dna(d):
-    narrative = d.get("narrative")
+    narrative = _first(d, "narrative", "story", "summary")
     if isinstance(narrative, str):                 # tolerate one blob
         narrative = [p.strip() for p in narrative.split("\n\n") if p.strip()]
     narrative = _items(narrative, 1, 3)
     if not narrative or not all(_text(p, 40) for p in narrative):
         return None
-    implications = _items(d.get("implications"), 2, 2)
+    implications = _items(_first(d, "implications", "implication",
+                                 "actions"), 2, 3)
     if not implications or not all(_text(p, 10, 300) for p in implications):
         return None
     return {"narrative": [p.strip() for p in narrative],
@@ -264,23 +313,25 @@ def _v_dna(d):
 
 
 def _v_splurge(d):
-    splurge = d.get("splurge")
-    saves = _items(d.get("saves"), 3, 3)
-    note = _text(d.get("split_note"), 10, 300)
+    splurge = _first(d, "splurge", "spend", "invest")
+    saves = _items(_first(d, "saves", "save", "economise"), 2, 4)
+    note = _text(_first(d, "split_note", "split", "budget_split"), 10, 300)
     if not (isinstance(splurge, dict) and saves and note):
         return None
-    head = {"item": _text(splurge.get("item"), 2, 90),
-            "why": _text(splurge.get("why"), 15)}
+    head = {"item": _text(_first(splurge, "item", "name", "thing"), 2, 90),
+            "why": _text(_first(splurge, "why", "reason", "note"), 15)}
     if not all(head.values()):
         return None
     out = []
     for s in saves:
-        if not isinstance(s, dict):
+        row = _row(s, ("item", "name", "thing"), ("why", "reason", "note"))
+        if not row:
             return None
-        row = {"item": _text(s.get("item"), 2, 90), "why": _text(s.get("why"), 10, 300)}
-        if not all(row.values()):
+        item = _text(row["name"], 2, 90)
+        why = "" if row["body"] == "" else _text(row["body"], 10, 300)
+        if not item or why is None:
             return None
-        out.append(row)
+        out.append({"item": item, "why": why})
     return {"splurge": head, "saves": out, "split_note": note}
 
 
@@ -292,6 +343,104 @@ VALIDATORS = {
     "dna": _v_dna,
     "splurge": _v_splurge,
 }
+
+
+# --- why a section was refused ---------------------------------------------
+
+# What each section is shaped like, declared once so a rejection can be
+# described without unpicking the validators. (list bounds, per-row fields) —
+# rows of None mean the list holds plain strings.
+SHAPE = {
+    "palette": {"intro": None, "closing_rule": None,
+                "colors": (3, 5, ("name", "hex", "role", "finish", "where"))},
+    "mistakes": {"items": (4, 6, ("title", "body", "fix"))},
+    "materials": {"intro": None, "rule": None,
+                  "pairs": (3, 5, ("combo", "verdict", "why"))},
+    "shopping": {"items": (4, 8, ("name", "priority_note")),
+                 "skip": (1, 3, ("name", "why"))},
+    "dna": {"narrative": (1, 3, None), "implications": (2, 3, None)},
+    "splurge": {"splurge": None, "split_note": None,
+                "saves": (2, 4, ("item", "why"))},
+}
+
+
+def _kind(value):
+    """A type name for a log line. Never the value itself."""
+    if isinstance(value, bool):
+        return "bool"
+    return type(value).__name__
+
+
+def _drift_detail(section_id, value):
+    """Field-level reasons a section was refused, as key names and types only.
+
+    The validators answer yes or no, which is the right contract for them and
+    useless for working out what the model actually sent. This walks the same
+    shape and reports what is missing, extra or the wrong type — never a value,
+    never a word the model wrote.
+    """
+    shape = SHAPE.get(section_id)
+    if not shape:
+        return ["no declared shape for %r" % section_id]
+    if not isinstance(value, dict):
+        return ["section is %s, not an object" % _kind(value)]
+
+    notes = []
+    for key in sorted(set(value) - set(shape)):
+        notes.append("extra key %r (%s)" % (key, _kind(value[key])))
+
+    for key in sorted(shape):
+        spec = shape[key]
+        if key not in value:
+            notes.append("missing %r" % key)
+            continue
+        got = value[key]
+        if spec is None:
+            if not isinstance(got, (str, dict)):
+                notes.append("%s: %s, want str or object" % (key, _kind(got)))
+            continue
+
+        low, high, fields = spec
+        if not isinstance(got, list):
+            notes.append("%s: %s, want list" % (key, _kind(got)))
+            continue
+        if not low <= len(got) <= high:
+            notes.append("%s: %d entries, want %d-%d" % (key, len(got), low, high))
+        for n, row in enumerate(got):
+            if fields is None:
+                if not isinstance(row, str):
+                    notes.append("%s[%d]: %s, want str" % (key, n, _kind(row)))
+                continue
+            if not isinstance(row, dict):
+                notes.append("%s[%d]: %s, want object with %s"
+                             % (key, n, _kind(row), "/".join(fields)))
+                continue
+            missing = [f for f in fields if f not in row]
+            extra = sorted(set(row) - set(fields))
+            if missing:
+                notes.append("%s[%d]: missing %s" % (key, n, ", ".join(missing)))
+            if extra:
+                notes.append("%s[%d]: extra %s"
+                             % (key, n, ", ".join("%s(%s)" % (e, _kind(row[e]))
+                                                  for e in extra)))
+            for f in fields:
+                if f in row and not isinstance(row[f], str):
+                    notes.append("%s[%d].%s: %s, want str"
+                                 % (key, n, f, _kind(row[f])))
+    if not notes:
+        return ["shape looks right; a field failed its own length or value rule"]
+
+    # Every row of a list usually drifts the same way, so say it once with a
+    # count instead of ten times with indices.
+    rolled, seen = [], {}
+    for note in notes:
+        key = re.sub(r"\[\d+\]", "[]", note)
+        if key in seen:
+            seen[key] += 1
+            continue
+        seen[key] = 1
+        rolled.append(key)
+    return ["%s (x%d)" % (n, seen[n]) if seen[n] > 1 else n for n in rolled]
 
 SYSTEM = """You write kitchen design reports for people who have just paid for one.
 
@@ -322,53 +471,102 @@ RETRY_NOTE = ("\n\nReturn only valid JSON: a single object in exactly the shape 
               "above, no code fence, no other text.")
 
 SPEC = {
+    # Every array shows the number of entries that is actually wanted. It used
+    # to show one, with a `// 5-7` comment beside it — but JSON has no comments
+    # and the system prompt says to match the shape exactly, so a one-entry
+    # example is an instruction to send one entry. That is what shape drift
+    # was: the model matching the example it was given.
     "palette": '''"palette": {
   "intro": "1-2 sentences on what this palette is doing and why it suits them",
-  "colors": [        // exactly 3, or 4 if the fourth earns it, split 60/30/10
-    {"name": "the colour's name",
+  "colors": [
+    {"name": "the dominant colour's name",
      "hex": "#RRGGBB — a real paint-range value, six hex digits",
-     "role": "its share under the 60/30/10 rule and the job it does there, e.g. 60% - walls and cabinet bulk",
+     "role": "60% - walls and cabinet bulk",
      "finish": "matte, satin or eggshell, and nothing else",
+     "where": "the exact surfaces it goes on"},
+    {"name": "the secondary colour's name",
+     "hex": "#RRGGBB",
+     "role": "30% - joinery",
+     "finish": "eggshell",
+     "where": "the exact surfaces it goes on"},
+    {"name": "the accent colour's name",
+     "hex": "#RRGGBB",
+     "role": "10% - hardware and one accent",
+     "finish": "satin",
      "where": "the exact surfaces it goes on"}
   ],
   "closing_rule": "one sentence of sheen or finish advice, e.g. what to keep off gloss"
-}''',
+}
+
+Send three colours in that order, or four if the fourth genuinely earns its
+place. Never fewer than three. The `role` values carry the 60/30/10 split and
+must add up to it.''',
     "mistakes": '''"mistakes": {
-  "items": [                       // exactly 5, each expensive once the units are in
+  "items": [
     {"title": "3-6 words, punchy, no full stop",
      "body": "2-3 sentences on what goes wrong and what it costs",
-     "fix": "one imperative sentence — what to do instead"}
+     "fix": "one imperative sentence — what to do instead"},
+    {"title": "the second mistake", "body": "...", "fix": "..."},
+    {"title": "the third mistake", "body": "...", "fix": "..."},
+    {"title": "the fourth mistake", "body": "...", "fix": "..."},
+    {"title": "the fifth mistake", "body": "...", "fix": "..."}
   ]
-}''',
+}
+
+Send five items, each written out in full — the shortened entries above are
+only showing you the shape. Each one expensive to undo once the units are in.''',
     "materials": '''"materials": {
   "intro": "1-2 sentences on how materials behave in this style",
-  "pairs": [                       // 3 or 4, at least one of them an "avoid"
+  "pairs": [
     {"combo": "the two or three materials, named with their finish",
-     "verdict": "works" or "avoid" — exactly one of those two words,
-     "why": "1-2 sentences on what happens when you use it"}
+     "verdict": "works",
+     "why": "1-2 sentences on what happens when you use it"},
+    {"combo": "a second pairing", "verdict": "works", "why": "..."},
+    {"combo": "a third pairing", "verdict": "avoid", "why": "..."}
   ],
   "rule": "one sentence they can carry into a showroom"
-}''',
+}
+
+Send three pairings written out in full, or four. `verdict` is
+"works" or "avoid" — exactly one of those two words, lower case and nothing
+else — and at least one must be "avoid": a page of things that work is a
+list, not a judgement.''',
     "shopping": '''"shopping": {
-  "items": [                       // 5-7, in buying order, first purchase first
-    {"name": "the thing to buy",
-     "priority_note": "one sentence on why it sits here in the order"}
+  "items": [
+    {"name": "the first thing to buy",
+     "priority_note": "one sentence on why it sits first in the order"},
+    {"name": "the second thing to buy", "priority_note": "..."},
+    {"name": "the third thing to buy", "priority_note": "..."},
+    {"name": "the fourth thing to buy", "priority_note": "..."},
+    {"name": "the fifth thing to buy", "priority_note": "..."}
   ],
-  "skip": [                        // 1-2 things people in this style waste money on
-    {"name": "the thing to skip", "why": "one sentence"}
+  "skip": [
+    {"name": "the thing to skip", "why": "one sentence on why it is wasted money"},
+    {"name": "a second thing to skip", "why": "..."}
   ]
-}''',
+}
+
+Send five to seven items, in buying order, each an object with both keys
+written out in full — never a bare string, and never fewer than five. Send
+one or two entries under `skip`, in the same object shape.''',
     "dna": '''"dna": {
   "narrative": ["first short paragraph", "second short paragraph"],
   "implications": ["one thing to do differently", "a second thing to do differently"]
-}''',
+}
+
+Both arrays hold plain strings. Send exactly two implications.''',
     "splurge": '''"splurge": {
   "splurge": {"item": "the one thing to overspend on", "why": "1-2 sentences"},
-  "saves": [                       // exactly 3
-    {"item": "what to buy cheaply", "why": "one sentence on why nobody notices"}
+  "saves": [
+    {"item": "the first thing to buy cheaply",
+     "why": "one sentence on why nobody notices"},
+    {"item": "the second thing to buy cheaply", "why": "..."},
+    {"item": "the third thing to buy cheaply", "why": "..."}
   ],
   "split_note": "a rough budget split across the two, in a sentence"
-}''',
+}
+
+Send exactly three entries under `saves`, each an object with both keys.''',
 }
 
 # Hand-written fallbacks, in the same shape the model returns. These are what a
@@ -828,11 +1026,23 @@ def _parse_detail(text, want):
     for key in want:
         value = data.get(key)
         if value is None:
-            return None, "key %r missing" % key
+            # A model that answered without the wrapper it was asked for has
+            # still answered. Take the whole object as the section when it is
+            # the only one being asked for and it looks like the right shape.
+            if len(want) == 1 and set(SHAPE.get(key, {})) & set(data):
+                value = data
+            else:
+                return None, "key %r missing" % key
+        value = _unwrap(key, value)
         if not isinstance(value, dict):
             return None, "key %r is %s, not an object" % (key, type(value).__name__)
         clean = VALIDATORS[key](value)
         if clean is None:
+            # The forensic layer. Debug rather than warning: the warning above
+            # already says the section was refused, and this is the detail you
+            # only want when you are working out why. Key names and types only.
+            log.debug("section %s field drift: %s", key,
+                      "; ".join(_drift_detail(key, value)))
             return None, "key %r failed its validator (shape drift)" % key
         out[key] = clean
     return out, None
