@@ -99,3 +99,6 @@ bottom.
 
 ## 2026-08-10 — claude/phase3e-paywall-punch
 - Phase 3e: paywall punch
+
+## 2026-08-10 — claude/phase4a-adaptive-engine
+- Phase 4a: adaptive engine
