@@ -127,9 +127,16 @@ def _clean_tag_scores(cfg, raw):
         if tag not in known:
             return None
         # bool is an int subclass; it is not a score.
-        if not isinstance(score, int) or isinstance(score, bool):
+        if isinstance(score, bool) or not isinstance(score, (int, float)):
             return None
-        if score < 0 or score > TAG_SCORE_MAX:
+        # Halves and negatives, since 4B: an inverse step scores a rejection
+        # at -0.5, so a tag nobody chose and somebody rejected finishes below
+        # zero. Requiring a non-negative int here would have rejected every
+        # payload the moment that step shipped, and rejection is silent — the
+        # report would simply have stopped being personalised.
+        if score != score or score in (float("inf"), float("-inf")):
+            return None
+        if not -TAG_SCORE_MAX <= score <= TAG_SCORE_MAX:
             return None
         clean[tag] = score
     return clean or None

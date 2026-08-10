@@ -1066,8 +1066,14 @@ def _choice_lines(cfg, choices):
             for c in (item.get("colors") or [])
             if c.get("name") and c.get("hex") and c.get("element")
         )
-        lines.append("%d. %s — chose \"%s\"%s"
-                     % (n, step.get("question") or step.get("id"),
+        # A step can ask what they would never have, and on that one the tap
+        # means the opposite of every other tap in the list. Saying "chose"
+        # for it would invite the model to build advice out of the one thing
+        # they told us to keep away from.
+        verb = ("explicitly rejected" if step.get("scoring") == "inverse"
+                else "chose")
+        lines.append("%d. %s — %s \"%s\"%s"
+                     % (n, step.get("question") or step.get("id"), verb,
                         item.get("label") or image_id,
                         (": " + colours) if colours else ""))
     return lines
@@ -1078,9 +1084,15 @@ def _choice_block(cfg, choices):
     lines = _choice_lines(cfg, choices)
     if not lines:
         return None
-    return ("The nine choices they made, in order, with what was on screen:\n"
+    # Counted, not written out: the quiz was nine steps and is now twelve, and
+    # a number spelled into the prompt is a number that goes stale silently.
+    return ("The %d choices they made, in order, with what was on screen:\n"
+            % len(lines)
             + "\n".join(lines)
-            + "\nYou may refer to any of these directly — \"the marble you "
+            + "\nOne of these is a rejection rather than a preference, and it "
+              "is marked as one — treat it as a thing to steer away from, "
+              "never as a thing to recommend."
+              "\nYou may refer to any of these directly — \"the marble you "
               "picked\", \"the brass you kept coming back to\" — but only where "
               "it earns its place in the advice.")
 
@@ -1094,6 +1106,9 @@ def _palette_block(cfg, choices):
         "This person's own choices, in order, with the colours that were in "
         "front of them:\n" + "\n".join(lines) + "\n\n"
         "Build the palette out of THESE colours. Rules:\n"
+        "- Any line marked as rejected is the one thing they told us to keep "
+        "out of the room. Its colours are not palette candidates; use it only "
+        "to rule a direction out.\n"
         "- A hue they chose more than once is what the 60% or the 30% should "
         "be. Recurring beats striking: if warm oak turned up in four of nine "
         "choices, oak carries the room whatever else appealed.\n"
