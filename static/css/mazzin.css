@@ -433,6 +433,10 @@ body {
   .cards.is-leaving .card { animation: fade-out 160ms ease both; }
   .caption.is-enter { animation: fade-in 200ms ease both; }
   .cta.is-nudged { animation: none; }
+  /* engine.js already refuses to add these classes here; this is the second
+     lock, for a preference that changes after the page has loaded. */
+  .pay-anchor.is-flashed { animation: none; }
+  #pay-button.is-breathing:not(:disabled) { animation: none; }
   .confetti { display: none; }
   .reaction.is-in .reaction-pill { animation: none; opacity: 1; transform: scale(1); }
   .cards.is-leaving .reaction-pill { animation: fade-out 160ms ease forwards; }
@@ -1299,9 +1303,24 @@ body {
   color: var(--muted);
 }
 
+/* Names the shape of what is being bought before the list itself, so six
+   ticks read as a finished thing rather than as however many bullets. */
+.manifest-head {
+  margin: 18px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+  text-transform: uppercase;
+  color: var(--muted);
+  /* Deliberately not `text-wrap: balance`: it evens the two lines by breaking
+     between the count and the noun it counts, which reads worse than the
+     trailing word it was meant to tidy up. */
+}
+
 .manifest {
   list-style: none;
-  margin: 18px 0 0;
+  margin: 0;
   padding: 0;
 }
 
@@ -1334,28 +1353,80 @@ body {
   line-height: 1.4;
 }
 
-/* What the report is worth, said once, next to what it costs. The text is a
-   darker terracotta than --accent rather than the accent itself: the accent
-   is tuned to carry white on a button, and on the soft tint it reads washed
-   out at 16px. */
+/* What the report is worth, said once, next to what it costs: a line that
+   sets the stake and a line that itemises it. */
 .pay-anchor {
-  margin: 18px 0 0;
+  margin: 16px 0 0;
   padding: 14px 16px;
   border-radius: 12px;
   background: var(--accent-soft);
+}
+
+.anchor-head {
+  display: block;
+  margin: 0 0 6px;
   font-family: var(--brand);
   font-optical-sizing: auto;
-  font-size: 16px;
-  line-height: 1.4;
-  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--accent);
+  text-wrap: balance;
+}
+
+/* Darker than --accent rather than the accent itself: the accent is tuned to
+   carry white on a button, and on the soft tint it goes washed out below the
+   headline's size and weight. */
+.anchor-line {
+  display: block;
+  font-size: 15px;
+  line-height: 1.45;
   color: #7A3A16;
 }
 
+/* Sits directly above the price so the number is read against something
+   already priced, rather than on its own. */
+.pay-reframe {
+  margin: 14px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* One gentle settle the first time the card comes into view. Scale only — a
+   fade would read as the page still loading. It runs once per session and
+   never again. */
+.pay-anchor.is-flashed { animation: anchor-flash 400ms var(--ease-settle) both; }
+
+@keyframes anchor-flash {
+  from { transform: scale(0.97); }
+  to { transform: scale(1); }
+}
+
 .price {
-  margin: 16px 0 0;
+  margin: 4px 0 0;
   font-size: 15px;
   font-weight: 600;
   color: var(--muted);
+}
+
+/* Two slow pulses under the button, four seconds apart, and then it is still.
+   Slow enough to read as the page settling rather than as something blinking
+   for attention, and it does not come back. Gated on :not(:disabled) so an
+   unchecked consent leaves a grey button sitting quietly. */
+#pay-button.is-breathing:not(:disabled) {
+  animation: cta-breathe 8s ease-in-out 1;
+}
+
+@keyframes cta-breathe {
+  0%, 6%, 24%, 56%, 74%, 100% {
+    box-shadow: 0 6px 18px rgba(192, 86, 33, 0.26);
+  }
+  15%, 65% {
+    box-shadow: 0 0 0 7px rgba(192, 86, 33, 0.13),
+                0 8px 22px rgba(192, 86, 33, 0.34);
+  }
 }
 
 .withdrawal {

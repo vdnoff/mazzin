@@ -619,14 +619,18 @@
       "Your style DNA breakdown",
       "Splurge vs save: where your money matters"
     ],
-    "anchor": "One wrong worktop choice costs $2,000+. This report costs {price}.",
+    "manifest_head": "What's inside — {n} sections, yours forever",
+    "anchor_head": "A {price} decision that protects a $20,000 renovation",
+    "anchor": "One wrong worktop costs $2,000+. One wrong cabinet color — $4,000. This report exists so you make neither.",
+    "reframe": "Less than a coffee. Cheaper than one sample pot of paint you'd buy wrong.",
     "price_suffix": "one-time",
-    "cta_label": "Unlock my full report — {price}",
+    "cta_label": "Get my report for {price}",
+    "consent_prechecked": true,
     "trust": [
       "Secure payment via Stripe",
       "Instant delivery",
       "PDF copy to your email"
     ],
-    "eu_withdrawal_text": "I agree that my report is delivered immediately and I lose my 14-day right of withdrawal once it is unlocked."
+    "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right."
   }
 }

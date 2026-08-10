@@ -68,6 +68,7 @@
   var analyzingTimer = null;    // free-result screen, between swipe and reveal
   var generatingTimer = null;   // the card under a report that is still filling
   var paywallTracked = false;
+  var payMotionDone = false;    // the paywall's attention pull runs once
 
   var el = {};
 
@@ -1424,8 +1425,15 @@
   }
 
   function renderManifest() {
+    var rows = cfg.checkout.manifest || [];
+    // `{n}` rather than a written-out six, for the same reason the price is a
+    // slot: a number in copy that describes a list should come from the list.
+    el.manifestHead.textContent =
+      (cfg.checkout.manifest_head || "").replace("{n}", String(rows.length));
+    el.manifestHead.hidden = !cfg.checkout.manifest_head;
+
     el.manifest.innerHTML = "";
-    (cfg.checkout.manifest || []).forEach(function (row) {
+    rows.forEach(function (row) {
       var li = elm("li", "manifest-row");
       li.appendChild(icon("check", "manifest-check"));
       li.appendChild(elm("span", "manifest-text", row));
@@ -1445,9 +1453,53 @@
     });
   }
 
+  // The three nodes 3e adds. funnel.html declares the containers this screen
+  // has always had, and these go inside them — built once, on first render, so
+  // a reader who goes back to the result and returns does not collect a second
+  // set. Same construction as the manifest rows and the trust row above.
+  function ensurePayNodes() {
+    if (el.anchorHead) return;
+
+    el.anchorHead = elm("span", "anchor-head");
+    el.anchorLine = elm("span", "anchor-line");
+    el.payAnchor.appendChild(el.anchorHead);
+    el.payAnchor.appendChild(el.anchorLine);
+
+    el.manifestHead = elm("p", "manifest-head");
+    el.manifest.parentNode.insertBefore(el.manifestHead, el.manifest);
+
+    el.reframe = elm("p", "pay-reframe");
+    el.price.parentNode.insertBefore(el.reframe, el.price);
+  }
+
+  // A one-time scale-in when the anchor first comes into view, and two slow
+  // shadow pulses under the button. Both are once per session and both are
+  // off entirely under prefers-reduced-motion — the point is to catch an eye
+  // that is already on the screen, not to keep moving.
+  function playPayMotion() {
+    if (prefersReducedMotion() || payMotionDone) return;
+    payMotionDone = true;
+
+    el.payButton.classList.add("is-breathing");
+
+    if (!window.IntersectionObserver) {
+      el.payAnchor.classList.add("is-flashed");
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        el.payAnchor.classList.add("is-flashed");
+        io.disconnect();
+      });
+    }, { threshold: 0.5 });
+    io.observe(el.payAnchor);
+  }
+
   function renderPaywall() {
     var style = styleById(winnerStyleId);
     var name = (style && style.name) || "";
+    ensurePayNodes();
 
     el.payKicker.textContent = cfg.checkout.kicker || "";
     // The winner is always computed before this screen can be reached, so the
@@ -1459,17 +1511,29 @@
 
     renderProof(style);
     renderManifest();
-    el.payAnchor.textContent = withPrice(cfg.checkout.anchor || "");
-    el.payAnchor.hidden = !cfg.checkout.anchor;
+
+    el.anchorHead.textContent = withPrice(cfg.checkout.anchor_head || "");
+    el.anchorHead.hidden = !cfg.checkout.anchor_head;
+    el.anchorLine.textContent = withPrice(cfg.checkout.anchor || "");
+    el.anchorLine.hidden = !cfg.checkout.anchor;
+    el.payAnchor.hidden = !(cfg.checkout.anchor_head || cfg.checkout.anchor);
+
+    el.reframe.textContent = withPrice(cfg.checkout.reframe || "");
+    el.reframe.hidden = !cfg.checkout.reframe;
 
     var suffix = cfg.checkout.price_suffix;
     el.price.textContent = formatPrice() + (suffix ? " · " + suffix : "");
     renderTrust();
 
     el.withdrawalText.textContent = cfg.checkout.eu_withdrawal_text || "";
-    el.withdrawalCheck.checked = false;
+    // The short line is the whole of what the box says now; the full clause it
+    // stands for is Terms section 6, which the footer links to from this
+    // screen. The box itself is unchanged — tappable, uncheckable, and still
+    // the only thing that enables the button.
+    el.withdrawalCheck.checked = cfg.checkout.consent_prechecked === true;
     el.payError.hidden = true;
     updatePayButton();
+    playPayMotion();
   }
 
   // --- boot ----------------------------------------------------------------
