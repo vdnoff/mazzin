@@ -51,8 +51,16 @@
   </section>
 
   <section id="screen-paywall" class="screen">
-    <h1 class="headline" id="paywall-headline">Unlock your full report</h1>
-    <ul class="benefits" id="benefits"></ul>
+    <p class="pay-kicker" id="pay-kicker"></p>
+    <h1 class="pay-title" id="paywall-headline"></h1>
+
+    <p class="pay-proof" id="pay-proof" hidden>
+      <span class="pay-dots" id="pay-dots" aria-hidden="true"></span>
+      <span class="pay-proof-line" id="pay-proof-line"></span>
+    </p>
+
+    <ul class="manifest" id="manifest"></ul>
+    <p class="pay-anchor" id="pay-anchor"></p>
     <p class="price" id="price"></p>
 
     <label class="withdrawal">
@@ -62,6 +70,7 @@
 
     <button class="cta" id="pay-button" type="button" disabled>Pay</button>
     <p class="pay-error" id="pay-error" role="alert" hidden></p>
+    <ul class="trust" id="trust"></ul>
     <button class="link-back" id="paywall-back" type="button">Back</button>
 
     <nav class="legal-links">

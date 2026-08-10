@@ -1250,30 +1250,156 @@ body {
   transform: none;
 }
 
-.benefits {
-  margin: 16px 0;
-  padding: 0 0 0 20px;
+/* The paywall is read top to bottom in one pass, so the order is the
+   argument: whose report this is, what is in it, what it is worth, what it
+   costs. Everything above the button is sized to clear a 390x844 viewport
+   without a scroll — the trust row is allowed to sit at the fold. */
+
+.pay-kicker {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.pay-title {
+  margin: 6px 0 0;
+  font-family: var(--brand);
+  font-optical-sizing: auto;
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+/* The same three colours the result screen showed, at dot size. It is the
+   only thing on this screen that is theirs rather than everyone's. */
+.pay-proof {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  margin: 12px 0 0;
+}
+
+.pay-dots { display: flex; gap: 4px; flex: none; }
+
+.pay-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(22, 24, 29, 0.12);
+}
+
+.pay-proof-line {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.manifest {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+}
+
+.manifest-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.manifest-row:last-child { margin-bottom: 0; }
+
+/* Stroked, not filled: the check reads at 17px without going heavy, and the
+   round cap keeps it from looking like a tick in a form. */
+.manifest-check {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.manifest-text {
+  min-width: 0;
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.4;
+}
+
+/* What the report is worth, said once, next to what it costs. The text is a
+   darker terracotta than --accent rather than the accent itself: the accent
+   is tuned to carry white on a button, and on the soft tint it reads washed
+   out at 16px. */
+.pay-anchor {
+  margin: 18px 0 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  font-family: var(--brand);
+  font-optical-sizing: auto;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #7A3A16;
 }
 
 .price {
-  margin: 16px 0;
-  font-size: 22px;
-  font-weight: 700;
+  margin: 16px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted);
 }
 
 .withdrawal {
   display: flex;
   gap: 10px;
   align-items: flex-start;
-  margin: 16px 0;
-  font-size: 13px;
-  line-height: 1.45;
+  margin: 14px 0 16px;
+  font-size: 12px;
+  line-height: 1.4;
   color: var(--muted);
 }
 
-.withdrawal input { margin-top: 2px; flex: 0 0 auto; }
+.withdrawal input {
+  margin: 1px 0 0;
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent);
+}
+
+.trust {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.trust-row { display: flex; gap: 5px; align-items: center; }
+
+.trust-icon {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
 .pay-error {
   margin: 10px 0 0;
