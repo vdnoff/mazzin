@@ -347,18 +347,19 @@ body {
 .reaction.is-right { padding-left: calc(50% + 5px); }
 
 .reaction-pill {
-  /* 96% of a card. Measured against all twelve reaction strings: 78% forced
-     "Character over polish", "Never goes out of style" and "Moody. Bold
-     choice" onto three lines, and 94% was the narrowest that held every one
-     of them to two without shrinking the 17px type. */
+  /* 96% of a card, which at 360 leaves ~117px of text column. The step labels
+     that replaced the old reaction strings are shorter but break worse: "Warm
+     evening glow" is three words and went to three lines at 17px/18px, while
+     the longer "Herringbone warmth" held two. Dropping a point of type and
+     three of padding gives every label two lines at both widths. */
   max-width: 96%;
-  padding: 10px 18px;
+  padding: 10px 15px;
   border-radius: 22px;
   background: #fff;
   box-shadow: 0 6px 18px rgba(22, 24, 29, 0.16);
   font-family: var(--brand);
   font-optical-sizing: auto;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.2;
   color: var(--accent);

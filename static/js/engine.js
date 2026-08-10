@@ -51,11 +51,8 @@
   var attribution = {};
 
   var scores = {};          // tag -> count
-  var seen = {};            // image id -> true (shown, never reshown)
   var pair = [];            // current [imgA, imgB]
   var step = 0;             // pairs completed
-  var byId = {};
-  var pending = {};          // tapped image id -> the pair that follows it
   var preloaded = {};        // img src -> already requested
   var winnerStyleId = null; // set when the result is computed
   var picking = false;      // true through the selection hold; taps ignored
@@ -68,7 +65,6 @@
   var statusTimer = null;
   var analyzingTimer = null;    // free-result screen, between swipe and reveal
   var generatingTimer = null;   // the card under a report that is still filling
-  var lastReaction = null;  // never show the same line twice running
   var paywallTracked = false;
 
   var el = {};
@@ -140,47 +136,27 @@
     window.scrollTo(0, 0);
   }
 
-  // --- pairing -------------------------------------------------------------
+  // --- steps ---------------------------------------------------------------
 
-  function rankTags(map) {
-    return Object.keys(map).sort(function (a, b) {
-      return map[b] - map[a] || (a < b ? -1 : 1);
-    });
+  // The sequence is fixed and authored: each step is one question comparing a
+  // single dimension, and both of its images are known up front. The previous
+  // tag-following pairing chose the next pair from whatever the running scores
+  // ranked highest, which put unrelated images against each other — a dark
+  // render beside a bowl of fruit is not a choice about anything.
+  function stepAt(index) {
+    var steps = (cfg.swipe && cfg.swipe.steps) || [];
+    return steps[index] || null;
   }
 
-  // Scores as they would stand if `item` were the next tap.
-  function scoresWith(item) {
-    var m = {}, k;
-    for (k in scores) m[k] = scores[k];
-    item.tags.forEach(function (t) { m[t] = (m[t] || 0) + 1; });
-    return m;
-  }
-
-  function unseen() {
-    return cfg.swipe.gallery.filter(function (g) { return !seen[g.id]; });
-  }
-
-  function pickByTag(pool, tag) {
-    if (!tag) return null;
-    var hits = pool.filter(function (g) { return g.tags.indexOf(tag) !== -1; });
-    if (!hits.length) return null;
-    return hits[Math.floor(Math.random() * hits.length)];
-  }
-
-  function pickRandom(pool) {
-    if (!pool.length) return null;
-    return pool[Math.floor(Math.random() * pool.length)];
-  }
-
-  function nextPairFrom(map) {
-    var pool = unseen();
-    if (pool.length < 2) return null;
-
-    var ranked = rankTags(map);
-    var a = pickByTag(pool, ranked[0]) || pickRandom(pool);
-    var rest = pool.filter(function (g) { return g.id !== a.id; });
-    var b = pickByTag(rest, ranked[1]) || pickRandom(rest);
-    return [a, b];
+  // The pair a step shows, with the sides shuffled. Which image is on the left
+  // is not part of the question, and leaving it fixed would let a habitual
+  // left-tapper score the same way every run.
+  function pairFor(index) {
+    var st = stepAt(index);
+    var images = (st && st.images) || [];
+    if (images.length < 2) return null;
+    var pair2 = images.slice(0, 2);
+    return Math.random() < 0.5 ? pair2 : [pair2[1], pair2[0]];
   }
 
   // --- preloading ----------------------------------------------------------
@@ -215,17 +191,12 @@
     });
   }
 
-  // The pair that follows depends on which card is tapped, so resolve both
-  // branches now and warm their images while the current pair is on screen.
-  // Whichever the user picks, its images are already in cache.
+  // The next step is the next step whatever the reader taps, so there is one
+  // set of images to warm rather than a branch per card.
   function prepareNext() {
-    pending = {};
-    if (step + 1 >= cfg.swipe.pairs_count) return;
-    pair.forEach(function (item) {
-      var next = nextPairFrom(scoresWith(item));
-      pending[item.id] = next;
-      if (next) next.forEach(function (g) { preload(g.img); });
-    });
+    var next = stepAt(step + 1);
+    if (!next) return;
+    (next.images || []).forEach(function (g) { preload(g.img); });
   }
 
   // --- swipe screen --------------------------------------------------------
@@ -235,7 +206,9 @@
     card.type = "button";
     card.className = "card";
     card.style.setProperty("--i", index);
-    card.setAttribute("aria-label", "Choose " + item.id);
+    // The label is the only human name these images have — "Choose s1a" told
+    // a screen reader nothing.
+    card.setAttribute("aria-label", "Choose " + (item.label || item.id));
 
     var img = document.createElement("img");
     img.className = "card-img";
@@ -262,30 +235,19 @@
     return card;
   }
 
-  // Captions are keyed by image-id prefix (k1/k2/k3) — one per gallery layer.
-  function captionFor(items) {
-    var captions = (cfg.swipe && cfg.swipe.captions) || {};
-    for (var i = 0; i < items.length; i++) {
-      var key = String(items[i].id).slice(0, 2);
-      if (captions[key]) return captions[key];
-    }
-    return "";
-  }
-
   function renderPair() {
     el.cards.innerHTML = "";
     el.cards.classList.remove("is-picking", "is-leaving");
     pair.forEach(function (item, i) {
-      seen[item.id] = true;
       el.cards.appendChild(cardNode(item, i));
     });
-    setCaption(captionFor(pair));
+    var st = stepAt(step);
+    setCaption((st && st.question) || "");
     renderProgress();
     prepareNext();
   }
 
-  // The caption only moves when it actually changes — a new layer of the
-  // gallery — so the motion means something.
+  // The caption is the step's own question, so it changes on every pair.
   function setCaption(text) {
     if (text === el.caption.textContent) return;
     el.caption.textContent = text;
@@ -315,30 +277,6 @@
     }
 
     el.progressLabel.textContent = current + " of " + total;
-  }
-
-  // The tag the chosen card has and the rejected one does not is what the tap
-  // actually revealed — a shared tag would have been picked either way.
-  function reactionFor(chosen, rejected) {
-    var map = (cfg.swipe && cfg.swipe.reactions) || {};
-    var rejectedTags = (rejected && rejected.tags) || [];
-    var known = chosen.tags.filter(function (t) { return map[t]; });
-    var differentiating = known.filter(function (t) {
-      return rejectedTags.indexOf(t) === -1;
-    });
-    var pool = differentiating.length ? differentiating : known;
-    if (!pool.length) return "";
-
-    // Rotate by step so a repeated tag pairing does not always read the same.
-    var texts = pool.map(function (t) { return map[t]; });
-    var pick = texts[(step - 1) % texts.length];
-    if (pick === lastReaction) {
-      for (var i = 0; i < texts.length; i++) {
-        if (texts[i] !== lastReaction) { pick = texts[i]; break; }
-      }
-    }
-    lastReaction = pick;
-    return pick;
   }
 
   function showReaction(text, card) {
@@ -372,8 +310,6 @@
   function choose(item, card) {
     if (picking || !pair.length) return;   // one tap per pair
     picking = true;
-    var next = pending[item.id] || null;   // resolved and preloaded already
-    var rejected = pair[0] === item ? pair[1] : pair[0];
     item.tags.forEach(function (t) { scores[t] = (scores[t] || 0) + 1; });
     step += 1;
     track("swipe", step);
@@ -384,8 +320,11 @@
     if (card) {
       card.classList.add("is-chosen");
       el.cards.classList.add("is-picking");
-      var reaction = reactionFor(item, rejected);
-      setTimeout(function () { showReaction(reaction, card); }, REACTION_DELAY_MS);
+      // The chip names what they just chose, in the words the step used for
+      // it. A tag-derived reaction had to guess at meaning the label already
+      // states.
+      setTimeout(function () { showReaction(item.label || "", card); },
+                 REACTION_DELAY_MS);
     }
     renderProgress();
 
@@ -393,7 +332,7 @@
       el.cards.classList.add("is-leaving");
       setTimeout(function () {
         picking = false;
-        if (step >= cfg.swipe.pairs_count) { startResult(); return; }
+        var next = step >= cfg.swipe.pairs_count ? null : pairFor(step);
         if (!next) { startResult(); return; }
         pair = next;
         renderPair();
@@ -553,7 +492,7 @@
   // anything. Deterministic: the same style always deals the same order.
   function styleShots(style) {
     var tags = (style && style.tags) || [];
-    var gallery = (cfg.swipe && cfg.swipe.gallery) || [];
+    var gallery = (cfg && cfg.preview_gallery) || [];
     if (!tags.length || !gallery.length) return [];
 
     return gallery
@@ -1422,24 +1361,26 @@
   }
 
   function startQuiz() {
-    byId = {};
-    cfg.swipe.gallery.forEach(function (g) { byId[g.id] = g; });
-
     el.headline.textContent = cfg.swipe.headline;
     el.subtext.textContent = cfg.swipe.subtext || "";
+    if (el.tapHint && cfg.swipe.hint) setHint(cfg.swipe.hint);
 
-    var first = (cfg.swipe.pairing && cfg.swipe.pairing.first_pair) || [];
-    var a = byId[first[0]];
-    var b = byId[first[1]];
-    if (!a || !b || a === b) {
-      var pool = cfg.swipe.gallery.slice();
-      a = pool[0];
-      b = pool[1];
-    }
-    pair = [a, b];
+    var first = pairFor(0);
+    if (!first) { startResult(); return; }
+    pair = first;
     show("screen-swipe");
     track("funnel_start");
     preloadPair(pair, renderPair);
+  }
+
+  // The hint keeps its dot, which is markup rather than copy — replace only
+  // the text node beside it.
+  function setHint(text) {
+    var node = el.tapHint;
+    while (node.lastChild && node.lastChild.nodeType === 3) {
+      node.removeChild(node.lastChild);
+    }
+    node.appendChild(document.createTextNode(text));
   }
 
   function boot() {

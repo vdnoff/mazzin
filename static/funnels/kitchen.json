@@ -9,66 +9,115 @@
   "swipe": {
     "pairs_count": 9,
     "headline": "Which kitchen feels more like you?",
-    "subtext": "Every choice shapes what you see next",
-    "captions": {
-      "k1": "Tap the kitchen you'd cook in",
-      "k2": "Which details speak to you?",
-      "k3": "Which materials would you touch?"
-    },
-    "reactions": {
-      "dark": "Moody. Bold choice",
-      "bright": "You love the light",
-      "warm": "Warmth wins",
-      "cool": "Cool and composed",
-      "wood": "Natural textures",
-      "stone": "Stone. Timeless",
-      "metal": "Raw and honest",
-      "rustic": "Character over polish",
-      "modern": "Clean lines",
-      "minimal": "Less is more",
-      "industrial": "Edge and grit",
-      "classic": "Never goes out of style"
-    },
-    "gallery": [
-      { "id": "k101", "img": "/static/galleries/kitchen/k101.webp", "tags": ["rustic", "warm", "wood"] },
-      { "id": "k102", "img": "/static/galleries/kitchen/k102.webp", "tags": ["rustic", "dark", "wood"] },
-      { "id": "k103", "img": "/static/galleries/kitchen/k103.webp", "tags": ["modern", "bright", "stone"] },
-      { "id": "k104", "img": "/static/galleries/kitchen/k104.webp", "tags": ["modern", "warm", "wood"] },
-      { "id": "k105", "img": "/static/galleries/kitchen/k105.webp", "tags": ["minimal", "bright", "stone"] },
-      { "id": "k106", "img": "/static/galleries/kitchen/k106.webp", "tags": ["minimal", "cool", "metal"] },
-      { "id": "k107", "img": "/static/galleries/kitchen/k107.webp", "tags": ["industrial", "dark", "metal"] },
-      { "id": "k108", "img": "/static/galleries/kitchen/k108.webp", "tags": ["industrial", "warm", "wood"] },
-      { "id": "k109", "img": "/static/galleries/kitchen/k109.webp", "tags": ["classic", "bright", "wood"] },
-      { "id": "k110", "img": "/static/galleries/kitchen/k110.webp", "tags": ["classic", "warm", "wood"] },
-      { "id": "k111", "img": "/static/galleries/kitchen/k111.webp", "tags": ["rustic", "bright", "stone"] },
-      { "id": "k112", "img": "/static/galleries/kitchen/k112.webp", "tags": ["modern", "dark", "stone"] },
-      { "id": "k201", "img": "/static/galleries/kitchen/k201.webp", "tags": ["minimal", "bright", "stone"] },
-      { "id": "k202", "img": "/static/galleries/kitchen/k202.webp", "tags": ["rustic", "warm", "wood"] },
-      { "id": "k203", "img": "/static/galleries/kitchen/k203.webp", "tags": ["industrial", "cool", "metal"] },
-      { "id": "k204", "img": "/static/galleries/kitchen/k204.webp", "tags": ["classic", "warm", "wood"] },
-      { "id": "k205", "img": "/static/galleries/kitchen/k205.webp", "tags": ["modern", "cool", "metal"] },
-      { "id": "k206", "img": "/static/galleries/kitchen/k206.webp", "tags": ["rustic", "dark", "wood"] },
-      { "id": "k207", "img": "/static/galleries/kitchen/k207.webp", "tags": ["minimal", "cool", "stone"] },
-      { "id": "k208", "img": "/static/galleries/kitchen/k208.webp", "tags": ["industrial", "dark", "wood"] },
-      { "id": "k209", "img": "/static/galleries/kitchen/k209.webp", "tags": ["classic", "bright", "stone"] },
-      { "id": "k210", "img": "/static/galleries/kitchen/k210.webp", "tags": ["modern", "warm", "wood"] },
-      { "id": "k301", "img": "/static/galleries/kitchen/k301.webp", "tags": ["rustic", "warm", "wood"] },
-      { "id": "k302", "img": "/static/galleries/kitchen/k302.webp", "tags": ["modern", "cool", "stone"] },
-      { "id": "k303", "img": "/static/galleries/kitchen/k303.webp", "tags": ["minimal", "bright", "stone"] },
-      { "id": "k304", "img": "/static/galleries/kitchen/k304.webp", "tags": ["industrial", "dark", "metal"] },
-      { "id": "k305", "img": "/static/galleries/kitchen/k305.webp", "tags": ["classic", "warm", "wood"] },
-      { "id": "k306", "img": "/static/galleries/kitchen/k306.webp", "tags": ["modern", "dark", "metal"] },
-      { "id": "k307", "img": "/static/galleries/kitchen/k307.webp", "tags": ["minimal", "cool", "metal"] },
-      { "id": "k308", "img": "/static/galleries/kitchen/k308.webp", "tags": ["rustic", "bright", "stone"] }
-    ],
-    "pairing": {
-      "strategy": "tag_follow",
-      "first_pair": [
-        "k101",
-        "k105"
-      ]
-    }
+    "subtext": "9 choices reveal your style",
+    "hint": "Tap your choice",
+    "steps": [
+      {
+        "id": "color",
+        "question": "Which colors feel like home?",
+        "images": [
+          { "id": "s1a", "img": "/static/galleries/kitchen/s1a.webp", "label": "Deep & moody", "tags": ["dark", "warm", "wood"] },
+          { "id": "s1b", "img": "/static/galleries/kitchen/s1b.webp", "label": "Soft & sunlit", "tags": ["bright", "warm", "wood"] }
+        ]
+      },
+      {
+        "id": "cabinets",
+        "question": "Pick your cabinet character",
+        "images": [
+          { "id": "s2a", "img": "/static/galleries/kitchen/s2a.webp", "label": "Classic charm", "tags": ["classic", "warm", "wood"] },
+          { "id": "s2b", "img": "/static/galleries/kitchen/s2b.webp", "label": "Sleek & seamless", "tags": ["minimal", "modern", "cool"] }
+        ]
+      },
+      {
+        "id": "lighting",
+        "question": "How should your kitchen glow?",
+        "images": [
+          { "id": "s3a", "img": "/static/galleries/kitchen/s3a.webp", "label": "Warm evening glow", "tags": ["dark", "warm", "industrial"] },
+          { "id": "s3b", "img": "/static/galleries/kitchen/s3b.webp", "label": "Clean daylight", "tags": ["bright", "cool", "modern"] }
+        ]
+      },
+      {
+        "id": "worktop",
+        "question": "Which worktop would you touch?",
+        "images": [
+          { "id": "s4a", "img": "/static/galleries/kitchen/s4a.webp", "label": "Marble drama", "tags": ["stone", "dark", "classic"] },
+          { "id": "s4b", "img": "/static/galleries/kitchen/s4b.webp", "label": "Warm wood", "tags": ["wood", "warm", "rustic"] }
+        ]
+      },
+      {
+        "id": "dining",
+        "question": "Where do you gather?",
+        "images": [
+          { "id": "s5a", "img": "/static/galleries/kitchen/s5a.webp", "label": "Gather & linger", "tags": ["rustic", "warm", "wood"] },
+          { "id": "s5b", "img": "/static/galleries/kitchen/s5b.webp", "label": "Quick & social", "tags": ["modern", "cool", "metal"] }
+        ]
+      },
+      {
+        "id": "floor",
+        "question": "What's underfoot?",
+        "images": [
+          { "id": "s6a", "img": "/static/galleries/kitchen/s6a.webp", "label": "Herringbone warmth", "tags": ["wood", "warm", "classic"] },
+          { "id": "s6b", "img": "/static/galleries/kitchen/s6b.webp", "label": "Modern stone", "tags": ["stone", "cool", "minimal"] }
+        ]
+      },
+      {
+        "id": "storage",
+        "question": "Show it or hide it?",
+        "images": [
+          { "id": "s7a", "img": "/static/galleries/kitchen/s7a.webp", "label": "Show it off", "tags": ["rustic", "bright", "wood"] },
+          { "id": "s7b", "img": "/static/galleries/kitchen/s7b.webp", "label": "Hidden & calm", "tags": ["minimal", "cool", "modern"] }
+        ]
+      },
+      {
+        "id": "mood",
+        "question": "Which evening is yours?",
+        "images": [
+          { "id": "s8a", "img": "/static/galleries/kitchen/s8a.webp", "label": "Intimate nights", "tags": ["dark", "warm", "industrial"] },
+          { "id": "s8b", "img": "/static/galleries/kitchen/s8b.webp", "label": "Fresh mornings", "tags": ["bright", "cool", "classic"] }
+        ]
+      },
+      {
+        "id": "materials",
+        "question": "Your material DNA?",
+        "images": [
+          { "id": "s9a", "img": "/static/galleries/kitchen/s9a.webp", "label": "Rich & bold", "tags": ["dark", "wood", "metal"] },
+          { "id": "s9b", "img": "/static/galleries/kitchen/s9b.webp", "label": "Light & natural", "tags": ["bright", "stone", "minimal"] }
+        ]
+      }
+    ]
   },
+  "preview_gallery": [
+    { "id": "k101", "img": "/static/galleries/kitchen/k101.webp", "tags": ["rustic", "warm", "wood"] },
+    { "id": "k102", "img": "/static/galleries/kitchen/k102.webp", "tags": ["rustic", "dark", "wood"] },
+    { "id": "k103", "img": "/static/galleries/kitchen/k103.webp", "tags": ["modern", "bright", "stone"] },
+    { "id": "k104", "img": "/static/galleries/kitchen/k104.webp", "tags": ["modern", "warm", "wood"] },
+    { "id": "k105", "img": "/static/galleries/kitchen/k105.webp", "tags": ["minimal", "bright", "stone"] },
+    { "id": "k106", "img": "/static/galleries/kitchen/k106.webp", "tags": ["minimal", "cool", "metal"] },
+    { "id": "k107", "img": "/static/galleries/kitchen/k107.webp", "tags": ["industrial", "dark", "metal"] },
+    { "id": "k108", "img": "/static/galleries/kitchen/k108.webp", "tags": ["industrial", "warm", "wood"] },
+    { "id": "k109", "img": "/static/galleries/kitchen/k109.webp", "tags": ["classic", "bright", "wood"] },
+    { "id": "k110", "img": "/static/galleries/kitchen/k110.webp", "tags": ["classic", "warm", "wood"] },
+    { "id": "k111", "img": "/static/galleries/kitchen/k111.webp", "tags": ["rustic", "bright", "stone"] },
+    { "id": "k112", "img": "/static/galleries/kitchen/k112.webp", "tags": ["modern", "dark", "stone"] },
+    { "id": "k201", "img": "/static/galleries/kitchen/k201.webp", "tags": ["minimal", "bright", "stone"] },
+    { "id": "k202", "img": "/static/galleries/kitchen/k202.webp", "tags": ["rustic", "warm", "wood"] },
+    { "id": "k203", "img": "/static/galleries/kitchen/k203.webp", "tags": ["industrial", "cool", "metal"] },
+    { "id": "k204", "img": "/static/galleries/kitchen/k204.webp", "tags": ["classic", "warm", "wood"] },
+    { "id": "k205", "img": "/static/galleries/kitchen/k205.webp", "tags": ["modern", "cool", "metal"] },
+    { "id": "k206", "img": "/static/galleries/kitchen/k206.webp", "tags": ["rustic", "dark", "wood"] },
+    { "id": "k207", "img": "/static/galleries/kitchen/k207.webp", "tags": ["minimal", "cool", "stone"] },
+    { "id": "k208", "img": "/static/galleries/kitchen/k208.webp", "tags": ["industrial", "dark", "wood"] },
+    { "id": "k209", "img": "/static/galleries/kitchen/k209.webp", "tags": ["classic", "bright", "stone"] },
+    { "id": "k210", "img": "/static/galleries/kitchen/k210.webp", "tags": ["modern", "warm", "wood"] },
+    { "id": "k301", "img": "/static/galleries/kitchen/k301.webp", "tags": ["rustic", "warm", "wood"] },
+    { "id": "k302", "img": "/static/galleries/kitchen/k302.webp", "tags": ["modern", "cool", "stone"] },
+    { "id": "k303", "img": "/static/galleries/kitchen/k303.webp", "tags": ["minimal", "bright", "stone"] },
+    { "id": "k304", "img": "/static/galleries/kitchen/k304.webp", "tags": ["industrial", "dark", "metal"] },
+    { "id": "k305", "img": "/static/galleries/kitchen/k305.webp", "tags": ["classic", "warm", "wood"] },
+    { "id": "k306", "img": "/static/galleries/kitchen/k306.webp", "tags": ["modern", "dark", "metal"] },
+    { "id": "k307", "img": "/static/galleries/kitchen/k307.webp", "tags": ["minimal", "cool", "metal"] },
+    { "id": "k308", "img": "/static/galleries/kitchen/k308.webp", "tags": ["rustic", "bright", "stone"] }
+  ],
   "styles": [
     {
       "id": "modern_rustic",
@@ -76,7 +125,8 @@
       "tags": [
         "rustic",
         "modern",
-        "wood"
+        "wood",
+        "bright"
       ],
       "blurb": "Warm timber and honest texture held in check by clean modern lines — comfortable without ever tipping into fussy.",
       "reveals": {
@@ -117,7 +167,8 @@
         "minimal",
         "modern",
         "cool",
-        "stone"
+        "stone",
+        "bright"
       ],
       "blurb": "Nothing on the counter, everything in its place, and daylight doing most of the decorating.",
       "reveals": {
@@ -200,7 +251,8 @@
         "classic",
         "warm",
         "bright",
-        "stone"
+        "stone",
+        "metal"
       ],
       "blurb": "Shaker doors, honest proportions and materials chosen to look better in ten years than they do today.",
       "reveals": {

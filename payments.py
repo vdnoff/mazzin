@@ -63,9 +63,19 @@ def _style_ids(cfg):
 
 
 def _gallery_tags(cfg):
-    """Every tag the gallery can actually award. The client cannot invent one."""
+    """Every tag the quiz can actually award. The client cannot invent one.
+
+    The steps are the whole source: a tag the reader had no way to tap is not a
+    tag they scored. `gallery` is the pre-3a shape and is still read, so a
+    funnel that has not been converted keeps validating instead of silently
+    rejecting every score it is sent.
+    """
+    swipe = cfg.get("swipe") or {}
     tags = set()
-    for item in ((cfg.get("swipe") or {}).get("gallery") or []):
+    for step in (swipe.get("steps") or []):
+        for item in (step.get("images") or []):
+            tags.update(item.get("tags") or [])
+    for item in (swipe.get("gallery") or []):
         tags.update(item.get("tags") or [])
     return tags
 
