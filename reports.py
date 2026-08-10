@@ -65,6 +65,12 @@ MAX_TOKENS = 2000          # the cached group, which is three sections at once
 SECTION_TOKENS = 700       # one personalised section on its own
 TEMPERATURE = 0.7
 
+# The offline warmer's own limits. Nothing is waiting on it, so it is patient
+# where the request path is not: a long per-call timeout and real retries in
+# place of the request path's one.
+WARM_TIMEOUT_S = 180.0
+WARM_RETRIES = 3
+
 # A 90-word section is ~500 characters. This only has to separate a real
 # section from an empty string or a one-line apology.
 MIN_BODY_CHARS = 200
@@ -562,13 +568,14 @@ def _section_prompt(style, name, tag_scores, section_id):
     return "\n\n".join(parts)
 
 
-def _cached_prompt(style, name):
+def _cached_prompt(style, name, ids=CACHED):
+    """The per-style sections. `ids` narrows it to a subset for the warmer."""
     return "\n\n".join(
         [
             _style_block(style, name),
             "Write for anyone with this style. Nothing here is specific to one "
             "person.",
-            _sections_block(CACHED),
+            _sections_block(ids),
         ]
     )
 
@@ -601,6 +608,29 @@ def _api():
             max_retries=1,
         )
     return _client
+
+
+def _warm_api():
+    """A client for offline warming, or None when generation is switched off.
+
+    Separate from the request-path client because the trade-off inverts. A
+    purchase cannot wait three minutes for a section, so `_api` gives up early
+    and stubs; a warmer run has nothing else to do and would far rather wait
+    than leave a style cold for the next buyer. Not cached — this is called
+    once per console run.
+    """
+    if not config.ANTHROPIC_API_KEY:
+        return None
+    try:
+        import anthropic
+    except ImportError:
+        log.error("anthropic SDK not installed — cannot warm the cache")
+        return None
+    return anthropic.Anthropic(
+        api_key=config.ANTHROPIC_API_KEY,
+        timeout=WARM_TIMEOUT_S,
+        max_retries=WARM_RETRIES,
+    )
 
 
 # --- the in-flight limit ---------------------------------------------------
@@ -725,17 +755,18 @@ def _generate(client, prompt, want, max_tokens=MAX_TOKENS):
 # --- cache -----------------------------------------------------------------
 
 
-def _read_cache(funnel_slug, result_style):
-    """Cached per-style sections, or None unless the whole set is current.
+def _cache_state(funnel_slug, result_style):
+    """(usable sections, stale row count) for one style.
 
-    A row written under an older schema is a miss, not a broken render: it is
-    regenerated and overwritten on the next purchase of that style.
+    Section-by-section rather than all-or-nothing, because the warmer needs to
+    know which three are missing and the purchase path only needs to know
+    whether all three are there.
     """
     try:
         rows = database.query_all(SELECT_SECTIONS_SQL, (funnel_slug, result_style))
     except Exception:
         log.exception("style section read failed for %s/%s", funnel_slug, result_style)
-        return None
+        return None, 0
 
     out = {}
     stale = 0
@@ -757,10 +788,26 @@ def _read_cache(funnel_slug, result_style):
             clean = VALIDATORS[section_id](data)
             if clean is not None:
                 out[section_id] = clean
+    return out, stale
+
+
+def _read_cache(funnel_slug, result_style):
+    """Cached per-style sections, or None unless the whole set is current.
+
+    A row written under an older schema is a miss, not a broken render: it is
+    regenerated and overwritten on the next purchase of that style.
+    """
+    out, stale = _cache_state(funnel_slug, result_style)
+    if out is None:
+        return None
 
     if stale:
-        log.info("style sections for %s/%s are schema %s — regenerating %d",
-                 funnel_slug, result_style, CACHE_SCHEMA, stale)
+        # Loud, because scripts/warm_cache.py is supposed to have left every
+        # style current. A stale row reaching a paying customer means the
+        # schema moved and nobody re-warmed it.
+        log.warning("style sections for %s/%s are schema %s — %d stale rows "
+                    "regenerating on the purchase path; run warm_cache.py",
+                    funnel_slug, result_style, CACHE_SCHEMA, stale)
 
     if all(section_id in out for section_id in CACHED):
         return dict((section_id, out[section_id]) for section_id in CACHED)
@@ -1051,11 +1098,95 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
         INSERT_SQL, (purchase_id, json.dumps(opening, separators=(",", ":")))
     )
     job["content"] = opening
+    # Counted before the thread starts: it writes into this same dict as
+    # sections land, and this number is how you tell whether the warmer is
+    # doing its job.
+    from_cache = len(built)
     threading.Thread(target=_run, args=(job,), daemon=True,
                      name="report-%s" % purchase_id).start()
     log.info("report started for purchase %s (%d tasks, %d cached)",
-             purchase_id, len(tasks), len(built))
+             purchase_id, len(tasks), from_cache)
     return opening
+
+
+# --- offline cache warmer --------------------------------------------------
+
+
+def warm_style_cache(funnel_slug, style_id, client=None):
+    """Fill the per-style section cache for one style. Console use only.
+
+    The three cached sections are the same for everyone with a given style, so
+    generating them during a purchase is work the buyer should never have paid
+    for in latency. Run this after a deploy that moves CACHE_SCHEMA and the
+    purchase path drops to the three personalised calls it actually needs.
+
+    Nothing here touches REPORT_BUDGET_S, the thread pool or the report row: it
+    is not on any request path, so it can take as long as it takes. Calls are
+    made one at a time, per missing section, so one unusable answer costs its
+    own section and not the other two — and a style that is half-cached is
+    repaired rather than regenerated.
+
+    Returns a dict: status is "cached" when there was nothing to do, "warmed"
+    when every missing section landed, "partial" when some did, "failed" when
+    none did, and "skipped" when there is no client or no such style.
+    """
+    def result(status, **extra):
+        out = {"funnel": funnel_slug, "style": style_id, "status": status,
+               "cached": [], "warmed": [], "failed": [], "stale": 0}
+        out.update(extra)
+        return out
+
+    try:
+        cfg = config.load_funnel(funnel_slug)
+    except KeyError:
+        return result("skipped", detail="no such funnel")
+
+    style = _style(cfg, style_id)
+    if not style:
+        return result("skipped", detail="no such style")
+    name = _style_name(cfg, style_id)
+
+    have, stale = _cache_state(funnel_slug, style_id)
+    if have is None:
+        return result("failed", detail="cache read failed")
+
+    present = [s for s in CACHED if s in have]
+    missing = [s for s in CACHED if s not in have]
+    if not missing:
+        return result("cached", cached=present, stale=stale)
+
+    if client is None:
+        client = _warm_api()
+    if client is None:
+        return result("skipped", cached=present, stale=stale,
+                      detail="no API key or SDK")
+
+    warmed, failed = [], []
+    for section_id in missing:
+        try:
+            got = _generate(client, _cached_prompt(style, name, (section_id,)),
+                            (section_id,), SECTION_TOKENS)
+        except Exception as exc:
+            log.warning("warm %s/%s/%s failed: %s", funnel_slug, style_id,
+                        section_id, type(exc).__name__)
+            got = None
+        if not got:
+            failed.append(section_id)
+            continue
+        _write_cache(funnel_slug, style_id, got)
+        warmed.append(section_id)
+
+    if not warmed:
+        status = "failed"
+    elif failed:
+        status = "partial"
+    else:
+        status = "warmed"
+    log.info("warm %s/%s: %s (warmed %s, already had %s, failed %s)",
+             funnel_slug, style_id, status, len(warmed), len(present),
+             len(failed))
+    return result(status, cached=present, warmed=warmed, failed=failed,
+                  stale=stale)
 
 
 # --- PDF -------------------------------------------------------------------
