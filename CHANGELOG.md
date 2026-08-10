@@ -69,3 +69,6 @@ bottom.
 
 ## 2026-08-10 — claude/phase2f-fast-delivery
 - Phase 2f: fast progressive delivery
+
+## 2026-08-10 — claude/phase2g-polish-stability
+- Phase 2g: stability + exclusivity
