@@ -555,15 +555,99 @@ def _leaning_block(tag_scores):
     )
 
 
-def _section_prompt(style, name, tag_scores, section_id):
+def _choice_lines(cfg, choices):
+    """What they actually looked at, in the order they chose it.
+
+    Tags say a choice was `warm`; this says it was a deep green cabinet next
+    to aged brass. It is the difference between a palette assembled from
+    categories and one assembled from things this person pointed at.
+    """
+    if not choices:
+        return []
+    by_id = {}
+    for step in (cfg.get("swipe") or {}).get("steps") or []:
+        for item in step.get("images") or []:
+            by_id[item.get("id")] = (step, item)
+
+    lines = []
+    for n, image_id in enumerate(choices, 1):
+        found = by_id.get(image_id)
+        if not found:
+            continue
+        step, item = found
+        colours = ", ".join(
+            "%s %s on the %s" % (c.get("name"), c.get("hex"), c.get("element"))
+            for c in (item.get("colors") or [])
+            if c.get("name") and c.get("hex") and c.get("element")
+        )
+        lines.append("%d. %s — chose \"%s\"%s"
+                     % (n, step.get("question") or step.get("id"),
+                        item.get("label") or image_id,
+                        (": " + colours) if colours else ""))
+    return lines
+
+
+def _choice_block(cfg, choices):
+    """The choice sequence as context for a section that is not the palette."""
+    lines = _choice_lines(cfg, choices)
+    if not lines:
+        return None
+    return ("The nine choices they made, in order, with what was on screen:\n"
+            + "\n".join(lines)
+            + "\nYou may refer to any of these directly — \"the marble you "
+              "picked\", \"the brass you kept coming back to\" — but only where "
+              "it earns its place in the advice.")
+
+
+def _palette_block(cfg, choices):
+    """The palette instruction, when we know what they actually chose."""
+    lines = _choice_lines(cfg, choices)
+    if not lines:
+        return None
+    return (
+        "This person's own choices, in order, with the colours that were in "
+        "front of them:\n" + "\n".join(lines) + "\n\n"
+        "Build the palette out of THESE colours. Rules:\n"
+        "- A hue they chose more than once is what the 60% or the 30% should "
+        "be. Recurring beats striking: if warm oak turned up in four of nine "
+        "choices, oak carries the room whatever else appealed.\n"
+        "- The 10% accent is the strongest colour they chose that did NOT "
+        "recur — the one they picked once and decisively.\n"
+        "- Use their hex values, or a shade within a few points of one, rather "
+        "than inventing a colour they never saw. You may correct a value that "
+        "was obviously lit rather than painted — a cream tile read under lamp "
+        "light is not really orange.\n"
+        "- Every colour's `where` must say which choice it came from, in those "
+        "words: \"the deep green you chose for your cabinets\", \"the marble "
+        "you picked over warm wood\". Name the choice, never the step number "
+        "and never a tag.\n"
+        "- If their choices genuinely conflict, say so in the closing rule and "
+        "resolve it — do not average them into mud."
+    )
+
+
+def _section_prompt(style, name, tag_scores, section_id, cfg=None, choices=None):
     """One personalised section on its own.
 
     Each section is its own call now, so each carries the whole style and
     leaning context. That is a few hundred repeated tokens per report against
     three sections arriving in the time one used to take.
+
+    When the choice sequence survived checkout it goes in too: the palette is
+    built from the colours they actually tapped, and the other two sections get
+    the sequence as something they may point at. Without it every section falls
+    back to the tag-based behaviour unchanged.
     """
     parts = [_style_block(style, name)]
     parts.append(_leaning_block(tag_scores))
+
+    extra = None
+    if cfg is not None and choices:
+        extra = (_palette_block(cfg, choices) if section_id == "palette"
+                 else _choice_block(cfg, choices))
+    if extra:
+        parts.append(extra)
+
     parts.append(_sections_block((section_id,)))
     return "\n\n".join(parts)
 
@@ -1013,7 +1097,7 @@ def _personal_order(cfg):
 
 
 def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
-                 on_final=None):
+                 on_final=None, choices=None):
     """Persist an empty report and generate into it in the background.
 
     Returns as soon as the row exists. Nothing here waits on a model, so the
@@ -1023,6 +1107,10 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     `on_final` is called exactly once with the finished content, which is
     where anything that must reflect the whole report — the emailed PDF —
     belongs.
+
+    `choices` is the sequence of image ids they tapped, already validated
+    against this funnel. It is what lets the palette be built from colours
+    they actually chose; without it every section falls back to tags alone.
 
     Raises if the funnel config is missing or the INSERT fails; the webhook
     treats that as non-fatal.
@@ -1063,7 +1151,8 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                 "ids": (section_id,), "cache": False,
                 "future": pool.submit(
                     _generate, client,
-                    _section_prompt(style, name, tag_scores, section_id),
+                    _section_prompt(style, name, tag_scores, section_id,
+                                    cfg, choices),
                     (section_id,), SECTION_TOKENS),
             })
         if cached is None:
@@ -1104,8 +1193,8 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     from_cache = len(built)
     threading.Thread(target=_run, args=(job,), daemon=True,
                      name="report-%s" % purchase_id).start()
-    log.info("report started for purchase %s (%d tasks, %d cached)",
-             purchase_id, len(tasks), from_cache)
+    log.info("report started for purchase %s (%d tasks, %d cached, %d choices)",
+             purchase_id, len(tasks), from_cache, len(choices or []))
     return opening
 
 
