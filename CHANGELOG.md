@@ -105,3 +105,6 @@ bottom.
 
 ## 2026-08-10 — claude/phase4b-content
 - Phase 4B: 12-step adaptive quiz
+
+## 2026-08-10 — claude/branding-logo
+- Add Mazzin brand assets: logo, mark, favicons
