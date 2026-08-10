@@ -218,18 +218,21 @@ def _record_side_effects(purchase_id, slug, session_id, result_style, tag_scores
                          email=None, checkout_session=None):
     """Report + emailed PDF + server-side purchase event.
 
-    The email is hung off the report's `on_final` hook rather than sent after
-    the call returns. That hook fires once the content is settled — after a
-    late model call has had its chance to upgrade the row — so the PDF carries
-    the best version rather than whatever existed at the budget cutoff. When
-    nothing is outstanding it fires inline and the mail goes immediately.
+    `start_report` persists an empty report row and returns; every model call
+    happens on a background thread that fills the row in as sections land. So
+    this webhook's response time no longer depends on generation at all — the
+    only thing between the purchase landing and the 200 is two inserts.
+
+    The email hangs off the report's `on_final` hook rather than anything here,
+    because that fires once at completion, after any late call has had its
+    chance to upgrade the row. The PDF therefore carries the finished report.
     """
 
     def deliver(content):
         reports.send_report_email(purchase_id, email, content, checkout_session)
 
     try:
-        reports.generate_report(
+        reports.start_report(
             purchase_id, slug, result_style, tag_scores,
             on_final=deliver if email else None,
         )
@@ -378,6 +381,8 @@ def report():
 
     row = database.query_one(SELECT_REPORT_SQL, (purchase["id"],))
     if not row:
+        # The webhook has not written the row yet. Everything after this point
+        # is a 200 with however much of the report exists.
         return jsonify(body), 202
 
     content = row["content"]
@@ -385,5 +390,7 @@ def report():
         content = json.loads(content)
 
     body["status"] = "ready"
+    body["complete"] = not str((content or {}).get("version") or "").endswith(
+        reports.PARTIAL_SUFFIX)
     body["report"] = content
     return jsonify(body), 200
