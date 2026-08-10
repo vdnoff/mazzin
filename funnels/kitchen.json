@@ -563,10 +563,24 @@
     "cta": "Unlock my full report"
   },
   "checkout": {
-    "benefits": [
-      "Your complete style breakdown, all six sections unlocked",
-      "Exact colors, materials and finishes to specify",
-      "A shopping list you can use today"
+    "kicker": "Your report is ready",
+    "title": "Your {style} Report",
+    "proof_line": "Built from your 9 choices",
+    "manifest": [
+      "Your complete color palette with exact paint codes",
+      "The 5 costly mistakes for your style — with fixes",
+      "Materials & combinations: what works, what to avoid",
+      "Ordered shopping list: what to buy first",
+      "Your style DNA breakdown",
+      "Splurge vs save: where your money matters"
+    ],
+    "anchor": "One wrong worktop choice costs $2,000+. This report costs {price}.",
+    "price_suffix": "one-time",
+    "cta_label": "Unlock my full report — {price}",
+    "trust": [
+      "Secure payment via Stripe",
+      "Instant delivery",
+      "PDF copy to your email"
     ],
     "eu_withdrawal_text": "I agree that my report is delivered immediately and I lose my 14-day right of withdrawal once it is unlocked."
   }

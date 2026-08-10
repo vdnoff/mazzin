@@ -1254,11 +1254,29 @@
     return (cents / 100).toFixed(2) + " " + cur;
   }
 
+  var SYMBOLS = { USD: "$", EUR: "€", GBP: "£" };
+
+  // The same amount, short enough to sit inside a sentence. "3.00 USD" is
+  // right on its own line and wrong in "This report costs ___", so copy that
+  // names the price interpolates this instead of spelling a number out —
+  // config never carries an amount, only the slot one goes in.
+  function formatPriceShort() {
+    var cents = cfg.pricing.amount_cents;
+    var cur = (cfg.pricing.currency || "usd").toUpperCase();
+    var amount = cents % 100 === 0 ? String(cents / 100)
+                                   : (cents / 100).toFixed(2);
+    return SYMBOLS[cur] ? SYMBOLS[cur] + amount : amount + " " + cur;
+  }
+
+  function withPrice(text) {
+    return String(text || "").replace(/\{price\}/g, formatPriceShort());
+  }
+
   function updatePayButton() {
     var ok = el.withdrawalCheck.checked && PAYMENTS_ENABLED;
     el.payButton.disabled = !ok;
     el.payButton.textContent = PAYMENTS_ENABLED
-      ? "Pay " + formatPrice()
+      ? withPrice(cfg.checkout.cta_label || cfg.pricing.cta || "Unlock")
       : "Payments coming in Phase 1b";
   }
 
@@ -1301,14 +1319,94 @@
       });
   }
 
-  function renderPaywall() {
-    el.benefits.innerHTML = "";
-    (cfg.checkout.benefits || []).forEach(function (b) {
-      var li = document.createElement("li");
-      li.textContent = b;
-      el.benefits.appendChild(li);
+  var SVG_NS = "http://www.w3.org/2000/svg";
+
+  // Icons are drawn rather than written: a glyph would arrive with whatever
+  // the platform emoji font decided, at a colour and weight nobody chose.
+  // These inherit currentColor and the accent, like everything else here.
+  var ICONS = {
+    check: "M4 10.5l4 4 8-9",
+    lock: "M6 9V6.5a4 4 0 018 0V9M4.5 9h11v8h-11z",
+    bolt: "M11 2L4.5 11.5H9.5L9 18l6.5-9.5H10.5z",
+    mail: "M2.5 5h15v10h-15zM2.5 5.5l7.5 5.5 7.5-5.5"
+  };
+
+  function icon(name, cls) {
+    var svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("class", cls);
+    svg.setAttribute("viewBox", "0 0 20 20");
+    svg.setAttribute("aria-hidden", "true");
+    var path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("d", ICONS[name]);
+    svg.appendChild(path);
+    return svg;
+  }
+
+  // The three colours the result screen already showed them, repeated here at
+  // dot size. The strip is a promise about the report, so it is drawn from the
+  // same config the palette section is delivered from rather than from
+  // decoration picked to look good — and a style with no palette shows
+  // nothing instead of a row of empty circles.
+  function renderProof(style) {
+    var colors = (((style || {}).reveals || {}).palette || {}).colors || [];
+    var line = cfg.checkout.proof_line || "";
+    el.payDots.innerHTML = "";
+    if (!colors.length || !line) {
+      el.payProof.hidden = true;
+      return;
+    }
+    colors.slice(0, 3).forEach(function (c) {
+      var dot = elm("span", "pay-dot");
+      dot.style.backgroundColor = c.hex;
+      el.payDots.appendChild(dot);
     });
-    el.price.textContent = formatPrice();
+    el.payProofLine.textContent = line;
+    el.payProof.hidden = false;
+  }
+
+  function renderManifest() {
+    el.manifest.innerHTML = "";
+    (cfg.checkout.manifest || []).forEach(function (row) {
+      var li = elm("li", "manifest-row");
+      li.appendChild(icon("check", "manifest-check"));
+      li.appendChild(elm("span", "manifest-text", row));
+      el.manifest.appendChild(li);
+    });
+  }
+
+  var TRUST_ICONS = ["lock", "bolt", "mail"];
+
+  function renderTrust() {
+    el.trust.innerHTML = "";
+    (cfg.checkout.trust || []).forEach(function (row, i) {
+      var li = elm("li", "trust-row");
+      li.appendChild(icon(TRUST_ICONS[i] || "check", "trust-icon"));
+      li.appendChild(elm("span", null, row));
+      el.trust.appendChild(li);
+    });
+  }
+
+  function renderPaywall() {
+    var style = styleById(winnerStyleId);
+    var name = (style && style.name) || "";
+
+    el.payKicker.textContent = cfg.checkout.kicker || "";
+    // The winner is always computed before this screen can be reached, so the
+    // name is always there — but "Your  Report" with a hole in it is the kind
+    // of thing that only ever shows up in a screenshot from a real customer.
+    el.paywallHeadline.textContent =
+      (cfg.checkout.title || "Your {style} Report")
+        .replace("{style}", name).replace(/\s{2,}/g, " ").trim();
+
+    renderProof(style);
+    renderManifest();
+    el.payAnchor.textContent = withPrice(cfg.checkout.anchor || "");
+    el.payAnchor.hidden = !cfg.checkout.anchor;
+
+    var suffix = cfg.checkout.price_suffix;
+    el.price.textContent = formatPrice() + (suffix ? " · " + suffix : "");
+    renderTrust();
+
     el.withdrawalText.textContent = cfg.checkout.eu_withdrawal_text || "";
     el.withdrawalCheck.checked = false;
     el.payError.hidden = true;
@@ -1340,7 +1438,14 @@
     el.resultBlurb = $("result-blurb");
     el.report = $("report");
     el.cta = $("cta");
-    el.benefits = $("benefits");
+    el.payKicker = $("pay-kicker");
+    el.paywallHeadline = $("paywall-headline");
+    el.payProof = $("pay-proof");
+    el.payDots = $("pay-dots");
+    el.payProofLine = $("pay-proof-line");
+    el.manifest = $("manifest");
+    el.payAnchor = $("pay-anchor");
+    el.trust = $("trust");
     el.price = $("price");
     el.withdrawalCheck = $("withdrawal-check");
     el.withdrawalText = $("withdrawal-text");
