@@ -90,3 +90,6 @@ bottom.
 
 ## 2026-08-10 — claude/fix-shopping-final
 - fix: shopping final
+
+## 2026-08-10 — claude/phase3c-paywall
+- Phase 3c: paywall pass
