@@ -75,3 +75,6 @@ bottom.
 
 ## 2026-08-10 — claude/phase3a-themed-steps
 - Phase 3a: themed swipe steps
+
+## 2026-08-10 — claude/fix-cache-warmer
+- fix: cache warmer
