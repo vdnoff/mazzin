@@ -87,3 +87,6 @@ bottom.
 
 ## 2026-08-10 — claude/fix-shape-drift
 - section shape drift fix
+
+## 2026-08-10 — claude/fix-shopping-final
+- fix: shopping final
