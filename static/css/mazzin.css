@@ -470,6 +470,16 @@ body {
 
 .dots { display: flex; gap: 6px; justify-content: center; }
 
+/* The step under the spinner, rotating while the report is still being
+   written. On the UI stack so it paints in a system font immediately. */
+.analyzing-status {
+  margin: 18px 0 0;
+  font-family: var(--ui);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
 .dots span {
   width: 9px;
   height: 9px;

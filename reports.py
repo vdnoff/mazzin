@@ -61,8 +61,12 @@ UPSERT_SECTION_SQL = (
 PERSONAL = ("palette", "materials", "mistakes")
 CACHED = ("shopping", "dna", "splurge")
 
-MAX_TOKENS = 2000
+MAX_TOKENS = 2000          # the cached group, which is three sections at once
+SECTION_TOKENS = 700       # one personalised section on its own
 TEMPERATURE = 0.7
+
+# Three personalised calls plus, on a cold style, the cached group.
+MAX_PARALLEL = 4
 
 # A 90-word section is ~500 characters. This only has to separate a real
 # section from an empty string or a one-line apology.
@@ -76,6 +80,10 @@ SCHEMA = "2"
 # Cached per-style rows are tagged with the schema that produced them. A row
 # from an older schema is a cache miss, not a broken render.
 CACHE_SCHEMA = SCHEMA
+
+# A report that exists but is still filling up. The client renders the sections
+# it has and keeps polling; the suffix is what tells it to.
+PARTIAL_SUFFIX = "-partial"
 
 HEX_RE = re.compile(r"^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 VERDICTS = ("works", "avoid")
@@ -530,23 +538,30 @@ def _style_block(style, name):
     return "\n".join(lines)
 
 
-def _personal_prompt(style, name, tag_scores):
+def _leaning_block(tag_scores):
+    if not tag_scores:
+        return ("Write for someone typical of this style; you have nothing "
+                "specific about this individual.")
+    ranked = sorted(tag_scores.items(), key=lambda kv: (-kv[1], kv[0]))
+    return (
+        "What they were drawn to, strongest pull first: %s. Let this bend the "
+        "advice — a strong pull toward dark or warm should change which colours "
+        "and materials you name, not just how you describe them. Refer to what "
+        "they kept choosing, never to the numbers."
+        % ", ".join("%s %d" % (tag, n) for tag, n in ranked if n > 0)
+    )
+
+
+def _section_prompt(style, name, tag_scores, section_id):
+    """One personalised section on its own.
+
+    Each section is its own call now, so each carries the whole style and
+    leaning context. That is a few hundred repeated tokens per report against
+    three sections arriving in the time one used to take.
+    """
     parts = [_style_block(style, name)]
-    if tag_scores:
-        ranked = sorted(tag_scores.items(), key=lambda kv: (-kv[1], kv[0]))
-        parts.append(
-            "What they were drawn to, strongest pull first: %s. Let this bend "
-            "the advice — a strong pull toward dark or warm should change which "
-            "colours and materials you name, not just how you describe them. "
-            "Refer to what they kept choosing, never to the numbers."
-            % ", ".join("%s %d" % (tag, n) for tag, n in ranked if n > 0)
-        )
-    else:
-        parts.append(
-            "Write for someone typical of this style; you have nothing "
-            "specific about this individual."
-        )
-    parts.append(_sections_block(PERSONAL))
+    parts.append(_leaning_block(tag_scores))
+    parts.append(_sections_block((section_id,)))
     return "\n\n".join(parts)
 
 
@@ -627,10 +642,10 @@ def _parse(text, want):
     return out
 
 
-def _ask(client, prompt):
+def _ask(client, prompt, max_tokens):
     message = client.messages.create(
         model=config.ANTHROPIC_MODEL,
-        max_tokens=MAX_TOKENS,
+        max_tokens=max_tokens,
         temperature=TEMPERATURE,
         system=SYSTEM,
         messages=[{"role": "user", "content": prompt}],
@@ -640,35 +655,16 @@ def _ask(client, prompt):
     )
 
 
-def _generate(client, prompt, want):
-    """One section group. Returns {section_id: body}, or None."""
-    parsed = _parse(_ask(client, prompt), want)
-    if parsed is None:
-        parsed = _parse(_ask(client, prompt + RETRY_NOTE), want)
-    return parsed
+def _generate(client, prompt, want, max_tokens=MAX_TOKENS):
+    """One section group. Returns {section_id: body}, or None.
 
-
-def _collect(futures, started):
-    """Results of the in-flight calls, giving up at the budget.
-
-    A call that has not answered by the budget is abandoned rather than waited
-    on: the webhook owes Stripe a response, and a stub section delivered on
-    time beats a real one delivered after the retry storm has started.
+    A single personalised section needs a fraction of the room a six-section
+    call did, so the caller sizes the budget to what it asked for.
     """
-    out = {}
-    for key, future in futures.items():
-        left = config.REPORT_BUDGET_S - (time.monotonic() - started)
-        try:
-            out[key] = future.result(timeout=max(0.0, left))
-        except concurrent.futures.TimeoutError:
-            log.warning("slow-gen fallback: %s abandoned at budget", key)
-            out[key] = None
-        except Exception as exc:
-            # An API error message can echo request content — log the
-            # exception class, never the payload.
-            log.warning("generation failed for %s: %s", key, type(exc).__name__)
-            out[key] = None
-    return out
+    parsed = _parse(_ask(client, prompt, max_tokens), want)
+    if parsed is None:
+        parsed = _parse(_ask(client, prompt + RETRY_NOTE, max_tokens), want)
+    return parsed
 
 
 # --- cache -----------------------------------------------------------------
@@ -738,30 +734,42 @@ def _write_cache(funnel_slug, result_style, sections):
 # --- entry point -----------------------------------------------------------
 
 
-def _assemble(cfg, funnel_slug, result_style, name, sections_data, paths):
-    """The stored content dict for whatever section data we have so far."""
+def _is_schema2(version):
+    """True for `llm-2`, `stub-2` and the partial marker they grow out of."""
+    version = version or ""
+    return version.endswith("-" + SCHEMA) or version.endswith(PARTIAL_SUFFIX)
+
+
+def _assemble(cfg, funnel_slug, result_style, name, built, paths, complete):
+    """The stored content for whatever has resolved so far.
+
+    A section that has not resolved is simply absent — the client renders what
+    exists and keeps polling. Once `complete`, every section is present, either
+    generated or stubbed, and the version says which.
+    """
     sections = []
     for section in cfg.get("report", {}).get("sections", []):
         if section.get("enabled") is False:
             continue
         section_id = section.get("id")
-        data = sections_data.get(section_id)
-        if not data:
-            data = _fill(STUBS.get(section_id), name) if section_id in STUBS else None
-        sections.append(
-            {
-                "id": section_id,
-                "title": section.get("title"),
-                "data": data,
-            }
-        )
+        if section_id not in built:
+            continue
+        sections.append({
+            "id": section_id,
+            "title": section.get("title"),
+            "data": built[section_id],
+        })
 
-    # "llm" means every section is real copy; a report carrying any stub stays
-    # "stub" so regeneration tooling can find it. The suffix is the schema, so
-    # a renderer knows which shape it is holding.
-    complete = all(path != "stub" for path in paths.values())
+    if not complete:
+        version = "llm-" + SCHEMA + PARTIAL_SUFFIX
+    else:
+        # "llm" means every section is real copy; a report carrying any stub
+        # stays "stub" so regeneration tooling can find it.
+        clean = all(paths.get(s["id"]) != "stub" for s in sections)
+        version = ("llm-" if clean else "stub-") + SCHEMA
+
     return {
-        "version": ("llm-" if complete else "stub-") + SCHEMA,
+        "version": version,
         "funnel": funnel_slug,
         "style_id": result_style,
         "style_name": name,
@@ -779,67 +787,136 @@ def _fire(on_final, content, purchase_id):
         log.exception("post-report hook failed for purchase %s", purchase_id)
 
 
-def _finish_late(job):
-    """Wait out the calls that missed the budget and upgrade what we stored.
+# --- the background runner -------------------------------------------------
 
-    Production showed a cold-cache purchase give up at the budget while the
-    model answered five seconds later — the answer was paid for and then
-    thrown away. Now it lands: the row is updated in place, so a client still
-    polling gets the real report and the emailed PDF carries it too.
+
+def _publish(job, complete=False):
+    """Write what has resolved so far over the row that already exists."""
+    content = _assemble(job["cfg"], job["funnel"], job["style_id"], job["name"],
+                        job["built"], job["paths"], complete)
+    job["content"] = content
+    try:
+        database.execute(
+            UPDATE_REPORT_SQL,
+            (json.dumps(content, separators=(",", ":")), job["purchase_id"]),
+        )
+    except Exception:
+        log.exception("report update failed for purchase %s", job["purchase_id"])
+    return content
+
+
+def _absorb(job, task, result):
+    """Fold one finished task into the job, or stub the sections it owed."""
+    ids = task["ids"]
+    if result:
+        job["built"].update(result)
+        for section_id in ids:
+            job["paths"][section_id] = "llm"
+        if task["cache"]:
+            _write_cache(job["funnel"], job["style_id"], result)
+        return True
+
+    for section_id in ids:
+        if section_id in job["built"]:
+            continue                      # already have it (a cache hit)
+        stub = STUBS.get(section_id)
+        job["built"][section_id] = _fill(stub, job["name"]) if stub else None
+        job["paths"][section_id] = "stub"
+    return False
+
+
+def _collect(job, task, future):
+    """Absorb one already-finished task. A failed call costs only its own ids."""
+    try:
+        result = future.result()
+    except Exception as exc:
+        log.warning("section %s failed for purchase %s: %s",
+                    "+".join(task["ids"]), job["purchase_id"], type(exc).__name__)
+        result = None
+    return _absorb(job, task, result)
+
+
+def _drain(job, pending, ceiling):
+    """Absorb tasks as they finish until `pending` empties or time runs out.
+
+    Yields once per batch that lands so the caller can publish. Waiting on
+    whichever call finishes first — rather than in submission order — is what
+    keeps a slow section from sitting on a finished one.
     """
-    deadline = time.monotonic() + config.REPORT_UPGRADE_MAX_S
-    built = dict(job["built"])
-    paths = dict(job["paths"])
-    upgraded = False
+    while pending:
+        remaining = ceiling - time.monotonic()
+        if remaining <= 0:
+            break
+        done, _ = concurrent.futures.wait(
+            list(pending), timeout=remaining,
+            return_when=concurrent.futures.FIRST_COMPLETED)
+        if not done:
+            break
+        landed = False
+        for future in done:
+            if _collect(job, pending.pop(future), future):
+                landed = True
+        yield landed
 
-    for key, future in job["leftover"].items():
-        try:
-            got = future.result(timeout=max(0.0, deadline - time.monotonic()))
-        except Exception:
-            got = None
-        if not got:
-            continue
-        built.update(got)
-        paths[key] = "llm"
-        upgraded = True
-        if key == "cached":
-            _write_cache(job["funnel"], job["style_id"], got)
 
-    job["pool"].shutdown(wait=False)
+def _run(job):
+    """Generate every section, publishing each one the moment it lands.
 
-    content = job["content"]
-    if upgraded:
-        content = _assemble(job["cfg"], job["funnel"], job["style_id"],
-                            job["name"], built, paths)
-        try:
-            database.execute(
-                UPDATE_REPORT_SQL,
-                (json.dumps(content, separators=(",", ":")), job["purchase_id"]),
-            )
-            log.info("late llm upgrade for purchase %s (%s -> %s)",
-                     job["purchase_id"], job["content"]["version"],
-                     content["version"])
-        except Exception:
-            log.exception("late upgrade write failed for purchase %s",
-                          job["purchase_id"])
-            content = job["content"]
+    The webhook is already gone by the time this starts. Sections are written
+    over the row as they resolve, so a client polling sees the palette while
+    the rest is still being written, and one slow call no longer holds five
+    finished sections hostage.
+    """
+    started = time.monotonic()
+    pending = dict((task["future"], task) for task in job["tasks"])
 
+    for _ in _drain(job, pending, started + config.REPORT_BUDGET_S):
+        _publish(job)
+
+    # Anything still running has missed its budget. Stub what it owed so the
+    # buyer has a whole report now, and keep the call alive in case it lands.
+    late = bool(pending)
+    if late:
+        log.warning("%s missed the budget for purchase %s",
+                    " ".join(sorted("+".join(t["ids"]) for t in pending.values())),
+                    job["purchase_id"])
+        for task in list(pending.values()):
+            _absorb(job, task, None)
+    content = _publish(job, complete=True)
+    log.info("report %s for purchase %s in %.1fs (%d sections, %s)",
+             content["version"], job["purchase_id"], time.monotonic() - started,
+             len(content["sections"]),
+             " ".join("%s=%s" % kv for kv in sorted(job["paths"].items())))
+
+    # Late arrivals still upgrade the row in place — they were paid for.
+    if late:
+        upgraded = any(list(_drain(
+            job, pending, time.monotonic() + config.REPORT_UPGRADE_MAX_S)))
+        if upgraded:
+            content = _publish(job, complete=True)
+            log.info("late llm upgrade for purchase %s (now %s)",
+                     job["purchase_id"], content["version"])
+
+    if job["pool"] is not None:
+        job["pool"].shutdown(wait=False)
     _fire(job["on_final"], content, job["purchase_id"])
 
 
-def generate_report(purchase_id, funnel_slug, result_style, tag_scores=None,
-                    on_final=None):
-    """Build and persist the report for a purchase. Returns the content dict.
+def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
+                 on_final=None):
+    """Persist an empty report and generate into it in the background.
 
-    `on_final` is called exactly once with the best content available — inline
-    when nothing is still running, otherwise from the background thread that
-    finishes the late calls. Anything that must reflect the *final* report,
-    such as the emailed PDF, belongs there rather than after the return.
+    Returns as soon as the row exists. Nothing here waits on a model, so the
+    webhook's response time no longer depends on generation at all — the row
+    is the handshake, and /api/report serves it while it fills up.
 
-    Raises if the funnel config is missing or the INSERT fails — callers
-    decide whether that is fatal (for the webhook, it is not).
+    `on_final` is called exactly once with the finished content, which is
+    where anything that must reflect the whole report — the emailed PDF —
+    belongs.
+
+    Raises if the funnel config is missing or the INSERT fails; the webhook
+    treats that as non-fatal.
     """
-    started = time.monotonic()
     cfg = config.load_funnel(funnel_slug)
     style = _style(cfg, result_style)
     name = _style_name(cfg, result_style)
@@ -847,67 +924,70 @@ def generate_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     cached = _read_cache(funnel_slug, result_style)
     client = _api() if style else None
 
-    futures = {}
+    built = {}
+    paths = {}
+    if cached:
+        built.update(cached)
+        for section_id in CACHED:
+            paths[section_id] = "cache"
+
+    job = {
+        "purchase_id": purchase_id, "cfg": cfg, "funnel": funnel_slug,
+        "style_id": result_style, "name": name, "built": built, "paths": paths,
+        "on_final": on_final, "content": None,
+    }
+
+    tasks = []
     pool = None
     if client is not None:
-        pool = concurrent.futures.ThreadPoolExecutor(max_workers=2)
-        futures["personal"] = pool.submit(
-            _generate, client, _personal_prompt(style, name, tag_scores), PERSONAL
-        )
+        # Palette first: it is the section the opening of the report is built
+        # around, so it is the one worth having soonest.
+        pool = concurrent.futures.ThreadPoolExecutor(max_workers=MAX_PARALLEL)
+        for section_id in PERSONAL:
+            tasks.append({
+                "ids": (section_id,), "cache": False,
+                "future": pool.submit(
+                    _generate, client,
+                    _section_prompt(style, name, tag_scores, section_id),
+                    (section_id,), SECTION_TOKENS),
+            })
         if cached is None:
-            futures["cached"] = pool.submit(
-                _generate, client, _cached_prompt(style, name), CACHED
-            )
+            tasks.append({
+                "ids": CACHED, "cache": True,
+                "future": pool.submit(_generate, client,
+                                      _cached_prompt(style, name), CACHED,
+                                      MAX_TOKENS),
+            })
+    job["tasks"] = tasks
+    job["pool"] = pool
 
-    results = _collect(futures, started) if futures else {}
-
-    built = {}
-    paths = {"personal": "stub", "cached": "stub"}
-    if results.get("personal"):
-        built.update(results["personal"])
-        paths["personal"] = "llm"
-
-    if cached is not None:
-        built.update(cached)
-        paths["cached"] = "cache"
-    elif results.get("cached"):
-        built.update(results["cached"])
-        paths["cached"] = "llm"
-        _write_cache(funnel_slug, result_style, results["cached"])
-
-    content = _assemble(cfg, funnel_slug, result_style, name, built, paths)
-
-    database.execute(
-        INSERT_SQL, (purchase_id, json.dumps(content, separators=(",", ":")))
-    )
-    log.info(
-        "report %s for purchase %s in %.1fs (%d sections, personal=%s cached=%s)",
-        content["version"],
-        purchase_id,
-        time.monotonic() - started,
-        len(content["sections"]),
-        paths["personal"],
-        paths["cached"],
-    )
-
-    leftover = {k: f for k, f in futures.items() if not f.done()}
-    if leftover:
-        job = {
-            "purchase_id": purchase_id, "cfg": cfg, "funnel": funnel_slug,
-            "style_id": result_style, "name": name, "built": built,
-            "paths": paths, "content": content, "leftover": leftover,
-            "pool": pool, "on_final": on_final,
-        }
-        threading.Thread(
-            target=_finish_late, args=(job,),
-            name="report-upgrade-%s" % purchase_id, daemon=True,
-        ).start()
-    else:
-        if pool is not None:
-            pool.shutdown(wait=False)
+    if not tasks:
+        # No model, no style, no key: the whole thing is stubs, and there is
+        # nothing to wait for.
+        for section_id in [s.get("id") for s in cfg.get("report", {}).get("sections", [])]:
+            if section_id not in built:
+                stub = STUBS.get(section_id)
+                built[section_id] = _fill(stub, name) if stub else None
+                paths[section_id] = "stub"
+        content = _assemble(cfg, funnel_slug, result_style, name, built, paths, True)
+        database.execute(
+            INSERT_SQL, (purchase_id, json.dumps(content, separators=(",", ":")))
+        )
+        log.info("report %s for purchase %s (no generation)",
+                 content["version"], purchase_id)
         _fire(on_final, content, purchase_id)
+        return content
 
-    return content
+    opening = _assemble(cfg, funnel_slug, result_style, name, built, paths, False)
+    database.execute(
+        INSERT_SQL, (purchase_id, json.dumps(opening, separators=(",", ":")))
+    )
+    job["content"] = opening
+    threading.Thread(target=_run, args=(job,), daemon=True,
+                     name="report-%s" % purchase_id).start()
+    log.info("report started for purchase %s (%d tasks, %d cached)",
+             purchase_id, len(tasks), len(built))
+    return opening
 
 
 # --- PDF -------------------------------------------------------------------
@@ -1155,7 +1235,7 @@ def _pdf_section_body(section, structured):
 
 def _pdf_html(content):
     name = _e(content.get("style_name") or "Your style")
-    structured = str(content.get("version") or "").endswith("-" + SCHEMA)
+    structured = _is_schema2(content.get("version"))
     blocks = [
         '<section class="cover">',
         '<p class="kicker">Mazzin</p>',

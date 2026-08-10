@@ -8,7 +8,7 @@
   var PAYMENTS_ENABLED = true;
   var SLIDE_OUT_MS = 160;       // outgoing pair
   var CARD_STAGGER_MS = 40;     // left card leads
-  var REPORT_POLL_MS = 2000;
+  var REPORT_POLL_MS = 1200;
   var PRELOAD_TIMEOUT_MS = 800;
   var HOLD_MS = 1650;           // ring -> badge -> reaction, then the pair goes
   var HOLD_REDUCED_MS = 500;    // same beats, no animation, for reduced motion
@@ -24,9 +24,18 @@
   var HALF = 0.5;
   var CONFETTI_COUNT = 24;
   var CONFETTI_LIFE_MS = 2200;  // longest particle plus its delay, then cleared
-  var REPORT_MAX_TRIES = 30;
+  // 100 tries at 1200ms is two minutes of polling, which has to outlast the
+  // server's whole window — the per-call budget plus the late-upgrade grace —
+  // or the last sections would never arrive without a reload.
+  var REPORT_MAX_TRIES = 100;
   var CS_RE = /^cs_[A-Za-z0-9_]{1,250}$/;   // Stripe checkout session id
   var REVEAL_THRESHOLD = 0.15;  // how much of a section must be in view to play
+  var STATUS_MS = 2500;         // how long each loading line holds
+  var STATUS_LINES = [
+    "Confirming your payment\u2026",
+    "Reading your choices\u2026",
+    "Writing your color palette\u2026"
+  ];
 
   var cfg = null;
   var slug = location.pathname.split("/")[1] || "";
@@ -45,6 +54,10 @@
   var confettiDone = false; // the burst fires once per session, never again
   var unlockedContent = null;   // report shown after returning from Stripe
   var unlockedStarted = false;  // the loading state is shown once, as early as possible
+  var unlockedShown = false;    // the report has replaced the loading state
+  var rendered = {};            // section id -> its node, so polls only append
+  var sectionIO = null;         // one observer, outliving any single render
+  var statusTimer = null;
   var lastReaction = null;  // never show the same line twice running
   var paywallTracked = false;
 
@@ -768,94 +781,126 @@
     splurge: splurgeBody
   };
 
+  function isTyped(version) {
+    return /(^|-)2(-partial)?$/.test(version || "");
+  }
+
+  function buildSection(sec, typed) {
+    var block = elm("article", "section");
+    block.appendChild(elm("h2", "section-title", sec.title || ""));
+
+    var build = typed && SECTION_BODY[sec.id];
+    if (build && sec.data) {
+      try {
+        block.appendChild(build(sec.data));
+        return block;
+      } catch (e) { /* fall through to prose */ }
+    }
+    block.appendChild(para(sec.body || "", "section-body"));
+    return block;
+  }
+
   // Paid view. The two-column table is a teaser device — a short title beside
   // a truncated reveal is what makes a locked row read as withheld. Once it is
   // bought it is a document, so each section gets a heading with its own rule
   // and a body shaped like its content: swatches, numbered cards, verdicts.
   //
+  // Sections arrive across several polls, so this only ever appends what is
+  // new. One that resolves late still lands in the right place: the payload is
+  // always in report order, so a newcomer goes immediately before the first
+  // already-rendered section that follows it.
+  //
   // Schema 1 reports predate the typed data and still exist in the database,
   // so they fall through to the prose renderer they were written for.
   function renderUnlockedReport(content) {
-    el.report.innerHTML = "";
     el.report.classList.add("report-unlocked");
-    var typed = /-2$/.test(content.version || "");
+    var typed = isTyped(content.version);
+    var list = content.sections || [];
 
-    (content.sections || []).forEach(function (sec, index) {
-      var block = elm("article", "section");
-      if (index === 0) block.classList.add("is-hero");
+    list.forEach(function (sec, index) {
+      if (!sec || !sec.id || rendered[sec.id]) return;
 
-      var head = elm("h2", "section-title", sec.title || "");
-      block.appendChild(head);
+      var block = buildSection(sec, typed);
+      rendered[sec.id] = block;
 
-      var build = typed && SECTION_BODY[sec.id];
-      if (build && sec.data) {
-        try {
-          block.appendChild(build(sec.data));
-        } catch (e) {
-          block.appendChild(para(sec.body || "", "section-body"));
-        }
-      } else {
-        block.appendChild(para(sec.body || "", "section-body"));
+      var before = null;
+      for (var j = index + 1; j < list.length; j++) {
+        if (rendered[list[j].id]) { before = rendered[list[j].id]; break; }
       }
-      el.report.appendChild(block);
+      if (before) el.report.insertBefore(block, before);
+      else el.report.appendChild(block);
+
+      observeSection(block);
     });
 
-    revealReport();
+    markHero();
+  }
+
+  // The opening section carries the choreography, and which section that is
+  // can change: a palette that resolves after another section still takes the
+  // top, and the sequence belongs to whatever is first.
+  function markHero() {
+    var sections = el.report.children;
+    for (var i = 0; i < sections.length; i++) {
+      sections[i].classList.toggle("is-hero", i === 0);
+    }
   }
 
   // --- reveals -------------------------------------------------------------
 
-  // The title lands first, then each section as it comes into view. The first
-  // section is already on screen at render, so its observer fires straight
-  // away and the opening plays as one sequence: title, rule, then swatches.
+  // The title lands first, then each section as it comes into view. Sections
+  // arrive over several polls, so the observer outlives any single render and
+  // newcomers are handed to it as they are built.
   //
   // Only transform and opacity animate, and each section is unobserved the
-  // moment it has played — this runs once, not on every scroll.
-  function revealReport() {
+  // moment it has played — once per section, not on every scroll.
+  function instantReveal() {
+    return !window.IntersectionObserver || prefersReducedMotion();
+  }
+
+  function revealHead() {
     var heads = [el.resultKicker, el.resultName, el.resultBlurb];
     heads.forEach(function (node, i) {
       if (!node) return;
       node.classList.add("reveal-head");
       node.style.setProperty("--i", i);
     });
-
-    var sections = el.report.querySelectorAll(".section");
-    var i;
-
-    if (!window.IntersectionObserver || prefersReducedMotion()) {
-      for (i = 0; i < heads.length; i++) {
-        if (heads[i]) heads[i].classList.add("is-revealed");
-      }
-      for (i = 0; i < sections.length; i++) {
-        sections[i].classList.add("is-revealed");
-      }
+    if (instantReveal()) {
+      heads.forEach(function (n) { if (n) n.classList.add("is-revealed"); });
       return;
     }
-
     // Next frame, so the starting state is painted before the transition.
     requestAnimationFrame(function () {
-      for (var h = 0; h < heads.length; h++) {
-        if (heads[h]) heads[h].classList.add("is-revealed");
-      }
+      heads.forEach(function (n) { if (n) n.classList.add("is-revealed"); });
     });
+  }
 
-    var io;
+  function observeSection(block) {
+    if (instantReveal()) {
+      block.classList.add("is-revealed");
+      return;
+    }
+    if (!sectionIO) sectionIO = makeObserver();
+    sectionIO.observe(block);
+  }
 
+  function makeObserver() {
     function reveal(node) {
       if (node.classList.contains("is-revealed")) return;
       node.classList.add("is-revealed");
       io.unobserve(node);
     }
 
-    io = new IntersectionObserver(function (entries) {
+    var io = new IntersectionObserver(function (entries) {
       // A jump — a restored scroll position, an anchor, a hard flick — can
       // carry a section from below the fold to above it without ever
       // intersecting, and an unrevealed section is invisible. Anything now
       // scrolled past has to play too, or someone has paid for a blank gap.
       // Measure first, then write, so nothing is read back mid-mutation.
+      var waiting = el.report.querySelectorAll(".section:not(.is-revealed)");
       var passed = [];
-      for (var p = 0; p < sections.length; p++) {
-        if (sections[p].getBoundingClientRect().bottom < 0) passed.push(sections[p]);
+      for (var p = 0; p < waiting.length; p++) {
+        if (waiting[p].getBoundingClientRect().bottom < 0) passed.push(waiting[p]);
       }
       entries.forEach(function (entry) {
         if (entry.isIntersecting) reveal(entry.target);
@@ -863,8 +908,10 @@
       passed.forEach(reveal);
     }, { threshold: REVEAL_THRESHOLD });
 
-    for (i = 0; i < sections.length; i++) io.observe(sections[i]);
+    return io;
   }
+
+  // --- free (pre-Stripe) result -------------------------------------------
 
   // One line of context immediately above the button, built here so the shell
   // markup stays a plain container.
@@ -964,18 +1011,28 @@
     el.analyzing.hidden = false;
     el.analyzingText.textContent = text;
     el.analyzingDots.hidden = true;
+    stopStatusRotation();
+    if (el.analyzingStatus) el.analyzingStatus.hidden = true;
     // We gave up polling, so stop promising mail we cannot see the state of.
     if (el.analyzingNote) el.analyzingNote.hidden = true;
   }
 
+  // Called on every poll that carries sections. The first one swaps the
+  // loading state for the report; the rest only append what is new.
   function renderUnlocked(content) {
-    el.analyzing.hidden = true;
-    el.resultBody.hidden = false;
-    el.cta.hidden = true;
-    if (el.ctaNote) el.ctaNote.hidden = true;
-
     unlockedContent = content;
-    el.resultName.textContent = content.style_name || "";
+
+    if (!unlockedShown) {
+      unlockedShown = true;
+      stopStatusRotation();
+      el.analyzing.hidden = true;
+      el.resultBody.hidden = false;
+      el.cta.hidden = true;
+      if (el.ctaNote) el.ctaNote.hidden = true;
+      el.resultName.textContent = content.style_name || "";
+      revealHead();
+    }
+
     applyStyleCopy();
     renderUnlockedReport(content);
   }
@@ -1008,10 +1065,49 @@
       : "We’re also emailing you a PDF copy.";
   }
 
+  // A third line, under the dots. The headline above stays the fixed promise
+  // and this carries the step, because the gap between the Stripe redirect and
+  // the first section is long enough that a spinner alone reads as stuck.
+  function setStatus(text) {
+    var node = el.analyzingStatus;
+    if (!node) {
+      node = elm("p", "analyzing-status");
+      node.id = "analyzing-status";
+      el.analyzing.appendChild(node);
+      el.analyzingStatus = node;
+    }
+    node.hidden = false;
+    node.textContent = text;
+  }
+
+  function startStatusRotation() {
+    if (statusTimer) return;
+    var i = 0;
+    setStatus(STATUS_LINES[0]);
+    if (prefersReducedMotion()) return;      // no churn for anyone opted out
+    statusTimer = setInterval(function () {
+      i += 1;
+      if (i >= STATUS_LINES.length) {        // hold on the last line
+        stopStatusRotation();
+        return;
+      }
+      setStatus(STATUS_LINES[i]);
+    }, STATUS_MS);
+  }
+
+  function stopStatusRotation() {
+    if (statusTimer) clearInterval(statusTimer);
+    statusTimer = null;
+  }
+
   function pollReport(cs, tries) {
     function retry() {
       if (tries + 1 >= REPORT_MAX_TRIES) {
-        showReportMessage("Your report is being prepared — check back in a minute.");
+        // Once sections are on screen the report is readable and giving up is
+        // silent — replacing it with a "come back later" would be a downgrade.
+        if (!unlockedShown) {
+          showReportMessage("Your report is being prepared — check back in a minute.");
+        }
         return;
       }
       setTimeout(function () { pollReport(cs, tries + 1); }, REPORT_POLL_MS);
@@ -1022,10 +1118,13 @@
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
         if (data && data.email_masked) setEmailNote(data.email_masked);
-        if (data && data.status === "ready" && data.report) {
-          renderUnlocked(data.report);
-          return;
-        }
+
+        var report = data && data.report;
+        var sections = (report && report.sections) || [];
+        if (sections.length) renderUnlocked(report);
+
+        // The row exists and is still filling up, or it exists and is done.
+        if (data && data.complete && sections.length) return;
         retry();
       })
       .catch(retry);
@@ -1042,6 +1141,7 @@
     el.analyzingDots.hidden = false;
     el.analyzingText.textContent = "Preparing your personalized report…";
     setEmailNote(null);
+    startStatusRotation();
     pollReport(cs, 0);
   }
 
