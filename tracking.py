@@ -26,6 +26,7 @@ bp = Blueprint("tracking", __name__)
 ALLOWED_EVENTS = {
     "funnel_start",
     "swipe",
+    "interstitial",
     "result_view",
     "paywall_view",
     "pay_tap",
@@ -168,13 +169,15 @@ def _clean_extra(funnel, event, value):
     if not isinstance(pair, str) or pair not in index["pairs"]:
         raise ValueError("extra")
 
+    # Two for a pair step, four for a grid. Anything else is not a step this
+    # engine can render, whatever the client says it drew.
     shown = value["shown"]
-    if not isinstance(shown, list) or len(shown) != 2:
+    if not isinstance(shown, list) or len(shown) not in (2, 4):
         raise ValueError("extra")
     for image_id in shown:
         if not isinstance(image_id, str) or image_id not in index["images"]:
             raise ValueError("extra")
-    if shown[0] == shown[1]:
+    if len(set(shown)) != len(shown):
         raise ValueError("extra")
 
     chosen = value["chosen"]
@@ -183,7 +186,7 @@ def _clean_extra(funnel, event, value):
     if not isinstance(chosen, str) or chosen not in shown:
         raise ValueError("extra")
 
-    return {"pair": pair, "shown": [shown[0], shown[1]], "chosen": chosen}
+    return {"pair": pair, "shown": list(shown), "chosen": chosen}
 
 
 @bp.post("/api/track")

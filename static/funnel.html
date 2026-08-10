@@ -22,14 +22,27 @@
       <div class="lead">
         <p class="kicker" id="swipe-headline"></p>
         <p class="subtext" id="swipe-subtext"></p>
-        <h1 class="caption" id="swipe-caption"></h1>
       </div>
     </header>
 
     <div class="stage" id="stage">
+      <h1 class="caption" id="swipe-caption"></h1>
       <div class="cards" id="cards"></div>
       <p class="tap-hint" id="tap-hint"><span class="tap-dot" aria-hidden="true"></span>Tap your choice</p>
     </div>
+  </section>
+
+  <section id="screen-interstitial" class="screen" aria-live="polite">
+    <div class="progress-row">
+      <div class="pips" id="mid-pips" aria-hidden="true"></div>
+      <span class="progress-label" id="mid-progress-label"></span>
+    </div>
+    <div class="mid-body">
+      <p class="mid-kicker" id="mid-kicker"></p>
+      <p class="mid-line" id="mid-line"></p>
+      <p class="mid-sub" id="mid-sub"></p>
+    </div>
+    <button class="mid-cta" id="mid-cta" type="button">Continue</button>
   </section>
 
   <section id="screen-result" class="screen" aria-live="polite">

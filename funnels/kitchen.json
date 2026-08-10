@@ -15,6 +15,7 @@
       {
         "id": "color",
         "question": "Which colors feel like home?",
+        "format": "pair",
         "pairs": [
           {
             "id": "p1",
@@ -48,6 +49,7 @@
       {
         "id": "cabinets",
         "question": "Pick your cabinet character",
+        "format": "pair",
         "pairs": [
           {
             "id": "p1",
@@ -81,6 +83,7 @@
       {
         "id": "lighting",
         "question": "How should your kitchen glow?",
+        "format": "pair",
         "pairs": [
           {
             "id": "p1",
@@ -114,6 +117,7 @@
       {
         "id": "worktop",
         "question": "Which worktop would you touch?",
+        "format": "pair",
         "pairs": [
           {
             "id": "p1",
@@ -146,6 +150,7 @@
       {
         "id": "dining",
         "question": "Where do you gather?",
+        "format": "pair",
         "pairs": [
           {
             "id": "p1",
@@ -179,6 +184,7 @@
       {
         "id": "floor",
         "question": "What's underfoot?",
+        "format": "pair",
         "pairs": [
           {
             "id": "p1",
@@ -212,6 +218,7 @@
       {
         "id": "storage",
         "question": "Show it or hide it?",
+        "format": "pair",
         "pairs": [
           {
             "id": "p1",
@@ -245,6 +252,7 @@
       {
         "id": "mood",
         "question": "Which evening is yours?",
+        "format": "pair",
         "pairs": [
           {
             "id": "p1",
@@ -278,6 +286,7 @@
       {
         "id": "materials",
         "question": "Your material DNA?",
+        "format": "pair",
         "pairs": [
           {
             "id": "p1",
@@ -310,6 +319,7 @@
       }
     ]
   },
+  "interstitials": [],
   "preview_gallery": [
     { "id": "k101", "img": "/static/galleries/kitchen/k101.webp", "tags": ["rustic", "warm", "wood"] },
     { "id": "k102", "img": "/static/galleries/kitchen/k102.webp", "tags": ["rustic", "dark", "wood"] },
