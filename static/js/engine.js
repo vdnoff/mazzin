@@ -13,6 +13,7 @@
   var HOLD_MS = 1650;           // ring -> badge -> reaction, then the pair goes
   var HOLD_REDUCED_MS = 500;    // same beats, no animation, for reduced motion
   var REACTION_DELAY_MS = 200;  // lands just after the check badge
+  var INTERSTITIAL_MS = 4000;   // a beat between steps, or a tap
   // The blur curve is anchored to the trigger phrase's own line boxes: one
   // line of softening leads into it, the trigger itself lands in the
   // barely-readable band, and one line later nothing is legible. The opacity
@@ -69,6 +70,9 @@
   var generatingTimer = null;   // the card under a report that is still filling
   var paywallTracked = false;
   var payMotionDone = false;    // the paywall's attention pull runs once
+  var midOpen = false;          // an interstitial is on screen
+  var midTimer = null;          // its auto-dismiss
+  var midSeen = {};             // after_step -> already shown this run
 
   var el = {};
 
@@ -170,26 +174,85 @@
     return [];
   }
 
-  // One pair, sides shuffled. Which image is on the left is not part of the
+  // A step shows two images side by side, or four in a grid. Both are one
+  // question and one tap; the format only changes how many things are being
+  // compared at once.
+  function stepFormat(st) {
+    return (st && st.format === "grid4") ? "grid4" : "pair";
+  }
+
+  function stepSize(st) {
+    return stepFormat(st) === "grid4" ? 4 : 2;
+  }
+
+  // The two axes a step can adapt on. The config names the axis; what the
+  // axis is made of lives here, because it is the same vocabulary the styles
+  // are scored against and it should not be restatable per funnel.
+  var TONE_AXIS = ["warm", "cool", "dark", "bright"];
+  var TONE_OPPOSITE = {
+    warm: "cool", cool: "warm", dark: "bright", bright: "dark"
+  };
+  var MATERIAL_AXIS = ["wood", "stone", "metal"];
+  var AXES = { tone: TONE_AXIS, material: MATERIAL_AXIS };
+
+  // The tag they have chosen most on one axis, or null when the axis has not
+  // come up yet. Ties go to the first listed, so the same run always resolves
+  // the same way.
+  function leaderOf(axis) {
+    var best = null;
+    var bestScore = 0;
+    (axis || []).forEach(function (tag) {
+      var n = scores[tag] || 0;
+      if (n > bestScore) { bestScore = n; best = tag; }
+    });
+    return best;
+  }
+
+  // Which pair an adaptive step wants, given what they have chosen so far.
+  // Null means nothing matched and the draw falls back to random, which is
+  // also what happens on a step with no rule at all.
+  function adaptivePairId(st) {
+    var rule = st && st.adaptive;
+    if (!rule || !rule.variants) return null;
+    var leader = leaderOf(AXES[rule.axis]);
+    return (leader && rule.variants[leader]) || rule.variants["default"] || null;
+  }
+
+  function shuffled(list) {
+    var out = list.slice();
+    for (var i = out.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var swap = out[i]; out[i] = out[j]; out[j] = swap;
+    }
+    return out;
+  }
+
+  // One pair, order shuffled. Which image is on the left is not part of the
   // question, and leaving it fixed would let a habitual left-tapper score the
   // same way every run.
   function pickPair(index) {
-    var pairs = pairsOf(stepAt(index));
+    var st = stepAt(index);
+    var pairs = pairsOf(st);
     if (!pairs.length) return null;
-    var pick = pairs[Math.floor(Math.random() * pairs.length)] || {};
-    var images = (pick.images || []).slice(0, 2);
-    if (images.length < 2) return null;
-    return {
-      id: pick.id || "p1",
-      images: Math.random() < 0.5 ? images : [images[1], images[0]]
-    };
+
+    var wanted = adaptivePairId(st);
+    var pick = null;
+    for (var i = 0; wanted && i < pairs.length; i++) {
+      if (pairs[i].id === wanted) { pick = pairs[i]; break; }
+    }
+    if (!pick) pick = pairs[Math.floor(Math.random() * pairs.length)] || {};
+
+    var size = stepSize(st);
+    var images = (pick.images || []).slice(0, size);
+    if (images.length < size) return null;
+    return { id: pick.id || "p1", images: shuffled(images) };
   }
 
-  // Drawn once per step and remembered. Preloading needs to know which two
-  // images are coming before the reader gets there, and the swipe event needs
-  // to name the same pair afterwards — rolling the dice twice would warm one
-  // pair and show another.
-  function shownAt(index) {
+  // Drawn once per step and remembered. Preloading needs to know which images
+  // are coming before the reader gets there, and the swipe event needs to name
+  // the same pair afterwards — rolling the dice twice would warm one pair and
+  // show another.
+  function resolveStep(index) {
     if (!Object.prototype.hasOwnProperty.call(shownPairs, index)) {
       shownPairs[index] = pickPair(index);
     }
@@ -197,8 +260,13 @@
   }
 
   function pairFor(index) {
-    var picked = shownAt(index);
+    var picked = resolveStep(index);
     return picked ? picked.images : null;
+  }
+
+  function shownAt(index) {
+    return Object.prototype.hasOwnProperty.call(shownPairs, index)
+      ? shownPairs[index] : null;
   }
 
   // --- preloading ----------------------------------------------------------
@@ -237,10 +305,24 @@
   // set of images to warm rather than a branch per card. Drawing the pair here
   // rather than at render time keeps that true now that a step has several:
   // two images are warmed, not every variant of the step.
+  //
+  // An adaptive step is the exception and has to stay one. Its answer depends
+  // on the choice being made right now, so resolving it here would read the
+  // scores one tap out of date and then remember the wrong pair. It warms
+  // every variant instead and pays for that in bytes rather than in showing
+  // the reader a pair the rule did not pick.
   function prepareNext() {
-    var next = shownAt(step + 1);
-    if (!next) return;
-    next.images.forEach(function (g) { preload(g.img); });
+    var index = step + 1;
+    var st = stepAt(index);
+    if (!st) return;
+    if (st.adaptive) {
+      pairsOf(st).forEach(function (p) {
+        (p.images || []).forEach(function (g) { preload(g.img); });
+      });
+      return;
+    }
+    var next = resolveStep(index);
+    if (next) next.images.forEach(function (g) { preload(g.img); });
   }
 
   // --- swipe screen --------------------------------------------------------
@@ -279,13 +361,14 @@
     return card;
   }
 
-  function renderPair() {
+  function renderStep() {
+    var st = stepAt(step);
     el.cards.innerHTML = "";
     el.cards.classList.remove("is-picking", "is-leaving");
+    el.cards.classList.toggle("is-grid4", stepFormat(st) === "grid4");
     pair.forEach(function (item, i) {
       el.cards.appendChild(cardNode(item, i));
     });
-    var st = stepAt(step);
     setCaption((st && st.question) || "");
     renderProgress();
     prepareNext();
@@ -300,27 +383,37 @@
     el.caption.classList.add("is-enter");
   }
 
-  function renderProgress() {
-    var total = cfg.swipe.pairs_count;
-    var current = Math.min(step + 1, total);
-
-    if (el.pips.childElementCount !== total) {
-      el.pips.innerHTML = "";
+  function fillPips(host, total) {
+    if (!host) return;
+    if (host.childElementCount !== total) {
+      host.innerHTML = "";
       for (var i = 0; i < total; i++) {
         var pip = document.createElement("span");
         pip.className = "pip";
-        el.pips.appendChild(pip);
+        host.appendChild(pip);
       }
     }
     for (var j = 0; j < total; j++) {
-      var node = el.pips.children[j];
+      var node = host.children[j];
       // Adding is-done re-triggers its pop animation, so only completed pips
       // that were not already done will pop.
       node.classList.toggle("is-done", j < step);
       node.classList.toggle("is-current", j === step);
     }
+  }
 
-    el.progressLabel.textContent = current + " of " + total;
+  // Two rows now — the swipe screen's and the interstitial's. An interstitial
+  // sits between two steps rather than beside them, so the count carries
+  // across it instead of disappearing and coming back.
+  function renderProgress() {
+    var total = cfg.swipe.pairs_count;
+    var current = Math.min(step + 1, total);
+    var label = current + " of " + total;
+
+    fillPips(el.pips, total);
+    fillPips(el.midPips, total);
+    el.progressLabel.textContent = label;
+    if (el.midProgressLabel) el.midProgressLabel.textContent = label;
   }
 
   function showReaction(text, card) {
@@ -394,12 +487,88 @@
       el.cards.classList.add("is-leaving");
       setTimeout(function () {
         picking = false;
-        var next = step >= cfg.swipe.pairs_count ? null : pairFor(step);
-        if (!next) { startResult(); return; }
-        pair = next;
-        renderPair();
+        var mid = interstitialAfter(step);
+        if (mid) { openInterstitial(mid); return; }
+        advance();
       }, SLIDE_OUT_MS + CARD_STAGGER_MS);
     }, prefersReducedMotion() ? HOLD_REDUCED_MS : HOLD_MS);
+  }
+
+  function advance() {
+    var next = step >= cfg.swipe.pairs_count ? null : pairFor(step);
+    if (!next) { startResult(); return; }
+    pair = next;
+    renderStep();
+    show("screen-swipe");
+  }
+
+  // --- interstitials -------------------------------------------------------
+
+  // A beat between steps that reads back what they have actually chosen. Every
+  // number on it comes out of `scores`, which is the same object the result is
+  // computed from — there is nothing here the run did not produce.
+
+  function fillTokens(text) {
+    if (!text) return "";
+    var tone = leaderOf(TONE_AXIS);
+    var material = leaderOf(MATERIAL_AXIS);
+    var total = cfg.swipe.pairs_count || 1;
+    return String(text)
+      .replace(/\{leading_trait\}/g, tone || "")
+      .replace(/\{opposite\}/g, (tone && TONE_OPPOSITE[tone]) || "")
+      .replace(/\{leading_material\}/g, material || "")
+      .replace(/\{n\}/g, String(tone ? (scores[tone] || 0) : 0))
+      .replace(/\{total\}/g, String(step))
+      .replace(/\{pct\}/g, String(Math.round(step / total * 100)));
+  }
+
+  // A template whose numbers cannot be derived yet is not shown at all. The
+  // alternatives are a sentence with a hole in it or a figure we invented,
+  // and this screen's entire claim is that it is reading what they chose.
+  function canFill(entry) {
+    var text = (entry.line || "") + " " + (entry.sub || "");
+    if (/\{leading_trait\}|\{opposite\}/.test(text) && !leaderOf(TONE_AXIS)) {
+      return false;
+    }
+    if (/\{leading_material\}/.test(text) && !leaderOf(MATERIAL_AXIS)) {
+      return false;
+    }
+    return true;
+  }
+
+  function interstitialAfter(completed) {
+    var list = (cfg && cfg.interstitials) || [];
+    for (var i = 0; i < list.length; i++) {
+      var entry = list[i];
+      if (entry && entry.after_step === completed && !midSeen[completed]) {
+        return canFill(entry) ? entry : null;
+      }
+    }
+    return null;
+  }
+
+  function openInterstitial(entry) {
+    midSeen[entry.after_step] = true;
+    midOpen = true;
+    el.midKicker.textContent = entry.kicker || "";
+    el.midLine.textContent = fillTokens(entry.line || "");
+    el.midSub.textContent = fillTokens(entry.sub || "");
+    el.midSub.hidden = !entry.sub;
+    el.midCta.textContent = entry.cta || "Continue analysis";
+    renderProgress();
+    show("screen-interstitial");
+    track("interstitial", step);
+    // Four seconds, or a tap — whichever comes first. A screen that only ever
+    // waits is a screen somebody sits through.
+    midTimer = setTimeout(closeInterstitial, INTERSTITIAL_MS);
+  }
+
+  function closeInterstitial() {
+    if (!midOpen) return;               // the tap and the timer both land here
+    midOpen = false;
+    clearTimeout(midTimer);
+    midTimer = null;
+    advance();
   }
 
   // --- result --------------------------------------------------------------
@@ -1542,6 +1711,12 @@
     el.cards = $("cards");
     el.pips = $("pips");
     el.tapHint = $("tap-hint");
+    el.midPips = $("mid-pips");
+    el.midProgressLabel = $("mid-progress-label");
+    el.midKicker = $("mid-kicker");
+    el.midLine = $("mid-line");
+    el.midSub = $("mid-sub");
+    el.midCta = $("mid-cta");
     el.progressLabel = $("progress-label");
     el.headline = $("swipe-headline");
     el.subtext = $("swipe-subtext");
@@ -1586,6 +1761,7 @@
     el.withdrawalCheck.addEventListener("change", updatePayButton);
     el.payButton.addEventListener("click", startCheckout);
     el.paywallBack.addEventListener("click", function () { show("screen-result"); });
+    el.midCta.addEventListener("click", closeInterstitial);
 
     // Rewrapped text moves the seam; re-measure when the box changes.
     var resizeTimer = null;
@@ -1605,7 +1781,7 @@
     pair = first;
     show("screen-swipe");
     track("funnel_start");
-    preloadPair(pair, renderPair);
+    preloadPair(pair, renderStep);
   }
 
   // The hint keeps its dot, which is markup rather than copy — replace only
