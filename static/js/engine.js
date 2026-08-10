@@ -51,6 +51,7 @@
   var attribution = {};
 
   var scores = {};          // tag -> count
+  var chosen = [];          // image ids, in the order they were tapped
   var pair = [];            // current [imgA, imgB]
   var step = 0;             // pairs completed
   var preloaded = {};        // img src -> already requested
@@ -311,6 +312,7 @@
     if (picking || !pair.length) return;   // one tap per pair
     picking = true;
     item.tags.forEach(function (t) { scores[t] = (scores[t] || 0) + 1; });
+    chosen.push(item.id);
     step += 1;
     track("swipe", step);
     pair = [];
@@ -1276,7 +1278,12 @@
         result_style: winnerStyleId,
         // Raw tag counts, so the report can be written around what this person
         // actually kept choosing. The server re-validates every key.
-        tag_scores: scores
+        tag_scores: scores,
+        // The images themselves, in the order they were tapped. Tags say what
+        // a choice meant; this says what they were looking at when they made
+        // it, which is what the palette is built from. Re-validated server
+        // side against the funnel's own step images.
+        choices: chosen.slice()
       })
     })
       .then(function (r) { return r.ok ? r.json() : null; })

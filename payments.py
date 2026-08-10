@@ -83,6 +83,9 @@ def _gallery_tags(cfg):
 # Stripe metadata values are strings capped at 500 characters.
 METADATA_VALUE_MAX = 500
 TAG_SCORE_MAX = 30
+# One tap per step, with headroom for a funnel that grows a few. Nine ids at
+# four characters plus separators is well inside the metadata value limit.
+CHOICES_MAX = 12
 
 
 def _clean_tag_scores(cfg, raw):
@@ -121,7 +124,72 @@ def _tag_scores_metadata(scores):
     return packed
 
 
-def _metadata(slug, session_id, result_style, tag_scores):
+def _step_image_ids(cfg):
+    """Every image id the quiz can hand back, in step order."""
+    out = []
+    for step in ((cfg.get("swipe") or {}).get("steps") or []):
+        for item in (step.get("images") or []):
+            if isinstance(item.get("id"), str):
+                out.append(item["id"])
+    return out
+
+
+def _clean_choices(cfg, raw):
+    """The tapped image ids, or None if the list is not usable.
+
+    Same posture as the tag scores: this only steers report copy, so anything
+    the client sends that does not describe a real run through this funnel is
+    dropped rather than failing the checkout. A client that sends nothing is
+    the same case as one that sends nonsense.
+    """
+    if not isinstance(raw, list) or not raw:
+        return None
+    steps = (cfg.get("swipe") or {}).get("steps") or []
+    limit = max(len(steps), int((cfg.get("swipe") or {}).get("pairs_count") or 0))
+    if limit and len(raw) > limit:
+        return None
+    if len(raw) > CHOICES_MAX:
+        return None
+
+    known = set(_step_image_ids(cfg))
+    for image_id in raw:
+        if not isinstance(image_id, str) or image_id not in known:
+            return None
+    # One tap per step: a repeated id is a replayed or hand-made list.
+    if len(set(raw)) != len(raw):
+        return None
+    return list(raw)
+
+
+def _choices_metadata(choices):
+    """The sequence as one short string, or None if it will not fit.
+
+    Comma-joined rather than JSON: the ids are the funnel's own and carry no
+    punctuation, so this is half the characters of a JSON array and leaves
+    room under Stripe's 500-character value limit.
+    """
+    if not choices:
+        return None
+    packed = ",".join(choices)
+    if len(packed) > METADATA_VALUE_MAX:
+        log.warning("choices too large for metadata (%d chars) — dropped",
+                    len(packed))
+        return None
+    return packed
+
+
+def _read_choices(cfg, packed):
+    """The sequence back out of Stripe metadata, re-validated.
+
+    Metadata round-trips through Stripe, so this is still client-originated
+    data by the time it comes back and is checked again from scratch.
+    """
+    if not isinstance(packed, str) or not packed:
+        return None
+    return _clean_choices(cfg, packed.split(","))
+
+
+def _metadata(slug, session_id, result_style, tag_scores, choices=None):
     """Checkout session metadata. Absent keys are absent, never empty strings."""
     data = {
         "funnel": slug,
@@ -130,6 +198,8 @@ def _metadata(slug, session_id, result_style, tag_scores):
     }
     if tag_scores:
         data["tag_scores"] = tag_scores
+    if choices:
+        data["choices"] = choices
     return data
 
 
@@ -163,8 +233,9 @@ def checkout():
         log.error("funnel %s has no usable price", slug)
         return jsonify({}), 502
 
-    # Steers the report copy only — never the price, never whether we fulfil.
+    # Steer the report copy only — never the price, never whether we fulfil.
     tag_scores = _tag_scores_metadata(_clean_tag_scores(cfg, body.get("tag_scores")))
+    choices = _choices_metadata(_clean_choices(cfg, body.get("choices")))
 
     title = (cfg.get("meta") or {}).get("title") or slug
     product_name = "%s — Full Style Report" % title
@@ -194,7 +265,8 @@ def checkout():
             managed_payments={"enabled": False},
             success_url="%s/%s?cs={CHECKOUT_SESSION_ID}" % (config.BASE_URL, slug),
             cancel_url="%s/%s?canceled=1" % (config.BASE_URL, slug),
-            metadata=_metadata(slug, session_id, result_style, tag_scores),
+            metadata=_metadata(slug, session_id, result_style, tag_scores,
+                               choices),
             customer_creation="if_required",
         )
     except Exception:
@@ -225,7 +297,7 @@ def _read_tag_scores(cfg, packed):
 
 
 def _record_side_effects(purchase_id, slug, session_id, result_style, tag_scores,
-                         email=None, checkout_session=None):
+                         email=None, checkout_session=None, choices=None):
     """Report + emailed PDF + server-side purchase event.
 
     `start_report` persists an empty report row and returns; every model call
@@ -244,7 +316,7 @@ def _record_side_effects(purchase_id, slug, session_id, result_style, tag_scores
     try:
         reports.start_report(
             purchase_id, slug, result_style, tag_scores,
-            on_final=deliver if email else None,
+            on_final=deliver if email else None, choices=choices,
         )
     except Exception:
         log.exception("report generation failed for purchase %s", purchase_id)
@@ -346,12 +418,13 @@ def stripe_webhook():
         return jsonify({}), 500
 
     log.info("purchase %s recorded for funnel %s", purchase_id, slug)
-    tag_scores = _read_tag_scores(
-        config.load_funnel(slug), metadata.get("tag_scores")
-    )
+    cfg = config.load_funnel(slug)
+    tag_scores = _read_tag_scores(cfg, metadata.get("tag_scores"))
+    choices = _read_choices(cfg, metadata.get("choices"))
     _record_side_effects(
         purchase_id, slug, session_id, result_style, tag_scores,
         email=details.get("email"), checkout_session=session.get("id"),
+        choices=choices,
     )
     return jsonify({"status": "ok"}), 200
 
