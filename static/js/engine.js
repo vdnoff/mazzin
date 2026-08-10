@@ -109,6 +109,89 @@
     return out;
   }
 
+  // --- Meta pixel ----------------------------------------------------------
+
+  // Off unless the server hands back an id. The id is fetched rather than
+  // written into the HTML because static/ is CDN-cached and shared by every
+  // funnel — a pixel baked in here would follow the next brand onto its own
+  // domain. With no id, nothing below runs and the page makes no request to
+  // Meta at all.
+  //
+  // Purchase is deliberately absent. The browser is the wrong place for it:
+  // a closed tab or a blocker loses it, and firing it here as well as on the
+  // server double-counts the only number the ad spend is judged on.
+  var pixelReady = false;
+  var pixelQueue = [];
+
+  function fbq() {
+    return window.fbq;
+  }
+
+  function pixelTrack(name) {
+    if (!pixelReady) { pixelQueue.push(name); return; }
+    try {
+      fbq()("track", name);
+    } catch (e) { /* measurement must never break the funnel */ }
+  }
+
+  // Meta's own loader, verbatim in behaviour: define the stub queue, then
+  // pull fbevents.js. Written out rather than pasted as a minified blob so
+  // the next person can see what it does.
+  function loadPixel(id) {
+    if (window.fbq) return;
+    var n = window.fbq = function () {
+      n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments);
+    };
+    if (!window._fbq) window._fbq = n;
+    n.push = n;
+    n.loaded = true;
+    n.version = "2.0";
+    n.queue = [];
+    var script = document.createElement("script");
+    script.async = true;
+    script.src = "https://connect.facebook.net/en_US/fbevents.js";
+    document.head.appendChild(script);
+    window.fbq("init", id);
+  }
+
+  function startPixel() {
+    fetch("/api/pixel-config", { cache: "force-cache" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        var id = data && data.pixel_id;
+        if (!id) return;
+        loadPixel(String(id));
+        pixelReady = true;
+        pixelTrack("PageView");
+        var queued = pixelQueue.slice();
+        pixelQueue = [];
+        queued.forEach(pixelTrack);
+      })
+      .catch(function () { /* no pixel, no funnel impact */ });
+  }
+
+  // What Meta needs to join this visit to the click that produced it. The
+  // cookies are set by fbevents.js itself; fbclid is on the landing URL and
+  // is the fallback for a first visit where the cookie does not exist yet.
+  function cookie(name) {
+    var hit = document.cookie.match(
+      new RegExp("(?:^|; )" + name + "=([^;]*)"));
+    return hit ? decodeURIComponent(hit[1]) : "";
+  }
+
+  var META_ID_RE = /^[A-Za-z0-9._-]{1,255}$/;
+
+  function metaIds() {
+    var out = {};
+    var fbp = cookie("_fbp");
+    var fbc = cookie("_fbc");
+    var fbclid = new URLSearchParams(location.search).get("fbclid") || "";
+    if (META_ID_RE.test(fbp)) out.fbp = fbp;
+    if (META_ID_RE.test(fbc)) out.fbc = fbc;
+    if (META_ID_RE.test(fbclid)) out.fbclid = fbclid;
+    return out;
+  }
+
   // --- tracking ------------------------------------------------------------
 
   function track(event, stepNo, extra) {
@@ -1221,6 +1304,10 @@
       renderCtaNote();
       renderLockedReport(win);
       track("result_view");
+      // A finished quiz with a result on screen is the qualified visitor Meta
+      // should be optimising towards, so Lead sits exactly here and nowhere
+      // earlier.
+      pixelTrack("Lead");
       watchCta();
       celebrate();
     }, cfg.analyzing.duration_ms);
@@ -1526,22 +1613,32 @@
     el.payButton.disabled = true;
     el.payButton.textContent = "Redirecting...";
 
+    var payload = {
+      funnel: slug,
+      session_id: sessionId,
+      result_style: winnerStyleId,
+      // Raw tag counts, so the report can be written around what this person
+      // actually kept choosing. The server re-validates every key.
+      tag_scores: scores,
+      // The images themselves, in the order they were tapped. Tags say what
+      // a choice meant; this says what they were looking at when they made
+      // it, which is what the palette is built from. Re-validated server
+      // side against the funnel's own step images.
+      choices: chosen.slice()
+    };
+
+    // The click identifiers travel with the checkout because this is the last
+    // moment the browser is involved. The purchase itself is reported by the
+    // server after Stripe confirms it, long after this tab may be gone, and
+    // without these it would arrive unattributed. The server re-validates
+    // them and drops anything that is not a plain identifier.
+    var ids = metaIds();
+    for (var k in ids) payload[k] = ids[k];
+
     fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        funnel: slug,
-        session_id: sessionId,
-        result_style: winnerStyleId,
-        // Raw tag counts, so the report can be written around what this person
-        // actually kept choosing. The server re-validates every key.
-        tag_scores: scores,
-        // The images themselves, in the order they were tapped. Tags say what
-        // a choice meant; this says what they were looking at when they made
-        // it, which is what the palette is built from. Re-validated server
-        // side against the funnel's own step images.
-        choices: chosen.slice()
-      })
+      body: JSON.stringify(payload)
     })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
@@ -1765,6 +1862,7 @@
   function wire() {
     el.cta.addEventListener("click", function () {
       track("pay_tap");
+      pixelTrack("InitiateCheckout");
       renderPaywall();
       show("screen-paywall");
     });
@@ -1810,6 +1908,7 @@
 
     var params = new URLSearchParams(location.search);
     attribution = readAttribution(params);
+    startPixel();
 
     // After the Stripe redirect sessionStorage may be empty (new tab on some
     // devices), so the cs param alone has to be enough to render the report.
