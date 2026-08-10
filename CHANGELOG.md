@@ -96,3 +96,6 @@ bottom.
 
 ## 2026-08-10 — claude/phase3d-variant-pools
 - Phase 3d: variant pairs
+
+## 2026-08-10 — claude/phase3e-paywall-punch
+- Phase 3e: paywall punch
