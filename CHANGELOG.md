@@ -93,3 +93,6 @@ bottom.
 
 ## 2026-08-10 — claude/phase3c-paywall
 - Phase 3c: paywall pass
+
+## 2026-08-10 — claude/phase3d-variant-pools
+- Phase 3d: variant pairs
