@@ -66,3 +66,6 @@ bottom.
 
 ## 2026-08-09 — claude/phase2e-report-experience
 - Phase 2e: report experience
+
+## 2026-08-10 — claude/phase2f-fast-delivery
+- Phase 2f: fast progressive delivery
