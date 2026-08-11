@@ -114,3 +114,6 @@ bottom.
 
 ## 2026-08-11 — claude/phase5b-home
 - Phase 5b: homepage + brand
+
+## 2026-08-11 — claude/phase5c-quiz-refresh
+- Phase 5c: quiz refresh
