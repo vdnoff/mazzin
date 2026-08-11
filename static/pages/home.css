@@ -198,6 +198,17 @@ body {
 
 .mini-pips i.is-done { background: var(--accent); }
 
+/* The preview sits on the first step now, so there is nothing done behind it
+   and the only thing the row can say is which one is live. Same pulse as the
+   funnel's own current pip, restated here because the two pages do not share
+   a stylesheet. */
+.mini-pips i.is-current { animation: mini-pip-pulse 1.8s ease-in-out infinite; }
+
+@keyframes mini-pip-pulse {
+  0%, 100% { background: var(--accent-soft); }
+  50% { background: #F5D9C4; }
+}
+
 .mini-count {
   flex: 0 0 auto;
   font-size: 10px;

@@ -109,9 +109,15 @@ def _gallery_tags(cfg):
 # Stripe metadata values are strings capped at 500 characters.
 METADATA_VALUE_MAX = 500
 TAG_SCORE_MAX = 30
-# One tap per step, with headroom for a funnel that grows a few. Nine ids at
-# four characters plus separators is well inside the metadata value limit.
-CHOICES_MAX = 12
+# One tap per step, with headroom for a funnel that grows a few. This is a
+# ceiling on absurdity, not a step count: the real per-funnel limit is the
+# step list itself, checked above it. It was 12 while the quiz was 12 steps,
+# which meant the thirteenth step would have failed every list at exactly the
+# length the quiz now produces — and the failure is silent, so the reports
+# would simply have stopped being personalised. Held at the same 20 the
+# tracking step ceiling uses; twenty ids and their separators are around a
+# hundred characters, well inside the metadata value limit.
+CHOICES_MAX = 20
 
 
 def _clean_tag_scores(cfg, raw):
