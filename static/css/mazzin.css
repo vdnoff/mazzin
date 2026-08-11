@@ -85,6 +85,26 @@ body {
 
 .progress-row { flex: 0 0 auto; }
 
+/* The wordmark above the progress bar. Held down to 20px and 0.85 opacity
+   because it is a signature, not a headline — the loud element on this screen
+   is the question. Twenty-six pixels total with its margin, and it takes that
+   from the slack .subtext collects rather than from the photographs: .cards
+   keeps its own min-height. */
+.swipe-brand {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  margin: 0 0 6px;
+  line-height: 0;
+  opacity: 0.85;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.swipe-brand img {
+  display: block;
+  max-height: 20px;
+  width: auto;
+}
+
 /* --- segmented progress ---------------------------------------------------- */
 
 .progress-row {

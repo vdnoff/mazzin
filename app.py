@@ -42,18 +42,24 @@ PAGES = {
     "/refund": "refund.html",
 }
 
+# The homepage is the one page here that actually changes: an analysis goes
+# live and its card has to stop saying "coming soon". Five minutes, against
+# the hour the legal pages get.
+HOME_HTML_MAX_AGE = 300
 
-def _page(filename):
+
+def _page(filename, max_age):
     resp = send_from_directory(os.path.join(config.STATIC_DIR, "pages"), filename)
-    resp.headers["Cache-Control"] = "public, max-age=%d" % config.PAGE_HTML_MAX_AGE
+    resp.headers["Cache-Control"] = "public, max-age=%d" % max_age
     return resp
 
 
 for _rule, _file in PAGES.items():
+    _age = HOME_HTML_MAX_AGE if _rule == "/" else config.PAGE_HTML_MAX_AGE
     app.add_url_rule(
         _rule,
         endpoint="page_" + _file.split(".")[0],
-        view_func=(lambda f=_file: _page(f)),
+        view_func=(lambda f=_file, a=_age: _page(f, a)),
         methods=["GET"],
     )
 
