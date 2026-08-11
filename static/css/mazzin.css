@@ -87,9 +87,10 @@ body {
 
 /* The wordmark above the progress bar. Held down to 20px and 0.85 opacity
    because it is a signature, not a headline — the loud element on this screen
-   is the question. Twenty-six pixels total with its margin, and it takes that
-   from the slack .subtext collects rather than from the photographs: .cards
-   keeps its own min-height. */
+   is the question. Twenty-six pixels total with its margin. It used to take
+   those from the slack .subtext collected; there is no slack any more, so it
+   takes them from the card row, which has the height to spare and a floor
+   that stops it giving away too much. */
 .swipe-brand {
   flex: 0 0 auto;
   align-self: flex-start;
@@ -166,13 +167,16 @@ body {
   color: var(--accent);
 }
 
-/* The free height collects here, above the question, rather than between the
-   question and the cards. That is the whole of the proximity fix: the two
-   things that belong together stay together and the slack goes somewhere it
-   is not read as a gap. */
+/* This used to be `margin-bottom: auto`, and it was where the screen's whole
+   surplus went: 111px of nothing between the subline and the question at
+   390x844, 136px at 430x932. The surplus belongs in the photographs, not in
+   a hole above the question, so the spacer is gone entirely and what separates
+   the subline from the question is the caption's own 16px top margin — one
+   margin, not two adding to 32. The cards' ceiling was raised to take back
+   everything this gives up. */
 .subtext {
   flex: 0 0 auto;
-  margin: 4px 0 auto;
+  margin: 4px 0 0;
   font-size: 12.5px;
   line-height: 1.4;
   color: var(--muted);
@@ -214,13 +218,16 @@ body {
   gap: 10px;
   align-items: stretch;
   justify-content: center;
-  /* The one elastic row in the column: it absorbs whatever the copy leaves
-     over, so extra viewport height becomes bigger photographs rather than
-     bigger gaps. The ceiling keeps the side trim near a fifth on every
-     device; the floor keeps the pair legible on short ones. */
+  /* The one elastic row in the column, and now the only thing that grows.
+     The old 94vw ceiling was lower than the surplus, so the leftover had
+     nowhere to go but the two auto margins that used to sit above the
+     question and below the hint — which is why both measured the same 111px.
+     Raised until the cards can take all of it on the three sizes this is
+     built for, so the column has no slack left to park anywhere. The floor
+     is unchanged and still keeps the pair legible on short screens. */
   flex: 1 1 auto;
   min-height: min(66vw, 40vh);
-  max-height: min(60vh, 94vw);
+  max-height: min(78vh, 160vw);
 }
 
 /* Four at once, two by two. The cells are squarer and shorter than the pair
@@ -232,7 +239,12 @@ body {
   grid-auto-rows: 1fr;
   gap: 10px;
   min-height: min(78vw, 46vh);
-  max-height: min(96vw, 62vh);
+  /* No ceiling of its own: it takes .cards's. With the two auto margins gone,
+     a ceiling the surplus cannot reach leaves the leftover below the hint
+     instead of above the question — 204px of it on this format at 390x844,
+     289 at 430x932, across five of the twelve steps. How much room the row
+     may take is a fact about the screen, not about how many cells are in it,
+     so it is stated once and the formats differ only in their floors. */
 }
 
 .cards.is-grid4 .card { border-radius: 16px; }
@@ -249,7 +261,6 @@ body {
   grid-auto-rows: 1fr;
   gap: 8px;
   min-height: min(96vw, 48vh);
-  max-height: min(124vw, 68vh);
 }
 
 .cards.is-grid6 .card { border-radius: 14px; }
@@ -456,7 +467,10 @@ body {
   justify-content: center;
   gap: 7px;
   min-height: 30px;
-  margin: 28px 0 auto;
+  /* The second of the two auto margins. Gone for the same reason: the hint
+     belongs at the bottom of the screen under the thumb, not floating a
+     hundred pixels above it. */
+  margin: 22px 0 0;
   padding-bottom: 12px;
   font-size: 17px;
   font-weight: 500;
