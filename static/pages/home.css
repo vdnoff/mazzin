@@ -1,0 +1,362 @@
+/* Mazzin homepage. Mobile-first, no JS, no external requests.
+
+   Its own stylesheet rather than an extension of pages.css: the legal pages
+   are a different job — long prose in a single column — and folding a card
+   grid and a display face into their sheet would restyle four pages nobody
+   asked to have restyled. The tokens below are the funnel's, copied
+   deliberately so the two surfaces read as one product. */
+
+/* The same self-hosted subsets the funnel uses. Declared again here because
+   this page does not load mazzin.css; the files are already on the origin,
+   so the second declaration costs a cache hit and nothing else. No CDN, no
+   Google Fonts, no request that leaves mazzin.com. */
+@font-face {
+  font-family: "Inter var";
+  src: url("/static/fonts/inter-latin-var.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Fraunces var";
+  src: url("/static/fonts/fraunces-latin-var.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --ink: #16181d;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --bg: #ffffff;
+  --accent: #C05621;
+  --accent-soft: #FDF1E7;
+  --ui: "Inter var", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --brand: "Fraunces var", Georgia, "Times New Roman", serif;
+  --radius: 16px;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--ui);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* --- header ---------------------------------------------------------------- */
+
+/* Logo only. The homepage is the navigation — a nav bar pointing at the page
+   you are already on is furniture. */
+.site-head {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.site-head .brand {
+  display: inline-flex;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.site-head .brand img { display: block; }
+
+/* --- hero ------------------------------------------------------------------ */
+
+.hero {
+  padding: 40px 0 34px;
+  max-width: 33ch;
+}
+
+.hero h1 {
+  margin: 0 0 14px;
+  font-family: var(--brand);
+  font-optical-sizing: auto;
+  font-size: 38px;
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.hero-sub {
+  margin: 0 0 18px;
+  font-size: 16px;
+  line-height: 1.55;
+  color: #3a3f47;
+}
+
+/* Three plain facts, separated by dots. No badges, no shields, nothing that
+   implies an endorsement we do not have. */
+.hero-trust {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.hero-trust span:not(:last-child)::after {
+  content: "·";
+  margin-left: 10px;
+  color: var(--line);
+}
+
+/* --- the grid -------------------------------------------------------------- */
+
+.analyses-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+.analyses-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.analyses-head p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  align-items: start;
+  gap: 12px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+/* The one live analysis takes the full width on a phone. Half a 390px screen
+   is not enough room to show a photograph and still say what the thing does,
+   and the live card is the only one on this page that can be acted on. */
+.card.is-live {
+  grid-column: 1 / -1;
+  border-color: #dcd6cf;
+}
+
+.card-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--accent-soft);
+}
+
+.card.is-live .card-media { aspect-ratio: 16 / 10; }
+
+/* Taken out of flow on purpose. An in-flow img with height:100% inside a box
+   whose height comes from aspect-ratio is a cyclic dependency: the percentage
+   resolves to auto, the photo falls back to its intrinsic size and drives the
+   box instead of the other way round. The gallery shots are portrait, so the
+   card came out half a screen tall. Positioned, the ratio holds and the crop
+   is the crop we asked for. */
+.card-media img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Placeholders, not photographs. A stock image of a bathroom on a card that
+   cannot be clicked would be a picture of a product that does not exist. */
+.card-media.is-placeholder {
+  background: linear-gradient(150deg, #f4f1ed 0%, #ebe6e0 55%, #e3ddd5 100%);
+}
+
+/* A soft light source top-left, so the tile reads as a surface rather than a
+   flat swatch. Kept off the deep end of the gradient — at 0.85 it bleached
+   the whole thing back to paper. */
+.card-media.is-placeholder::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(110% 80% at 20% 12%,
+    rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 58%);
+}
+
+/* Two class names deep, to match .card-media.is-placeholder above — at one
+   they lost the cascade to it and all five tiles drew the same beige. */
+.is-placeholder.g-2 { background: linear-gradient(148deg, #e9eaef 0%, #dcdee6 52%, #cdd0da 100%); }
+.is-placeholder.g-3 { background: linear-gradient(148deg, #ece7e0 0%, #ded6cb 52%, #cec4b6 100%); }
+.is-placeholder.g-4 { background: linear-gradient(148deg, #e4ece5 0%, #d3e0d5 52%, #c2d2c5 100%); }
+.is-placeholder.g-5 { background: linear-gradient(148deg, #f0e6e2 0%, #e3d3cd 52%, #d5c2ba 100%); }
+.is-placeholder.g-6 { background: linear-gradient(148deg, #e8e9ee 0%, #dadce4 52%, #cbced8 100%); }
+
+.card-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  padding: 13px 14px 14px;
+}
+
+.badge {
+  display: inline-block;
+  align-self: flex-start;
+  margin: 0 0 7px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.badge.is-now {
+  background: var(--accent);
+  color: #fff;
+}
+
+.badge.is-soon {
+  background: var(--accent-soft);
+  color: #9a5a30;
+}
+
+.card h3 {
+  margin: 0 0 5px;
+  font-size: 15.5px;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+}
+
+.card p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.card.is-live h3 { font-size: 18px; }
+.card.is-live p { font-size: 14px; color: #4b5159; }
+
+/* Muted as a whole rather than greyed word by word: nothing on these cards is
+   interactive, and the eye should read that before it reads the badge. */
+.card.is-soon { background: #fcfcfb; }
+.card.is-soon h3 { color: #4b5159; }
+
+.card-cta {
+  display: block;
+  margin: 13px 0 0;
+  padding: 13px 16px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 650;
+  text-align: center;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card-cta:active { transform: scale(0.99); }
+
+.grid-note {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* --- disclaimer ------------------------------------------------------------ */
+
+.note {
+  margin: 26px 0 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fafafa;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.note p { margin: 0; }
+
+/* --- footer ---------------------------------------------------------------- */
+
+.site-foot {
+  margin-top: 40px;
+  padding: 22px 0 calc(30px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.site-foot nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-bottom: 14px;
+}
+
+.site-foot a { color: var(--muted); text-decoration: none; }
+
+.site-foot nav a:hover,
+.site-foot nav a:focus { text-decoration: underline; }
+
+.site-foot p { margin: 0 0 6px; }
+
+.foot-mark {
+  display: inline-block;
+  margin-top: 10px;
+  opacity: 0.55;
+}
+
+.foot-mark img { display: block; }
+
+/* --- wider viewports -------------------------------------------------------- */
+
+@media (min-width: 700px) {
+  .hero { padding: 56px 0 40px; max-width: 30ch; }
+  .hero h1 { font-size: 52px; }
+  .hero-sub { font-size: 17px; max-width: 52ch; }
+  .grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  /* Back into the flow at three columns: the row is wide enough that a
+     full-bleed live card would leave two empty cells beside it. */
+  .card.is-live { grid-column: auto; }
+  .card.is-live .card-media { aspect-ratio: 4 / 3; }
+  .card.is-live h3 { font-size: 16.5px; }
+  .card.is-live p { font-size: 13.5px; }
+}
+
+@media (min-width: 1000px) {
+  .hero { max-width: 34ch; }
+  .hero h1 { font-size: 60px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-cta:active { transform: none; }
+}

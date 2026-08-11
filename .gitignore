@@ -6,3 +6,6 @@ __pycache__/
 .venv/
 venv/
 .DS_Store
+
+# Working folder for brand source files — exports live in static/brand/.
+assets/

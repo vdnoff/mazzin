@@ -7,9 +7,11 @@
 <title>Mazzin</title>
 <link rel="preload" href="/static/fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/static/fonts/fraunces-latin-var.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="icon" href="/static/img/favicon.ico" sizes="32x32">
-<link rel="icon" type="image/svg+xml" href="/static/img/mark.svg">
-<link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png">
+<link rel="icon" href="/static/brand/favicon.ico" sizes="32x32">
+<link rel="icon" type="image/svg+xml" href="/static/brand/mark.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="/static/brand/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/static/brand/icon-512.png">
+<link rel="apple-touch-icon" href="/static/brand/apple-touch-icon.png">
 <link rel="stylesheet" href="/static/css/mazzin.css">
 </head>
 <body>
@@ -18,6 +20,7 @@
 
   <section id="screen-swipe" class="screen is-active">
     <header class="swipe-top">
+      <a class="swipe-brand" href="/"><img src="/static/brand/logo.svg" alt="mazzin" height="20" width="88"></a>
       <div class="progress-row">
         <div class="pips" id="pips" aria-hidden="true"></div>
         <span class="progress-label" id="progress-label"></span>
