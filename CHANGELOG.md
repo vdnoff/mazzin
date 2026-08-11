@@ -120,3 +120,6 @@ bottom.
 
 ## 2026-08-11 — claude/phase5d-hero-visual
 - Phase 5d: hero visual
+
+## 2026-08-11 — claude/phase5e-space-copy
+- Phase 5e: spacing + copy
