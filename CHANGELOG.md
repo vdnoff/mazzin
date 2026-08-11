@@ -123,3 +123,6 @@ bottom.
 
 ## 2026-08-11 — claude/phase5e-space-copy
 - Phase 5e: spacing + copy
+
+## 2026-08-11 — claude/phase5e-quiz-overhaul-613vz8
+- Phase 5f: quiz overhaul
