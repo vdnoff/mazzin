@@ -1079,16 +1079,65 @@ def _choice_lines(cfg, choices):
     return lines
 
 
-def _choice_block(cfg, choices):
+# How many style elements the free result screen shows. engine.js owns the
+# grid; this owns knowing what was in it.
+ELEMENTS_SHOWN = 6
+
+
+def _shown_elements(cfg, choices, tag_scores):
+    """The style element labels the free result already put on screen.
+
+    Recomputed here rather than taken from the browser, by the same rule
+    engine.js picks with: an element whose image they tapped comes first, in
+    config order, and the remaining slots go to whichever elements carry most
+    of what they kept choosing. `choices` and `tag_scores` were both
+    re-validated at checkout and the mapping is the config the server owns, so
+    nothing in this is the client's word.
+    """
+    items = [item for item in
+             ((cfg.get("style_elements") or {}).get("items") or [])
+             if isinstance(item, dict)]
+    if not items or not choices:
+        return []
+
+    scores = tag_scores or {}
+    picked, seen = [], set()
+    for index, item in enumerate(items):
+        if len(picked) >= ELEMENTS_SHOWN:
+            break
+        if item.get("image") in choices:
+            seen.add(index)
+            picked.append(item)
+
+    if len(picked) < ELEMENTS_SHOWN:
+        rest = [(index, item) for index, item in enumerate(items)
+                if index not in seen]
+        rest.sort(key=lambda row: (
+            -sum(scores.get(tag, 0) for tag in (row[1].get("tags") or [])),
+            row[0]))
+        picked.extend(item for _, item in rest[:ELEMENTS_SHOWN - len(picked)])
+
+    return [item["label"] for item in picked if item.get("label")]
+
+
+def _choice_block(cfg, choices, tag_scores=None):
     """The choice sequence as context for a section that is not the palette."""
     lines = _choice_lines(cfg, choices)
     if not lines:
         return None
-    # Counted, not written out: the quiz was nine steps and is now twelve, and
-    # a number spelled into the prompt is a number that goes stale silently.
+    elements = _shown_elements(cfg, choices, tag_scores)
+    # They have already been told these are their elements, for free, before
+    # being asked for anything. A section that then recommends around one of
+    # them reads as the report going back on the free part of itself.
+    shown = ("\nThey have already been shown these as their style elements: %s "
+             "— specify these rather than contradict them.\n"
+             % ", ".join(elements)) if elements else ""
+    # Counted, not written out: the quiz was nine steps and is now thirteen,
+    # and a number spelled into the prompt is a number that goes stale silently.
     return ("The %d choices they made, in order, with what was on screen:\n"
             % len(lines)
             + "\n".join(lines)
+            + shown
             + "\nOne of these is a rejection rather than a preference, and it "
               "is marked as one — treat it as a thing to steer away from, "
               "never as a thing to recommend."
@@ -1194,7 +1243,7 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None, choices=None)
     extra = None
     if cfg is not None and choices:
         extra = (_palette_block(cfg, choices) if section_id == "palette"
-                 else _choice_block(cfg, choices))
+                 else _choice_block(cfg, choices, tag_scores))
     if extra:
         parts.append(extra)
 

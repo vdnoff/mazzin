@@ -727,6 +727,68 @@ body {
   color: var(--ink);
 }
 
+/* --- style elements (free) ------------------------------------------------- */
+
+/* Six chips under the palette, given away before the paywall. Two columns
+   because a phone fits two 150px cells with a gap and nothing wider reads at
+   thumbnail size, and because a single column of six would push the first
+   locked section off the screen entirely. */
+.elements-sub {
+  margin: -6px 0 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.element-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.element-chip {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  padding: 7px 9px 7px 7px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+/* Square, and the photograph is centre-cropped into it: the quiz frames are
+   tall rooms, and a whole room shrunk to 38px is a grey smudge. */
+.element-thumb {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--accent-soft);
+}
+
+.element-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Wraps to two lines rather than truncating — the label is the claim, and half
+   a claim is worse than a taller chip. */
+.element-label {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
 /* --- still generating ------------------------------------------------------ */
 
 /* Sections land one at a time, and a report that has stopped growing looks

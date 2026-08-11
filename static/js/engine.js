@@ -719,11 +719,20 @@
     // sections showing the same two frames reads as a bug, not as a teaser.
     var pool = styleShots(style);
     var taken = 0;
+    var elementsPlaced = false;
 
     sections.forEach(function (sec) {
       if (sec.enabled === false) return;
       var mode = (sec.reveal && sec.reveal.mode) || "locked";
       var reveal = reveals[sec.id];
+
+      // The elements block goes in at the line between what they have been
+      // given and what is being sold: under the palette, above the first
+      // section with its words held back.
+      if (mode !== "visible" && !elementsPlaced) {
+        elementsPlaced = true;
+        addElements();
+      }
 
       var block = elm("article", "section");
       block.setAttribute("data-mode", mode);
@@ -740,11 +749,109 @@
       el.report.appendChild(block);
     });
 
+    // A report with nothing locked in it would never have hit the line above.
+    if (!elementsPlaced) addElements();
+
     layoutDissolves();
     // A font swap changes the metrics the mask was measured against.
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(layoutDissolves);
     }
+  }
+
+  // --- style elements (free) ------------------------------------------------
+
+  // Six things the report will specify, named and pictured, given away before
+  // anything is asked for. The palette above proves we read their colours; this
+  // proves we read their fittings, which is the harder claim and the one the
+  // locked sections are trading on.
+  var ELEMENT_COUNT = 6;
+
+  function elementItems() {
+    var block = cfg && cfg.style_elements;
+    return (block && block.items) || [];
+  }
+
+  // What one element is worth against the run so far. Same `scores` object the
+  // result is computed from, so an element cannot rank on a tag nobody chose.
+  function elementWeight(item) {
+    var sum = 0;
+    (item.tags || []).forEach(function (t) { sum += scores[t] || 0; });
+    return sum;
+  }
+
+  // An image they actually tapped is the strongest claim available — they
+  // pointed at it — so those fill the grid first, in config order. The rest go
+  // to whichever elements carry most of what they kept choosing, with config
+  // order breaking ties so one run always shows one set.
+  //
+  // The chosen pass alone cannot fill six: the mapped images live on five
+  // steps and only one image per step is ever tapped.
+  function pickElements() {
+    var items = elementItems();
+    if (!items.length) return [];
+
+    var picked = [];
+    var seen = {};
+    items.forEach(function (item) {
+      if (picked.length >= ELEMENT_COUNT) return;
+      if (item.image && chosen.indexOf(item.image) !== -1) {
+        seen[item.id] = true;
+        picked.push(item);
+      }
+    });
+
+    if (picked.length < ELEMENT_COUNT) {
+      items
+        .map(function (item, i) {
+          return { item: item, weight: elementWeight(item), i: i };
+        })
+        .filter(function (row) { return !seen[row.item.id]; })
+        .sort(function (a, b) { return b.weight - a.weight || a.i - b.i; })
+        .slice(0, ELEMENT_COUNT - picked.length)
+        .forEach(function (row) { picked.push(row.item); });
+    }
+    return picked;
+  }
+
+  function addElements() {
+    var node = elementsSection();
+    if (node) el.report.appendChild(node);
+  }
+
+  // Same article shell as every other section, so it inherits the rule under
+  // the title and the spacing between blocks. The thumbnails are square
+  // centre-crops rather than the tall quiz frames: at this size the crop is
+  // the material, and the room around it is noise.
+  function elementsSection() {
+    var block = cfg && cfg.style_elements;
+    var items = pickElements();
+    if (!block || !items.length) return null;
+
+    var node = elm("article", "section section-elements");
+    node.setAttribute("data-mode", "visible");
+    node.appendChild(elm("h2", "section-title",
+                         block.title || "Your Style Elements"));
+    if (block.subline) node.appendChild(elm("p", "elements-sub", block.subline));
+
+    var grid = elm("ul", "element-grid");
+    items.forEach(function (item) {
+      var chip = elm("li", "element-chip");
+      var frame = elm("span", "element-thumb");
+      var img = document.createElement("img");
+      img.src = item.img;
+      img.alt = "";
+      img.loading = "lazy";
+      img.draggable = false;
+      frame.appendChild(img);
+      chip.appendChild(frame);
+      chip.appendChild(elm("span", "element-label", item.label || ""));
+      grid.appendChild(chip);
+    });
+    node.appendChild(grid);
+
+    node.addEventListener("click", focusCta);
+    return node;
   }
 
   // The one section delivered in full, and it is delivered in the paid shape:
