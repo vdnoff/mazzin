@@ -237,6 +237,23 @@ body {
 
 .cards.is-grid4 .card { border-radius: 16px; }
 
+/* Six palette boards, three rows of two. The cells are wider than they are
+   tall — a swatch board reads fine cropped to a landscape cell, and three
+   portrait rows would not fit a phone with the question still above them.
+   The ceiling is higher than grid4's because there is one more row to place,
+   and .cards is still the elastic row, so what it cannot take it gives back
+   to the slack above the caption rather than pushing the hint off-screen. */
+.cards.is-grid6 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 8px;
+  min-height: min(96vw, 48vh);
+  max-height: min(124vw, 68vh);
+}
+
+.cards.is-grid6 .card { border-radius: 14px; }
+
 .card {
   position: relative;
   flex: 1 1 0;
@@ -1309,6 +1326,25 @@ body {
 .mid-cta:active { background: #f6f7f8; }
 
 /* --- CTA / paywall ------------------------------------------------------- */
+
+/* The cost of the mistakes, between the locked sections and the button. The
+   brand face and the accent ground make it the one block on this screen that
+   is neither a section nor a control, which is what stops it reading as more
+   report. */
+.value-banner {
+  margin: 18px 0 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  font-family: var(--brand);
+  font-optical-sizing: auto;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.005em;
+  color: #7A3A16;
+  text-wrap: pretty;
+}
 
 .cta-note {
   margin: 0 0 10px;
