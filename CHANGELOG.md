@@ -108,3 +108,6 @@ bottom.
 
 ## 2026-08-10 — claude/branding-logo
 - Add Mazzin brand assets: logo, mark, favicons
+
+## 2026-08-11 — claude/phase5-meta-pixel
+- Phase 5: Meta pixel + CAPI
