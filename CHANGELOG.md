@@ -117,3 +117,6 @@ bottom.
 
 ## 2026-08-11 — claude/phase5c-quiz-refresh
 - Phase 5c: quiz refresh
+
+## 2026-08-11 — claude/phase5d-hero-visual
+- Phase 5d: hero visual
