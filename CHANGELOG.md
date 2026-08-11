@@ -111,3 +111,6 @@ bottom.
 
 ## 2026-08-11 — claude/phase5-meta-pixel
 - Phase 5: Meta pixel + CAPI
+
+## 2026-08-11 — claude/phase5b-home
+- Phase 5b: homepage + brand
