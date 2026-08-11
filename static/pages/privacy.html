@@ -18,7 +18,7 @@
 
 <main class="wrap">
   <h1>Privacy Policy</h1>
-  <p class="updated">Last updated: 2026-08-09</p>
+  <p class="updated">Last updated: 2026-08-10</p>
 
   <p class="lede">Short version: you can take a quiz without telling us
   anything about yourself. We only learn your email address if you buy a
@@ -63,22 +63,42 @@
   <p>We never see or store your full card number, expiry date, or security
   code. Those go directly to our payment provider.</p>
 
+  <h3>Advertising measurement</h3>
+  <p>We use Meta's advertising analytics — the Meta pixel in your browser and
+  matching events sent from our server — to measure how our ads perform. It
+  tells us which ads led to a completed quiz and which led to a sale, so we
+  can stop paying for the ones that do neither. What is involved:</p>
+  <ul>
+    <li>the pixel sets Meta's own cookies (<code>_fbp</code> and
+      <code>_fbc</code>) and reads the click identifier
+      (<code>fbclid</code>) from the link you arrived through — together these
+      identify a browser and the ad click that sent it, not a person by
+      name;</li>
+    <li>we send Meta an event when a page is viewed, when a quiz produces a
+      result, and when checkout is opened;</li>
+    <li>when a purchase completes, our server sends Meta the amount, the
+      currency, and your email address hashed with SHA-256. Hashing happens on
+      our server: Meta receives the hash, not the address.</li>
+  </ul>
+  <p>Your quiz answers, your style result, and the contents of your report are
+  never sent to Meta.</p>
+
   <h2>3. What we do not do</h2>
   <ul>
     <li><strong>No accounts.</strong> There is nothing to register for and no
       password to manage.</li>
-    <li><strong>No tracking cookies at present.</strong> The site currently
-      sets no advertising or analytics cookies. Your browser keeps a session
-      identifier in its own temporary storage so a quiz survives a page
-      reload; it is cleared when you close the tab.</li>
+    <li><strong>No cookies of our own.</strong> The only cookies set on this
+      site are Meta's advertising cookies described above. Your browser keeps
+      a session identifier in its own temporary storage so a quiz survives a
+      page reload; it is cleared when you close the tab.</li>
     <li><strong>No selling or renting of personal data</strong> to anyone, for
       any purpose.</li>
     <li><strong>No profiling that produces legal effects</strong> for you, and
       no automated decision-making of that kind.</li>
   </ul>
-  <p>We may in future use advertising analytics to measure campaign
-  performance; see the cookie notice for details if and when that happens,
-  and where consent is required we will ask for it before anything is set.</p>
+  <p>The advertising measurement described above is the whole of it. We do not
+  run any other analytics or advertising technology, and if we add one we will
+  say so here first.</p>
 
   <h2>4. Why we are allowed to use this data</h2>
   <ul>
@@ -90,8 +110,9 @@
       precisely so that it stays proportionate.</li>
     <li><strong>Legal obligation</strong> (Art. 6(1)(c) GDPR) — to retain sale
       records for tax and accounting purposes.</li>
-    <li><strong>Consent</strong> (Art. 6(1)(a) GDPR) — where we ever introduce
-      analytics or advertising technology that requires it.</li>
+    <li><strong>Consent</strong> (Art. 6(1)(a) GDPR) — where advertising
+      measurement requires it in your jurisdiction, and for any future
+      technology of that kind.</li>
   </ul>
 
   <h2>5. Who we share it with</h2>
@@ -102,6 +123,11 @@
       details as an independent controller for its own compliance purposes and
       returns the limited purchase data listed above. See Stripe's own privacy
       policy for how it treats that information.</li>
+    <li><strong>Meta</strong> — advertising measurement. Meta receives the
+      pixel and server events described in section 2, including a hashed form
+      of your email address on purchase, and acts as an independent controller
+      for its own purposes. See Meta's own privacy policy for how it treats
+      that information.</li>
     <li><strong>Our hosting and content delivery providers</strong> — they
       operate the servers and network the site runs on.</li>
   </ul>

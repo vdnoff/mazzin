@@ -11,9 +11,12 @@ is used wherever a fractional amount is actually computed.
 No email address, address or raw request body is ever written to a log line.
 """
 
+import decimal
+import hashlib
 import json
 import logging
 import re
+import time
 
 import pymysql.err
 import stripe
@@ -215,7 +218,37 @@ def _read_choices(cfg, packed):
     return _clean_choices(cfg, packed.split(","))
 
 
-def _metadata(slug, session_id, result_style, tag_scores, choices=None):
+# --- Meta click identifiers ------------------------------------------------
+
+# Meta's own formats: `fb.1.<ms>.<random>` for the browser cookie and the
+# click id, and an fbclid is a URL parameter somebody else generated. None of
+# them are ours to interpret — they are opaque strings we carry from the tap
+# to the Purchase event so the two can be joined. The caps are Stripe's
+# metadata limit and a sanity bound; anything longer is not a click id.
+META_ID_MAX = 255
+META_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,%d}$" % META_ID_MAX)
+META_ID_KEYS = ("fbp", "fbc", "fbclid")
+
+
+def _clean_meta_ids(raw):
+    """The click identifiers worth forwarding, or {}.
+
+    Same posture as the tag scores: these only improve ad attribution, so a
+    bad one is dropped and the purchase carries on. A missing identifier costs
+    a slightly worse match rate; a failed checkout costs the sale.
+    """
+    if not isinstance(raw, dict):
+        return {}
+    out = {}
+    for key in META_ID_KEYS:
+        value = raw.get(key)
+        if isinstance(value, str) and META_ID_RE.match(value):
+            out[key] = value
+    return out
+
+
+def _metadata(slug, session_id, result_style, tag_scores, choices=None,
+              meta_ids=None):
     """Checkout session metadata. Absent keys are absent, never empty strings."""
     data = {
         "funnel": slug,
@@ -226,7 +259,136 @@ def _metadata(slug, session_id, result_style, tag_scores, choices=None):
         data["tag_scores"] = tag_scores
     if choices:
         data["choices"] = choices
+    for key, value in (meta_ids or {}).items():
+        data[key] = value
     return data
+
+
+# --- Meta Conversions API --------------------------------------------------
+
+# The browser never fires Purchase. An ad blocker, a closed tab or a back
+# button all lose it, and a browser that does fire it plus a server that also
+# does produces two. One sender, server-side, after the row exists.
+
+
+def _sha256(value):
+    """Meta's normalisation for an email: trimmed, lower-cased, then hashed."""
+    return hashlib.sha256(value.strip().lower().encode("utf-8")).hexdigest()
+
+
+def _capi_url():
+    return "https://graph.facebook.com/%s/%s/events" % (
+        config.META_API_VERSION, config.META_PIXEL_ID)
+
+
+def send_purchase_event(purchase_id, slug, amount_cents, currency,
+                        email=None, payment_intent=None, meta_ids=None,
+                        event_time=None):
+    """Tell Meta a purchase happened. Returns True if it was accepted.
+
+    Best effort by construction: every failure path returns False and the
+    webhook still answers 200. Stripe retries a non-200, and a retry would
+    replay a purchase we have already recorded — an advertising event is not
+    worth that.
+
+    `event_id` is the payment intent, which is what makes this safe to send
+    more than once: Meta deduplicates on it, so a replayed webhook or a future
+    browser-side Purchase collapses into one conversion rather than inflating
+    the number the ad spend is judged against.
+    """
+    if not (config.META_PIXEL_ID and config.META_CAPI_TOKEN):
+        return False
+
+    try:
+        import requests
+    except ImportError:
+        log.error("requests not installed — Meta purchase events are skipped")
+        return False
+
+    ids = meta_ids or {}
+    user_data = {}
+    if email:
+        # The only personal datum that leaves here, and it leaves hashed.
+        user_data["em"] = [_sha256(email)]
+    if ids.get("fbp"):
+        user_data["fbp"] = ids["fbp"]
+    # fbc is the joinable click id. Meta will take a raw fbclid wrapped in its
+    # own format, so a visitor who arrived with one but has no cookie yet is
+    # still attributable.
+    if ids.get("fbc"):
+        user_data["fbc"] = ids["fbc"]
+    elif ids.get("fbclid") and event_time:
+        user_data["fbc"] = "fb.1.%d.%s" % (event_time * 1000, ids["fbclid"])
+
+    if not user_data:
+        # Nothing to match on. Meta rejects the event anyway, so do not spend
+        # a request finding that out.
+        log.info("purchase %s has no Meta identifiers — event not sent",
+                 purchase_id)
+        return False
+
+    payload = {
+        "data": [{
+            "event_name": "Purchase",
+            "event_time": event_time or int(time.time()),
+            "event_id": payment_intent or ("purchase-%s" % purchase_id),
+            "action_source": "website",
+            "event_source_url": "%s/%s" % (config.BASE_URL, slug),
+            "user_data": user_data,
+            "custom_data": {
+                # Cents to units, through Decimal — this is a money value and
+                # the rule here is that money never touches a float.
+                "value": float(decimal.Decimal(amount_cents)
+                               / decimal.Decimal(100)),
+                "currency": (currency or "usd").lower(),
+            },
+        }],
+    }
+    if config.META_TEST_EVENT_CODE:
+        payload["test_event_code"] = config.META_TEST_EVENT_CODE
+
+    try:
+        response = requests.post(
+            _capi_url(),
+            json=payload,
+            params={"access_token": config.META_CAPI_TOKEN},
+            timeout=config.META_TIMEOUT_S,
+        )
+    except Exception as exc:
+        # Class only. The payload holds a hashed email and click ids, and none
+        # of it belongs in a log line.
+        log.warning("Meta purchase event failed for purchase %s: %s",
+                    purchase_id, type(exc).__name__)
+        return False
+
+    if response.status_code >= 300:
+        log.warning("Meta purchase event rejected for purchase %s: HTTP %s",
+                    purchase_id, response.status_code)
+        return False
+
+    log.info("Meta purchase event sent for purchase %s", purchase_id)
+    return True
+
+
+# --- GET /api/pixel-config -------------------------------------------------
+
+
+@bp.get("/api/pixel-config")
+def pixel_config():
+    """The pixel id, or null. One field, no secrets.
+
+    The id lives here rather than in the HTML because static/ is served by the
+    CDN and shared by every funnel and every brand that will ever run on this
+    shell. A pixel compiled into those files would follow the next one onto
+    its own domain.
+
+    The token is never exposed: it is a server credential and the browser has
+    no use for it.
+    """
+    response = jsonify({"pixel_id": config.META_PIXEL_ID or None})
+    response.headers["Cache-Control"] = (
+        "public, max-age=%d" % config.PIXEL_CONFIG_MAX_AGE)
+    return response
 
 
 # --- POST /api/checkout ----------------------------------------------------
@@ -262,6 +424,9 @@ def checkout():
     # Steer the report copy only — never the price, never whether we fulfil.
     tag_scores = _tag_scores_metadata(_clean_tag_scores(cfg, body.get("tag_scores")))
     choices = _choices_metadata(_clean_choices(cfg, body.get("choices")))
+    # Carried through Stripe so the server-side Purchase can be joined to the
+    # click that produced it. Never used to decide anything on this path.
+    meta_ids = _clean_meta_ids(body)
 
     title = (cfg.get("meta") or {}).get("title") or slug
     product_name = "%s — Full Style Report" % title
@@ -292,7 +457,7 @@ def checkout():
             success_url="%s/%s?cs={CHECKOUT_SESSION_ID}" % (config.BASE_URL, slug),
             cancel_url="%s/%s?canceled=1" % (config.BASE_URL, slug),
             metadata=_metadata(slug, session_id, result_style, tag_scores,
-                               choices),
+                               choices, meta_ids),
             customer_creation="if_required",
         )
     except Exception:
@@ -444,6 +609,21 @@ def stripe_webhook():
         return jsonify({}), 500
 
     log.info("purchase %s recorded for funnel %s", purchase_id, slug)
+
+    # After the row, never before, and never in a way that can change the
+    # answer. A conversion Meta missed is a reporting gap; a webhook that
+    # returns non-200 is a retry against a purchase already written.
+    try:
+        send_purchase_event(
+            purchase_id, slug, amount_cents, currency,
+            email=details.get("email"), payment_intent=payment_intent,
+            meta_ids=_clean_meta_ids(metadata),
+            event_time=int(event.get("created") or time.time()),
+        )
+    except Exception as exc:
+        log.warning("Meta purchase event raised for purchase %s: %s",
+                    purchase_id, type(exc).__name__)
+
     cfg = config.load_funnel(slug)
     tag_scores = _read_tag_scores(cfg, metadata.get("tag_scores"))
     choices = _read_choices(cfg, metadata.get("choices"))

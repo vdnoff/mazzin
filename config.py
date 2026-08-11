@@ -57,6 +57,23 @@ RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 RESEND_TIMEOUT_S = float(os.getenv("RESEND_TIMEOUT_S", "15"))
 EMAIL_FROM = os.getenv("EMAIL_FROM", "Mazzin <reports@mazzin.com>")
 
+# --- Meta advertising measurement -----------------------------------------
+# Two switches, and either being empty turns its own half off without
+# touching the other. No pixel id: the browser loads nothing from Meta and
+# /api/pixel-config answers null. No token: the server sends no Purchase.
+# A funnel with neither behaves exactly as it did before any of this existed.
+#
+# The id is deliberately not baked into the static HTML. Those files are
+# cached by the CDN and shared across every funnel, so a pixel compiled into
+# them would follow a second brand onto a second domain.
+META_PIXEL_ID = os.getenv("META_PIXEL_ID", "")
+META_CAPI_TOKEN = os.getenv("META_CAPI_TOKEN", "")
+META_API_VERSION = os.getenv("META_API_VERSION", "v21.0")
+META_TIMEOUT_S = float(os.getenv("META_TIMEOUT_S", "10"))
+# Meta's own test hook: set it and events land in Events Manager's test tab
+# instead of in reporting. Absent in production, which is the point.
+META_TEST_EVENT_CODE = os.getenv("META_TEST_EVENT_CODE", "")
+
 # --- App ------------------------------------------------------------------
 BASE_URL = os.getenv("BASE_URL", "https://mazzin.com")
 
@@ -70,6 +87,10 @@ FUNNEL_HTML_MAX_AGE = 300
 
 # Facade and legal pages change rarely.
 PAGE_HTML_MAX_AGE = 3600
+
+# The pixel id changes about never, and the endpoint is on the critical
+# path of every page load. Cache it hard.
+PIXEL_CONFIG_MAX_AGE = int(os.getenv("PIXEL_CONFIG_MAX_AGE", "86400"))
 
 
 def valid_slug(slug):
