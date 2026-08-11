@@ -79,6 +79,11 @@ body {
 
 .hero {
   padding: 40px 0 34px;
+}
+
+/* The measure lives on the copy rather than on .hero, because .hero becomes
+   a two-column grid at 900px and a max-width there would cap the whole row. */
+.hero-copy {
   max-width: 33ch;
 }
 
@@ -116,6 +121,189 @@ body {
   content: "·";
   margin-left: 10px;
   color: var(--line);
+}
+
+/* --- the hero preview ------------------------------------------------------ */
+
+/* Hidden by default and switched on at 900px, rather than shown and then
+   hidden: below that width it must not exist at all, and `display: none` from
+   the start means the two gallery photographs are never fetched on a phone.
+   `loading="lazy"` would not have saved them on its own — a lazy image inside
+   a displayed container still loads once it nears the viewport. */
+.hero-preview { display: none; }
+
+.phone-tilt {
+  transform: rotate(-3deg);
+  transform-origin: center;
+}
+
+/* The float is on the inner element so the tilt above stays out of the
+   keyframes; a rotation restated inside an animation is a rotation that
+   drifts the moment either value changes. */
+.phone {
+  width: 300px;
+  height: 620px;
+  padding: 9px;
+  border-radius: 42px;
+  /* Bezel: a dark ground with a lighter inner lip, which is what reads as an
+     edge rather than as a border. */
+  background: linear-gradient(160deg, #2b2d33 0%, #16181d 55%, #23252b 100%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset,
+              0 30px 60px -20px rgba(22, 24, 29, 0.45),
+              0 8px 24px -12px rgba(22, 24, 29, 0.3);
+  animation: phone-float 6s ease-in-out infinite;
+}
+
+@keyframes phone-float {
+  0%, 100% { transform: translateY(-6px); }
+  50% { transform: translateY(6px); }
+}
+
+/* Inside the glass the layout is the funnel's own: a flex column with the
+   card row as the one elastic child and the slack collecting above the
+   question. Scaled down, not redesigned — the point is that it looks like
+   the thing they are about to use. */
+.phone-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  /* The deep bottom padding is not a mistake. On the real screen the hint
+     sits 111px clear of the bottom edge, which is 13% of the viewport; the
+     same share here is 81px, and without it the slack the funnel collects
+     above its question all piles up here instead. */
+  padding: 15px 13px 80px;
+  border-radius: 34px;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.mini-progress {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 9px;
+}
+
+.mini-pips {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 2px;
+}
+
+.mini-pips i {
+  flex: 1 1 0;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+}
+
+.mini-pips i.is-done { background: var(--accent); }
+
+.mini-count {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.mini-kicker {
+  flex: 0 0 auto;
+  margin: 15px 0 0;
+  font-size: 9.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* The auto margin is where the spare height goes, exactly as it does in the
+   funnel: above the question, never between the question and the cards. */
+.mini-sub {
+  flex: 0 0 auto;
+  margin: 3px 0 auto;
+  font-size: 9.5px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.mini-question {
+  flex: 0 0 auto;
+  margin: 12px 0 7px;
+  font-family: var(--brand);
+  font-optical-sizing: auto;
+  font-size: 23px;
+  font-weight: 600;
+  line-height: 1.13;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+/* Measured off the real screen rather than guessed at. At 390x844 the funnel
+   draws each card 174 by 367 — a width/height of 0.474 — with the card row
+   taking 43.5% of the viewport. This screen is 616 tall, so 43.5% is 268 and
+   the ceiling below puts the ratio back on 0.47. */
+.mini-cards {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 7px;
+  min-height: 0;
+  max-height: 264px;
+}
+
+.mini-card {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: 15px;
+  background: #eceef1;
+  overflow: hidden;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+}
+
+.mini-card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The ring suggests the tap the hint is asking for. A pseudo-element rather
+   than an animated box-shadow, because opacity is the cheap property and a
+   shadow spread is not. */
+.mini-card.is-tapped::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 3px solid var(--accent);
+  border-radius: 15px;
+  opacity: 0;
+  animation: tap-ring 3s ease-in-out infinite;
+}
+
+@keyframes tap-ring {
+  0%, 100% { opacity: 0; }
+  40%, 60% { opacity: 1; }
+}
+
+.mini-hint {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 11px 0 0;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.mini-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
 }
 
 /* --- the grid -------------------------------------------------------------- */
@@ -340,7 +528,8 @@ body {
 /* --- wider viewports -------------------------------------------------------- */
 
 @media (min-width: 700px) {
-  .hero { padding: 56px 0 40px; max-width: 30ch; }
+  .hero { padding: 56px 0 40px; }
+  .hero-copy { max-width: 30ch; }
   .hero h1 { font-size: 52px; }
   .hero-sub { font-size: 17px; max-width: 52ch; }
   .grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -352,11 +541,33 @@ body {
   .card.is-live p { font-size: 13.5px; }
 }
 
+/* Two columns, and the preview appears. 900px is where the right-hand side
+   stops being a margin and starts being empty space. */
+@media (min-width: 900px) {
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 48px;
+    padding: 60px 0 48px;
+  }
+
+  .hero-preview {
+    display: flex;
+    justify-content: center;
+  }
+}
+
 @media (min-width: 1000px) {
-  .hero { max-width: 34ch; }
+  .hero-copy { max-width: 34ch; }
   .hero h1 { font-size: 60px; }
 }
 
+/* Nothing moves. The float and the tap ring both stop, and the ring is left
+   showing rather than left hidden — it is pointing at the card the hint is
+   talking about, and that is information, not decoration. */
 @media (prefers-reduced-motion: reduce) {
   .card-cta:active { transform: none; }
+  .phone { animation: none; }
+  .mini-card.is-tapped::after { animation: none; opacity: 1; }
 }

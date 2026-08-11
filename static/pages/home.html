@@ -33,13 +33,55 @@
 <main class="wrap">
 
   <section class="hero">
-    <h1>Analyses that save you money.</h1>
-    <p class="hero-sub">Mazzin is a display-tap AI tool trained on thousands of
-    real choices. Two minutes of tapping — a precise, personalized analysis
-    that protects you from expensive mistakes.</p>
-    <p class="hero-trust">
-      <span>No sign-up</span><span>~2 minutes</span><span>From $3</span>
-    </p>
+    <div class="hero-copy">
+      <h1>Analyses that save you money.</h1>
+      <p class="hero-sub">Mazzin is a display-tap AI tool trained on thousands of
+      real choices. Two minutes of tapping — a precise, personalized analysis
+      that protects you from expensive mistakes.</p>
+      <p class="hero-trust">
+        <span>No sign-up</span><span>~2 minutes</span><span>From $3</span>
+      </p>
+    </div>
+
+    <!-- A picture of the product, not the product. No engine, no handlers,
+         nothing to tap: it exists so a desktop visitor can see what two
+         minutes of tapping actually looks like before they commit to it.
+         Hidden outright below 900px — on a phone the real thing is one tap
+         away, and a mock of a screen you are holding is worse than nothing.
+         aria-hidden because a screen reader announcing a worktop question
+         out of context would be describing a control that is not there. -->
+    <div class="hero-preview" aria-hidden="true">
+      <div class="phone-tilt">
+        <div class="phone">
+          <div class="phone-screen">
+
+            <div class="mini-progress">
+              <span class="mini-pips">
+                <i class="is-done"></i><i class="is-done"></i><i class="is-done"></i><i class="is-done"></i><i class="is-done"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              </span>
+              <span class="mini-count">5 of 12</span>
+            </div>
+
+            <p class="mini-kicker">Which kitchen feels more like you?</p>
+            <p class="mini-sub">12 choices reveal your style</p>
+
+            <p class="mini-question">The worktop you'd touch every day:</p>
+
+            <div class="mini-cards">
+              <span class="mini-card is-tapped">
+                <img src="/static/galleries/kitchen/c4a.webp" alt="" width="640" height="982" loading="lazy" decoding="async">
+              </span>
+              <span class="mini-card">
+                <img src="/static/galleries/kitchen/c4b.webp" alt="" width="640" height="982" loading="lazy" decoding="async">
+              </span>
+            </div>
+
+            <p class="mini-hint"><i class="mini-dot"></i>Tap your choice</p>
+
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section>
