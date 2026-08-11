@@ -257,15 +257,18 @@
     return [];
   }
 
-  // A step shows two images side by side, or four in a grid. Both are one
-  // question and one tap; the format only changes how many things are being
-  // compared at once.
+  // A step shows two images side by side, four in a grid, or six in three
+  // rows of two. All of them are one question and one tap; the format only
+  // changes how many things are being compared at once.
+  var GRID_SIZE = { grid4: 4, grid6: 6 };
+
   function stepFormat(st) {
-    return (st && st.format === "grid4") ? "grid4" : "pair";
+    var f = st && st.format;
+    return GRID_SIZE[f] ? f : "pair";
   }
 
   function stepSize(st) {
-    return stepFormat(st) === "grid4" ? 4 : 2;
+    return GRID_SIZE[stepFormat(st)] || 2;
   }
 
   // The two axes a step can adapt on. The config names the axis; what the
@@ -448,7 +451,9 @@
     var st = stepAt(step);
     el.cards.innerHTML = "";
     el.cards.classList.remove("is-picking", "is-leaving");
-    el.cards.classList.toggle("is-grid4", stepFormat(st) === "grid4");
+    var fmt = stepFormat(st);
+    el.cards.classList.toggle("is-grid4", fmt === "grid4");
+    el.cards.classList.toggle("is-grid6", fmt === "grid6");
     pair.forEach(function (item, i) {
       el.cards.appendChild(cardNode(item, i));
     });
@@ -1250,6 +1255,25 @@
 
   // One line of context immediately above the button, built here so the shell
   // markup stays a plain container.
+  // What the locked rows are worth, said once, between the sections and the
+  // button. It sits here rather than on the paywall alone because this is the
+  // screen where somebody decides whether to keep reading, and the number is
+  // a market cost of getting a worktop or a cabinet colour wrong — not a
+  // saving we have measured and cannot support.
+  function renderValueBanner() {
+    var copy = (cfg.result && cfg.result.value_banner) || "";
+    if (!copy) return;
+    var banner = el.valueBanner;
+    if (!banner) {
+      banner = document.createElement("p");
+      banner.className = "value-banner";
+      banner.id = "value-banner";
+      el.cta.parentNode.insertBefore(banner, el.cta);
+      el.valueBanner = banner;
+    }
+    banner.textContent = copy;
+  }
+
   function renderCtaNote() {
     var sections = ((cfg.report && cfg.report.sections) || [])
       .filter(function (sec) { return sec.enabled !== false; });
@@ -1301,6 +1325,7 @@
       el.resultName.textContent = win.name;
       el.resultBlurb.textContent = win.blurb || "";
       el.cta.textContent = cfg.pricing.cta;
+      renderValueBanner();
       renderCtaNote();
       renderLockedReport(win);
       track("result_view");

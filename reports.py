@@ -1097,15 +1097,64 @@ def _choice_block(cfg, choices):
               "it earns its place in the advice.")
 
 
+def _color_family(cfg, choices):
+    """The palette family they picked at step 1, with its actual colours.
+
+    Step 1 offers six boards and asks which palette pulls them in. That is a
+    more specific answer than any tag can hold: `warm, wood, rustic` fits a
+    moss-green board and a walnut board equally, and a report that averaged
+    the two would hand a moss-green person a brown kitchen.
+
+    Nothing is trusted from the client here. `choices` is a list of image ids
+    the checkout already re-validated against this funnel, and the family is
+    read back out of the config the server owns.
+    """
+    if not choices:
+        return None
+    by_id = {}
+    for step in (cfg.get("swipe") or {}).get("steps") or []:
+        pairs = step.get("pairs") or [{"images": step.get("images") or []}]
+        for pair in pairs:
+            for item in (pair.get("images") or []):
+                if item.get("color_family"):
+                    by_id[item.get("id")] = item
+    for image_id in choices:
+        item = by_id.get(image_id)
+        if item:
+            colours = ", ".join(
+                "%s %s" % (c.get("name"), c.get("hex"))
+                for c in (item.get("colors") or [])
+                if c.get("name") and c.get("hex"))
+            return item["color_family"], item.get("label") or "", colours
+    return None
+
+
 def _palette_block(cfg, choices):
     """The palette instruction, when we know what they actually chose."""
     lines = _choice_lines(cfg, choices)
     if not lines:
         return None
+    # The anchor goes first and is stated as a requirement rather than as
+    # context. Everything after it is about which of their colours does what;
+    # this is about which family the whole palette lives in, and it is not
+    # one signal among twelve any more.
+    family = _color_family(cfg, choices)
+    anchor = ""
+    if family:
+        family_id, label, colours = family
+        anchor = (
+            "The user's chosen color family is %s (%s). The 60/30/10 palette "
+            "MUST be built around this family — the dominant and secondary "
+            "colors come from it; only the accent may depart.\n\n"
+            % (family_id, colours or label))
     return (
+        anchor +
         "This person's own choices, in order, with the colours that were in "
         "front of them:\n" + "\n".join(lines) + "\n\n"
         "Build the palette out of THESE colours. Rules:\n"
+        "- The colour family above is the anchor. The 60% and the 30% come "
+        "out of it. A rule below that would pull the dominant colour out of "
+        "that family loses to this one.\n"
         "- Any line marked as rejected is the one thing they told us to keep "
         "out of the room. Its colours are not palette candidates; use it only "
         "to rule a direction out.\n"

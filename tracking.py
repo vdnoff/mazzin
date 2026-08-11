@@ -169,10 +169,11 @@ def _clean_extra(funnel, event, value):
     if not isinstance(pair, str) or pair not in index["pairs"]:
         raise ValueError("extra")
 
-    # Two for a pair step, four for a grid. Anything else is not a step this
-    # engine can render, whatever the client says it drew.
+    # Two for a pair step, four for a grid, six for the palette grid.
+    # Anything else is not a step this engine can render, whatever the client
+    # says it drew.
     shown = value["shown"]
-    if not isinstance(shown, list) or len(shown) not in (2, 4):
+    if not isinstance(shown, list) or len(shown) not in (2, 4, 6):
         raise ValueError("extra")
     for image_id in shown:
         if not isinstance(image_id, str) or image_id not in index["images"]:
