@@ -154,32 +154,43 @@ body {
   color: var(--muted);
 }
 
-/* --- lead copy: kicker demoted, caption promoted --------------------------- */
+/* --- lead copy: the money line, then the caption --------------------------- */
 
-.kicker {
-  flex: 0 0 auto;
-  margin: 20px 0 0;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
+/* The uppercase kicker above this line is gone. It said "your kitchen style
+   analysis" — which the reader already knows, having just tapped a card that
+   said so — in the loudest treatment on the screen, and it was pushing the
+   only sentence that states what the quiz is worth into 12.5px grey.
+   That sentence is now the header: brand face, ink, and the saving itself in
+   the accent, sitting directly under the progress bar with nothing above it
+   to share the attention.
 
-/* This used to be `margin-bottom: auto`, and it was where the screen's whole
+   This used to be `margin-bottom: auto`, and it was where the screen's whole
    surplus went: 111px of nothing between the subline and the question at
-   390x844, 136px at 430x932. The surplus belongs in the photographs, not in
-   a hole above the question, so the spacer is gone entirely and what separates
-   the subline from the question is the caption's own 16px top margin — one
-   margin, not two adding to 32. The cards' ceiling was raised to take back
-   everything this gives up. */
+   390x844. The surplus belongs in the photographs, so there is no spacer —
+   what separates this from the question is the caption's own top margin. */
 .subtext {
   flex: 0 0 auto;
-  margin: 4px 0 0;
-  font-size: 12.5px;
-  line-height: 1.4;
-  color: var(--muted);
+  margin: 14px 0 0;
+  font-family: var(--brand);
+  font-optical-sizing: auto;
+  font-size: 17.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+/* The words the whole line exists for. Terracotta rather than bold, because
+   the line is already the heaviest thing in the header and a second weight
+   inside it would just read as emphasis on emphasis.
+
+   Kept on one line: the phrase is the reason the colour is there, and a wrap
+   through the middle of it hands the reader "thousands" in accent at the end
+   of one line and "saved" at the start of the next. */
+.subtext .money {
+  color: var(--accent);
+  white-space: nowrap;
 }
 
 /* The per-layer caption is the loud element on this screen — it is the only
@@ -637,6 +648,28 @@ body {
   color: #3d424c;
 }
 
+/* --- the mistakes teaser --------------------------------------------------- */
+
+/* Between the blurb and the report card. Five of the six locked sections are
+   things a reader might like to have; this one is the thing it costs money not
+   to have, and buried as row two of a stack of blurred prose it was reading as
+   just another withheld heading. A rule and a tint, not a box — the value
+   banner further down already owns the loud accent block on this screen, and
+   two of those would cancel each other out. */
+.mistakes-teaser {
+  margin: 0 0 20px;
+  padding: 12px 0 12px 14px;
+  border-left: 3px solid var(--accent);
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mistakes-teaser:active { opacity: 0.78; }
+
 /* --- report table ---------------------------------------------------------- */
 
 /* One card holding a stack of rows: title on the left, the reveal ladder on
@@ -787,6 +820,38 @@ body {
   font-weight: 600;
   line-height: 1.3;
   color: var(--ink);
+}
+
+/* The paid strip. Same chips, one to a row, because each now carries the
+   specification underneath — the finish, the fitting, the temperature — which
+   is the thing the free view said the report would give them. Two columns
+   would put a specification in 60px of width. */
+.element-grid.is-detailed {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.element-grid.is-detailed .element-chip {
+  align-items: center;
+  padding: 9px 12px 9px 9px;
+}
+
+.element-grid.is-detailed .element-thumb {
+  width: 44px;
+  height: 44px;
+}
+
+.element-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.element-spec {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
 }
 
 /* --- still generating ------------------------------------------------------ */
@@ -1380,6 +1445,42 @@ body {
   color: var(--muted);
 }
 
+/* The working row: a spinner and a line that changes, directly above the
+   button. The screen says it is adjusting what comes next; without this it
+   says so on a page that is visibly doing nothing. It sits outside .mid-body
+   so the read-back keeps its own centred block and this stays anchored to the
+   button — the pause is unchanged, only what you look at during it. */
+.mid-working {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.mid-spinner {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--accent-soft);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: mid-spin 700ms linear infinite;
+}
+
+@keyframes mid-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Anyone opted out of motion gets the row without the spin — the copy still
+   rotates on its own timer, which the engine also holds still for them. */
+@media (prefers-reduced-motion: reduce) {
+  .mid-spinner { animation: none; }
+}
+
 /* Quieter than the paywall's button on purpose: this is a beat to step
    through, not a decision, and it dismisses itself either way. */
 .mid-cta {
@@ -1564,6 +1665,24 @@ body {
   min-width: 0;
   font-size: 15px;
   line-height: 1.4;
+}
+
+/* The mistakes row. Six rows with identical ticks say every line in the list
+   is worth the same, and one of them is the reason the report gets bought —
+   so it takes a rule, a tint and the weight, and the other five stay as they
+   were. The padding is on the row rather than the text so the tick sits
+   inside the tinted block with it. */
+.manifest-row.is-hero {
+  margin: 0 -10px 10px;
+  padding: 9px 10px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  background: var(--accent-soft);
+}
+
+.manifest-row.is-hero .manifest-text {
+  font-weight: 600;
+  color: var(--ink);
 }
 
 /* What the report is worth, said once, next to what it costs: a line that

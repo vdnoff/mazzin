@@ -14,6 +14,7 @@
   var HOLD_REDUCED_MS = 500;    // same beats, no animation, for reduced motion
   var REACTION_DELAY_MS = 200;  // lands just after the check badge
   var INTERSTITIAL_MS = 4000;   // a beat between steps, or a tap
+  var WORKING_MS = 2000;        // the interstitial's micro-copy rotation
   // The blur curve is anchored to the trigger phrase's own line boxes: one
   // line of softening leads into it, the trigger itself lands in the
   // barely-readable band, and one line later nothing is legible. The opacity
@@ -61,9 +62,12 @@
   var picking = false;      // true through the selection hold; taps ignored
   var confettiDone = false; // the burst fires once per session, never again
   var unlockedContent = null;   // report shown after returning from Stripe
+  var unlockedComplete = false; // whether that report is finished
+  var configLost = false;       // the funnel config fetch failed for good
   var unlockedStarted = false;  // the loading state is shown once, as early as possible
   var unlockedShown = false;    // the report has replaced the loading state
   var rendered = {};            // section id -> its node, so polls only append
+  var paidElements = false;     // the elements strip is placed once, paid side
   var sectionIO = null;         // one observer, outliving any single render
   var statusTimer = null;
   var analyzingTimer = null;    // free-result screen, between swipe and reveal
@@ -73,6 +77,7 @@
   var midOpen = false;          // an interstitial is on screen
   var midTimer = null;          // its auto-dismiss
   var midSeen = {};             // after_step -> already shown this run
+  var workingTimer = null;      // the interstitial's rotating micro-copy
 
   var el = {};
 
@@ -649,6 +654,7 @@
     el.midSub.textContent = fillTokens(entry.sub || "");
     el.midSub.hidden = !entry.sub;
     el.midCta.textContent = entry.cta || "Continue analysis";
+    startWorking();
     renderProgress();
     show("screen-interstitial");
     track("interstitial", step);
@@ -662,7 +668,52 @@
     midOpen = false;
     clearTimeout(midTimer);
     midTimer = null;
+    stopWorking();
     advance();
+  }
+
+  // A spinner and a line that changes under the read-back. The screen was
+  // already claiming to be adjusting what comes next; this is the only part of
+  // it that looks like something is happening while it says so. It is
+  // decoration over a real pause — the dismiss timing above is untouched by
+  // it, and it stops the moment the screen goes.
+  function workingLines() {
+    var lines = cfg && cfg.interstitial_working;
+    return (lines && lines.length) ? lines : [];
+  }
+
+  function startWorking() {
+    var lines = workingLines();
+    var row = el.midWorking;
+    if (!lines.length) {
+      if (row) row.hidden = true;
+      return;
+    }
+    if (!row) {
+      row = elm("p", "mid-working");
+      row.id = "mid-working";
+      row.setAttribute("aria-live", "polite");
+      var spin = elm("span", "mid-spinner");
+      spin.setAttribute("aria-hidden", "true");
+      row.appendChild(spin);
+      row.appendChild(elm("span", "mid-working-text"));
+      el.midCta.parentNode.insertBefore(row, el.midCta);
+      el.midWorking = row;
+    }
+    row.hidden = false;
+    var text = row.querySelector(".mid-working-text");
+    var i = 0;
+    text.textContent = lines[0];
+    if (workingTimer || prefersReducedMotion() || lines.length < 2) return;
+    workingTimer = setInterval(function () {
+      i = (i + 1) % lines.length;
+      text.textContent = lines[i];
+    }, WORKING_MS);
+  }
+
+  function stopWorking() {
+    if (workingTimer) clearInterval(workingTimer);
+    workingTimer = null;
   }
 
   // --- result --------------------------------------------------------------
@@ -814,6 +865,23 @@
     return picked;
   }
 
+  // The paid view shows the six the free view showed, and the server is what
+  // remembers which six: it stored them with the report. Somebody returning
+  // from Stripe can land in a new tab with no `chosen` and no `scores` left to
+  // recompute from, and six elements picked out of an empty run would be a
+  // different set from the one they were promised.
+  function elementsFor(ids) {
+    if (!ids || !ids.length) return pickElements();
+    var items = elementItems();
+    var byId = {};
+    items.forEach(function (item) { byId[item.id] = item; });
+    var out = [];
+    ids.forEach(function (id) {
+      if (byId[id]) out.push(byId[id]);
+    });
+    return out.length ? out : pickElements();
+  }
+
   function addElements() {
     var node = elementsSection();
     if (node) el.report.appendChild(node);
@@ -823,18 +891,25 @@
   // the title and the spacing between blocks. The thumbnails are square
   // centre-crops rather than the tall quiz frames: at this size the crop is
   // the material, and the room around it is noise.
-  function elementsSection() {
+  //
+  // `detail` is the paid view: the same strip, one to a row, each chip
+  // carrying the specification the report was promising to give them. Before
+  // the money it is a list of things we know about you; after it, it is the
+  // beginning of the document.
+  function elementsSection(detail, ids) {
     var block = cfg && cfg.style_elements;
-    var items = pickElements();
+    var items = detail ? elementsFor(ids) : pickElements();
     if (!block || !items.length) return null;
 
     var node = elm("article", "section section-elements");
     node.setAttribute("data-mode", "visible");
     node.appendChild(elm("h2", "section-title",
                          block.title || "Your Style Elements"));
-    if (block.subline) node.appendChild(elm("p", "elements-sub", block.subline));
+    if (!detail && block.subline) {
+      node.appendChild(elm("p", "elements-sub", block.subline));
+    }
 
-    var grid = elm("ul", "element-grid");
+    var grid = elm("ul", "element-grid" + (detail ? " is-detailed" : ""));
     items.forEach(function (item) {
       var chip = elm("li", "element-chip");
       var frame = elm("span", "element-thumb");
@@ -845,12 +920,22 @@
       img.draggable = false;
       frame.appendChild(img);
       chip.appendChild(frame);
-      chip.appendChild(elm("span", "element-label", item.label || ""));
+      if (detail) {
+        var text = elm("span", "element-text");
+        text.appendChild(elm("span", "element-label", item.label || ""));
+        if (item.spec) text.appendChild(elm("span", "element-spec", item.spec));
+        chip.appendChild(text);
+      } else {
+        chip.appendChild(elm("span", "element-label", item.label || ""));
+      }
       grid.appendChild(chip);
     });
     node.appendChild(grid);
 
-    node.addEventListener("click", focusCta);
+    // Only the preview is one big tap target for the button. In the paid view
+    // there is no button, and a section that scrolled somewhere when touched
+    // would be a document fighting the reader.
+    if (!detail) node.addEventListener("click", focusCta);
     return node;
   }
 
@@ -1256,29 +1341,77 @@
   //
   // Schema 1 reports predate the typed data and still exist in the database,
   // so they fall through to the prose renderer they were written for.
+  // The order the document is read in belongs to the config, not to whichever
+  // model call happened to finish first. Enabled sections, in the order they
+  // are configured.
+  function reportOrder(content) {
+    var configured = ((cfg && cfg.report && cfg.report.sections) || [])
+      .filter(function (sec) { return sec.enabled !== false; })
+      .map(function (sec) { return sec.id; });
+    if (configured.length) return configured;
+    // The report can arrive before the config does. The payload is built in
+    // report order too, so it is the same answer rather than a different one.
+    return (content.sections || []).map(function (sec) {
+      return sec && sec.id;
+    });
+  }
+
+  // The seam the elements sit on, read out of the config rather than by naming
+  // "palette" here: the last section the reader is given for nothing. Same rule
+  // the preview uses, so the two views cannot drift apart.
+  function elementsAnchor() {
+    var sections = ((cfg && cfg.report && cfg.report.sections) || [])
+      .filter(function (sec) { return sec.enabled !== false; });
+    var anchor = null;
+    for (var i = 0; i < sections.length; i++) {
+      var mode = (sections[i].reveal && sections[i].reveal.mode) || "locked";
+      if (mode !== "visible") break;
+      anchor = sections[i].id;
+    }
+    return anchor || (sections[0] && sections[0].id) || null;
+  }
+
+  function placeElements(content) {
+    if (paidElements) return;
+    paidElements = true;
+    var node = elementsSection(true, content.elements);
+    if (!node) return;
+    el.report.appendChild(node);
+    observeSection(node);
+  }
+
+  // Strictly in order, and only ever a prefix of it. A section is rendered
+  // once every section above it is already on screen, so the reader never
+  // watches "Materials" appear over the hole where "The 5 Mistakes" is still
+  // being written and then get pushed down when it lands. Nothing shows at all
+  // until the palette is in — the generating card covers that wait, and a
+  // report that opens on its fourth section is not the document that was sold.
   function renderUnlockedReport(content) {
     // The two share section classes, so the preview's must not survive into
     // the paid view — it would leave paid sections wired to the paywall.
     el.report.classList.remove("report-preview");
     el.report.classList.add("report-unlocked");
     var typed = isTyped(content.version);
-    var list = content.sections || [];
 
-    list.forEach(function (sec, index) {
-      if (!sec || !sec.id || rendered[sec.id]) return;
-
-      var block = buildSection(sec, typed);
-      rendered[sec.id] = block;
-
-      var before = null;
-      for (var j = index + 1; j < list.length; j++) {
-        if (rendered[list[j].id]) { before = rendered[list[j].id]; break; }
-      }
-      if (before) el.report.insertBefore(block, before);
-      else el.report.appendChild(block);
-
-      observeSection(block);
+    var arrived = {};
+    (content.sections || []).forEach(function (sec) {
+      if (sec && sec.id) arrived[sec.id] = sec;
     });
+
+    var order = reportOrder(content);
+    var anchor = elementsAnchor();
+    for (var i = 0; i < order.length; i++) {
+      var id = order[i];
+      if (!rendered[id]) {
+        var sec = arrived[id];
+        if (!sec) break;                  // the first gap ends the run
+        var block = buildSection(sec, typed);
+        rendered[id] = block;
+        el.report.appendChild(block);     // always in order, so never inserted
+        observeSection(block);
+      }
+      if (id === anchor) placeElements(content);
+    }
 
     markHero();
   }
@@ -1360,6 +1493,29 @@
 
   // --- free (pre-Stripe) result -------------------------------------------
 
+  // The one locked section worth naming before anyone scrolls. Five of the six
+  // are things a reader can imagine wanting; the mistakes section is the one
+  // that costs money not to have, so it gets a line of its own directly under
+  // the blurb, above the report rather than inside it. Templated in config so
+  // the number and the wording stay copy rather than code.
+  function renderMistakesTeaser(style) {
+    var copy = (cfg.result && cfg.result.mistakes_teaser) || "";
+    var node = el.mistakesTeaser;
+    if (!copy) {
+      if (node) node.hidden = true;
+      return;
+    }
+    if (!node) {
+      node = elm("p", "mistakes-teaser");
+      node.id = "mistakes-teaser";
+      el.report.parentNode.insertBefore(node, el.report);
+      el.mistakesTeaser = node;
+      node.addEventListener("click", focusCta);
+    }
+    node.hidden = false;
+    node.textContent = copy.replace(/\{style\}/g, (style && style.name) || "");
+  }
+
   // One line of context immediately above the button, built here so the shell
   // markup stays a plain container.
   // What the locked rows are worth, said once, between the sections and the
@@ -1432,6 +1588,7 @@
       el.resultName.textContent = win.name;
       el.resultBlurb.textContent = win.blurb || "";
       el.cta.textContent = cfg.pricing.cta;
+      renderMistakesTeaser(win);
       renderValueBanner();
       renderCtaNote();
       renderLockedReport(win);
@@ -1526,10 +1683,18 @@
     if (el.analyzingNote) el.analyzingNote.hidden = true;
   }
 
-  // Called on every poll that carries sections. The first one swaps the
-  // loading state for the report; the rest only append what is new.
+  // Called on every poll that carries sections. The first one that can open
+  // the document swaps the loading state for it; the rest only append.
   function renderUnlocked(content, complete) {
     unlockedContent = content;
+    unlockedComplete = complete;
+
+    // The section the report opens with has to be here before any of it goes
+    // up. A poll can carry section four on its own — the model calls resolve
+    // in whatever order they resolve — and swapping the loading state for a
+    // report whose first heading is "Get the Look" is a worse wait than the
+    // wait itself. The status card stays until the opening is real.
+    if (!unlockedShown && !hasOpening(content)) return;
 
     if (!unlockedShown) {
       unlockedShown = true;
@@ -1546,6 +1711,31 @@
     renderUnlockedReport(content);
     if (complete) stopGenerating();
     else startGenerating();
+  }
+
+  // Whether the section the document opens with is here.
+  //
+  // Without the config there is no such thing as "the section it opens with":
+  // the payload's own order is the order things resolved in, which is how a
+  // report ends up opening on its third heading. So the answer is no until the
+  // config lands — the status card is already covering that wait — and
+  // `configLost` releases the hold if it never does, because a paid report
+  // withheld over a CDN hiccup is far worse than one in the wrong order.
+  function hasOpening(content) {
+    if (!configLost && !(cfg && cfg.report && cfg.report.sections)) return false;
+    var order = reportOrder(content);
+    if (!order.length) return false;
+    var first = order[0];
+    return (content.sections || []).some(function (sec) {
+      return sec && sec.id === first;
+    });
+  }
+
+  // The config and the report race each other, and either can win. Whichever
+  // arrives second re-runs the render, so content held back for want of an
+  // order goes up the moment the order is known rather than on the next poll.
+  function reflowUnlocked() {
+    if (unlockedContent) renderUnlocked(unlockedContent, unlockedComplete);
   }
 
   // Sections arrive one at a time, and a report that stops growing looks
@@ -1840,9 +2030,21 @@
       (cfg.checkout.manifest_head || "").replace("{n}", String(rows.length));
     el.manifestHead.hidden = !cfg.checkout.manifest_head;
 
+    // One row is the reason most people are on this screen, and six identical
+    // ticks say the opposite — that everything in the list weighs the same.
+    // The config names the row by a fragment of its own copy rather than by
+    // an index, so re-ordering the manifest cannot silently promote the wrong
+    // line. First match only: a treatment applied twice is not a treatment.
+    var needle = (cfg.checkout.manifest_hero || "").toLowerCase();
+    var promoted = false;
+
     el.manifest.innerHTML = "";
     rows.forEach(function (row) {
       var li = elm("li", "manifest-row");
+      if (needle && !promoted && String(row).toLowerCase().indexOf(needle) !== -1) {
+        promoted = true;
+        li.classList.add("is-hero");
+      }
       li.appendChild(icon("check", "manifest-check"));
       li.appendChild(elm("span", "manifest-text", row));
       el.manifest.appendChild(li);
@@ -1957,7 +2159,6 @@
     el.midSub = $("mid-sub");
     el.midCta = $("mid-cta");
     el.progressLabel = $("progress-label");
-    el.headline = $("swipe-headline");
     el.subtext = $("swipe-subtext");
     el.caption = $("swipe-caption");
     el.analyzing = $("analyzing");
@@ -2012,8 +2213,7 @@
   }
 
   function startQuiz() {
-    el.headline.textContent = cfg.swipe.headline;
-    el.subtext.textContent = cfg.swipe.subtext || "";
+    setMoneyLine(cfg.swipe.subtext || "", cfg.swipe.subtext_accent || "");
     if (el.tapHint && cfg.swipe.hint) setHint(cfg.swipe.hint);
 
     var first = pairFor(0);
@@ -2022,6 +2222,25 @@
     show("screen-swipe");
     track("funnel_start");
     preloadPair(pair, renderStep);
+  }
+
+  // The header line, with the part that names the saving lifted into the
+  // accent. The fragment to lift is named in the config rather than marked up
+  // in it: config carries copy, and copy with tags in it is copy that has to
+  // be trusted with innerHTML. Everything here is a text node, so the worst a
+  // bad config can do is fail to match and leave the line plain.
+  function setMoneyLine(text, accent) {
+    var node = el.subtext;
+    if (!node) return;
+    node.textContent = "";
+    var at = accent ? text.indexOf(accent) : -1;
+    if (at === -1) {
+      node.textContent = text;
+      return;
+    }
+    node.appendChild(document.createTextNode(text.slice(0, at)));
+    node.appendChild(elm("span", "money", accent));
+    node.appendChild(document.createTextNode(text.slice(at + accent.length)));
   }
 
   // The hint keeps its dot, which is markup rather than copy — replace only
@@ -2057,11 +2276,17 @@
         cfg = data;
         document.title = (cfg.meta && cfg.meta.title) || document.title;
         wire();
-        if (unlocked) applyStyleCopy();
+        if (unlocked) { applyStyleCopy(); reflowUnlocked(); }
         else startQuiz();
       })
       .catch(function () {
-        if (!unlocked) el.headline.textContent = "This quiz is unavailable right now.";
+        // Nothing is coming. Whatever the report says its own order is, is now
+        // the best order there is.
+        configLost = true;
+        if (unlocked) reflowUnlocked();
+        // The kicker this used to write into is gone; the caption is the
+        // loudest slot on an otherwise empty screen, so the failure goes there.
+        if (!unlocked) el.caption.textContent = "This quiz is unavailable right now.";
       });
   }
 

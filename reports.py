@@ -1084,8 +1084,8 @@ def _choice_lines(cfg, choices):
 ELEMENTS_SHOWN = 6
 
 
-def _shown_elements(cfg, choices, tag_scores):
-    """The style element labels the free result already put on screen.
+def _pick_elements(cfg, choices, tag_scores):
+    """The style elements the free result already put on screen.
 
     Recomputed here rather than taken from the browser, by the same rule
     engine.js picks with: an element whose image they tapped comes first, in
@@ -1093,6 +1093,10 @@ def _shown_elements(cfg, choices, tag_scores):
     of what they kept choosing. `choices` and `tag_scores` were both
     re-validated at checkout and the mapping is the config the server owns, so
     nothing in this is the client's word.
+
+    The ids travel into the stored report, which is what lets the paid view
+    show the same six. It cannot recompute them for itself: somebody returning
+    from Stripe may land in a new tab with no quiz state at all.
     """
     items = [item for item in
              ((cfg.get("style_elements") or {}).get("items") or [])
@@ -1117,7 +1121,27 @@ def _shown_elements(cfg, choices, tag_scores):
             row[0]))
         picked.extend(item for _, item in rest[:ELEMENTS_SHOWN - len(picked)])
 
-    return [item["label"] for item in picked if item.get("label")]
+    return picked
+
+
+def _shown_elements(cfg, choices, tag_scores):
+    """Just the labels, for the prompts."""
+    return [item["label"] for item in _pick_elements(cfg, choices, tag_scores)
+            if item.get("label")]
+
+
+def _element_specs(cfg, choices, tag_scores):
+    """`label — spec` for each shown element, for the section that has to
+    deliver on them. The spec is the config's own wording, so the report and
+    the chip under it cannot disagree about what was promised."""
+    lines = []
+    for item in _pick_elements(cfg, choices, tag_scores):
+        label = item.get("label")
+        if not label:
+            continue
+        spec = item.get("spec")
+        lines.append("%s — %s" % (label, spec) if spec else label)
+    return lines
 
 
 def _choice_block(cfg, choices, tag_scores=None):
@@ -1246,6 +1270,25 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None, choices=None)
                  else _choice_block(cfg, choices, tag_scores))
     if extra:
         parts.append(extra)
+
+    # The materials section is where the free preview gets paid off. Those six
+    # elements were named on the result screen before any money changed hands,
+    # with the promise that the report specifies each one — so this section is
+    # required to, by name, rather than left to mention them if it happens to.
+    if section_id == "materials" and cfg is not None and choices:
+        specs = _element_specs(cfg, choices, tag_scores)
+        if specs:
+            parts.append(
+                "REQUIRED — these are the style elements this person was shown "
+                "on the free result, with the specification each one was "
+                "promised:\n"
+                + "\n".join("- " + line for line in specs)
+                + "\nEvery one of them must appear in this section by name, "
+                  "and each must be specified rather than merely mentioned: "
+                  "the finish, the material or the fitting to ask a supplier "
+                  "for. Do not contradict a specification above. You may group "
+                  "them where they belong together, and you may add to them, "
+                  "but nothing on the list may be missing.")
 
     parts.append(_sections_block((section_id,)))
     return "\n\n".join(parts)
@@ -1595,12 +1638,18 @@ def _is_schema2(version):
     return version.endswith("-" + SCHEMA) or version.endswith(PARTIAL_SUFFIX)
 
 
-def _assemble(cfg, funnel_slug, result_style, name, built, paths, complete):
+def _assemble(cfg, funnel_slug, result_style, name, built, paths, complete,
+              elements=None):
     """The stored content for whatever has resolved so far.
 
     A section that has not resolved is simply absent — the client renders what
     exists and keeps polling. Once `complete`, every section is present, either
     generated or stubbed, and the version says which.
+
+    `elements` is the ids of the style elements the free result showed, so the
+    paid view can put the same six back on screen. It is stored rather than
+    recomputed in the browser because someone returning from Stripe may have
+    no quiz state left to recompute from.
     """
     sections = []
     for section in cfg.get("report", {}).get("sections", []):
@@ -1623,13 +1672,16 @@ def _assemble(cfg, funnel_slug, result_style, name, built, paths, complete):
         clean = all(paths.get(s["id"]) != "stub" for s in sections)
         version = ("llm-" if clean else "stub-") + SCHEMA
 
-    return {
+    content = {
         "version": version,
         "funnel": funnel_slug,
         "style_id": result_style,
         "style_name": name,
         "sections": sections,
     }
+    if elements:
+        content["elements"] = list(elements)
+    return content
 
 
 def _fire(on_final, content, purchase_id):
@@ -1648,7 +1700,7 @@ def _fire(on_final, content, purchase_id):
 def _publish(job, complete=False):
     """Write what has resolved so far over the row that already exists."""
     content = _assemble(job["cfg"], job["funnel"], job["style_id"], job["name"],
-                        job["built"], job["paths"], complete)
+                        job["built"], job["paths"], complete, job["elements"])
     job["content"] = content
     try:
         database.execute(
@@ -1798,10 +1850,15 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
         for section_id in CACHED:
             paths[section_id] = "cache"
 
+    # The six the free result named, resolved once here and carried on every
+    # write: the paid view shows exactly what was promised, not a fresh guess.
+    elements = [item["id"] for item in _pick_elements(cfg, choices, tag_scores)
+                if item.get("id")]
+
     job = {
         "purchase_id": purchase_id, "cfg": cfg, "funnel": funnel_slug,
         "style_id": result_style, "name": name, "built": built, "paths": paths,
-        "on_final": on_final, "content": None,
+        "on_final": on_final, "content": None, "elements": elements,
     }
 
     tasks = []
@@ -1842,7 +1899,8 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                 stub = STUBS.get(section_id)
                 built[section_id] = _fill(stub, name) if stub else None
                 paths[section_id] = "stub"
-        content = _assemble(cfg, funnel_slug, result_style, name, built, paths, True)
+        content = _assemble(cfg, funnel_slug, result_style, name, built, paths,
+                            True, elements)
         database.execute(
             INSERT_SQL, (purchase_id, json.dumps(content, separators=(",", ":")))
         )
@@ -1851,7 +1909,8 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
         _fire(on_final, content, purchase_id)
         return content
 
-    opening = _assemble(cfg, funnel_slug, result_style, name, built, paths, False)
+    opening = _assemble(cfg, funnel_slug, result_style, name, built, paths,
+                        False, elements)
     database.execute(
         INSERT_SQL, (purchase_id, json.dumps(opening, separators=(",", ":")))
     )
@@ -1953,14 +2012,28 @@ PDF_CSS = """
 @page {
   size: A4;
   margin: 22mm 18mm 20mm;
-  @bottom-center {
+  /* The page number moves right so the wordmark can have the left. Every page
+     of a document somebody keeps should say where it came from — a printed
+     page that has been separated from its first one is otherwise anonymous. */
+  @bottom-left {
+    content: "mazzin.com";
+    font-family: %(sans)s;
+    font-size: 9pt;
+    color: #9aa0a6;
+  }
+  @bottom-right {
     content: counter(page);
     font-family: %(sans)s;
     font-size: 9pt;
     color: #9aa0a6;
   }
 }
-@page :first { margin-top: 60mm; @bottom-center { content: ""; } }
+/* The cover carries the logo itself, so it needs neither. */
+@page :first {
+  margin-top: 48mm;
+  @bottom-left { content: ""; }
+  @bottom-right { content: ""; }
+}
 
 body { font-family: %(sans)s; font-size: 11pt; line-height: 1.65; color: #3d424c; }
 
@@ -1968,14 +2041,11 @@ body { font-family: %(sans)s; font-size: 11pt; line-height: 1.65; color: #3d424c
    and the two collide with no space between them. */
 .cover { break-after: page; }
 
-.kicker {
-  margin: 0 0 10mm;
-  font-family: %(sans)s;
-  font-size: 9pt;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #C05621;
+/* The wordmark, at the size it is drawn at rather than stretched to a box:
+   the SVG carries its own aspect ratio and a height alone keeps it. */
+.cover-logo {
+  height: 9mm;
+  margin: 0 0 12mm;
 }
 .cover-lead { margin: 0 0 3mm; font-size: 11pt; color: #6b7280; }
 .cover-name {
@@ -2195,7 +2265,9 @@ def _pdf_html(content):
     structured = _is_schema2(content.get("version"))
     blocks = [
         '<section class="cover">',
-        '<p class="kicker">Mazzin</p>',
+        # Resolved against config.STATIC_DIR, which is the base_url build_pdf
+        # renders with. A missing file loses the logo and nothing else.
+        '<img class="cover-logo" src="brand/logo.svg" alt="Mazzin">',
         '<p class="cover-lead">Your kitchen style report</p>',
         '<h1 class="cover-name">%s</h1>' % name,
         '<div class="rule"></div>',
@@ -2241,16 +2313,66 @@ def build_pdf(content):
 
 RESEND_URL = "https://api.resend.com/emails"
 
+# The opening congratulates them on the decision they already made, names what
+# it bought, and stops. There is no "join 12,000 renovators" line and there
+# will not be one: we have no such number, and a receipt is the worst possible
+# place to put a figure nobody can stand behind. The price is interpolated
+# from the purchase rather than written in, so it cannot drift from what was
+# actually charged.
+#
+# The wordmark is an <img> at a hosted URL. Several clients will not draw an
+# SVG at all, which is why the alt text is the brand name and the block around
+# it carries the brand colour: where it does not render, the header still
+# reads as Mazzin rather than as a broken image.
 EMAIL_HTML = """<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#3d424c;max-width:520px">
-<p style="font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#C05621;margin:0 0 18px">Mazzin</p>
-<h1 style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:600;line-height:1.2;color:#16181d;margin:0 0 14px">Your %(name)s report is ready</h1>
-<p style="margin:0 0 14px">It is attached as a PDF, and it is always available at your result link.</p>
-<p style="margin:0"><a href="%(link)s" style="color:#C05621">Open your report</a></p>
+<p style="margin:0 0 22px"><img src="%(logo)s" width="114" height="26" alt="Mazzin" style="display:block;border:0;font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:600;color:#16181d;text-decoration:none"></p>
+<h1 style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:600;line-height:1.25;color:#16181d;margin:0 0 16px">Smart move.</h1>
+<p style="margin:0 0 16px">%(opening)s Your personalized %(name)s report is attached.</p>
+<p style="margin:0 0 22px"><a href="%(link)s" style="color:#C05621;font-weight:600">Open your report online</a></p>
+<p style="margin:0 0 6px;padding-top:18px;border-top:1px solid #e5e7eb;font-size:13px;color:#6b7280">It stays available at that link, and the PDF is yours to keep.</p>
+<p style="margin:0;font-size:13px;color:#6b7280"><a href="%(home)s" style="color:#6b7280;text-decoration:none">mazzin.com</a></p>
 </div>"""
 
 
 def _slug(text):
     return re.sub(r"[^a-z0-9]+", "-", (text or "report").lower()).strip("-") or "report"
+
+
+SYMBOLS = {"USD": "$", "EUR": "€", "GBP": "£"}
+
+
+def _price_paid(content):
+    """What this report cost, as a string for one sentence, or None.
+
+    Read out of the funnel's own pricing rather than written into the copy: a
+    receipt that names a price the checkout does not charge is the one line in
+    the mail nobody would forgive. None when it cannot be read, and the
+    sentence is then written without a number rather than with a guessed one.
+    """
+    try:
+        cfg = config.load_funnel(content.get("funnel") or "")
+    except (KeyError, ValueError, OSError):
+        return None
+    pricing = cfg.get("pricing") or {}
+    cents = pricing.get("amount_cents")
+    if isinstance(cents, bool) or not isinstance(cents, int) or cents <= 0:
+        return None
+    currency = str(pricing.get("currency") or "usd").upper()
+    # Cents are integers and stay integers; this is display, not arithmetic.
+    whole, part = divmod(cents, 100)
+    amount = str(whole) if part == 0 else "%d.%02d" % (whole, part)
+    symbol = SYMBOLS.get(currency)
+    return (symbol + amount) if symbol else ("%s %s" % (amount, currency))
+
+
+def _email_opening(content):
+    """The congratulation. Names the price when we know it, and does not
+    reach for a substitute when we do not."""
+    price = _price_paid(content)
+    if price:
+        return ("You just spent %s to dodge the mistakes that cost renovators "
+                "thousands." % html.escape(price))
+    return ("You just dodged the mistakes that cost renovators thousands.")
 
 
 def send_report_email(purchase_id, email, content, checkout_session=None):
@@ -2284,8 +2406,14 @@ def send_report_email(purchase_id, email, content, checkout_session=None):
     payload = {
         "from": config.EMAIL_FROM,
         "to": [email],
-        "subject": "Your %s style report" % name,
-        "html": EMAIL_HTML % {"name": html.escape(name), "link": html.escape(link)},
+        "subject": "Your %s kitchen style report — Mazzin" % name,
+        "html": EMAIL_HTML % {
+            "name": html.escape(name),
+            "link": html.escape(link),
+            "logo": html.escape(config.BASE_URL + "/static/brand/logo.svg"),
+            "home": html.escape(config.BASE_URL),
+            "opening": _email_opening(content),
+        },
         "attachments": [
             {
                 "filename": "mazzin-%s-report.pdf" % _slug(name),
