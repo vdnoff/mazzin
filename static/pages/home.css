@@ -209,13 +209,9 @@ body {
   50% { background: #F5D9C4; }
 }
 
-.mini-count {
-  flex: 0 0 auto;
-  font-size: 10px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: var(--muted);
-}
+/* The count is gone from the funnel, so it is gone from the picture of the
+   funnel. Nothing is left beside the pips, so they take the whole row — which
+   is why the rule above still gives them `flex: 1 1 auto`. */
 
 /* The uppercase kicker is gone from the funnel, so it is gone from the
    picture of the funnel. What is left is the money line, in the same
