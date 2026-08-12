@@ -2248,7 +2248,7 @@
     "manifest_hero": "mistakes",
     "manifest_head": "What's inside — {n} sections, yours forever",
     "anchor_head": "A {price} decision that protects a $20,000 renovation",
-    "anchor": "The mistakes in this report cost renovators $2,000–$5,000 to undo. Catching one pays for it a thousand times over.",
+    "anchor": "The mistakes in this report cost renovators $4,000+ to undo. Catching one pays for it a thousand times over.",
     "reframe": "Less than a coffee. Cheaper than one sample pot of paint you'd buy wrong.",
     "price_suffix": "one-time",
     "cta_label": "Get my report for {price}",
@@ -2261,7 +2261,7 @@
     "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right."
   },
   "result": {
-    "mistakes_teaser": "Inside: the 5 mistakes {style} owners make — the average one costs $2,000+ to undo.",
-    "value_banner": "The mistakes in this report cost renovators $2,000–$5,000 to undo. Catching one pays for it a thousand times over."
+    "mistakes_teaser": "Inside: the 5 mistakes {style} owners make — the average one costs $4,000+ to undo.",
+    "value_banner": "The mistakes in this report cost renovators $4,000+ to undo. Catching one pays for it a thousand times over."
   }
 }

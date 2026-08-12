@@ -1458,17 +1458,21 @@ body {
   color: var(--muted);
 }
 
-/* The working row: a spinner and a line that changes, directly above the
-   button. The screen says it is adjusting what comes next; without this it
-   says so on a page that is visibly doing nothing. It sits outside .mid-body
-   so the read-back keeps its own centred block and this stays anchored to the
-   button — the pause is unchanged, only what you look at during it. */
+/* The working row: a spinner and a line that changes, directly under the
+   subline it belongs to. The screen says it is adjusting what comes next;
+   without this it says so on a page that is visibly doing nothing.
+
+   It sits inside .mid-body, as the last line of the read-back, because that
+   is what it is about. Anchored to the button at the bottom of the screen it
+   read as a state of the button — something to wait out before you were
+   allowed to continue — which is the one thing this screen must not imply,
+   since the button is live from the moment it appears. The pause is
+   unchanged, only what you look at during it. */
 .mid-working {
-  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 9px;
-  margin: 0 0 14px;
+  margin: 14px 0 0;
   font-size: 13px;
   line-height: 1.4;
   color: var(--muted);
