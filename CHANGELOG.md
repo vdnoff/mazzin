@@ -132,3 +132,6 @@ bottom.
 
 ## 2026-08-12 — claude/tweak-hook-copy
 - tweak: hook copy + anchors
+
+## 2026-08-12 — claude/final-touch
+- final touches
