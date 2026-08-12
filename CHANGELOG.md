@@ -135,3 +135,6 @@ bottom.
 
 ## 2026-08-12 — claude/final-touch
 - final touches
+
+## 2026-08-12 — claude/fix-checkout-tracking
+- fix: checkout tracking split
