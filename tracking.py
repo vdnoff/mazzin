@@ -21,6 +21,13 @@ log = logging.getLogger(__name__)
 
 bp = Blueprint("tracking", __name__)
 
+# In funnel order. `paywall_open` is the tap that asks to see the price and
+# `pay_tap` is the tap that starts paying it — one name covered both until the
+# split, which made the gap between wanting to know and being willing to pay
+# unmeasurable. `checkout_error` is the client saying its own checkout call
+# failed; it carries no detail, and being client-asserted it is a signal to
+# look at the server logs rather than a count to trust on its own.
+#
 # `purchase` is deliberately absent: it is written server-side by the Stripe
 # webhook in Phase 1b and must never be client-assertable.
 ALLOWED_EVENTS = {
@@ -29,7 +36,9 @@ ALLOWED_EVENTS = {
     "interstitial",
     "result_view",
     "paywall_view",
+    "paywall_open",
     "pay_tap",
+    "checkout_error",
 }
 
 UUID_RE = re.compile(
