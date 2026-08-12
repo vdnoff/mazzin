@@ -2367,12 +2367,18 @@ def _price_paid(content):
 
 def _email_opening(content):
     """The congratulation. Names the price when we know it, and does not
-    reach for a substitute when we do not."""
+    reach for a substitute when we do not.
+
+    The saving is the same figure the funnel leads with everywhere else. It
+    was "thousands" here, which is the one place the reader has already paid
+    and can check the claim against what they are holding — a vaguer number
+    there than on the way in reads as the number getting smaller.
+    """
     price = _price_paid(content)
     if price:
         return ("You just spent %s to dodge the mistakes that cost renovators "
-                "thousands." % html.escape(price))
-    return ("You just dodged the mistakes that cost renovators thousands.")
+                "$4,000+." % html.escape(price))
+    return ("You just dodged the mistakes that cost renovators $4,000+.")
 
 
 def send_report_email(purchase_id, email, content, checkout_session=None):

@@ -697,7 +697,11 @@
       spin.setAttribute("aria-hidden", "true");
       row.appendChild(spin);
       row.appendChild(elm("span", "mid-working-text"));
-      el.midCta.parentNode.insertBefore(row, el.midCta);
+      // Under the subline, inside the read-back block. Anchored to the button
+      // it read as a state of the button — something you were waiting on
+      // before you were allowed to continue — when what it is actually saying
+      // is that the sentence above it is being acted on.
+      el.midSub.parentNode.insertBefore(row, el.midSub.nextSibling);
       el.midWorking = row;
     }
     row.hidden = false;
