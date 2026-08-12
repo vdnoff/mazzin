@@ -129,3 +129,6 @@ bottom.
 
 ## 2026-08-12 — claude/phase6-final-polish
 - Phase 6: final polish
+
+## 2026-08-12 — claude/tweak-hook-copy
+- tweak: hook copy + anchors
