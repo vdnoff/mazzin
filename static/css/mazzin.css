@@ -146,12 +146,25 @@ body {
   50% { background: #F5D9C4; }
 }
 
+/* "7 of 13" is gone from the screen. Reading the total before you have decided
+   to start is being told what it costs you before being told what it is worth,
+   and the pips already say how far along you are without ever naming the end.
+   The row is the pips and nothing else now; they take the width the count used
+   to hold.
+
+   The element stays in the document, out of sight, because the pips are
+   aria-hidden and deleting this would leave a thirteen-step quiz with no
+   progress information at all for anyone using a screen reader. Out of flow,
+   so it contributes no width and no gap. */
 .progress-label {
-  flex: 0 0 auto;
-  font-size: 13px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: var(--muted);
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* --- lead copy: the money line, then the caption --------------------------- */

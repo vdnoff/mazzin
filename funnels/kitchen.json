@@ -9,13 +9,13 @@
   "swipe": {
     "pairs_count": 13,
     "headline": "Your kitchen style analysis",
-    "subtext": "13 taps now — thousands saved on your renovation",
-    "subtext_accent": "thousands saved",
+    "subtext": "$4,000+ saved on your renovation",
+    "subtext_accent": "$4,000+",
     "hint": "Tap your choice",
     "steps": [
       {
         "id": "hook",
-        "question": "Which kitchen is your dream?",
+        "question": "Which kitchen would you walk into?",
         "format": "pair",
         "pairs": [
           {
