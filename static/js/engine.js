@@ -1932,7 +1932,14 @@
       : "Payments coming in Phase 1b";
   }
 
+  // The payment attempt itself, and the only place that name belongs. Fired
+  // before the guard rather than after it: what this counts is somebody
+  // pressing the button that takes their money, and a run that then bails on
+  // an unchecked box is a tap that happened. The guard is unreachable from
+  // the UI anyway — the button is disabled while the box is clear, and a
+  // disabled button dispatches no click.
   function startCheckout() {
+    track("pay_tap");
     if (!PAYMENTS_ENABLED || !el.withdrawalCheck.checked) return;
 
     el.payError.hidden = true;
@@ -1975,6 +1982,14 @@
         throw new Error("no url");
       })
       .catch(function () {
+        // Everything that can go wrong between the tap and Stripe lands here:
+        // a dead network, a 500, a response with no url in it. Until now all
+        // of it was silent — the reader saw one sentence and the funnel report
+        // saw a tap that simply never became a purchase, which is the same
+        // shape as somebody changing their mind. No payload: the event is the
+        // fact, and anything more would be describing our own failure into a
+        // table that holds one row per visitor action.
+        track("checkout_error");
         el.payError.textContent = "Could not start checkout. Please try again.";
         el.payError.hidden = false;
         updatePayButton();
@@ -2197,8 +2212,15 @@
   }
 
   function wire() {
+    // This button opens the paywall. It does not start a payment, and calling
+    // it `pay_tap` made every funnel report count the two as the same act —
+    // the ratio between deciding to look at the price and deciding to pay it
+    // was invisible, and the drop-off between them read as no drop-off at all.
+    //
+    // The pixel event stays here on purpose. InitiateCheckout is Meta's name
+    // for the intent step, and intent is exactly what this tap is.
     el.cta.addEventListener("click", function () {
-      track("pay_tap");
+      track("paywall_open");
       pixelTrack("InitiateCheckout");
       renderPaywall();
       show("screen-paywall");
