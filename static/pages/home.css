@@ -217,27 +217,27 @@ body {
   color: var(--muted);
 }
 
-.mini-kicker {
-  flex: 0 0 auto;
-  margin: 15px 0 0;
-  font-size: 9.5px;
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
+/* The uppercase kicker is gone from the funnel, so it is gone from the
+   picture of the funnel. What is left is the money line, in the same
+   treatment the real header now gives it — brand face, ink, the saving in
+   terracotta — scaled to this 300px screen from the 17.5px it is at 390.
 
-/* No auto margin, for the same reason the funnel no longer has one: the
-   spare height belongs in the photographs. What separates the subline from
-   the question is the question's own top margin and nothing else. */
+   No auto margin, for the same reason the funnel has none: the spare height
+   belongs in the photographs. What separates this from the question is the
+   question's own top margin and nothing else. */
 .mini-sub {
   flex: 0 0 auto;
-  margin: 3px 0 0;
-  font-size: 9.5px;
-  line-height: 1.4;
-  color: var(--muted);
+  margin: 13px 0 0;
+  font-family: var(--brand);
+  font-optical-sizing: auto;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--ink);
 }
+
+.mini-money { color: var(--accent); }
 
 .mini-question {
   flex: 0 0 auto;
