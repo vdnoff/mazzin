@@ -141,3 +141,6 @@ bottom.
 
 ## 2026-08-13 — claude/single-page-checkout
 - single-page checkout
+
+## 2026-08-13 — claude/tweak-product-name
+- tweak: product name
