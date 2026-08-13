@@ -399,6 +399,45 @@ def pixel_config():
 
 # --- POST /api/checkout ----------------------------------------------------
 
+# Stripe caps the product name it will render; past this it truncates, and a
+# name that ends mid-word on the payment page looks like a broken store.
+PRODUCT_NAME_MAX = 250
+
+
+def _text(value, limit=PRODUCT_NAME_MAX):
+    """A usable one-line string from config, or None."""
+    if not isinstance(value, str):
+        return None
+    value = value.strip()
+    return value[:limit] or None
+
+
+def _product_images(checkout_cfg):
+    """The single product image, absolute, or an empty list.
+
+    Stripe fetches this itself from the public internet, so a relative path is
+    useless to it — the config stores the path and this joins it to BASE_URL,
+    which is where the success and cancel URLs already come from. Doing it that
+    way rather than writing the domain in here means a staging deploy shows its
+    own image instead of production's, and there is one place the hostname is
+    configured rather than two.
+
+    Anything that is not a path or an http(s) URL is dropped: Stripe rejects
+    the whole session over a bad image, and losing a picture is better than
+    losing the sale.
+    """
+    raw = _text(checkout_cfg.get("product_image"), limit=500)
+    if not raw:
+        return []
+    if raw.startswith("http://") or raw.startswith("https://"):
+        return [raw]
+    if not raw.startswith("/"):
+        return []
+    base = (config.BASE_URL or "").rstrip("/")
+    if not (base.startswith("http://") or base.startswith("https://")):
+        return []
+    return [base + raw]
+
 
 @bp.post("/api/checkout")
 def checkout():
@@ -434,8 +473,20 @@ def checkout():
     # click that produced it. Never used to decide anything on this path.
     meta_ids = _clean_meta_ids(body)
 
+    # What Stripe shows on its own payment page and on the receipt. It is the
+    # last piece of copy somebody reads before paying and the only one we do
+    # not draw ourselves, so it comes out of the funnel config with the rest of
+    # the funnel's words. The old derived name stays as the fallback: a funnel
+    # without the key, or an older config still in the CDN, gets exactly what
+    # it got before.
+    checkout_cfg = cfg.get("checkout") or {}
     title = (cfg.get("meta") or {}).get("title") or slug
-    product_name = "%s — Full Style Report" % title
+    product_name = (_text(checkout_cfg.get("product_name"))
+                    or "%s — Full Style Report" % title)
+    product_data = {"name": product_name}
+    images = _product_images(checkout_cfg)
+    if images:
+        product_data["images"] = images
 
     if not stripe.api_key:
         log.error("STRIPE_SECRET_KEY is not configured")
@@ -450,7 +501,7 @@ def checkout():
                     "price_data": {
                         "currency": currency,
                         "unit_amount": amount_cents,
-                        "product_data": {"name": product_name},
+                        "product_data": product_data,
                     },
                 }
             ],

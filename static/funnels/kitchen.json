@@ -2235,6 +2235,8 @@
   },
   "checkout": {
     "kicker": "Your report is ready",
+    "product_name": "Your Kitchen Style Report — the mistakes that cost $4,000+",
+    "product_image": "/static/galleries/kitchen/mp1.webp",
     "single_page": true,
     "commerce": {
       "anchor_head": "A {price} decision that saves you $4,000+",
