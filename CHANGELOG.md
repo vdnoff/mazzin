@@ -138,3 +138,6 @@ bottom.
 
 ## 2026-08-12 — claude/fix-checkout-tracking
 - fix: checkout tracking split
+
+## 2026-08-13 — claude/single-page-checkout
+- single-page checkout
