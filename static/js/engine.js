@@ -74,6 +74,15 @@
   var generatingTimer = null;   // the card under a report that is still filling
   var paywallTracked = false;
   var payMotionDone = false;    // the paywall's attention pull runs once
+  var singlePage = false;       // the commerce block lives on the result page
+  var commerceMoved = false;    // the paywall rows have been relocated once
+  var stickyArmed = false;      // the mid-CTA has been tapped
+  var stickyOn = false;         // the bar is currently showing
+  var commerceInView = false;   // the block is on screen right now
+  // Which deliberate act most recently preceded the commerce block coming into
+  // view. Plain scrolling is the default because it is the answer when nobody
+  // pressed anything.
+  var payIntent = "scroll";
   var midOpen = false;          // an interstitial is on screen
   var midTimer = null;          // its auto-dismiss
   var midSeen = {};             // after_step -> already shown this run
@@ -787,6 +796,7 @@
       if (mode !== "visible" && !elementsPlaced) {
         elementsPlaced = true;
         addElements();
+        if (singlePage) addOffer(style);
       }
 
       var block = elm("article", "section");
@@ -805,7 +815,10 @@
     });
 
     // A report with nothing locked in it would never have hit the line above.
-    if (!elementsPlaced) addElements();
+    if (!elementsPlaced) {
+      addElements();
+      if (singlePage) addOffer(style);
+    }
 
     layoutDissolves();
     // A font swap changes the metrics the mask was measured against.
@@ -1149,6 +1162,13 @@
   }
 
   function focusCta() {
+    // Single-page has no button of its own to scroll to — the whole offer is
+    // further down the same page, and that is what a tap on a locked row is
+    // asking to see.
+    if (singlePage) {
+      scrollToCommerce();
+      return;
+    }
     if (!el.cta || el.cta.hidden) return;
     if (el.cta.scrollIntoView) {
       el.cta.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1502,22 +1522,24 @@
   // that costs money not to have, so it gets a line of its own directly under
   // the blurb, above the report rather than inside it. Templated in config so
   // the number and the wording stay copy rather than code.
-  function renderMistakesTeaser(style) {
+  function buildMistakesTeaser(style) {
     var copy = (cfg.result && cfg.result.mistakes_teaser) || "";
-    var node = el.mistakesTeaser;
-    if (!copy) {
-      if (node) node.hidden = true;
-      return;
-    }
-    if (!node) {
-      node = elm("p", "mistakes-teaser");
-      node.id = "mistakes-teaser";
-      el.report.parentNode.insertBefore(node, el.report);
-      el.mistakesTeaser = node;
-      node.addEventListener("click", focusCta);
-    }
-    node.hidden = false;
+    if (!copy) return null;
+    var node = elm("p", "mistakes-teaser");
+    node.id = "mistakes-teaser";
     node.textContent = copy.replace(/\{style\}/g, (style && style.name) || "");
+    node.addEventListener("click", focusCta);
+    return node;
+  }
+
+  // Two-screen placement: above the report card, where it has always been.
+  // Single-page puts it inside the card instead, under the offer, which is the
+  // seam `addOffer` owns.
+  function renderMistakesTeaser(style) {
+    var node = buildMistakesTeaser(style);
+    if (!node) return;
+    el.report.parentNode.insertBefore(node, el.report);
+    el.mistakesTeaser = node;
   }
 
   // One line of context immediately above the button, built here so the shell
@@ -1591,17 +1613,34 @@
       el.resultBody.hidden = false;
       el.resultName.textContent = win.name;
       el.resultBlurb.textContent = win.blurb || "";
-      el.cta.textContent = cfg.pricing.cta;
-      renderMistakesTeaser(win);
-      renderValueBanner();
-      renderCtaNote();
-      renderLockedReport(win);
+      singlePage = wantsSinglePage();
+
+      if (singlePage) {
+        // No result CTA and no value banner: the button is the one at the
+        // bottom of the page now, and the anchor card carries what the banner
+        // used to say — once, where the decision is actually made.
+        el.cta.hidden = true;
+        renderLockedReport(win);
+        renderCommerce();
+      } else {
+        el.cta.textContent = cfg.pricing.cta;
+        renderMistakesTeaser(win);
+        renderValueBanner();
+        renderCtaNote();
+        renderLockedReport(win);
+      }
+
       track("result_view");
       // A finished quiz with a result on screen is the qualified visitor Meta
       // should be optimising towards, so Lead sits exactly here and nowhere
       // earlier.
       pixelTrack("Lead");
-      watchCta();
+      if (singlePage) {
+        watchCommerce();
+        watchScroll();
+      } else {
+        watchCta();
+      }
       celebrate();
     }, cfg.analyzing.duration_ms);
   }
@@ -2072,9 +2111,9 @@
 
   var TRUST_ICONS = ["lock", "bolt", "mail"];
 
-  function renderTrust() {
+  function renderTrust(rows) {
     el.trust.innerHTML = "";
-    (cfg.checkout.trust || []).forEach(function (row, i) {
+    (rows || cfg.checkout.trust || []).forEach(function (row, i) {
       var li = elm("li", "trust-row");
       li.appendChild(icon(TRUST_ICONS[i] || "check", "trust-icon"));
       li.appendChild(elm("span", null, row));
@@ -2165,6 +2204,221 @@
     playPayMotion();
   }
 
+
+  // --- single-page checkout -------------------------------------------------
+
+  // The paywall as a block on the result page rather than a screen after it.
+  // Config decides, but only when the config also carries the copy the block
+  // is made of: engine.js and the funnel JSON sit behind a CDN and can be
+  // cached a version apart, and an engine that switched to single-page against
+  // a config with no `commerce` in it would render a half-empty page with a
+  // pay button on the end. Falling back to the two-screen flow that older
+  // config can fill completely is the only safe way to be wrong here.
+  function wantsSinglePage() {
+    var co = (cfg && cfg.checkout) || {};
+    return co.single_page !== false && !!co.commerce;
+  }
+
+  function commerceCopy() {
+    return ((cfg && cfg.checkout) || {}).commerce || {};
+  }
+
+  // Relocation, not duplication. Every row in the block below is the node the
+  // two-screen paywall uses, moved: the pay button keeps the listener wire()
+  // gave it, `startCheckout` keeps the element it already knew about, and
+  // `updatePayButton` keeps working on both paths. Two buttons that can both
+  // charge somebody is exactly the kind of thing that ends up with one of them
+  // never being updated again.
+  function moveCommerce() {
+    if (commerceMoved) return;
+    commerceMoved = true;
+    // Before the move: it inserts relative to nodes that are about to travel.
+    ensurePayNodes();
+
+    [el.manifest, el.payAnchor, el.price, el.withdrawal, el.payButton,
+     el.payError, el.trust, el.legal].forEach(function (node) {
+      if (node) el.commerce.appendChild(node);
+    });
+
+    // Left behind, with the screen nobody now travels to: its kicker and title
+    // were introducing that screen, the colour proof repeats the palette the
+    // reader has already scrolled past, the manifest head and the reframe line
+    // are not in the merged layout, and the back link has nothing to go back
+    // to. Hidden rather than deleted so the flag can put them back.
+    [el.payKicker, el.paywallHeadline, el.payProof, el.paywallBack,
+     el.manifestHead, el.reframe].forEach(function (node) {
+      if (node) node.hidden = true;
+    });
+  }
+
+  function renderCommerce() {
+    var copy = commerceCopy();
+    moveCommerce();
+
+    renderManifest();
+
+    fillAccent(el.anchorHead, withPrice(copy.anchor_head || ""),
+               copy.anchor_head_accent || "");
+    el.anchorHead.hidden = !copy.anchor_head;
+    el.anchorLine.textContent = withPrice(copy.anchor || "");
+    el.anchorLine.hidden = !copy.anchor;
+    el.payAnchor.hidden = !(copy.anchor_head || copy.anchor);
+
+    var suffix = copy.price_suffix;
+    el.price.textContent = formatPrice() + (suffix ? " \u00B7 " + suffix : "");
+
+    el.withdrawalText.textContent = withPrice(copy.consent || "");
+    el.withdrawalCheck.checked = cfg.checkout.consent_prechecked === true;
+
+    renderTrust(copy.trust);
+    el.payError.hidden = true;
+    updatePayButton();
+
+    el.commerce.hidden = false;
+    if (el.sticky) el.sticky.textContent = withPrice(copy.sticky_label || "");
+    playPayMotion();
+  }
+
+  // The card between the elements strip and the first locked section. It is
+  // the only thing on the way down that asks for anything, and what it asks
+  // for is a scroll rather than a payment.
+  function buildMidCta() {
+    var copy = commerceCopy();
+    if (!copy.mid_button) return null;
+
+    var card = elm("div", "mid-offer");
+    card.id = "mid-offer";
+    var line = elm("p", "mid-offer-line");
+    fillAccent(line, withPrice(copy.mid_line || ""), copy.mid_line_accent || "");
+    card.appendChild(line);
+
+    var button = elm("button", "mid-offer-cta", withPrice(copy.mid_button));
+    button.type = "button";
+    button.addEventListener("click", function (e) {
+      e.stopPropagation();          // the report card scrolls on tap too
+      track("mid_cta");
+      payIntent = "mid_cta";
+      stickyArmed = true;
+      updateSticky();
+      scrollToCommerce();
+    });
+    card.appendChild(button);
+    el.midOffer = card;
+    return card;
+  }
+
+  // Both single-page insertions, at the seam the elements strip already owns:
+  // elements, then the offer card, then the teaser, then everything withheld.
+  function addOffer(style) {
+    var mid = buildMidCta();
+    if (mid) el.report.appendChild(mid);
+    var teaser = buildMistakesTeaser(style);
+    if (teaser) {
+      el.report.appendChild(teaser);
+      el.mistakesTeaser = teaser;
+    }
+  }
+
+  function scrollToCommerce() {
+    if (!el.commerce || el.commerce.hidden) return;
+    if (el.commerce.scrollIntoView) {
+      el.commerce.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    nudgePay();
+  }
+
+  function nudgePay() {
+    if (!el.payButton) return;
+    el.payButton.classList.remove("is-nudged");
+    void el.payButton.offsetWidth;
+    el.payButton.classList.add("is-nudged");
+  }
+
+  // --- the sticky bar -------------------------------------------------------
+
+  // Shown once somebody is past the free part or has asked to see the offer,
+  // and taken away again whenever the real block is on screen — a bar telling
+  // you to go to the thing you are already looking at is just something
+  // covering it.
+  function updateSticky() {
+    var bar = el.sticky;
+    if (!bar || !singlePage) return;
+    var want = (stickyArmed || pastPalette()) && !commerceInView;
+    if (want === stickyOn) return;
+    stickyOn = want;
+    bar.hidden = !want;
+    // Next frame, so the slide has a starting position to animate from.
+    if (want) {
+      requestAnimationFrame(function () { bar.classList.add("is-in"); });
+    } else {
+      bar.classList.remove("is-in");
+    }
+  }
+
+  // "Past the free palette" is its bottom edge leaving the top of the screen.
+  // The palette is the first section in the report by construction — it is the
+  // one the config marks visible, and the ordering gate puts it first.
+  function pastPalette() {
+    var first = el.report && el.report.querySelector(".section");
+    if (!first) return false;
+    return first.getBoundingClientRect().bottom < 0;
+  }
+
+  function watchScroll() {
+    var pending = false;
+    function onScroll() {
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(function () {
+        pending = false;
+        updateSticky();
+      });
+    }
+    // Passive: this only reads geometry and must never hold up a scroll.
+    try {
+      window.addEventListener("scroll", onScroll, { passive: true });
+    } catch (e) {
+      window.addEventListener("scroll", onScroll);
+    }
+    window.addEventListener("resize", onScroll);
+    onScroll();
+  }
+
+  // --- reaching the offer ---------------------------------------------------
+
+  // `paywall_view` means the commerce block reached the reader, once per
+  // session, and it carries how they got there — whichever deliberate act most
+  // recently preceded it, or plain scrolling when there was none. The pixel's
+  // InitiateCheckout fires at the same moment for the same reason: this is
+  // where the offer is actually seen.
+  function watchCommerce() {
+    if (!window.IntersectionObserver) {
+      firePaywallView();
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        commerceInView = e.isIntersecting;
+        if (e.isIntersecting) firePaywallView();
+      });
+      updateSticky();
+    }, {
+      // Any part of it entering counts, except the strip the sticky bar
+      // covers. A threshold fraction would be unreachable on a block taller
+      // than the viewport, which this one can be.
+      threshold: 0,
+      rootMargin: "0px 0px -80px 0px"
+    });
+    io.observe(el.commerce);
+  }
+
+  function firePaywallView() {
+    if (paywallTracked) return;
+    paywallTracked = true;
+    track("paywall_view", null, { src: payIntent });
+    pixelTrack("InitiateCheckout");
+  }
+
   // --- boot ----------------------------------------------------------------
 
   function cache() {
@@ -2209,6 +2463,10 @@
     el.payButton = $("pay-button");
     el.payError = $("pay-error");
     el.paywallBack = $("paywall-back");
+    el.withdrawal = $("withdrawal");
+    el.legal = $("legal-links");
+    el.commerce = $("commerce");
+    el.sticky = $("sticky-cta");
   }
 
   function wire() {
@@ -2225,6 +2483,13 @@
       renderPaywall();
       show("screen-paywall");
     });
+    if (el.sticky) {
+      el.sticky.addEventListener("click", function () {
+        track("sticky_cta");
+        payIntent = "sticky";
+        scrollToCommerce();
+      });
+    }
     el.withdrawalCheck.addEventListener("change", updatePayButton);
     el.payButton.addEventListener("click", startCheckout);
     el.paywallBack.addEventListener("click", function () { show("screen-result"); });
@@ -2256,9 +2521,17 @@
   // be trusted with innerHTML. Everything here is a text node, so the worst a
   // bad config can do is fail to match and leave the line plain.
   function setMoneyLine(text, accent) {
-    var node = el.subtext;
+    fillAccent(el.subtext, text, accent);
+  }
+
+  // One line with one fragment of it lifted into the accent. Shared by the
+  // swipe header, the mid-page card and the commerce anchor, so the three
+  // places that shout a number all shout it the same way. Everything appended
+  // is a text node: config carries copy, never markup.
+  function fillAccent(node, text, accent) {
     if (!node) return;
     node.textContent = "";
+    text = String(text || "");
     var at = accent ? text.indexOf(accent) : -1;
     if (at === -1) {
       node.textContent = text;

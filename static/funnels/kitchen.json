@@ -2235,6 +2235,23 @@
   },
   "checkout": {
     "kicker": "Your report is ready",
+    "single_page": true,
+    "commerce": {
+      "anchor_head": "A {price} decision that saves you $4,000+",
+      "anchor_head_accent": "$4,000+",
+      "anchor": "That $20,000 renovation turns on decisions like these. The mistakes in this report cost renovators $4,000+ to undo.",
+      "price_suffix": "one-time payment · no subscription",
+      "consent": "One-time {price} — no subscription, ever. My report unlocks instantly.",
+      "trust": [
+        "Secure via Stripe",
+        "One-time — no recurring charges",
+        "PDF to your email"
+      ],
+      "mid_line": "Save $4,000+ on your renovation — starting now.",
+      "mid_line_accent": "$4,000+",
+      "mid_button": "See what's inside ↓",
+      "sticky_label": "Unlock full report — {price}"
+    },
     "title": "Your {style} Report",
     "proof_line": "Built from your 13 choices",
     "manifest": [

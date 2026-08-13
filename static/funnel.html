@@ -65,6 +65,12 @@
       <div class="report" id="report"></div>
 
       <button class="cta" id="cta" type="button"></button>
+
+      <!-- Single-page checkout. The paywall's own rows are moved in here at
+           render time rather than duplicated, so the button that takes the
+           money is the same element with the same listener in both flows. Left
+           empty and hidden when checkout.single_page is false. -->
+      <div class="commerce" id="commerce" hidden></div>
     </div>
   </section>
 
@@ -81,7 +87,7 @@
     <p class="pay-anchor" id="pay-anchor"></p>
     <p class="price" id="price"></p>
 
-    <label class="withdrawal">
+    <label class="withdrawal" id="withdrawal">
       <input type="checkbox" id="withdrawal-check">
       <span id="withdrawal-text"></span>
     </label>
@@ -91,7 +97,7 @@
     <ul class="trust" id="trust"></ul>
     <button class="link-back" id="paywall-back" type="button">Back</button>
 
-    <nav class="legal-links">
+    <nav class="legal-links" id="legal-links">
       <a href="/terms">Terms</a>
       <a href="/privacy">Privacy</a>
       <a href="/refund">Refunds</a>
@@ -99,6 +105,12 @@
   </section>
 
 </main>
+
+<!-- Outside the screens: it is fixed to the viewport, and it must not inherit
+     a screen's display:none while the engine is deciding whether to show it.
+     The engine is the only thing that ever unhides it, and only on the free
+     single-page result. -->
+<button class="sticky-cta" id="sticky-cta" type="button" hidden></button>
 
 <script src="/static/js/engine.js"></script>
 </body>

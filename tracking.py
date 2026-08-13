@@ -21,12 +21,16 @@ log = logging.getLogger(__name__)
 
 bp = Blueprint("tracking", __name__)
 
-# In funnel order. `paywall_open` is the tap that asks to see the price and
-# `pay_tap` is the tap that starts paying it — one name covered both until the
-# split, which made the gap between wanting to know and being willing to pay
-# unmeasurable. `checkout_error` is the client saying its own checkout call
-# failed; it carries no detail, and being client-asserted it is a signal to
-# look at the server logs rather than a count to trust on its own.
+# In funnel order. `mid_cta` and `sticky_cta` are the two prompts on the
+# single-page result that ask for a scroll rather than a payment; `paywall_view`
+# is the offer actually reaching the reader and carries which of them sent them
+# there. `paywall_open` belongs to the two-screen flow behind the config flag
+# and stays allowed for as long as that flag can be turned off. `pay_tap` is the
+# tap that starts paying — one name covered both it and opening the paywall
+# until the split, which made the gap between wanting to know the price and
+# being willing to pay it unmeasurable. `checkout_error` is the client saying
+# its own checkout call failed; it carries no detail, and being client-asserted
+# it is a signal to look at the server logs rather than a count to trust alone.
 #
 # `purchase` is deliberately absent: it is written server-side by the Stripe
 # webhook in Phase 1b and must never be client-assertable.
@@ -35,6 +39,8 @@ ALLOWED_EVENTS = {
     "swipe",
     "interstitial",
     "result_view",
+    "mid_cta",
+    "sticky_cta",
     "paywall_view",
     "paywall_open",
     "pay_tap",
@@ -149,23 +155,50 @@ def _funnel_index(slug):
 
 SWIPE_EXTRA_KEYS = frozenset(("pair", "shown", "chosen"))
 
+# How somebody arrived at the offer. A closed set, because the point of the
+# field is to be grouped by — one typo in a client that ships to everybody
+# would otherwise become a category nobody notices is missing.
+PAYWALL_VIEW_KEYS = frozenset(("src",))
+PAYWALL_VIEW_SRC = frozenset(("mid_cta", "sticky", "scroll"))
+
+
+def _clean_paywall_view(value):
+    """`{"src": ...}` and nothing else. Raises on anything it is not.
+
+    Rebuilt rather than passed through, like the swipe payload above it: what
+    reaches the column is a string this module chose from a set it owns.
+    """
+    if set(value) != PAYWALL_VIEW_KEYS:
+        raise ValueError("extra")
+    src = value["src"]
+    if not isinstance(src, str) or src not in PAYWALL_VIEW_SRC:
+        raise ValueError("extra")
+    return {"src": src}
+
 
 def _clean_extra(funnel, event, value):
-    """The swipe payload, rebuilt from validated parts. Raises on junk.
+    """The event payload, rebuilt from validated parts. Raises on junk.
 
-    Every string is checked against ids this funnel could actually have shown,
-    and the value stored is assembled here rather than passed through, so
-    nothing reaches the events column that did not come out of the config.
+    Two events carry one: a swipe says which pair it drew and which image was
+    tapped, and a paywall view says how the reader got to the offer. Every
+    string is checked against something this module can enumerate — ids this
+    funnel could actually have shown, or the closed set of sources above — and
+    the value stored is assembled here rather than passed through, so nothing
+    reaches the events column that did not come out of the config or this file.
 
     This used to take any JSON object up to four thousand characters and write
     it — which made the column a free write for anybody who found the endpoint,
-    and truncated the overflow into JSON that would not parse back. A swipe
-    with no payload is still fine: an engine.js cached from before this shipped
-    sends none.
+    and truncated the overflow into JSON that would not parse back. An event
+    with no payload is still fine: an engine.js cached from before either of
+    these shipped sends none.
     """
     if value is None:
         return None
-    if event != "swipe" or not isinstance(value, dict):
+    if not isinstance(value, dict):
+        raise ValueError("extra")
+    if event == "paywall_view":
+        return _clean_paywall_view(value)
+    if event != "swipe":
         raise ValueError("extra")
     if set(value) != SWIPE_EXTRA_KEYS:
         raise ValueError("extra")
