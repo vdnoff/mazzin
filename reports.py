@@ -26,6 +26,7 @@ import concurrent.futures
 import html
 import json
 import logging
+import os
 import re
 import threading
 import time
@@ -1268,6 +1269,74 @@ def _color_family(cfg, choices):
     return None
 
 
+def _images_by_id(cfg):
+    out = {}
+    for step in (cfg.get("swipe") or {}).get("steps") or []:
+        for pair in (step.get("pairs") or []):
+            for item in (pair.get("images") or []):
+                if isinstance(item, dict) and item.get("id"):
+                    out[item["id"]] = item
+    return out
+
+
+def _chosen_on_step(cfg, choices, step_id):
+    """The image id they tapped on one named step, or None."""
+    if not choices or not step_id:
+        return None
+    for step in (cfg.get("swipe") or {}).get("steps") or []:
+        if step.get("id") != step_id:
+            continue
+        here = set()
+        for pair in (step.get("pairs") or []):
+            for item in (pair.get("images") or []):
+                if item.get("id"):
+                    here.add(item["id"])
+        for image_id in choices:
+            if image_id in here:
+                return image_id
+    return None
+
+
+def _visuals(cfg, result_style, choices):
+    """The photographs this report is illustrated with, as image ids.
+
+    The palette board they chose at the colour step, and the two surfaces —
+    worktop and backsplash — they picked. Resolved here and stored with the
+    report for the same reason the style elements are: nearly every reader
+    arrives at the paid view through a Stripe redirect, in a page with no quiz
+    state left to resolve them from, and the PDF is built on a server that
+    never had any. Where a choice is missing the config's per-style default
+    stands in, so the pictures always belong to the style even when they
+    cannot belong to the person.
+
+    Ids rather than paths: the caller that draws them owns how a path is
+    built, and a stored URL is a stored deploy layout.
+    """
+    block = ((cfg.get("report") or {}).get("visuals")) or {}
+    known = _images_by_id(cfg)
+    fallback = (block.get("defaults") or {}).get(result_style) or {}
+
+    def pick(value):
+        return value if value in known else None
+
+    out = {}
+    board = (pick(_chosen_on_step(cfg, choices, block.get("moodboard_step")))
+             or pick(fallback.get("moodboard")))
+    if board:
+        out["moodboard"] = board
+
+    mats = []
+    defaults = fallback.get("materials") or []
+    for i, step_id in enumerate(block.get("material_steps") or []):
+        one = (pick(_chosen_on_step(cfg, choices, step_id))
+               or pick(defaults[i] if i < len(defaults) else None))
+        if one:
+            mats.append(one)
+    if mats:
+        out["materials"] = mats
+    return out or None
+
+
 def _palette_block(cfg, choices):
     """The palette instruction, when we know what they actually chose."""
     lines = _choice_lines(cfg, choices)
@@ -1722,7 +1791,7 @@ def _is_schema2(version):
 
 
 def _assemble(cfg, funnel_slug, result_style, name, built, paths, complete,
-              elements=None):
+              elements=None, visuals=None):
     """The stored content for whatever has resolved so far.
 
     A section that has not resolved is simply absent — the client renders what
@@ -1733,6 +1802,11 @@ def _assemble(cfg, funnel_slug, result_style, name, built, paths, complete,
     paid view can put the same six back on screen. It is stored rather than
     recomputed in the browser because someone returning from Stripe may have
     no quiz state left to recompute from.
+
+    `visuals` is stored for exactly the same reason: the palette board and the
+    two surfaces the report is illustrated with are ids out of this person's
+    own run, and the page that draws them is reached through a redirect. The
+    PDF is built server-side and never had the run at all.
     """
     sections = []
     for section in cfg.get("report", {}).get("sections", []):
@@ -1764,6 +1838,8 @@ def _assemble(cfg, funnel_slug, result_style, name, built, paths, complete,
     }
     if elements:
         content["elements"] = list(elements)
+    if visuals:
+        content["visuals"] = dict(visuals)
     return content
 
 
@@ -1783,7 +1859,8 @@ def _fire(on_final, content, purchase_id):
 def _publish(job, complete=False):
     """Write what has resolved so far over the row that already exists."""
     content = _assemble(job["cfg"], job["funnel"], job["style_id"], job["name"],
-                        job["built"], job["paths"], complete, job["elements"])
+                        job["built"], job["paths"], complete, job["elements"],
+                        job["visuals"])
     job["content"] = content
     try:
         database.execute(
@@ -1937,11 +2014,13 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     # write: the paid view shows exactly what was promised, not a fresh guess.
     elements = [item["id"] for item in _pick_elements(cfg, choices, tag_scores)
                 if item.get("id")]
+    visuals = _visuals(cfg, result_style, choices)
 
     job = {
         "purchase_id": purchase_id, "cfg": cfg, "funnel": funnel_slug,
         "style_id": result_style, "name": name, "built": built, "paths": paths,
         "on_final": on_final, "content": None, "elements": elements,
+        "visuals": visuals,
     }
 
     tasks = []
@@ -1982,7 +2061,7 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                 built[section_id] = _stub_for(section_id, name, style)
                 paths[section_id] = "stub"
         content = _assemble(cfg, funnel_slug, result_style, name, built, paths,
-                            True, elements)
+                            True, elements, visuals)
         database.execute(
             INSERT_SQL, (purchase_id, json.dumps(content, separators=(",", ":")))
         )
@@ -1992,7 +2071,7 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
         return content
 
     opening = _assemble(cfg, funnel_slug, result_style, name, built, paths,
-                        False, elements)
+                        False, elements, visuals)
     database.execute(
         INSERT_SQL, (purchase_id, json.dumps(opening, separators=(",", ":")))
     )
@@ -2217,6 +2296,23 @@ body { font-family: %(sans)s; font-size: 11pt; line-height: 1.65; color: #3d424c
 .badge.works { background: #FDF1E7; color: #C05621; }
 .badge.avoid { background: #FBEAE9; color: #B3261E; }
 
+/* the two photographs the report carries. Fixed heights and object-fit, so a
+   gallery image that is not the ratio this expects is cropped rather than
+   allowed to push a section onto another page. */
+figure { margin: 0 0 4mm; break-inside: avoid-page; }
+figure img { display: block; width: 100%%; object-fit: cover; }
+figure figcaption {
+  padding: 1.6mm 2.5mm;
+  font-size: 8pt;
+  font-weight: 600;
+  color: #6b7280;
+  background: #f6f7f9;
+}
+.board img { height: 42mm; }
+.shots { display: flex; gap: 3mm; margin: 0 0 4mm; }
+.shots figure { flex: 1 1 0; min-width: 0; margin: 0; }
+.shots img { height: 32mm; }
+
 /* shopping skip block */
 .skip { margin: 4mm 0 0; padding-top: 3mm; border-top: 0.2mm solid #e5e7eb; }
 .skip b { color: #16181d; }
@@ -2253,7 +2349,66 @@ def _e(value):
     return html.escape(value or "")
 
 
+# Set for the length of one _pdf_html call. The section builders take only
+# their own data — the same shape the browser's do — so the two photographs
+# that belong to the document rather than to a section reach them this way
+# rather than by widening six signatures for the sake of two.
+#
+# Thread-local, because it is not one call at a time: a report generates on a
+# thread of its own and the PDF is built at the end of it, so two purchases
+# landing together would otherwise race here and one reader would be sent the
+# other's photographs. Nothing about that failure is visible in testing.
+_pdf_state = threading.local()
+
+
+def _pdf_visuals():
+    if not hasattr(_pdf_state, "visuals"):
+        _pdf_state.visuals = {}
+    return _pdf_state.visuals
+
+
+PRINT_DIR = "img/print"
+
+
+def _print_src(image_id, item):
+    """Where the PDF should read this photograph from.
+
+    The print copy first. WeasyPrint embeds whatever it is handed at full
+    resolution, and the gallery originals are screen-sized: two of them took a
+    report from 28 KB to 1.9 MB, which is a mailbox problem rather than a
+    quality one. scripts-side, `printvariants` writes a pre-cropped JPEG per
+    image at the size the stylesheet actually draws.
+
+    Falls back to the original if the variant is not on disk, because a heavy
+    PDF is still a PDF and a missing one is not.
+    """
+    rel = os.path.join(PRINT_DIR, image_id + ".jpg")
+    if os.path.isfile(os.path.join(config.STATIC_DIR, rel)):
+        return rel
+    src = item.get("img") or ""
+    return src[len("/static/"):] if src.startswith("/static/") else src
+
+
+def _pdf_image(image_id, cls, caption=None):
+    """One <figure>, or "" when the id resolves to nothing.
+
+    The src is relative because build_pdf renders with base_url=STATIC_DIR;
+    an absolute URL would make the PDF depend on the site being up.
+    """
+    item = (_pdf_visuals().get("images") or {}).get(image_id)
+    if not item:
+        return ""
+    src = _print_src(image_id, item)
+    if not src:
+        return ""
+    label = ('<figcaption>%s</figcaption>' % _e(item.get("label"))
+             if caption and item.get("label") else "")
+    return '<figure class="%s"><img src="%s" alt="">%s</figure>' % (
+        cls, _e(src), label)
+
+
 def _pdf_palette(d):
+    board = _pdf_image(_pdf_visuals().get("moodboard"), "board", True)
     rows = "".join(
         '<div class="swatch"><span class="dot" style="background:%s"></span>'
         '<div class="swatch-text"><b>%s</b> <span class="hex">%s</span>'
@@ -2263,8 +2418,8 @@ def _pdf_palette(d):
            _e(c["finish"]), _e(c["where"]))
         for c in d["colors"]
     )
-    return ('<p class="intro">%s</p>%s<p class="callout">%s</p>'
-            % (_e(d["intro"]), rows, _e(d["closing_rule"])))
+    return ('%s<p class="intro">%s</p>%s<p class="callout">%s</p>'
+            % (board, _e(d["intro"]), rows, _e(d["closing_rule"])))
 
 
 def _pdf_mistakes(d):
@@ -2277,14 +2432,17 @@ def _pdf_mistakes(d):
 
 
 def _pdf_materials(d):
+    shots = "".join(_pdf_image(one, "shot", True)
+                    for one in (_pdf_visuals().get("materials") or []))
+    strip = '<div class="shots">%s</div>' % shots if shots else ""
     rows = "".join(
         '<div class="verdict"><b>%s</b> <span class="badge %s">%s</span>'
         "<p>%s</p></div>"
         % (_e(p["combo"]), p["verdict"], p["verdict"].upper(), _e(p["why"]))
         for p in d["pairs"]
     )
-    return ('<p class="intro">%s</p>%s<p class="callout">%s</p>'
-            % (_e(d["intro"]), rows, _e(d["rule"])))
+    return ('%s<p class="intro">%s</p>%s<p class="callout">%s</p>'
+            % (strip, _e(d["intro"]), rows, _e(d["rule"])))
 
 
 def _pdf_shopping(d):
@@ -2345,6 +2503,23 @@ def _pdf_section_body(section, structured):
 def _pdf_html(content):
     name = _e(content.get("style_name") or "Your style")
     structured = _is_schema2(content.get("version"))
+
+    # The two photographs the document carries, resolved once against the
+    # funnel this report was written for. A config that cannot be loaded costs
+    # the pictures and nothing else — a report without them is still a report.
+    state = _pdf_visuals()
+    state.clear()
+    visuals = content.get("visuals") or {}
+    if visuals:
+        try:
+            cfg = config.load_funnel(content.get("funnel"))
+        except (KeyError, ValueError, OSError):
+            cfg = None
+        if cfg is not None:
+            state["images"] = _images_by_id(cfg)
+            state["moodboard"] = visuals.get("moodboard")
+            state["materials"] = list(visuals.get("materials") or [])
+
     blocks = [
         '<section class="cover">',
         # Resolved against config.STATIC_DIR, which is the base_url build_pdf
