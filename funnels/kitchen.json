@@ -1983,7 +1983,7 @@
           "trigger": "brushed steel, and only there,"
         },
         "shopping": {
-          "setup": "The table matters more than the cabinetry, and the number people get wrong is",
+          "setup": "The table matters more than the cabinetry, and with {metal} hardware chosen the number people get wrong is",
           "trigger": "its height, not its length,"
         },
         "dna": {
@@ -2051,7 +2051,7 @@
           "trigger": "the splashback, honed stone,"
         },
         "shopping": {
-          "setup": "Buy the tap last and overspend on it, because in a quiet room the eye lands on",
+          "setup": "Buy the tap last and overspend on it, because against {metal} in a quiet room the eye lands on",
           "trigger": "the only thing that moves,"
         },
         "dna": {
@@ -2119,7 +2119,7 @@
           "trigger": "the darkest one, at sixty percent,"
         },
         "shopping": {
-          "setup": "Buy the lighting first, because in this style the fixtures are the architecture and",
+          "setup": "Buy the lighting first, because in this style the fixtures are the architecture and {metal} decides",
           "trigger": "the pendant over the island,"
         },
         "dna": {
@@ -2186,7 +2186,7 @@
           "trigger": "honed quartzite, softly veined,"
         },
         "shopping": {
-          "setup": "Hardware is where a classic kitchen is won or lost, and the one detail to sample is",
+          "setup": "Hardware is where a classic kitchen is won or lost, and in {metal} the one detail to sample is",
           "trigger": "the knurling, under your light,"
         },
         "dna": {
@@ -2304,15 +2304,15 @@
       "rows": [
         {
           "section": "materials",
-          "hook": "The two combinations to avoid entirely — and what to ask a supplier for instead."
+          "hook": "Your {worktop} + {metal} pairing has one expensive conflict — and one combination that always works."
         },
         {
           "section": "dna",
-          "hook": "How your two influences score, and exactly where they pull against each other."
+          "hook": "How your {palette} choices split between your two style influences."
         },
         {
           "section": "splurge",
-          "hook": "Your budget split line by line, with a floor and a ceiling for each one."
+          "hook": "Where your {floor} budget should actually go — floor and ceiling for each line."
         },
         {
           "title": "Your Exact Paint Codes",
@@ -2355,6 +2355,24 @@
             "b8b"
           ]
         }
+      }
+    },
+    "hook_slots": {
+      "worktop": {
+        "step": "worktop",
+        "fallback": "worktop"
+      },
+      "metal": {
+        "step": "hardware",
+        "fallback": "metal"
+      },
+      "palette": {
+        "step": "color",
+        "fallback": "palette"
+      },
+      "floor": {
+        "step": "floor",
+        "fallback": "floor"
       }
     }
   },
@@ -2411,7 +2429,7 @@
     "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right."
   },
   "result": {
-    "mistakes_teaser": "You've seen mistake #1. The other four cost {style} owners $4,000+ on average to undo.",
+    "mistakes_teaser": "You've seen mistake #1. The other four cost {style} owners $4,000+ to undo — and one involves your {worktop}.",
     "value_banner": "The mistakes in this report cost renovators $4,000+ to undo. Catching one pays for it a thousand times over."
   }
 }
