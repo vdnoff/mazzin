@@ -886,6 +886,9 @@
   function renderLockedReport(style) {
     var sections = (cfg.report && cfg.report.sections) || [];
     var reveals = (style && style.reveals) || {};
+    // Resolved once for the whole zone: three places write hooks and all three
+    // must name the same worktop.
+    hookWords = hookWordsFor(style);
     el.report.innerHTML = "";
     el.report.classList.add("report-preview");
 
@@ -1020,7 +1023,9 @@
       li.appendChild(padlockNode("is-sm"));
       var text = elm("div", "also-text");
       text.appendChild(elm("p", "also-title", title));
-      if (row.hook) text.appendChild(elm("p", "also-hook", row.hook));
+      if (row.hook) {
+        text.appendChild(elm("p", "also-hook", fillHook(row.hook, hookWords)));
+      }
       li.appendChild(text);
       list.appendChild(li);
     });
@@ -1230,7 +1235,9 @@
     } else if (typeof reveal === "string") {
       setup = reveal;
     }
-    body.appendChild(dissolveNode(setup, trigger, runOn(fillerLines(sec, 2))));
+    body.appendChild(dissolveNode(fillHook(setup, hookWords),
+                                  fillHook(trigger, hookWords),
+                                  runOn(fillerLines(sec, 2))));
 
     var strip = previewStrip(pool, from);
     if (strip) body.appendChild(strip);
@@ -1476,6 +1483,58 @@
   // module-level handle rather than a parameter threaded through buildSection,
   // because two of the six builders want it and the other four do not.
   var reportVisuals = null;
+
+  // The same shape on the free side: the words the locked zone's hooks are
+  // written around, resolved once per render and read by all three of the
+  // places that write one.
+  var hookWords = {};
+
+  // --- the words a hook is written around -----------------------------------
+
+  // What goes where a hook says {worktop}. Every one of them is read out of
+  // the run: which image was tapped on which step, and the label the quiz put
+  // under it. The step each placeholder reads lives in the config, because
+  // step ids belong to a funnel and this engine serves any of them.
+  //
+  // A curiosity gap about your own worktop is a different thing from one about
+  // worktops. Nothing here makes a claim the generic copy did not — the same
+  // sections, described in the reader's own nouns.
+  function hookWordsFor(style) {
+    var slots = (cfg && cfg.report && cfg.report.hook_slots) || {};
+    var out = { style: (style && style.name) || "" };
+    for (var key in slots) {
+      if (!Object.prototype.hasOwnProperty.call(slots, key)) continue;
+      var rule = slots[key] || {};
+      var picked = imageById(chosenOnStep(rule.step));
+      var label = picked && picked.label;
+      // The fallback is the bare noun rather than a phrase, because every
+      // sentence is written around "your {slot}" and has to survive as
+      // English without one: "one involves your worktop" reads, where an
+      // empty string leaves a hole and "the worktop you chose" leaves two
+      // articles. Only reachable on a config whose steps have been renamed —
+      // the locked zone is rendered off a finished run — but a hook with
+      // braces in it on a live page would be worse than a generic one.
+      out[key] = label ? lowerLabel(label) : (rule.fallback || key);
+    }
+    return out;
+  }
+
+  // "Aged brass" is a proper noun that is not one, and it lands mid-sentence.
+  // First character only: "Moss & earth" must not come back as "moss & Earth".
+  function lowerLabel(text) {
+    return String(text).charAt(0).toLowerCase() + String(text).slice(1);
+  }
+
+  // A placeholder nothing answers is left as it was written. That way a copy
+  // change that invents `{splashback}` shows up as `{splashback}` on the page
+  // rather than as a silent gap in a sentence.
+  function fillHook(text, words) {
+    if (!text) return "";
+    return String(text).replace(/\{(\w+)\}/g, function (whole, key) {
+      return Object.prototype.hasOwnProperty.call(words || {}, key)
+        ? words[key] : whole;
+    });
+  }
 
   function imageById(id) {
     var steps = (cfg && cfg.swipe && cfg.swipe.steps) || [];
@@ -1915,7 +1974,7 @@
     if (!copy) return null;
     var node = elm("p", "mistakes-teaser");
     node.id = "mistakes-teaser";
-    node.textContent = copy.replace(/\{style\}/g, (style && style.name) || "");
+    node.textContent = fillHook(copy, hookWordsFor(style));
     node.addEventListener("click", focusCta);
     return node;
   }
