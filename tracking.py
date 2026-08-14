@@ -45,6 +45,19 @@ ALLOWED_EVENTS = {
     "paywall_open",
     "pay_tap",
     "checkout_error",
+    # After the money, not before it. These four are the visualizer's funnel
+    # inside the funnel — a photo chosen, a transformation asked for, and
+    # which way it ended — and they are the only events here that describe
+    # something happening on a page somebody has already paid for.
+    #
+    # They carry no payload at all: `_clean_extra` rejects an `extra` on
+    # anything but a swipe and a paywall view, so a filename or an image
+    # dimension cannot ride along on one even if a future client tried to
+    # send it. What a photograph was called is the reader's business.
+    "viz_upload",
+    "viz_generate",
+    "viz_ready",
+    "viz_failed",
 }
 
 UUID_RE = re.compile(

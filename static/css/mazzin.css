@@ -599,9 +599,10 @@ body {
   .pip.is-done, .pip.is-current, .tap-dot { animation: none; }
   /* The two waiting states keep their shape — they are how you know something
      is still happening — but they stop moving. */
-  .analyzing-bar-fill, .generating-shimmer, .dots span { animation: none; }
+  .analyzing-bar-fill, .generating-shimmer, .viz-shimmer,
+  .dots span { animation: none; }
   .analyzing-bar-fill { background: var(--accent); opacity: 0.5; }
-  .generating-shimmer { background: #F3DFCE; }
+  .generating-shimmer, .viz-shimmer { background: #F3DFCE; }
   @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
   @keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
 }
@@ -993,6 +994,253 @@ body {
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
+  color: #8a4a1c;
+}
+
+/* --- the visualizer -------------------------------------------------------- */
+
+/* The first thing in the unlocked report on the funnel that sells it, and the
+   only section that asks the reader to do something rather than read. It is
+   given a tinted ground so it reads as an instrument sitting on the document
+   rather than as another chapter of it. */
+.section-visualizer {
+  padding: 16px 15px 18px;
+  border: 1px solid #F0DCCB;
+  border-radius: 14px;
+  background: var(--accent-soft);
+}
+
+.section-visualizer .section-title { margin-top: 0; }
+
+.viz-intro {
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #7A3A16;
+}
+
+/* The picker. A dashed well rather than a button, because what it wants is a
+   file and the shape people have been taught to drop one into is a well. The
+   whole thing is the label, so the tap target is the box and not a word in
+   the middle of it. */
+.viz-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 26px 16px;
+  border: 2px dashed #E0BC9C;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.viz-drop:active { border-color: var(--accent); }
+
+.viz-drop-mark {
+  font-size: 26px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.viz-drop-cta {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Never display:none — a hidden input inside a label still has to be
+   focusable and clickable for the keyboard path to work. */
+.viz-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The sentence that decides whether the render is any good. Sits directly
+   under whichever control leads to a generation, every time. */
+.viz-guide {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+  text-align: center;
+}
+
+.viz-shot {
+  margin: 0 0 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.viz-img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.viz-go {
+  display: block;
+  width: 100%;
+  padding: 15px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--ui);
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 6px 18px rgba(192, 86, 33, 0.26);
+}
+
+.viz-go:active { transform: translateY(1px); }
+
+/* Secondary by design: swapping the photo is a correction, not the path. */
+.viz-replace {
+  display: block;
+  margin: 12px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  text-align: center;
+  text-decoration: underline;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The wait. Same shimmer as the report's own generating card, because it is
+   the same promise — something is being written and the page has not stalled. */
+.viz-working {
+  padding: 18px 16px 16px;
+  border-radius: 12px;
+  background: #fff;
+  text-align: center;
+}
+
+.viz-shimmer {
+  display: block;
+  height: 6px;
+  margin-bottom: 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    #F3DFCE 0%, #ffffff 42%, #ffffff 58%, #F3DFCE 100%);
+  background-size: 220% 100%;
+  animation: shimmer 1.7s linear infinite;
+}
+
+.viz-working-title {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.viz-working-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #8a4a1c;
+}
+
+.viz-note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* Before and after, side by side and equal. Side by side rather than stacked
+   even on a 390px screen: the whole claim is that it is the same room, and a
+   comparison the reader has to scroll between is not a comparison. */
+.viz-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.viz-half {
+  margin: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  cursor: zoom-in;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.viz-half.is-after { box-shadow: 0 0 0 2px var(--accent); }
+
+.viz-caption {
+  padding: 7px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--muted);
+  text-align: center;
+}
+
+.viz-half.is-after .viz-caption { color: var(--accent); }
+
+.viz-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.viz-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* Equal halves, and both on one line. "Regenerate once" is the longest label
+   either of them takes and it has to fit across half a 390px screen without
+   wrapping — a two-line pill beside a one-line pill reads as a mistake. */
+.viz-download,
+.viz-again {
+  flex: 1;
+  padding: 12px 10px;
+  border: 1px solid #E0BC9C;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--accent);
+  font-family: var(--ui);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.viz-spent {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* A failure the reader can act on. Bordered rather than tinted red: nothing
+   has gone wrong with their purchase, and an alarm-coloured banner on a page
+   somebody just paid for reads as one. */
+.viz-error {
+  margin: 0 0 12px;
+  padding: 11px 13px;
+  border: 1px solid #E0BC9C;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 14px;
+  line-height: 1.45;
   color: #8a4a1c;
 }
 

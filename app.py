@@ -14,12 +14,24 @@ import config
 import database
 from payments import bp as payments_bp
 from tracking import bp as tracking_bp
+from visualizer import bp as visualizer_bp
 
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
+
+# The outer wall on any request body. Every endpoint here took kilobytes until
+# the visualizer started accepting photographs, and a request larger than the
+# largest photo we would ever keep should be refused by the server before a
+# worker reads it into memory. The slack over VISUALIZER_MAX_BYTES is the
+# multipart envelope around the file, not extra room for the file itself —
+# the per-photo limit is enforced again inside the upload route, where the
+# refusal can be a sentence rather than a bare 413.
+app.config["MAX_CONTENT_LENGTH"] = config.VISUALIZER_MAX_BYTES + 512 * 1024
+
 app.register_blueprint(tracking_bp)
 app.register_blueprint(payments_bp)
+app.register_blueprint(visualizer_bp)
 
 
 @app.get("/health")

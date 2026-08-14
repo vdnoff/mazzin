@@ -84,6 +84,13 @@
   var rendered = {};            // section id -> its node, so polls only append
   var paidElements = false;     // the elements strip is placed once, paid side
   var sectionIO = null;         // one observer, outliving any single render
+  var unlockedCs = null;        // the token this report was opened with
+  var vizNode = null;           // the visualizer section, placed once
+  var vizState = null;          // the last status body the server sent
+  var vizTimer = null;          // the poll, running only while it generates
+  var vizBusy = false;          // a request of ours is in flight
+  var vizUploading = false;     // the in-flight request is an upload
+  var vizSeen = {};             // status -> already counted, so events fire once
   var statusTimer = null;
   var analyzingTimer = null;    // free-result screen, between swipe and reveal
   var generatingTimer = null;   // the card under a report that is still filling
@@ -1868,6 +1875,7 @@
     // the paid view — it would leave paid sections wired to the paywall.
     el.report.classList.remove("report-preview");
     el.report.classList.add("report-unlocked");
+    placeVisualizer();
     var typed = isTyped(content.version);
     // Resolved on every poll: the first one may arrive before the config has,
     // and the section builders below read it as they run.
@@ -2170,6 +2178,416 @@
     }, CONFETTI_LIFE_MS);
   }
 
+  // --- the visualizer -------------------------------------------------------
+
+  // A photograph of the reader's own kitchen, redrawn in the style the report
+  // just described. It is the headline of the funnel that sells it, so it sits
+  // above the palette rather than under the document — and it exists at all
+  // only where the config says so, which is what keeps every other funnel's
+  // unlocked report byte-for-byte what it was.
+  //
+  // The whole thing is one small state machine over what the server says:
+  //   none -> uploaded -> generating -> ready
+  // with `failed` reachable from generating and returning to uploaded. The
+  // server owns every transition; this only ever draws the state it is told
+  // and asks for the next one. That is deliberate — a page that decided for
+  // itself that a render was running would keep saying so after a reload, and
+  // one that counted its own credits would disagree with the thing being
+  // billed.
+
+  var VIZ_POLL_MS = 2500;
+  var VIZ_ROTATE_MS = 4000;
+
+  // Refusals that mean "not for this purchase, ever" rather than "not now".
+  // Every one of them is decided before any work is done and none of them can
+  // change while the page is open, so the section retires instead of retrying.
+  var DEAD = ["no_visualizer", "no_funnel", "no_purchase", "not_paid"];
+
+  function vizConfig() {
+    var block = cfg && cfg.visualizer;
+    if (!block || block.enabled !== true) return null;
+    return block;
+  }
+
+  // Available only where all three are true: the funnel offers it, we know
+  // which purchase this is, and the report is the paid one.
+  function vizOn() {
+    return !!(vizConfig() && unlockedCs);
+  }
+
+  function placeVisualizer() {
+    if (vizNode || !vizOn()) return;
+    var block = vizConfig();
+
+    vizNode = elm("article", "section section-visualizer");
+    vizNode.id = "visualizer";
+    vizNode.appendChild(elm("h2", "section-title",
+                            block.title || "Your Kitchen, Transformed"));
+    if (block.intro) vizNode.appendChild(elm("p", "viz-intro", block.intro));
+    vizNode.appendChild(elm("div", "viz-body"));
+
+    // First in the document, whatever else has already landed. Sections arrive
+    // across several polls and this one is not one of them.
+    el.report.insertBefore(vizNode, el.report.firstChild);
+    observeSection(vizNode);
+
+    // What state this purchase is already in. Somebody who left mid-render and
+    // came back through the link in their email must find the render, not an
+    // upload box offering to start again.
+    vizFetch("/api/visualizer/status?cs=" + encodeURIComponent(unlockedCs));
+    vizRender();
+  }
+
+  function vizBody() {
+    return vizNode && vizNode.querySelector(".viz-body");
+  }
+
+  function vizRemove() {
+    vizStopPoll();
+    if (vizNode && vizNode.parentNode) vizNode.parentNode.removeChild(vizNode);
+    // Left set, not cleared: `placeVisualizer` checks it to decide whether the
+    // section has already been dealt with, and putting back one the server has
+    // just refused would be a loop.
+    vizState = null;
+  }
+
+  // Every server answer lands here. Draw, count, and keep polling only while
+  // there is something to wait for.
+  function vizApply(data) {
+    vizState = data || null;
+    var status = (data && data.status) || "none";
+
+    if (vizUploading) {
+      vizUploading = false;
+      track("viz_upload");
+    }
+    if (status === "ready" && !vizSeen.ready) {
+      vizSeen.ready = true;
+      track("viz_ready");
+    }
+    if (status === "failed" && !vizSeen.failed) {
+      vizSeen.failed = true;
+      track("viz_failed");
+    }
+    // Armed again for the next round, so a regenerate that fails is counted.
+    if (status === "generating") vizSeen = {};
+
+    vizRender();
+    if (status === "generating") vizPoll();
+    else vizStopPoll();
+  }
+
+  function vizPoll() {
+    if (vizTimer) return;
+    vizTimer = setInterval(function () {
+      if (vizBusy) return;
+      vizFetch("/api/visualizer/status?cs=" + encodeURIComponent(unlockedCs));
+    }, VIZ_POLL_MS);
+  }
+
+  function vizStopPoll() {
+    if (vizTimer) clearInterval(vizTimer);
+    vizTimer = null;
+    vizStopRotate();
+  }
+
+  // One request at a time. `body` is a FormData for the two POSTs and absent
+  // for a poll.
+  function vizFetch(url, body, onError) {
+    if (vizBusy) return;
+    vizBusy = true;
+    fetch(url, body ? { method: "POST", body: body } : { cache: "no-store" })
+      .then(function (r) {
+        return r.json().then(function (data) {
+          return { ok: r.ok, data: data };
+        });
+      })
+      .then(function (res) {
+        vizBusy = false;
+        if (res.ok) { vizApply(res.data); return; }
+
+        // The server does not have this feature for this purchase — which,
+        // with the config on a CDN and the code on the server, is exactly what
+        // the window between a static deploy and a code deploy looks like.
+        // Take the section out rather than offer a picker that would 404: an
+        // absent section is a page that never promised anything.
+        if (DEAD.indexOf((res.data && res.data.error) || "") !== -1) {
+          vizRemove();
+          return;
+        }
+
+        // Any other refusal carries its own sentence. Show it rather than a
+        // generic failure: "you've used both" and "that isn't a photo" are
+        // different things and the reader can act on exactly one of them.
+        if (onError) onError((res.data && res.data.message) || "");
+        else vizApply(res.data && res.data.status ? res.data : vizState);
+      })
+      .catch(function () {
+        vizBusy = false;
+        if (onError) onError("");
+      });
+  }
+
+  function vizRender() {
+    var host = vizBody();
+    if (!host) return;
+    var block = vizConfig();
+    var status = (vizState && vizState.status) || "none";
+
+    host.textContent = "";
+
+    // Whatever went wrong is said once, at the top, above whichever state the
+    // reader is being put back into. A failure with no photo behind it — an
+    // upload that was refused — leaves them at the picker with the reason
+    // above it rather than at a picker that looks like it was never used.
+    if (status === "failed" && vizState.message) {
+      host.appendChild(elm("p", "viz-error", vizState.message));
+    }
+
+    if (status === "generating") host.appendChild(vizWorking(block));
+    else if (status === "ready") host.appendChild(vizResult(block));
+    else if (status === "uploaded" || (vizState && vizState.has_source)) {
+      host.appendChild(vizReady(block));
+    } else host.appendChild(vizDrop(block));
+
+    if (status !== "generating") vizStopRotate();
+  }
+
+  // The line the reader is told before they take the photograph. Almost every
+  // disappointing render is a photograph problem — too close, lights off, half
+  // the room out of frame — so it is shown next to the button on every state
+  // that can still lead to a generation, not once at the start.
+  function vizGuide(block) {
+    return elm("p", "viz-guide", block.guidance || "");
+  }
+
+  function vizButton(cls, label, onTap) {
+    var btn = elm("button", cls, label);
+    btn.type = "button";
+    btn.addEventListener("click", onTap);
+    return btn;
+  }
+
+  function vizFileInput(block) {
+    var input = document.createElement("input");
+    input.type = "file";
+    // Both, deliberately. On a phone this offers the camera and the library
+    // together; naming `capture` would force the camera and lose everybody who
+    // photographed their kitchen yesterday.
+    input.accept = "image/jpeg,image/png";
+    input.className = "viz-file";
+    input.addEventListener("change", function () {
+      var file = input.files && input.files[0];
+      if (file) vizUpload(file);
+    });
+    return input;
+  }
+
+  function vizDrop(block) {
+    var zone = elm("label", "viz-drop");
+    zone.appendChild(elm("span", "viz-drop-mark", "＋"));
+    zone.appendChild(elm("span", "viz-drop-cta",
+                         block.upload_cta || "Choose a photo"));
+    zone.appendChild(vizGuide(block));
+    zone.appendChild(vizFileInput(block));
+    return zone;
+  }
+
+  function vizReady(block) {
+    var frag = document.createDocumentFragment();
+
+    var figure = elm("figure", "viz-shot");
+    var img = document.createElement("img");
+    img.className = "viz-img";
+    img.src = vizSourceUrl();
+    img.alt = "";
+    figure.appendChild(img);
+    frag.appendChild(figure);
+
+    // Two different reasons the button does not come back: every credit is
+    // spent, or the server has stopped accepting attempts for this purchase.
+    // Both end the same way, and in both cases offering a button the server
+    // would refuse is worse than not offering one.
+    var spent = (vizState && vizState.remaining) === 0;
+    var retriable = !(vizState && vizState.retriable === false);
+    if (spent || !retriable) {
+      frag.appendChild(elm("p", "viz-spent",
+                           (vizState && vizState.message)
+                           || block.spent_note || ""));
+    } else {
+      frag.appendChild(vizButton("viz-go",
+                                 block.generate_cta || "Transform my kitchen",
+                                 vizGenerate));
+      frag.appendChild(vizGuide(block));
+    }
+
+    var swap = elm("label", "viz-replace",
+                   block.replace_cta || "Use a different photo");
+    swap.appendChild(vizFileInput(block));
+    frag.appendChild(swap);
+    return frag;
+  }
+
+  function vizWorking(block) {
+    var card = elm("div", "viz-working");
+    card.setAttribute("aria-live", "polite");
+    card.appendChild(elm("span", "viz-shimmer"));
+    card.appendChild(elm("p", "viz-working-title",
+                         block.generating_title || "Redrawing your kitchen…"));
+    card.appendChild(elm("p", "viz-working-text", vizLines(block)[0]));
+    if (block.generating_note) {
+      card.appendChild(elm("p", "viz-note", block.generating_note));
+    }
+    vizStartRotate(card, block);
+    return card;
+  }
+
+  function vizLines(block) {
+    var lines = block && block.generating_messages;
+    return (lines && lines.length) ? lines : ["Working…"];
+  }
+
+  var vizRotateTimer = null;
+
+  function vizStartRotate(card, block) {
+    vizStopRotate();
+    if (prefersReducedMotion()) return;
+    var lines = vizLines(block);
+    var i = 0;
+    vizRotateTimer = setInterval(function () {
+      i = (i + 1) % lines.length;
+      var text = card.querySelector(".viz-working-text");
+      if (text) text.textContent = lines[i];
+    }, VIZ_ROTATE_MS);
+  }
+
+  function vizStopRotate() {
+    if (vizRotateTimer) clearInterval(vizRotateTimer);
+    vizRotateTimer = null;
+  }
+
+  function vizSourceUrl() {
+    return "/api/visualizer/image?which=source&cs="
+      + encodeURIComponent(unlockedCs);
+  }
+
+  function vizResult(block) {
+    var frag = document.createDocumentFragment();
+
+    var pair = elm("div", "viz-pair");
+    pair.appendChild(vizFigure(vizSourceUrl(),
+                               block.before_label || "Your kitchen", false));
+    pair.appendChild(vizFigure(vizState.url,
+                               block.after_label || "In your style", true));
+    frag.appendChild(pair);
+
+    if (block.enlarge_hint) {
+      frag.appendChild(elm("p", "viz-hint", block.enlarge_hint));
+    }
+
+    var actions = elm("div", "viz-actions");
+    // A real link rather than a scripted save: the file is same-origin and the
+    // route sets the disposition, so the browser's own download does the work.
+    var save = elm("a", "viz-download", block.download_cta || "Download");
+    save.href = vizState.url + "&download=1";
+    save.setAttribute("download", "my-kitchen-transformed.jpg");
+    actions.appendChild(save);
+
+    if ((vizState.remaining || 0) > 0) {
+      actions.appendChild(vizButton("viz-again",
+                                    block.regenerate_cta || "Regenerate once",
+                                    vizGenerate));
+    }
+    frag.appendChild(actions);
+
+    if (!(vizState.remaining > 0) && block.spent_note) {
+      frag.appendChild(elm("p", "viz-spent", block.spent_note));
+    }
+    return frag;
+  }
+
+  function vizFigure(src, caption, after) {
+    var figure = elm("figure", "viz-half" + (after ? " is-after" : ""));
+    var img = document.createElement("img");
+    img.className = "viz-img";
+    img.src = src;
+    img.alt = "";
+    figure.appendChild(img);
+    figure.appendChild(elm("figcaption", "viz-caption", caption));
+    figure.addEventListener("click", function () { vizEnlarge(src, caption); });
+    return figure;
+  }
+
+  function vizEnlarge(src, caption) {
+    if (el.vizBox && el.vizBox.parentNode) {
+      el.vizBox.parentNode.removeChild(el.vizBox);
+    }
+    var box = boxShell("vizBox", "viz-box", caption || "");
+    var shell = elm("div", "lightbox-shell");
+    var figure = elm("div", "sample-figure");
+    var img = document.createElement("img");
+    img.className = "sample-img";
+    img.src = src;
+    img.alt = "";
+    figure.appendChild(img);
+    shell.appendChild(figure);
+    if (caption) shell.appendChild(elm("p", "sample-caption", caption));
+    shell.appendChild(boxClose("vizBox"));
+    box.appendChild(shell);
+    document.body.appendChild(box);
+    el.vizBox = box;
+    showBox("vizBox");
+  }
+
+  function vizUpload(file) {
+    if (vizBusy) return;
+    var host = vizBody();
+    if (host) {
+      host.textContent = "";
+      host.appendChild(elm("p", "viz-note", "Uploading…"));
+    }
+    var body = new FormData();
+    body.append("photo", file);
+    // Counted when the server has it, not when the picker closed. A photo the
+    // server refused is a `viz_failed`, and counting it as both would make the
+    // upload-to-generate rate read better than it is.
+    vizUploading = true;
+    vizFetch("/api/visualizer/upload?cs=" + encodeURIComponent(unlockedCs),
+             body, vizFailed);
+  }
+
+  function vizGenerate() {
+    if (vizBusy) return;
+    track("viz_generate");
+    // Straight into the working state rather than waiting for the answer: the
+    // request takes a moment and a button that stays idle gets pressed twice.
+    // The server would refuse the second one, but the reader would not know
+    // that.
+    vizState = { status: "generating",
+                 remaining: (vizState && vizState.remaining) || 0 };
+    vizRender();
+    vizFetch("/api/visualizer/generate?cs=" + encodeURIComponent(unlockedCs),
+             new FormData(), vizFailed);
+  }
+
+  // A refusal the server explained, or a network failure it could not. Either
+  // way the section goes back to a state the reader can act from — with the
+  // photo still on the server, so nothing has to be chosen twice.
+  function vizFailed(message) {
+    var block = vizConfig() || {};
+    vizUploading = false;
+    vizState = {
+      status: "failed",
+      message: message || block.error_text || "That didn't work. Try again.",
+      remaining: (vizState && vizState.remaining) || 1,
+      has_source: !!(vizState && vizState.has_source),
+      retriable: true
+    };
+    if (!vizSeen.failed) { vizSeen.failed = true; track("viz_failed"); }
+    vizRender();
+    vizStopPoll();
+  }
+
   // --- unlocked (post-Stripe) view ----------------------------------------
 
   function showReportMessage(text) {
@@ -2381,6 +2799,10 @@
   function startUnlocked(cs) {
     if (unlockedStarted) return;
     unlockedStarted = true;
+    // Held for the visualizer, which needs the same token on every call it
+    // makes. Nothing else on the unlocked path keeps it: the report poller is
+    // handed it as an argument and recurses with it.
+    unlockedCs = cs;
     show("screen-result");
     el.resultBody.hidden = true;
     el.cta.hidden = true;
@@ -2768,15 +3190,71 @@
     return link;
   }
 
+  // --- modals ---------------------------------------------------------------
+
+  // Two things on this page open a sheet over a locked document: the sample
+  // page on the offer, and the transformed kitchen after it. They look nothing
+  // alike inside and behave identically outside — backdrop closes, Escape
+  // closes, the page underneath must not scroll — so the outside is written
+  // once here and each of them fills in its own middle.
+  //
+  // `slot` is the key on `el` the box is kept under, because both are built
+  // once and then re-shown rather than rebuilt on every open.
+  function boxShell(slot, id, label) {
+    var box = elm("div", "lightbox");
+    box.id = id;
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+    box.setAttribute("aria-label", label || "");
+    // Anywhere off the content closes it; the content itself does not.
+    box.addEventListener("click", function (e) {
+      if (e.target === box) closeBox(slot);
+    });
+    return box;
+  }
+
+  function boxClose(slot) {
+    var close = elm("button", "sample-close", "×");
+    close.type = "button";
+    close.setAttribute("aria-label", "Close");
+    close.addEventListener("click", function () { closeBox(slot); });
+    return close;
+  }
+
+  // One handler per slot, held so it can be removed again. A listener left on
+  // the document after close would keep answering Escape for a dialog that is
+  // no longer on screen.
+  var boxKeys = {};
+
+  function showBox(slot) {
+    var box = el[slot];
+    if (!box) return;
+    box.hidden = false;
+    document.body.classList.add("is-locked");
+    if (!boxKeys[slot]) {
+      boxKeys[slot] = function (e) {
+        if (e.key === "Escape" || e.keyCode === 27) closeBox(slot);
+      };
+    }
+    document.addEventListener("keydown", boxKeys[slot]);
+    var close = box.querySelector(".sample-close");
+    if (close && close.focus) close.focus();
+  }
+
+  function closeBox(slot) {
+    var box = el[slot];
+    if (!box) return;
+    box.hidden = true;
+    document.body.classList.remove("is-locked");
+    if (boxKeys[slot]) document.removeEventListener("keydown", boxKeys[slot]);
+  }
+
   function openSample() {
     if (el.sample) { showSample(); return; }
     var copy = commerceCopy();
 
-    var box = elm("div", "lightbox");
-    box.id = "sample-box";
-    box.setAttribute("role", "dialog");
-    box.setAttribute("aria-modal", "true");
-    box.setAttribute("aria-label", copy.sample_link || "Sample page");
+    var box = boxShell("sample", "sample-box",
+                       copy.sample_link || "Sample page");
 
     var shell = elm("div", "lightbox-shell");
     var figure = elm("div", "sample-figure");
@@ -2793,41 +3271,17 @@
       shell.appendChild(elm("p", "sample-caption", copy.sample_caption));
     }
 
-    var close = elm("button", "sample-close", "×");
-    close.type = "button";
+    var close = boxClose("sample");
     close.id = "sample-close";
-    close.setAttribute("aria-label", "Close");
-    close.addEventListener("click", closeSample);
     shell.appendChild(close);
 
     box.appendChild(shell);
-    // Anywhere off the page closes it; the page itself does not.
-    box.addEventListener("click", function (e) {
-      if (e.target === box) closeSample();
-    });
     document.body.appendChild(box);
     el.sample = box;
     showSample();
   }
 
-  function showSample() {
-    el.sample.hidden = false;
-    document.body.classList.add("is-locked");
-    document.addEventListener("keydown", sampleKeys);
-    var close = el.sample.querySelector(".sample-close");
-    if (close && close.focus) close.focus();
-  }
-
-  function closeSample() {
-    if (!el.sample) return;
-    el.sample.hidden = true;
-    document.body.classList.remove("is-locked");
-    document.removeEventListener("keydown", sampleKeys);
-  }
-
-  function sampleKeys(e) {
-    if (e.key === "Escape" || e.keyCode === 27) closeSample();
-  }
+  function showSample() { showBox("sample"); }
 
   // The card between the elements strip and the first locked section. It is
   // the only thing on the way down that asks for anything, and what it asks
