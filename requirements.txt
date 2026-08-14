@@ -5,3 +5,8 @@ stripe==15.4.0
 anthropic==0.121.0
 requests==2.34.2
 weasyprint==69.0
+# Already installed — weasyprint has always pulled it in. Named here because
+# visualizer.py imports it directly now, and a direct import resting on
+# somebody else's transitive dependency breaks the day that dependency changes
+# its mind. No new install: this is the version already in the virtualenv.
+Pillow==12.3.0

@@ -2378,6 +2378,47 @@
       }
     }
   },
+  "visualizer": {
+    "enabled": true,
+    "max_generations": 2,
+    "title": "Your Kitchen, Transformed",
+    "intro": "Upload one photo of your kitchen and see it redecorated in your style — same room, same layout, your palette.",
+    "guidance": "Stand back, daylight on, whole kitchen in frame.",
+    "upload_cta": "Choose a photo",
+    "replace_cta": "Use a different photo",
+    "generate_cta": "Transform my kitchen",
+    "regenerate_cta": "Regenerate once",
+    "download_cta": "Download",
+    "before_label": "Your kitchen",
+    "after_label": "In your style",
+    "enlarge_hint": "Tap either photo to enlarge",
+    "generating_title": "Redrawing your kitchen…",
+    "generating_messages": [
+      "Reading your palette…",
+      "Matching your materials…",
+      "Keeping your layout exactly as it is…",
+      "Rendering — this is the slow part…"
+    ],
+    "generating_note": "This takes 30–90 seconds. You can leave this page and come back to it — the link in your email brings you here.",
+    "spent_note": "You've used both transformations for this report.",
+    "error_text": "That didn't come out. Nothing was used up — try again.",
+    "error_final": "We couldn't complete a transformation for this report. Reply to your report email and we'll sort it out.",
+    "prompt_slots": {
+      "metal": {
+        "tag": "metal",
+        "fallback": "brass"
+      },
+      "worktop": {
+        "tag": "stone",
+        "fallback": "stone"
+      },
+      "wood": {
+        "tag": "wood",
+        "fallback": "oak"
+      }
+    },
+    "prompt_template": "Redecorate this exact kitchen in {style} style: cabinets in {dominant} ({dominant_hex}), {secondary} accents, {metal} hardware, {worktop} worktops, {wood} where timber shows. KEEP the room's exact layout, geometry, camera angle, perspective, window positions and appliance positions unchanged — this must be recognisably the same room from the same spot, redecorated, not a different kitchen. Photorealistic, natural daylight, no text, no people."
+  },
   "pricing": {
     "amount_cents": 700,
     "currency": "usd",

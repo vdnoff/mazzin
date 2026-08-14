@@ -67,6 +67,57 @@ LLM_MAX_CONCURRENCY = int(os.getenv("LLM_MAX_CONCURRENCY", "2"))
 # the stored report. This is the ceiling on that background wait.
 REPORT_UPGRADE_MAX_S = float(os.getenv("REPORT_UPGRADE_MAX_S", "60"))
 
+# --- Visualizer (photo -> restyled render) --------------------------------
+# The same kill-switch shape as every other integration here: an empty key
+# means the feature reports itself unavailable and nothing else changes. A
+# funnel without a `visualizer` block never reaches any of this.
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
+OPENAI_IMAGE_MODEL = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-1")
+
+# An image edit is the one thing here that costs real money per use, so both
+# levers are environment variables rather than constants. At 1024x1024 the
+# quality tiers run roughly $0.01 / $0.04 / $0.17 per image; `medium` twice is
+# under a dollar on a hundred purchases and is the balance this ships with.
+OPENAI_IMAGE_SIZE = os.getenv("OPENAI_IMAGE_SIZE", "1024x1024")
+OPENAI_IMAGE_QUALITY = os.getenv("OPENAI_IMAGE_QUALITY", "medium")
+
+# Image edits are slow — a minute is normal, two is not unusual. This runs on
+# a background thread, so nothing is waiting on it but the poller.
+OPENAI_TIMEOUT_S = float(os.getenv("OPENAI_TIMEOUT_S", "180"))
+
+# Uploaded photographs and their renders. Deliberately not under static/: these
+# are pictures of somebody's home, and everything in static/ is world-readable
+# and CDN-cached. They are served by a route that checks the purchase token
+# instead. Outside the repo tree by default so a deploy never walks over them.
+VISUALIZER_DIR = os.getenv(
+    "VISUALIZER_DIR", os.path.join(BASE_DIR, "data", "visualizer"))
+
+# What a phone camera sends is 3-8MB; 8 is a generous ceiling that still fits
+# comfortably in a worker's memory while PIL decodes it.
+VISUALIZER_MAX_BYTES = int(os.getenv("VISUALIZER_MAX_BYTES", str(8 * 1024 * 1024)))
+
+# The longest side we keep. The model reads a 1024px square; 1536 leaves room
+# for the before/after to stay crisp on a 3x phone screen without storing a
+# 12-megapixel original of someone's kitchen indefinitely.
+VISUALIZER_MAX_EDGE = int(os.getenv("VISUALIZER_MAX_EDGE", "1536"))
+VISUALIZER_JPEG_QUALITY = int(os.getenv("VISUALIZER_JPEG_QUALITY", "88"))
+
+# A decode ceiling well under Pillow's own bomb guard. No phone photograph is
+# 40 megapixels; anything claiming to be is a crafted file, not a kitchen.
+VISUALIZER_MAX_PIXELS = int(os.getenv("VISUALIZER_MAX_PIXELS", str(40_000_000)))
+
+# Attempts, not generations. A generation is a credit the buyer paid for and
+# is only spent when an image actually comes back; an attempt is any claim on
+# the worker, and this is the ceiling that stops a purchase whose generation
+# fails forever from retrying forever.
+VISUALIZER_MAX_ATTEMPTS = int(os.getenv("VISUALIZER_MAX_ATTEMPTS", "6"))
+
+# How long a row may sit in `generating` before another attempt may claim it.
+# Nothing releases the claim if a worker is killed mid-call, so the lock has to
+# be able to expire on its own.
+VISUALIZER_STALE_S = float(os.getenv("VISUALIZER_STALE_S", "300"))
+
 # --- Email delivery -------------------------------------------------------
 # An empty key is a kill switch: no PDF is built and no email is sent, and
 # every other part of the purchase still works.

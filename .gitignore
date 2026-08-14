@@ -9,3 +9,6 @@ venv/
 
 # Working folder for brand source files — exports live in static/brand/.
 assets/
+
+# Uploaded kitchen photos and their renders. Never in git, never in static/.
+data/

@@ -45,6 +45,10 @@ UPDATE_REPORT_SQL = (
     "UPDATE reports SET content = %s WHERE purchase_id = %s ORDER BY id DESC LIMIT 1"
 )
 
+SELECT_REPORT_SQL = (
+    "SELECT content FROM reports WHERE purchase_id = %s ORDER BY id DESC LIMIT 1"
+)
+
 SELECT_SECTIONS_SQL = (
     "SELECT section_id, content FROM style_sections "
     "WHERE funnel = %s AND style_id = %s"
@@ -1841,6 +1845,32 @@ def _assemble(cfg, funnel_slug, result_style, name, built, paths, complete,
     if visuals:
         content["visuals"] = dict(visuals)
     return content
+
+
+def report_content(purchase_id):
+    """The stored report for a purchase, parsed, or None.
+
+    The row is written as a JSON column and read back as either a dict or a
+    string depending on the driver's mood, which is a two-line dance that was
+    already being done in one place and is now wanted in two. Here rather than
+    at either call site because what a report row contains is this module's
+    business, and a second hand-rolled decode is how the two drift apart.
+    """
+    try:
+        row = database.query_one(SELECT_REPORT_SQL, (purchase_id,))
+    except Exception:
+        log.exception("report read failed for purchase %s", purchase_id)
+        return None
+    if not row:
+        return None
+    content = row.get("content")
+    if isinstance(content, (str, bytes)):
+        try:
+            content = json.loads(content)
+        except ValueError:
+            log.error("report for purchase %s is not valid JSON", purchase_id)
+            return None
+    return content if isinstance(content, dict) else None
 
 
 def _fire(on_final, content, purchase_id):
