@@ -1162,6 +1162,15 @@
     });
     node.appendChild(grid);
 
+    // A line under the strip for a funnel that sells something the strip does
+    // not describe. It is config copy and nothing else — a funnel without it
+    // renders exactly what it rendered before — and it sits under the chips
+    // because that is where the reader has just been shown what the report
+    // knows about their kitchen, which is the thing being transformed.
+    if (!detail && block.promo) {
+      node.appendChild(elm("p", "elements-promo", block.promo));
+    }
+
     // Only the preview is one big tap target for the button. In the paid view
     // there is no button, and a section that scrolled somewhere when touched
     // would be a document fighting the reader.

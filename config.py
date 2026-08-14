@@ -20,10 +20,27 @@ DB_USER = os.getenv("DB_USER", "")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_NAME = os.getenv("DB_NAME", "")
 
-# --- Stripe (unused in Phase 1a, wired in Phase 1b) -----------------------
+# --- Stripe ---------------------------------------------------------------
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
+
+# A second key set, for funnels marked `"stripe_mode": "test"` in their config.
+# The point is to be able to walk a whole funnel — quiz, checkout, webhook,
+# report, email — with a 4242 card, on the live site, without a real charge and
+# without the money paths diverging from the ones customers use.
+#
+# Entirely optional. Absent, the feature is simply unavailable: a funnel asking
+# for test mode is refused at checkout with a log line saying why, and every
+# live funnel behaves exactly as it did. Nothing here is ever fatal at import,
+# because a server that will not boot is a worse outcome than a funnel that
+# will not sell.
+STRIPE_TEST_SECRET_KEY = os.getenv("STRIPE_TEST_SECRET_KEY", "")
+STRIPE_TEST_WEBHOOK_SECRET = os.getenv("STRIPE_TEST_WEBHOOK_SECRET", "")
+# Read for symmetry and unused, exactly like its live counterpart: checkout is
+# a redirect to Stripe-hosted Checkout, so no publishable key ever reaches the
+# browser. Here so that a mode is one complete key set rather than two.
+STRIPE_TEST_PUBLISHABLE_KEY = os.getenv("STRIPE_TEST_PUBLISHABLE_KEY", "")
 
 # --- Report generation ----------------------------------------------------
 # An empty key is a kill switch, not an error: reports fall back to the stub

@@ -11,6 +11,14 @@ the one who pays for those three sections in latency:
     python3 scripts/warm_cache.py kitchen minimalist # one style
     python3 scripts/warm_cache.py --dry-run          # report, generate nothing
 
+A funnel cloned from another starts cold even though its styles are the same
+objects — the cache is keyed on the funnel too. Copy rather than regenerate:
+
+    python3 scripts/warm_cache.py kitchen-visualizer --copy-from kitchen
+
+which needs no model at all, and falls back to nothing: a section the source
+does not have is reported missing rather than quietly generated.
+
 It is idempotent: a second run over a warm cache reports "cached" for every
 style and makes no model calls at all. Exit status is 0 when nothing failed,
 1 when any style could not be filled, so it can gate a deploy step.
@@ -56,6 +64,9 @@ def main(argv=None):
     ap.add_argument("style", nargs="*", help="only these styles")
     ap.add_argument("--dry-run", action="store_true",
                     help="report what is missing without calling the model")
+    ap.add_argument("--copy-from", metavar="FUNNEL",
+                    help="fill from another funnel's cache instead of "
+                         "generating (for a cloned funnel)")
     args = ap.parse_args(argv)
 
     slugs = funnels([args.funnel] if args.funnel else None)
@@ -63,7 +74,11 @@ def main(argv=None):
         print("no funnels found in %s" % config.FUNNELS_DIR)
         return 1
 
-    if not config.ANTHROPIC_API_KEY and not args.dry_run:
+    if args.copy_from and not config.funnel_exists(args.copy_from):
+        print("no such funnel to copy from: %s" % args.copy_from)
+        return 1
+
+    if not config.ANTHROPIC_API_KEY and not (args.dry_run or args.copy_from):
         print("ANTHROPIC_API_KEY is not set — nothing can be generated.")
         print("Run with --dry-run to see what is missing.")
         return 1
@@ -89,6 +104,8 @@ def main(argv=None):
                        "cached": sorted(have), "warmed": [],
                        "failed": missing, "stale": stale,
                        "detail": "dry run"}
+            elif args.copy_from:
+                row = reports.copy_style_cache(args.copy_from, slug, style_id)
             else:
                 row = reports.warm_style_cache(slug, style_id)
 
