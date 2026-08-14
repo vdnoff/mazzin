@@ -1004,20 +1004,86 @@ def _sections_block(ids):
     )
 
 
+def _config_hex(colour):
+    """`#rrggbb` for a config palette colour, or None.
+
+    The free result draws the swatch and names the colour but does not print
+    the code — that is the first thing the report is being paid for — so the
+    config carries the value as an rgb triple and nothing the browser is sent
+    is a paint code. This is the server side reading it back. `hex` is still
+    accepted: config and engine sit behind a CDN and can be a version apart.
+    """
+    if not isinstance(colour, dict):
+        return None
+    triple = colour.get("rgb")
+    if (isinstance(triple, (list, tuple)) and len(triple) == 3
+            and all(isinstance(v, int) and 0 <= v <= 255 for v in triple)):
+        return "#%02X%02X%02X" % tuple(triple)
+    raw = colour.get("hex")
+    return raw if isinstance(raw, str) and HEX_RE.match(raw) else None
+
+
+def _stub_for(section_id, name, style=None):
+    """The placeholder for one section, or None if it has no placeholder.
+
+    The mistakes stub is the one that cannot be purely generic any more. The
+    free result hands over mistake #1 by name and says the other four are in
+    here; if generation fails and this is what ships, a stub that opens on
+    somebody else's first mistake breaks that promise on the one path where
+    the reader is least inclined to be forgiving. So the promised one goes in
+    front and the generic list fills in behind it.
+    """
+    stub = STUBS.get(section_id)
+    if stub is None:
+        return None
+    if section_id == "mistakes":
+        first = _mistake_one(style)
+        if first:
+            stub = dict(stub)
+            # Four behind it: five items, inside the 4-6 the schema allows.
+            stub["items"] = [first] + list(stub["items"])[:4]
+    return _fill(stub, name)
+
+
+def _mistake_one(style):
+    """The mistake the free result gave away in full, or None.
+
+    Same three fields as a row of the paid section, so it can be handed
+    straight back to the model as item 1. A config without it — an older one,
+    or another funnel — simply has no requirement to carry.
+    """
+    one = ((style or {}).get("reveals") or {}).get("mistake_one")
+    if not isinstance(one, dict):
+        return None
+    out = {}
+    for field in ("title", "body", "fix"):
+        value = one.get(field)
+        if not isinstance(value, str) or not value.strip():
+            return None
+        out[field] = value.strip()
+    return out
+
+
 def _style_block(style, name):
     lines = ["Style: %s" % name]
     blurb = (style or {}).get("blurb")
     if blurb:
         lines.append("What the style is: %s" % blurb)
     palette = ((style or {}).get("reveals") or {}).get("palette") or {}
-    colors = palette.get("colors") or []
-    if colors:
+    named = []
+    for colour in (palette.get("colors") or []):
+        code = _config_hex(colour)
+        if colour.get("name") and code:
+            named.append("%s %s" % (colour["name"], code))
+    if named:
+        # What they have and have not been given, stated separately, because
+        # the palette section is sold on the difference: they have seen the
+        # swatch and the name for nothing, and the code is the thing this
+        # section is delivering. A model told they had already been shown the
+        # codes writes around them.
         lines.append(
-            "Palette already shown to them: %s"
-            % ", ".join(
-                "%s %s" % (c.get("name"), c.get("hex")) for c in colors
-            )
-        )
+            "Palette already shown to them, as a swatch and a name only — "
+            "they have NOT been given these codes: %s" % ", ".join(named))
     return "\n".join(lines)
 
 
@@ -1270,6 +1336,23 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None, choices=None)
                  else _choice_block(cfg, choices, tag_scores))
     if extra:
         parts.append(extra)
+
+    # The first mistake was given away in full, numbered, with the promise
+    # that the other four are in here. So it has to BE the first item rather
+    # than a similar one: a reader who bought on "mistakes 2-5" and found five
+    # unfamiliar ones has been told the truth about the count and nothing else.
+    if section_id == "mistakes":
+        first = _mistake_one(style)
+        if first:
+            parts.append(
+                "REQUIRED — item 1 of this section was already given to this "
+                "person in full, for free, as \"Mistake #1 of 5\". Reproduce "
+                "it as item 1, in these words:\n"
+                "  title: %s\n  body: %s\n  fix: %s\n"
+                "Items 2 onward are yours to write and must all be different "
+                "from it. Order them cheapest correction first, so the one "
+                "that costs most to undo is last."
+                % (first["title"], first["body"], first["fix"]))
 
     # The materials section is where the free preview gets paid off. Those six
     # elements were named on the result screen before any money changed hands,
@@ -1726,8 +1809,8 @@ def _absorb(job, task, result):
     for section_id in ids:
         if section_id in job["built"]:
             continue                      # already have it (a cache hit)
-        stub = STUBS.get(section_id)
-        job["built"][section_id] = _fill(stub, job["name"]) if stub else None
+        job["built"][section_id] = _stub_for(
+            section_id, job["name"], _style(job["cfg"], job["style_id"]))
         job["paths"][section_id] = "stub"
     return False
 
@@ -1896,8 +1979,7 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
         # nothing to wait for.
         for section_id in [s.get("id") for s in cfg.get("report", {}).get("sections", [])]:
             if section_id not in built:
-                stub = STUBS.get(section_id)
-                built[section_id] = _fill(stub, name) if stub else None
+                built[section_id] = _stub_for(section_id, name, style)
                 paths[section_id] = "stub"
         content = _assemble(cfg, funnel_slug, result_style, name, built, paths,
                             True, elements)

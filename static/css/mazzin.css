@@ -993,6 +993,53 @@ body {
   color: var(--muted);
 }
 
+/* The free view's code slot. The colour and its name are given; the code is
+   the first thing the report is being paid for, so what sits here is a
+   placeholder of the right shape rather than the real value under a filter —
+   there is no value in the document to lift. Blurred anyway, because a crisp
+   row of blocks reads as a rendering fault and a soft one reads as withheld. */
+.swatch-hex.is-masked {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: baseline;
+}
+
+.code-mask {
+  filter: blur(1.6px);
+  -webkit-filter: blur(1.6px);
+  opacity: 0.65;
+  letter-spacing: -0.04em;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* The padlock at text size: same shape, no halo — the halo exists to survive
+   a photograph behind it, and on a white row it is a box around a word. */
+.row-lock.is-inline {
+  position: relative;
+  top: auto;
+  left: auto;
+  z-index: auto;
+  width: 13px;
+  height: 10px;
+  /* Its own shackle is drawn above the box, so the box sits low in the line. */
+  margin-top: 5px;
+  transform: none;
+  border-radius: 2.5px;
+  box-shadow: none;
+}
+
+.row-lock.is-inline::before {
+  width: 8px;
+  height: 6px;
+  border-width: 2px;
+  border-radius: 4px 4px 0 0;
+}
+
+/* At 13px a 5px keyhole is a smudge, not a detail. */
+.row-lock.is-inline::after { display: none; }
+
 .swatch-role {
   margin: 0 0 3px;
   font-size: 13px;
@@ -1009,6 +1056,69 @@ body {
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+/* --- the free mistake ------------------------------------------------------ */
+
+/* Deliberately not styled as a teaser. It is one page of the report, set the
+   way the report sets it, sitting in the free part of the page — the argument
+   for buying is that it looks exactly like this and there are four more. */
+.section-mistake-one .mistake { margin-bottom: 0; }
+
+/* The line that says where the other four are. Tinted rather than blurred:
+   nothing is being withheld here, it is a signpost, and a second blurred
+   treatment this high up would blunt the two that are still to come. */
+.mistake-locked {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 16px 0 0;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #7A3A16;
+}
+
+/* --- what else is in there, in one card ------------------------------------ */
+
+/* Four sections that used to be four blurred blocks. The blur said the same
+   thing four times; four different sentences say four different things in a
+   third of the height. */
+.also-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.also-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(22, 24, 29, 0.08);
+}
+
+.also-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.also-row:first-child { padding-top: 2px; }
+
+.also-text { min-width: 0; }
+
+.also-title {
+  margin: 0 0 2px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.also-hook {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--muted);
 }
 
 .mistake,
@@ -1641,18 +1751,161 @@ body {
   box-shadow: 0 4px 16px rgba(22, 24, 29, 0.08);
 }
 
-.commerce .manifest { margin-bottom: 18px; }
-.commerce .price { margin: 14px 0 12px; }
-.commerce .trust { margin-top: 16px; }
-.commerce .legal-links { margin-top: 18px; }
+/* One descent, in the order the decision is made: what it is worth, what is
+   in it, what it costs, the consent, the button. Nothing between the price and
+   the tap, and nothing above the headline. */
+
+/* The headline is the block's header now rather than a tinted card inside it.
+   A card around it made the whole block read as two offers stacked — a boxed
+   claim, then a list, then a second boxed control — when there is one offer
+   and it starts here. */
+.commerce .pay-anchor {
+  margin: 0 0 16px;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+}
 
 /* The anchor headline carries the saving now, so it follows the rule the swipe
    header and the mid-CTA already follow: the sentence in ink, the figure in
    the accent. Left uniformly accent — which is what the two-screen paywall
    does, where the headline names a price rather than a saving — the number it
    exists for would be the one thing on the card that did not stand out. */
-.commerce .anchor-head { color: var(--ink); }
+.commerce .anchor-head { margin: 0; color: var(--ink); }
 .commerce .anchor-head .money { color: var(--accent); }
+
+/* Six rows of supporting detail under a headline, so they read at supporting
+   size. At 15px with 10px between them the list was competing with the line
+   above it for the same attention. */
+.commerce .manifest { margin-bottom: 14px; }
+.commerce .manifest-row { margin-bottom: 7px; }
+.commerce .manifest-text { font-size: 14px; line-height: 1.35; }
+.commerce .manifest-row.is-hero { margin: 0 -10px 7px; padding: 7px 10px; }
+.commerce .manifest-check { width: 16px; height: 16px; }
+
+/* Against the button rather than adrift above the list: this is the last thing
+   read before the tap, so it is the number and the terms and nothing else. */
+.commerce .price {
+  margin: 0 0 10px;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.commerce .withdrawal { margin: 0 0 14px; }
+.commerce .trust { margin-top: 16px; }
+.commerce .legal-links { margin-top: 18px; }
+
+/* The one dominant control on the page: taller than any other tap target and
+   the only solid accent field in the block. */
+.commerce .cta {
+  min-height: 58px;
+  font-size: 19px;
+}
+
+/* --- the sample page -------------------------------------------------------- */
+
+/* A link, not a button: it is the one thing in this block that does not want
+   to be mistaken for the control at the bottom of it. */
+.sample-link {
+  display: block;
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sample-link:active { opacity: 0.7; }
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  background: rgba(22, 24, 29, 0.72);
+  overflow-y: auto;
+}
+
+.lightbox-shell {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+}
+
+/* The image is the report; the veil is the boundary. Kept as an overlay rather
+   than a filter on the image so the top of the page is exactly as sharp here
+   as it is in the document being sold. */
+.sample-figure {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.4);
+}
+
+.sample-img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sample-veil {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 50%;
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  /* The gradient is the fallback where backdrop-filter is not supported: the
+     lower half still stops being readable, it just stops by fading to paper
+     instead of by going soft. */
+  background: linear-gradient(to bottom,
+              rgba(255, 255, 255, 0) 0%,
+              rgba(255, 255, 255, 0.55) 45%,
+              rgba(255, 255, 255, 0.92) 100%);
+  pointer-events: none;
+}
+
+.sample-caption {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.86);
+  text-align: center;
+}
+
+.sample-close {
+  position: absolute;
+  top: -14px;
+  right: -6px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--ink);
+  font-size: 22px;
+  line-height: 36px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+/* The page behind a lightbox must not scroll under it. */
+body.is-locked { overflow: hidden; }
 
 /* --- the sticky mini-CTA ---------------------------------------------------- */
 
