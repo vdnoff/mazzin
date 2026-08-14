@@ -162,3 +162,6 @@ bottom.
 
 ## 2026-08-14 — claude/sticky-revert
 - sticky revert
+
+## 2026-08-14 — claude/visualizer-funnel
+- visualizer funnel + stripe modes
