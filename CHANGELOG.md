@@ -153,3 +153,6 @@ bottom.
 
 ## 2026-08-14 — claude/polish-pass-2
 - polish pass 2
+
+## 2026-08-14 — claude/meta-addpaymentinfo
+- meta: AddPaymentInfo
