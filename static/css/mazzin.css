@@ -126,6 +126,9 @@ body {
   border-radius: 999px;
   background: var(--accent-soft);
   transform-origin: center;
+  /* The colour eases rather than switching, so the fill and the pop are one
+     gesture. Matched to the exit phase, which is when engine.js fills it. */
+  transition: background-color 220ms ease;
 }
 
 .pip.is-done {
@@ -135,10 +138,13 @@ body {
 
 .pip.is-current { animation: pip-pulse 1.8s ease-in-out infinite; }
 
+/* Both axes, not just the height. A pip is 8px tall and a fifth of the row
+   wide, so scaling only Y made it a spike; the pop is meant to read as the
+   segment landing, at the same moment the cards leave. */
 @keyframes pip-pop {
-  0% { transform: scaleY(1); }
-  45% { transform: scaleY(1.75); }
-  100% { transform: scaleY(1); }
+  0% { transform: scale(1); }
+  45% { transform: scale(1.15); }
+  100% { transform: scale(1); }
 }
 
 @keyframes pip-pulse {
@@ -227,11 +233,22 @@ body {
   text-wrap: balance;
 }
 
-.caption.is-enter { animation: caption-in 250ms var(--ease-ios) both; }
+/* The question crossfades: out with the set it belongs to, in with the next
+   one. It used to lift 14px on the way in, which was the only vertical travel
+   left on the screen once the cards started moving sideways — two directions
+   in one 240ms window reads as two things happening, not one step turning
+   over. Opacity only, so the words stay put and only the sentence changes. */
+.caption.is-enter { animation: caption-in 240ms var(--ease-ios) both; }
+.caption.is-exit { animation: caption-out 220ms var(--ease-ios) both; }
 
 @keyframes caption-in {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes caption-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 /* --- cards ----------------------------------------------------------------- */
@@ -302,33 +319,54 @@ body {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  transition: transform 220ms ease-out, box-shadow 220ms ease-out,
-              opacity 220ms ease-out;
-  animation: card-in 480ms var(--ease-settle) backwards;
-  animation-delay: calc(var(--i, 0) * 40ms);
+  /* 180ms is the selection dim below; the shadow and the ring keep the slower
+     curve because they are the moment landing rather than the set receding. */
+  transition: transform 180ms ease-out, opacity 180ms ease-out,
+              box-shadow 220ms ease-out;
+  animation: card-in 240ms var(--ease-settle) backwards;
+  /* Set by engine.js per format, so six cards land in the same window four do.
+     The fallback is the uncapped per-card figure, for a stylesheet that
+     arrives ahead of the engine that fills it in. */
+  animation-delay: calc(var(--i, 0) * var(--stagger, 50ms));
   will-change: transform, opacity;
 }
 
 .card:active { transform: scale(0.96); }
 
-/* Incoming: the pair settles up into place. Shorter travel than before and a
-   long, even deceleration with no overshoot — the opacity is done by 60% so
-   the last stretch is pure movement coming to rest. */
+/* Incoming: the set slides in from the right, left card first. The travel is
+   horizontal now and matches the exit's, so one step reads as the whole row
+   moving one place along rather than as two unrelated animations. */
 @keyframes card-in {
-  from { opacity: 0; transform: translateY(28px) scale(0.98); }
-  60% { opacity: 1; }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
-/* Outgoing: both cards leave left with a slight tilt. */
+/* Outgoing: everything leaves to the left together, except the card they
+   chose, which goes last. The order is the point — the rejected images clear
+   out and the choice follows them, so the eye is left holding the thing that
+   was picked rather than watching two cards race.
+
+   Each of the two states continues from where the selection moment left it:
+   the dimmed cards are already at 0.4/0.96 and the chosen one at 1.05, and a
+   keyframe that started from `scale(1)` would snap both back at 0%. */
 .cards.is-leaving .card {
-  animation: card-out 160ms var(--ease-ios) both;
-  animation-delay: calc(var(--i, 0) * 40ms);
+  animation: card-out 220ms var(--ease-ios) both;
+  animation-delay: 0s;
 }
 
 @keyframes card-out {
-  from { opacity: 1; transform: translateX(0) rotate(0deg); }
-  to { opacity: 0; transform: translateX(-24%) rotate(-2deg); }
+  from { opacity: 0.4; transform: translateX(0) scale(0.96); }
+  to { opacity: 0; transform: translateX(-24px) scale(0.96); }
+}
+
+.cards.is-leaving .card.is-chosen {
+  animation-name: card-out-chosen;
+  animation-delay: 40ms;
+}
+
+@keyframes card-out-chosen {
+  from { opacity: 1; transform: translateX(0) scale(1.05); }
+  to { opacity: 0; transform: translateX(-24px) scale(1.05); }
 }
 
 /* The ring lives on a pseudo-element so its width and its opacity can be
@@ -355,10 +393,13 @@ body {
   box-shadow: inset 0 0 0 3px var(--accent);
 }
 
-/* Focus collapses onto the choice: the other card recedes at the same moment. */
+/* Focus collapses onto the choice: everything they did not tap recedes at the
+   same moment. On a grid that is three or five cards at once, which is why it
+   goes further than it did when it was one — at 0.45 a four-up still read as
+   four photographs with one highlighted. */
 .cards.is-picking .card:not(.is-chosen) {
-  opacity: 0.45;
-  transform: scale(0.97);
+  opacity: 0.4;
+  transform: scale(0.96);
 }
 
 .card-img {
@@ -520,8 +561,17 @@ body {
   .card, .check, .pip, .card::after { transition: none; }
   .card { animation: fade-in 160ms ease backwards; }
   .card.is-chosen .check { animation: none; opacity: 1; transform: scale(1); }
-  .cards.is-leaving .card { animation: fade-out 160ms ease both; }
+  /* Both halves of the shorthand matter: the name drops the 24px of travel and
+     the delay drops the chosen card's 40ms tail, so the set still leaves as one
+     thing. engine.js shortens the swap to match. */
+  .cards.is-leaving .card,
+  .cards.is-leaving .card.is-chosen {
+    animation: fade-out 160ms ease both;
+  }
   .caption.is-enter { animation: fade-in 200ms ease both; }
+  /* The question does not fade out at all here — it is replaced in place, which
+     is what it did before the crossfade existed. */
+  .caption.is-exit { animation: none; }
   .cta.is-nudged { animation: none; }
   /* engine.js already refuses to add these classes here; this is the second
      lock, for a preference that changes after the page has loaded. */
