@@ -1773,7 +1773,7 @@
   ],
   "style_elements": {
     "title": "Your Style Elements",
-    "subline": "Locked in from your choices — the full report specifies each one.",
+    "subline": "Recognized from your choices — specified in your full report.",
     "items": [
       {
         "id": "brass-hardware",
@@ -1949,22 +1949,34 @@
           "colors": [
             {
               "name": "Oat Linen",
-              "hex": "#E5DAC8"
+              "rgb": [
+                229,
+                218,
+                200
+              ]
             },
             {
               "name": "Weathered Oak",
-              "hex": "#8B6F4E"
+              "rgb": [
+                139,
+                111,
+                78
+              ]
             },
             {
               "name": "Burnt Clay",
-              "hex": "#A45A34"
+              "rgb": [
+                164,
+                90,
+                52
+              ]
             }
           ],
           "line": "Oat linen keeps it light, weathered oak does the warming, and a burnt clay accent stops the whole thing going soft."
         },
         "mistakes": {
-          "setup": "Never let the wood tones in a room match each other exactly, and the way out is",
-          "trigger": "to age one piece past the rest,"
+          "setup": "That one is the cheapest of the five to put right. The other four are ranked by what they cost to undo, and the one at the top of that list is",
+          "trigger": "the worktop, before it is templated,"
         },
         "materials": {
           "setup": "Timber and stone turn muddy without one cold element between them, and it is",
@@ -1981,6 +1993,11 @@
         "splurge": {
           "setup": "Spend on the timber and save on anything you can paint, and what ages worst is",
           "trigger": "the worktop edge, by winter two,"
+        },
+        "mistake_one": {
+          "title": "Matching every wood tone in the room",
+          "body": "A kitchen where the floor, the cabinetry and the table are all the same timber reads as a showroom set rather than a room that was put together over time. Matched tones flatten the depth that made you want wood in the first place: everything sits on one plane, nothing recedes, and the warmth you were buying goes flat under the lights.",
+          "fix": "Keep one piece deliberately older and darker than the rest. A table or a run of open shelving a few shades past the floor gives the eye somewhere to land, and the mismatch reads as age rather than as a mistake."
         }
       }
     },
@@ -2000,22 +2017,34 @@
           "colors": [
             {
               "name": "Chalk White",
-              "hex": "#F4F4F2"
+              "rgb": [
+                244,
+                244,
+                242
+              ]
             },
             {
               "name": "Pale Concrete",
-              "hex": "#D5D6D2"
+              "rgb": [
+                213,
+                214,
+                210
+              ]
             },
             {
               "name": "Graphite",
-              "hex": "#3A3D42"
+              "rgb": [
+                58,
+                61,
+                66
+              ]
             }
           ],
           "line": "Chalk white does the bulk, pale concrete carries the only texture, and graphite appears once — on the handles, nowhere else."
         },
         "mistakes": {
-          "setup": "Never solve a storage problem with more cabinetry, because the real fix is",
-          "trigger": "one drawer you never fill,"
+          "setup": "That one is the cheapest of the five to put right. The other four are ranked by what they cost to undo, and the one at the top of that list is",
+          "trigger": "the joinery, before it is ordered,"
         },
         "materials": {
           "setup": "Matte over gloss on every surface but one, and the exception that matters is",
@@ -2032,6 +2061,11 @@
         "splurge": {
           "setup": "Spend on the joinery, save on appliances, and what separates minimal from bare is",
           "trigger": "a two millimetre shadow gap,"
+        },
+        "mistake_one": {
+          "title": "Solving a storage problem with more cabinetry",
+          "body": "The instinct in a minimal kitchen is to add another run of units so that nothing has to sit out. It works for about a month. Full cupboards turn every door into a decision, and the room stops feeling calm long before it stops being tidy — the clear surfaces you wanted are the first thing to go.",
+          "fix": "Plan one drawer you never fill. Deliberate slack is what keeps the counters clear a year in; a kitchen packed to its capacity has nowhere to put the ordinary mess of a Tuesday, so the mess stays on the worktop."
         }
       }
     },
@@ -2051,22 +2085,34 @@
           "colors": [
             {
               "name": "Iron Black",
-              "hex": "#2B2B2B"
+              "rgb": [
+                43,
+                43,
+                43
+              ]
             },
             {
               "name": "Smoked Oak",
-              "hex": "#5C4A38"
+              "rgb": [
+                92,
+                74,
+                56
+              ]
             },
             {
               "name": "Zinc Grey",
-              "hex": "#8A8D91"
+              "rgb": [
+                138,
+                141,
+                145
+              ]
             }
           ],
           "line": "Iron black holds the frame, smoked oak warms it back up, and zinc grey keeps those two from fighting each other."
         },
         "mistakes": {
-          "setup": "Never buy the pre-distressed version of anything — the giveaway is",
-          "trigger": "the repeat in the pattern,"
+          "setup": "That one is the cheapest of the five to put right. The other four are ranked by what they cost to undo, and the one at the top of that list is",
+          "trigger": "the extraction, before the ceiling closes,"
         },
         "materials": {
           "setup": "Steel, oak and concrete work in one ratio, and the dominant surface should be",
@@ -2083,6 +2129,11 @@
         "splurge": {
           "setup": "Spend on the extraction, not the carcasses, because the thing nobody fakes is",
           "trigger": "the weight of the hardware,"
+        },
+        "mistake_one": {
+          "title": "Buying anything pre-distressed",
+          "body": "Factory wear is printed, and printed wear repeats. Once you have noticed the same scratch on two cabinet fronts you cannot stop noticing it, and the room drops from raw to themed in a single look. This style reads as honest only while the marks look earned.",
+          "fix": "Buy plain and let the room do the ageing. Unfinished steel, mill-finish hardware and oiled rather than lacquered timber all mark unevenly inside a year — which is the look the distressed version is imitating and never quite gets."
         }
       }
     },
@@ -2101,22 +2152,34 @@
           "colors": [
             {
               "name": "Bone White",
-              "hex": "#ECE4D6"
+              "rgb": [
+                236,
+                228,
+                214
+              ]
             },
             {
               "name": "Aged Brass",
-              "hex": "#B08D57"
+              "rgb": [
+                176,
+                141,
+                87
+              ]
             },
             {
               "name": "Walnut Shadow",
-              "hex": "#5A4632"
+              "rgb": [
+                90,
+                70,
+                50
+              ]
             }
           ],
           "line": "Bone white on the cabinetry, aged brass on everything you actually touch, and walnut shadow keeping the room from floating away."
         },
         "mistakes": {
-          "setup": "Never mix more than two metals in one room, and the pairing that always works is",
-          "trigger": "brass with nickel, never black,"
+          "setup": "That one is the cheapest of the five to put right. The other four are ranked by what they cost to undo, and the one at the top of that list is",
+          "trigger": "the doors, before they are painted,"
         },
         "materials": {
           "setup": "Marble looks right and behaves badly, so the surface to use instead is",
@@ -2133,6 +2196,11 @@
         "splurge": {
           "setup": "Spend on the doors and save on the worktop, because what you touch daily is",
           "trigger": "the door frame, not the top,"
+        },
+        "mistake_one": {
+          "title": "Mixing more than two metals",
+          "body": "Taps, handles, hinges, lighting and the rail on the range are five separate chances to introduce a finish. Past two, a classic kitchen loses the quiet coordination the whole style depends on and starts reading as a collection of separate purchases that happened to end up in one room.",
+          "fix": "Pick two and hold the line — brass carries the warmth, nickel does the working parts. Anything black is a third metal whatever the showroom calls it, and it is the one that dates fastest."
         }
       }
     }
@@ -2226,7 +2294,32 @@
           "mode": "locked"
         }
       }
-    ]
+    ],
+    "mistake_one": {
+      "title": "Mistake #1 of 5",
+      "locked_note": "Mistakes 2–5 — inside your full report"
+    },
+    "also": {
+      "title": "Also in your report",
+      "rows": [
+        {
+          "section": "materials",
+          "hook": "The two combinations to avoid entirely — and what to ask a supplier for instead."
+        },
+        {
+          "section": "dna",
+          "hook": "How your two influences score, and exactly where they pull against each other."
+        },
+        {
+          "section": "splurge",
+          "hook": "Your budget split line by line, with a floor and a ceiling for each one."
+        },
+        {
+          "title": "Your Exact Paint Codes",
+          "hook": "The code for every colour above, its sheen level, and the order to apply them in."
+        }
+      ]
+    }
   },
   "pricing": {
     "amount_cents": 300,
@@ -2241,8 +2334,7 @@
     "commerce": {
       "anchor_head": "A {price} decision that saves you $4,000+",
       "anchor_head_accent": "$4,000+",
-      "anchor": "That $20,000 renovation turns on decisions like these. The mistakes in this report cost renovators $4,000+ to undo.",
-      "price_suffix": "one-time payment · no subscription",
+      "price_suffix": "one-time · no subscription",
       "consent": "One-time {price} — no subscription, ever. My report unlocks instantly.",
       "trust": [
         "Secure via Stripe",
@@ -2252,7 +2344,9 @@
       "mid_line": "Save $4,000+ on your renovation — starting now.",
       "mid_line_accent": "$4,000+",
       "mid_button": "See what's inside ↓",
-      "sticky_label": "Unlock full report — {price}"
+      "sticky_label": "Unlock full report — {price}",
+      "sample_link": "See a sample page",
+      "sample_caption": "An example page. Yours is written from your own choices."
     },
     "title": "Your {style} Report",
     "proof_line": "Built from your 13 choices",
@@ -2280,7 +2374,7 @@
     "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right."
   },
   "result": {
-    "mistakes_teaser": "Inside: the 5 mistakes {style} owners make — the average one costs $4,000+ to undo.",
+    "mistakes_teaser": "You've seen mistake #1. The other four cost {style} owners $4,000+ on average to undo.",
     "value_banner": "The mistakes in this report cost renovators $4,000+ to undo. Catching one pays for it a thousand times over."
   }
 }

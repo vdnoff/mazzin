@@ -855,22 +855,41 @@
     return lines;
   }
 
-  // The preview is the paid document with the copy taken out of it, not a
-  // different object: same stacked sections, same titles and rules, same
-  // swatch cards. What you are buying should be recognisable from what you
-  // are looking at, so the only difference a reader can point to is that
-  // most of the words are behind a blur.
+  // Which locked sections have given up their own block to the compact card
+  // at the bottom. A row naming a section that this config does not have is
+  // ignored on both sides, so a stale funnel JSON can neither collapse a
+  // section that is not there nor lose one that is.
+  function collapsedIds() {
+    var rows = ((cfg.report && cfg.report.also) || {}).rows || [];
+    var ids = {};
+    rows.forEach(function (row) {
+      if (row && row.section) ids[row.section] = true;
+    });
+    return ids;
+  }
+
+  // The preview is the paid document with most of the copy taken out of it,
+  // not a different object: same stacked sections, same titles and rules, same
+  // swatch cards. What you are buying should be recognisable from what you are
+  // looking at.
+  //
+  // What changed is where the line falls and how often it is drawn. The reader
+  // now gets a whole page of the report for nothing — the palette, one entire
+  // mistake — and the withheld part is two teasers and a list rather than five
+  // identical blurs, because five of them in a row is not five arguments, it is
+  // one argument made five times until it stops landing.
   function renderLockedReport(style) {
     var sections = (cfg.report && cfg.report.sections) || [];
     var reveals = (style && style.reveals) || {};
     el.report.innerHTML = "";
     el.report.classList.add("report-preview");
 
-    // Ranked once for the whole report, then dealt out two at a time: five
+    // Ranked once for the whole report, then dealt out two at a time: two
     // sections showing the same two frames reads as a bug, not as a teaser.
     var pool = styleShots(style);
     var taken = 0;
     var elementsPlaced = false;
+    var collapsed = collapsedIds();
 
     sections.forEach(function (sec) {
       if (sec.enabled === false) return;
@@ -878,13 +897,18 @@
       var reveal = reveals[sec.id];
 
       // The elements block goes in at the line between what they have been
-      // given and what is being sold: under the palette, above the first
-      // section with its words held back.
+      // given and what is being sold: under the palette and the free mistake,
+      // above the first section with its words held back.
       if (mode !== "visible" && !elementsPlaced) {
         elementsPlaced = true;
         addElements();
         if (singlePage) addOffer(style);
       }
+
+      // Collapsed sections have a row in the card below instead of a block of
+      // their own. Five blurred blocks in a row taught the reader to scroll
+      // past blurred blocks, which is the opposite of what they are for.
+      if (mode !== "visible" && collapsed[sec.id]) return;
 
       var block = elm("article", "section");
       block.setAttribute("data-mode", mode);
@@ -899,6 +923,13 @@
 
       block.addEventListener("click", focusCta);
       el.report.appendChild(block);
+
+      // Straight after the palette, before anything is asked for: one whole
+      // mistake, numbered, in the shape the paid section uses.
+      if (mode === "visible" && reveal && reveal.colors) {
+        var free = mistakeOneSection(style);
+        if (free) el.report.appendChild(free);
+      }
     });
 
     // A report with nothing locked in it would never have hit the line above.
@@ -907,11 +938,96 @@
       if (singlePage) addOffer(style);
     }
 
+    var also = alsoSection(sections);
+    if (also) el.report.appendChild(also);
+
     layoutDissolves();
     // A font swap changes the metrics the mask was measured against.
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(layoutDissolves);
     }
+  }
+
+  // --- the free mistake ------------------------------------------------------
+
+  // One of the five, whole, before anything is asked for — and it is the one
+  // the locked section's teaser used to be written about, so the reader who
+  // buys on "the other four" gets the other four rather than five strangers.
+  //
+  // Built out of the same classes the paid section uses, deliberately: the
+  // strongest argument for what a report page looks like is a report page.
+  function mistakeOneSection(style) {
+    var one = ((style && style.reveals) || {}).mistake_one;
+    var copy = (cfg.report && cfg.report.mistake_one) || {};
+    if (!one || !one.title || !one.body || !one.fix) return null;
+
+    var node = elm("article", "section section-mistake-one");
+    node.setAttribute("data-mode", "visible");
+    node.appendChild(elm("h2", "section-title", copy.title || "Mistake #1"));
+
+    var list = elm("ol", "mistake-list");
+    var li = elm("li", "mistake");
+    li.appendChild(elm("span", "mistake-num", "1"));
+    var box = elm("div", "mistake-text");
+    box.appendChild(elm("h3", "mistake-title", one.title));
+    box.appendChild(elm("p", "mistake-body", one.body));
+    box.appendChild(elm("p", "mistake-fix", "→ Fix: " + one.fix));
+    li.appendChild(box);
+    list.appendChild(li);
+    node.appendChild(list);
+
+    if (copy.locked_note) {
+      var foot = elm("p", "mistake-locked");
+      foot.appendChild(lockNode(true));
+      foot.appendChild(elm("span", null, copy.locked_note));
+      node.appendChild(foot);
+      node.addEventListener("click", focusCta);
+    }
+    return node;
+  }
+
+  // --- what is left, in one card ---------------------------------------------
+
+  // The four sections that no longer get a blurred block each. One row apiece:
+  // a lock, the title the report will use, and a line about what the section
+  // decides. It is shorter than any one of the blocks it replaces and it says
+  // more, because four different sentences carry further than four identical
+  // treatments.
+  function alsoSection(sections) {
+    var block = (cfg.report && cfg.report.also) || {};
+    var rows = block.rows || [];
+    if (!rows.length) return null;
+
+    var titles = {};
+    (sections || []).forEach(function (sec) {
+      if (sec && sec.id && sec.enabled !== false) titles[sec.id] = sec.title;
+    });
+
+    var list = elm("ul", "also-list");
+    rows.forEach(function (row) {
+      if (!row) return;
+      // A row naming a section takes that section's own title. A row with a
+      // title of its own is something the report contains that is not a
+      // section — the paint codes live inside the palette.
+      var title = row.section ? titles[row.section] : row.title;
+      if (!title) return;
+      var li = elm("li", "also-row");
+      li.appendChild(lockNode(true));
+      var text = elm("div", "also-text");
+      text.appendChild(elm("p", "also-title", title));
+      if (row.hook) text.appendChild(elm("p", "also-hook", row.hook));
+      li.appendChild(text);
+      list.appendChild(li);
+    });
+    if (!list.childElementCount) return null;
+
+    var node = elm("article", "section section-also");
+    node.setAttribute("data-mode", "locked");
+    node.appendChild(elm("h2", "section-title",
+                         block.title || "Also in your report"));
+    node.appendChild(list);
+    node.addEventListener("click", focusCta);
+    return node;
   }
 
   // --- style elements (free) ------------------------------------------------
@@ -1043,22 +1159,46 @@
     return node;
   }
 
-  // The one section delivered in full, and it is delivered in the paid shape:
-  // real hex circles, the name and the code beside them. This is the sample,
-  // so it has to be the actual product rather than a summary of it.
+  // The colour to paint a config swatch with. The config carries an rgb
+  // triple rather than a hex string, so that nothing the free page is sent is
+  // a paint code — see maskedCode below. `hex` is still read, because an
+  // engine.js this new can be handed a funnel JSON cached from before the
+  // change and a row of empty circles would be worse than an old code.
+  function swatchColor(c) {
+    var t = c && c.rgb;
+    if (t && t.length === 3) return "rgb(" + t[0] + "," + t[1] + "," + t[2] + ")";
+    return (c && c.hex) || "";
+  }
+
+  // What stands where the code goes. Not the real value under a blur — the
+  // value is not in the document at all, and a placeholder of the right shape
+  // says "there is a code here and you have not got it" more honestly than a
+  // hex somebody can read out of devtools.
+  function maskedCode() {
+    var span = elm("span", "swatch-hex is-masked");
+    span.setAttribute("aria-label", "Paint code locked");
+    span.appendChild(elm("span", "code-mask", "#■■■■■"));
+    span.appendChild(lockNode(true));
+    return span;
+  }
+
+  // The free palette: the three colours, drawn and named, with a one-line
+  // reason. What it does not carry is the codes — that is the line the report
+  // is being bought across, and it is drawn in the payload rather than in CSS
+  // so that view-source is the same answer as the screen.
   function previewPalette(reveal) {
     var frag = document.createDocumentFragment();
-    var list = elm("ul", "swatch-list");
+    var list = elm("ul", "swatch-list is-gated");
 
     (reveal.colors || []).forEach(function (c) {
       var li = elm("li", "swatch-row");
       var dot = elm("span", "swatch-dot");
-      dot.style.backgroundColor = c.hex;
+      dot.style.backgroundColor = swatchColor(c);
       li.appendChild(dot);
 
       var text = elm("div", "swatch-text");
       var head = elm("p", "swatch-name", c.name);
-      head.appendChild(elm("span", "swatch-hex", c.hex));
+      head.appendChild(maskedCode());
       text.appendChild(head);
       li.appendChild(text);
       list.appendChild(li);
@@ -1240,9 +1380,12 @@
     for (var i = 0; i < all.length; i++) layoutDissolve(all[i]);
   }
 
-  function lockNode() {
+  // `inline` is the small one that sits in a line of text rather than over a
+  // photograph: same drawing, no halo, no keyhole — at 13px the keyhole is a
+  // smudge and the halo is a white box around a word.
+  function lockNode(inline) {
     var lock = document.createElement("span");
-    lock.className = "row-lock";
+    lock.className = "row-lock" + (inline ? " is-inline" : "");
     lock.setAttribute("role", "img");
     lock.setAttribute("aria-label", "Locked");
     return lock;
@@ -2160,7 +2303,7 @@
     }
     colors.slice(0, 3).forEach(function (c) {
       var dot = elm("span", "pay-dot");
-      dot.style.backgroundColor = c.hex;
+      dot.style.backgroundColor = swatchColor(c);
       el.payDots.appendChild(dot);
     });
     el.payProofLine.textContent = line;
@@ -2316,14 +2459,20 @@
   // `updatePayButton` keeps working on both paths. Two buttons that can both
   // charge somebody is exactly the kind of thing that ends up with one of them
   // never being updated again.
+  // Headline, then what you get, then what it costs, then the button. The
+  // manifest used to come first and the headline second, which put the list
+  // in front of the reason to read it; and the price used to sit two rows
+  // above the button with the consent between them, so the number and the tap
+  // were never in the eye at once. Everything below the anchor is now one
+  // descent: six rows, a price, a checkbox, the button.
   function moveCommerce() {
     if (commerceMoved) return;
     commerceMoved = true;
     // Before the move: it inserts relative to nodes that are about to travel.
     ensurePayNodes();
 
-    [el.manifest, el.payAnchor, el.price, el.withdrawal, el.payButton,
-     el.payError, el.trust, el.legal].forEach(function (node) {
+    [el.payAnchor, el.manifest, buildSampleLink(), el.price, el.withdrawal,
+     el.payButton, el.payError, el.trust, el.legal].forEach(function (node) {
       if (node) el.commerce.appendChild(node);
     });
 
@@ -2364,6 +2513,88 @@
     el.commerce.hidden = false;
     if (el.sticky) el.sticky.textContent = withPrice(copy.sticky_label || "");
     playPayMotion();
+  }
+
+  // --- the sample page --------------------------------------------------------
+
+  var SAMPLE_SRC = "/static/img/sample_page.png";
+
+  // Under the manifest, because that is where somebody stops believing the
+  // list: six lines describing a document is not a document. The link opens
+  // one real page of one, with its lower half behind a blur — the same
+  // boundary the report itself draws, drawn once more where the decision is.
+  function buildSampleLink() {
+    var copy = commerceCopy();
+    if (!copy.sample_link) return null;
+    var link = elm("button", "sample-link", copy.sample_link);
+    link.type = "button";
+    link.id = "sample-link";
+    link.addEventListener("click", function (e) {
+      e.stopPropagation();
+      openSample();
+    });
+    return link;
+  }
+
+  function openSample() {
+    if (el.sample) { showSample(); return; }
+    var copy = commerceCopy();
+
+    var box = elm("div", "lightbox");
+    box.id = "sample-box";
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+    box.setAttribute("aria-label", copy.sample_link || "Sample page");
+
+    var shell = elm("div", "lightbox-shell");
+    var figure = elm("div", "sample-figure");
+    var img = document.createElement("img");
+    img.className = "sample-img";
+    img.src = SAMPLE_SRC;
+    img.alt = "";
+    figure.appendChild(img);
+    // The blur is an overlay rather than a filter on the image, so the top of
+    // the page stays exactly as sharp as it is in the report.
+    figure.appendChild(elm("span", "sample-veil"));
+    shell.appendChild(figure);
+    if (copy.sample_caption) {
+      shell.appendChild(elm("p", "sample-caption", copy.sample_caption));
+    }
+
+    var close = elm("button", "sample-close", "×");
+    close.type = "button";
+    close.id = "sample-close";
+    close.setAttribute("aria-label", "Close");
+    close.addEventListener("click", closeSample);
+    shell.appendChild(close);
+
+    box.appendChild(shell);
+    // Anywhere off the page closes it; the page itself does not.
+    box.addEventListener("click", function (e) {
+      if (e.target === box) closeSample();
+    });
+    document.body.appendChild(box);
+    el.sample = box;
+    showSample();
+  }
+
+  function showSample() {
+    el.sample.hidden = false;
+    document.body.classList.add("is-locked");
+    document.addEventListener("keydown", sampleKeys);
+    var close = el.sample.querySelector(".sample-close");
+    if (close && close.focus) close.focus();
+  }
+
+  function closeSample() {
+    if (!el.sample) return;
+    el.sample.hidden = true;
+    document.body.classList.remove("is-locked");
+    document.removeEventListener("keydown", sampleKeys);
+  }
+
+  function sampleKeys(e) {
+    if (e.key === "Escape" || e.keyCode === 27) closeSample();
   }
 
   // The card between the elements strip and the first locked section. It is
