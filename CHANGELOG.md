@@ -150,3 +150,6 @@ bottom.
 
 ## 2026-08-14 — claude/value-boundary
 - value boundary + design overhaul
+
+## 2026-08-14 — claude/polish-pass-2
+- polish pass 2
