@@ -30,7 +30,28 @@ log = logging.getLogger(__name__)
 
 bp = Blueprint("payments", __name__)
 
+# The default for anything that does not name a key. Every call below names
+# one: `stripe.api_key` is module state, and mutating it per request would race
+# across the threads Flask serves concurrent requests on — two funnels in two
+# modes would take each other's key. The SDK pulls `api_key` out of the call's
+# kwargs as a request option, so passing it is both explicit and thread-safe.
 stripe.api_key = config.STRIPE_SECRET_KEY
+
+# Which key set a funnel transacts on. `live` is the default and the only mode
+# a funnel gets by saying nothing, so an older config — or one cached a version
+# back in the CDN — is a live funnel, which is what it has always been.
+LIVE, TEST = "live", "test"
+
+
+def _stripe_mode(cfg):
+    return TEST if (cfg or {}).get("stripe_mode") == TEST else LIVE
+
+
+def _stripe_secret(mode):
+    """The secret key for a mode, or "" when that mode is not configured."""
+    return (config.STRIPE_TEST_SECRET_KEY if mode == TEST
+            else config.STRIPE_SECRET_KEY)
+
 
 UUID_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
@@ -488,12 +509,25 @@ def checkout():
     if images:
         product_data["images"] = images
 
-    if not stripe.api_key:
-        log.error("STRIPE_SECRET_KEY is not configured")
+    # Which key set this funnel transacts on, and a refusal rather than a
+    # fallback when it asks for one that is not configured. Quietly billing a
+    # test funnel against the live key would be the single worst outcome here,
+    # so the missing-key branch stops instead of guessing.
+    mode = _stripe_mode(cfg)
+    secret = _stripe_secret(mode)
+    if not secret:
+        log.error(
+            "funnel %s wants stripe_mode=%s but %s is not configured — "
+            "refusing checkout", slug, mode,
+            "STRIPE_TEST_SECRET_KEY" if mode == TEST else "STRIPE_SECRET_KEY")
         return jsonify({}), 502
 
     try:
         session = stripe.checkout.Session.create(
+            # Extracted by the SDK as a request option, never sent as a form
+            # field. Passed rather than assigned so two funnels in two modes
+            # cannot take each other's key off the module.
+            api_key=secret,
             mode="payment",
             line_items=[
                 {
@@ -580,7 +614,15 @@ def stripe_webhook():
     payload = request.get_data()
     signature = request.headers.get("Stripe-Signature", "")
 
-    if not config.STRIPE_WEBHOOK_SECRET:
+    # One endpoint, two Stripe accounts' worth of signatures: the live one and,
+    # where it is configured, the test one a `stripe_mode: test` funnel
+    # transacts on. Live is tried first because it is the one that carries
+    # money and the one almost every event comes from; a test secret that is
+    # not set simply is not tried.
+    secrets = [(LIVE, config.STRIPE_WEBHOOK_SECRET),
+               (TEST, config.STRIPE_TEST_WEBHOOK_SECRET)]
+    secrets = [(mode, key) for mode, key in secrets if key]
+    if not secrets:
         log.error("STRIPE_WEBHOOK_SECRET is not configured")
         return jsonify({}), 400
 
@@ -588,23 +630,32 @@ def stripe_webhook():
     # stripe.Webhook.construct_event returns an Event object whose shape has
     # changed across SDK majors — it stopped being a dict in 15.x, so `.get()`
     # on it raises. A plain dict keeps this handler independent of that.
+    #
+    # verify_header interpolates the payload into the signed string with %s, so
+    # bytes would hash as their repr. Decode first, exactly as construct_event
+    # does internally.
+    raw = payload.decode("utf-8") if isinstance(payload, bytes) else payload
+    signed = None
+    last = None
+    for mode, secret in secrets:
+        try:
+            stripe.WebhookSignature.verify_header(
+                raw, signature, secret, stripe.Webhook.DEFAULT_TOLERANCE)
+            signed = mode
+            break
+        except Exception as exc:
+            last = exc
+    if signed is None:
+        # Signature failures are routine (probes, retries after a key rotation).
+        # Log the exception class, never the payload.
+        log.warning("stripe webhook rejected: %s", type(last).__name__)
+        return jsonify({}), 400
+
     try:
-        # verify_header interpolates the payload into the signed string with
-        # %s, so bytes would hash as their repr. Decode first, exactly as
-        # construct_event does internally.
-        raw = payload.decode("utf-8") if isinstance(payload, bytes) else payload
-        stripe.WebhookSignature.verify_header(
-            raw,
-            signature,
-            config.STRIPE_WEBHOOK_SECRET,
-            stripe.Webhook.DEFAULT_TOLERANCE,
-        )
         event = json.loads(raw)
         if not isinstance(event, dict):
             raise ValueError("event is not an object")
     except Exception as exc:
-        # Signature failures are routine (probes, retries after a key rotation).
-        # Log the exception class, never the payload.
         log.warning("stripe webhook rejected: %s", type(exc).__name__)
         return jsonify({}), 400
 
@@ -670,16 +721,34 @@ def stripe_webhook():
     # After the row, never before, and never in a way that can change the
     # answer. A conversion Meta missed is a reporting gap; a webhook that
     # returns non-200 is a retry against a purchase already written.
-    try:
-        send_purchase_event(
-            purchase_id, slug, amount_cents, currency,
-            email=details.get("email"), payment_intent=payment_intent,
-            meta_ids=_clean_meta_ids(metadata),
-            event_time=int(event.get("created") or time.time()),
-        )
-    except Exception as exc:
-        log.warning("Meta purchase event raised for purchase %s: %s",
-                    purchase_id, type(exc).__name__)
+    #
+    # Nothing from a test payment reaches Meta. A 4242 card walking the funnel
+    # is not a conversion, and one in the pixel would be optimised against and
+    # counted in the number the ad spend is judged on. Two independent markers
+    # have to agree it is real: Stripe's own `livemode`, and the session id,
+    # which carries cs_test_ on a test session. Absence is not evidence — an
+    # event with no `livemode` at all behaves exactly as it did before this,
+    # so a live purchase can never be dropped by a missing field.
+    live_purchase = (event.get("livemode") is not False
+                     and not str(session.get("id") or "").startswith("cs_test_"))
+    if not live_purchase:
+        # Names the payment, not the signature: an event can be signed with the
+        # live secret and still be a test payment, and a line claiming
+        # otherwise is the one you would read while wondering where a
+        # conversion went.
+        log.info("purchase %s is not a live payment (signature: %s) — Meta "
+                 "purchase event skipped", purchase_id, signed)
+    else:
+        try:
+            send_purchase_event(
+                purchase_id, slug, amount_cents, currency,
+                email=details.get("email"), payment_intent=payment_intent,
+                meta_ids=_clean_meta_ids(metadata),
+                event_time=int(event.get("created") or time.time()),
+            )
+        except Exception as exc:
+            log.warning("Meta purchase event raised for purchase %s: %s",
+                        purchase_id, type(exc).__name__)
 
     cfg = config.load_funnel(slug)
     tag_scores = _read_tag_scores(cfg, metadata.get("tag_scores"))

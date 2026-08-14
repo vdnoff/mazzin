@@ -2090,6 +2090,66 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
 # --- offline cache warmer --------------------------------------------------
 
 
+def copy_style_cache(from_slug, to_slug, style_id):
+    """Copy one style's cached sections between two funnels. Console use only.
+
+    The cache is keyed on (funnel, style_id, section_id), so a funnel cloned
+    from another starts cold even though its styles are the same objects with
+    the same blurbs and the same reveals — the three cached sections it would
+    generate are the ones already sitting under the funnel it was cloned from.
+    Copying them is the difference between a clone costing nothing and a clone
+    costing a model call per style per section.
+
+    Only current-schema rows are copied, and only into sections the
+    destination does not already have: this never overwrites something a real
+    purchase generated, and it can never seed a stale row into a fresh funnel.
+
+    Returns the same dict shape as warm_style_cache, with the copied sections
+    under "warmed" so one summary can print both.
+    """
+    def result(status, **extra):
+        out = {"funnel": to_slug, "style": style_id, "status": status,
+               "cached": [], "warmed": [], "failed": [], "stale": 0}
+        out.update(extra)
+        return out
+
+    for slug in (from_slug, to_slug):
+        try:
+            config.load_funnel(slug)
+        except KeyError:
+            return result("skipped", detail="no such funnel: %s" % slug)
+
+    source, _ = _cache_state(from_slug, style_id)
+    have, stale = _cache_state(to_slug, style_id)
+    if source is None or have is None:
+        return result("failed", detail="cache read failed")
+
+    present = [s for s in CACHED if s in have]
+    missing = [s for s in CACHED if s not in have]
+    if not missing:
+        return result("cached", cached=present, stale=stale)
+
+    copyable = {s: source[s] for s in missing if s in source}
+    if not copyable:
+        return result("failed", cached=present, failed=missing,
+                      detail="%s has nothing to copy" % from_slug)
+
+    _write_cache(to_slug, style_id, copyable)
+
+    # Read back rather than assume: a write that did not land would otherwise
+    # be reported as a warm cache and found by the first buyer.
+    have, stale = _cache_state(to_slug, style_id)
+    have = have or {}
+    still = [s for s in CACHED if s not in have]
+    copied = sorted(copyable)
+    if still:
+        return result("partial" if len(still) < len(missing) else "failed",
+                      cached=present, warmed=copied, failed=still, stale=stale,
+                      detail="copied from %s" % from_slug)
+    return result("warmed", cached=present, warmed=copied, stale=stale,
+                  detail="copied from %s" % from_slug)
+
+
 def warm_style_cache(funnel_slug, style_id, client=None):
     """Fill the per-style section cache for one style. Console use only.
 

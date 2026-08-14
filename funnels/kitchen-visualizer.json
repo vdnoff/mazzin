@@ -1,0 +1,2438 @@
+{
+  "slug": "kitchen-visualizer",
+  "funnel_id": "kitchen_visualizer_v1",
+  "locale": "en",
+  "stripe_mode": "test",
+  "meta": {
+    "title": "What's Your Kitchen Style?",
+    "og_image": "/static/galleries/kitchen/og.webp"
+  },
+  "swipe": {
+    "pairs_count": 13,
+    "headline": "Your kitchen style analysis",
+    "subtext": "$4,000+ saved on your renovation",
+    "subtext_accent": "$4,000+",
+    "hint": "Tap your choice",
+    "steps": [
+      {
+        "id": "hook",
+        "question": "Which kitchen would you walk into?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "hk1a",
+                "img": "/static/galleries/kitchen/hk1a.webp",
+                "label": "Evening drama",
+                "tags": [
+                  "dark",
+                  "warm",
+                  "wood"
+                ],
+                "colors": [
+                  {
+                    "name": "Forest Green",
+                    "hex": "#0E1405",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Aged Brass",
+                    "hex": "#D09243",
+                    "element": "pendants"
+                  },
+                  {
+                    "name": "Lamplit Marble",
+                    "hex": "#9C7C56",
+                    "element": "island worktop"
+                  },
+                  {
+                    "name": "Herringbone Oak",
+                    "hex": "#4E2D0E",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "hk1b",
+                "img": "/static/galleries/kitchen/hk1b.webp",
+                "label": "Morning light",
+                "tags": [
+                  "bright",
+                  "warm",
+                  "wood"
+                ],
+                "colors": [
+                  {
+                    "name": "Soft Cream",
+                    "hex": "#CAB691",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Blond Oak",
+                    "hex": "#BF9356",
+                    "element": "island"
+                  },
+                  {
+                    "name": "White Marble",
+                    "hex": "#CEC4B3",
+                    "element": "island worktop"
+                  },
+                  {
+                    "name": "Warm Oak",
+                    "hex": "#C4A47C",
+                    "element": "floor"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "color",
+        "question": "Which palette pulls you in?",
+        "format": "grid6",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "mp1",
+                "img": "/static/galleries/kitchen/mp1.webp",
+                "label": "Deep & dramatic",
+                "tags": [
+                  "dark",
+                  "warm",
+                  "wood"
+                ],
+                "colors": [
+                  {
+                    "name": "Forest Green",
+                    "hex": "#242E26",
+                    "element": "cabinet paint"
+                  },
+                  {
+                    "name": "Dark Walnut",
+                    "hex": "#311E10",
+                    "element": "timber"
+                  },
+                  {
+                    "name": "Antique Brass",
+                    "hex": "#5F4620",
+                    "element": "metal"
+                  },
+                  {
+                    "name": "Black Marble",
+                    "hex": "#090A07",
+                    "element": "stone"
+                  }
+                ],
+                "color_family": "deep-dramatic"
+              },
+              {
+                "id": "mp2",
+                "img": "/static/galleries/kitchen/mp2.webp",
+                "label": "Soft & airy",
+                "tags": [
+                  "bright",
+                  "warm",
+                  "wood"
+                ],
+                "colors": [
+                  {
+                    "name": "Soft Cream",
+                    "hex": "#D0BDA6",
+                    "element": "cabinet paint"
+                  },
+                  {
+                    "name": "Pale Oak",
+                    "hex": "#C8A67D",
+                    "element": "timber"
+                  },
+                  {
+                    "name": "White Stone",
+                    "hex": "#D0C3B3",
+                    "element": "stone"
+                  },
+                  {
+                    "name": "Brushed Brass",
+                    "hex": "#6C5739",
+                    "element": "hardware"
+                  }
+                ],
+                "color_family": "soft-neutral"
+              },
+              {
+                "id": "mp3",
+                "img": "/static/galleries/kitchen/mp3.webp",
+                "label": "Urban & raw",
+                "tags": [
+                  "dark",
+                  "cool",
+                  "stone"
+                ],
+                "colors": [
+                  {
+                    "name": "Greige Timber",
+                    "hex": "#735E48",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Charcoal Oak",
+                    "hex": "#2E2B25",
+                    "element": "timber"
+                  },
+                  {
+                    "name": "Poured Concrete",
+                    "hex": "#6A665E",
+                    "element": "worktop"
+                  },
+                  {
+                    "name": "Black Slate",
+                    "hex": "#2C2923",
+                    "element": "stone"
+                  }
+                ],
+                "color_family": "urban-grey"
+              },
+              {
+                "id": "mp4",
+                "img": "/static/galleries/kitchen/mp4.webp",
+                "label": "Crisp & clean",
+                "tags": [
+                  "bright",
+                  "cool",
+                  "stone"
+                ],
+                "colors": [
+                  {
+                    "name": "White Marble",
+                    "hex": "#DDD7CE",
+                    "element": "stone"
+                  },
+                  {
+                    "name": "Blond Oak",
+                    "hex": "#D1B28E",
+                    "element": "timber"
+                  },
+                  {
+                    "name": "Frosted Glass",
+                    "hex": "#A6A188",
+                    "element": "glass"
+                  },
+                  {
+                    "name": "Brushed Steel",
+                    "hex": "#878068",
+                    "element": "hardware"
+                  }
+                ],
+                "color_family": "crisp-white"
+              },
+              {
+                "id": "mp5",
+                "img": "/static/galleries/kitchen/mp5.webp",
+                "label": "Moss & earth",
+                "tags": [
+                  "warm",
+                  "wood",
+                  "rustic"
+                ],
+                "colors": [
+                  {
+                    "name": "Olive Green",
+                    "hex": "#68684A",
+                    "element": "cabinet paint"
+                  },
+                  {
+                    "name": "Dark Walnut",
+                    "hex": "#673F1D",
+                    "element": "timber"
+                  },
+                  {
+                    "name": "Raw Linen",
+                    "hex": "#AC9473",
+                    "element": "textile"
+                  },
+                  {
+                    "name": "Aged Brass",
+                    "hex": "#825819",
+                    "element": "metal"
+                  }
+                ],
+                "color_family": "moss-earth"
+              },
+              {
+                "id": "mp6",
+                "img": "/static/galleries/kitchen/mp6.webp",
+                "label": "Dusty blue & oak",
+                "tags": [
+                  "cool",
+                  "bright",
+                  "classic"
+                ],
+                "colors": [
+                  {
+                    "name": "Dusty Blue",
+                    "hex": "#6C797A",
+                    "element": "cabinet paint"
+                  },
+                  {
+                    "name": "Natural Oak",
+                    "hex": "#B58959",
+                    "element": "timber"
+                  },
+                  {
+                    "name": "White Marble",
+                    "hex": "#D5D0C7",
+                    "element": "stone"
+                  },
+                  {
+                    "name": "Aged Bronze",
+                    "hex": "#40311F",
+                    "element": "hardware"
+                  }
+                ],
+                "color_family": "dusty-blue"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cabinets",
+        "question": "Your cabinet fronts for the next decade:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "c2a",
+                "img": "/static/galleries/kitchen/c2a.webp",
+                "label": "Crafted & classic",
+                "tags": [
+                  "classic",
+                  "warm",
+                  "wood"
+                ],
+                "colors": [
+                  {
+                    "name": "Sage Green",
+                    "hex": "#909175",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Aged Brass",
+                    "hex": "#755D21",
+                    "element": "hardware"
+                  },
+                  {
+                    "name": "Sunlit Sage",
+                    "hex": "#A9A68B",
+                    "element": "cabinet rails"
+                  }
+                ]
+              },
+              {
+                "id": "c2b",
+                "img": "/static/galleries/kitchen/c2b.webp",
+                "label": "Seamless & silent",
+                "tags": [
+                  "minimal",
+                  "cool",
+                  "modern"
+                ],
+                "colors": [
+                  {
+                    "name": "Graphite Slab",
+                    "hex": "#4F4F4A",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Pale Stone",
+                    "hex": "#A09892",
+                    "element": "worktop"
+                  },
+                  {
+                    "name": "Ink Black",
+                    "hex": "#181B18",
+                    "element": "plinth"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "lighting",
+        "question": "The light you'd cook under:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "lt3a",
+                "img": "/static/galleries/kitchen/lt3a.webp",
+                "label": "Golden pools",
+                "tags": [
+                  "warm",
+                  "dark",
+                  "classic"
+                ],
+                "colors": [
+                  {
+                    "name": "Amber Glow",
+                    "hex": "#E79D45",
+                    "element": "pendant light"
+                  },
+                  {
+                    "name": "Aged Brass",
+                    "hex": "#561F01",
+                    "element": "pendants"
+                  },
+                  {
+                    "name": "Lamplit Stone",
+                    "hex": "#BB6B28",
+                    "element": "island worktop"
+                  },
+                  {
+                    "name": "Shadowed Timber",
+                    "hex": "#0F0701",
+                    "element": "cabinets"
+                  }
+                ]
+              },
+              {
+                "id": "lt3b",
+                "img": "/static/galleries/kitchen/lt3b.webp",
+                "label": "Crisp & bright",
+                "tags": [
+                  "cool",
+                  "bright",
+                  "modern"
+                ],
+                "colors": [
+                  {
+                    "name": "Paper White",
+                    "hex": "#E4E4E0",
+                    "element": "wall units"
+                  },
+                  {
+                    "name": "Chalk Quartz",
+                    "hex": "#D8D0C4",
+                    "element": "island worktop"
+                  },
+                  {
+                    "name": "Natural Oak",
+                    "hex": "#857357",
+                    "element": "island"
+                  },
+                  {
+                    "name": "Brushed Steel",
+                    "hex": "#D1DCD4",
+                    "element": "tap"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "worktop",
+        "question": "The worktop you'd touch every day:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "c4a",
+                "img": "/static/galleries/kitchen/c4a.webp",
+                "label": "Bold stone",
+                "tags": [
+                  "stone",
+                  "dark",
+                  "classic"
+                ],
+                "colors": [
+                  {
+                    "name": "Black Marble",
+                    "hex": "#070803",
+                    "element": "worktop"
+                  },
+                  {
+                    "name": "Vein Taupe",
+                    "hex": "#716C60",
+                    "element": "stone veining"
+                  },
+                  {
+                    "name": "Lamplit Ceramic",
+                    "hex": "#7F7561",
+                    "element": "mug"
+                  }
+                ]
+              },
+              {
+                "id": "c4b",
+                "img": "/static/galleries/kitchen/c4b.webp",
+                "label": "Living wood",
+                "tags": [
+                  "wood",
+                  "warm",
+                  "rustic"
+                ],
+                "colors": [
+                  {
+                    "name": "Walnut",
+                    "hex": "#76492A",
+                    "element": "worktop"
+                  },
+                  {
+                    "name": "Chalk Tile",
+                    "hex": "#AD9F8E",
+                    "element": "splashback"
+                  },
+                  {
+                    "name": "Soft Cream",
+                    "hex": "#A89781",
+                    "element": "cabinets"
+                  }
+                ]
+              },
+              {
+                "id": "c4c",
+                "img": "/static/galleries/kitchen/c4c.webp",
+                "label": "Soft quartz",
+                "tags": [
+                  "bright",
+                  "cool",
+                  "stone"
+                ],
+                "colors": [
+                  {
+                    "name": "Speckled Quartz",
+                    "hex": "#D7C9B9",
+                    "element": "worktop"
+                  },
+                  {
+                    "name": "Warm Oak",
+                    "hex": "#55320E",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Chalk Ceramic",
+                    "hex": "#BDA88D",
+                    "element": "mug"
+                  }
+                ]
+              },
+              {
+                "id": "c4d",
+                "img": "/static/galleries/kitchen/c4d.webp",
+                "label": "Poured concrete",
+                "tags": [
+                  "cool",
+                  "dark",
+                  "industrial"
+                ],
+                "colors": [
+                  {
+                    "name": "Poured Concrete",
+                    "hex": "#726B60",
+                    "element": "worktop"
+                  },
+                  {
+                    "name": "Concrete Wall",
+                    "hex": "#423A29",
+                    "element": "splashback"
+                  },
+                  {
+                    "name": "Matte Black",
+                    "hex": "#030603",
+                    "element": "sink run"
+                  },
+                  {
+                    "name": "Warm Ceramic",
+                    "hex": "#998D7F",
+                    "element": "mug"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "dining",
+        "question": "Where your evenings happen:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "c5a",
+                "img": "/static/galleries/kitchen/c5a.webp",
+                "label": "Long breakfasts",
+                "tags": [
+                  "rustic",
+                  "warm",
+                  "wood"
+                ],
+                "colors": [
+                  {
+                    "name": "Honey Pine",
+                    "hex": "#5B340C",
+                    "element": "table"
+                  },
+                  {
+                    "name": "Cream Paint",
+                    "hex": "#B69B72",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Terracotta Tile",
+                    "hex": "#966931",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "c5b",
+                "img": "/static/galleries/kitchen/c5b.webp",
+                "label": "Espresso pace",
+                "tags": [
+                  "modern",
+                  "cool",
+                  "metal"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Oak",
+                    "hex": "#B69B7B",
+                    "element": "wall units"
+                  },
+                  {
+                    "name": "Chalk Quartz",
+                    "hex": "#E4D6BF",
+                    "element": "worktop"
+                  },
+                  {
+                    "name": "Blond Timber",
+                    "hex": "#C7A57B",
+                    "element": "floor"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "floor",
+        "question": "The floor you'd walk barefoot on:",
+        "format": "grid6",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "f6a",
+                "img": "/static/galleries/kitchen/f6a.webp",
+                "label": "Herringbone oak",
+                "tags": [
+                  "wood",
+                  "warm",
+                  "bright"
+                ],
+                "colors": [
+                  {
+                    "name": "Honey Herringbone",
+                    "hex": "#A66B26",
+                    "element": "floor"
+                  },
+                  {
+                    "name": "Cream Paint",
+                    "hex": "#C3A27D",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Warm Plaster",
+                    "hex": "#FDF1DA",
+                    "element": "walls"
+                  }
+                ]
+              },
+              {
+                "id": "f6b",
+                "img": "/static/galleries/kitchen/f6b.webp",
+                "label": "Smoked plank",
+                "tags": [
+                  "wood",
+                  "warm",
+                  "dark"
+                ],
+                "colors": [
+                  {
+                    "name": "Smoked Oak",
+                    "hex": "#4E3721",
+                    "element": "floor"
+                  },
+                  {
+                    "name": "Lamplit Tan",
+                    "hex": "#A97F40",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Warm Plaster",
+                    "hex": "#EAE7DC",
+                    "element": "walls"
+                  }
+                ]
+              },
+              {
+                "id": "f6c",
+                "img": "/static/galleries/kitchen/f6c.webp",
+                "label": "Raw concrete",
+                "tags": [
+                  "stone",
+                  "cool",
+                  "minimal"
+                ],
+                "colors": [
+                  {
+                    "name": "Poured Concrete",
+                    "hex": "#98958B",
+                    "element": "floor"
+                  },
+                  {
+                    "name": "Pale Oak",
+                    "hex": "#A9A296",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Grey Stone",
+                    "hex": "#998262",
+                    "element": "worktop"
+                  }
+                ]
+              },
+              {
+                "id": "f6d",
+                "img": "/static/galleries/kitchen/f6d.webp",
+                "label": "Gallery stone",
+                "tags": [
+                  "stone",
+                  "cool",
+                  "bright"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Stone Tile",
+                    "hex": "#E7E5E3",
+                    "element": "floor"
+                  },
+                  {
+                    "name": "Blond Oak",
+                    "hex": "#B5A79B",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Paper White",
+                    "hex": "#D1CBC1",
+                    "element": "walls"
+                  }
+                ]
+              },
+              {
+                "id": "f6e",
+                "img": "/static/galleries/kitchen/f6e.webp",
+                "label": "Terracotta warmth",
+                "tags": [
+                  "warm",
+                  "rustic",
+                  "classic"
+                ],
+                "colors": [
+                  {
+                    "name": "Terracotta Tile",
+                    "hex": "#7C3202",
+                    "element": "floor"
+                  },
+                  {
+                    "name": "Cream Cabinets",
+                    "hex": "#D2BC9B",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Warm Plaster",
+                    "hex": "#815516",
+                    "element": "extractor hood"
+                  }
+                ]
+              },
+              {
+                "id": "f6f",
+                "img": "/static/galleries/kitchen/f6f.webp",
+                "label": "Slate drama",
+                "tags": [
+                  "cool",
+                  "dark",
+                  "stone"
+                ],
+                "colors": [
+                  {
+                    "name": "Slate Tile",
+                    "hex": "#23241C",
+                    "element": "floor"
+                  },
+                  {
+                    "name": "Chalk Cabinets",
+                    "hex": "#C6BCA8",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Natural Oak",
+                    "hex": "#8B7A64",
+                    "element": "worktop"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "storage",
+        "question": "Your everyday things — shown or hidden?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "c7a",
+                "img": "/static/galleries/kitchen/c7a.webp",
+                "label": "Life on display",
+                "tags": [
+                  "rustic",
+                  "bright",
+                  "wood"
+                ],
+                "colors": [
+                  {
+                    "name": "Natural Oak",
+                    "hex": "#C7BCB0",
+                    "element": "open shelves"
+                  },
+                  {
+                    "name": "Bone Ceramic",
+                    "hex": "#BD935F",
+                    "element": "crockery"
+                  },
+                  {
+                    "name": "Soft Cream",
+                    "hex": "#D9CCBD",
+                    "element": "cabinets"
+                  }
+                ]
+              },
+              {
+                "id": "c7b",
+                "img": "/static/galleries/kitchen/c7b.webp",
+                "label": "Everything hidden",
+                "tags": [
+                  "minimal",
+                  "cool",
+                  "modern"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Oak",
+                    "hex": "#B79C7E",
+                    "element": "base units"
+                  },
+                  {
+                    "name": "Chalk Paint",
+                    "hex": "#CDC1AE",
+                    "element": "wall units"
+                  },
+                  {
+                    "name": "Warm Stone",
+                    "hex": "#C1A98B",
+                    "element": "worktop"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "backsplash",
+        "question": "The wall behind your stove:",
+        "format": "pair",
+        "adaptive": {
+          "axis": "material",
+          "variants": {
+            "wood": "p_wood",
+            "default": "p_hard"
+          }
+        },
+        "pairs": [
+          {
+            "id": "p_wood",
+            "images": [
+              {
+                "id": "b8a",
+                "img": "/static/galleries/kitchen/b8a.webp",
+                "label": "Warm texture",
+                "tags": [
+                  "wood",
+                  "warm",
+                  "rustic"
+                ],
+                "colors": [
+                  {
+                    "name": "Warm Timber",
+                    "hex": "#603B09",
+                    "element": "panelled splashback"
+                  },
+                  {
+                    "name": "Lamplit Nickel",
+                    "hex": "#8D6F45",
+                    "element": "hood"
+                  },
+                  {
+                    "name": "Chalk Quartz",
+                    "hex": "#D4A470",
+                    "element": "worktop"
+                  }
+                ]
+              },
+              {
+                "id": "b8b",
+                "img": "/static/galleries/kitchen/b8b.webp",
+                "label": "Handmade glow",
+                "tags": [
+                  "wood",
+                  "warm",
+                  "classic"
+                ],
+                "colors": [
+                  {
+                    "name": "Amber Glaze",
+                    "hex": "#AA640A",
+                    "element": "tile splashback"
+                  },
+                  {
+                    "name": "Cream Plaster",
+                    "hex": "#B69B72",
+                    "element": "hood"
+                  },
+                  {
+                    "name": "Terracotta",
+                    "hex": "#4F2202",
+                    "element": "jug"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p_hard",
+            "images": [
+              {
+                "id": "b8c",
+                "img": "/static/galleries/kitchen/b8c.webp",
+                "label": "Stone statement",
+                "tags": [
+                  "stone",
+                  "dark",
+                  "classic"
+                ],
+                "colors": [
+                  {
+                    "name": "Vein White",
+                    "hex": "#B1A899",
+                    "element": "marble slab"
+                  },
+                  {
+                    "name": "Storm Grey",
+                    "hex": "#333026",
+                    "element": "marble veining"
+                  },
+                  {
+                    "name": "Brushed Steel",
+                    "hex": "#907F67",
+                    "element": "range"
+                  }
+                ]
+              },
+              {
+                "id": "b8d",
+                "img": "/static/galleries/kitchen/b8d.webp",
+                "label": "Chef's steel",
+                "tags": [
+                  "metal",
+                  "cool",
+                  "industrial"
+                ],
+                "colors": [
+                  {
+                    "name": "Brushed Steel",
+                    "hex": "#A69C8F",
+                    "element": "splashback"
+                  },
+                  {
+                    "name": "Paper White",
+                    "hex": "#E7E6DF",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Ink Black",
+                    "hex": "#3F352B",
+                    "element": "range top"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "hardware",
+        "question": "The details your hand finds first:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "h9a",
+                "img": "/static/galleries/kitchen/h9a.webp",
+                "label": "Aged brass",
+                "tags": [
+                  "classic",
+                  "warm",
+                  "metal"
+                ],
+                "colors": [
+                  {
+                    "name": "Aged Brass",
+                    "hex": "#CCA77D",
+                    "element": "tap"
+                  },
+                  {
+                    "name": "Warm Stone",
+                    "hex": "#775A35",
+                    "element": "worktop"
+                  },
+                  {
+                    "name": "Deep Navy",
+                    "hex": "#202320",
+                    "element": "cabinets"
+                  }
+                ]
+              },
+              {
+                "id": "h9b",
+                "img": "/static/galleries/kitchen/h9b.webp",
+                "label": "Matte black",
+                "tags": [
+                  "modern",
+                  "dark",
+                  "metal"
+                ],
+                "colors": [
+                  {
+                    "name": "Matte Black",
+                    "hex": "#050503",
+                    "element": "tap and handles"
+                  },
+                  {
+                    "name": "Pale Ash",
+                    "hex": "#C5AF99",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Warm Stone",
+                    "hex": "#B9AC99",
+                    "element": "worktop"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "mood",
+        "question": "Your kitchen at 9pm:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "c10c",
+                "img": "/static/galleries/kitchen/c10c.webp",
+                "label": "Cozy evenings",
+                "tags": [
+                  "warm",
+                  "dark",
+                  "rustic"
+                ],
+                "colors": [
+                  {
+                    "name": "Candle Amber",
+                    "hex": "#E29E4C",
+                    "element": "pendant light"
+                  },
+                  {
+                    "name": "Lamplit Oak",
+                    "hex": "#8D4F14",
+                    "element": "island"
+                  },
+                  {
+                    "name": "Shadowed Cabinets",
+                    "hex": "#100500",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Warm Tile",
+                    "hex": "#703B09",
+                    "element": "splashback"
+                  }
+                ]
+              },
+              {
+                "id": "c10d",
+                "img": "/static/galleries/kitchen/c10d.webp",
+                "label": "Hosting nights",
+                "tags": [
+                  "warm",
+                  "bright",
+                  "classic"
+                ],
+                "colors": [
+                  {
+                    "name": "Warm Glow",
+                    "hex": "#FDDCAC",
+                    "element": "pendant light"
+                  },
+                  {
+                    "name": "Lamplit Oak",
+                    "hex": "#B56E18",
+                    "element": "table"
+                  },
+                  {
+                    "name": "Amber Cabinet",
+                    "hex": "#A86F27",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Metro Tile",
+                    "hex": "#894E05",
+                    "element": "splashback"
+                  }
+                ]
+              },
+              {
+                "id": "c10e",
+                "img": "/static/galleries/kitchen/c10e.webp",
+                "label": "Quiet & calm",
+                "tags": [
+                  "warm",
+                  "minimal",
+                  "stone"
+                ],
+                "colors": [
+                  {
+                    "name": "Lamp Amber",
+                    "hex": "#F49A25",
+                    "element": "table lamp"
+                  },
+                  {
+                    "name": "Shadowed Umber",
+                    "hex": "#4E2C01",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Lamplit Tile",
+                    "hex": "#916022",
+                    "element": "splashback"
+                  },
+                  {
+                    "name": "Dim Walnut",
+                    "hex": "#6B3A01",
+                    "element": "table"
+                  }
+                ]
+              },
+              {
+                "id": "c10f",
+                "img": "/static/galleries/kitchen/c10f.webp",
+                "label": "Fresh & ready",
+                "tags": [
+                  "cool",
+                  "bright",
+                  "modern"
+                ],
+                "colors": [
+                  {
+                    "name": "Dusty Blue",
+                    "hex": "#456071",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Cool Quartz",
+                    "hex": "#8CA1AD",
+                    "element": "worktop"
+                  },
+                  {
+                    "name": "Shadowed Oak",
+                    "hex": "#373023",
+                    "element": "lower units"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "dealbreaker",
+        "question": "Which would you NEVER have?",
+        "format": "grid4",
+        "scoring": "inverse",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "d11a",
+                "img": "/static/galleries/kitchen/d11a.webp",
+                "label": "Too much everything",
+                "tags": [
+                  "rustic",
+                  "warm",
+                  "wood"
+                ],
+                "colors": [
+                  {
+                    "name": "Golden Oak",
+                    "hex": "#7E4E18",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Cold White",
+                    "hex": "#A6A299",
+                    "element": "fridge"
+                  },
+                  {
+                    "name": "Clutter Blue",
+                    "hex": "#8F6136",
+                    "element": "stacked ware"
+                  }
+                ]
+              },
+              {
+                "id": "d11b",
+                "img": "/static/galleries/kitchen/d11b.webp",
+                "label": "Feels like a lab",
+                "tags": [
+                  "minimal",
+                  "cool",
+                  "bright"
+                ],
+                "colors": [
+                  {
+                    "name": "Clinical White",
+                    "hex": "#DCE4EA",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Cold Tile",
+                    "hex": "#E2E8EF",
+                    "element": "floor"
+                  },
+                  {
+                    "name": "Oven Glass",
+                    "hex": "#31494C",
+                    "element": "oven door"
+                  }
+                ]
+              },
+              {
+                "id": "d11c",
+                "img": "/static/galleries/kitchen/d11c.webp",
+                "label": "Stuck in time",
+                "tags": [
+                  "classic",
+                  "warm",
+                  "wood"
+                ],
+                "colors": [
+                  {
+                    "name": "Dated Oak",
+                    "hex": "#985A17",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Almond Appliance",
+                    "hex": "#DACAB0",
+                    "element": "fridge"
+                  },
+                  {
+                    "name": "Beige Vinyl",
+                    "hex": "#C1A57E",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "d11d",
+                "img": "/static/galleries/kitchen/d11d.webp",
+                "label": "Trying too hard",
+                "tags": [
+                  "modern",
+                  "bright",
+                  "metal"
+                ],
+                "colors": [
+                  {
+                    "name": "Lacquer Red",
+                    "hex": "#AD3F28",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Chalk Tile",
+                    "hex": "#D6D4D2",
+                    "element": "splashback"
+                  },
+                  {
+                    "name": "Brushed Steel",
+                    "hex": "#948E87",
+                    "element": "oven"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "materials",
+        "question": "Your material DNA — final signal:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "mt1",
+                "img": "/static/galleries/kitchen/mt1.webp",
+                "label": "Rich & bold",
+                "tags": [
+                  "dark",
+                  "wood",
+                  "metal"
+                ],
+                "colors": [
+                  {
+                    "name": "Smoked Oak",
+                    "hex": "#2B1C0E",
+                    "element": "timber"
+                  },
+                  {
+                    "name": "Black Marble",
+                    "hex": "#181611",
+                    "element": "stone"
+                  },
+                  {
+                    "name": "Aged Brass",
+                    "hex": "#906020",
+                    "element": "metal"
+                  },
+                  {
+                    "name": "Tan Leather",
+                    "hex": "#884314",
+                    "element": "leather"
+                  }
+                ]
+              },
+              {
+                "id": "mt2",
+                "img": "/static/galleries/kitchen/mt2.webp",
+                "label": "Light & natural",
+                "tags": [
+                  "bright",
+                  "wood",
+                  "stone"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Ash",
+                    "hex": "#CCAC8A",
+                    "element": "timber"
+                  },
+                  {
+                    "name": "Limestone",
+                    "hex": "#DDCDBC",
+                    "element": "stone"
+                  },
+                  {
+                    "name": "Soft Cream",
+                    "hex": "#C9B198",
+                    "element": "cabinet paint"
+                  },
+                  {
+                    "name": "Wool Throw",
+                    "hex": "#BDA07C",
+                    "element": "textile"
+                  }
+                ]
+              },
+              {
+                "id": "mt3",
+                "img": "/static/galleries/kitchen/mt3.webp",
+                "label": "Soft & raw",
+                "tags": [
+                  "warm",
+                  "stone",
+                  "rustic"
+                ],
+                "colors": [
+                  {
+                    "name": "Travertine",
+                    "hex": "#C5B197",
+                    "element": "stone"
+                  },
+                  {
+                    "name": "Cream Boucle",
+                    "hex": "#9D8463",
+                    "element": "textile"
+                  },
+                  {
+                    "name": "Lime Plaster",
+                    "hex": "#BCA587",
+                    "element": "cabinet paint"
+                  },
+                  {
+                    "name": "Hammered Pewter",
+                    "hex": "#40382A",
+                    "element": "metal"
+                  }
+                ]
+              },
+              {
+                "id": "mt4",
+                "img": "/static/galleries/kitchen/mt4.webp",
+                "label": "Sleek & polished",
+                "tags": [
+                  "cool",
+                  "metal",
+                  "modern"
+                ],
+                "colors": [
+                  {
+                    "name": "Gloss White",
+                    "hex": "#D9D3CC",
+                    "element": "cabinet paint"
+                  },
+                  {
+                    "name": "Blond Oak",
+                    "hex": "#B68756",
+                    "element": "timber"
+                  },
+                  {
+                    "name": "Polished Chrome",
+                    "hex": "#695844",
+                    "element": "metal"
+                  },
+                  {
+                    "name": "Black Stone",
+                    "hex": "#2E2923",
+                    "element": "stone"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "interstitials": [
+    {
+      "after_step": 4,
+      "template": "pattern",
+      "kicker": "Pattern detected",
+      "line": "You choose {leading_trait} over {opposite} — {n} of {total} choices",
+      "sub": "Adjusting what you see next.",
+      "cta": "Continue analysis"
+    },
+    {
+      "after_step": 7,
+      "template": "confirm",
+      "kicker": "Signal recorded",
+      "line": "Your {leading_material} signal is strong. Testing it.",
+      "sub": "Adjusting what you see next.",
+      "cta": "Continue analysis"
+    },
+    {
+      "after_step": 10,
+      "template": "almost",
+      "kicker": "Calibrating",
+      "line": "Profile {pct}% calibrated. Final signals.",
+      "sub": "Three more, then the read.",
+      "cta": "Continue analysis"
+    }
+  ],
+  "interstitial_working": [
+    "Analyzing your choices…",
+    "Comparing against our data…",
+    "Preparing what's next…"
+  ],
+  "preview_gallery": [
+    {
+      "id": "k101",
+      "img": "/static/galleries/kitchen/k101.webp",
+      "tags": [
+        "rustic",
+        "warm",
+        "wood"
+      ]
+    },
+    {
+      "id": "k102",
+      "img": "/static/galleries/kitchen/k102.webp",
+      "tags": [
+        "rustic",
+        "dark",
+        "wood"
+      ]
+    },
+    {
+      "id": "k103",
+      "img": "/static/galleries/kitchen/k103.webp",
+      "tags": [
+        "modern",
+        "bright",
+        "stone"
+      ]
+    },
+    {
+      "id": "k104",
+      "img": "/static/galleries/kitchen/k104.webp",
+      "tags": [
+        "modern",
+        "warm",
+        "wood"
+      ]
+    },
+    {
+      "id": "k105",
+      "img": "/static/galleries/kitchen/k105.webp",
+      "tags": [
+        "minimal",
+        "bright",
+        "stone"
+      ]
+    },
+    {
+      "id": "k106",
+      "img": "/static/galleries/kitchen/k106.webp",
+      "tags": [
+        "minimal",
+        "cool",
+        "metal"
+      ]
+    },
+    {
+      "id": "k107",
+      "img": "/static/galleries/kitchen/k107.webp",
+      "tags": [
+        "industrial",
+        "dark",
+        "metal"
+      ]
+    },
+    {
+      "id": "k108",
+      "img": "/static/galleries/kitchen/k108.webp",
+      "tags": [
+        "industrial",
+        "warm",
+        "wood"
+      ]
+    },
+    {
+      "id": "k109",
+      "img": "/static/galleries/kitchen/k109.webp",
+      "tags": [
+        "classic",
+        "bright",
+        "wood"
+      ]
+    },
+    {
+      "id": "k110",
+      "img": "/static/galleries/kitchen/k110.webp",
+      "tags": [
+        "classic",
+        "warm",
+        "wood"
+      ]
+    },
+    {
+      "id": "k111",
+      "img": "/static/galleries/kitchen/k111.webp",
+      "tags": [
+        "rustic",
+        "bright",
+        "stone"
+      ]
+    },
+    {
+      "id": "k112",
+      "img": "/static/galleries/kitchen/k112.webp",
+      "tags": [
+        "modern",
+        "dark",
+        "stone"
+      ]
+    },
+    {
+      "id": "k201",
+      "img": "/static/galleries/kitchen/k201.webp",
+      "tags": [
+        "minimal",
+        "bright",
+        "stone"
+      ]
+    },
+    {
+      "id": "k202",
+      "img": "/static/galleries/kitchen/k202.webp",
+      "tags": [
+        "rustic",
+        "warm",
+        "wood"
+      ]
+    },
+    {
+      "id": "k203",
+      "img": "/static/galleries/kitchen/k203.webp",
+      "tags": [
+        "industrial",
+        "cool",
+        "metal"
+      ]
+    },
+    {
+      "id": "k204",
+      "img": "/static/galleries/kitchen/k204.webp",
+      "tags": [
+        "classic",
+        "warm",
+        "wood"
+      ]
+    },
+    {
+      "id": "k205",
+      "img": "/static/galleries/kitchen/k205.webp",
+      "tags": [
+        "modern",
+        "cool",
+        "metal"
+      ]
+    },
+    {
+      "id": "k206",
+      "img": "/static/galleries/kitchen/k206.webp",
+      "tags": [
+        "rustic",
+        "dark",
+        "wood"
+      ]
+    },
+    {
+      "id": "k207",
+      "img": "/static/galleries/kitchen/k207.webp",
+      "tags": [
+        "minimal",
+        "cool",
+        "stone"
+      ]
+    },
+    {
+      "id": "k208",
+      "img": "/static/galleries/kitchen/k208.webp",
+      "tags": [
+        "industrial",
+        "dark",
+        "wood"
+      ]
+    },
+    {
+      "id": "k209",
+      "img": "/static/galleries/kitchen/k209.webp",
+      "tags": [
+        "classic",
+        "bright",
+        "stone"
+      ]
+    },
+    {
+      "id": "k210",
+      "img": "/static/galleries/kitchen/k210.webp",
+      "tags": [
+        "modern",
+        "warm",
+        "wood"
+      ]
+    },
+    {
+      "id": "k301",
+      "img": "/static/galleries/kitchen/k301.webp",
+      "tags": [
+        "rustic",
+        "warm",
+        "wood"
+      ]
+    },
+    {
+      "id": "k302",
+      "img": "/static/galleries/kitchen/k302.webp",
+      "tags": [
+        "modern",
+        "cool",
+        "stone"
+      ]
+    },
+    {
+      "id": "k303",
+      "img": "/static/galleries/kitchen/k303.webp",
+      "tags": [
+        "minimal",
+        "bright",
+        "stone"
+      ]
+    },
+    {
+      "id": "k304",
+      "img": "/static/galleries/kitchen/k304.webp",
+      "tags": [
+        "industrial",
+        "dark",
+        "metal"
+      ]
+    },
+    {
+      "id": "k305",
+      "img": "/static/galleries/kitchen/k305.webp",
+      "tags": [
+        "classic",
+        "warm",
+        "wood"
+      ]
+    },
+    {
+      "id": "k306",
+      "img": "/static/galleries/kitchen/k306.webp",
+      "tags": [
+        "modern",
+        "dark",
+        "metal"
+      ]
+    },
+    {
+      "id": "k307",
+      "img": "/static/galleries/kitchen/k307.webp",
+      "tags": [
+        "minimal",
+        "cool",
+        "metal"
+      ]
+    },
+    {
+      "id": "k308",
+      "img": "/static/galleries/kitchen/k308.webp",
+      "tags": [
+        "rustic",
+        "bright",
+        "stone"
+      ]
+    }
+  ],
+  "style_elements": {
+    "title": "Your Style Elements",
+    "subline": "Recognized from your choices — specified in your full report.",
+    "items": [
+      {
+        "id": "brass-hardware",
+        "label": "Brass hardware",
+        "spec": "Aged brass — unlacquered, satin finish",
+        "image": "h9a",
+        "img": "/static/galleries/kitchen/h9a.webp",
+        "tags": [
+          "classic",
+          "warm",
+          "metal"
+        ]
+      },
+      {
+        "id": "matte-black",
+        "label": "Matte black",
+        "spec": "Matte black — powder-coated, no sheen",
+        "image": "h9b",
+        "img": "/static/galleries/kitchen/h9b.webp",
+        "tags": [
+          "modern",
+          "dark",
+          "metal"
+        ]
+      },
+      {
+        "id": "oak-wood",
+        "label": "Oak wood",
+        "spec": "European oak — natural oil, no stain",
+        "image": "f6a",
+        "img": "/static/galleries/kitchen/f6a.webp",
+        "tags": [
+          "wood",
+          "warm",
+          "bright"
+        ]
+      },
+      {
+        "id": "dark-timber",
+        "label": "Dark timber",
+        "spec": "Smoked oak — fumed, hard-wax finish",
+        "image": "f6b",
+        "img": "/static/galleries/kitchen/f6b.webp",
+        "tags": [
+          "wood",
+          "warm",
+          "dark"
+        ]
+      },
+      {
+        "id": "stone-worktop",
+        "label": "Stone worktop",
+        "spec": "Dark marble — honed, 20mm mitred edge",
+        "image": "c4a",
+        "img": "/static/galleries/kitchen/c4a.webp",
+        "tags": [
+          "stone",
+          "dark",
+          "classic"
+        ]
+      },
+      {
+        "id": "warm-quartz",
+        "label": "Warm quartz",
+        "spec": "Speckled quartz — matt, warm-white base",
+        "image": "c4c",
+        "img": "/static/galleries/kitchen/c4c.webp",
+        "tags": [
+          "bright",
+          "cool",
+          "stone"
+        ]
+      },
+      {
+        "id": "concrete",
+        "label": "Concrete",
+        "spec": "Poured concrete — sealed, waxed finish",
+        "image": "c4d",
+        "img": "/static/galleries/kitchen/c4d.webp",
+        "tags": [
+          "cool",
+          "dark",
+          "industrial"
+        ]
+      },
+      {
+        "id": "open-shelving",
+        "label": "Open shelving",
+        "spec": "Open oak shelves — 40mm solid, no brackets",
+        "image": "c7a",
+        "img": "/static/galleries/kitchen/c7a.webp",
+        "tags": [
+          "rustic",
+          "bright",
+          "wood"
+        ]
+      },
+      {
+        "id": "concealed-storage",
+        "label": "Concealed storage",
+        "spec": "Handleless fronts — push-catch, shadow gap",
+        "image": "c7b",
+        "img": "/static/galleries/kitchen/c7b.webp",
+        "tags": [
+          "minimal",
+          "cool",
+          "modern"
+        ]
+      },
+      {
+        "id": "statement-pendants",
+        "label": "Statement pendants",
+        "spec": "Brass pendants — dimmable, warm 2700K",
+        "image": "lt3a",
+        "img": "/static/galleries/kitchen/lt3a.webp",
+        "tags": [
+          "warm",
+          "dark",
+          "classic"
+        ]
+      },
+      {
+        "id": "led-precision",
+        "label": "LED precision",
+        "spec": "Linear LED — recessed, neutral 3000K",
+        "image": "lt3b",
+        "img": "/static/galleries/kitchen/lt3b.webp",
+        "tags": [
+          "cool",
+          "bright",
+          "modern"
+        ]
+      },
+      {
+        "id": "terracotta-floor",
+        "label": "Terracotta floor",
+        "spec": "Terracotta tile — unglazed, sealed matt",
+        "image": "f6e",
+        "img": "/static/galleries/kitchen/f6e.webp",
+        "tags": [
+          "warm",
+          "rustic",
+          "classic"
+        ]
+      },
+      {
+        "id": "slate-floor",
+        "label": "Slate floor",
+        "spec": "Slate tile — riven, natural cleft",
+        "image": "f6f",
+        "img": "/static/galleries/kitchen/f6f.webp",
+        "tags": [
+          "cool",
+          "dark",
+          "stone"
+        ]
+      }
+    ],
+    "promo": "After unlock: upload a photo of your kitchen and see it transformed to match your report."
+  },
+  "styles": [
+    {
+      "id": "modern_rustic",
+      "name": "Modern Rustic",
+      "tags": [
+        "rustic",
+        "stone",
+        "warm",
+        "wood"
+      ],
+      "blurb": "Warm timber and honest texture held in check by clean modern lines — comfortable without ever tipping into fussy.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Oat Linen",
+              "rgb": [
+                229,
+                218,
+                200
+              ]
+            },
+            {
+              "name": "Weathered Oak",
+              "rgb": [
+                139,
+                111,
+                78
+              ]
+            },
+            {
+              "name": "Burnt Clay",
+              "rgb": [
+                164,
+                90,
+                52
+              ]
+            }
+          ],
+          "line": "Oat linen keeps it light, weathered oak does the warming, and a burnt clay accent stops the whole thing going soft."
+        },
+        "mistakes": {
+          "setup": "That one is the cheapest of the five to put right. The other four are ranked by what they cost to undo, and the one at the top of that list is",
+          "trigger": "the worktop, before it is templated,"
+        },
+        "materials": {
+          "setup": "Timber and stone turn muddy without one cold element between them, and it is",
+          "trigger": "brushed steel, and only there,"
+        },
+        "shopping": {
+          "setup": "The table matters more than the cabinetry, and with {metal} hardware chosen the number people get wrong is",
+          "trigger": "its height, not its length,"
+        },
+        "dna": {
+          "setup": "Your choices sit closer to the modern half than you would guess, and it shows",
+          "trigger": "in the pairs you skipped fast,"
+        },
+        "splurge": {
+          "setup": "Spend on the timber and save on anything you can paint, and what ages worst is",
+          "trigger": "the worktop edge, by winter two,"
+        },
+        "mistake_one": {
+          "title": "Matching every wood tone in the room",
+          "body": "A kitchen where the floor, the cabinetry and the table are all the same timber reads as a showroom set rather than a room that was put together over time. Matched tones flatten the depth that made you want wood in the first place: everything sits on one plane, nothing recedes, and the warmth you were buying goes flat under the lights.",
+          "fix": "Keep one piece deliberately older and darker than the rest. A table or a run of open shelving a few shades past the floor gives the eye somewhere to land, and the mismatch reads as age rather than as a mistake."
+        }
+      }
+    },
+    {
+      "id": "minimalist",
+      "name": "Minimalist",
+      "tags": [
+        "bright",
+        "minimal",
+        "modern",
+        "stone",
+        "wood"
+      ],
+      "blurb": "Nothing on the counter, everything in its place, and daylight doing most of the decorating.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Chalk White",
+              "rgb": [
+                244,
+                244,
+                242
+              ]
+            },
+            {
+              "name": "Pale Concrete",
+              "rgb": [
+                213,
+                214,
+                210
+              ]
+            },
+            {
+              "name": "Graphite",
+              "rgb": [
+                58,
+                61,
+                66
+              ]
+            }
+          ],
+          "line": "Chalk white does the bulk, pale concrete carries the only texture, and graphite appears once — on the handles, nowhere else."
+        },
+        "mistakes": {
+          "setup": "That one is the cheapest of the five to put right. The other four are ranked by what they cost to undo, and the one at the top of that list is",
+          "trigger": "the joinery, before it is ordered,"
+        },
+        "materials": {
+          "setup": "Matte over gloss on every surface but one, and the exception that matters is",
+          "trigger": "the splashback, honed stone,"
+        },
+        "shopping": {
+          "setup": "Buy the tap last and overspend on it, because against {metal} in a quiet room the eye lands on",
+          "trigger": "the only thing that moves,"
+        },
+        "dna": {
+          "setup": "Your picks run cooler than the average minimalist's, which puts you nearer",
+          "trigger": "Scandinavian than Japanese,"
+        },
+        "splurge": {
+          "setup": "Spend on the joinery, save on appliances, and what separates minimal from bare is",
+          "trigger": "a two millimetre shadow gap,"
+        },
+        "mistake_one": {
+          "title": "Solving a storage problem with more cabinetry",
+          "body": "The instinct in a minimal kitchen is to add another run of units so that nothing has to sit out. It works for about a month. Full cupboards turn every door into a decision, and the room stops feeling calm long before it stops being tidy — the clear surfaces you wanted are the first thing to go.",
+          "fix": "Plan one drawer you never fill. Deliberate slack is what keeps the counters clear a year in; a kitchen packed to its capacity has nowhere to put the ordinary mess of a Tuesday, so the mess stays on the worktop."
+        }
+      }
+    },
+    {
+      "id": "industrial",
+      "name": "Industrial",
+      "tags": [
+        "cool",
+        "dark",
+        "industrial",
+        "metal",
+        "wood"
+      ],
+      "blurb": "Raw metal, dark surfaces and structure worn on purpose — your kitchen doesn't hide how it's built.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Iron Black",
+              "rgb": [
+                43,
+                43,
+                43
+              ]
+            },
+            {
+              "name": "Smoked Oak",
+              "rgb": [
+                92,
+                74,
+                56
+              ]
+            },
+            {
+              "name": "Zinc Grey",
+              "rgb": [
+                138,
+                141,
+                145
+              ]
+            }
+          ],
+          "line": "Iron black holds the frame, smoked oak warms it back up, and zinc grey keeps those two from fighting each other."
+        },
+        "mistakes": {
+          "setup": "That one is the cheapest of the five to put right. The other four are ranked by what they cost to undo, and the one at the top of that list is",
+          "trigger": "the extraction, before the ceiling closes,"
+        },
+        "materials": {
+          "setup": "Steel, oak and concrete work in one ratio, and the dominant surface should be",
+          "trigger": "the darkest one, at sixty percent,"
+        },
+        "shopping": {
+          "setup": "Buy the lighting first, because in this style the fixtures are the architecture and {metal} decides",
+          "trigger": "the pendant over the island,"
+        },
+        "dna": {
+          "setup": "Your picks lean into structure over surface, so the influence beneath is",
+          "trigger": "warehouse, not workshop,"
+        },
+        "splurge": {
+          "setup": "Spend on the extraction, not the carcasses, because the thing nobody fakes is",
+          "trigger": "the weight of the hardware,"
+        },
+        "mistake_one": {
+          "title": "Buying anything pre-distressed",
+          "body": "Factory wear is printed, and printed wear repeats. Once you have noticed the same scratch on two cabinet fronts you cannot stop noticing it, and the room drops from raw to themed in a single look. This style reads as honest only while the marks look earned.",
+          "fix": "Buy plain and let the room do the ageing. Unfinished steel, mill-finish hardware and oiled rather than lacquered timber all mark unevenly inside a year — which is the look the distressed version is imitating and never quite gets."
+        }
+      }
+    },
+    {
+      "id": "classic",
+      "name": "Classic",
+      "tags": [
+        "classic",
+        "stone",
+        "warm",
+        "wood"
+      ],
+      "blurb": "Shaker doors, honest proportions and materials chosen to look better in ten years than they do today.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Bone White",
+              "rgb": [
+                236,
+                228,
+                214
+              ]
+            },
+            {
+              "name": "Aged Brass",
+              "rgb": [
+                176,
+                141,
+                87
+              ]
+            },
+            {
+              "name": "Walnut Shadow",
+              "rgb": [
+                90,
+                70,
+                50
+              ]
+            }
+          ],
+          "line": "Bone white on the cabinetry, aged brass on everything you actually touch, and walnut shadow keeping the room from floating away."
+        },
+        "mistakes": {
+          "setup": "That one is the cheapest of the five to put right. The other four are ranked by what they cost to undo, and the one at the top of that list is",
+          "trigger": "the doors, before they are painted,"
+        },
+        "materials": {
+          "setup": "Marble looks right and behaves badly, so the surface to use instead is",
+          "trigger": "honed quartzite, softly veined,"
+        },
+        "shopping": {
+          "setup": "Hardware is where a classic kitchen is won or lost, and in {metal} the one detail to sample is",
+          "trigger": "the knurling, under your light,"
+        },
+        "dna": {
+          "setup": "Your answers read classic with a warmer bias than most, which points you",
+          "trigger": "toward English country, not French,"
+        },
+        "splurge": {
+          "setup": "Spend on the doors and save on the worktop, because what you touch daily is",
+          "trigger": "the door frame, not the top,"
+        },
+        "mistake_one": {
+          "title": "Mixing more than two metals",
+          "body": "Taps, handles, hinges, lighting and the rail on the range are five separate chances to introduce a finish. Past two, a classic kitchen loses the quiet coordination the whole style depends on and starts reading as a collection of separate purchases that happened to end up in one room.",
+          "fix": "Pick two and hold the line — brass carries the warmth, nickel does the working parts. Anything black is a third metal whatever the showroom calls it, and it is the one that dates fastest."
+        }
+      }
+    }
+  ],
+  "analyzing": {
+    "duration_ms": 2500,
+    "text": "Analyzing your choices",
+    "messages": [
+      "Analyzing your 13 choices…",
+      "Comparing against thousands of kitchens…",
+      "Isolating your style signature…"
+    ]
+  },
+  "report": {
+    "generating_messages": [
+      "Our AI is comparing your choices against thousands of kitchens…",
+      "Searching for the combinations that fit YOU…",
+      "Cross-referencing your material picks…",
+      "Almost there — writing your recommendations…"
+    ],
+    "sections": [
+      {
+        "id": "palette",
+        "title": "Your Color Palette",
+        "enabled": true,
+        "preview": [
+          "Each one is specified by finish as well as by colour, because the same pigment reads differently in matte than it does in satin.",
+          "The report gives the exact codes, the sheen level for every surface, and the order to apply them in."
+        ],
+        "reveal": {
+          "mode": "visible"
+        }
+      },
+      {
+        "id": "mistakes",
+        "title": "The 5 Mistakes People With Your Style Make",
+        "enabled": true,
+        "preview": [
+          "It sounds obvious written down, and it is still the thing that costs people the most to undo once the units are in.",
+          "The remaining four are ranked by what they cost to fix, cheapest correction first."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "materials",
+        "title": "Materials & Combinations",
+        "enabled": true,
+        "preview": [
+          "Get that ratio right and the rest of the room falls into place around it without much effort at all.",
+          "The report names the products, the two combinations to avoid entirely, and what to ask a supplier for."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "shopping",
+        "title": "Get the Look: Your Shopping List",
+        "enabled": true,
+        "preview": [
+          "Everything else can wait until the room is in and you can see what it actually still needs.",
+          "The list is ordered by how much each item changes the room, not by what happens to be cheapest."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "dna",
+        "title": "Your Style DNA Breakdown",
+        "enabled": true,
+        "preview": [
+          "It shows up in the choices you made quickly, far more than in the ones you sat and deliberated over.",
+          "The breakdown scores both influences and explains exactly where they pull against each other."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "splurge",
+        "title": "What to Splurge On vs. Where to Save",
+        "enabled": true,
+        "preview": [
+          "The difference is invisible in a showroom and obvious after two years of using the room every day.",
+          "The report splits the budget line by line, with a sensible floor and ceiling for each one."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      }
+    ],
+    "mistake_one": {
+      "title": "Mistake #1 of 5",
+      "locked_note": "Mistakes 2–5 — inside your full report"
+    },
+    "also": {
+      "title": "Also in your report",
+      "rows": [
+        {
+          "section": "materials",
+          "hook": "Your {worktop} + {metal} pairing has one expensive conflict — and one combination that always works."
+        },
+        {
+          "section": "dna",
+          "hook": "How your {palette} choices split between your two style influences."
+        },
+        {
+          "section": "splurge",
+          "hook": "Where your {floor} budget should actually go — floor and ceiling for each line."
+        },
+        {
+          "title": "Your Exact Paint Codes",
+          "hook": "The code for every colour above, its sheen level, and the order to apply them in."
+        }
+      ]
+    },
+    "visuals": {
+      "moodboard_step": "color",
+      "material_steps": [
+        "worktop",
+        "backsplash"
+      ],
+      "defaults": {
+        "modern_rustic": {
+          "moodboard": "mp5",
+          "materials": [
+            "c4b",
+            "b8a"
+          ]
+        },
+        "minimalist": {
+          "moodboard": "mp4",
+          "materials": [
+            "c4c",
+            "b8c"
+          ]
+        },
+        "industrial": {
+          "moodboard": "mp3",
+          "materials": [
+            "c4d",
+            "b8d"
+          ]
+        },
+        "classic": {
+          "moodboard": "mp2",
+          "materials": [
+            "c4a",
+            "b8b"
+          ]
+        }
+      }
+    },
+    "hook_slots": {
+      "worktop": {
+        "step": "worktop",
+        "fallback": "worktop"
+      },
+      "metal": {
+        "step": "hardware",
+        "fallback": "metal"
+      },
+      "palette": {
+        "step": "color",
+        "fallback": "palette"
+      },
+      "floor": {
+        "step": "floor",
+        "fallback": "floor"
+      }
+    }
+  },
+  "pricing": {
+    "amount_cents": 700,
+    "currency": "usd",
+    "cta": "Unlock my full report"
+  },
+  "checkout": {
+    "kicker": "Your report is ready",
+    "product_name": "Your Kitchen Style Report + Visualization — see your kitchen transformed",
+    "product_image": "/static/creative_src/stripe_tile.png",
+    "single_page": true,
+    "commerce": {
+      "anchor_head": "A {price} decision that saves you $4,000+",
+      "anchor_head_accent": "$4,000+",
+      "price_suffix": "one-time · no subscription",
+      "consent": "One-time {price} — no subscription, ever. My report unlocks instantly.",
+      "trust": [
+        "Secure via Stripe",
+        "One-time — no recurring charges",
+        "PDF to your email"
+      ],
+      "mid_line": "Save $4,000+ on your renovation — starting now.",
+      "mid_line_accent": "$4,000+",
+      "mid_button": "See what's inside ↓",
+      "sticky_label": "Unlock full report — {price}",
+      "sample_link": "See a sample page",
+      "sample_caption": "An example page. Yours is written from your own choices."
+    },
+    "title": "Your {style} Report",
+    "proof_line": "Built from your 13 choices",
+    "manifest": [
+      "Your kitchen, reimagined in your style — from your photo",
+      "Your complete color palette with exact paint codes",
+      "The 5 costly mistakes for your style — with fixes",
+      "Materials & combinations: what works, what to avoid",
+      "Ordered shopping list: what to buy first",
+      "Your style DNA breakdown",
+      "Splurge vs save: where your money matters"
+    ],
+    "manifest_hero": "reimagined",
+    "manifest_head": "What's inside — {n} sections, yours forever",
+    "anchor_head": "A {price} decision that protects a $20,000 renovation",
+    "anchor": "The mistakes in this report cost renovators $4,000+ to undo. Catching one pays for it a thousand times over.",
+    "reframe": "Less than a coffee. Cheaper than one sample pot of paint you'd buy wrong.",
+    "price_suffix": "one-time",
+    "cta_label": "Get my report for {price}",
+    "consent_prechecked": true,
+    "trust": [
+      "Secure payment via Stripe",
+      "Instant delivery",
+      "PDF copy to your email"
+    ],
+    "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right."
+  },
+  "result": {
+    "mistakes_teaser": "You've seen mistake #1. The other four cost {style} owners $4,000+ to undo — and one involves your {worktop}.",
+    "value_banner": "The mistakes in this report cost renovators $4,000+ to undo. Catching one pays for it a thousand times over."
+  }
+}

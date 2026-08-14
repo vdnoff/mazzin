@@ -863,6 +863,21 @@ body {
   color: var(--muted);
 }
 
+/* The line under the strip on a funnel that sells something the chips do not
+   describe. Tinted rather than muted, because it is the one sentence on the
+   free page naming a thing the report does not already contain — it is an
+   offer, not a caption, and grey 14px would read as another subline. */
+.elements-promo {
+  margin: 14px 0 0;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #7A3A16;
+}
+
 .element-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
