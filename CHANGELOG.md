@@ -165,3 +165,6 @@ bottom.
 
 ## 2026-08-14 — claude/visualizer-funnel
 - visualizer funnel + stripe modes
+
+## 2026-08-14 — claude/visualizer-feature
+- visualizer feature
