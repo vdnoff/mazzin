@@ -6,8 +6,23 @@
   "use strict";
 
   var PAYMENTS_ENABLED = true;
-  var SLIDE_OUT_MS = 160;       // outgoing pair
-  var CARD_STAGGER_MS = 40;     // left card leads
+  // One step change is three beats: the selection dims everything that was not
+  // tapped, the whole set leaves to the left, and the next set arrives from the
+  // right. Nothing overlaps, so the reader never sees two sets at once.
+  //
+  // Only the exit is timed here, because only the exit is something the engine
+  // waits on: the 240ms enter runs in the stylesheet over cards that are
+  // already in the document, and nothing is sequenced behind it.
+  var EXIT_MS = 220;            // the set slides left and fades
+  var EXIT_CHOSEN_MS = 40;      // ...with the card they chose leaving last
+  var ENTER_STAGGER_MS = 50;    // per card, left to right
+  var ENTER_STAGGER_CAP_MS = 150;  // a six-up would otherwise take 250ms to land
+  var SWAP_REDUCED_MS = 200;    // reduced motion: the old instant swap, unchanged
+  // The enter animation must not start over cards with nothing in them. These
+  // bytes were warmed a step ago by prepareNext(), so this normally resolves on
+  // the next microtask; the cap is for the case where the warm did not land, and
+  // is small enough that the whole step change stays inside its latency budget.
+  var DECODE_TIMEOUT_MS = 300;
   var REPORT_POLL_MS = 1200;
   var PRELOAD_TIMEOUT_MS = 800;
   var HOLD_MS = 1650;           // ring -> badge -> reaction, then the pair goes
@@ -376,6 +391,12 @@
     preloaded[src] = true;
     var img = new Image();
     img.src = src;
+    // Decoded here, not at the swap. It is the same work either way, but a
+    // whole step early it happens inside the selection hold where nothing else
+    // is going on, and whenDecoded() below then resolves on the first tick
+    // instead of holding a six-up grid for a sixth of a second. The promise
+    // keeps `img` alive; a failure is the placeholder's problem, not ours.
+    if (img.decode) img.decode().catch(function () {});
   }
 
   // Wait for both images, or PRELOAD_TIMEOUT_MS, whichever comes first — a
@@ -398,6 +419,42 @@
         if (remaining <= 0) finish();
       };
       img.src = item.img;
+    });
+  }
+
+  // Decoded, not merely fetched. `preload` and `preloadPair` above stop at the
+  // bytes being in the cache, which is enough when the cards fade up from grey
+  // but not when they slide in — a card that decodes two frames into its own
+  // entrance animates an empty rectangle and then pops. `img.decode()` is the
+  // only hook that answers "this will paint on the next frame"; where it is
+  // missing, `onload` is the closest thing and is what the old path used.
+  //
+  // The images are already warm, so this is a microtask in the normal case.
+  // The timeout is the guarantee: a step change is never held longer than
+  // DECODE_TIMEOUT_MS by an image, whatever the network is doing.
+  function whenDecoded(items, done) {
+    var remaining = items.length;
+    var fired = false;
+    function finish() {
+      if (fired) return;
+      fired = true;
+      clearTimeout(timer);
+      done();
+    }
+    function one() {
+      remaining -= 1;
+      if (remaining <= 0) finish();
+    }
+    if (!remaining) { finish(); return; }
+    var timer = setTimeout(finish, DECODE_TIMEOUT_MS);
+    items.forEach(function (item) {
+      var img = new Image();
+      preloaded[item.img] = true;
+      img.src = item.img;
+      // Failures resolve too: a broken image gets its placeholder from
+      // cardNode, and holding the quiz for a 404 helps nobody.
+      if (img.decode) { img.decode().then(one, one); return; }
+      img.onload = img.onerror = one;
     });
   }
 
@@ -461,6 +518,16 @@
     return card;
   }
 
+  // How far apart the cards land. Left to right at ENTER_STAGGER_MS each, but
+  // the last card must still arrive promptly: six of them at 50ms would put the
+  // bottom-right board a quarter of a second behind the top-left one, which
+  // stops reading as one set arriving and starts reading as a list loading.
+  // The whole set is inside ENTER_STAGGER_CAP_MS however many there are.
+  function enterStagger(count) {
+    if (count < 2) return ENTER_STAGGER_MS;
+    return Math.min(ENTER_STAGGER_MS, ENTER_STAGGER_CAP_MS / (count - 1));
+  }
+
   function renderStep() {
     var st = stepAt(step);
     el.cards.innerHTML = "";
@@ -468,6 +535,10 @@
     var fmt = stepFormat(st);
     el.cards.classList.toggle("is-grid4", fmt === "grid4");
     el.cards.classList.toggle("is-grid6", fmt === "grid6");
+    // Read by the per-card animation-delay. An engine.js that predates this
+    // sets nothing and the CSS falls back to its own default, which is the
+    // uncapped per-card figure — later, never broken.
+    el.cards.style.setProperty("--stagger", enterStagger(pair.length) + "ms");
     pair.forEach(function (item, i) {
       el.cards.appendChild(cardNode(item, i));
     });
@@ -477,10 +548,14 @@
   }
 
   // The caption is the step's own question, so it changes on every pair.
+  //
+  // It fades out with the outgoing set and back in with the incoming one, so it
+  // is restarted unconditionally — two steps that happen to ask the same
+  // question still need the second half of that crossfade, and an early return
+  // on matching text would leave the line faded out and never bring it back.
   function setCaption(text) {
-    if (text === el.caption.textContent) return;
     el.caption.textContent = text;
-    el.caption.classList.remove("is-enter");
+    el.caption.classList.remove("is-enter", "is-exit");
     void el.caption.offsetWidth;        // restart the animation
     el.caption.classList.add("is-enter");
   }
@@ -589,25 +664,37 @@
       setTimeout(function () { showReaction(item.label || "", card); },
                  REACTION_DELAY_MS);
     }
-    renderProgress();
 
+    var reduced = prefersReducedMotion();
     setTimeout(function () {
+      // The pip fills as the set leaves, not as the card is tapped. It used to
+      // pop a second and a half before anything else moved, which read as a
+      // fourth event in a step that only has three; on the exit it is the same
+      // gesture as the cards, one row up.
+      renderProgress();
+      el.caption.classList.remove("is-enter");
+      el.caption.classList.add("is-exit");
       el.cards.classList.add("is-leaving");
       setTimeout(function () {
-        picking = false;
         var mid = interstitialAfter(step);
-        if (mid) { openInterstitial(mid); return; }
+        if (mid) { picking = false; openInterstitial(mid); return; }
+        // `picking` stays set across the decode gate below: the outgoing cards
+        // are still in the DOM and still buttons, and a tap landing on an
+        // invisible one must not advance the quiz twice.
         advance();
-      }, SLIDE_OUT_MS + CARD_STAGGER_MS);
-    }, prefersReducedMotion() ? HOLD_REDUCED_MS : HOLD_MS);
+      }, reduced ? SWAP_REDUCED_MS : EXIT_MS + EXIT_CHOSEN_MS);
+    }, reduced ? HOLD_REDUCED_MS : HOLD_MS);
   }
 
   function advance() {
     var next = step >= cfg.swipe.pairs_count ? null : pairFor(step);
-    if (!next) { startResult(); return; }
-    pair = next;
-    renderStep();
-    show("screen-swipe");
+    if (!next) { picking = false; startResult(); return; }
+    whenDecoded(next, function () {
+      pair = next;
+      renderStep();
+      show("screen-swipe");
+      picking = false;
+    });
   }
 
   // --- interstitials -------------------------------------------------------
