@@ -156,3 +156,6 @@ bottom.
 
 ## 2026-08-14 — claude/meta-addpaymentinfo
 - meta: AddPaymentInfo
+
+## 2026-08-14 — claude/personal-hooks
+- personalized hooks
