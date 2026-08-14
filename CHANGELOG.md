@@ -147,3 +147,6 @@ bottom.
 
 ## 2026-08-13 — claude/tweak-product-name
 - tweak: product name + image
+
+## 2026-08-14 — claude/value-boundary
+- value boundary + design overhaul
