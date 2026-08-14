@@ -254,7 +254,7 @@ body {
 /* --- cards ----------------------------------------------------------------- */
 
 .cards {
-  position: relative;          /* the reaction chip anchors to this row */
+  position: relative;
   display: flex;
   gap: 10px;
   align-items: stretch;
@@ -420,9 +420,11 @@ body {
 }
 
 .check {
-  /* Bottom corner: the reaction chip straddles the card's top edge and is as
-     wide as the card, so a top-corner badge would sit behind it. */
+  /* Bottom corner, and above the selection wash: the label owns the middle of
+     the card now, and the badge is the other half of the same confirmation —
+     dimmed under the wash it would read as part of the photograph. */
   position: absolute;
+  z-index: 4;
   bottom: 11px;
   right: 11px;
   width: 34px;
@@ -448,43 +450,42 @@ body {
   100% { opacity: 1; transform: scale(1); }
 }
 
-/* --- reaction chip --------------------------------------------------------- */
+/* --- selection label ------------------------------------------------------- */
 
-/* Straddles the top edge of the chosen card — half over the photograph, half
-   above it. It lives in .cards rather than inside .card because the card
-   clips its own overflow.
+/* Dead centre of the card that was tapped, over a wash that darkens the
+   photograph enough for the label to read on any of them.
 
-   The outer element spans the whole row and pads away the half it does not
-   belong to, so the pill's available width is always exactly one card. An
-   earlier version offset it with `left: 75%`, which silently capped the
-   right-hand chip's shrink-to-fit at the distance to the row's edge and
-   wrapped it onto four lines. */
+   It used to straddle the card's top edge, anchored to the row and pushed left
+   or right by half its width. That was arithmetic that only worked for two
+   cards: on a four-up the chip sat over the card above it, and on a six-up
+   over two. Inside the card there is nothing to compute — it is a centred box
+   in the element it was always about, at every grid size. */
 .reaction {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
+  inset: 0;
   z-index: 3;
   display: flex;
+  align-items: center;
   justify-content: center;
-  transform: translateY(-50%);
+  padding: 10px;
+  background: rgba(22, 24, 29, 0.34);
+  opacity: 0;
   pointer-events: none;
 }
 
-.reaction.is-left { padding-right: calc(50% + 5px); }
-.reaction.is-right { padding-left: calc(50% + 5px); }
+.reaction.is-in { animation: reaction-wash 180ms ease forwards; }
+
+@keyframes reaction-wash {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
 .reaction-pill {
-  /* 96% of a card, which at 360 leaves ~117px of text column. The step labels
-     that replaced the old reaction strings are shorter but break worse: "Warm
-     evening glow" is three words and went to three lines at 17px/18px, while
-     the longer "Herringbone warmth" held two. Dropping a point of type and
-     three of padding gives every label two lines at both widths. */
-  max-width: 96%;
+  max-width: 100%;
   padding: 10px 15px;
   border-radius: 22px;
   background: #fff;
-  box-shadow: 0 6px 18px rgba(22, 24, 29, 0.16);
+  box-shadow: 0 6px 18px rgba(22, 24, 29, 0.24);
   font-family: var(--brand);
   font-optical-sizing: auto;
   font-size: 16px;
@@ -492,8 +493,28 @@ body {
   line-height: 1.2;
   color: var(--accent);
   text-align: center;
+  text-wrap: balance;
   opacity: 0;
   transform: scale(0.8);
+}
+
+/* A grid cell is a fraction of the width a pair card has, and the label is the
+   same sentence either way, so the type comes down to meet it rather than the
+   pill being allowed to fill the photograph. */
+.cards.is-grid4 .reaction-pill {
+  padding: 8px 12px;
+  border-radius: 18px;
+  font-size: 14px;
+}
+
+.cards.is-grid6 .reaction {
+  padding: 6px;
+}
+
+.cards.is-grid6 .reaction-pill {
+  padding: 6px 10px;
+  border-radius: 15px;
+  font-size: 12.5px;
 }
 
 /* Inline so it trails the last line instead of sitting beside a wrapped block. */
@@ -502,6 +523,8 @@ body {
   font-family: var(--ui);
   font-size: 13px;
 }
+
+.cards.is-grid6 .reaction .tick { margin-left: 4px; font-size: 11px; }
 
 .reaction.is-in .reaction-pill {
   animation: reaction-in 200ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
@@ -512,15 +535,8 @@ body {
   to { opacity: 1; transform: scale(1); }
 }
 
-/* Leaves with the pair it belongs to. */
-.cards.is-leaving .reaction-pill {
-  animation: reaction-out 160ms ease forwards;
-}
-
-@keyframes reaction-out {
-  from { opacity: 1; transform: scale(1); }
-  to { opacity: 0; transform: scale(0.94); }
-}
+/* No exit of its own: the chip is inside the card now, so it leaves when the
+   card does and a second animation would only fight that one. */
 
 /* --- tap hint -------------------------------------------------------------- */
 
@@ -578,8 +594,8 @@ body {
   .pay-anchor.is-flashed { animation: none; }
   #pay-button.is-breathing:not(:disabled) { animation: none; }
   .confetti { display: none; }
+  .reaction.is-in { animation: none; opacity: 1; }
   .reaction.is-in .reaction-pill { animation: none; opacity: 1; transform: scale(1); }
-  .cards.is-leaving .reaction-pill { animation: fade-out 160ms ease forwards; }
   .pip.is-done, .pip.is-current, .tap-dot { animation: none; }
   /* The two waiting states keep their shape — they are how you know something
      is still happening — but they stop moving. */
@@ -774,6 +790,17 @@ body {
   margin-top: 18px;
   padding-top: 18px;              /* 36px between sections, line centred in it */
   border-top: 1px solid var(--line);
+}
+
+/* The paid document breathes wider than the preview does. The preview is a
+   page somebody is scrolling past to reach a button, so it is compact on
+   purpose; this is a document somebody has bought and is reading, and 36px
+   between sections reads as rows of a table rather than as chapters. 60px,
+   with the rule sitting in the middle of it, is the rhythm the rest of the
+   type was set for. */
+.report-unlocked .section + .section {
+  margin-top: 30px;
+  padding-top: 30px;
 }
 
 .section-title {
@@ -976,6 +1003,71 @@ body {
   box-shadow: inset 0 0 0 1px rgba(22, 24, 29, 0.12);
 }
 
+/* Bigger in the paid view, where the colour is the product rather than a
+   promise about one: a 38px dot is a bullet, and 56px is a sample you can
+   hold a door front against. Squared off with a large radius so it reads as a
+   chip of paint rather than as another circular icon. */
+.report-unlocked .swatch-row { gap: 14px; margin-bottom: 18px; }
+
+.report-unlocked .swatch-dot {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px rgba(22, 24, 29, 0.1),
+              0 2px 8px rgba(22, 24, 29, 0.12);
+}
+
+/* --- the report's own photographs ------------------------------------------ */
+
+/* A column, so the caption is part of the figure rather than something the
+   rounded corners clip off the bottom of it. The ratio is stated on the image
+   and the crop is object-fit's problem: a gallery shot is whatever shape it
+   was taken in, and a report where every plate is a different height reads as
+   a scrapbook. */
+.palette-board,
+.material-shot {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #eceef1;
+}
+
+.palette-board { margin-bottom: 18px; border-radius: var(--radius); }
+
+.palette-board img,
+.material-shot img {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+}
+
+/* Header visual: wide and short, because the section under it is the read. */
+.palette-board img { aspect-ratio: 21 / 9; }
+.material-shot img { aspect-ratio: 4 / 3; }
+
+/* The label the quiz gave the photograph, which is also the words the reader
+   chose it under. Tinted rather than white so the strip reads as part of the
+   plate instead of as a line of body copy that has drifted up. */
+.palette-board figcaption,
+.material-shot figcaption {
+  padding: 8px 12px;
+  background: #f4f2ef;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #6b6257;
+}
+
+/* The two surfaces the section is judging, above the judgements. */
+.material-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
 .swatch-text { min-width: 0; }
 
 .swatch-name {
@@ -1014,31 +1106,42 @@ body {
   -webkit-user-select: none;
 }
 
-/* The padlock at text size: same shape, no halo — the halo exists to survive
-   a photograph behind it, and on a white row it is a box around a word. */
-.row-lock.is-inline {
-  position: relative;
-  top: auto;
-  left: auto;
-  z-index: auto;
-  width: 13px;
-  height: 10px;
-  /* Its own shackle is drawn above the box, so the box sits low in the line. */
-  margin-top: 5px;
-  transform: none;
-  border-radius: 2.5px;
-  box-shadow: none;
+/* One padlock, drawn as an SVG and sized by whatever holds it. It replaces a
+   lock built out of a box and two pseudo-elements: that survived at 28px over
+   a photograph and came apart everywhere else — at text size the shackle was a
+   hairline floating over a filled rectangle, which reads as a bullet that has
+   broken rather than as a lock. A filled body with a stroked shackle holds its
+   shape from 15px to 48px, which is the point of having one drawing. */
+.padlock {
+  flex: none;
+  display: block;
 }
 
-.row-lock.is-inline::before {
-  width: 8px;
-  height: 6px;
-  border-width: 2px;
-  border-radius: 4px 4px 0 0;
+.padlock-shackle {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.1;
+  stroke-linecap: round;
 }
 
-/* At 13px a 5px keyhole is a smudge, not a detail. */
-.row-lock.is-inline::after { display: none; }
+.padlock-body { fill: var(--accent); }
+.padlock-hole { fill: #fff; }
+
+/* Beside a line of text. It sits low, because the shackle is drawn above the
+   body and the body is what should line up with the words. */
+.padlock.is-sm {
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+}
+
+/* At 15px a keyhole is a smudge in the middle of a 9px block, not a detail. */
+.padlock.is-sm .padlock-hole { display: none; }
+
+.padlock.is-lg {
+  width: 48px;
+  height: 48px;
+}
 
 .swatch-role {
   margin: 0 0 3px;
@@ -1489,51 +1592,35 @@ body {
   -webkit-user-select: none;
 }
 
-/* Drawn rather than set, so it takes the accent colour — an emoji padlock
-   would render in its own palette. It sits over the strip, which puts it
-   between the unreadable prose and the unreadable images: one marker for
-   both, rather than a lock per blurred thing. */
-.row-lock {
+/* One marker for the whole withheld block — the unreadable prose and the
+   unreadable photographs under it — sitting at the centre of both rather than
+   tucked into the strip. At 48px inside a soft white disc it is what the eye
+   lands on when the section arrives, which is the job: the section has to be
+   recognised as withheld before any of it is read.
+
+   It takes no taps. The section itself has carried the listener all along, and
+   a lock that swallowed the press would be the one part of the locked zone
+   that did not take you to the offer. */
+.locked-lock {
   position: absolute;
   top: 50%;
   left: 50%;
-  z-index: 2;
-  width: 28px;
-  height: 22px;
-  margin: 0;
-  transform: translate(-50%, -50%);
-  border-radius: 5px;
-  background: var(--accent);
-  /* The halo is what keeps it readable over a photograph of any brightness. */
-  box-shadow: 0 0 0 7px rgba(255, 255, 255, 0.55),
-              0 2px 10px rgba(22, 24, 29, 0.18);
-}
-
-.row-lock::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 100%;
-  width: 17px;
-  height: 12px;
-  transform: translateX(-50%);
-  border: 3px solid var(--accent);
-  border-bottom: 0;
-  border-radius: 9px 9px 0 0;
-}
-
-/* The keyhole — at 28px the shape needs it to read as a padlock and not a
-   rounded rectangle wearing a hat. */
-.row-lock::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 5px;
-  height: 5px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 78px;
+  height: 78px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.74);
+  /* Two rings rather than one edge: the outer is the halo that keeps it off
+     whatever photograph is behind it, the inner is the disc it sits on. */
+  box-shadow: 0 0 0 12px rgba(255, 255, 255, 0.3),
+              0 10px 28px rgba(22, 24, 29, 0.18);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  pointer-events: none;
 }
 
 .section-body { font-size: 15px; line-height: 1.55; }

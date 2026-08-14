@@ -2319,6 +2319,43 @@
           "hook": "The code for every colour above, its sheen level, and the order to apply them in."
         }
       ]
+    },
+    "visuals": {
+      "moodboard_step": "color",
+      "material_steps": [
+        "worktop",
+        "backsplash"
+      ],
+      "defaults": {
+        "modern_rustic": {
+          "moodboard": "mp5",
+          "materials": [
+            "c4b",
+            "b8a"
+          ]
+        },
+        "minimalist": {
+          "moodboard": "mp4",
+          "materials": [
+            "c4c",
+            "b8c"
+          ]
+        },
+        "industrial": {
+          "moodboard": "mp3",
+          "materials": [
+            "c4d",
+            "b8d"
+          ]
+        },
+        "classic": {
+          "moodboard": "mp2",
+          "materials": [
+            "c4a",
+            "b8b"
+          ]
+        }
+      }
     }
   },
   "pricing": {

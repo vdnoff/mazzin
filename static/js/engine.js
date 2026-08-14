@@ -593,15 +593,20 @@
     if (el.midProgressLabel) el.midProgressLabel.textContent = label;
   }
 
+  // The label lands in the middle of the card that was tapped, over a wash
+  // that dims the photograph under it.
+  //
+  // It used to straddle the card's top edge, anchored to the row and offset
+  // left or right by half its width. That worked for a pair and for nothing
+  // else: on a four-up it sat over the card above, and on a six-up over two of
+  // them. Putting it inside the card removes the arithmetic \u2014 the chip is a
+  // centred box in the only element it was ever about, at any grid size.
   function showReaction(text, card) {
-    if (!text) return;
+    if (!text || !card) return;
     var chip = document.createElement("div");
-    chip.className = "reaction " +
-      (el.cards.firstChild === card ? "is-left" : "is-right");
+    chip.className = "reaction";
     chip.setAttribute("role", "status");
 
-    // The pill is a separate box so its width is measured against one card,
-    // independent of where the outer element sits in the row.
     var pill = document.createElement("div");
     pill.className = "reaction-pill";
     pill.appendChild(document.createTextNode(text));
@@ -611,7 +616,7 @@
     tick.textContent = "\u2713";
     pill.appendChild(tick);
     chip.appendChild(pill);
-    el.cards.appendChild(chip);
+    card.appendChild(chip);
     // next frame, so the entry animation actually runs
     requestAnimationFrame(function () { chip.classList.add("is-in"); });
   }
@@ -978,7 +983,7 @@
 
     if (copy.locked_note) {
       var foot = elm("p", "mistake-locked");
-      foot.appendChild(lockNode(true));
+      foot.appendChild(padlockNode("is-sm"));
       foot.appendChild(elm("span", null, copy.locked_note));
       node.appendChild(foot);
       node.addEventListener("click", focusCta);
@@ -1012,7 +1017,7 @@
       var title = row.section ? titles[row.section] : row.title;
       if (!title) return;
       var li = elm("li", "also-row");
-      li.appendChild(lockNode(true));
+      li.appendChild(padlockNode("is-sm"));
       var text = elm("div", "also-text");
       text.appendChild(elm("p", "also-title", title));
       if (row.hook) text.appendChild(elm("p", "also-hook", row.hook));
@@ -1178,7 +1183,7 @@
     var span = elm("span", "swatch-hex is-masked");
     span.setAttribute("aria-label", "Paint code locked");
     span.appendChild(elm("span", "code-mask", "#■■■■■"));
-    span.appendChild(lockNode(true));
+    span.appendChild(padlockNode("is-sm"));
     return span;
   }
 
@@ -1229,6 +1234,19 @@
 
     var strip = previewStrip(pool, from);
     if (strip) body.appendChild(strip);
+
+    // One padlock over the whole withheld block — the prose and the pictures
+    // together — rather than a small one tucked into the strip. There is one
+    // thing being withheld here, so there is one marker for it, and at 48px it
+    // is the element the eye lands on when the section comes into view instead
+    // of something noticed on the way past.
+    //
+    // It does not take the tap: `pointer-events: none` lets it fall through to
+    // the section, which has carried the listener all along.
+    var mark = elm("span", "locked-lock");
+    mark.setAttribute("aria-hidden", "true");
+    mark.appendChild(padlockNode("is-lg"));
+    body.appendChild(mark);
     return body;
   }
 
@@ -1248,7 +1266,6 @@
       frame.appendChild(img);
       strip.appendChild(frame);
     });
-    strip.appendChild(lockNode());
     return strip;
   }
 
@@ -1380,15 +1397,45 @@
     for (var i = 0; i < all.length; i++) layoutDissolve(all[i]);
   }
 
-  // `inline` is the small one that sits in a line of text rather than over a
-  // photograph: same drawing, no halo, no keyhole — at 13px the keyhole is a
-  // smudge and the halo is a white box around a word.
-  function lockNode(inline) {
-    var lock = document.createElement("span");
-    lock.className = "row-lock" + (inline ? " is-inline" : "");
-    lock.setAttribute("role", "img");
-    lock.setAttribute("aria-label", "Locked");
-    return lock;
+  // One padlock, drawn once, used at every size the report needs: 15px beside
+  // a row in the "also" card and 48px over a locked section.
+  //
+  // It replaces a lock built out of a box and two pseudo-elements. That shape
+  // survived at 28px over a photograph and fell apart everywhere else — at
+  // text size the shackle was a hairline sitting above a filled rectangle,
+  // which reads as a bullet that has come apart rather than as a lock. A
+  // filled body with a stroked shackle holds together at both ends of the
+  // range, which is the whole reason for having one drawing.
+  function padlockNode(cls) {
+    var svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("class", "padlock" + (cls ? " " + cls : ""));
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", "Locked");
+
+    var shackle = document.createElementNS(SVG_NS, "path");
+    shackle.setAttribute("class", "padlock-shackle");
+    shackle.setAttribute("d", "M7.9 10.2V7.4a4.1 4.1 0 018.2 0v2.8");
+    svg.appendChild(shackle);
+
+    var body = document.createElementNS(SVG_NS, "rect");
+    body.setAttribute("class", "padlock-body");
+    body.setAttribute("x", "4.6");
+    body.setAttribute("y", "10.2");
+    body.setAttribute("width", "14.8");
+    body.setAttribute("height", "10.4");
+    body.setAttribute("rx", "2.6");
+    svg.appendChild(body);
+
+    // Only legible on the large one; the small variant hides it in CSS rather
+    // than rendering a smudge in the middle of the body.
+    var hole = document.createElementNS(SVG_NS, "circle");
+    hole.setAttribute("class", "padlock-hole");
+    hole.setAttribute("cx", "12");
+    hole.setAttribute("cy", "15.4");
+    hole.setAttribute("r", "1.6");
+    svg.appendChild(hole);
+    return svg;
   }
 
   function focusCta() {
@@ -1423,10 +1470,104 @@
     return node;
   }
 
+  // --- the report's own photographs -----------------------------------------
+
+  // Set once the paid content lands, read by the section builders below. A
+  // module-level handle rather than a parameter threaded through buildSection,
+  // because two of the six builders want it and the other four do not.
+  var reportVisuals = null;
+
+  function imageById(id) {
+    var steps = (cfg && cfg.swipe && cfg.swipe.steps) || [];
+    for (var i = 0; i < steps.length; i++) {
+      var pairs = steps[i].pairs || [];
+      for (var j = 0; j < pairs.length; j++) {
+        var images = pairs[j].images || [];
+        for (var k = 0; k < images.length; k++) {
+          if (images[k].id === id) return images[k];
+        }
+      }
+    }
+    return null;
+  }
+
+  // Which image they tapped on one named step, or null. Reads `chosen`, so it
+  // only answers in the tab that took the quiz.
+  function chosenOnStep(stepId) {
+    if (!stepId || !chosen.length) return null;
+    var steps = (cfg && cfg.swipe && cfg.swipe.steps) || [];
+    for (var i = 0; i < steps.length; i++) {
+      if (steps[i].id !== stepId) continue;
+      var here = {};
+      (steps[i].pairs || []).forEach(function (p) {
+        (p.images || []).forEach(function (g) { here[g.id] = true; });
+      });
+      for (var c = 0; c < chosen.length; c++) {
+        if (here[chosen[c]]) return chosen[c];
+      }
+    }
+    return null;
+  }
+
+  // The palette board they chose and the two surfaces they picked, as image
+  // records. Three sources, in falling order of how much they know about this
+  // particular reader:
+  //
+  //   1. what the server stored with the report — the only one that survives
+  //      the Stripe redirect, which is how nearly everybody arrives here;
+  //   2. the run in this tab, for a report opened without leaving;
+  //   3. the config's per-style defaults, for a report written before this
+  //      shipped or a run whose choices did not reach the server.
+  //
+  // A report illustrated with somebody else's kitchen is worse than one with
+  // no pictures, so every branch ends in an image this reader could actually
+  // have been shown for their style.
+  function visualsFor(content) {
+    var block = (cfg && cfg.report && cfg.report.visuals) || {};
+    var stored = (content && content.visuals) || {};
+    var byStyle = (block.defaults || {})[(content || {}).style_id] || {};
+    var steps = block.material_steps || [];
+
+    var board = stored.moodboard
+      || chosenOnStep(block.moodboard_step)
+      || byStyle.moodboard;
+
+    var mats = [];
+    var storedMats = stored.materials || [];
+    for (var i = 0; i < steps.length; i++) {
+      var one = storedMats[i] || chosenOnStep(steps[i])
+        || (byStyle.materials || [])[i];
+      var rec = one && imageById(one);
+      if (rec) mats.push(rec);
+    }
+    return { moodboard: board && imageById(board), materials: mats };
+  }
+
+  function figureNode(cls, item, caption) {
+    var fig = elm("figure", cls);
+    var img = document.createElement("img");
+    img.src = item.img;
+    img.alt = "";
+    img.loading = "lazy";
+    img.draggable = false;
+    fig.appendChild(img);
+    if (caption && item.label) {
+      fig.appendChild(elm("figcaption", null, item.label));
+    }
+    return fig;
+  }
+
   // --- typed section bodies (schema 2) -------------------------------------
 
   function paletteBody(d) {
     var frag = document.createDocumentFragment();
+
+    // The board they chose at the colour step, at the head of the section the
+    // colours came out of. It is the one picture in the report that says "this
+    // is yours" without a sentence having to say it.
+    var board = (reportVisuals || {}).moodboard;
+    if (board) frag.appendChild(figureNode("palette-board", board, true));
+
     frag.appendChild(elm("p", "section-intro", d.intro));
 
     var list = elm("ul", "swatch-list");
@@ -1468,6 +1609,20 @@
 
   function materialsBody(d) {
     var frag = document.createDocumentFragment();
+
+    // The worktop and the backsplash they picked, side by side above the
+    // verdicts. This section is a set of judgements about surfaces; showing
+    // the two surfaces it is judging is the difference between reading advice
+    // and reading advice about your own kitchen.
+    var mats = (reportVisuals || {}).materials || [];
+    if (mats.length) {
+      var strip = elm("div", "material-strip");
+      mats.forEach(function (m) {
+        strip.appendChild(figureNode("material-shot", m, true));
+      });
+      frag.appendChild(strip);
+    }
+
     frag.appendChild(elm("p", "section-intro", d.intro));
 
     var list = elm("ul", "verdict-list");
@@ -1646,6 +1801,9 @@
     el.report.classList.remove("report-preview");
     el.report.classList.add("report-unlocked");
     var typed = isTyped(content.version);
+    // Resolved on every poll: the first one may arrive before the config has,
+    // and the section builders below read it as they run.
+    reportVisuals = visualsFor(content);
 
     var arrived = {};
     (content.sections || []).forEach(function (sec) {
@@ -2637,6 +2795,42 @@
     }
   }
 
+  // Whether the bar can charge somebody without showing them the block first.
+  // Both halves matter: the config has to say the consent is given by default,
+  // AND the box has to actually be ticked — a reader who scrolled down and
+  // unticked it has said something, and a bar that ignored that would be
+  // taking the money on a consent that had been withdrawn.
+  function stickyCanCheckout() {
+    return !!(cfg && cfg.checkout
+              && cfg.checkout.consent_prechecked === true
+              && el.withdrawalCheck && el.withdrawalCheck.checked
+              && el.payButton && !el.payButton.disabled
+              && el.commerce && !el.commerce.hidden);
+  }
+
+  // The bar is the offer, not a signpost to it. Sending somebody to a button
+  // they had already found is a scroll and a second decision between the tap
+  // and Stripe, and both of those are places to lose them.
+  //
+  // The event trail is the same one the scroll produces, in the same order:
+  // sticky_cta for the tap, then paywall_view attributed to it — the offer
+  // reached this reader here, on the bar, which is exactly what that event is
+  // for — then pay_tap out of startCheckout. Firing paywall_view by hand is
+  // what stops the shortcut from putting a hole in the funnel, because the
+  // observer that usually fires it never sees the block scroll past.
+  function stickyTap() {
+    track("sticky_cta");
+    payIntent = "sticky";
+    if (stickyCanCheckout()) {
+      firePaywallView();
+      startCheckout();
+      return;
+    }
+    stickyArmed = true;
+    updateSticky();
+    scrollToCommerce();
+  }
+
   function scrollToCommerce() {
     if (!el.commerce || el.commerce.hidden) return;
     if (el.commerce.scrollIntoView) {
@@ -2801,13 +2995,7 @@
       renderPaywall();
       show("screen-paywall");
     });
-    if (el.sticky) {
-      el.sticky.addEventListener("click", function () {
-        track("sticky_cta");
-        payIntent = "sticky";
-        scrollToCommerce();
-      });
-    }
+    if (el.sticky) el.sticky.addEventListener("click", stickyTap);
     el.withdrawalCheck.addEventListener("change", updatePayButton);
     el.payButton.addEventListener("click", startCheckout);
     el.paywallBack.addEventListener("click", function () { show("screen-result"); });
