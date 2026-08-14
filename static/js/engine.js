@@ -2860,39 +2860,24 @@
     }
   }
 
-  // Whether the bar can charge somebody without showing them the block first.
-  // Both halves matter: the config has to say the consent is given by default,
-  // AND the box has to actually be ticked — a reader who scrolled down and
-  // unticked it has said something, and a bar that ignored that would be
-  // taking the money on a consent that had been withdrawn.
-  function stickyCanCheckout() {
-    return !!(cfg && cfg.checkout
-              && cfg.checkout.consent_prechecked === true
-              && el.withdrawalCheck && el.withdrawalCheck.checked
-              && el.payButton && !el.payButton.disabled
-              && el.commerce && !el.commerce.hidden);
-  }
-
-  // The bar is the offer, not a signpost to it. Sending somebody to a button
-  // they had already found is a scroll and a second decision between the tap
-  // and Stripe, and both of those are places to lose them.
+  // The bar asks for a scroll, not for money. It briefly took the payment
+  // itself — one tap from the bar to Stripe — and that is reverted: the block
+  // it scrolls to is where the price, the consent and the button are, and
+  // somebody who has not seen those has not been shown what they are agreeing
+  // to. A bar that charges is a bar that has to carry all three.
   //
-  // The event trail is the same one the scroll produces, in the same order:
-  // sticky_cta for the tap, then paywall_view attributed to it — the offer
-  // reached this reader here, on the bar, which is exactly what that event is
-  // for — then pay_tap out of startCheckout. Firing paywall_view by hand is
-  // what stops the shortcut from putting a hole in the funnel, because the
-  // observer that usually fires it never sees the block scroll past.
+  // The two paths that used to exist here are one path now. There is no
+  // consent_prechecked branch left to take: the checkbox is on the block, so
+  // whether it starts ticked changes what the reader finds when they arrive
+  // rather than what this function does. `pay_tap` belongs to the button they
+  // find there and to nothing else.
+  //
+  // `payIntent` is still set, and is still the whole point of tapping it: the
+  // block coming into view fires `paywall_view`, and this is what makes that
+  // event say the bar sent them rather than a scroll.
   function stickyTap() {
     track("sticky_cta");
     payIntent = "sticky";
-    if (stickyCanCheckout()) {
-      firePaywallView();
-      startCheckout();
-      return;
-    }
-    stickyArmed = true;
-    updateSticky();
     scrollToCommerce();
   }
 
