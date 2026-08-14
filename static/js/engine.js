@@ -2367,6 +2367,12 @@
   // disabled button dispatches no click.
   function startCheckout() {
     track("pay_tap");
+    // Meta's name for the same moment. InitiateCheckout already fires when the
+    // offer reaches somebody; this is the narrower signal Meta optimises
+    // against — the tap that starts paying. Both ways in go through here, the
+    // pay button and the sticky bar's shortcut, so one call covers both and
+    // neither can drift from the other.
+    pixelTrack("AddPaymentInfo");
     if (!PAYMENTS_ENABLED || !el.withdrawalCheck.checked) return;
 
     el.payError.hidden = true;
