@@ -159,3 +159,6 @@ bottom.
 
 ## 2026-08-14 — claude/personal-hooks
 - personalized hooks
+
+## 2026-08-14 — claude/sticky-revert
+- sticky revert
