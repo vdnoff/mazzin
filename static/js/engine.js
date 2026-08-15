@@ -2371,10 +2371,18 @@
   function vizFileInput(block) {
     var input = document.createElement("input");
     input.type = "file";
-    // Both, deliberately. On a phone this offers the camera and the library
-    // together; naming `capture` would force the camera and lose everybody who
-    // photographed their kitchen yesterday.
-    input.accept = "image/jpeg,image/png";
+    // Everything the OS is willing to call an image, and no narrower.
+    //
+    // This used to name jpeg and png, which quietly greyed out most of the
+    // camera roll on an iPhone: the camera writes HEIC and a portrait or
+    // burst shot is an MPO, and neither matches either type. A phone's own
+    // idea of what it took is more reliable than a list maintained here, and
+    // the server decodes the bytes anyway — the accept attribute is a filter
+    // on a picker, never a check.
+    //
+    // Still `image/*` and not omitted: on Android an unrestricted input
+    // offers every file on the device.
+    input.accept = "image/*";
     input.className = "viz-file";
     input.addEventListener("change", function () {
       var file = input.files && input.files[0];

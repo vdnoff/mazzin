@@ -10,3 +10,7 @@ weasyprint==69.0
 # somebody else's transitive dependency breaks the day that dependency changes
 # its mind. No new install: this is the version already in the virtualenv.
 Pillow==12.3.0
+# The formats a phone actually sends. An iPhone camera produces HEIC and
+# Pillow has no decoder for it on its own — this registers one. Ships wheels
+# for cp313 on manylinux, so the server installs it without a compiler.
+pillow-heif==1.5.0
