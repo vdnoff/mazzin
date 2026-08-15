@@ -168,3 +168,6 @@ bottom.
 
 ## 2026-08-14 — claude/visualizer-feature
 - visualizer feature
+
+## 2026-08-15 — claude/upload-formats
+- upload formats fix
