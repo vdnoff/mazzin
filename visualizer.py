@@ -54,10 +54,30 @@ bp = Blueprint("visualizer", __name__)
 NONE, UPLOADED, GENERATING, READY, FAILED = (
     "none", "uploaded", "generating", "ready", "failed")
 
-# What a browser is allowed to hand us. Checked against what PIL actually
-# decodes, not against the Content-Type header, which is whatever the client
-# felt like saying.
-ALLOWED_FORMATS = frozenset(("JPEG", "PNG"))
+# What we will not take, which is a far shorter list than what we will.
+#
+# The rule is "anything Pillow can decode", because the alternative — an
+# allowlist of formats — is what broke this in production: it said JPEG and
+# PNG, and an iPhone camera sends HEIC while portrait and burst shots arrive
+# as MPO. A phone will keep inventing containers and none of them are worth a
+# deploy.
+#
+# EPS is the exception, and it is a security carve-out rather than a taste
+# one. Pillow does not decode PostScript itself: it writes the upload to a
+# temporary file and runs Ghostscript on it. Ghostscript parsing a stranger's
+# file is a much larger thing to be responsible for than an image decoder, and
+# no camera on earth produces EPS, so the trade is all cost and no benefit.
+REFUSED_FORMATS = frozenset(("EPS",))
+
+# One sentence for every way a file can fail to be a photograph, because from
+# the reader's side they are the same event and naming three formats is more
+# use to them than naming the seventeen we would actually take.
+UNREADABLE = "We couldn't read that photo — JPEG, PNG or HEIC please."
+
+# Set once `register_image_formats` has run, so it can be called from anywhere
+# as many times as anyone likes.
+_formats_registered = False
+_formats_lock = threading.Lock()
 
 PLACEHOLDER_RE = re.compile(r"\{(\w+)\}")
 
@@ -199,6 +219,39 @@ class IntakeError(Exception):
         self.message = message
 
 
+def register_image_formats():
+    """Teach Pillow the formats a phone sends. Idempotent, never raises.
+
+    Only HEIC needs teaching. MPO — what a portrait or burst shot arrives as —
+    Pillow already reads, and WEBP and the rest have always been built in.
+
+    Called at boot from app.py and again from the intake path, because the
+    intake path is also reached by scripts and tests that never import app.
+    Registering twice is free; registering not at all is a funnel that refuses
+    every photograph taken on an iPhone.
+    """
+    global _formats_registered
+    if _formats_registered:
+        return
+    with _formats_lock:
+        if _formats_registered:
+            return
+        try:
+            from pillow_heif import register_heif_opener
+            register_heif_opener()
+            log.info("visualizer: HEIC/HEIF support registered")
+        except Exception as exc:
+            # Not fatal, and deliberately so. Everything that is not HEIC still
+            # works; an iPhone photographing straight from the camera does not.
+            # Loud enough to find in a log, quiet enough not to stop a boot.
+            log.error("pillow-heif is not available (%s) — HEIC uploads will "
+                      "be refused. Run: pip install -r requirements.txt",
+                      type(exc).__name__)
+        # Set either way: a second attempt would fail identically, and the
+        # error belongs in the log once rather than on every upload.
+        _formats_registered = True
+
+
 def normalise(raw):
     """Bytes off a phone -> a plain JPEG with nothing else in it.
 
@@ -237,20 +290,26 @@ def normalise(raw):
         log.error("Pillow is not installed — visualizer uploads are refused")
         raise IntakeError("unavailable", "Uploads are briefly unavailable.")
 
+    register_image_formats()
+
     try:
         # `open` reads the header and stops. The pixels are not decoded until
         # `load()`, which is what makes the size check below worth anything:
         # it happens before we have allocated for them.
+        #
+        # What decides the format is this call and nothing else. The filename,
+        # the extension and the Content-Type are all the client's word for it,
+        # and on a phone all three are routinely wrong — a share sheet will
+        # hand over a HEIC called IMG_0001.JPG marked image/jpeg. The bytes
+        # are the only honest answer.
         img = Image.open(io.BytesIO(raw))
         fmt = img.format
     except Exception:
-        raise IntakeError(
-            "not_an_image", "That doesn't look like a photo. JPEG or PNG, "
-                            "please.")
+        raise IntakeError("not_an_image", UNREADABLE)
 
-    if fmt not in ALLOWED_FORMATS:
-        raise IntakeError(
-            "wrong_format", "That's a %s. JPEG or PNG, please." % (fmt or "file"))
+    if fmt in REFUSED_FORMATS:
+        log.info("visualizer: refused a %s upload", fmt)
+        raise IntakeError("wrong_format", UNREADABLE)
 
     # Checked here rather than by moving Pillow's own `MAX_IMAGE_PIXELS`, which
     # is a module global: two uploads at once would race on it and leave it
@@ -266,9 +325,25 @@ def normalise(raw):
             "work better.")
 
     try:
+        # A portrait or burst shot arrives as MPO, which is several JPEGs in
+        # one file — the photograph, then a depth map or the frames either side
+        # of it. Frame 0 is the picture that was taken, and it is what Pillow
+        # lands on already; seeking to it says so out loud and costs nothing.
+        if getattr(img, "n_frames", 1) > 1:
+            img.seek(0)
+
         img.load()
+
         # Reads the orientation tag, rotates the pixels, returns an image with
         # no orientation tag left to disagree with them.
+        #
+        # Right for every format here, including the two that disagree about
+        # who does the rotating. A JPEG or an MPO arrives unrotated with a tag
+        # saying which way is up, and this is what stands it up. A HEIC does
+        # not: libheif applies the container's rotation while decoding, and
+        # pillow-heif rewrites the EXIF tag to 1 on the way out precisely so
+        # that a caller doing this does not rotate it a second time. Both
+        # paths end with upright pixels and no tag.
         img = ImageOps.exif_transpose(img) or img
         img = img.convert("RGB")
 
@@ -287,7 +362,7 @@ def normalise(raw):
                  optimize=True)
     except Exception:
         log.exception("visualizer: re-encode failed")
-        raise IntakeError("unreadable", "We couldn't read that photo.")
+        raise IntakeError("unreadable", UNREADABLE)
 
     return out.getvalue()
 

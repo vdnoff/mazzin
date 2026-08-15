@@ -12,11 +12,22 @@ from flask import Flask, send_from_directory
 
 import config
 import database
+import visualizer
 from payments import bp as payments_bp
 from tracking import bp as tracking_bp
 from visualizer import bp as visualizer_bp
 
 logging.basicConfig(level=logging.INFO)
+
+# HEIC is what an iPhone camera produces, and Pillow cannot read it without a
+# plugin. Registered once here, at boot, rather than on the first upload.
+#
+# It is a call and not an import because `deploy.sh` deliberately does not
+# install dependencies: between a deploy and a human running pip, the package
+# is missing, and a bare top-level import of it would take the whole site down
+# rather than degrade to refusing HEIC uploads. Same reasoning the Anthropic
+# SDK is imported inside a function in reports.py.
+visualizer.register_image_formats()
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 
