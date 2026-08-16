@@ -183,3 +183,6 @@ bottom.
 
 ## 2026-08-16 — claude/steps-strip
 - 3-step strip
+
+## 2026-08-16 — claude/steps-strip
+- step strip polish
