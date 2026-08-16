@@ -86,6 +86,8 @@
   var sectionIO = null;         // one observer, outliving any single render
   var unlockedCs = null;        // the token this report was opened with
   var vizNode = null;           // the visualizer section, placed once
+  var vizDead = false;          // the server said not for this reader, ever
+  var vizTeaserSeen = false;    // the locked panel has been counted once
   var vizState = null;          // the last status body the server sent
   var vizTimer = null;          // the poll, running only while it generates
   var vizBusy = false;          // a request of ours is in flight
@@ -955,6 +957,12 @@
 
     var also = alsoSection(sections);
     if (also) el.report.appendChild(also);
+
+    // Last, so it lands at the top of a report that has just been rebuilt from
+    // nothing. On the funnel that takes the photo early this is the first
+    // thing under the style name — their kitchen, and the transformation they
+    // have not bought yet — and on every other funnel it does not exist.
+    placeVisualizer();
 
     layoutDissolves();
     // A font swap changes the metrics the mask was measured against.
@@ -2209,14 +2217,38 @@
     return block;
   }
 
-  // Available only where all three are true: the funnel offers it, we know
-  // which purchase this is, and the report is the paid one.
+  // On the paid page it needs the purchase token. On the free one it needs a
+  // funnel that has opted into taking the photo early, and the session id the
+  // quiz has been sending with every event since boot.
   function vizOn() {
-    return !!(vizConfig() && unlockedCs);
+    var block = vizConfig();
+    if (!block) return false;
+    if (unlockedCs) return true;
+    return block.pre_purchase === true && !!sessionId;
+  }
+
+  // The credential this page has, as the query string every call appends.
+  // Which one it is decides almost nothing below — the server draws the same
+  // line in one place and the client does not need a second copy of it.
+  function vizAuth() {
+    if (unlockedCs) return "cs=" + encodeURIComponent(unlockedCs);
+    return "session_id=" + encodeURIComponent(sessionId)
+      + "&funnel=" + encodeURIComponent(slug);
+  }
+
+  // Before the money. The section is the same article in the same place either
+  // way; what changes is that there is no generating and no result, because
+  // the thing that costs money has not been bought yet.
+  function vizPre() {
+    return !unlockedCs;
   }
 
   function placeVisualizer() {
-    if (vizNode || !vizOn()) return;
+    // `vizDead` and not `vizNode`: the free page rebuilds its report from
+    // scratch, so a node that is no longer in the document is a node to
+    // replace rather than a reason to stop.
+    if (vizDead || !vizOn()) return;
+    if (vizNode && vizNode.parentNode === el.report) return;
     var block = vizConfig();
 
     vizNode = elm("article", "section section-visualizer");
@@ -2224,6 +2256,14 @@
     vizNode.appendChild(elm("h2", "section-title",
                             block.title || "Your Kitchen, Transformed"));
     if (block.intro) vizNode.appendChild(elm("p", "viz-intro", block.intro));
+
+    // What it costs, said before a photograph is asked for rather than after
+    // one has been handed over. The upload moving ahead of the payment is only
+    // fair if the price moved ahead of the upload.
+    if (vizPre() && block.price_note) {
+      vizNode.appendChild(elm("p", "viz-price", withPrice(block.price_note)));
+    }
+
     vizNode.appendChild(elm("div", "viz-body"));
 
     // First in the document, whatever else has already landed. Sections arrive
@@ -2231,10 +2271,11 @@
     el.report.insertBefore(vizNode, el.report.firstChild);
     observeSection(vizNode);
 
-    // What state this purchase is already in. Somebody who left mid-render and
-    // came back through the link in their email must find the render, not an
-    // upload box offering to start again.
-    vizFetch("/api/visualizer/status?cs=" + encodeURIComponent(unlockedCs));
+    // What state this reader is already in. Somebody who left mid-render and
+    // came back through the link in their email must find the render, and
+    // somebody who uploaded a photo yesterday must find the photo — not an
+    // empty box offering to start again.
+    if (!vizState) vizFetch("/api/visualizer/status?" + vizAuth());
     vizRender();
   }
 
@@ -2245,9 +2286,10 @@
   function vizRemove() {
     vizStopPoll();
     if (vizNode && vizNode.parentNode) vizNode.parentNode.removeChild(vizNode);
-    // Left set, not cleared: `placeVisualizer` checks it to decide whether the
-    // section has already been dealt with, and putting back one the server has
-    // just refused would be a loop.
+    // Retired for the life of the page. The free report re-renders and would
+    // otherwise put back a section the server has just said is not on offer.
+    vizDead = true;
+    vizNode = null;
     vizState = null;
   }
 
@@ -2259,7 +2301,10 @@
 
     if (vizUploading) {
       vizUploading = false;
-      track("viz_upload");
+      // Which side of the money it happened on. The same act before and after
+      // a purchase is two different events, and one name for both would make
+      // the whole point of moving the upload earlier unmeasurable.
+      track("viz_upload", null, { phase: vizPre() ? "pre" : "post" });
     }
     if (status === "ready" && !vizSeen.ready) {
       vizSeen.ready = true;
@@ -2281,7 +2326,7 @@
     if (vizTimer) return;
     vizTimer = setInterval(function () {
       if (vizBusy) return;
-      vizFetch("/api/visualizer/status?cs=" + encodeURIComponent(unlockedCs));
+      vizFetch("/api/visualizer/status?" + vizAuth());
     }, VIZ_POLL_MS);
   }
 
@@ -2344,13 +2389,104 @@
       host.appendChild(elm("p", "viz-error", vizState.message));
     }
 
+    var have = status === "uploaded" || (vizState && vizState.has_source);
+
+    // Before the money there are two states and no more. Generating and ready
+    // are not reachable here — the endpoint behind them takes a purchase token
+    // and nothing else — so the pre-purchase branch is written as the two
+    // states it actually has rather than as the paid machine with parts
+    // switched off.
+    if (vizPre()) {
+      host.appendChild(have ? vizTeaser(block) : vizDrop(block));
+      renderManifestRows();
+      return;
+    }
+
     if (status === "generating") host.appendChild(vizWorking(block));
     else if (status === "ready") host.appendChild(vizResult(block));
-    else if (status === "uploaded" || (vizState && vizState.has_source)) {
-      host.appendChild(vizReady(block));
-    } else host.appendChild(vizDrop(block));
+    else if (have) host.appendChild(vizReady(block));
+    else host.appendChild(vizDrop(block));
 
     if (status !== "generating") vizStopRotate();
+  }
+
+  // Their kitchen, and beside it the same photograph behind a lock.
+  //
+  // The blurred panel is their own picture rather than a stock frame or a grey
+  // box, and that is the entire idea: what is being withheld is visibly theirs.
+  // A placeholder anybody could have been shown withholds nothing.
+  function vizTeaser(block) {
+    var frag = document.createDocumentFragment();
+
+    var pair = elm("div", "viz-pair viz-pair-teaser");
+
+    var before = elm("figure", "viz-half");
+    before.appendChild(vizImg(vizSourceUrl()));
+    before.appendChild(elm("figcaption", "viz-caption",
+                           block.before_label_pre || block.before_label
+                           || "Your kitchen"));
+    pair.appendChild(before);
+
+    var after = elm("figure", "viz-half is-locked");
+    var shade = elm("div", "viz-shade");
+    var blurred = vizImg(vizSourceUrl());
+    blurred.className = "viz-img is-blurred";
+    shade.appendChild(blurred);
+    shade.appendChild(icon("lock", "viz-lock"));
+    after.appendChild(shade);
+    after.appendChild(elm("figcaption", "viz-caption",
+                          fillHook(block.locked_label
+                                   || "Your {style} transformation",
+                                   hookWordsFor(styleById(winnerStyleId)))));
+    // The whole panel asks the same question the offer answers, so touching
+    // any of it goes there. `focusCta` and not `scrollToCommerce`: on a funnel
+    // whose offer is still on its own screen the commerce block is hidden and
+    // scrolling to it does nothing, which would make the lock a dead end.
+    after.addEventListener("click", focusCta);
+    pair.appendChild(after);
+
+    frag.appendChild(pair);
+
+    if (block.locked_cta) {
+      frag.appendChild(vizButton("viz-go", block.locked_cta, focusCta));
+    }
+
+    var swap = elm("label", "viz-replace",
+                   block.replace_cta || "Use a different photo");
+    swap.appendChild(vizFileInput(block));
+    frag.appendChild(swap);
+
+    vizWatchTeaser(pair);
+    return frag;
+  }
+
+  function vizImg(src) {
+    var img = document.createElement("img");
+    img.className = "viz-img";
+    img.src = src;
+    img.alt = "";
+    return img;
+  }
+
+  // The offer reaching the reader, counted once. It is the visualizer's
+  // `paywall_view`: without it, "uploaded a photo" and "was actually shown
+  // what they would get" are the same number, and they are not.
+  function vizWatchTeaser(node) {
+    if (vizTeaserSeen) return;
+    var fire = function () {
+      if (vizTeaserSeen) return;
+      vizTeaserSeen = true;
+      track("viz_teaser_view");
+    };
+    if (!window.IntersectionObserver) { fire(); return; }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        io.disconnect();
+        fire();
+      });
+    }, { threshold: 0.4 });
+    io.observe(node);
   }
 
   // The line the reader is told before they take the photograph. Almost every
@@ -2398,6 +2534,14 @@
                          block.upload_cta || "Choose a photo"));
     zone.appendChild(vizGuide(block));
     zone.appendChild(vizFileInput(block));
+
+    // What happens to the photograph, answered before it is asked. It is the
+    // first thing anybody sensible wonders before handing over a picture of
+    // the inside of their house, and it belongs inside the tap target so it
+    // cannot be scrolled past on the way to the picker.
+    if (block.privacy_note) {
+      zone.appendChild(elm("p", "viz-privacy", block.privacy_note));
+    }
     return zone;
   }
 
@@ -2475,8 +2619,7 @@
   }
 
   function vizSourceUrl() {
-    return "/api/visualizer/image?which=source&cs="
-      + encodeURIComponent(unlockedCs);
+    return "/api/visualizer/image?which=source&" + vizAuth();
   }
 
   function vizResult(block) {
@@ -2560,8 +2703,7 @@
     // server refused is a `viz_failed`, and counting it as both would make the
     // upload-to-generate rate read better than it is.
     vizUploading = true;
-    vizFetch("/api/visualizer/upload?cs=" + encodeURIComponent(unlockedCs),
-             body, vizFailed);
+    vizFetch("/api/visualizer/upload?" + vizAuth(), body, vizFailed);
   }
 
   function vizGenerate() {
@@ -2574,8 +2716,7 @@
     vizState = { status: "generating",
                  remaining: (vizState && vizState.remaining) || 0 };
     vizRender();
-    vizFetch("/api/visualizer/generate?cs=" + encodeURIComponent(unlockedCs),
-             new FormData(), vizFailed);
+    vizFetch("/api/visualizer/generate?" + vizAuth(), new FormData(), vizFailed);
   }
 
   // A refusal the server explained, or a network failure it could not. Either
@@ -2972,8 +3113,37 @@
     el.payProof.hidden = false;
   }
 
+  // Once the photo is on the server, the row that promises a visualization
+  // stops describing something they will hand over and starts describing
+  // something already waiting. Config copy, and only on the funnel that has
+  // both the key and a photo — everywhere else the manifest is what it was.
+  function manifestRows() {
+    var rows = (cfg.checkout.manifest || []).slice();
+    var block = vizConfig();
+    var have = vizState && vizState.has_source && !vizState.paid;
+    if (rows.length && have && block && block.manifest_uploaded) {
+      rows[0] = block.manifest_uploaded;
+    }
+    return rows;
+  }
+
+  // The manifest is built once when the offer is rendered, and the photo can
+  // arrive after that. Re-running it is cheap and keeps the two in step
+  // without the upload path needing to know how a manifest row is built.
+  //
+  // Guarded on `manifestHead` rather than on `manifest`: the head is created
+  // by the same setup pass that first renders the rows, so its absence means
+  // the offer has not been built yet — and re-rendering into a half-built one
+  // empties the list and throws on the way out, leaving no manifest at all.
+  // The first real render picks the photo up anyway.
+  function renderManifestRows() {
+    if (el.manifest && el.manifestHead && cfg && cfg.checkout) {
+      renderManifest();
+    }
+  }
+
   function renderManifest() {
-    var rows = cfg.checkout.manifest || [];
+    var rows = manifestRows();
     // `{n}` rather than a written-out six, for the same reason the price is a
     // slot: a number in copy that describes a list should come from the list.
     el.manifestHead.textContent =

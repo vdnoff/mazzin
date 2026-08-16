@@ -1,11 +1,20 @@
-"""Photo in, restyled kitchen out. Post-purchase, one funnel, two renders.
+"""Photo in, restyled kitchen out. One funnel, two renders.
 
 Owns four routes and everything behind them: taking a photograph off a phone,
 turning it into something safe to keep, building the edit instruction out of
 the report that was already written for this buyer, calling the image model,
 and serving the two pictures back to the one person entitled to see them.
 
-Three things shape most of the decisions here.
+**The upload happens before the money and the generation happens after it.**
+That split is the shape of the whole module. Somebody can put a photo of their
+kitchen up while they are still deciding, and see it sitting next to a locked
+panel where the transformation will be — but the thing that bills an account
+is reachable only with a token Stripe's webhook produced. So a photograph has
+two possible owners: a quiz session, which owns a file and nothing else, and a
+purchase, which owns everything. `Subject` is where the two meet, and
+`_resolve(allow_pending=...)` is the one line that separates them.
+
+Three things shape most of the remaining decisions.
 
 **It costs money per use.** Every other endpoint in this app is free to serve.
 This one bills an external account each time it succeeds, so the credit count
@@ -16,8 +25,9 @@ failure that produced no image gives the credit back rather than eating it.
 **The input is a photograph of somebody's home.** It is stripped of every EXIF
 tag on the way in — a phone photo carries GPS coordinates, a device serial and
 a timestamp, and none of that is ours to keep. It is stored outside static/,
-served only through a route that checks the purchase token, and never named in
-a log line.
+served only through a route that checks a credential, and never named in a log
+line. Most uploads are from people who never buy, so most of them are deleted
+unread within two days rather than kept against a purchase that never came.
 
 **The model is slow and the browser is a phone.** Generation runs on a
 background thread and the page polls a status endpoint, exactly as the report
@@ -31,6 +41,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import threading
 import time
 import urllib.error
@@ -80,6 +91,23 @@ _formats_registered = False
 _formats_lock = threading.Lock()
 
 PLACEHOLDER_RE = re.compile(r"\{(\w+)\}")
+
+# The quiz session, which is what a photograph is filed under before there is
+# a purchase to file it under. Same shape tracking.py and payments.py validate.
+UUID_RE = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+    re.IGNORECASE,
+)
+
+# A session may upload once it has actually run the funnel. Pre-purchase upload
+# is by nature an endpoint nobody has authenticated against — that is the whole
+# point of it — so this is what stops it being a free eight megabytes of disk
+# to anyone who can spell a UUID. Every real reader has fired `funnel_start`
+# and `result_view` long before the section is on their screen.
+SELECT_SESSION_SEEN_SQL = (
+    "SELECT 1 AS seen FROM events "
+    "WHERE session_id = %s AND funnel = %s LIMIT 1"
+)
 
 SELECT_PURCHASE_SQL = (
     "SELECT id, funnel, status FROM purchases "
@@ -183,6 +211,29 @@ def result_path(purchase_id, n):
     return os.path.join(_dir(purchase_id), "result_%d.jpg" % int(n))
 
 
+# A photograph uploaded before there is a purchase to hang it on, kept under
+# the session that took the quiz. It becomes a real one at the webhook, or it
+# is deleted unread.
+PENDING = "pending"
+
+
+def pending_dir(session_id):
+    """The directory for one un-bought session.
+
+    The name is a UUID and it is re-checked here rather than trusted from the
+    caller, because this is the one path component in the whole module that
+    originates in a request body. A session id that is not a UUID cannot
+    address a directory at all, so there is nothing to traverse with.
+    """
+    if not isinstance(session_id, str) or not UUID_RE.match(session_id):
+        raise ValueError("session_id")
+    return os.path.join(config.VISUALIZER_DIR, PENDING, session_id)
+
+
+def pending_source(session_id):
+    return os.path.join(pending_dir(session_id), "source.jpg")
+
+
 def _write_atomic(path, data):
     """Write a file that is never half there.
 
@@ -205,6 +256,125 @@ def _write_atomic(path, data):
         except OSError:
             pass
         raise
+
+
+# --- pending photographs come and go ---------------------------------------
+
+
+def purge_pending(max_age_s=None):
+    """Delete un-bought photographs older than the window. Returns how many.
+
+    Almost everybody who uploads one does not buy, so this is the path most
+    photographs take: they are read by nobody, they become a purchase's or
+    they are removed. Forty-eight hours is long enough for somebody to come
+    back to a tab the next evening and short enough that a picture of a
+    stranger's kitchen is not sitting on a disk a week later.
+
+    Age is the file's own mtime rather than the directory's, so re-uploading
+    restarts the clock the way somebody still deciding would expect.
+
+    Never raises. It runs on the upload path and from cron, and neither of
+    those should fail because a directory was removed underneath it.
+    """
+    if max_age_s is None:
+        max_age_s = config.VISUALIZER_PENDING_MAX_AGE_S
+    root = os.path.join(config.VISUALIZER_DIR, PENDING)
+    cutoff = time.time() - max_age_s
+    removed = 0
+    try:
+        names = os.listdir(root)
+    except OSError:
+        return 0
+
+    for name in names:
+        path = os.path.join(root, name)
+        try:
+            source = os.path.join(path, "source.jpg")
+            if os.path.isfile(source):
+                if os.path.getmtime(source) > cutoff:
+                    continue
+            elif os.path.getmtime(path) > cutoff:
+                # An empty directory, left by a claim or a half-finished write.
+                # Aged out on its own mtime rather than kept forever.
+                continue
+            shutil.rmtree(path, ignore_errors=True)
+            removed += 1
+        except OSError:
+            continue
+    if removed:
+        log.info("visualizer: purged %d pending photo(s)", removed)
+    return removed
+
+
+# The sweep walks every pending directory, which is fine once in a while and
+# silly on every upload. This is the last time it ran, so a busy hour costs one
+# sweep rather than one per photograph.
+_last_purge = [0.0]
+
+
+def maybe_purge_pending():
+    """Sweep at most once per interval, from whichever request gets there."""
+    now = time.time()
+    if now - _last_purge[0] < config.VISUALIZER_PURGE_EVERY_S:
+        return
+    _last_purge[0] = now
+    try:
+        purge_pending()
+    except Exception:
+        log.exception("visualizer: pending purge failed")
+
+
+def claim_pending(purchase_id, session_id, cfg):
+    """Move a session's photograph onto a purchase. Returns True if one moved.
+
+    Called from the webhook, once, after the purchase row exists. Everything
+    after this point is the flow that already existed: there is a photo under
+    the purchase and a row saying so, exactly as if it had been uploaded from
+    the paid page.
+
+    Idempotent by construction rather than by checking: a replayed webhook
+    finds nothing left to move, because the first one moved it.
+    """
+    if settings(cfg) is None:
+        return False
+    try:
+        source = pending_source(session_id)
+    except ValueError:
+        return False
+    if not os.path.isfile(source):
+        return False
+
+    target = source_path(purchase_id)
+    try:
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        # A rename, not a copy: it is atomic, it cannot half-succeed, and it
+        # leaves no second copy of somebody's kitchen behind to be collected
+        # later. Both paths are under VISUALIZER_DIR, so it never crosses a
+        # filesystem.
+        os.replace(source, target)
+    except OSError:
+        log.exception("visualizer: could not move the pending photo onto "
+                      "purchase %s", purchase_id)
+        return False
+
+    try:
+        shutil.rmtree(pending_dir(session_id), ignore_errors=True)
+    except (OSError, ValueError):
+        pass
+
+    try:
+        database.execute(UPSERT_STATE_SQL, (purchase_id,))
+    except Exception:
+        # The photo is in place and the row is not. The paid page's status
+        # endpoint reports `none` while the file sits there, and re-uploading
+        # from the paid page recovers it — which is the existing flow, so this
+        # degrades to what shipped before rather than to nothing.
+        log.exception("visualizer: photo moved but the row failed for "
+                      "purchase %s", purchase_id)
+        return False
+
+    log.info("visualizer: pending photo claimed by purchase %s", purchase_id)
+    return True
 
 
 # --- taking a photograph in ------------------------------------------------
@@ -691,6 +861,119 @@ class Denied(Exception):
         self.code = code
 
 
+class Subject:
+    """Whose photograph this is, and which of the two ways we know that.
+
+    Two things can own a photo here and they are not the same kind of thing.
+
+    A **purchase** is identified by the result-link token, has been confirmed
+    paid by Stripe, and is the only thing that may ever spend a generation.
+
+    A **session** is identified by the quiz session id and is nobody in
+    particular — the reader has not paid and may never. It can put a photo up
+    and look at it, and that is the whole list. Keeping the two as one object
+    with a `paid` flag rather than as two code paths is deliberate: the intake
+    pipeline, the storage rules and the image route are genuinely identical
+    for both, and the one place they differ is the one place that matters, so
+    it is written out on its own rather than spread across four routes.
+    """
+
+    def __init__(self, cfg, block, token, purchase=None, session_id=None):
+        self.cfg = cfg
+        self.block = block
+        self.token = token          # what the browser calls back with
+        self.purchase = purchase
+        self.session_id = session_id
+
+    @property
+    def paid(self):
+        return self.purchase is not None
+
+    @property
+    def purchase_id(self):
+        return self.purchase["id"] if self.purchase else None
+
+    def source(self):
+        return (source_path(self.purchase["id"]) if self.paid
+                else pending_source(self.session_id))
+
+    def query(self):
+        """The credential, as the browser must send it back."""
+        if self.paid:
+            return "cs=" + urllib.parse.quote(self.token, safe="")
+        return "session_id=%s&funnel=%s" % (
+            urllib.parse.quote(self.session_id, safe=""),
+            urllib.parse.quote(self.cfg.get("slug") or "", safe=""))
+
+
+def _param(name):
+    value = request.args.get(name)
+    if not value and request.method == "POST":
+        value = request.form.get(name)
+    return value
+
+
+def _pending_subject():
+    """A reader who has run the quiz and not bought anything, or None.
+
+    Deliberately weaker than a purchase and deliberately not nothing. What it
+    proves is that this session actually ran this funnel — there is an event
+    row for it — which is not identity, and is not meant to be. It is the
+    difference between an endpoint anyone can write eight megabytes to and one
+    that costs a full quiz run per photograph.
+    """
+    session_id = _param("session_id")
+    if not isinstance(session_id, str) or not UUID_RE.match(session_id):
+        return None
+
+    slug = _param("funnel")
+    if not config.funnel_exists(slug):
+        raise Denied(404, "no_funnel")
+
+    try:
+        cfg = config.load_funnel(slug)
+    except (KeyError, ValueError, OSError):
+        raise Denied(404, "no_funnel")
+
+    block = settings(cfg)
+    if block is None:
+        raise Denied(404, "no_visualizer")
+    if block.get("pre_purchase") is not True:
+        # The funnel offers the feature but not before the money. Same answer
+        # as a funnel that does not offer it at all, because from the browser's
+        # side it is the same fact: there is nothing for you here yet.
+        raise Denied(404, "no_visualizer")
+
+    try:
+        seen = database.query_one(SELECT_SESSION_SEEN_SQL, (session_id, slug))
+    except Exception:
+        log.exception("visualizer: session lookup failed")
+        raise Denied(500, "lookup_failed")
+    if not seen:
+        raise Denied(403, "unknown_session")
+
+    return Subject(cfg, block, session_id, session_id=session_id)
+
+
+def _resolve(allow_pending):
+    """The subject for this request, or a refusal.
+
+    `allow_pending` is the COGS line, written once. Everything that only
+    handles a photograph the reader already owns takes either credential;
+    generation takes the paid one and nothing else, because a generation is
+    the one operation here that bills an account.
+    """
+    if _param("cs"):
+        return _authorise()
+    if allow_pending:
+        pending = _pending_subject()
+        if pending is not None:
+            return pending
+    # No usable credential of either kind. Answered as a bad token rather than
+    # as a missing session so the two modes cannot be told apart by probing.
+    raise Denied(400, "bad_token")
+
+
 def _authorise():
     """Resolve the result-link token into (token, purchase, cfg, block).
 
@@ -728,7 +1011,7 @@ def _authorise():
     if block is None:
         raise Denied(404, "no_visualizer")
 
-    return cs, purchase, cfg, block
+    return Subject(cfg, block, cs, purchase=purchase)
 
 
 def _denied(exc):
@@ -741,19 +1024,26 @@ def _denied(exc):
 @bp.post("/api/visualizer/upload")
 def upload():
     try:
-        cs, purchase, cfg, block = _authorise()
+        who = _resolve(allow_pending=True)
     except Denied as exc:
         return _denied(exc)
 
-    state = read_state(purchase["id"]) or {}
-    if state.get("status") == GENERATING and not _stale(state):
-        # Replacing the photograph under a render that is already running would
-        # produce a before/after of two different rooms. Only while it really
-        # is running, though: the same staleness rule the status endpoint uses,
-        # so a worker that died does not lock the picker for five minutes on a
-        # page that has already given up on it.
-        return jsonify({"error": "generating",
-                        "message": "Hold on — a transformation is running."}), 409
+    if who.paid:
+        state = read_state(who.purchase_id) or {}
+        if state.get("status") == GENERATING and not _stale(state):
+            # Replacing the photograph under a render that is already running
+            # would produce a before/after of two different rooms. Only while
+            # it really is running, though: the same staleness rule the status
+            # endpoint uses, so a worker that died does not lock the picker for
+            # five minutes on a page that has already given up on it.
+            return jsonify(
+                {"error": "generating",
+                 "message": "Hold on — a transformation is running."}), 409
+    else:
+        # Cheap, and on the one path that creates pending photographs, so the
+        # sweep runs about as often as they arrive. Before the write rather
+        # than after, so a burst cannot outpace it.
+        maybe_purge_pending()
 
     upload_file = request.files.get("photo")
     if upload_file is None:
@@ -775,28 +1065,36 @@ def upload():
         return jsonify({"error": exc.code, "message": exc.message}), 400
 
     try:
-        _write_atomic(source_path(purchase["id"]), jpeg)
+        _write_atomic(who.source(), jpeg)
     except Exception:
         log.exception("visualizer: could not store the source photo")
         return jsonify({"error": "store_failed",
                         "message": "We couldn't save that. Try again."}), 500
 
-    try:
-        database.execute(UPSERT_STATE_SQL, (purchase["id"],))
-    except Exception:
-        log.exception("visualizer: could not record the upload")
-        return jsonify({"error": "store_failed",
-                        "message": "We couldn't save that. Try again."}), 500
+    # Only a purchase has a row. A session's photograph is a file and nothing
+    # else — there is no state to keep about somebody who has not bought
+    # anything, and a table of them would be a list of people who did not.
+    if who.paid:
+        try:
+            database.execute(UPSERT_STATE_SQL, (who.purchase_id,))
+        except Exception:
+            log.exception("visualizer: could not record the upload")
+            return jsonify({"error": "store_failed",
+                            "message": "We couldn't save that. Try again."}), 500
 
-    return jsonify(_status_body(cs, purchase, block)), 200
+    return jsonify(_status_body(who)), 200
 
 
 @bp.post("/api/visualizer/generate")
 def generate():
     try:
-        cs, purchase, cfg, block = _authorise()
+        # The COGS line. A session id gets a reader as far as putting a photo
+        # up and looking at it; the thing that costs money is reachable only
+        # with a token Stripe's webhook produced.
+        who = _resolve(allow_pending=False)
     except Denied as exc:
         return _denied(exc)
+    cs, purchase, cfg, block = who.token, who.purchase, who.cfg, who.block
 
     state = read_state(purchase["id"])
     if not state:
@@ -804,7 +1102,7 @@ def generate():
                         "message": "Upload a photo first."}), 409
     if state.get("status") == GENERATING and not _stale(state):
         # Already running. Not an error — the page just polls.
-        return jsonify(_status_body(cs, purchase, block)), 200
+        return jsonify(_status_body(who)), 200
 
     limit = max_generations(block)
     if int(state.get("generations") or 0) >= limit:
@@ -827,7 +1125,7 @@ def generate():
 
     if not claim(purchase["id"], limit):
         # Lost the race, or ran into a ceiling between the read above and here.
-        return jsonify(_status_body(cs, purchase, block)), 200
+        return jsonify(_status_body(who)), 200
 
     threading.Thread(
         target=run_generation,
@@ -835,7 +1133,7 @@ def generate():
         daemon=True,
     ).start()
 
-    return jsonify(_status_body(cs, purchase, block)), 200
+    return jsonify(_status_body(who)), 200
 
 
 def _stale(state):
@@ -845,13 +1143,33 @@ def _stale(state):
     return (time.time() - float(started)) > config.VISUALIZER_STALE_S
 
 
-def _status_body(cs, purchase, block):
+def _status_body(who):
     """What the page polls for. Re-read every time; never cached."""
-    state = read_state(purchase["id"])
-    limit = max_generations(block)
+    limit = max_generations(who.block)
+    has_source = os.path.isfile(who.source())
+    source_url = "/api/visualizer/image?which=source&" + who.query()
+
+    # A session has no row and needs none. There are exactly two things to
+    # know about it — is there a photo, and where can the page draw it — and
+    # `paid: false` is what tells the browser to render the teaser rather than
+    # the machinery.
+    if not who.paid:
+        body = {"status": UPLOADED if has_source else NONE,
+                "paid": False,
+                "generations": 0, "max_generations": limit,
+                "remaining": limit, "has_source": has_source}
+        if has_source:
+            body["source_url"] = source_url
+        return body
+
+    state = read_state(who.purchase_id)
     if not state:
-        return {"status": NONE, "generations": 0, "max_generations": limit,
-                "remaining": limit, "has_source": False}
+        # A purchase with a photo already on disk and no row is what a webhook
+        # that moved the file and then failed to write leaves behind. Reported
+        # as `none` so the paid page offers the picker, which rebuilds both.
+        return {"status": NONE, "paid": True, "generations": 0,
+                "max_generations": limit, "remaining": limit,
+                "has_source": has_source}
 
     status = state.get("status") or UPLOADED
     if status == GENERATING and _stale(state):
@@ -862,35 +1180,35 @@ def _status_body(cs, purchase, block):
     attempts = int(state.get("attempts") or 0)
     body = {
         "status": status,
+        "paid": True,
         "generations": used,
         "max_generations": limit,
         "remaining": max(0, limit - used),
-        "has_source": os.path.isfile(source_path(purchase["id"])),
+        "has_source": has_source,
+        "source_url": source_url,
     }
     if status == READY and state.get("result_n"):
         # `v` is which render this is, so a regenerate changes the URL and the
         # browser fetches the new picture instead of showing the cached one.
-        body["url"] = "/api/visualizer/image?which=result&cs=%s&v=%d" % (
-            urllib.parse.quote(cs, safe=""), int(state["result_n"]))
-        body["source_url"] = "/api/visualizer/image?which=source&cs=%s" % (
-            urllib.parse.quote(cs, safe=""))
+        body["url"] = "/api/visualizer/image?which=result&%s&v=%d" % (
+            who.query(), int(state["result_n"]))
     if status == FAILED:
         # Whether the button comes back. A purchase that has run out of
         # attempts is told so once instead of being offered a retry that the
         # server will refuse.
         body["retriable"] = attempts < config.VISUALIZER_MAX_ATTEMPTS
-        body["message"] = (block.get("error_text") if body["retriable"]
-                           else block.get("error_final"))
+        body["message"] = (who.block.get("error_text") if body["retriable"]
+                           else who.block.get("error_final"))
     return body
 
 
 @bp.get("/api/visualizer/status")
 def status():
     try:
-        cs, purchase, cfg, block = _authorise()
+        who = _resolve(allow_pending=True)
     except Denied as exc:
         return _denied(exc)
-    resp = jsonify(_status_body(cs, purchase, block))
+    resp = jsonify(_status_body(who))
     resp.headers["Cache-Control"] = "no-store"
     return resp, 200
 
@@ -902,22 +1220,29 @@ def image():
     These files are not in static/ and never will be: static/ is served by the
     web server straight off disk with no idea who is asking, and behind a CDN
     that would cache the inside of somebody's house at an edge node. Here the
-    token is checked first and the response is marked private and
+    credential is checked first and the response is marked private and
     uncacheable — the browser may keep it, nothing in between may.
+
+    Both credentials reach it, because the teaser has to draw the reader their
+    own photograph before they have paid for anything. Only a purchase has a
+    render to ask for; a session asking for one is asking for a file that does
+    not exist, and is told so.
     """
     try:
-        _cs, purchase, cfg, block = _authorise()
+        who = _resolve(allow_pending=True)
     except Denied as exc:
         return _denied(exc)
 
     which = request.args.get("which") or "result"
     if which == "source":
-        path = source_path(purchase["id"])
+        path = who.source()
     elif which == "result":
-        state = read_state(purchase["id"]) or {}
+        if not who.paid:
+            return jsonify({"error": "not_ready"}), 404
+        state = read_state(who.purchase_id) or {}
         if state.get("status") != READY or not state.get("result_n"):
             return jsonify({"error": "not_ready"}), 404
-        path = result_path(purchase["id"], state["result_n"])
+        path = result_path(who.purchase_id, state["result_n"])
     else:
         return jsonify({"error": "bad_which"}), 400
 

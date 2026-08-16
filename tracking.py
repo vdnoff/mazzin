@@ -58,7 +58,36 @@ ALLOWED_EVENTS = {
     "viz_generate",
     "viz_ready",
     "viz_failed",
+    # The locked panel reaching the reader's screen: their own kitchen beside
+    # the transformation they have not bought. It is the visualizer's
+    # `paywall_view` — the moment the offer is actually made — and without it
+    # the upload-to-purchase rate has no denominator.
+    "viz_teaser_view",
 }
+
+# `viz_upload` happens on both sides of the money now, and the two are
+# different events wearing one name: one is somebody still deciding, the other
+# is somebody who has already paid. A closed set of two, for the same reason
+# `paywall_view` has one — a field whose whole purpose is to be grouped by
+# cannot afford a typo in a client that ships to everybody.
+VIZ_UPLOAD_KEYS = frozenset(("phase",))
+VIZ_UPLOAD_PHASE = frozenset(("pre", "post"))
+
+
+def _clean_viz_upload(value):
+    """`{"phase": "pre"|"post"}` and nothing else. Raises on anything it is not.
+
+    Rebuilt rather than passed through, like every other payload here. Nothing
+    about the photograph is carried — not its name, not its size, not its
+    dimensions — and this shape is what makes that structural rather than a
+    convention somebody has to remember.
+    """
+    if set(value) != VIZ_UPLOAD_KEYS:
+        raise ValueError("extra")
+    phase = value["phase"]
+    if not isinstance(phase, str) or phase not in VIZ_UPLOAD_PHASE:
+        raise ValueError("extra")
+    return {"phase": phase}
 
 UUID_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
@@ -192,12 +221,13 @@ def _clean_paywall_view(value):
 def _clean_extra(funnel, event, value):
     """The event payload, rebuilt from validated parts. Raises on junk.
 
-    Two events carry one: a swipe says which pair it drew and which image was
-    tapped, and a paywall view says how the reader got to the offer. Every
-    string is checked against something this module can enumerate — ids this
-    funnel could actually have shown, or the closed set of sources above — and
-    the value stored is assembled here rather than passed through, so nothing
-    reaches the events column that did not come out of the config or this file.
+    Three events carry one: a swipe says which pair it drew and which image was
+    tapped, a paywall view says how the reader got to the offer, and a
+    visualizer upload says which side of the money it happened on. Every string
+    is checked against something this module can enumerate — ids this funnel
+    could actually have shown, or one of the closed sets above — and the value
+    stored is assembled here rather than passed through, so nothing reaches the
+    events column that did not come out of the config or this file.
 
     This used to take any JSON object up to four thousand characters and write
     it — which made the column a free write for anybody who found the endpoint,
@@ -211,6 +241,8 @@ def _clean_extra(funnel, event, value):
         raise ValueError("extra")
     if event == "paywall_view":
         return _clean_paywall_view(value)
+    if event == "viz_upload":
+        return _clean_viz_upload(value)
     if event != "swipe":
         raise ValueError("extra")
     if set(value) != SWIPE_EXTRA_KEYS:

@@ -578,6 +578,31 @@ def _read_tag_scores(cfg, packed):
     return _clean_tag_scores(cfg, raw)
 
 
+def _claim_visualizer_photo(purchase_id, slug, session_id):
+    """Hand this purchase the photo its session uploaded before paying.
+
+    On a funnel that takes the photograph before the money, the file is
+    already on disk under the quiz session by the time this runs. Moving it
+    here is what makes the paid page open on a picture the reader has already
+    chosen rather than on a picker asking them to choose it again.
+
+    Imported inside the function rather than at module scope: visualizer.py
+    imports this module for the checkout-session pattern, so a top-level
+    import in the other direction would be a cycle.
+
+    Never raises. A photo that does not move leaves the purchase exactly where
+    it would have been without this — the paid page's own upload still works,
+    which is the flow that shipped before any of this.
+    """
+    try:
+        import visualizer
+        cfg = config.load_funnel(slug)
+        visualizer.claim_pending(purchase_id, session_id, cfg)
+    except Exception:
+        log.exception("visualizer photo claim failed for purchase %s",
+                      purchase_id)
+
+
 def _record_side_effects(purchase_id, slug, session_id, result_style, tag_scores,
                          email=None, checkout_session=None, choices=None):
     """Report + emailed PDF + server-side purchase event.
@@ -594,6 +619,12 @@ def _record_side_effects(purchase_id, slug, session_id, result_style, tag_scores
 
     def deliver(content):
         reports.send_report_email(purchase_id, email, content, checkout_session)
+
+    # Before the report, because it is a file rename and a single INSERT while
+    # the report is a background thread and a fleet of model calls. The paid
+    # page polls both; this one should already be true when the first poll
+    # lands.
+    _claim_visualizer_photo(purchase_id, slug, session_id)
 
     try:
         reports.start_report(
