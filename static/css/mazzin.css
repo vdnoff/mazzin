@@ -212,6 +212,46 @@ body {
   white-space: nowrap;
 }
 
+/* Where the thirteen taps are going, under the line that says what it is
+   worth. Deliberately the quietest thing in the header: the loud element on
+   this screen is the question, and a second confident sentence beside the
+   money line would be two headlines arguing.
+
+   `flex: 0 0 auto` because `.lead` is display:contents — this is a flex item
+   of the header, and without it the line would be squeezed rather than take
+   its own space. The whole block is budgeted at about twenty pixels: 13px at
+   1.3 is seventeen, and the margin is the rest. */
+.journey {
+  flex: 0 0 auto;
+  margin: 4px 0 0;
+  font-family: var(--ui);
+  /* 13px is the size, and it is the size everywhere from a 390px screen up.
+     Below that it eases down rather than wrapping: the sentence needs 351px
+     of the 328px a 360px screen has, and a second line would cost 34 pixels
+     of a header that has none to give — which would come out of the cards,
+     the loudest and most useful thing on the screen. 3.34vw reaches the 13px
+     ceiling at 390 and resolves to just over 12 at 360, and the floor stops
+     it disappearing on anything narrower. */
+  font-size: clamp(11px, 3.34vw, 13px);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* The arrows carry the accent and nothing else does. They are the part that
+   makes it read as a sequence rather than as a list, so they are the part
+   worth colouring — and at this weight the tint registers without the line
+   competing with the sentence above it. One pixel of air each side rather
+   than two, because those eight pixels are the difference between fitting on
+   a 360 and not. */
+.journey-arrow {
+  color: var(--accent);
+  padding: 0 1px;
+  font-weight: 600;
+}
+
 /* The per-layer caption is the loud element on this screen — it is the only
    thing that changes, so it gets the brand face and the size.
 
@@ -2063,6 +2103,21 @@ body {
   font-size: 13px;
   line-height: 1.4;
   color: var(--muted);
+}
+
+/* The handoff, on the last interstitial only. Everything else on this screen
+   is about the read that is happening now; this is the one line about what
+   comes after it, so it is set apart by a rule rather than by another size —
+   and tinted, because it is the first mention that the last step involves
+   their own kitchen. */
+.mid-next {
+  margin: 16px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--line);
+  font-size: 13.5px;
+  line-height: 1.45;
+  font-weight: 600;
+  color: #8a4a1c;
 }
 
 .mid-spinner {
