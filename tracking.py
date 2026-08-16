@@ -79,6 +79,33 @@ VIZ_UPLOAD_PHASE = frozenset(("pre", "post"))
 # only way to see which one a real device actually took.
 VIZ_UPLOAD_PATH = frozenset(("bitmap", "canvas", "raw"))
 
+# Which button was pressed. `redirect` is the trip to Stripe's hosted page that
+# every funnel has always had; `wallet` is a sheet opening over the paywall
+# itself. They are the same intention through very different amounts of
+# friction, and without this field the difference between them is invisible in
+# a table that has one row per tap.
+#
+# A closed set, for the reason every closed set here is one: this is a field
+# whose whole purpose is to be grouped by, and a typo in a client that ships to
+# everybody would become a category nobody notices is missing.
+PAY_TAP_METHOD = frozenset(("wallet", "redirect"))
+
+
+def _clean_pay_tap(value):
+    """`{"method": ...}` from a closed set, and nothing else.
+
+    Optional in the sense that matters: `pay_tap` with no payload at all is
+    still accepted, because engine.js sits behind a CDN and the version that
+    sent none will be served for a while yet. What is not accepted is a
+    `pay_tap` carrying anything other than exactly this.
+    """
+    if set(value) != {"method"}:
+        raise ValueError("extra")
+    method = value["method"]
+    if not isinstance(method, str) or method not in PAY_TAP_METHOD:
+        raise ValueError("extra")
+    return {"method": method}
+
 
 def _clean_viz_upload(value):
     """`{"phase": ..., "path": ...}`, both from closed sets. Raises otherwise.
@@ -240,13 +267,14 @@ def _clean_paywall_view(value):
 def _clean_extra(funnel, event, value):
     """The event payload, rebuilt from validated parts. Raises on junk.
 
-    Three events carry one: a swipe says which pair it drew and which image was
-    tapped, a paywall view says how the reader got to the offer, and a
-    visualizer upload says which side of the money it happened on. Every string
-    is checked against something this module can enumerate — ids this funnel
-    could actually have shown, or one of the closed sets above — and the value
-    stored is assembled here rather than passed through, so nothing reaches the
-    events column that did not come out of the config or this file.
+    Four events carry one: a swipe says which pair it drew and which image was
+    tapped, a paywall view says how the reader got to the offer, a pay tap says
+    which of the two buttons took it, and a visualizer upload says which side
+    of the money it happened on. Every string is checked against something this
+    module can enumerate — ids this funnel could actually have shown, or one of
+    the closed sets above — and the value stored is assembled here rather than
+    passed through, so nothing reaches the events column that did not come out
+    of the config or this file.
 
     This used to take any JSON object up to four thousand characters and write
     it — which made the column a free write for anybody who found the endpoint,
@@ -262,6 +290,8 @@ def _clean_extra(funnel, event, value):
         return _clean_paywall_view(value)
     if event == "viz_upload":
         return _clean_viz_upload(value)
+    if event == "pay_tap":
+        return _clean_pay_tap(value)
     if event != "swipe":
         raise ValueError("extra")
     if set(value) != SWIPE_EXTRA_KEYS:

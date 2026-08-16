@@ -45,7 +45,16 @@
   // server's whole window — the per-call budget plus the late-upgrade grace —
   // or the last sections would never arrive without a reload.
   var REPORT_MAX_TRIES = 100;
-  var CS_RE = /^cs_[A-Za-z0-9_]{1,250}$/;   // Stripe checkout session id
+  // The token a paid reader comes back with. Two shapes, because there are two
+  // ways to pay: `cs_` from the hosted redirect, `pi_` from a payment confirmed
+  // in the page. The parameter is called `cs` for both — it is the name that is
+  // already in the wild, on links people have and on the server route that
+  // reads it, and renaming it would strand every one of them.
+  //
+  // This mirrors payments.RESULT_TOKEN_RE, which is what actually decides
+  // whether a token finds a purchase. A `pi_` reaching here and being turned
+  // away would have dropped somebody who had just paid onto the quiz.
+  var CS_RE = /^(?:cs|pi)_[A-Za-z0-9_]{1,250}$/;
   var REVEAL_THRESHOLD = 0.15;  // how much of a section must be in view to play
   var GENERATING_MS = 3000;     // rotation of the in-report "still writing" card
   // The report can be rendered before the funnel config has loaded, so the
@@ -112,6 +121,15 @@
   var midTimer = null;          // its auto-dismiss
   var midSeen = {};             // after_step -> already shown this run
   var workingTimer = null;      // the interstitial's rotating micro-copy
+  // --- express checkout -----------------------------------------------------
+  var xpState = "off";          // off | reserved | wallet | redirect
+  var xpStarted = false;        // the whole attempt runs once per page
+  var xpSlot = null;            // the placeholder and the element, stacked
+  var xpMountNode = null;       // the layer the element itself mounts into
+  var xpBlock = null;           // the grid holding the slot and the pay button
+  var xpIntent = null;          // {client_secret, publishable_key} from the API
+  var xpElements = null;        // the Stripe Elements group
+  var xpTimer = null;           // the deadline; a dead paywall costs more
 
   var el = {};
 
@@ -3328,28 +3346,18 @@
     el.payButton.textContent = PAYMENTS_ENABLED
       ? withPrice(cfg.checkout.cta_label || cfg.pricing.cta || "Unlock")
       : "Payments coming in Phase 1b";
+    // The other button the same box gates, when there is one. A no-op on every
+    // funnel without the express flag, and on this one until the element says
+    // it has a wallet to offer.
+    xpConsent();
   }
 
-  // The payment attempt itself, and the only place that name belongs. Fired
-  // before the guard rather than after it: what this counts is somebody
-  // pressing the button that takes their money, and a run that then bails on
-  // an unchecked box is a tap that happened. The guard is unreachable from
-  // the UI anyway — the button is disabled while the box is clear, and a
-  // disabled button dispatches no click.
-  function startCheckout() {
-    track("pay_tap");
-    // Meta's name for the same moment. InitiateCheckout already fires when the
-    // offer reaches somebody; this is the narrower signal Meta optimises
-    // against — the tap that starts paying. Both ways in go through here, the
-    // pay button and the sticky bar's shortcut, so one call covers both and
-    // neither can drift from the other.
-    pixelTrack("AddPaymentInfo");
-    if (!PAYMENTS_ENABLED || !el.withdrawalCheck.checked) return;
-
-    el.payError.hidden = true;
-    el.payButton.disabled = true;
-    el.payButton.textContent = "Redirecting...";
-
+  // Everything a payment needs, and the same body for both ways of starting
+  // one: `/api/checkout` and `/api/payment-intent` validate through the same
+  // function server-side, so there is one shape here rather than two that
+  // agree today. No amount in it — the price is read from the funnel on the
+  // server, and the client has never been able to say what anything costs.
+  function orderPayload() {
     var payload = {
       funnel: slug,
       session_id: sessionId,
@@ -3364,18 +3372,40 @@
       choices: chosen.slice()
     };
 
-    // The click identifiers travel with the checkout because this is the last
+    // The click identifiers travel with the order because this is the last
     // moment the browser is involved. The purchase itself is reported by the
     // server after Stripe confirms it, long after this tab may be gone, and
     // without these it would arrive unattributed. The server re-validates
     // them and drops anything that is not a plain identifier.
     var ids = metaIds();
     for (var k in ids) payload[k] = ids[k];
+    return payload;
+  }
+
+  // The payment attempt itself, and the only place that name belongs. Fired
+  // before the guard rather than after it: what this counts is somebody
+  // pressing the button that takes their money, and a run that then bails on
+  // an unchecked box is a tap that happened. The guard is unreachable from
+  // the UI anyway — the button is disabled while the box is clear, and a
+  // disabled button dispatches no click.
+  function startCheckout() {
+    track("pay_tap", null, { method: "redirect" });
+    // Meta's name for the same moment. InitiateCheckout already fires when the
+    // offer reaches somebody; this is the narrower signal Meta optimises
+    // against — the tap that starts paying. The wallet button fires it too,
+    // from its own click handler: they are two buttons now, and the one the
+    // reader was given is not a thing Meta should be able to tell apart.
+    pixelTrack("AddPaymentInfo");
+    if (!PAYMENTS_ENABLED || !el.withdrawalCheck.checked) return;
+
+    el.payError.hidden = true;
+    el.payButton.disabled = true;
+    el.payButton.textContent = "Redirecting...";
 
     fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(orderPayload())
     })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
@@ -3398,6 +3428,334 @@
         el.payError.hidden = false;
         updatePayButton();
       });
+  }
+
+  // --- express checkout -----------------------------------------------------
+
+  // A wallet button on the paywall — Apple Pay, Google Pay, Link — instead of
+  // a trip to Stripe's hosted page. The sheet opens over this page, the reader
+  // authorises with a thumb, and nobody types a card number.
+  //
+  // Everything below is written around one fact: this can fail in more ways
+  // than the redirect can. Stripe.js is a third-party script on a network we
+  // do not control, the intent is a round trip, the element decides for itself
+  // whether this device has a wallet at all, and any of the three can simply
+  // not answer. A dead paywall costs more than a lost wallet, so every one of
+  // those endings is the same ending — today's button, calling /api/checkout,
+  // exactly as it always has.
+  var XP_SRC = "https://js.stripe.com/v3/";
+
+  // The whole budget, from the first byte requested to the element saying it
+  // is ready. Not per-step: the reader is looking at a placeholder for the
+  // duration, and what they are owed is a button inside three seconds, not a
+  // fair share of the wait for each thing that has to happen.
+  var XP_DEADLINE_MS = 3000;
+
+  // Stripe's own ceiling for the wallet button is 55px. The block reserves the
+  // pay button's full height regardless, and centres whatever it gets inside
+  // it, so this number changes what the button looks like and never what the
+  // page measures.
+  var XP_BUTTON_HEIGHT = 55;
+
+  function expressOn() {
+    return ((cfg && cfg.checkout) || {}).express === true;
+  }
+
+  // Config, not inference. The flag being absent — an older funnel JSON behind
+  // the CDN, or /kitchen, which never gets this — means none of it runs and
+  // no script is fetched from Stripe at all.
+  function xpStart() {
+    if (xpStarted || !expressOn() || !PAYMENTS_ENABLED) return;
+    if (!el.payButton || !el.payButton.parentNode) return;
+    xpStarted = true;
+
+    xpReserve();
+
+    // One deadline for the whole attempt, armed before anything is asked for.
+    xpTimer = setTimeout(function () { xpFallback(); }, XP_DEADLINE_MS);
+
+    // Both in flight at once. The script is the long pole and the intent is a
+    // round trip to our own server; running them in sequence would spend the
+    // budget twice for no reason.
+    var stripeReady = false;
+    var maker = null;
+
+    function ready() {
+      if (xpState !== "reserved") return;          // the deadline got here first
+      if (!stripeReady || !xpIntent) return;
+      if (!maker) { xpFallback(); return; }
+      xpMount(maker);
+    }
+
+    xpLoadStripe(function (factory) {
+      stripeReady = true;
+      maker = factory;
+      ready();
+    });
+
+    xpFetchIntent(function (intent) {
+      if (!intent) { xpFallback(); return; }
+      xpIntent = intent;
+      ready();
+    });
+  }
+
+  // The reserved state. The slot and the pay button are two children of one
+  // grid cell, so the block is always as tall as the taller of them and
+  // nothing below it can move when the choice is finally made. That is
+  // structural rather than two numbers kept in step by hand: whichever way
+  // this ends, the button under the reader's thumb is where it already was.
+  function xpReserve() {
+    var summary = xpSummary();
+
+    xpBlock = elm("div", "xp");
+    xpBlock.id = "xp";
+
+    // Two layers, stacked the same way the block itself is. The element
+    // mounts into the lower one and paints as soon as it is mounted — before
+    // it has said whether it has a wallet to offer — so it stays invisible and
+    // untouchable until it does, with the placeholder over it. Otherwise there
+    // is a moment, however short, with two buttons on screen and the choice
+    // between them not yet made.
+    xpSlot = elm("div", "xp__slot");
+    xpSlot.id = "xp-slot";
+    xpMountNode = elm("div", "xp__mount xp__off");
+    xpSlot.appendChild(xpMountNode);
+    xpSlot.appendChild(elm("div", "xp__ghost"));
+
+    var parent = el.payButton.parentNode;
+    parent.insertBefore(xpBlock, el.payButton);
+    if (summary) {
+      parent.insertBefore(summary, xpBlock);
+      // The card carries everything the price row above it did and the product
+      // name besides, so the row would be the same number said twice, two
+      // lines apart. Hidden here rather than never rendered, because whether
+      // this card exists is decided after that row is written — and hidden
+      // now, before any of the three states, so nothing moves later.
+      if (el.price) el.price.hidden = true;
+    }
+
+    // The button first, the slot over it: in one grid cell the later child
+    // paints on top, and the wallet button has to be the one a thumb reaches.
+    xpBlock.appendChild(el.payButton);
+    xpBlock.appendChild(xpSlot);
+
+    xpSet("reserved");
+  }
+
+  // Which of the two is live. Never both: the one that is not is invisible and
+  // untouchable, and it stays in the grid so the block keeps its height.
+  function xpSet(state) {
+    xpState = state;
+    var wallet = state === "reserved" || state === "wallet";
+    xpSlot.classList.toggle("xp__off", !wallet);
+    el.payButton.classList.toggle("xp__off", wallet);
+  }
+
+  // Every ending that is not a wallet. Called from the deadline, from a script
+  // that would not load, from an intent that did not come back, from an
+  // element that errored, and from an element that reported no wallet on this
+  // device — because to the reader they are one thing, which is that the
+  // ordinary button is what they get.
+  function xpFallback() {
+    if (xpState === "redirect") return;
+    if (xpTimer) { clearTimeout(xpTimer); xpTimer = null; }
+    xpSet("redirect");
+    updatePayButton();
+  }
+
+  function xpLoadStripe(done) {
+    if (window.Stripe) { done(window.Stripe); return; }
+    var tag = document.createElement("script");
+    tag.src = XP_SRC;
+    tag.async = true;
+    tag.onload = function () { done(window.Stripe || null); };
+    tag.onerror = function () { done(null); };
+    try {
+      document.head.appendChild(tag);
+    } catch (e) {
+      done(null);
+    }
+  }
+
+  // The publishable key comes back with the intent it belongs to. It is the
+  // only place it comes from: a key in the funnel JSON would be a second
+  // source of truth for which Stripe account this funnel sells on, and the two
+  // would eventually disagree about a live funnel.
+  function xpFetchIntent(done) {
+    fetch("/api/payment-intent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(orderPayload())
+    })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        done(data && data.client_secret && data.publishable_key ? data : null);
+      })
+      .catch(function () { done(null); });
+  }
+
+  function xpMount(maker) {
+    var stripe;
+    try {
+      stripe = maker(xpIntent.publishable_key);
+      xpElements = stripe.elements({ clientSecret: xpIntent.client_secret });
+      var element = xpElements.create("expressCheckout", {
+        buttonHeight: XP_BUTTON_HEIGHT
+      });
+
+      // The only place the choice is made, and it is made on what the element
+      // reports rather than on anything guessed about the device beforehand.
+      element.on("ready", function (ev) {
+        var have = ev && ev.availablePaymentMethods;
+        var any = false;
+        for (var k in have) { if (have[k]) { any = true; break; } }
+        if (!any) { xpFallback(); return; }
+        xpShowWallet();
+      });
+      element.on("loaderror", function () { xpFallback(); });
+      element.on("click", function (ev) { xpClick(ev); });
+      element.on("cancel", function () { xpCancel(); });
+      element.on("confirm", function () { xpConfirm(stripe); });
+
+      element.mount(xpMountNode);
+    } catch (e) {
+      xpFallback();
+    }
+  }
+
+  function xpShowWallet() {
+    if (xpState !== "reserved") return;
+    if (xpTimer) { clearTimeout(xpTimer); xpTimer = null; }
+    var ghost = xpSlot.querySelector(".xp__ghost");
+    if (ghost) ghost.parentNode.removeChild(ghost);
+    xpMountNode.classList.remove("xp__off");
+    xpSet("wallet");
+    xpConsent();
+  }
+
+  // The tap that asks for the sheet. Counted here rather than after the
+  // consent check, for the same reason the redirect button counts before its
+  // own guard: what this measures is somebody pressing the thing that takes
+  // their money.
+  function xpClick(ev) {
+    track("pay_tap", null, { method: "wallet" });
+    pixelTrack("AddPaymentInfo");
+
+    // The withdrawal consent has to be given before the sheet opens, not
+    // inside it — there is nothing in a wallet sheet that could carry it, and
+    // it is the same box gating the same purchase on the same page. Not
+    // resolving is how the element is told not to open.
+    if (!el.withdrawalCheck.checked) {
+      xpNudgeConsent();
+      return;
+    }
+    el.payError.hidden = true;
+    // No options: no email field and no address, because nothing here needs
+    // one. The address the report goes to is collected by Stripe on the
+    // hosted page and by the webhook on this one.
+    ev.resolve({});
+  }
+
+  // Somebody looked at the sheet and closed it. That is not a failure and it
+  // is not a state to recover from: the button stays live, the box stays
+  // ticked, the page has not moved, and nothing red appears. There is
+  // deliberately no flag being cleared here — a "busy" state that only the
+  // sheet can clear is a dead button waiting to happen, and the sheet is
+  // modal, so there is no second tap to defend against anyway.
+  function xpCancel() { }
+
+  function xpConfirm(stripe) {
+    var back = location.origin + "/" + slug + "?cs="
+      + encodeURIComponent(xpIntentId());
+
+    stripe.confirmPayment({
+      elements: xpElements,
+      confirmParams: { return_url: back },
+      redirect: "if_required"
+    })
+      .then(function (res) {
+        if (res && res.error) { xpFailed(); return; }
+        // Not a claim that the money arrived — the webhook is the only thing
+        // that decides that. This hands the token to the page the same way the
+        // hosted redirect does, and the report appears when, and only when,
+        // the poll finds one written for it.
+        location.href = "/" + slug + "?cs=" + encodeURIComponent(xpIntentId());
+      })
+      .catch(function () { xpFailed(); });
+  }
+
+  // `pi_x_secret_y` — the intent's own id is the part before the separator,
+  // and it is what the server stores and looks a purchase up by. The secret
+  // half never leaves this function.
+  function xpIntentId() {
+    return String(xpIntent.client_secret).split("_secret_")[0];
+  }
+
+  // A payment that really did fail. One short line, and the ordinary button
+  // put back within reach — whatever went wrong with the wallet, the redirect
+  // is a way through that does not depend on any of it.
+  function xpFailed() {
+    el.payError.textContent = "That payment didn't go through. Please try again.";
+    el.payError.hidden = false;
+    xpFallback();
+  }
+
+  function xpNudgeConsent() {
+    el.payError.textContent = "Please tick the box above to continue.";
+    el.payError.hidden = false;
+    if (el.withdrawal) {
+      el.withdrawal.classList.remove("is-nudged");
+      void el.withdrawal.offsetWidth;
+      el.withdrawal.classList.add("is-nudged");
+    }
+  }
+
+  // The wallet button greys out with the box, the way the pay button does.
+  // Stripe's element has no disabled state, so this is appearance only — what
+  // actually stops the sheet is `xpClick` declining to resolve.
+  function xpConsent() {
+    if (xpState !== "wallet") return;
+    xpSlot.classList.toggle("is-locked", !el.withdrawalCheck.checked);
+    if (el.withdrawalCheck.checked) el.payError.hidden = true;
+  }
+
+  // What a wallet buyer would otherwise never see. The hosted page names the
+  // product and the amount before anything is authorised; a sheet that opens
+  // in place shows the amount and nothing about what it is for, so the naming
+  // has to happen here, above the button, before the thumb.
+  //
+  // Every word of it is config that already exists, and it is rendered with
+  // the same trust row the block below uses rather than a second set of
+  // styles saying the same thing.
+  function xpSummary() {
+    var co = (cfg && cfg.checkout) || {};
+    var copy = commerceCopy();
+    var name = co.product_name || "";
+    if (!name) return null;
+
+    var card = elm("div", "xp-summary");
+    card.appendChild(elm("p", "xp-summary__name", name));
+
+    var suffix = copy.price_suffix || co.price_suffix || "";
+    var price = elm("p", "xp-summary__price");
+    price.appendChild(elm("span", "xp-summary__amount", formatPrice()));
+    if (suffix) price.appendChild(elm("span", "xp-summary__terms", suffix));
+    card.appendChild(price);
+
+    // The first trust row, which is the one about the payment itself; the
+    // other two are about what arrives afterwards and are already on screen
+    // under the button. Repeating all three here would be the same list twice.
+    var rows = copy.trust || co.trust || [];
+    if (rows.length) {
+      var list = elm("ul", "trust xp-summary__trust");
+      var li = elm("li", "trust-row");
+      li.appendChild(icon(TRUST_ICONS[0], "trust-icon"));
+      li.appendChild(elm("span", null, rows[0]));
+      list.appendChild(li);
+      card.appendChild(list);
+    }
+    return card;
   }
 
   var SVG_NS = "http://www.w3.org/2000/svg";
@@ -3595,6 +3953,7 @@
     el.withdrawalCheck.checked = cfg.checkout.consent_prechecked === true;
     el.payError.hidden = true;
     updatePayButton();
+    xpStart();
     playPayMotion();
   }
 
@@ -3675,6 +4034,9 @@
     updatePayButton();
 
     el.commerce.hidden = false;
+    // After the block is on screen: the slot is measured against the pay
+    // button, and a button inside a hidden container has no height to match.
+    xpStart();
     if (el.sticky) el.sticky.textContent = withPrice(copy.sticky_label || "");
     playPayMotion();
   }

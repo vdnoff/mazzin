@@ -665,10 +665,13 @@ body {
   .pip.is-done, .pip.is-current, .tap-dot { animation: none; }
   /* The two waiting states keep their shape — they are how you know something
      is still happening — but they stop moving. */
-  .analyzing-bar-fill, .generating-shimmer, .viz-shimmer,
+  .analyzing-bar-fill, .generating-shimmer, .viz-shimmer, .xp__ghost,
+  .withdrawal.is-nudged,
   .dots span { animation: none; }
   .analyzing-bar-fill { background: var(--accent); opacity: 0.5; }
   .generating-shimmer, .viz-shimmer { background: #F3DFCE; }
+  .xp__ghost { background: #ECEEF1; }
+  .withdrawal.is-nudged { color: #b3261e; }
   @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
   @keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
 }
@@ -2758,6 +2761,105 @@ body.is-locked { overflow: hidden; }
   font-size: 14px;
   line-height: 1.4;
   color: #b3261e;
+}
+
+/* --- express checkout ------------------------------------------------------ */
+
+/* Two buttons, one cell. The wallet slot and the pay button are stacked in the
+   same grid area, so the block is always as tall as the taller of them and
+   nothing under it moves when the choice between them is made. Neither one is
+   ever taken out of the flow — the one that is not live is made invisible and
+   untouchable instead, which is what keeps the height constant without two
+   numbers having to be kept in step by hand. */
+.xp { display: grid; }
+.xp > * { grid-area: 1 / 1; }
+
+.xp__off {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* The same stacking one layer down: the element paints the instant it is
+   mounted, which is before it has said whether it has a wallet at all, so the
+   placeholder sits over it until it does. */
+.xp__slot {
+  display: grid;
+  align-items: center;
+}
+
+.xp__slot > * {
+  grid-area: 1 / 1;
+  width: 100%;
+}
+
+/* The same grey as a disabled pay button says, in the same place: the box
+   above has not been ticked. Appearance only — what actually stops the sheet
+   from opening is the click handler declining to resolve. */
+.xp__slot.is-locked { opacity: 0.45; }
+
+/* What sits in the slot until the element answers. A flat grey rectangle for
+   three seconds reads as something broken, so it moves — slowly, and on the
+   same keyframes the report's generating card already uses. */
+.xp__ghost {
+  width: 100%;
+  height: 55px;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg,
+    #ECEEF1 0%, #F7F8F9 42%, #F7F8F9 58%, #ECEEF1 100%);
+  background-size: 220% 100%;
+  animation: shimmer 1.7s linear infinite;
+}
+
+/* What the hosted page would have said before anything was authorised. A
+   wallet sheet shows an amount and nothing about what it is for, so the naming
+   happens here instead, immediately above the thumb. */
+.xp-summary {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.xp-summary__name {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.xp-summary__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin: 7px 0 0;
+}
+
+.xp-summary__amount {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.xp-summary__terms {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* The shared trust row, left-aligned: it is one fact in a card rather than a
+   centred strip under a button. */
+.xp-summary__trust {
+  justify-content: flex-start;
+  margin: 8px 0 0;
+}
+
+/* A tap on a wallet button with the box still clear. The button cannot go
+   grey and then flash, so the thing it is waiting on does. */
+.withdrawal.is-nudged { animation: consent-nudge 640ms ease; }
+
+@keyframes consent-nudge {
+  0%, 100% { color: var(--muted); }
+  30%, 65% { color: #b3261e; }
 }
 
 .legal-links {
