@@ -189,3 +189,6 @@ bottom.
 
 ## 2026-08-16 — claude/express-backend
 - express checkout backend
+
+## 2026-08-16 — claude/express-ui
+- Express Checkout Element with redirect fallback
