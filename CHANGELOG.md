@@ -180,3 +180,6 @@ bottom.
 
 ## 2026-08-16 — claude/journey-line
 - journey line
+
+## 2026-08-16 — claude/steps-strip
+- 3-step strip
