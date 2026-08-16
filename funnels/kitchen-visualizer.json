@@ -10,9 +10,20 @@
   "swipe": {
     "pairs_count": 13,
     "headline": "Your kitchen style analysis",
-    "subtext": "$4,000+ saved on your renovation",
-    "subtext_accent": "$4,000+",
-    "journey": "Your choices → your style → your kitchen, transformed",
+    "journey_steps": [
+      {
+        "n": "1",
+        "label": "Tap what\nyou like"
+      },
+      {
+        "n": "2",
+        "label": "Add your\nkitchen photo"
+      },
+      {
+        "n": "3",
+        "label": "See it\ntransformed"
+      }
+    ],
     "hint": "Tap your choice",
     "steps": [
       {
