@@ -174,3 +174,6 @@ bottom.
 
 ## 2026-08-16 — claude/pre-purchase-upload
 - pre-purchase upload teaser
+
+## 2026-08-16 — claude/upload-hardening
+- upload hardening + android paths
