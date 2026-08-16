@@ -225,15 +225,20 @@ body {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-  margin: 2px 0 16px;
+  margin: 15px 0 16px;
 }
 
-/* `var(--accent)` rather than the literal #C05621: they are the same value,
+/* The disc scales with the label. At 12px text a 22px disc read right; with
+   the label at 15px the same disc reads undersized — a numeral that has been
+   left behind by the words beside it. The line-height matches the height
+   exactly, which is what centres the digit without a flex context.
+
+   `var(--accent)` rather than the literal #C05621: they are the same value,
    and a brand colour with two sources of truth is a brand colour that will
    eventually have two values. */
 .m-steps__n {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   margin: 0 auto 6px;
   border-radius: 50%;
   background: var(--accent);
@@ -241,14 +246,36 @@ body {
   /* `var(--ui)` and not a literal `Inter`: the face is loaded under the name
      "Inter var", so a shorthand naming plain `Inter` would miss the webfont
      and land on the generic sans-serif. */
-  font: 600 12px/22px var(--ui);
+  font: 600 13px/24px var(--ui);
   text-align: center;
 }
 
+/* 15px from 390 up, and smaller below it, because the copy will not hold two
+   lines at one size across the range.
+
+   "on your kitchen" is the longest line of the three and sets 15px at 111px
+   wide. The column is a third of the screen less the gaps: 114px at 390, but
+   104px at 360 and 91px at 320. So 15px fits the design target with three
+   pixels to spare and overflows both narrower ones — at 320 the third label
+   went to four lines, which is a strip with a ragged bottom edge and the
+   thing the explicit \n in config exists to prevent.
+
+   Steps rather than a vw ramp: the ramp that lands on exactly 15 at 390
+   leaves a pixel of slack at 360, which is inside the margin of error for a
+   font metric on a real device. These three sizes each clear their column by
+   two to four pixels. */
 .m-steps__l {
   font: 500 12px/1.3 var(--ui);
   color: #4A4741;
   text-align: center;
+}
+
+@media (min-width: 360px) {
+  .m-steps__l { font-size: 13.5px; }
+}
+
+@media (min-width: 390px) {
+  .m-steps__l { font-size: 15px; }
 }
 
 /* The per-layer caption is the loud element on this screen — it is the only
