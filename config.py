@@ -113,6 +113,20 @@ VISUALIZER_MAX_PIXELS = int(os.getenv("VISUALIZER_MAX_PIXELS", str(40_000_000)))
 # fails forever from retrying forever.
 VISUALIZER_MAX_ATTEMPTS = int(os.getenv("VISUALIZER_MAX_ATTEMPTS", "6"))
 
+# A photograph uploaded before the purchase that would give it a home. Most
+# never get one — the upload moves ahead of the payment on purpose, so the
+# common case is a picture of a kitchen belonging to somebody who did not buy.
+# Two days is long enough to come back to the tab tomorrow evening and short
+# enough that a stranger's home is not on a disk next week.
+VISUALIZER_PENDING_MAX_AGE_S = float(
+    os.getenv("VISUALIZER_PENDING_MAX_AGE_S", str(48 * 3600)))
+
+# The sweep walks every pending directory, so it runs on a timer rather than on
+# every upload. Cron may also call scripts/cleanup_pending.py; both are safe and
+# neither is required for the other to work.
+VISUALIZER_PURGE_EVERY_S = float(
+    os.getenv("VISUALIZER_PURGE_EVERY_S", str(600)))
+
 # How long a row may sit in `generating` before another attempt may claim it.
 # Nothing releases the claim if a worker is killed mid-call, so the lock has to
 # be able to expire on its own.

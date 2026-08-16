@@ -1933,7 +1933,7 @@
         ]
       }
     ],
-    "promo": "After unlock: upload a photo of your kitchen and see it transformed to match your report."
+    "promo": "Upload a photo of your kitchen and see it transformed to match your report."
   },
   "styles": [
     {
@@ -2383,6 +2383,14 @@
     "max_generations": 2,
     "title": "Your Kitchen, Transformed",
     "intro": "Upload one photo of your kitchen and see it redecorated in your style — same room, same layout, your palette.",
+    "pre_purchase": true,
+    "price_note": "Your transformation + full report — {price}, one-time",
+    "privacy_note": "Your photo is private, used only for your visualization, deleted if you don't continue.",
+    "teaser_title": "Your kitchen, ready",
+    "before_label_pre": "Your kitchen",
+    "locked_label": "Your {style} transformation",
+    "locked_cta": "Unlock to see it",
+    "manifest_uploaded": "Your kitchen, reimagined — photo received ✓",
     "guidance": "Stand back, daylight on, whole kitchen in frame.",
     "upload_cta": "Choose a photo",
     "replace_cta": "Use a different photo",

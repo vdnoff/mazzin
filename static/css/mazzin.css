@@ -1019,6 +1019,29 @@ body {
   color: #7A3A16;
 }
 
+/* What it costs, above the picker. Said before a photograph is asked for, so
+   the reader knows what the upload is in service of — the point of taking the
+   photo early is investment, and investment obtained without the price on
+   screen is a different and worse thing. */
+.viz-price {
+  margin: -6px 0 14px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--accent);
+}
+
+/* The answer to the question anybody sensible asks before handing over a
+   picture of the inside of their house. Muted and small: it is a reassurance,
+   not a term, and setting it loud would make it sound like one. */
+.viz-privacy {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+  text-align: center;
+}
+
 /* The picker. A dashed well rather than a button, because what it wants is a
    file and the shape people have been taught to drop one into is a well. The
    whole thing is the label, so the tap target is the box and not a word in
@@ -1175,6 +1198,60 @@ body {
 }
 
 .viz-half.is-after { box-shadow: 0 0 0 2px var(--accent); }
+
+/* --- the pre-purchase teaser ---------------------------------------------- */
+
+/* Their kitchen beside the same photograph behind a lock. The panels are equal
+   because the claim is that the right one is the left one — a smaller or
+   greyer placeholder would read as a diagram of the offer rather than as the
+   offer. */
+.viz-pair-teaser .viz-half.is-locked {
+  cursor: pointer;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.viz-shade {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Blurred hard enough that there is nothing to read and not so hard that it
+   stops being a kitchen: the whole device depends on recognising the room as
+   yours. Scaled up because a blur samples past its own edges and would
+   otherwise leave a pale border where the pixels run out. */
+.viz-img.is-blurred {
+  filter: blur(14px);
+  transform: scale(1.15);
+}
+
+/* Warm rather than neutral, so the locked panel reads as withheld by the same
+   hand that wrote the report rather than as an image that failed to load. */
+.viz-shade::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(192, 86, 33, 0.22);
+}
+
+.viz-lock {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+}
+
+.viz-half.is-locked .viz-caption {
+  color: var(--accent);
+  font-weight: 700;
+}
 
 .viz-caption {
   padding: 7px 8px;
