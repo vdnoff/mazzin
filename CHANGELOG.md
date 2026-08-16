@@ -186,3 +186,6 @@ bottom.
 
 ## 2026-08-16 — claude/steps-strip
 - step strip polish
+
+## 2026-08-16 — claude/express-backend
+- express checkout backend
