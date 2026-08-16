@@ -92,6 +92,7 @@
   var vizTimer = null;          // the poll, running only while it generates
   var vizBusy = false;          // a request of ours is in flight
   var vizUploading = false;     // the in-flight request is an upload
+  var vizUploadPath = null;     // how it was shrunk: bitmap|canvas|raw
   var vizSeen = {};             // status -> already counted, so events fire once
   var statusTimer = null;
   var analyzingTimer = null;    // free-result screen, between swipe and reveal
@@ -2304,7 +2305,14 @@
       // Which side of the money it happened on. The same act before and after
       // a purchase is two different events, and one name for both would make
       // the whole point of moving the upload earlier unmeasurable.
-      track("viz_upload", null, { phase: vizPre() ? "pre" : "post" });
+      // `path` says how the photograph got here — the memory-safe bitmap
+      // resize, the ordinary canvas, or raw off the camera. It is the only way
+      // to see which of the three real devices actually take, which is the
+      // question that started this.
+      track("viz_upload", null, {
+        phase: vizPre() ? "pre" : "post",
+        path: vizUploadPath || "raw"
+      });
     }
     if (status === "ready" && !vizSeen.ready) {
       vizSeen.ready = true;
@@ -2350,13 +2358,17 @@
       .then(function (res) {
         vizBusy = false;
         if (res.ok) { vizApply(res.data); return; }
+        var code = (res.data && res.data.error) || "";
 
-        // The server does not have this feature for this purchase — which,
-        // with the config on a CDN and the code on the server, is exactly what
-        // the window between a static deploy and a code deploy looks like.
-        // Take the section out rather than offer a picker that would 404: an
-        // absent section is a page that never promised anything.
-        if (DEAD.indexOf((res.data && res.data.error) || "") !== -1) {
+        // The server does not have this feature here — which, with the config
+        // on a CDN and the code on the server, is exactly what the window
+        // between a static deploy and a code deploy looks like. Take the
+        // section out rather than offer a picker that would 404.
+        //
+        // Only on a poll, though. A section that vanishes the instant somebody
+        // taps a photograph is worse than one that says what went wrong, so a
+        // call with its own error handler gets routed to copy instead.
+        if (!onError && DEAD.indexOf(code) !== -1) {
           vizRemove();
           return;
         }
@@ -2364,13 +2376,70 @@
         // Any other refusal carries its own sentence. Show it rather than a
         // generic failure: "you've used both" and "that isn't a photo" are
         // different things and the reader can act on exactly one of them.
-        if (onError) onError((res.data && res.data.message) || "");
+        if (onError) onError((res.data && res.data.message) || "", code,
+                             res.data);
         else vizApply(res.data && res.data.status ? res.data : vizState);
       })
       .catch(function () {
         vizBusy = false;
-        if (onError) onError("");
+        // Nothing came back, or what came back was not JSON. Either way this
+        // is the network class and emphatically not a reason to reach for
+        // whatever copy happens to be the default.
+        if (onError) onError("", "network");
       });
+  }
+
+  // --- what to say when an upload does not go through -----------------------
+
+  // The four ways a photograph fails to arrive, in the reader's terms rather
+  // than the server's. This exists because there was one fallback string for
+  // every failure in the section, and it belonged to generation — so a photo
+  // that was merely too big was answered with "Nothing was used up — try
+  // again", which is true of a render and meaningless about an upload.
+  //
+  // Config wins if it carries the same keys, so this can move into the funnel
+  // without a deploy; these are the defaults, not the only copy.
+  // `{limit}` is filled from whatever the server actually refused it for, so
+  // raising the cap is a config change rather than a copy edit — and so the
+  // sentence can never name a number the server disagrees with.
+  var UPLOAD_COPY = {
+    size: "That photo is over {limit}MB — most phones can export a smaller "
+      + "version, or try a different shot",
+    format: "We couldn't read that photo — JPEG, PNG or HEIC please",
+    session: "This link needs your own quiz first — take it in 2 minutes and "
+      + "your photo slot will be ready",
+    network: "Upload didn't go through — check your connection and try again"
+  };
+
+  var UPLOAD_LIMIT_FALLBACK = 20;
+
+  // Which class a server code belongs to. Anything unrecognised is network,
+  // because the honest thing to tell somebody about a failure we cannot name
+  // is to try again — not to guess at a cause.
+  var UPLOAD_CLASS = {
+    too_large: "size",
+    not_an_image: "format",
+    wrong_format: "format",
+    unreadable: "format",
+    unavailable: "format",
+    empty: "format",
+    no_file: "format",
+    unknown_session: "session",
+    bad_token: "session",
+    no_purchase: "session",
+    not_paid: "session",
+    no_visualizer: "session",
+    no_funnel: "session"
+  };
+
+  function uploadCopy(code, data) {
+    var block = vizConfig() || {};
+    var set = block.upload_errors || {};
+    var kind = UPLOAD_CLASS[code] || "network";
+    var text = set[kind] || UPLOAD_COPY[kind];
+    var bytes = data && data.limit_bytes;
+    var mb = bytes ? Math.round(bytes / 1048576) : UPLOAD_LIMIT_FALLBACK;
+    return String(text).replace(/\{limit\}/g, String(mb));
   }
 
   function vizRender() {
@@ -2690,6 +2759,215 @@
     showBox("vizBox");
   }
 
+  // --- shrinking the photograph before it goes anywhere ---------------------
+
+  // The longest side we send. The model reads about a megapixel and the server
+  // keeps 1536, so 2048 is already more than anything downstream wants — it is
+  // the point where sending more stops buying anything.
+  var VIZ_UPLOAD_EDGE = 2048;
+  var VIZ_UPLOAD_QUALITY = 0.85;
+
+  // Draw it, then send what was drawn.
+  //
+  // This is the fix for a whole class of failure rather than a saving. A 48MP
+  // Pro sensor writes HEICs past any sane request ceiling, and it writes
+  // container variants a server-side decoder may not know yet — but the phone
+  // that took the photograph can always display it, and anything the browser
+  // can display it can draw. What leaves the device is therefore an ordinary
+  // JPEG of a few hundred kilobytes, whatever exotic thing came off the
+  // sensor, and it goes over mobile data in a fraction of the time.
+  //
+  // Three ways down, in order of how much they can be trusted with a very
+  // large file:
+  //
+  //   bitmap — createImageBitmap with resize options. The decoder scales
+  //            while decoding, so a 108MP JPEG never exists full-size in
+  //            memory. This is the one that matters in an in-app WebView on
+  //            a mid-range Android, where the other path runs out of memory.
+  //   canvas — Image plus drawImage. Correct everywhere, allocates the whole
+  //            source bitmap first.
+  //   raw    — send the file exactly as the camera wrote it, and let the
+  //            server decode it. The path that worked before any of this.
+  //
+  // Which one a device actually took is reported with the upload, because the
+  // whole reason this exists is that we could not see what real phones were
+  // doing.
+
+  function vizLog(message) {
+    // Console as well as telemetry: the telemetry says which path, the console
+    // says why, and only one of them is available while somebody is holding
+    // the phone that is failing.
+    try {
+      if (window.console && console.log) console.log("[viz] " + message);
+    } catch (e) { /* a console that throws is not worth an upload */ }
+  }
+
+  // A canvas to a JPEG blob. `toBlob` is the right call and some older Android
+  // WebViews either lack it or hand back null, so `toDataURL` is kept as the
+  // way out — it is synchronous and wasteful and it works.
+  function vizCanvasBlob(canvas, done) {
+    function fromDataUrl() {
+      try {
+        var url = canvas.toDataURL("image/jpeg", VIZ_UPLOAD_QUALITY);
+        var comma = url.indexOf(",");
+        if (comma < 0 || url.indexOf("image/jpeg") < 0) { done(null); return; }
+        var binary = atob(url.slice(comma + 1));
+        var bytes = new Uint8Array(binary.length);
+        for (var i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        done(new Blob([bytes], { type: "image/jpeg" }));
+      } catch (e) {
+        done(null);
+      }
+    }
+
+    if (!canvas.toBlob) {
+      vizLog("toBlob missing — using toDataURL");
+      fromDataUrl();
+      return;
+    }
+    try {
+      canvas.toBlob(function (blob) {
+        if (blob) { done(blob); return; }
+        // Documented WebView behaviour, not a theoretical branch.
+        vizLog("toBlob returned null — using toDataURL");
+        fromDataUrl();
+      }, "image/jpeg", VIZ_UPLOAD_QUALITY);
+    } catch (e) {
+      vizLog("toBlob threw — using toDataURL");
+      fromDataUrl();
+    }
+  }
+
+  // Paint a decoded source onto a canvas at the target size and encode it.
+  function vizEncode(source, w, h, how, finish) {
+    var scale = Math.min(1, VIZ_UPLOAD_EDGE / Math.max(w, h));
+    var canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(w * scale));
+    canvas.height = Math.max(1, Math.round(h * scale));
+
+    var ctx = canvas.getContext && canvas.getContext("2d");
+    if (!ctx) { finish(null, "raw", "no 2d context"); return; }
+    ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+
+    vizCanvasBlob(canvas, function (blob) {
+      if (!blob) { finish(null, "raw", "no blob from canvas"); return; }
+      finish(blob, how);
+    });
+  }
+
+  // The memory-safe one. `resizeWidth` alone preserves the aspect ratio, so a
+  // landscape photo is done in a single decode; a portrait one comes back
+  // taller than the cap and is decoded again bounded on the other axis. Both
+  // decodes are scaled, so neither holds the full-size image.
+  //
+  // One known cost: a photograph already narrower than the cap is resampled
+  // *up* to it, because there is no way to learn the source size without
+  // decoding something. It costs a slightly larger upload on small images and
+  // nothing on the phone photographs this is for, all of which are wider.
+  function vizBitmap(file, finish) {
+    if (!window.createImageBitmap || !window.Promise) {
+      finish(null, "canvas", "no createImageBitmap");
+      return;
+    }
+    var opts = { resizeWidth: VIZ_UPLOAD_EDGE, resizeQuality: "high" };
+    var first = null;
+    try {
+      createImageBitmap(file, opts).then(function (bmp) {
+        first = bmp;
+        if (bmp.height <= VIZ_UPLOAD_EDGE) return bmp;
+        var narrow = Math.max(
+          1, Math.round(VIZ_UPLOAD_EDGE * bmp.width / bmp.height));
+        return createImageBitmap(file, {
+          resizeWidth: narrow, resizeHeight: VIZ_UPLOAD_EDGE,
+          resizeQuality: "high"
+        });
+      }).then(function (bmp) {
+        if (first && first !== bmp && first.close) first.close();
+        vizEncode(bmp, bmp.width, bmp.height, "bitmap",
+                  function (blob, how, why) {
+                    if (bmp.close) bmp.close();
+                    finish(blob, how, why);
+                  });
+      })["catch"](function (err) {
+        if (first && first.close) first.close();
+        finish(null, "canvas", "createImageBitmap failed: " + err);
+      });
+    } catch (e) {
+      finish(null, "canvas", "createImageBitmap threw");
+    }
+  }
+
+  // The everywhere-else one.
+  function vizCanvas(file, finish) {
+    if (!window.URL || !URL.createObjectURL) {
+      finish(null, "raw", "no object URLs");
+      return;
+    }
+    var url;
+    var img = new Image();
+    // A photograph that will not decode in a reasonable time is one we stop
+    // waiting on rather than one that leaves the reader with a dead picker.
+    var timer = setTimeout(function () {
+      finish(null, "raw", "decode timed out");
+    }, 15000);
+
+    function cleanup() {
+      clearTimeout(timer);
+      if (url) { try { URL.revokeObjectURL(url); } catch (e) { /* fine */ } }
+    }
+
+    img.onload = function () {
+      cleanup();
+      var w = img.naturalWidth || img.width;
+      var h = img.naturalHeight || img.height;
+      if (!w || !h) { finish(null, "raw", "no dimensions"); return; }
+      try {
+        vizEncode(img, w, h, "canvas", finish);
+      } catch (e) {
+        finish(null, "raw", "draw failed");
+      }
+    };
+    img.onerror = function () {
+      cleanup();
+      finish(null, "raw", "the browser could not decode it");
+    };
+
+    try {
+      url = URL.createObjectURL(file);
+      img.src = url;
+    } catch (e) {
+      cleanup();
+      finish(null, "raw", "could not make an object URL");
+    }
+  }
+
+  function vizShrink(file, done) {
+    var settled = false;
+
+    function land(out, how) {
+      if (settled) return;
+      settled = true;
+      vizLog("upload path: " + how
+             + (out && out.size ? " (" + Math.round(out.size / 1024) + "KB)"
+                                : ""));
+      done(out || file, how);
+    }
+
+    vizBitmap(file, function (blob, how, why) {
+      if (blob) { land(blob, how); return; }
+      if (why) vizLog("bitmap path unavailable — " + why);
+      if (how === "raw") { land(null, "raw"); return; }
+
+      vizCanvas(file, function (blob2, how2, why2) {
+        if (blob2) { land(blob2, how2); return; }
+        if (why2) vizLog("canvas path unavailable — " + why2);
+        land(null, "raw");
+      });
+    });
+  }
+
   function vizUpload(file) {
     if (vizBusy) return;
     var host = vizBody();
@@ -2697,13 +2975,23 @@
       host.textContent = "";
       host.appendChild(elm("p", "viz-note", "Uploading…"));
     }
-    var body = new FormData();
-    body.append("photo", file);
-    // Counted when the server has it, not when the picker closed. A photo the
-    // server refused is a `viz_failed`, and counting it as both would make the
-    // upload-to-generate rate read better than it is.
-    vizUploading = true;
-    vizFetch("/api/visualizer/upload?" + vizAuth(), body, vizFailed);
+    // Held so the picker cannot fire twice while the canvas is working — the
+    // request itself has not started yet, so `vizBusy` is not set for it.
+    vizBusy = true;
+    vizShrink(file, function (payload, how) {
+      vizBusy = false;
+      var body = new FormData();
+      // A filename is required for the part to arrive as a file rather than a
+      // field. Ours, not theirs: what the photograph was called on their phone
+      // is not something this server needs to be told.
+      body.append("photo", payload, "upload.jpg");
+      // Counted when the server has it, not when the picker closed. A photo
+      // the server refused is a `viz_failed`, and counting it as both would
+      // make the upload-to-generate rate read better than it is.
+      vizUploading = true;
+      vizUploadPath = how;
+      vizFetch("/api/visualizer/upload?" + vizAuth(), body, vizUploadFailed);
+    });
   }
 
   function vizGenerate() {
@@ -2722,12 +3010,32 @@
   // A refusal the server explained, or a network failure it could not. Either
   // way the section goes back to a state the reader can act from — with the
   // photo still on the server, so nothing has to be chosen twice.
+  // A generation that did not produce an image. `error_text` is this one's
+  // copy and only this one's — it is the sentence that says the credit was not
+  // spent, which is a fact about renders and nothing at all about uploads.
   function vizFailed(message) {
-    var block = vizConfig() || {};
+    vizShowFailure(message
+                   || (vizConfig() || {}).error_text
+                   || "That didn't work. Try again.");
+  }
+
+  // A photograph that did not arrive. Its own copy set, keyed on what the
+  // server actually said, because the four ways this fails need four different
+  // things from the reader: a smaller file, a different file, a quiz, or
+  // another try in a minute.
+  function vizUploadFailed(message, code, data) {
+    // The server's own sentence wins where it has one worth showing — it knows
+    // things the class does not, like which of two ceilings was hit — but a
+    // code we can name beats a generic message, and beats silence outright.
+    var mapped = uploadCopy(code, data);
+    vizShowFailure(UPLOAD_CLASS[code] ? mapped : (message || mapped));
+  }
+
+  function vizShowFailure(message) {
     vizUploading = false;
     vizState = {
       status: "failed",
-      message: message || block.error_text || "That didn't work. Try again.",
+      message: message,
       remaining: (vizState && vizState.remaining) || 1,
       has_source: !!(vizState && vizState.has_source),
       retriable: true

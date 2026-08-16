@@ -70,24 +70,43 @@ ALLOWED_EVENTS = {
 # is somebody who has already paid. A closed set of two, for the same reason
 # `paywall_view` has one — a field whose whole purpose is to be grouped by
 # cannot afford a typo in a client that ships to everybody.
-VIZ_UPLOAD_KEYS = frozenset(("phase",))
 VIZ_UPLOAD_PHASE = frozenset(("pre", "post"))
+
+# How the browser got the photograph into the request: a memory-safe
+# `createImageBitmap` resize, an ordinary canvas draw, or the raw file exactly
+# as the camera wrote it. Most of the traffic here is Android inside an in-app
+# WebView, where the first two are the ones that fail, and this field is the
+# only way to see which one a real device actually took.
+VIZ_UPLOAD_PATH = frozenset(("bitmap", "canvas", "raw"))
 
 
 def _clean_viz_upload(value):
-    """`{"phase": "pre"|"post"}` and nothing else. Raises on anything it is not.
+    """`{"phase": ..., "path": ...}`, both from closed sets. Raises otherwise.
 
     Rebuilt rather than passed through, like every other payload here. Nothing
     about the photograph is carried — not its name, not its size, not its
     dimensions — and this shape is what makes that structural rather than a
     convention somebody has to remember.
+
+    `path` is optional: an engine.js cached from before it shipped sends a
+    payload with only `phase` in it, and the CDN will be serving one of those
+    for a while after this deploys.
     """
-    if set(value) != VIZ_UPLOAD_KEYS:
+    keys = set(value)
+    if not keys or not keys.issubset({"phase", "path"}) or "phase" not in keys:
         raise ValueError("extra")
+
     phase = value["phase"]
     if not isinstance(phase, str) or phase not in VIZ_UPLOAD_PHASE:
         raise ValueError("extra")
-    return {"phase": phase}
+    out = {"phase": phase}
+
+    if "path" in keys:
+        path = value["path"]
+        if not isinstance(path, str) or path not in VIZ_UPLOAD_PATH:
+            raise ValueError("extra")
+        out["path"] = path
+    return out
 
 UUID_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
