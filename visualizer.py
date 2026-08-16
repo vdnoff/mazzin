@@ -54,7 +54,7 @@ from flask import Blueprint, jsonify, request, send_file
 import config
 import database
 import reports
-from payments import CHECKOUT_SESSION_RE
+from payments import RESULT_TOKEN_RE, find_purchase
 
 log = logging.getLogger(__name__)
 
@@ -107,11 +107,6 @@ UUID_RE = re.compile(
 SELECT_SESSION_SEEN_SQL = (
     "SELECT 1 AS seen FROM events "
     "WHERE session_id = %s AND funnel = %s LIMIT 1"
-)
-
-SELECT_PURCHASE_SQL = (
-    "SELECT id, funnel, status FROM purchases "
-    "WHERE checkout_session = %s LIMIT 1"
 )
 
 SELECT_STATE_SQL = (
@@ -986,11 +981,15 @@ def _authorise():
     cs = request.args.get("cs")
     if not cs and request.method == "POST":
         cs = request.form.get("cs")
-    if not isinstance(cs, str) or not CHECKOUT_SESSION_RE.match(cs):
+    if not isinstance(cs, str) or not RESULT_TOKEN_RE.match(cs):
         raise Denied(400, "bad_token")
 
     try:
-        purchase = database.query_one(SELECT_PURCHASE_SQL, (cs,))
+        # payments.py owns what a result token resolves to. Two copies of that
+        # SELECT is how the visualizer ends up unable to find a purchase the
+        # report can — which is precisely what would have happened the day an
+        # in-page payment produced a `pi_` token and only one of them knew.
+        purchase = find_purchase(cs)
     except Exception:
         log.exception("visualizer: purchase lookup failed")
         raise Denied(500, "lookup_failed")

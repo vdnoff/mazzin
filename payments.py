@@ -4,6 +4,19 @@ The webhook is the only writer of `purchases`. Nothing the client says about
 a payment is trusted, and the client never supplies an amount — prices are
 read server-side from the funnel config.
 
+Two routes start a payment and neither one completes it. `/api/checkout`
+creates a hosted Checkout Session and redirects; `/api/payment-intent` creates
+a PaymentIntent for a payment confirmed in the page. They validate through the
+same function and price from the same config, so there is one answer to what
+something costs rather than two that agree today. The redirect is the default
+and the one carrying money; the intent path has no caller yet.
+
+Both arrive back here as a webhook, as `checkout.session.completed` or
+`payment_intent.succeeded`, and are read into one shape before anything is
+written — so there is one INSERT, one set of side effects, and one place where
+a purchase becomes real. `uq_payment_intent` is what makes a payment that
+somehow produced both events yield one row and not two.
+
 Amounts are integer cents everywhere in this module, which is what Stripe
 sends and what MySQL stores. No float ever touches a money value; a Decimal
 is used wherever a fractional amount is actually computed.
@@ -53,6 +66,17 @@ def _stripe_secret(mode):
             else config.STRIPE_SECRET_KEY)
 
 
+def _stripe_publishable(mode):
+    """The publishable key for a mode, or "" when that mode is not configured.
+
+    The only key that is ever allowed out of this process. It goes to the
+    browser so Stripe.js can confirm a PaymentIntent there, which is the whole
+    reason it exists — it identifies the account and authorises nothing.
+    """
+    return (config.STRIPE_TEST_PUBLISHABLE_KEY if mode == TEST
+            else config.STRIPE_PUBLISHABLE_KEY)
+
+
 UUID_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
     re.IGNORECASE,
@@ -60,6 +84,17 @@ UUID_RE = re.compile(
 
 # Stripe checkout session ids: cs_test_... / cs_live_...
 CHECKOUT_SESSION_RE = re.compile(r"^cs_[A-Za-z0-9_]{1,250}$")
+
+# What a reader's result link can carry. `cs_` is what every link in the wild
+# already holds and is unchanged; `pi_` is what a purchase confirmed in the
+# page has instead, because it never had a checkout session at all.
+#
+# Both are Stripe-generated identifiers of the same shape and the same
+# unguessability, and both are already known to the browser that made the
+# payment — the redirect puts the `cs_` in the URL bar, and the client secret
+# contains the `pi_`. So this widens what the token may look like without
+# widening what a stranger can reach.
+RESULT_TOKEN_RE = re.compile(r"^(?:cs|pi)_[A-Za-z0-9_]{1,250}$")
 
 INSERT_PURCHASE_SQL = (
     "INSERT INTO purchases "
@@ -72,14 +107,39 @@ INSERT_PURCHASE_EVENT_SQL = (
     "INSERT INTO events (funnel, session_id, event) VALUES (%s, %s, 'purchase')"
 )
 
+# One purchase, found by whichever identifier its payment produced. A hosted
+# checkout has a `cs_` and no `pi_` in the link; an in-page confirmation has a
+# `pi_` and no checkout session at all. The token is matched against both
+# columns rather than parsed and routed, because a prefix is a weaker thing to
+# depend on than an index — and both columns are indexed, so this is two key
+# lookups either way.
+#
+# Passing the same value twice is deliberate and safe: a `cs_` can never equal
+# a payment intent id and a `pi_` can never equal a checkout session id, so
+# exactly one side can match.
 SELECT_PURCHASE_SQL = (
     "SELECT id, funnel, session_id, result_style, status, email FROM purchases "
-    "WHERE checkout_session = %s LIMIT 1"
+    "WHERE checkout_session = %s OR payment_intent = %s LIMIT 1"
 )
 
 SELECT_REPORT_SQL = (
     "SELECT content FROM reports WHERE purchase_id = %s ORDER BY id DESC LIMIT 1"
 )
+
+
+def find_purchase(token):
+    """The purchase a result token names, or None. Raises on a database error.
+
+    The one place a browser-supplied token becomes a purchase. It was two
+    identical SELECTs in two modules, which is exactly the arrangement that
+    would have left the visualizer unable to find an in-page purchase while
+    the report could — so it is one function now and both callers import it.
+
+    Validating the token is the caller's job, because what they do about a
+    malformed one differs: the report answers 400 and the visualizer answers
+    the same refusal it gives an unknown session.
+    """
+    return database.query_one(SELECT_PURCHASE_SQL, (token, token))
 
 
 def _style_ids(cfg):
@@ -276,7 +336,12 @@ def _clean_meta_ids(raw):
 
 def _metadata(slug, session_id, result_style, tag_scores, choices=None,
               meta_ids=None):
-    """Checkout session metadata. Absent keys are absent, never empty strings."""
+    """Metadata for whichever object starts the payment. Absent keys are
+    absent, never empty strings.
+
+    One builder for the Checkout Session and the PaymentIntent alike, because
+    the webhook reads them back through one code path and a difference here
+    would surface there as a purchase that could not be recorded."""
     data = {
         "funnel": slug,
         "session_id": session_id,
@@ -460,39 +525,107 @@ def _product_images(checkout_cfg):
     return [base + raw]
 
 
-@bp.post("/api/checkout")
-def checkout():
-    body = request.get_json(silent=True, force=True)
+class OrderError(Exception):
+    """A request that will not become a payment, with the status to answer."""
+
+    def __init__(self, status):
+        Exception.__init__(self, status)
+        self.status = status
+
+
+def _validated_order(body):
+    """Everything a payment needs, taken from a request and re-derived here.
+
+    Two routes now start a payment — the hosted Checkout redirect and the
+    PaymentIntent the Express Checkout Element confirms — and they have to
+    agree on every one of these answers. Not "should agree": a second copy of
+    this that drifted would be a second opinion about what something costs.
+
+    The one rule that matters is unchanged and is the reason this reads the
+    config rather than the body: **the price comes from the funnel, never from
+    the client.** The body supplies which funnel, which session and which
+    style; the amount is looked up. Everything else it sends steers report
+    copy or ad attribution and can be dropped without affecting the sale.
+
+    Raises OrderError with the status to answer. A 400 is the caller's fault
+    and says nothing about why; a 502 is ours and is logged.
+    """
     if not isinstance(body, dict):
-        return jsonify({}), 400
+        raise OrderError(400)
 
     slug = body.get("funnel")
     if not config.funnel_exists(slug):
-        return jsonify({}), 400
+        raise OrderError(400)
 
     session_id = body.get("session_id")
     if not isinstance(session_id, str) or not UUID_RE.match(session_id):
-        return jsonify({}), 400
+        raise OrderError(400)
 
     cfg = config.load_funnel(slug)
 
     result_style = body.get("result_style")
     if result_style not in _style_ids(cfg):
-        return jsonify({}), 400
+        raise OrderError(400)
 
     pricing = cfg.get("pricing") or {}
     amount_cents = pricing.get("amount_cents")
     currency = pricing.get("currency")
     if not isinstance(amount_cents, int) or amount_cents <= 0 or not currency:
         log.error("funnel %s has no usable price", slug)
-        return jsonify({}), 502
+        raise OrderError(502)
 
-    # Steer the report copy only — never the price, never whether we fulfil.
-    tag_scores = _tag_scores_metadata(_clean_tag_scores(cfg, body.get("tag_scores")))
-    choices = _choices_metadata(_clean_choices(cfg, body.get("choices")))
-    # Carried through Stripe so the server-side Purchase can be joined to the
-    # click that produced it. Never used to decide anything on this path.
-    meta_ids = _clean_meta_ids(body)
+    # Which key set this funnel transacts on, and a refusal rather than a
+    # fallback when it asks for one that is not configured. Quietly billing a
+    # test funnel against the live key would be the single worst outcome here,
+    # so the missing-key branch stops instead of guessing.
+    mode = _stripe_mode(cfg)
+    secret = _stripe_secret(mode)
+    if not secret:
+        log.error(
+            "funnel %s wants stripe_mode=%s but %s is not configured — "
+            "refusing payment", slug, mode,
+            "STRIPE_TEST_SECRET_KEY" if mode == TEST else "STRIPE_SECRET_KEY")
+        raise OrderError(502)
+
+    return {
+        "slug": slug,
+        "cfg": cfg,
+        "session_id": session_id,
+        "result_style": result_style,
+        "amount_cents": amount_cents,
+        "currency": currency,
+        # Steer the report copy only — never the price, never whether we
+        # fulfil.
+        "tag_scores": _tag_scores_metadata(
+            _clean_tag_scores(cfg, body.get("tag_scores"))),
+        "choices": _choices_metadata(
+            _clean_choices(cfg, body.get("choices"))),
+        # Carried through Stripe so the server-side Purchase can be joined to
+        # the click that produced it. Never used to decide anything.
+        "meta_ids": _clean_meta_ids(body),
+        "mode": mode,
+        "secret": secret,
+    }
+
+
+@bp.post("/api/checkout")
+def checkout():
+    try:
+        order = _validated_order(request.get_json(silent=True, force=True))
+    except OrderError as exc:
+        return jsonify({}), exc.status
+
+    slug = order["slug"]
+    cfg = order["cfg"]
+    session_id = order["session_id"]
+    result_style = order["result_style"]
+    amount_cents = order["amount_cents"]
+    currency = order["currency"]
+    tag_scores = order["tag_scores"]
+    choices = order["choices"]
+    meta_ids = order["meta_ids"]
+    mode = order["mode"]
+    secret = order["secret"]
 
     # What Stripe shows on its own payment page and on the receipt. It is the
     # last piece of copy somebody reads before paying and the only one we do
@@ -508,19 +641,6 @@ def checkout():
     images = _product_images(checkout_cfg)
     if images:
         product_data["images"] = images
-
-    # Which key set this funnel transacts on, and a refusal rather than a
-    # fallback when it asks for one that is not configured. Quietly billing a
-    # test funnel against the live key would be the single worst outcome here,
-    # so the missing-key branch stops instead of guessing.
-    mode = _stripe_mode(cfg)
-    secret = _stripe_secret(mode)
-    if not secret:
-        log.error(
-            "funnel %s wants stripe_mode=%s but %s is not configured — "
-            "refusing checkout", slug, mode,
-            "STRIPE_TEST_SECRET_KEY" if mode == TEST else "STRIPE_SECRET_KEY")
-        return jsonify({}), 502
 
     try:
         session = stripe.checkout.Session.create(
@@ -559,6 +679,77 @@ def checkout():
     return jsonify({"url": session.url})
 
 
+# --- POST /api/payment-intent ----------------------------------------------
+
+
+@bp.post("/api/payment-intent")
+def payment_intent():
+    """A PaymentIntent for a payment confirmed in the page rather than on
+    Stripe's.
+
+    The same order as `/api/checkout`, priced the same way from the same
+    config by the same function — the two differ only in what Stripe object
+    they create and therefore in where the card details are typed. The hosted
+    redirect remains the default and is untouched; nothing calls this yet.
+
+    What comes back is a client secret and the *publishable* key. Neither is a
+    credential: the client secret authorises confirming this one payment for
+    this one amount, and the amount was fixed here, from the funnel, before
+    the browser ever saw it. The client still cannot say what anything costs,
+    and this route still does not confirm anything — only the webhook does.
+    """
+    try:
+        order = _validated_order(request.get_json(silent=True, force=True))
+    except OrderError as exc:
+        return jsonify({}), exc.status
+
+    slug = order["slug"]
+    mode = order["mode"]
+
+    # A payment nobody can confirm is worse than no payment: the charge would
+    # be created and then stranded. Refused for the same reason and in the
+    # same shape as a missing secret.
+    publishable = _stripe_publishable(mode)
+    if not publishable:
+        log.error(
+            "funnel %s wants stripe_mode=%s but %s is not configured — "
+            "refusing payment intent", slug, mode,
+            "STRIPE_TEST_PUBLISHABLE_KEY" if mode == TEST
+            else "STRIPE_PUBLISHABLE_KEY")
+        return jsonify({}), 502
+
+    try:
+        intent = stripe.PaymentIntent.create(
+            # Extracted by the SDK as a request option, never sent as a form
+            # field. Passed rather than assigned so two funnels in two modes
+            # cannot take each other's key off the module.
+            api_key=order["secret"],
+            amount=order["amount_cents"],
+            currency=order["currency"],
+            # Stripe decides which methods to offer from the account's
+            # settings and the device, which is what makes the wallets appear
+            # without this route naming any of them.
+            automatic_payment_methods={"enabled": True},
+            # The same metadata the checkout session carries, from the same
+            # builder — the webhook reads one shape whichever object produced
+            # the payment.
+            metadata=_metadata(slug, order["session_id"],
+                               order["result_style"], order["tag_scores"],
+                               order["choices"], order["meta_ids"]),
+        )
+    except Exception:
+        # Stripe's message can echo request contents — log the type only.
+        log.exception("stripe payment intent create failed for funnel %s", slug)
+        return jsonify({}), 502
+
+    return jsonify({
+        "client_secret": intent.client_secret,
+        "publishable_key": publishable,
+        "amount_cents": order["amount_cents"],
+        "currency": order["currency"],
+    })
+
+
 # --- POST /api/stripe/webhook ----------------------------------------------
 
 
@@ -576,6 +767,111 @@ def _read_tag_scores(cfg, packed):
     except ValueError:
         return None
     return _clean_tag_scores(cfg, raw)
+
+
+# Both ways a payment reaches us. The hosted redirect is the one carrying
+# money today; the intent is what an in-page confirmation produces. Anything
+# else is acknowledged and ignored.
+PAID_EVENTS = frozenset(("checkout.session.completed",
+                         "payment_intent.succeeded"))
+
+
+def _from_checkout_session(session):
+    """The paid facts, off a Checkout Session. None when it has no amount."""
+    amount_cents = session.get("amount_total")
+    if not isinstance(amount_cents, int):
+        return None
+    payment_intent = session.get("payment_intent")
+    return {
+        "amount_cents": amount_cents,
+        "currency": (session.get("currency") or "usd")[:3],
+        "details": session.get("customer_details") or {},
+        "payment_intent": (payment_intent
+                           if isinstance(payment_intent, str) else None),
+        "checkout_session": session.get("id"),
+    }
+
+
+def _billing_details(intent, cfg):
+    """Who paid, off the charge behind an intent. `{}` when it cannot be read.
+
+    A PaymentIntent does not carry an email of its own — it is on the charge,
+    which the event may or may not expand. Recent API versions send
+    `latest_charge` as a bare id, older ones inline `charges.data[0]`, and both
+    are handled here rather than assumed.
+
+    Failing to find it is not a failure of the payment. A purchase with no
+    email is already an ordinary case on the existing path: the row is written,
+    the report is generated, and only the email delivery is skipped.
+    """
+    charge = intent.get("latest_charge")
+    if isinstance(charge, dict):
+        return charge.get("billing_details") or {}
+
+    inline = ((intent.get("charges") or {}).get("data") or [])
+    if inline and isinstance(inline[0], dict):
+        return inline[0].get("billing_details") or {}
+
+    if not isinstance(charge, str) or not charge:
+        return {}
+
+    # Only reached when the event carried an id rather than the object. The
+    # mode's own key, for the same reason every other call names one.
+    secret = _stripe_secret(_stripe_mode(cfg))
+    if not secret:
+        return {}
+    try:
+        fetched = stripe.Charge.retrieve(charge, api_key=secret)
+    except Exception as exc:
+        # An address we could not fetch costs an email. It does not cost the
+        # purchase, so this is a warning and the flow continues.
+        log.warning("could not retrieve charge for a payment intent: %s",
+                    type(exc).__name__)
+        return {}
+    return dict(fetched.get("billing_details") or {})
+
+
+def _from_payment_intent(intent, cfg):
+    """The paid facts, off a PaymentIntent. None when nothing was received.
+
+    `amount_received` and not `amount`: the first is what was actually taken,
+    the second is what was asked for. On a succeeded intent they agree, and on
+    anything else the difference is the whole point.
+    """
+    amount_cents = intent.get("amount_received")
+    if not isinstance(amount_cents, int) or amount_cents <= 0:
+        return None
+
+    billing = _billing_details(intent, cfg)
+    return {
+        "amount_cents": amount_cents,
+        "currency": (intent.get("currency") or "usd")[:3],
+        # Reshaped to the customer_details keys the rest of this handler reads,
+        # so one insert serves both paths.
+        "details": {"email": billing.get("email"),
+                    "address": billing.get("address") or {}},
+        "payment_intent": intent.get("id"),
+        # There was no checkout session. This is the column the migration
+        # exists to allow NULL in.
+        "checkout_session": None,
+    }
+
+
+def _is_live_payment(event, checkout_session):
+    """Whether Meta should hear about this. Absence is never evidence.
+
+    `livemode` is the authority and the only marker the intent path has — a
+    `pi_` id looks identical in both modes, so there is nothing else to read
+    and nothing worth inventing. On the checkout path the session id carries a
+    `cs_test_` prefix as a second, independent marker, and it is still used
+    there.
+
+    An event with no `livemode` at all behaves exactly as it did before any of
+    this, so a live purchase can never be lost to a missing field.
+    """
+    if event.get("livemode") is False:
+        return False
+    return not str(checkout_session or "").startswith("cs_test_")
 
 
 def _claim_visualizer_photo(purchase_id, slug, session_id):
@@ -690,11 +986,12 @@ def stripe_webhook():
         log.warning("stripe webhook rejected: %s", type(exc).__name__)
         return jsonify({}), 400
 
-    if event.get("type") != "checkout.session.completed":
+    kind = event.get("type")
+    if kind not in PAID_EVENTS:
         return jsonify({"status": "ignored"}), 200
 
-    session = (event.get("data") or {}).get("object") or {}
-    metadata = session.get("metadata") or {}
+    obj = (event.get("data") or {}).get("object") or {}
+    metadata = obj.get("metadata") or {}
 
     slug = metadata.get("funnel")
     session_id = metadata.get("session_id")
@@ -703,23 +1000,30 @@ def stripe_webhook():
     if not config.funnel_exists(slug) or not (
         isinstance(session_id, str) and UUID_RE.match(session_id)
     ):
-        # Sessions created outside this funnel (or by an older build) are not
+        # Payments created outside this funnel (or by an older build) are not
         # ours to record. Acknowledge so Stripe stops retrying.
         log.warning("webhook %s has unusable metadata — skipped", event.get("id"))
         return jsonify({"status": "skipped"}), 200
 
-    amount_cents = session.get("amount_total")
-    if not isinstance(amount_cents, int):
-        log.warning("webhook %s has no amount_total — skipped", event.get("id"))
+    # The two objects that mean "this was paid for" describe the same facts
+    # under different names, so they are read into one shape here and
+    # everything below this line is written once.
+    if kind == "payment_intent.succeeded":
+        paid = _from_payment_intent(obj, config.load_funnel(slug))
+    else:
+        paid = _from_checkout_session(obj)
+
+    if paid is None:
+        log.warning("webhook %s has no usable amount — skipped",
+                    event.get("id"))
         return jsonify({"status": "skipped"}), 200
 
-    currency = (session.get("currency") or "usd")[:3]
-    details = session.get("customer_details") or {}
+    amount_cents = paid["amount_cents"]
+    currency = paid["currency"]
+    details = paid["details"]
     address = details.get("address") or {}
-
-    payment_intent = session.get("payment_intent")
-    if not isinstance(payment_intent, str):
-        payment_intent = None
+    payment_intent = paid["payment_intent"]
+    checkout_session = paid["checkout_session"]
 
     try:
         purchase_id = database.execute(
@@ -729,7 +1033,7 @@ def stripe_webhook():
                 session_id,
                 event.get("id"),
                 payment_intent,
-                session.get("id"),
+                checkout_session,
                 amount_cents,
                 currency,
                 details.get("email"),
@@ -760,8 +1064,7 @@ def stripe_webhook():
     # which carries cs_test_ on a test session. Absence is not evidence — an
     # event with no `livemode` at all behaves exactly as it did before this,
     # so a live purchase can never be dropped by a missing field.
-    live_purchase = (event.get("livemode") is not False
-                     and not str(session.get("id") or "").startswith("cs_test_"))
+    live_purchase = _is_live_payment(event, checkout_session)
     if not live_purchase:
         # Names the payment, not the signature: an event can be signed with the
         # live secret and still be a test payment, and a line claiming
@@ -786,7 +1089,7 @@ def stripe_webhook():
     choices = _read_choices(cfg, metadata.get("choices"))
     _record_side_effects(
         purchase_id, slug, session_id, result_style, tag_scores,
-        email=details.get("email"), checkout_session=session.get("id"),
+        email=details.get("email"), checkout_session=checkout_session,
         choices=choices,
     )
     return jsonify({"status": "ok"}), 200
@@ -811,11 +1114,14 @@ def _mask_email(address):
 
 @bp.get("/api/report")
 def report():
+    # Still `cs`, and still every `cs_` link that has ever been emailed. The
+    # parameter name is the shape in the wild and is not worth changing to
+    # match what a token can now also be.
     cs = request.args.get("cs", "")
-    if not CHECKOUT_SESSION_RE.match(cs):
+    if not RESULT_TOKEN_RE.match(cs):
         return jsonify({}), 400
 
-    purchase = database.query_one(SELECT_PURCHASE_SQL, (cs,))
+    purchase = find_purchase(cs)
     if not purchase:
         # Webhook has not landed yet — the client keeps polling.
         return jsonify({"status": "pending"}), 202

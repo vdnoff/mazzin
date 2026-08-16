@@ -37,9 +37,14 @@ STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
 # will not sell.
 STRIPE_TEST_SECRET_KEY = os.getenv("STRIPE_TEST_SECRET_KEY", "")
 STRIPE_TEST_WEBHOOK_SECRET = os.getenv("STRIPE_TEST_WEBHOOK_SECRET", "")
-# Read for symmetry and unused, exactly like its live counterpart: checkout is
-# a redirect to Stripe-hosted Checkout, so no publishable key ever reaches the
-# browser. Here so that a mode is one complete key set rather than two.
+# In use as of the PaymentIntent path: a payment confirmed in the page needs
+# Stripe.js, and Stripe.js needs the publishable key for the account the intent
+# was created on. It authorises nothing — it identifies — but it still has to
+# be the one matching the funnel's mode, or the browser would be talking to a
+# different account than the intent lives on.
+#
+# The hosted-Checkout redirect still uses neither, which is why both of these
+# sat unread until now.
 STRIPE_TEST_PUBLISHABLE_KEY = os.getenv("STRIPE_TEST_PUBLISHABLE_KEY", "")
 
 # --- Report generation ----------------------------------------------------
