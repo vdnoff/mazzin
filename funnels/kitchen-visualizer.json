@@ -12,6 +12,7 @@
     "headline": "Your kitchen style analysis",
     "subtext": "$4,000+ saved on your renovation",
     "subtext_accent": "$4,000+",
+    "journey": "Your choices → your style → your kitchen, transformed",
     "hint": "Tap your choice",
     "steps": [
       {
@@ -1492,7 +1493,8 @@
       "kicker": "Calibrating",
       "line": "Profile {pct}% calibrated. Final signals.",
       "sub": "Three more, then the read.",
-      "cta": "Continue analysis"
+      "cta": "Continue analysis",
+      "next": "Next: your result — then upload a photo of your kitchen to see it transformed."
     }
   ],
   "interstitial_working": [

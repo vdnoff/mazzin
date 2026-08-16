@@ -766,6 +766,7 @@
     el.midSub.hidden = !entry.sub;
     el.midCta.textContent = entry.cta || "Continue analysis";
     startWorking();
+    setHandoff(entry.next || "");
     renderProgress();
     show("screen-interstitial");
     track("interstitial", step);
@@ -824,6 +825,29 @@
       i = (i + 1) % lines.length;
       text.textContent = lines[i];
     }, WORKING_MS);
+  }
+
+  // What happens after the last one of these. Per-entry copy, so only the
+  // interstitial that is actually the last one carries it — a "next: your
+  // result" on the first of three would be a lie about how much is left.
+  //
+  // Below the working row and above the button, because it is the one line
+  // here that is about after rather than about now. Set on every open, so an
+  // entry without it clears one left by an entry that had it.
+  function setHandoff(text) {
+    var node = el.midNext;
+    if (!text) {
+      if (node) node.hidden = true;
+      return;
+    }
+    if (!node) {
+      node = elm("p", "mid-next");
+      node.id = "mid-next";
+      el.midSub.parentNode.appendChild(node);
+      el.midNext = node;
+    }
+    node.hidden = false;
+    node.textContent = fillTokens(text);
   }
 
   function stopWorking() {
@@ -4010,6 +4034,7 @@
 
   function startQuiz() {
     setMoneyLine(cfg.swipe.subtext || "", cfg.swipe.subtext_accent || "");
+    setJourney(cfg.swipe.journey || "");
     if (el.tapHint && cfg.swipe.hint) setHint(cfg.swipe.hint);
 
     var first = pairFor(0);
@@ -4045,6 +4070,42 @@
     node.appendChild(document.createTextNode(text.slice(0, at)));
     node.appendChild(elm("span", "money", accent));
     node.appendChild(document.createTextNode(text.slice(at + accent.length)));
+  }
+
+  // Where this is going, said once under the money line.
+  //
+  // Somebody thirteen taps into a quiz has been told what they will get and
+  // not that the last step is a photograph of their own kitchen. On the funnel
+  // that ends in one, this is the only place before the result that says so —
+  // and on every other funnel the key is absent and nothing is added, which
+  // is what keeps a header with no slack left in it exactly as it was.
+  //
+  // Split on the arrow rather than marked up in config, for the same reason
+  // the money line is: config carries copy, and copy with tags in it is copy
+  // that has to be trusted with innerHTML. Everything below is a text node.
+  var JOURNEY_ARROW = "→";
+
+  function setJourney(text) {
+    var node = el.journey;
+    if (!text) {
+      if (node) node.hidden = true;
+      return;
+    }
+    if (!node) {
+      node = elm("p", "journey");
+      node.id = "swipe-journey";
+      // Inside `.lead`, under the money line. `.lead` is display:contents, so
+      // this becomes a flex item of the header like its sibling — and takes
+      // its own space rather than borrowing the caption's.
+      el.subtext.parentNode.insertBefore(node, el.subtext.nextSibling);
+      el.journey = node;
+    }
+    node.hidden = false;
+    node.textContent = "";
+    String(text).split(JOURNEY_ARROW).forEach(function (part, index) {
+      if (index) node.appendChild(elm("span", "journey-arrow", JOURNEY_ARROW));
+      node.appendChild(document.createTextNode(part));
+    });
   }
 
   // The hint keeps its dot, which is markup rather than copy — replace only
