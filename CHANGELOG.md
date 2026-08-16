@@ -171,3 +171,6 @@ bottom.
 
 ## 2026-08-15 — claude/upload-formats
 - upload formats fix
+
+## 2026-08-16 — claude/pre-purchase-upload
+- pre-purchase upload teaser
