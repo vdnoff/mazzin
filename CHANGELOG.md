@@ -177,3 +177,6 @@ bottom.
 
 ## 2026-08-16 — claude/upload-hardening
 - upload hardening + android paths
+
+## 2026-08-16 — claude/journey-line
+- journey line
