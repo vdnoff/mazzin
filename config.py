@@ -93,9 +93,18 @@ OPENAI_TIMEOUT_S = float(os.getenv("OPENAI_TIMEOUT_S", "180"))
 VISUALIZER_DIR = os.getenv(
     "VISUALIZER_DIR", os.path.join(BASE_DIR, "data", "visualizer"))
 
-# What a phone camera sends is 3-8MB; 8 is a generous ceiling that still fits
-# comfortably in a worker's memory while PIL decodes it.
-VISUALIZER_MAX_BYTES = int(os.getenv("VISUALIZER_MAX_BYTES", str(8 * 1024 * 1024)))
+# Eight megabytes was set from what a phone camera sent when this was written,
+# and a 48-megapixel Pro sensor writes past it routinely — which is how a
+# ceiling meant for crafted files ended up refusing ordinary photographs.
+#
+# The browser downscales before it uploads, so almost nothing should ever come
+# near this: what arrives is a 2048px JPEG of a few hundred kilobytes. This is
+# the ceiling for the raw fallback — an in-app WebView with no working canvas,
+# or a file it could not decode — where the original is sent exactly as the
+# camera wrote it. Twenty-five is chosen for that path rather than for the
+# common one, because the common one does not use it.
+VISUALIZER_MAX_BYTES = int(os.getenv("VISUALIZER_MAX_BYTES",
+                                     str(25 * 1024 * 1024)))
 
 # The longest side we keep. The model reads a 1024px square; 1536 leaves room
 # for the before/after to stay crisp on a 3x phone screen without storing a
@@ -103,9 +112,19 @@ VISUALIZER_MAX_BYTES = int(os.getenv("VISUALIZER_MAX_BYTES", str(8 * 1024 * 1024
 VISUALIZER_MAX_EDGE = int(os.getenv("VISUALIZER_MAX_EDGE", "1536"))
 VISUALIZER_JPEG_QUALITY = int(os.getenv("VISUALIZER_JPEG_QUALITY", "88"))
 
-# A decode ceiling well under Pillow's own bomb guard. No phone photograph is
-# 40 megapixels; anything claiming to be is a crafted file, not a kitchen.
-VISUALIZER_MAX_PIXELS = int(os.getenv("VISUALIZER_MAX_PIXELS", str(40_000_000)))
+# A decode ceiling, still well under Pillow's own bomb guard.
+#
+# "No phone photograph is 40 megapixels" was true when it was written and is
+# not any more: a 48MP Pro sensor produces 8064x6048, which is 48.8 million —
+# so the guard against crafted files was rejecting the exact device this
+# feature was being used on. Eighty admits a 48 and a 64 with room over.
+#
+# The cost of the ceiling is memory: Pillow holds the decoded image as three
+# bytes a pixel, so eighty megapixels is about 240MB in a worker for as long as
+# the re-encode takes. That is survivable and it is why this is not simply set
+# to Pillow's own limit. The browser downscales before uploading, so almost
+# nothing reaches this at all — it is the fallback path's wall.
+VISUALIZER_MAX_PIXELS = int(os.getenv("VISUALIZER_MAX_PIXELS", str(80_000_000)))
 
 # Attempts, not generations. A generation is a credit the buyer paid for and
 # is only spent when an image actually comes back; an attempt is any claim on

@@ -8,7 +8,7 @@ worker time is spent on /api/* and nothing else.
 import logging
 import os
 
-from flask import Flask, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory
 
 import config
 import database
@@ -43,6 +43,37 @@ app.config["MAX_CONTENT_LENGTH"] = config.VISUALIZER_MAX_BYTES + 512 * 1024
 app.register_blueprint(tracking_bp)
 app.register_blueprint(payments_bp)
 app.register_blueprint(visualizer_bp)
+
+
+@app.errorhandler(413)
+def too_large(_exc):
+    """A body over the ceiling, answered in the language the caller speaks.
+
+    This one handler is the whole of a production bug that looked like three.
+    Werkzeug enforces MAX_CONTENT_LENGTH while parsing the body, which happens
+    *before* any route function runs — so an oversize photograph was refused
+    by the framework, the visualizer never saw it, and the server said nothing
+    at all. That was the silence.
+
+    The default answer is an HTML error page. The upload page calls
+    `response.json()` on it, which throws, which lands in the catch-all branch
+    with no message — and the catch-all fell back to the *generation* failure
+    copy. That was the wrong sentence: "Nothing was used up — try again" shown
+    to somebody whose photograph was simply too big.
+
+    So: JSON, with an error code the page can route on, and a log line naming
+    the length that did it. Everything else on the site is unaffected — no
+    other endpoint here takes a body big enough to reach this.
+    """
+    length = request.headers.get("Content-Length") or "?"
+    logging.getLogger("visualizer").info(
+        "visualizer: upload refused (too_large_body) len=%s type=%s "
+        "limit=%d", length, str(request.content_type)[:60],
+        app.config["MAX_CONTENT_LENGTH"])
+    return jsonify({
+        "error": "too_large",
+        "limit_bytes": config.VISUALIZER_MAX_BYTES,
+    }), 413
 
 
 @app.get("/health")

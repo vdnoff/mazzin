@@ -1018,6 +1018,56 @@ def _denied(exc):
     return jsonify({"error": exc.code}), exc.status
 
 
+# --- saying why, every time -------------------------------------------------
+
+
+def _signature(raw, count=8):
+    """The first few bytes as hex. What the file claims to be, structurally.
+
+    Eight bytes is enough to name a container and nowhere near enough to be
+    content: `ffd8ffe0` is a JPEG, `0000001c66747970` is the front of an ISO
+    box and says HEIC, `89504e47` is a PNG. When somebody's phone sends
+    something we cannot read, this is the difference between "an upload
+    failed" and "that model writes a variant we do not decode".
+    """
+    return (raw or b"")[:count].hex()
+
+
+def refused(reason, raw=None, extra=None):
+    """One line per rejected upload. No exceptions.
+
+    An upload that fails and leaves nothing in the log is a bug report with no
+    evidence in it, and that is precisely what happened: a photograph over the
+    ceiling was refused by Werkzeug before this module ran at all, so the
+    server had nothing to say and the page showed the wrong sentence. Every
+    path that turns an upload away now comes through here.
+
+    What is logged is a reason from a closed set, the declared length, the
+    declared type and eight bytes of signature. What is not logged is the
+    filename, the rest of the bytes, and anything else about the picture —
+    those belong to whoever took it.
+    """
+    parts = ["visualizer: upload refused (%s)" % reason]
+    length = request.headers.get("Content-Length")
+    parts.append("len=%s" % (length if length else "?"))
+
+    upload_file = None
+    try:
+        upload_file = request.files.get("photo")
+    except Exception:
+        # Reading `files` re-parses the body, which is exactly what failed on
+        # the path this function exists for. Never let logging raise.
+        pass
+    claimed = getattr(upload_file, "mimetype", None) or request.content_type
+    parts.append("type=%s" % (str(claimed)[:60] if claimed else "?"))
+
+    if raw is not None:
+        parts.append("sig=%s" % _signature(raw))
+    if extra:
+        parts.append(str(extra)[:80])
+    log.info(" ".join(parts))
+
+
 # --- routes ----------------------------------------------------------------
 
 
@@ -1026,6 +1076,11 @@ def upload():
     try:
         who = _resolve(allow_pending=True)
     except Denied as exc:
+        # An upload turned away at the door used to be as silent as one turned
+        # away for its size — and this is the one somebody hits by opening a
+        # friend's result link, where the fix is a sentence rather than a
+        # smaller photograph.
+        refused(exc.code)
         return _denied(exc)
 
     if who.paid:
@@ -1047,6 +1102,7 @@ def upload():
 
     upload_file = request.files.get("photo")
     if upload_file is None:
+        refused("no_file")
         return jsonify({"error": "no_file", "message": "No photo was sent."}), 400
 
     # One byte past the ceiling, so what is measured is what arrived rather
@@ -1059,15 +1115,17 @@ def upload():
     try:
         jpeg = normalise(raw)
     except IntakeError as exc:
-        # No filename, no dimensions, no size: the reason is a fixed string
-        # from a closed set and nothing about the file goes to the log.
-        log.info("visualizer: upload refused (%s)", exc.code)
+        # The signature is the whole point of logging this one: a phone that
+        # writes a container we cannot read is indistinguishable from a broken
+        # upload until you can see the first eight bytes of it.
+        refused(exc.code, raw)
         return jsonify({"error": exc.code, "message": exc.message}), 400
 
     try:
         _write_atomic(who.source(), jpeg)
     except Exception:
         log.exception("visualizer: could not store the source photo")
+        refused("store_failed", raw)
         return jsonify({"error": "store_failed",
                         "message": "We couldn't save that. Try again."}), 500
 
