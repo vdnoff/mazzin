@@ -4034,7 +4034,7 @@
 
   function startQuiz() {
     setMoneyLine(cfg.swipe.subtext || "", cfg.swipe.subtext_accent || "");
-    setJourney(cfg.swipe.journey || "");
+    setJourneySteps(cfg.swipe.journey_steps);
     if (el.tapHint && cfg.swipe.hint) setHint(cfg.swipe.hint);
 
     var first = pairFor(0);
@@ -4050,7 +4050,19 @@
   // in it: config carries copy, and copy with tags in it is copy that has to
   // be trusted with innerHTML. Everything here is a text node, so the worst a
   // bad config can do is fail to match and leave the line plain.
+  // A funnel with no `subtext` gets no line, and no space where one would
+  // have been. The node is in the shell markup rather than built here, so
+  // leaving it empty would leave a 14px top margin on nothing — which on a
+  // header with no slack in it is 14px taken from the cards to show a blank.
+  // `hidden` and not an empty string, because [hidden] wins over the margin.
   function setMoneyLine(text, accent) {
+    if (!el.subtext) return;
+    if (!text) {
+      el.subtext.textContent = "";
+      el.subtext.hidden = true;
+      return;
+    }
+    el.subtext.hidden = false;
     fillAccent(el.subtext, text, accent);
   }
 
@@ -4072,40 +4084,65 @@
     node.appendChild(document.createTextNode(text.slice(at + accent.length)));
   }
 
-  // Where this is going, said once under the money line.
+  // Where this is going, as three numbered steps across the top.
   //
   // Somebody thirteen taps into a quiz has been told what they will get and
   // not that the last step is a photograph of their own kitchen. On the funnel
-  // that ends in one, this is the only place before the result that says so —
-  // and on every other funnel the key is absent and nothing is added, which
-  // is what keeps a header with no slack left in it exactly as it was.
+  // that ends in one this is the only place before the result that says so,
+  // and it replaces the money line rather than sitting under it — two claims
+  // stacked above the question were two headlines arguing.
   //
-  // Split on the arrow rather than marked up in config, for the same reason
-  // the money line is: config carries copy, and copy with tags in it is copy
-  // that has to be trusted with innerHTML. Everything below is a text node.
-  var JOURNEY_ARROW = "→";
-
-  function setJourney(text) {
-    var node = el.journey;
-    if (!text) {
+  // Built once and left in the header, which persists across steps: the cards
+  // and the caption are what change between taps, so the strip is on screen
+  // for every one of the thirteen without being rebuilt for any of them.
+  //
+  // A funnel with no `journey_steps` gets nothing at all — no node, no grid,
+  // no margin — which is the whole of what keeps /kitchen as it was.
+  function setJourneySteps(steps) {
+    var node = el.journeySteps;
+    if (!steps || !steps.length) {
       if (node) node.hidden = true;
       return;
     }
     if (!node) {
-      node = elm("p", "journey");
-      node.id = "swipe-journey";
-      // Inside `.lead`, under the money line. `.lead` is display:contents, so
-      // this becomes a flex item of the header like its sibling — and takes
-      // its own space rather than borrowing the caption's.
+      node = elm("div", "m-steps");
+      node.id = "swipe-steps";
+      // Inside `.lead`, in the slot the money line occupies. `.lead` is
+      // display:contents, so this becomes a flex item of the screen like its
+      // sibling and takes its own space rather than borrowing the caption's.
       el.subtext.parentNode.insertBefore(node, el.subtext.nextSibling);
-      el.journey = node;
+      el.journeySteps = node;
     }
     node.hidden = false;
     node.textContent = "";
-    String(text).split(JOURNEY_ARROW).forEach(function (part, index) {
-      if (index) node.appendChild(elm("span", "journey-arrow", JOURNEY_ARROW));
-      node.appendChild(document.createTextNode(part));
+
+    steps.forEach(function (step) {
+      if (!step) return;
+      var cell = elm("div", "m-steps__c");
+      cell.appendChild(elm("div", "m-steps__n", String(step.n == null
+                                                       ? "" : step.n)));
+      cell.appendChild(labelWithBreaks("div", "m-steps__l",
+                                       String(step.label || "")));
+      node.appendChild(cell);
     });
+  }
+
+  // Copy with an explicit line break in it, as text nodes and real <br>
+  // elements. The break is explicit rather than left to wrapping because the
+  // three columns have to be the same height, and where a phrase wraps
+  // naturally depends on the screen — three columns that each break somewhere
+  // different is a strip with a ragged bottom edge.
+  //
+  // Built rather than assigned: config carries copy, and copy that reaches
+  // innerHTML is copy that has to be trusted. A label with a tag in it lands
+  // on the page as the literal characters of that tag.
+  function labelWithBreaks(tag, cls, text) {
+    var node = elm(tag, cls);
+    text.split("\n").forEach(function (line, index) {
+      if (index) node.appendChild(document.createElement("br"));
+      node.appendChild(document.createTextNode(line));
+    });
+    return node;
   }
 
   // The hint keeps its dot, which is markup rather than copy — replace only
