@@ -2450,6 +2450,7 @@
     "product_name": "Your Kitchen Style Report + Visualization — see your kitchen transformed",
     "product_image": "/static/creative_src/stripe_tile.png",
     "single_page": true,
+    "express": true,
     "commerce": {
       "anchor_head": "A {price} decision that saves you $4,000+",
       "anchor_head_accent": "$4,000+",
