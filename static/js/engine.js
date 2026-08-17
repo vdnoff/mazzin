@@ -121,6 +121,10 @@
   var midTimer = null;          // its auto-dismiss
   var midSeen = {};             // after_step -> already shown this run
   var workingTimer = null;      // the interstitial's rotating micro-copy
+  // Which of the three steps the reader is standing in: 0 while they are
+  // choosing, 1 once the offer and the upload box are what is in front of
+  // them, 2 once their kitchen has actually been drawn.
+  var journeyStage = 0;
   // --- express checkout -----------------------------------------------------
   var xpState = "off";          // off | reserved | wallet | redirect
   var xpStarted = false;        // the whole attempt runs once per page
@@ -2137,6 +2141,9 @@
         el.cta.hidden = true;
         renderLockedReport(win);
         renderCommerce();
+        // The offer is on screen: the choosing is done and the photo is what
+        // is being asked for.
+        markJourney(1);
       } else {
         el.cta.textContent = cfg.pricing.cta;
         renderMistakesTeaser(win);
@@ -2286,6 +2293,60 @@
     return !unlockedCs;
   }
 
+  // What the reader already owns, shown back to them: the three colours their
+  // choices produced and the fittings those choices ranked highest.
+  //
+  // Nothing here crosses the paid line, and the line is worth restating
+  // because this is a new place to cross it. The dots are painted from the
+  // `rgb` triple the funnel JSON carries — the free payload has no `hex` in it
+  // at all — and the paint CODE is what the report is bought for, so no code
+  // is written, no `swatch-hex` node is built, and the element chips carry
+  // their label without the `spec` subline that belongs to the paid detail
+  // view. What is on screen here is exactly what the free result page below
+  // already shows.
+  function yoursStrip(block) {
+    var style = styleById(winnerStyleId);
+    var colors = (((style || {}).reveals || {}).palette || {}).colors || [];
+    var items = pickElements().slice(0, 3);
+    if (!colors.length && !items.length) return null;
+
+    var node = elm("div", "viz-yours");
+    if (block.yours_title) {
+      node.appendChild(elm("p", "viz-yours__title", block.yours_title));
+    }
+
+    if (colors.length) {
+      var swatches = elm("ul", "viz-yours__colors");
+      colors.forEach(function (c) {
+        var li = elm("li", "viz-yours__color");
+        var dot = elm("span", "viz-yours__dot");
+        dot.style.backgroundColor = swatchColor(c);
+        li.appendChild(dot);
+        li.appendChild(elm("span", "viz-yours__name", c.name || ""));
+        swatches.appendChild(li);
+      });
+      node.appendChild(swatches);
+    }
+
+    // Labels, not thumbnails. Three 4:3 thumbs cost about 120px of height,
+    // and at 320 that was enough to push the upload box off the bottom of the
+    // card — which is a worse trade than it looks, because the box is the
+    // thing this section exists to get somebody to use. The pictures are
+    // already on the free result page below.
+    if (items.length) {
+      var chips = elm("ul", "viz-yours__items");
+      items.forEach(function (item) {
+        chips.appendChild(elm("li", "viz-yours__item", item.label || ""));
+      });
+      node.appendChild(chips);
+    }
+
+    if (block.yours_note) {
+      node.appendChild(elm("p", "viz-yours__note", block.yours_note));
+    }
+    return node;
+  }
+
   function placeVisualizer() {
     // `vizDead` and not `vizNode`: the free page rebuilds its report from
     // scratch, so a node that is no longer in the document is a node to
@@ -2305,6 +2366,15 @@
     // fair if the price moved ahead of the upload.
     if (vizPre() && block.price_note) {
       vizNode.appendChild(elm("p", "viz-price", withPrice(block.price_note)));
+    }
+
+    // Their own palette and their own fittings, directly above the box that
+    // asks for a photograph. It is the answer to "what will it look like":
+    // not a promise about the render, but the actual colours and materials
+    // that go into it, which they picked themselves thirteen taps ago.
+    if (vizPre()) {
+      var yours = yoursStrip(block);
+      if (yours) vizNode.appendChild(yours);
     }
 
     vizNode.appendChild(elm("div", "viz-body"));
@@ -2734,6 +2804,9 @@
   }
 
   function vizResult(block) {
+    // Their kitchen has been drawn. Third step, and the only place it is
+    // reached — the teaser and the working state are still the second.
+    markJourney(2);
     var frag = document.createDocumentFragment();
 
     var pair = elm("div", "viz-pair");
@@ -4067,6 +4140,33 @@
     el.leadReport.hidden = !copy.lead_report;
   }
 
+  // Three things, in the order they matter, and the first one carries the
+  // weight because it is the one being bought. No fourth item, and nothing
+  // about other customers: there are none yet, and a number nobody can stand
+  // behind is the one line on a paywall that costs more than it earns.
+  function renderValue(copy) {
+    var rows = copy.value || [];
+    if (!el.valueList) {
+      if (!rows.length || !el.price || !el.price.parentNode) return;
+      el.valueList = elm("ul", "offer-value");
+      el.price.parentNode.insertBefore(el.valueList, el.price);
+    }
+    el.valueList.textContent = "";
+    el.valueList.hidden = !rows.length;
+
+    rows.forEach(function (row) {
+      if (!row || !row.text) return;
+      var li = elm("li", "offer-value__row" + (row.hero ? " is-hero" : ""));
+      li.appendChild(icon(row.hero ? "bolt" : "check", "offer-value__mark"));
+      var text = elm("span", "offer-value__text");
+      // The accent lands on the figure alone. Bolding the whole sentence
+      // emphasises nothing; bolding "$4,000+" is the point of the sentence.
+      fillAccent(text, withPrice(row.text), row.accent || "");
+      li.appendChild(text);
+      el.valueList.appendChild(li);
+    });
+  }
+
   function ensureLeadNodes() {
     if (el.leadMain || !el.manifest || !el.manifest.parentNode) return;
     el.leadMain = elm("p", "offer-lead");
@@ -4106,6 +4206,12 @@
       node.appendChild(elm("span", "price-note", co.price_launch_label));
     }
     if (suffix) node.appendChild(elm("span", "price-note", suffix));
+
+    // Beside the number rather than in the list above it: this is a term of
+    // the sale, not one of the things being sold.
+    if (co.price_terms) {
+      node.appendChild(elm("span", "price-terms", co.price_terms));
+    }
   }
 
   // The quiet line by the button. It is what stops somebody expecting a
@@ -4162,6 +4268,7 @@
 
     renderManifest();
     renderLeads(copy);
+    renderValue(copy);
 
     fillAccent(el.anchorHead, withPrice(copy.anchor_head || ""),
                copy.anchor_head_accent || "");
@@ -4634,6 +4741,23 @@
                                        String(step.label || "")));
       node.appendChild(cell);
     });
+    markJourney(journeyStage);
+  }
+
+  // Which of the three the reader is actually in. A strip that looks the same
+  // on every screen is decoration; one that moves is a position.
+  //
+  // Class only, never geometry: the active and inactive circles are the same
+  // size and the labels the same weight, so the strip cannot change height
+  // when the stage does and nothing below it moves.
+  function markJourney(stage) {
+    journeyStage = stage;
+    var node = el.journeySteps;
+    if (!node) return;
+    var cells = node.querySelectorAll(".m-steps__c");
+    for (var i = 0; i < cells.length; i++) {
+      cells[i].classList.toggle("is-active", i === stage);
+    }
   }
 
   // Copy with an explicit line break in it, as text nodes and real <br>

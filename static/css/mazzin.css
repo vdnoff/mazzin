@@ -2822,6 +2822,171 @@ body.is-locked { overflow: hidden; }
   color: var(--muted);
 }
 
+/* --- what they already chose, above the upload box ------------------------- */
+
+/* Compact on purpose: this sits between the intro and the box asking for a
+   photograph, and pushing that box off the first screen would cost more than
+   this section earns. */
+.viz-yours {
+  margin: 0 0 14px;
+  padding: 12px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.viz-yours__title {
+  margin: 0 0 9px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.viz-yours__colors,
+.viz-yours__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.viz-yours__color {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+
+/* Painted from the rgb triple in the payload. The paint CODE is what the
+   report is bought for and is not written anywhere on this page. */
+.viz-yours__dot {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.viz-yours__items { margin-top: 8px; gap: 6px; }
+
+.viz-yours__item {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #f4f5f7;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #4A4741;
+}
+
+.viz-yours__note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+/* On the narrowest screens every row of this costs a row of the upload box
+   below it. The label goes — the swatches and the chips say what it said —
+   and everything else closes up. The tie line stays: it is the sentence that
+   connects what they chose to what they are about to buy. */
+@media (max-width: 359px) {
+  .viz-yours { margin-bottom: 10px; padding: 10px; }
+  .viz-yours__title { display: none; }
+  .viz-yours__colors { gap: 4px 10px; }
+  .viz-yours__color { font-size: 12px; }
+  .viz-yours__items { margin-top: 6px; }
+  .viz-yours__note { margin-top: 8px; font-size: 11.5px; }
+}
+
+/* --- what the money buys --------------------------------------------------- */
+
+.offer-value {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.offer-value__row {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin: 0 0 9px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.offer-value__mark {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The one being bought. Bigger, warmer, and set off from the two below it,
+   because the image is the product and the report explains it. */
+.offer-value__row.is-hero {
+  margin: 0 -10px 12px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  font-size: 15.5px;
+  font-weight: 600;
+}
+
+.offer-value__row.is-hero .offer-value__mark {
+  width: 18px;
+  height: 18px;
+  fill: var(--accent);
+  stroke: none;
+}
+
+/* The figure, not the sentence around it. */
+.offer-value__text .money {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* A term of the sale, beside the number, on its own line under it. */
+.price-terms {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* --- the journey strip, showing where they are ----------------------------- */
+
+/* Inactive is an outline of exactly the same box as active: same width, same
+   height, same line-height, so the strip cannot change height when the stage
+   moves and nothing under it shifts. */
+.m-steps__c .m-steps__n {
+  background: transparent;
+  color: var(--muted);
+  box-shadow: inset 0 0 0 1.5px #d4d6db;
+}
+
+.m-steps__c .m-steps__l { color: #9aa0aa; }
+
+.m-steps__c.is-active .m-steps__n {
+  background: var(--accent);
+  color: #FFF7EF;
+  box-shadow: none;
+}
+
+/* Colour only, never weight. A bolder label is a wider label, and at 320px a
+   wider label is a label that wraps to a third line — which is the exact
+   layout shift this state is not allowed to cause. */
+.m-steps__c.is-active .m-steps__l { color: #4A4741; }
+
 /* --- express checkout ------------------------------------------------------ */
 
 /* Two buttons, one cell. The wallet slot and the pay button are stacked in the
