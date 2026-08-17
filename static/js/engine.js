@@ -2312,12 +2312,8 @@
   function yoursStrip(block) {
     var style = styleById(winnerStyleId);
     var colors = (((style || {}).reveals || {}).palette || {}).colors || [];
-    // Five blocks and four thumbs. `pickElements` is the same picker the free
-    // strip below uses, so a choice with no image of its own falls back to the
-    // style-matched one exactly as it already does.
     colors = colors.slice(0, 5);
-    var items = pickElements().slice(0, 4);
-    if (!colors.length && !items.length) return null;
+    if (!colors.length) return null;
 
     var node = elm("div", "viz-yours");
 
@@ -2334,28 +2330,15 @@
       node.appendChild(swatches);
     }
 
-    // The gallery thumbnails the free Style Elements strip already shows, in
-    // the same free form: the picture and its label, never the `spec` subline
-    // that belongs to the paid detail view.
-    if (items.length) {
-      node.appendChild(elm("p", "viz-yours__label",
-                           block.materials_label || "YOUR MATERIALS"));
-      var grid = elm("ul", "viz-yours__items");
-      items.forEach(function (item) {
-        var li = elm("li", "viz-yours__item");
-        var frame = elm("span", "viz-yours__thumb");
-        var img = document.createElement("img");
-        img.src = item.img;
-        img.alt = "";
-        img.loading = "lazy";
-        img.draggable = false;
-        frame.appendChild(img);
-        li.appendChild(frame);
-        li.appendChild(elm("span", "viz-yours__name", item.label || ""));
-        grid.appendChild(li);
-      });
-      node.appendChild(grid);
-    }
+    // Palette only. The four material thumbnails that used to sit here are
+    // the same four pictures, at the same size, with the same labels, that
+    // the Style Elements section shows a screen further down — the same page
+    // was carrying them twice.
+    //
+    // The section is the one that keeps them, and not by preference:
+    // test_boundary asserts six `.element-chip` nodes each with an
+    // `.element-thumb img` on the free page, so removing them there would
+    // break the free/paid contract. Removing them here breaks nothing.
 
     if (block.yours_note) {
       node.appendChild(elm("p", "viz-yours__note", block.yours_note));
@@ -2381,7 +2364,10 @@
     // one has been handed over. The upload moving ahead of the payment is only
     // fair if the price moved ahead of the upload.
     if (vizPre() && block.price_note) {
-      vizNode.appendChild(elm("p", "viz-price", withPrice(block.price_note)));
+      // Held on `el` so the gate can take it down: "no price until a photo"
+      // has to mean every price on the page, and this is one of them.
+      el.vizPrice = elm("p", "viz-price", withPrice(block.price_note));
+      vizNode.appendChild(el.vizPrice);
     }
 
     // Their own palette and their own fittings, directly above the box that
@@ -3663,13 +3649,19 @@
     var parent = el.payButton.parentNode;
     parent.insertBefore(xpBlock, el.payButton);
     if (summary) {
-      parent.insertBefore(summary, xpBlock);
-      // The card carries everything the price row above it did and the product
-      // name besides, so the row would be the same number said twice, two
-      // lines apart. Hidden here rather than never rendered, because whether
-      // this card exists is decided after that row is written — and hidden
-      // now, before any of the three states, so nothing moves later.
-      if (el.price) el.price.hidden = true;
+      // Into the price row's slot, not up against the button. It IS the price
+      // block on the wallet path, and the order the block is read in — what
+      // you get, what it costs, what it is not, the consent, the button — does
+      // not change because the button turned out to be a wallet.
+      if (el.price && el.price.parentNode) {
+        el.price.parentNode.insertBefore(summary, el.price);
+      } else {
+        parent.insertBefore(summary, xpBlock);
+      }
+      el.xpSummary = summary;
+      // Hidden until the element reports a wallet. `xpSet` owns which of the
+      // two price blocks is showing from here on.
+      summary.hidden = true;
     }
 
     // The button first, the slot over it: in one grid cell the later child
@@ -3687,6 +3679,24 @@
     var wallet = state === "reserved" || state === "wallet";
     xpSlot.classList.toggle("xp__off", !wallet);
     el.payButton.classList.toggle("xp__off", wallet);
+    showSummary(state === "wallet");
+  }
+
+  // Exactly one price block, whichever way the wallet check goes.
+  //
+  // The summary card belongs to the wallet path and only to it: a sheet opens
+  // over this page showing an amount and nothing about what it is for, so the
+  // naming has to happen here. The redirect path does not need it — Stripe's
+  // own page names the product before anything is authorised — and running
+  // both left "$7 $3 LAUNCH PRICE" printed twice, a hundred pixels apart.
+  function showSummary(on) {
+    if (el.xpSummary) el.xpSummary.hidden = !on;
+    if (el.price) el.price.hidden = on || priceGated();
+  }
+
+  // Whether the price is being withheld until a photograph exists.
+  function priceGated() {
+    return gateUp && ((cfg && cfg.checkout) || {}).price_after_upload === true;
   }
 
   // Every ending that is not a wallet. Called from the deadline, from a script
@@ -3929,18 +3939,9 @@
     renderPrice(price, copy.price_suffix || co.price_suffix || "");
     card.appendChild(price);
 
-    // The first trust row, which is the one about the payment itself; the
-    // other two are about what arrives afterwards and are already on screen
-    // under the button. Repeating all three here would be the same list twice.
-    var rows = copy.trust || co.trust || [];
-    if (rows.length) {
-      var list = elm("ul", "trust xp-summary__trust");
-      var li = elm("li", "trust-row");
-      li.appendChild(icon(TRUST_ICONS[0], "trust-icon"));
-      li.appendChild(elm("span", null, rows[0]));
-      list.appendChild(li);
-      card.appendChild(list);
-    }
+    // No trust row here. There is one on the page, directly under the pay
+    // control, and this was a second copy of its first line sitting a
+    // hundred pixels above it — the same reassurance twice reads as neither.
     return card;
   }
 
@@ -4185,7 +4186,12 @@
     var rows = copy.value || [];
     if (!el.valueList) {
       if (!rows.length || !el.price || !el.price.parentNode) return;
+      el.valueHead = elm("h3", "offer-value__head", copy.value_head || "");
+      el.valueHead.hidden = !copy.value_head;
       el.valueList = elm("ul", "offer-value");
+      // Heading then cards then price, with nothing allowed between them:
+      // both are inserted immediately before the price row, in that order.
+      el.price.parentNode.insertBefore(el.valueHead, el.price);
       el.price.parentNode.insertBefore(el.valueList, el.price);
     }
     el.valueList.textContent = "";
@@ -4265,10 +4271,25 @@
     // because `showGate(false)` runs this before it starts the wallet. A
     // price that first appears after the money has been asked for is the one
     // ordering this must never produce.
-    var hide = on && ((cfg && cfg.checkout) || {}).price_after_upload === true;
+    var hide = priceGated();
     if (el.price) {
-      el.price.hidden = hide;
+      // `xpSet` owns this too once a wallet answer is in, so ask it rather
+      // than assuming: the summary card may be the price block right now.
+      el.price.hidden = hide || (el.xpSummary && !el.xpSummary.hidden);
       el.price.classList.toggle("is-dimmed", on && !hide);
+    }
+    if (el.xpSummary && hide) el.xpSummary.hidden = true;
+
+    // Every other place a price is printed. "No price until a photo" has to
+    // mean the page, not one row of it: the visualizer card names the price
+    // above the upload box, and the sticky bar carries it down the whole
+    // scroll. Both were still saying it while the block below said nothing.
+    if (el.vizPrice) el.vizPrice.hidden = hide;
+    if (el.sticky) {
+      var copy = commerceCopy();
+      el.sticky.textContent = hide
+        ? (copy.sticky_label_gated || copy.sticky_label || "")
+        : withPrice(copy.sticky_label || "");
     }
 
     if (xpBlock) xpBlock.hidden = on;
@@ -4490,12 +4511,15 @@
     updatePayButton();
 
     el.commerce.hidden = false;
+    // The bar's default label, before the gate has had a look at it. A funnel
+    // with no gate keeps exactly this; a gated one has it replaced a line
+    // below, which is why this is written first and not last.
+    if (el.sticky) el.sticky.textContent = withPrice(copy.sticky_label || "");
     // After the block is on screen: the slot is measured against the pay
     // button, and a button inside a hidden container has no height to match.
     // `renderGate` is what calls `xpStart` now — it only starts once there is
     // a photograph to sell a transformation of.
     renderGate();
-    if (el.sticky) el.sticky.textContent = withPrice(copy.sticky_label || "");
     playPayMotion();
   }
 
