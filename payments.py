@@ -792,6 +792,36 @@ def _from_checkout_session(session):
     }
 
 
+def _as_plain_dict(obj):
+    """A Stripe SDK object as a plain dict, all the way down. `{}` on anything
+    else.
+
+    The one boundary between the SDK's object model and this module, which
+    reads dicts and nothing else. Two ways of getting it wrong were both live
+    here at once and both crashed the webhook:
+
+    - `.get()` does not exist on a `StripeObject` in SDK 15.x. It is no longer
+      a dict subclass, so `.get` is not a method but a field lookup on an
+      object that has no such field, and it raises AttributeError.
+    - `dict(obj)` does not work either. There is no `keys()` for the mapping
+      protocol to find, so it falls back to iterating the object as a sequence
+      of pairs and raises `KeyError: 0`. Swapping `.get(k)` for `[k]` alone
+      would have moved the crash one line, not removed it.
+
+    `to_dict()` is the SDK's own answer and it recurses by default, so nested
+    objects — `billing_details`, the `address` inside it — come back as plain
+    dicts too and one conversion is genuinely enough. Everything below this
+    function uses ordinary dict access.
+    """
+    if isinstance(obj, dict):
+        return obj
+    to_dict = getattr(obj, "to_dict", None)
+    if not callable(to_dict):
+        return {}
+    value = to_dict()
+    return value if isinstance(value, dict) else {}
+
+
 def _billing_details(intent, cfg):
     """Who paid, off the charge behind an intent. `{}` when it cannot be read.
 
@@ -802,7 +832,13 @@ def _billing_details(intent, cfg):
 
     Failing to find it is not a failure of the payment. A purchase with no
     email is already an ordinary case on the existing path: the row is written,
-    the report is generated, and only the email delivery is skipped.
+    the report is generated, and only the email delivery is skipped. A missing
+    address is a delivery gap; a 500 here is a paid reader watching a spinner
+    that will never finish, because the purchase was never recorded at all.
+
+    `intent` arrives from `json.loads` of the webhook body, so it and anything
+    reached through it are already plain dicts. The single object in this
+    function that is not is the one fetched from the API below.
     """
     charge = intent.get("latest_charge")
     if isinstance(charge, dict):
@@ -822,13 +858,17 @@ def _billing_details(intent, cfg):
         return {}
     try:
         fetched = stripe.Charge.retrieve(charge, api_key=secret)
+        # Converted inside the try on purpose: a `to_dict` that failed would
+        # otherwise escape as a 500 and cost the purchase, which is exactly
+        # what this whole path is written to avoid.
+        charge_data = _as_plain_dict(fetched)
     except Exception as exc:
         # An address we could not fetch costs an email. It does not cost the
         # purchase, so this is a warning and the flow continues.
         log.warning("could not retrieve charge for a payment intent: %s",
                     type(exc).__name__)
         return {}
-    return dict(fetched.get("billing_details") or {})
+    return charge_data.get("billing_details") or {}
 
 
 def _from_payment_intent(intent, cfg):
