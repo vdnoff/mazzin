@@ -231,3 +231,6 @@ bottom.
 
 ## 2026-08-17 — claude/result-page-rebuild
 - result page rebuild
+
+## 2026-08-17 — claude/material-swatches
+- material swatches
