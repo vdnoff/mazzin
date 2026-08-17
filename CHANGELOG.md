@@ -195,3 +195,6 @@ bottom.
 
 ## 2026-08-17 — claude/fix-billing-details
 - fix billing details
+
+## 2026-08-17 — claude/express-email
+- wallet email
