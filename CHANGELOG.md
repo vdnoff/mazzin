@@ -198,3 +198,6 @@ bottom.
 
 ## 2026-08-17 — claude/express-email
 - wallet email
+
+## 2026-08-17 — claude/tests-into-repo
+- tests into repo
