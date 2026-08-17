@@ -258,7 +258,13 @@ SWIPE_EXTRA_KEYS = frozenset(("pair", "shown", "chosen"))
 # field is to be grouped by — one typo in a client that ships to everybody
 # would otherwise become a category nobody notices is missing.
 PAYWALL_VIEW_KEYS = frozenset(("src",))
-PAYWALL_VIEW_SRC = frozenset(("mid_cta", "sticky", "scroll"))
+# `teaser_cta` is the button under the visualizer's two panels — their kitchen
+# beside their kitchen behind a lock. It gets a word of its own rather than
+# borrowing `mid_cta`: the two sit on different funnels, in front of different
+# arguments, and the question the button was put back to answer is how many
+# readers the panels send down to the offer. Folded into another bucket, that
+# number cannot be read out again.
+PAYWALL_VIEW_SRC = frozenset(("mid_cta", "sticky", "scroll", "teaser_cta"))
 
 
 def _clean_paywall_view(value):

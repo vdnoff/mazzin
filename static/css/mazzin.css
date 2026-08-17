@@ -1251,6 +1251,11 @@ body {
 
 .viz-go:active { transform: translateY(1px); }
 
+/* Under the panels rather than floating between them and the replace link:
+   close enough to the locked half to read as the answer to it, far enough
+   that the caption underneath the panel is not crowded. */
+.viz-go--teaser { margin: 14px 0 0; }
+
 /* Secondary by design: swapping the photo is a correction, not the path. */
 .viz-replace {
   display: block;

@@ -576,8 +576,11 @@ for name in ("mid_cta", "sticky_cta", "paywall_view", "paywall_open",
     check("  %-15s allowed" % name, name in tracking.ALLOWED_EVENTS)
 check("purchase is still not client-assertable",
       "purchase" not in tracking.ALLOWED_EVENTS)
-for src_ in ("mid_cta", "sticky", "scroll"):
-    check("  paywall_view src=%-8s accepted" % src_,
+# Every member of the closed set, read from the set rather than typed out
+# here. A value added to tracking.py and to nothing else would otherwise be a
+# category that validates and is never sent.
+for src_ in sorted(tracking.PAYWALL_VIEW_SRC):
+    check("  paywall_view src=%-10s accepted" % src_,
           tracking._clean_extra("kitchen", "paywall_view", {"src": src_})
           == {"src": src_})
 for bad in ({"src": "elsewhere"}, {"src": 1}, {}, {"src": "scroll", "x": 1}):
@@ -608,6 +611,16 @@ check("every allowed event is emitted",
       str(sorted(tracking.ALLOWED_EVENTS - emitted)))
 check("paywall_view is the only event sent with a payload",
       len(_re.findall(r'track\("paywall_view", null, \{ src:', engine)) == 1)
+# The src field, both directions, the same way the event names are checked
+# above. `paywall_view` is grouped by this value, so a word in one file and not
+# the other is either a bucket nobody fills or a payload the server refuses.
+sent = set(_re.findall(r'payIntent = "([a-z_]+)"', engine))
+check("every src engine.js sends is in the closed set",
+      sent <= tracking.PAYWALL_VIEW_SRC,
+      str(sorted(sent - tracking.PAYWALL_VIEW_SRC)))
+check("every src in the closed set is sent by engine.js",
+      tracking.PAYWALL_VIEW_SRC <= sent,
+      str(sorted(tracking.PAYWALL_VIEW_SRC - sent)))
 shell = open(os.path.join(ROOT, "static/funnel.html")).read()
 for node in ("commerce", "sticky-cta", "withdrawal", "legal-links"):
     check("  shell declares #%s" % node, 'id="%s"' % node in shell)

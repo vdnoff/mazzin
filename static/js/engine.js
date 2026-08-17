@@ -2707,7 +2707,28 @@
 
     frag.appendChild(pair);
 
-    if (block.locked_cta) {
+    // The bridge from the locked panel to the offer.
+    //
+    // This is the one moment on the page where the reader can see what they do
+    // not have: their own kitchen beside their own kitchen behind a lock. The
+    // block that sells it is a screen and a half further down, and asking
+    // somebody at the peak of wanting a thing to go and find the button is
+    // asking them to cool off on the way. It takes no money and starts no
+    // checkout — it scrolls, exactly as the panel's own tap does.
+    //
+    // Only ever when there is a photograph. `vizTeaser` is already the
+    // photo-present branch, but the check is written out rather than inferred:
+    // with nothing uploaded there is nothing to unlock, and the foot of the
+    // page is already asking for the photograph in its own words. Read from
+    // `vizState` and not from `gateUp`, because `vizRender` builds this before
+    // it calls `renderGate` and the flag is one render stale here.
+    var teaserCta = ((cfg && cfg.checkout) || {}).teaser_cta;
+    if (teaserCta && vizHasPhoto()) {
+      frag.appendChild(vizButton("viz-go viz-go--teaser", teaserCta,
+                                 teaserTap));
+    } else if (block.locked_cta) {
+      // The older key, for a funnel that still carries it. Never both: two
+      // full-width accent buttons under one pair of panels is two offers.
       frag.appendChild(vizButton("viz-go", block.locked_cta, focusCta));
     }
 
@@ -2723,6 +2744,25 @@
 
     vizWatchTeaser(pair);
     return frag;
+  }
+
+  // What the teaser button does, and the whole of it.
+  //
+  // `payIntent` is the point. `paywall_view` carries how the reader got to the
+  // offer, and the observer that fires it cannot tell a scroll from a scroll
+  // somebody asked for — so whichever deliberate act preceded it names itself
+  // first. Filed under `scroll`, or under `mid_cta` because that is the nearest
+  // existing word, this button's entire contribution would be invisible: the
+  // question it exists to answer is how many people the panels send down, and
+  // that number cannot be read out of a bucket it shares.
+  //
+  // No event of its own. `mid_cta` has one because it was the only prompt on a
+  // page of blurred sections and its tap rate was the thing being measured;
+  // here the tap and the arrival are the same act a second apart, and
+  // `paywall_view` with this src already counts it.
+  function teaserTap() {
+    payIntent = "teaser_cta";
+    scrollToCommerce();
   }
 
   function vizImg(src) {
