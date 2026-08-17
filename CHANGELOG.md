@@ -225,3 +225,6 @@ bottom.
 
 ## 2026-08-17 — claude/fix-check-hex
 - check hex
+
+## 2026-08-17 — claude/paywall-visual-fix
+- paywall: gate all price copy, dedupe, sizing, order
