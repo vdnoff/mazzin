@@ -410,10 +410,21 @@ for st in cfg["styles"]:
         gated += ["#%02X%02X%02X" % (r, g, b), "#%02x%02x%02x" % (r, g, b)]
 hits = [h for h in gated if h in raw]
 check("no gated paint code survives anywhere in the config", not hits, hits[:3])
-check("the server can still read a code back",
-      reports._config_hex(cfg["styles"][0]["reveals"]["palette"]["colors"][0])
-      == "#E5DAC8",
-      reports._config_hex(cfg["styles"][0]["reveals"]["palette"]["colors"][0]))
+# Derived from the config rather than written in. The palette moved from
+# three colours to five and this still expected the old first one, which is a
+# test failing for the only reason a test should not: the thing it describes
+# changed somewhere else and it was never told.
+#
+# Still real work, not a restatement of the function. The value has to be the
+# uppercase form of that triple, and it has to be one of the codes collected
+# above as gated — the server reading back exactly what the browser is denied
+# is the whole point of the function existing.
+_first = cfg["styles"][0]["reveals"]["palette"]["colors"][0]
+_want = "#%02X%02X%02X" % tuple(_first["rgb"])
+_got = reports._config_hex(_first)
+check("the server can still read a code back", _got == _want, (_got, _want))
+check("  and it is exactly a code the browser is denied",
+      _got in gated, _got)
 check("and it tells the model the reader has NOT been given them",
       "have NOT been given these codes"
       in reports._style_block(cfg["styles"][0], "Modern Rustic"))
