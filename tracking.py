@@ -63,6 +63,17 @@ ALLOWED_EVENTS = {
     # `paywall_view` — the moment the offer is actually made — and without it
     # the upload-to-purchase rate has no denominator.
     "viz_teaser_view",
+    # The bottom of the offer, before a photograph exists: the price is on
+    # screen but the pay control is not, and what stands in its place is a
+    # button asking for the kitchen first. `viz_gate_view` is that state
+    # reaching the reader, once per session rather than once per scroll past
+    # it; `viz_gate_tap` is them accepting it and going back up for the photo.
+    #
+    # Without the pair there is no denominator for the upload: a reader who
+    # reached the offer and never uploaded is indistinguishable from one who
+    # never got that far, and those are opposite problems.
+    "viz_gate_view",
+    "viz_gate_tap",
 }
 
 # `viz_upload` happens on both sides of the money now, and the two are

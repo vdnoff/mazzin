@@ -105,7 +105,12 @@ def main():
                     n.querySelector('.code-mask')||n).filter,
                 text: n.textContent
             }))""")
-            check("three colours", len(rows) == 3, len(rows))
+            # Five since the palette went to five roles — cabinetry, worktop,
+            # walls, contrast and metal. Read from the config rather than
+            # written in, so the next change to the palette is a config change
+            # and not a config change plus a number in here.
+            want = len(CFG["styles"][0]["reveals"]["palette"]["colors"])
+            check("%d colours" % want, len(rows) == want, len(rows))
             check("every one is named",
                   all(r["name"] and r["name"].strip() for r in rows),
                   [r["name"] for r in rows])
