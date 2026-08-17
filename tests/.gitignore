@@ -1,0 +1,10 @@
+# What the suites write while they run. They build their own fixtures — photos
+# at particular sizes and formats, screenshots of what they walked — beside
+# themselves, and none of it is source. Regenerated on every run.
+__pycache__/
+*.png
+*.pdf
+fixture-email.html
+vizfiles/
+hardfiles/
+prefiles/
