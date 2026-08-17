@@ -2763,6 +2763,65 @@ body.is-locked { overflow: hidden; }
   color: #b3261e;
 }
 
+/* --- the offer, when the offer is a picture -------------------------------- */
+
+/* Two sentences where a seven-row tick list used to be. The first is the
+   thing being bought and reads at body size; the second is the report, one
+   step quieter, because it explains the image rather than competing with it. */
+.offer-lead {
+  margin: 0 0 12px;
+  font-size: 15.5px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.offer-lead .money { color: var(--accent); font-weight: 600; }
+
+.offer-lead--report {
+  margin: 0 0 18px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* What it was, what it is, what that is called. The old number is small and
+   struck and grey; the new one is the only loud thing in the row. */
+.price.has-was,
+.xp-summary__price.has-was {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+
+.price-was {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.price-now {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.price-note {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* Quiet on purpose. This is the line that stops somebody expecting a drawing
+   they could hand to a builder, and a line that shouts about what a thing is
+   not is a line that talks people out of it. */
+.offer-expectation {
+  margin: 0 0 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
 /* --- express checkout ------------------------------------------------------ */
 
 /* Two buttons, one cell. The wallet slot and the pay button are stacked in the

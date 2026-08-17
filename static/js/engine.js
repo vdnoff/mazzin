@@ -3813,10 +3813,11 @@
     var card = elm("div", "xp-summary");
     card.appendChild(elm("p", "xp-summary__name", name));
 
-    var suffix = copy.price_suffix || co.price_suffix || "";
+    // The same was/now/launch presentation the block above it uses. A wallet
+    // buyer sees the price here and nowhere else, so it cannot be the one
+    // place the offer looks different.
     var price = elm("p", "xp-summary__price");
-    price.appendChild(elm("span", "xp-summary__amount", formatPrice()));
-    if (suffix) price.appendChild(elm("span", "xp-summary__terms", suffix));
+    renderPrice(price, copy.price_suffix || co.price_suffix || "");
     card.appendChild(price);
 
     // The first trust row, which is the one about the payment itself; the
@@ -4017,8 +4018,8 @@
     el.reframe.textContent = withPrice(cfg.checkout.reframe || "");
     el.reframe.hidden = !cfg.checkout.reframe;
 
-    var suffix = cfg.checkout.price_suffix;
-    el.price.textContent = formatPrice() + (suffix ? " · " + suffix : "");
+    renderPrice(el.price, cfg.checkout.price_suffix);
+    renderExpectation();
     renderTrust();
 
     el.withdrawalText.textContent = cfg.checkout.eu_withdrawal_text || "";
@@ -4050,6 +4051,75 @@
 
   function commerceCopy() {
     return ((cfg && cfg.checkout) || {}).commerce || {};
+  }
+
+  // Two lines where a seven-row list used to be. The first names the thing
+  // being bought — their own kitchen, redrawn — and the second names the
+  // report as what makes that image usable rather than as a second product.
+  // A funnel with neither key renders neither node, so the older config
+  // behind the CDN, and /kitchen, are unchanged.
+  function renderLeads(copy) {
+    ensureLeadNodes();
+    if (!el.leadMain) return;
+    fillAccent(el.leadMain, withPrice(copy.lead || ""), copy.lead_accent || "");
+    el.leadMain.hidden = !copy.lead;
+    el.leadReport.textContent = withPrice(copy.lead_report || "");
+    el.leadReport.hidden = !copy.lead_report;
+  }
+
+  function ensureLeadNodes() {
+    if (el.leadMain || !el.manifest || !el.manifest.parentNode) return;
+    el.leadMain = elm("p", "offer-lead");
+    el.leadReport = elm("p", "offer-lead offer-lead--report");
+    el.manifest.parentNode.insertBefore(el.leadMain, el.manifest);
+    el.manifest.parentNode.insertBefore(el.leadReport, el.manifest);
+  }
+
+  // The price, everywhere it is shown as a price rather than mentioned inside
+  // a sentence: what it was, struck; what it is, loud; and what that is called.
+  //
+  // The struck figure is config copy, never arithmetic. A number this code
+  // worked out would be a claim about what something used to cost that nothing
+  // here can stand behind, and the one place a made-up "was" price is worth
+  // real money is exactly the place it must not be invented.
+  function renderPrice(node, suffix) {
+    if (!node) return;
+    var co = (cfg && cfg.checkout) || {};
+
+    // No struck figure configured, no new presentation: this is the one line
+    // every funnel without a launch price still renders, and it renders it
+    // exactly as it always did, down to the separator. A funnel that did not
+    // ask for this change does not get it.
+    if (!co.price_was_display) {
+      node.classList.remove("has-was");
+      node.textContent = formatPrice() + (suffix ? " · " + suffix : "");
+      return;
+    }
+
+    node.textContent = "";
+    node.classList.add("has-was");
+    node.appendChild(elm("span", "price-was", co.price_was_display));
+    // The short form: "$3" beside a struck "$7" is the comparison. "3.00 USD"
+    // beside it is an invoice.
+    node.appendChild(elm("span", "price-now", formatPriceShort()));
+    if (co.price_launch_label) {
+      node.appendChild(elm("span", "price-note", co.price_launch_label));
+    }
+    if (suffix) node.appendChild(elm("span", "price-note", suffix));
+  }
+
+  // The quiet line by the button. It is what stops somebody expecting a
+  // drawing they could hand a builder, which is the refund this prevents, so
+  // it is always rendered when the config carries it and never made loud.
+  function renderExpectation() {
+    var text = ((cfg && cfg.checkout) || {}).expectation || "";
+    if (!el.expectation) {
+      if (!text || !el.withdrawal || !el.withdrawal.parentNode) return;
+      el.expectation = elm("p", "offer-expectation");
+      el.withdrawal.parentNode.insertBefore(el.expectation, el.withdrawal);
+    }
+    el.expectation.textContent = text;
+    el.expectation.hidden = !text;
   }
 
   // Relocation, not duplication. Every row in the block below is the node the
@@ -4091,6 +4161,7 @@
     moveCommerce();
 
     renderManifest();
+    renderLeads(copy);
 
     fillAccent(el.anchorHead, withPrice(copy.anchor_head || ""),
                copy.anchor_head_accent || "");
@@ -4099,8 +4170,8 @@
     el.anchorLine.hidden = !copy.anchor;
     el.payAnchor.hidden = !(copy.anchor_head || copy.anchor);
 
-    var suffix = copy.price_suffix;
-    el.price.textContent = formatPrice() + (suffix ? " \u00B7 " + suffix : "");
+    renderPrice(el.price, copy.price_suffix);
+    renderExpectation();
 
     el.withdrawalText.textContent = withPrice(copy.consent || "");
     el.withdrawalCheck.checked = cfg.checkout.consent_prechecked === true;

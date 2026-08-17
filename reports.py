@@ -2680,8 +2680,9 @@ RESEND_URL = "https://api.resend.com/emails"
 # reads as Mazzin rather than as a broken image.
 EMAIL_HTML = """<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#3d424c;max-width:520px">
 <p style="margin:0 0 22px"><img src="%(logo)s" width="114" height="26" alt="Mazzin" style="display:block;border:0;font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:600;color:#16181d;text-decoration:none"></p>
-<h1 style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:600;line-height:1.25;color:#16181d;margin:0 0 16px">Smart move.</h1>
-<p style="margin:0 0 16px">%(opening)s Your personalized %(name)s report is attached.</p>
+<h1 style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:600;line-height:1.25;color:#16181d;margin:0 0 16px">%(headline)s</h1>
+<p style="margin:0 0 16px">%(opening)s</p>
+<p style="margin:0 0 16px">%(body)s</p>
 %(link_block)s<p style="margin:0 0 6px;padding-top:18px;border-top:1px solid #e5e7eb;font-size:13px;color:#6b7280">%(keep)s</p>
 <p style="margin:0;font-size:13px;color:#6b7280"><a href="%(home)s" style="color:#6b7280;text-decoration:none">mazzin.com</a></p>
 </div>"""
@@ -2693,8 +2694,38 @@ EMAIL_LINK_BLOCK = (
     '<p style="margin:0 0 22px"><a href="%(link)s"'
     ' style="color:#C05621;font-weight:600">Open your report online</a></p>\n')
 
-KEEP_WITH_LINK = "It stays available at that link, and the PDF is yours to keep."
 KEEP_NO_LINK = "The PDF is yours to keep."
+
+# Two mails, because there are two products. A funnel that redraws the
+# reader's own kitchen is selling a picture the report explains; a funnel
+# without one is selling the report, and has been all along. The copy is
+# chosen by what the funnel actually carries rather than by its slug, so a
+# third funnel gets the right voice by having a `visualizer` block or not
+# having one — and /kitchen's mail is exactly the mail it has always sent.
+COPY_REPORT = {
+    "headline": "Smart move.",
+    "subject": "Your %s kitchen style report — Mazzin",
+    "body": "Your personalized %s report is attached.",
+    "keep": "It stays available at that link, and the PDF is yours to keep.",
+}
+
+COPY_VISUALIZER = {
+    "headline": "Your kitchen, in your style.",
+    "subject": "Your kitchen, in %s — Mazzin",
+    "body": ("The %s report attached is the rest of it: which materials, "
+             "colours and finishes make that kitchen real."),
+    "keep": "Your kitchen stays at that link, and the PDF is yours to keep.",
+}
+
+
+def _email_copy(content):
+    """Which of the two mails this purchase gets."""
+    try:
+        cfg = config.load_funnel(content.get("funnel") or "")
+    except Exception:
+        return COPY_REPORT
+    block = (cfg or {}).get("visualizer") or {}
+    return COPY_VISUALIZER if block.get("enabled") else COPY_REPORT
 
 
 def _slug(text):
@@ -2738,6 +2769,11 @@ def _email_opening(content):
     there than on the way in reads as the number getting smaller.
     """
     price = _price_paid(content)
+    if _email_copy(content) is COPY_VISUALIZER:
+        if price:
+            return ("Your own kitchen, redrawn in the style your choices "
+                    "pointed at — for %s." % html.escape(price))
+        return "Your own kitchen, redrawn in the style your choices pointed at."
     if price:
         return ("You just spent %s to dodge the mistakes that cost renovators "
                 "$4,000+." % html.escape(price))
@@ -2797,6 +2833,7 @@ def send_report_email(purchase_id, email, content, checkout_session=None):
         return False
 
     name = content.get("style_name") or "style"
+    copy = _email_copy(content)
     token = _result_token(purchase_id, checkout_session)
     funnel = content.get("funnel") or ""
 
@@ -2809,7 +2846,7 @@ def send_report_email(purchase_id, email, content, checkout_session=None):
     if token and funnel:
         link = "%s/%s?cs=%s" % (config.BASE_URL, funnel, token)
         link_block = EMAIL_LINK_BLOCK % {"link": html.escape(link)}
-        keep = KEEP_WITH_LINK
+        keep = copy["keep"]
     else:
         log.warning("purchase %s has no result token — email sent with the "
                     "PDF and no link", purchase_id)
@@ -2819,9 +2856,10 @@ def send_report_email(purchase_id, email, content, checkout_session=None):
     payload = {
         "from": config.EMAIL_FROM,
         "to": [email],
-        "subject": "Your %s kitchen style report — Mazzin" % name,
+        "subject": copy["subject"] % name,
         "html": EMAIL_HTML % {
-            "name": html.escape(name),
+            "headline": html.escape(copy["headline"]),
+            "body": copy["body"] % html.escape(name),
             "link_block": link_block,
             "keep": keep,
             "logo": html.escape(config.BASE_URL + "/static/brand/logo.svg"),
