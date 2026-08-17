@@ -207,3 +207,6 @@ bottom.
 
 ## 2026-08-17 — claude/viz-paywall
 - viz paywall
+
+## 2026-08-17 — claude/paywall-value
+- paywall value
