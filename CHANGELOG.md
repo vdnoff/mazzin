@@ -213,3 +213,6 @@ bottom.
 
 ## 2026-08-17 — claude/paywall-redesign
 - paywall redesign
+
+## 2026-08-17 — claude/palette-five
+- five colour palette
