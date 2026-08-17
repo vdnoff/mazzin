@@ -483,6 +483,15 @@ def main():
             # frames, same labels, same withheld specification. Checking the
             # card rather than deleting the check is the point, because what
             # was being tested was never the strip.
+            #
+            # The picture is a flat texture swatch now rather than the quiz's
+            # room shot, so what is asserted is the swatch: that each thumbnail
+            # is the `swatch` the config names for that item, that the byte it
+            # points at actually decoded, and that the specification of every
+            # material shown is still nowhere on the page. The free/paid line
+            # has not moved — the surface is given away, the spec is not — and
+            # a check that only asked for a path under /static/galleries/ would
+            # now pass on a row of broken frames.
             vpage = browser.new_page(viewport={"width": 390, "height": 844},
                                      device_scale_factor=2)
             verrors = []
@@ -498,17 +507,47 @@ def main():
                           .getAttribute ? n.querySelector('.viz-yours__thumb img')
                           .getAttribute('src') : null,
                     label: (n.querySelector('.viz-yours__name')||{}).textContent,
+                    loading: (n.querySelector('.viz-yours__thumb img')||{})
+                              .getAttribute ? n.querySelector(
+                                '.viz-yours__thumb img').getAttribute('loading')
+                              : null,
+                    decoded: !!(n.querySelector('.viz-yours__thumb img')||{})
+                                .naturalWidth,
                     h: (n.querySelector('.viz-yours__thumb')||n)
                         .getBoundingClientRect().height
                 }))""")
             check("four material thumbnails in the card",
                   len(thumbs) == 4, len(thumbs))
-            check("each is a real gallery frame",
-                  all((t["src"] or "").startswith("/static/galleries/")
-                      for t in thumbs), [t["src"] for t in thumbs])
             check("each carries its label",
                   all(t["label"] and t["label"].strip() for t in thumbs),
                   [t["label"] for t in thumbs])
+
+            # Each shown thumbnail against the item the config says it is.
+            SWATCH = {i["label"]: i.get("swatch")
+                      for i in VCFG["style_elements"]["items"]}
+            check("each is the texture swatch its item names",
+                  all(t["src"] == SWATCH.get(t["label"]) for t in thumbs),
+                  [(t["label"], t["src"], SWATCH.get(t["label"]))
+                   for t in thumbs if t["src"] != SWATCH.get(t["label"])])
+            check("  which is a material texture, not a room shot",
+                  all((t["src"] or "").startswith("/static/materials/")
+                      for t in thumbs), [t["src"] for t in thumbs])
+            check("  and the file behind it actually decoded",
+                  all(t["decoded"] for t in thumbs),
+                  [t["src"] for t in thumbs if not t["decoded"]])
+            check("  lazily, the way the elements strip loaded",
+                  all(t["loading"] == "lazy" for t in thumbs),
+                  [t["loading"] for t in thumbs])
+            # Every item, not only the four this run drew: a swatch missing
+            # from one of the thirteen is a broken frame for whoever draws it.
+            missing = [i["id"] for i in VCFG["style_elements"]["items"]
+                       if not i.get("swatch")
+                       or urllib.request.urlopen(
+                           "http://127.0.0.1:%d%s" % (PORT, i["swatch"])
+                       ).status != 200]
+            check("all %d items resolve to a served swatch"
+                  % len(VCFG["style_elements"]["items"]), not missing, missing)
+
             check("64px square",
                   all(abs(t["h"] - 64) < 1 for t in thumbs),
                   [t["h"] for t in thumbs])

@@ -1794,6 +1794,7 @@
         "spec": "Aged brass — unlacquered, satin finish",
         "image": "h9a",
         "img": "/static/galleries/kitchen/h9a.webp",
+        "swatch": "/static/materials/kitchen/brass-hardware.webp",
         "tags": [
           "classic",
           "warm",
@@ -1806,6 +1807,7 @@
         "spec": "Matte black — powder-coated, no sheen",
         "image": "h9b",
         "img": "/static/galleries/kitchen/h9b.webp",
+        "swatch": "/static/materials/kitchen/matte-black.webp",
         "tags": [
           "modern",
           "dark",
@@ -1818,6 +1820,7 @@
         "spec": "European oak — natural oil, no stain",
         "image": "f6a",
         "img": "/static/galleries/kitchen/f6a.webp",
+        "swatch": "/static/materials/kitchen/oak-wood.webp",
         "tags": [
           "wood",
           "warm",
@@ -1830,6 +1833,7 @@
         "spec": "Smoked oak — fumed, hard-wax finish",
         "image": "f6b",
         "img": "/static/galleries/kitchen/f6b.webp",
+        "swatch": "/static/materials/kitchen/dark-timber.webp",
         "tags": [
           "wood",
           "warm",
@@ -1842,6 +1846,7 @@
         "spec": "Dark marble — honed, 20mm mitred edge",
         "image": "c4a",
         "img": "/static/galleries/kitchen/c4a.webp",
+        "swatch": "/static/materials/kitchen/stone-worktop.webp",
         "tags": [
           "stone",
           "dark",
@@ -1854,6 +1859,7 @@
         "spec": "Speckled quartz — matt, warm-white base",
         "image": "c4c",
         "img": "/static/galleries/kitchen/c4c.webp",
+        "swatch": "/static/materials/kitchen/warm-quartz.webp",
         "tags": [
           "bright",
           "cool",
@@ -1866,6 +1872,7 @@
         "spec": "Poured concrete — sealed, waxed finish",
         "image": "c4d",
         "img": "/static/galleries/kitchen/c4d.webp",
+        "swatch": "/static/materials/kitchen/concrete.webp",
         "tags": [
           "cool",
           "dark",
@@ -1878,6 +1885,7 @@
         "spec": "Open oak shelves — 40mm solid, no brackets",
         "image": "c7a",
         "img": "/static/galleries/kitchen/c7a.webp",
+        "swatch": "/static/materials/kitchen/open-shelving.webp",
         "tags": [
           "rustic",
           "bright",
@@ -1890,6 +1898,7 @@
         "spec": "Handleless fronts — push-catch, shadow gap",
         "image": "c7b",
         "img": "/static/galleries/kitchen/c7b.webp",
+        "swatch": "/static/materials/kitchen/concealed-storage.webp",
         "tags": [
           "minimal",
           "cool",
@@ -1902,6 +1911,7 @@
         "spec": "Brass pendants — dimmable, warm 2700K",
         "image": "lt3a",
         "img": "/static/galleries/kitchen/lt3a.webp",
+        "swatch": "/static/materials/kitchen/statement-pendants.webp",
         "tags": [
           "warm",
           "dark",
@@ -1914,6 +1924,7 @@
         "spec": "Linear LED — recessed, neutral 3000K",
         "image": "lt3b",
         "img": "/static/galleries/kitchen/lt3b.webp",
+        "swatch": "/static/materials/kitchen/led-precision.webp",
         "tags": [
           "cool",
           "bright",
@@ -1926,6 +1937,7 @@
         "spec": "Terracotta tile — unglazed, sealed matt",
         "image": "f6e",
         "img": "/static/galleries/kitchen/f6e.webp",
+        "swatch": "/static/materials/kitchen/terracotta-floor.webp",
         "tags": [
           "warm",
           "rustic",
@@ -1938,6 +1950,7 @@
         "spec": "Slate tile — riven, natural cleft",
         "image": "f6f",
         "img": "/static/galleries/kitchen/f6f.webp",
+        "swatch": "/static/materials/kitchen/slate-floor.webp",
         "tags": [
           "cool",
           "dark",
