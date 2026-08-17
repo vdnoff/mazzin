@@ -75,6 +75,12 @@ class Server:
         self.checkouts = 0
         self.checkout_bodies = []
         self.intent_answer = None  # (code, body) to force
+        # Whether this reader has already handed over a kitchen. The upload
+        # gate on kitchen-visualizer refuses to mount a wallet, create an
+        # intent or enable the pay button until they have, so every case in
+        # here that is about the Express Element starts with a photo on file.
+        # The one case that is about the gate itself sets it False.
+        self.has_source = True
 
 
 S = Server()
@@ -111,9 +117,10 @@ class Handler(WalkHandler):
         if path == "/api/report":
             return self._json(report_body())
         if path == "/api/visualizer/status":
-            return self._json({"status": "none", "paid": False,
+            return self._json({"status": "uploaded" if S.has_source else "none",
+                               "paid": False,
                                "generations": 0, "max_generations": 2,
-                               "remaining": 2, "has_source": False})
+                               "remaining": 2, "has_source": S.has_source})
         if path in ("/kitchen", "/kitchen-visualizer"):
             self.path = "/static/funnel.html"
         return super().do_GET()
@@ -252,8 +259,16 @@ def walk(page, cfg=CFG):
 
 
 def open_paywall(browser, script=None, block=False, slug="kitchen-visualizer",
-                 cfg=CFG):
-    """A page walked to the paywall, with js.stripe.com answered by `script`."""
+                 cfg=CFG, photo=True):
+    """A page walked to the paywall, with js.stripe.com answered by `script`.
+
+    `photo` is whether the visualizer already has this reader's kitchen. It
+    defaults to True because the wallet cannot exist without one: the upload
+    gate holds the whole pay control down until a photograph has been sent, so
+    a walk with no photo is a walk to a page with no Express Element on it,
+    which is the subject of exactly one case below and of none of the others.
+    """
+    S.has_source = photo
     page = browser.new_page(viewport={"width": 390, "height": 844})
     errors = []
     page.on("pageerror", lambda e: errors.append(str(e)))
@@ -269,6 +284,11 @@ def open_paywall(browser, script=None, block=False, slug="kitchen-visualizer",
     page.goto("http://127.0.0.1:%d/%s" % (PORT, slug))
     walk(page, cfg)
     page.wait_for_selector("#commerce:not([hidden])", timeout=15000)
+    # The gate coming down is what starts the wallet, and the status it turns
+    # on arrives from the stub a fetch after the offer renders. Waiting for the
+    # price row rather than for a timeout: it is the node the gate is keyed to.
+    if photo and slug == "kitchen-visualizer":
+        page.wait_for_selector(".offer-gate", state="hidden", timeout=8000)
     return page, errors, seen
 
 
@@ -452,42 +472,49 @@ def main():
                   [u for u in seen if "stripe" in u])
             check("no page errors", not errors, errors[:3])
 
-            # --- the trust summary ------------------------------------
-            print("\n--- what a wallet buyer would otherwise never be told ---")
-            summary = page.evaluate("""() => {
-              var n = document.querySelector('.xp-summary');
-              if (!n) return null;
-              var xp = document.getElementById('xp');
-              return {name: n.querySelector('.xp-summary__name').textContent,
-                      amount: n.querySelector('.xp-summary__amount').textContent,
-                      terms: (n.querySelector('.xp-summary__terms')||{}).textContent,
-                      trust: (n.querySelector('.trust-row span')||{}).textContent,
-                      above: n.getBoundingClientRect().bottom <=
-                             xp.getBoundingClientRect().top + 1};
-            }""")
-            check("the summary exists", summary is not None)
-            check("  it names what is bought, from checkout.product_name",
-                  summary["name"] == CFG["checkout"]["product_name"],
-                  summary["name"])
-            check("  it names the one-time price, from pricing",
-                  summary["amount"] == "%.2f %s" % (
-                      CFG["pricing"]["amount_cents"] / 100.0,
-                      CFG["pricing"]["currency"].upper()), summary["amount"])
-            check("  with the one-time terms beside it",
-                  summary["terms"] == CFG["checkout"]["commerce"]["price_suffix"],
-                  summary["terms"])
-            check("  and a trust row out of commerce.trust",
-                  summary["trust"] == CFG["checkout"]["commerce"]["trust"][0],
-                  summary["trust"])
-            check("  it sits above the button, not below it", summary["above"])
-            check("  and it replaces the price row rather than repeating it",
-                  not visible(page, "#price"))
-            check("  so the amount appears once in the block",
-                  page.inner_text("#commerce").count("7.00 USD") == 1,
-                  page.inner_text("#commerce").count("7.00 USD"))
-            check("  and it is built from config, with no new copy invented",
-                  all(s in json.dumps(CFG, ensure_ascii=False) for s in
-                      [summary["name"], summary["terms"], summary["trust"]]))
+            # --- what a wallet buyer is told, and where ---------------
+            #
+            # This used to be a summary card the wallet path grew above the
+            # button: the product name and the amount, because the hosted page
+            # names both and a sheet opening in place names neither. It is gone
+            # on this funnel, and what replaced it is not less — it is the same
+            # facts, earlier and in one place. The page names what is bought in
+            # three value cards and what it costs in the price row, both of
+            # them above the pay control and both of them there before Stripe
+            # has answered. A card that arrives on the wallet answer says it a
+            # second time and moves the button while it does.
+            print("\n--- the wallet buyer reads the same block as everyone ---")
+            check("no summary card on the focused page",
+                  page.query_selector(".xp-summary") is None)
+            check("  the price row is the price block, wallet and all",
+                  visible(page, "#price"))
+            money = "%.2f %s" % (CFG["pricing"]["amount_cents"] / 100.0,
+                                 CFG["pricing"]["currency"].upper())
+            short = "$%d" % (CFG["pricing"]["amount_cents"] // 100)
+            # One price block, counted as blocks and not as occurrences of the
+            # figure: the consent line names the amount inside a sentence about
+            # the terms ("One-time $3 — no subscription, ever"), which is copy
+            # rather than a second price to compare with the first.
+            check("  and exactly one block presents it as the price",
+                  page.eval_on_selector_all(
+                      ".price-now", """ns => ns.filter(
+                          n => n.offsetParent !== null).length""") == 1,
+                  page.eval_on_selector_all(".price-now", "n => n.length"))
+            check("  the figure it presents is the configured one",
+                  page.inner_text("#price .price-now") == short,
+                  page.inner_text("#price .price-now"))
+            check("  what is bought is named above it, from commerce.value",
+                  page.eval_on_selector_all(
+                      ".offer-value__row", "n => n.length")
+                  == len(CFG["checkout"]["commerce"]["value"]))
+            check("  the value cards sit above the price, not beside the button",
+                  page.evaluate("""() => {
+                    var v = document.querySelector('.offer-value'),
+                        p = document.getElementById('price');
+                    return v.getBoundingClientRect().bottom
+                           <= p.getBoundingClientRect().top + 1; }"""))
+            check("  and the long form is nowhere on the page",
+                  money not in page.inner_text("#result-body"), money)
 
             # --- consent gates the sheet ------------------------------
             print("\n--- the withdrawal consent gates the sheet, not the sheet it ---")
@@ -725,9 +752,14 @@ def main():
             check("  the row under it is at the same y",
                   reserved["trustTop"] == final["trustTop"],
                   (reserved["trustTop"], final["trustTop"]))
+            # The figure comes from `pricing`, not from a literal. It was $7
+            # when this was written and it is $3 now, and a number typed in
+            # here is a check that fails the next time the price moves for a
+            # reason that has nothing to do with what it is testing.
             check("  it carries the config's own label",
                   page.inner_text("#pay-button") ==
-                  CFG["checkout"]["cta_label"].replace("{price}", "$7"),
+                  CFG["checkout"]["cta_label"].replace(
+                      "{price}", "$%d" % (CFG["pricing"]["amount_cents"] // 100)),
                   page.inner_text("#pay-button"))
             check("  live, because this funnel pre-ticks the box",
                   not page.is_disabled("#pay-button"))

@@ -1081,6 +1081,63 @@ body {
 
 .section-visualizer .section-title { margin-top: 0; }
 
+/* The focused free page is one page, not a stack of cards.
+
+   Everything on it — the style name, their palette and materials, the panels,
+   the offer — is one continuous argument read in one direction, and the two
+   hairlines are the only divisions it wants. Three white boxes on a grey field
+   divide it four times instead, in a second visual language, and put two edges
+   and a shadow between the reader's own materials and the picture they go into.
+   The tinted visualizer card, the report card and the commerce card all drop
+   here, and nowhere else: the paid report keeps every one of them, because
+   there the sections are separate documents and the boxes are how you tell. */
+.report-focus .section-visualizer {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  cursor: auto;
+}
+
+/* `report-focus` lands on #report itself, beside `report` and `report-preview`,
+   so this is the card rule and the padding rule for the same node. */
+.report-focus {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+/* Doubled up on purpose: `.commerce` is declared further down this file, and a
+   single class here would lose to it on source order alone. */
+.commerce.commerce--focus {
+  margin-top: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+/* The journey strip, moved onto the result page. Same three cells the swipe
+   header showed, in the slot above the style name, so "you are on step 2 of 3"
+   is answered where the reader is rather than on a screen they have left. */
+.m-steps--result { margin: 0 0 22px; }
+
+/* The two rules the focused page is built on: one under the style description,
+   one between the panels and the offer. Full-bleed inside the page's own
+   padding, which is what makes them read as divisions of one page rather than
+   as edges of two cards. */
+.result-rule {
+  height: 1px;
+  margin: 20px 0;
+  border: 0;
+  background: var(--line);
+}
+
+.report-focus .section-visualizer .result-rule { margin: 4px 0 20px; }
+
+.commerce > .result-rule { margin: 20px 0 22px; }
+
 .viz-intro {
   margin: 0 0 14px;
   font-size: 14px;
@@ -1205,6 +1262,15 @@ body {
   text-decoration: underline;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Quieter still on the focused page, where the only control that should read
+   as a control is the one at the foot: a small grey line, not an accent link. */
+.viz-replace.is-quiet {
+  margin-top: 10px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--muted);
 }
 
 /* The wait. Same shimmer as the report's own generating card, because it is
@@ -2851,6 +2917,42 @@ body.is-locked { overflow: hidden; }
   height: 32px;
   border-radius: 6px;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.10);
+}
+
+/* Four across, square, labelled. The same gallery frames the quiz showed and
+   the same labels, at the size that makes the crop the material and not the
+   room around it. No `spec` subline — that is the paid detail view. */
+.viz-yours__items {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.viz-yours__thumb {
+  display: block;
+  overflow: hidden;
+  height: 64px;
+  border-radius: 8px;
+  background: #f1f2f4;
+}
+
+.viz-yours__thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.viz-yours__name {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--muted);
 }
 
 .viz-yours__note {
