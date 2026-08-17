@@ -2937,6 +2937,11 @@ body.is-locked { overflow: hidden; }
   height: 64px;
   border-radius: 8px;
   background: #f1f2f4;
+  /* The same hairline the palette blocks above carry, for the same reason: a
+     pale surface — oak, warm quartz, a painted door — has no edge of its own
+     against a white page, and three of them in a row without one read as one
+     field rather than as three materials. */
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.10);
 }
 
 .viz-yours__thumb img {

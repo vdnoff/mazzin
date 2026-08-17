@@ -2347,12 +2347,19 @@
       node.appendChild(swatches);
     }
 
-    // The gallery thumbnails, in the free form: the picture and its label,
-    // never the `spec` subline that belongs to the paid detail view. They were
-    // taken out of here a change ago because the Style Elements section a
-    // screen below was showing the same four pictures — this is the other half
-    // of resolving that, and it is this half because the section is gone and
-    // the four fittings are half of what goes into the render.
+    // Four materials, named and pictured, in the free form: the picture and
+    // its label, never the `spec` subline that belongs to the paid detail view.
+    //
+    // The picture is a flat close-up of the surface — a `swatch` — and not the
+    // room shot the quiz used. The quiz frames are whole kitchens, and a whole
+    // kitchen shrunk to a 64px square is four or five materials, a window and
+    // a worktop all at once, which at that size is mud. A close-up of the same
+    // material is one thing at one scale, which is what the reader is being
+    // shown: this is your brass, this is your concrete.
+    //
+    // `img` is still the fallback, so a funnel whose items carry no `swatch` —
+    // /kitchen, or this one served from a JSON cached before the key existed —
+    // renders exactly what it rendered before rather than four broken frames.
     if (items.length) {
       node.appendChild(elm("p", "viz-yours__label",
                            block.materials_label || "YOUR MATERIALS"));
@@ -2361,8 +2368,12 @@
         var li = elm("li", "viz-yours__item");
         var frame = elm("span", "viz-yours__thumb");
         var img = document.createElement("img");
-        img.src = item.img;
+        img.src = item.swatch || item.img;
         img.alt = "";
+        // Lazy, the same as the elements strip these came from. The row is
+        // below the fold on every phone the page is built for, and four
+        // textures fetched before the style name has painted are four requests
+        // competing with the thing the reader is waiting to read.
         img.loading = "lazy";
         img.draggable = false;
         frame.appendChild(img);
