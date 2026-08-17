@@ -125,6 +125,8 @@
   // choosing, 1 once the offer and the upload box are what is in front of
   // them, 2 once their kitchen has actually been drawn.
   var journeyStage = 0;
+  var gateSeen = false;         // viz_gate_view is once a session, not a scroll
+  var gateIO = null;            // its observer, dropped the moment it fires
   // --- express checkout -----------------------------------------------------
   var xpState = "off";          // off | reserved | wallet | redirect
   var xpStarted = false;        // the whole attempt runs once per page
@@ -4237,6 +4239,9 @@
     if (xpBlock) xpBlock.hidden = on;
     else if (el.payButton) el.payButton.hidden = on;
 
+    if (on) watchGate();
+    else if (gateIO) { gateIO.disconnect(); gateIO = null; }
+
     // The element is never mounted while the gate is up, so there is no wallet
     // button to press and no intent created for a purchase that cannot be
     // fulfilled. Taken down, this is what lets it start.
@@ -4244,7 +4249,8 @@
   }
 
   function ensureGateNodes() {
-    if (el.gate || !el.commerce) return;
+    if (el.gate) { homeGate(); return; }
+    if (!el.commerce) return;
     var co = (cfg && cfg.checkout) || {};
     if (!co.gate_cta) return;
 
@@ -4253,13 +4259,59 @@
     button.type = "button";
     button.appendChild(elm("span", "offer-gate__arrow", "↑"));
     button.appendChild(elm("span", null, co.gate_cta));
-    button.addEventListener("click", scrollToUpload);
+    button.addEventListener("click", function () {
+      track("viz_gate_tap");
+      scrollToUpload();
+    });
     el.gate.appendChild(button);
     if (co.gate_note) {
       el.gate.appendChild(elm("p", "offer-gate__note", co.gate_note));
     }
-    // Directly under the price, where the pay control would be.
+    homeGate();
+  }
+
+  // Directly under the price, where the pay control would be — and re-homed
+  // every time, because the price row does not stay put.
+  //
+  // The visualizer section renders before `moveCommerce` relocates the price
+  // into the commerce block, and the first thing it does is ask for the gate.
+  // Built once at that moment, the gate was inserted beside a price row that
+  // was still on the two-screen paywall, and stayed there: present, correct
+  // by every class and hidden flag, and nought pixels tall inside a screen
+  // nobody was looking at. A reader with no photo therefore got a dimmed
+  // price, no button and no sentence explaining why — the protection worked
+  // and the explanation for it did not.
+  function homeGate() {
+    if (!el.gate || !el.price || !el.price.parentNode) return;
+    if (el.gate.parentNode === el.price.parentNode) return;
     el.price.parentNode.insertBefore(el.gate, el.price.nextSibling);
+  }
+
+  // The gate reaching the reader, counted once. It is put up before the offer
+  // is scrolled to and can be scrolled past repeatedly, so the count is of
+  // people who saw it and not of times it crossed the fold — a scroll-counted
+  // view would make the upload rate look worse the longer somebody deliberated.
+  function watchGate() {
+    if (gateSeen || gateIO || !el.gate) return;
+
+    if (!window.IntersectionObserver) {
+      // Nothing to observe with. Counting it as it goes up overstates it
+      // slightly; not counting it at all loses the denominator entirely, and
+      // of the two only one of them can be corrected later.
+      gateSeen = true;
+      track("viz_gate_view");
+      return;
+    }
+
+    gateIO = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting || gateSeen) return;
+        gateSeen = true;
+        track("viz_gate_view");
+        if (gateIO) { gateIO.disconnect(); gateIO = null; }
+      });
+    }, { threshold: 0.4 });
+    gateIO.observe(el.gate);
   }
 
   function scrollToUpload() {
