@@ -49,6 +49,13 @@ SELECT_REPORT_SQL = (
     "SELECT content FROM reports WHERE purchase_id = %s ORDER BY id DESC LIMIT 1"
 )
 
+# Both ways a purchase can be identified in a link. Exactly one of them is
+# filled for any given row: a hosted checkout has the session and no intent in
+# the link, a payment confirmed in the page has the intent and no session.
+SELECT_PURCHASE_TOKENS_SQL = (
+    "SELECT checkout_session, payment_intent FROM purchases WHERE id = %s"
+)
+
 SELECT_SECTIONS_SQL = (
     "SELECT section_id, content FROM style_sections "
     "WHERE funnel = %s AND style_id = %s"
@@ -2675,10 +2682,19 @@ EMAIL_HTML = """<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe 
 <p style="margin:0 0 22px"><img src="%(logo)s" width="114" height="26" alt="Mazzin" style="display:block;border:0;font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:600;color:#16181d;text-decoration:none"></p>
 <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:600;line-height:1.25;color:#16181d;margin:0 0 16px">Smart move.</h1>
 <p style="margin:0 0 16px">%(opening)s Your personalized %(name)s report is attached.</p>
-<p style="margin:0 0 22px"><a href="%(link)s" style="color:#C05621;font-weight:600">Open your report online</a></p>
-<p style="margin:0 0 6px;padding-top:18px;border-top:1px solid #e5e7eb;font-size:13px;color:#6b7280">It stays available at that link, and the PDF is yours to keep.</p>
+%(link_block)s<p style="margin:0 0 6px;padding-top:18px;border-top:1px solid #e5e7eb;font-size:13px;color:#6b7280">%(keep)s</p>
 <p style="margin:0;font-size:13px;color:#6b7280"><a href="%(home)s" style="color:#6b7280;text-decoration:none">mazzin.com</a></p>
 </div>"""
+
+# The online copy, offered only when there is a token that will actually open
+# it. Everything about the mail that mentions a link lives in here, so there is
+# no arrangement of the template that can promise one it did not send.
+EMAIL_LINK_BLOCK = (
+    '<p style="margin:0 0 22px"><a href="%(link)s"'
+    ' style="color:#C05621;font-weight:600">Open your report online</a></p>\n')
+
+KEEP_WITH_LINK = "It stays available at that link, and the PDF is yours to keep."
+KEEP_NO_LINK = "The PDF is yours to keep."
 
 
 def _slug(text):
@@ -2728,6 +2744,36 @@ def _email_opening(content):
     return ("You just dodged the mistakes that cost renovators $4,000+.")
 
 
+def _result_token(purchase_id, checkout_session=None):
+    """What `?cs=` has to carry for this purchase, or None.
+
+    Two things can open a paid report and the parameter is called `cs` for
+    both: `cs_…` from a hosted checkout, `pi_…` from a payment confirmed in the
+    page. Widening the reading side was not enough — `find_purchase` matches on
+    either column and the client regex accepts either shape, but the one place
+    that *builds* a link still assumed a session. A wallet purchase has none,
+    so every one of those emails carried a link to the funnel root and sent a
+    buyer back to the quiz they had already finished.
+
+    The caller's value wins when it has one, so the hosted path costs no query
+    at all and behaves exactly as it did. Only a purchase without a session
+    reaches the database, and it reads the row it is already named after.
+    """
+    if checkout_session:
+        return checkout_session
+    try:
+        row = database.query_one(SELECT_PURCHASE_TOKENS_SQL, (purchase_id,))
+    except Exception as exc:
+        # A link is worth a query; it is not worth the email. Losing the row
+        # here costs the online copy and nothing else — the PDF still goes.
+        log.warning("could not read tokens for purchase %s: %s",
+                    purchase_id, type(exc).__name__)
+        return None
+    if not row:
+        return None
+    return row.get("checkout_session") or row.get("payment_intent") or None
+
+
 def send_report_email(purchase_id, email, content, checkout_session=None):
     """Email the report as a PDF attachment. Returns True when Resend took it.
 
@@ -2751,18 +2797,33 @@ def send_report_email(purchase_id, email, content, checkout_session=None):
         return False
 
     name = content.get("style_name") or "style"
-    link = "%s/%s%s" % (
-        config.BASE_URL,
-        content.get("funnel") or "",
-        ("?cs=" + checkout_session) if checkout_session else "",
-    )
+    token = _result_token(purchase_id, checkout_session)
+    funnel = content.get("funnel") or ""
+
+    # No token, no link. The old line built the URL with the query string left
+    # off, which is not a broken link — it is a working link to the quiz, and
+    # it sent somebody who had just paid back to the start of the funnel they
+    # had already finished. Sending nothing is the honest failure: the report
+    # is attached either way, and the reader is not invited to click on their
+    # own paywall.
+    if token and funnel:
+        link = "%s/%s?cs=%s" % (config.BASE_URL, funnel, token)
+        link_block = EMAIL_LINK_BLOCK % {"link": html.escape(link)}
+        keep = KEEP_WITH_LINK
+    else:
+        log.warning("purchase %s has no result token — email sent with the "
+                    "PDF and no link", purchase_id)
+        link_block = ""
+        keep = KEEP_NO_LINK
+
     payload = {
         "from": config.EMAIL_FROM,
         "to": [email],
         "subject": "Your %s kitchen style report — Mazzin" % name,
         "html": EMAIL_HTML % {
             "name": html.escape(name),
-            "link": html.escape(link),
+            "link_block": link_block,
+            "keep": keep,
             "logo": html.escape(config.BASE_URL + "/static/brand/logo.svg"),
             "home": html.escape(config.BASE_URL),
             "opening": _email_opening(content),
