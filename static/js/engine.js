@@ -953,6 +953,18 @@
     el.report.innerHTML = "";
     el.report.classList.add("report-preview");
 
+    // One block, and it is the thing being sold. Everything the loop below
+    // would build — the palette section, the free mistake, the elements strip,
+    // the mid card, the mistakes teaser, the two remaining blurred teasers and
+    // the also-list — is off this funnel's page. `placeVisualizer` puts their
+    // own palette, their own materials and the two panels in, and
+    // `renderCommerce` puts the offer under it.
+    if (focusResult()) {
+      el.report.classList.add("report-focus");
+      placeVisualizer();
+      return;
+    }
+
     // Ranked once for the whole report, then dealt out two at a time: two
     // sections showing the same two frames reads as a bug, not as a teaser.
     var pool = styleShots(style);
@@ -2144,6 +2156,7 @@
         // bottom of the page now, and the anchor card carries what the banner
         // used to say — once, where the decision is actually made.
         el.cta.hidden = true;
+        homeJourney();
         renderLockedReport(win);
         renderCommerce();
         // The offer is on screen: the choosing is done and the photo is what
@@ -2312,8 +2325,12 @@
   function yoursStrip(block) {
     var style = styleById(winnerStyleId);
     var colors = (((style || {}).reveals || {}).palette || {}).colors || [];
+    // Five blocks and four thumbs. `pickElements` is the same picker the
+    // Style Elements strip used, so the four are still the four this run
+    // actually ranked highest — the strip is gone, the picker is not.
     colors = colors.slice(0, 5);
-    if (!colors.length) return null;
+    var items = pickElements().slice(0, 4);
+    if (!colors.length && !items.length) return null;
 
     var node = elm("div", "viz-yours");
 
@@ -2330,15 +2347,31 @@
       node.appendChild(swatches);
     }
 
-    // Palette only. The four material thumbnails that used to sit here are
-    // the same four pictures, at the same size, with the same labels, that
-    // the Style Elements section shows a screen further down — the same page
-    // was carrying them twice.
-    //
-    // The section is the one that keeps them, and not by preference:
-    // test_boundary asserts six `.element-chip` nodes each with an
-    // `.element-thumb img` on the free page, so removing them there would
-    // break the free/paid contract. Removing them here breaks nothing.
+    // The gallery thumbnails, in the free form: the picture and its label,
+    // never the `spec` subline that belongs to the paid detail view. They were
+    // taken out of here a change ago because the Style Elements section a
+    // screen below was showing the same four pictures — this is the other half
+    // of resolving that, and it is this half because the section is gone and
+    // the four fittings are half of what goes into the render.
+    if (items.length) {
+      node.appendChild(elm("p", "viz-yours__label",
+                           block.materials_label || "YOUR MATERIALS"));
+      var grid = elm("ul", "viz-yours__items");
+      items.forEach(function (item) {
+        var li = elm("li", "viz-yours__item");
+        var frame = elm("span", "viz-yours__thumb");
+        var img = document.createElement("img");
+        img.src = item.img;
+        img.alt = "";
+        img.loading = "lazy";
+        img.draggable = false;
+        frame.appendChild(img);
+        li.appendChild(frame);
+        li.appendChild(elm("span", "viz-yours__name", item.label || ""));
+        grid.appendChild(li);
+      });
+      node.appendChild(grid);
+    }
 
     if (block.yours_note) {
       node.appendChild(elm("p", "viz-yours__note", block.yours_note));
@@ -2356,9 +2389,22 @@
 
     vizNode = elm("article", "section section-visualizer");
     vizNode.id = "visualizer";
-    vizNode.appendChild(elm("h2", "section-title",
-                            block.title || "Your Kitchen, Transformed"));
-    if (block.intro) vizNode.appendChild(elm("p", "viz-intro", block.intro));
+
+    // The focused free page names nothing here. Directly above this are the
+    // style name and its one-line description, and directly below is a strip
+    // headed YOUR PALETTE over a row of the reader's own colours — a heading
+    // saying "Your Kitchen, Transformed" and a paragraph explaining that a
+    // photo becomes a picture sit between the reader and the two things that
+    // make the same point by being true. A rule instead, which is the whole of
+    // what the join needs. The paid report still opens with both: there it is
+    // a document, and a document has a title.
+    if (focusResult() && vizPre()) {
+      vizNode.appendChild(ruleNode());
+    } else {
+      vizNode.appendChild(elm("h2", "section-title",
+                              block.title || "Your Kitchen, Transformed"));
+      if (block.intro) vizNode.appendChild(elm("p", "viz-intro", block.intro));
+    }
 
     // What it costs, said before a photograph is asked for rather than after
     // one has been handed over. The upload moving ahead of the payment is only
@@ -2654,7 +2700,12 @@
       frag.appendChild(vizButton("viz-go", block.locked_cta, focusCta));
     }
 
-    var swap = elm("label", "viz-replace",
+    // A way back to the picker, and nothing louder than that. On the focused
+    // page the only control that asks for anything is the one at the foot, so
+    // this is a line of text under the panels rather than a second button
+    // competing with it.
+    var swap = elm("label", "viz-replace"
+                   + (focusResult() ? " is-quiet" : ""),
                    block.replace_cta || "Use a different photo");
     swap.appendChild(vizFileInput(block));
     frag.appendChild(swap);
@@ -3691,7 +3742,10 @@
   // both left "$7 $3 LAUNCH PRICE" printed twice, a hundred pixels apart.
   function showSummary(on) {
     if (el.xpSummary) el.xpSummary.hidden = !on;
-    if (el.price) el.price.hidden = on || priceGated();
+    // The price row yields to the summary card and to nothing else. Without a
+    // card there is no other price block, so hiding the row on a wallet answer
+    // would leave a page selling something at no stated price.
+    if (el.price) el.price.hidden = (on && !!el.xpSummary) || priceGated();
   }
 
   // Whether the price is being withheld until a photograph exists.
@@ -3929,6 +3983,14 @@
     var name = co.product_name || "";
     if (!name) return null;
 
+    // Not on the focused page. There the price is a row of the page — under
+    // three value cards, over the consent box — and it is there whichever way
+    // the wallet check goes, so a card that appears when a wallet answers and
+    // takes the row's place is a second price block and, worse, a block that
+    // arrives late: everything below it moves the moment Stripe replies, which
+    // is the moment a thumb is already on its way to the button.
+    if (focusResult()) return null;
+
     var card = elm("div", "xp-summary");
     card.appendChild(elm("p", "xp-summary__name", name));
 
@@ -4162,6 +4224,32 @@
 
   function commerceCopy() {
     return ((cfg && cfg.checkout) || {}).commerce || {};
+  }
+
+  // The free result page as one argument instead of eleven.
+  //
+  // On a funnel that sells a picture of the reader's own kitchen, the page they
+  // land on had accumulated every section the report funnel needs and then the
+  // offer underneath it: a palette section, a whole free mistake, a strip of
+  // style elements, a card asking them to scroll, a teaser about the other four
+  // mistakes, two more blurred teasers, a list of what else is inside, a sample
+  // link, two lead lines. Each of those earns its place on /kitchen, where the
+  // report IS the product. Here the product is above all of it and every one of
+  // them is another reason to stop before reaching it.
+  //
+  // So this funnel renders a fixed page: what they chose, the two panels, and
+  // what unlocking costs. It is a layout switch and not a feature flag — the
+  // config either names this layout or it does not, and a funnel JSON cached
+  // from before the key existed renders exactly what it rendered yesterday.
+  // /kitchen never names it.
+  function focusResult() {
+    return ((cfg && cfg.report) || {}).free_layout === "visualizer";
+  }
+
+  // The hairlines the focused page is divided by. It has no section stack to
+  // inherit rules from any more, so the two rules it does want are drawn.
+  function ruleNode() {
+    return elm("div", "result-rule");
   }
 
   // Two lines where a seven-row list used to be. The first names the thing
@@ -4443,9 +4531,16 @@
   function renderExpectation() {
     var text = ((cfg && cfg.checkout) || {}).expectation || "";
     if (!el.expectation) {
-      if (!text || !el.withdrawal || !el.withdrawal.parentNode) return;
+      // Under the pay control on the focused page, over the consent box
+      // everywhere else. The order the block is read in runs price, consent,
+      // button — and a sentence about what the render is not, placed between
+      // the number and the tap, is an interruption at the worst moment. After
+      // the button it is what it is for: the thing that stops somebody
+      // expecting a drawing they could hand a builder.
+      var anchor = focusResult() ? el.trust : el.withdrawal;
+      if (!text || !anchor || !anchor.parentNode) return;
       el.expectation = elm("p", "offer-expectation");
-      el.withdrawal.parentNode.insertBefore(el.expectation, el.withdrawal);
+      anchor.parentNode.insertBefore(el.expectation, anchor);
     }
     el.expectation.textContent = text;
     el.expectation.hidden = !text;
@@ -4469,8 +4564,21 @@
     // Before the move: it inserts relative to nodes that are about to travel.
     ensurePayNodes();
 
-    [el.payAnchor, el.manifest, buildSampleLink(), el.price, el.withdrawal,
-     el.payButton, el.payError, el.trust, el.legal].forEach(function (node) {
+    // The focused page takes fewer rows, and the ones it leaves out are the
+    // ones that describe the offer instead of making it: the anchor line, the
+    // six-row manifest and the sample-page link, all of which are answered
+    // above by three value cards and by the reader's own kitchen. The rule is
+    // the join to what is above.
+    //
+    // The expectation line is not in either list. It is placed by
+    // `renderExpectation`, which puts it under the pay control here and over
+    // the consent box on /kitchen.
+    var rows = focusResult()
+      ? [ruleNode(), el.price, el.withdrawal, el.payButton, el.payError,
+         el.trust, el.legal]
+      : [el.payAnchor, el.manifest, buildSampleLink(), el.price, el.withdrawal,
+         el.payButton, el.payError, el.trust, el.legal];
+    rows.forEach(function (node) {
       if (node) el.commerce.appendChild(node);
     });
 
@@ -4483,22 +4591,46 @@
      el.manifestHead, el.reframe].forEach(function (node) {
       if (node) node.hidden = true;
     });
+
+    // Same treatment for the three the focused layout drops. They stay on the
+    // paywall screen nobody travels to, which is already display:none — hidden
+    // as well so that flipping `single_page` off cannot surface an anchor line
+    // this funnel has no copy for.
+    if (focusResult()) {
+      [el.payAnchor, el.manifest].forEach(function (node) {
+        if (node) node.hidden = true;
+      });
+      // One page, not a page and then a card with the offer in it. The report
+      // above has already dropped its own card for the same reason: the two
+      // hairlines are what divide this page, and a box edge beside a hairline
+      // is the same division drawn twice in two different languages.
+      el.commerce.classList.add("commerce--focus");
+    }
   }
 
   function renderCommerce() {
     var copy = commerceCopy();
+    var focus = focusResult();
     moveCommerce();
 
-    renderManifest();
-    renderLeads(copy);
+    // Three renders the focused layout has no nodes on the page for. Calling
+    // them anyway would build a lead paragraph and a manifest head into a
+    // container sitting on a screen nobody reaches, which is not harmful and is
+    // not honest either — the page does not have these, so nothing renders them.
+    if (!focus) {
+      renderManifest();
+      renderLeads(copy);
+    }
     renderValue(copy);
 
-    fillAccent(el.anchorHead, withPrice(copy.anchor_head || ""),
-               copy.anchor_head_accent || "");
-    el.anchorHead.hidden = !copy.anchor_head;
-    el.anchorLine.textContent = withPrice(copy.anchor || "");
-    el.anchorLine.hidden = !copy.anchor;
-    el.payAnchor.hidden = !(copy.anchor_head || copy.anchor);
+    if (!focus) {
+      fillAccent(el.anchorHead, withPrice(copy.anchor_head || ""),
+                 copy.anchor_head_accent || "");
+      el.anchorHead.hidden = !copy.anchor_head;
+      el.anchorLine.textContent = withPrice(copy.anchor || "");
+      el.anchorLine.hidden = !copy.anchor;
+      el.payAnchor.hidden = !(copy.anchor_head || copy.anchor);
+    }
 
     renderPrice(el.price, copy.price_suffix);
     renderExpectation();
@@ -4998,6 +5130,26 @@
       node.appendChild(cell);
     });
     markJourney(journeyStage);
+  }
+
+  // The strip onto the result page, moved rather than copied.
+  //
+  // It was built into the swipe screen's header, which is exactly right for the
+  // thirteen taps and wrong the moment they are over: that screen is
+  // display:none from the result onwards, so `markJourney(1)` was setting the
+  // active class on a strip nobody could see. Step 2 of three — "your kitchen"
+  // — is the step the reader is standing in for the whole of this page, and a
+  // position they cannot see is not a position.
+  //
+  // Moved, so there is one strip: two would be two things to keep in step, and
+  // the one that got forgotten would be the one on screen.
+  function homeJourney() {
+    if (!focusResult()) return;
+    var node = el.journeySteps;
+    if (!node || !el.resultBody) return;
+    if (node.parentNode === el.resultBody) return;
+    node.classList.add("m-steps--result");
+    el.resultBody.insertBefore(node, el.resultBody.firstChild);
   }
 
   // Which of the three the reader is actually in. A strip that looks the same

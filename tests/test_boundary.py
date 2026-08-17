@@ -8,12 +8,23 @@ in the order a decision is made. Then goes looking for the gated paint codes
 everywhere a reader could look for them — the served JSON, the served JS, and
 the rendered DOM — because a boundary that only exists in CSS is not one.
 
+Two funnels, because the free page is no longer one page. Sections 1-8 are
+/kitchen, where the report is the product and the result page is a preview of
+it. Section 9 is /kitchen-visualizer, where the product is a picture of the
+reader's own kitchen and the result page was rebuilt around it: no palette
+section, no free mistake, no elements strip, no teasers, no also-list. The
+property being checked there is the same property — the pictures and their
+labels are free, the specifications and the paint codes are not — asserted
+against the structure that now carries it.
+
     python3 boundary.py
 """
 import json
 import os
 import re
+import socketserver
 import sys
+import threading
 import urllib.request
 
 # The repo root, derived from this file rather than hardcoded: a suite
@@ -35,16 +46,49 @@ COMMERCE = CFG["checkout"]["commerce"]
 ALSO = CFG["report"]["also"]
 SECTION_TITLE = {s["id"]: s["title"] for s in CFG["report"]["sections"]}
 
-# Every paint code the config used to hand over, reconstructed from the rgb
+VCFG = json.load(open(os.path.join(ROOT, "funnels/kitchen-visualizer.json")))
+VIZ = VCFG["visualizer"]
+
+
+# Every paint code a config used to hand over, reconstructed from the rgb
 # triples it carries now. These are the strings that must not be reachable.
-GATED = []
-for _style in CFG["styles"]:
-    for _c in _style["reveals"]["palette"]["colors"]:
-        r, g, b = _c["rgb"]
-        GATED += ["#%02X%02X%02X" % (r, g, b), "#%02x%02x%02x" % (r, g, b)]
+def gated_of(cfg):
+    out = []
+    for style in cfg["styles"]:
+        for c in style["reveals"]["palette"]["colors"]:
+            r, g, b = c["rgb"]
+            out += ["#%02X%02X%02X" % (r, g, b), "#%02x%02x%02x" % (r, g, b)]
+    return out
+
+
+GATED = gated_of(CFG)
+VGATED = gated_of(VCFG)
 
 fails = []
 checks = [0]
+
+
+# The walk handler serves /kitchen and stubs the two calls the quiz makes. The
+# visualizer funnel needs its slug and the status the engine asks for before it
+# decides which of its two pre-purchase states to draw — no photograph, so the
+# answer is the honest empty one and the page comes up gated.
+class VizHandler(Handler):
+
+    def do_GET(self):
+        path = self.path.split("?")[0]
+        if path == "/api/visualizer/status":
+            return self._json({"status": "none", "has_source": False,
+                               "paid": False, "generations_left": 2})
+        if path == "/kitchen-visualizer":
+            self.path = "/static/funnel.html"
+        return super().do_GET()
+
+
+def serve_both():
+    socketserver.TCPServer.allow_reuse_address = True
+    httpd = socketserver.TCPServer(("127.0.0.1", PORT), VizHandler)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    return httpd
 
 
 def check(label, ok, detail=""):
@@ -79,7 +123,7 @@ def titles(page):
 
 
 def main():
-    httpd = serve()
+    httpd = serve_both()
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(executable_path=CHROME)
@@ -429,6 +473,155 @@ def main():
             page.screenshot(path=shot, full_page=True)
             size = page.evaluate("() => document.body.scrollHeight")
             print("    %s  (%dpx tall)" % (shot, size))
+
+            print("\n--- 9. /kitchen-visualizer: pictures free, specs not ---")
+            # The same boundary on the funnel whose free page was rebuilt. It
+            # used to be carried by the Style Elements strip — six chips, a
+            # thumbnail and a label each and no `spec` subline — and that
+            # section is off this funnel's page. The four material thumbnails
+            # in the card above the upload box carry it now: same gallery
+            # frames, same labels, same withheld specification. Checking the
+            # card rather than deleting the check is the point, because what
+            # was being tested was never the strip.
+            vpage = browser.new_page(viewport={"width": 390, "height": 844},
+                                     device_scale_factor=2)
+            verrors = []
+            vpage.on("pageerror", lambda e: verrors.append(str(e)))
+            vpage.on("console", lambda m: verrors.append(m.text)
+                     if m.type == "error" else None)
+            vpage.goto("http://127.0.0.1:%d/kitchen-visualizer" % PORT)
+            quiz(vpage)
+
+            thumbs = vpage.eval_on_selector_all(
+                ".viz-yours__item", """ns => ns.map(n => ({
+                    src: (n.querySelector('.viz-yours__thumb img')||{})
+                          .getAttribute ? n.querySelector('.viz-yours__thumb img')
+                          .getAttribute('src') : null,
+                    label: (n.querySelector('.viz-yours__name')||{}).textContent,
+                    h: (n.querySelector('.viz-yours__thumb')||n)
+                        .getBoundingClientRect().height
+                }))""")
+            check("four material thumbnails in the card",
+                  len(thumbs) == 4, len(thumbs))
+            check("each is a real gallery frame",
+                  all((t["src"] or "").startswith("/static/galleries/")
+                      for t in thumbs), [t["src"] for t in thumbs])
+            check("each carries its label",
+                  all(t["label"] and t["label"].strip() for t in thumbs),
+                  [t["label"] for t in thumbs])
+            check("64px square",
+                  all(abs(t["h"] - 64) < 1 for t in thumbs),
+                  [t["h"] for t in thumbs])
+            labels = {t["label"] for t in thumbs}
+            specs = {i["label"]: i.get("spec") for i in VCFG["style_elements"]["items"]}
+            check("no thumbnail's specification is on the page",
+                  not [s for lb, s in specs.items()
+                       if lb in labels and s and s in vpage.content()],
+                  [s for lb, s in specs.items() if lb in labels and s
+                   and s in vpage.content()][:1])
+            check("no spec node anywhere on it",
+                  vpage.eval_on_selector_all(
+                      ".element-spec, .viz-yours__spec", "n => n.length") == 0)
+
+            palette = vpage.eval_on_selector_all(
+                ".viz-yours__color",
+                """ns => ns.map(n => ({
+                    bg: getComputedStyle(n).backgroundColor,
+                    h: n.getBoundingClientRect().height,
+                    text: n.textContent}))""")
+            want = len(VCFG["styles"][0]["reveals"]["palette"]["colors"])
+            check("%d colour blocks, painted the real colour" % want,
+                  len(palette) == want
+                  and all(re.match(r"^rgba?\(\d", p["bg"] or "")
+                          for p in palette), len(palette))
+            check("32px tall", all(abs(p["h"] - 32) < 1 for p in palette),
+                  [p["h"] for p in palette])
+            check("and none of them writes a code",
+                  not any(p["text"].strip() for p in palette))
+            vdom = vpage.content()
+            check("no paint code in the rendered DOM",
+                  not [h for h in VGATED if h in vdom],
+                  [h for h in VGATED if h in vdom][:3])
+            vserved = urllib.request.urlopen(
+                "http://127.0.0.1:%d/static/funnels/kitchen-visualizer.json"
+                % PORT).read().decode()
+            check("nor in the funnel JSON the browser fetches",
+                  not [h for h in VGATED if h in vserved],
+                  [h for h in VGATED if h in vserved][:3])
+
+            # Everything the rebuild took off this page. Named one by one
+            # rather than counted, so a section coming back is a named failure.
+            gone = vpage.evaluate("""() => ({
+                swatches: document.querySelectorAll('.swatch-row').length,
+                mistakeOne: document.querySelectorAll('.section-mistake-one').length,
+                elements: document.querySelectorAll('.section-elements').length,
+                midCta: document.querySelectorAll('.mid-offer').length,
+                teaser: document.querySelectorAll('.mistakes-teaser').length,
+                dissolves: document.querySelectorAll('#report .dissolve').length,
+                also: document.querySelectorAll('.section-also').length,
+                sample: document.querySelectorAll('#sample-link').length,
+                leads: Array.from(document.querySelectorAll('.offer-lead'))
+                         .filter(n => !n.hidden).length,
+                manifest: Array.from(document.querySelectorAll('#commerce .manifest-row'))
+                            .length,
+                vizPrice: document.querySelectorAll('.viz-price').length,
+                lockedCta: document.querySelectorAll('.viz-go').length
+            })""")
+            for k, v in sorted(gone.items()):
+                check("  %-12s is off the page" % k, v == 0, v)
+
+            order = vpage.evaluate("""() => Array.from(
+                document.querySelectorAll('#report > *, #commerce > *'))
+                .filter(c => !c.hidden && c.offsetParent !== null)
+                .map(c => c.id || c.className.split(' ')[0])""")
+            check("report is the visualizer block alone, then the offer",
+                  order[:1] == ["visualizer"], order)
+            # The price row itself is not in this list, and that is the check
+            # below: gated, it is hidden, so what follows the value cards is
+            # the gate.
+            check("the offer runs rule, heading, value cards, gate, legal",
+                  order[1:] == ["result-rule", "offer-value__head",
+                                "offer-value", "offer-gate", "legal-links"],
+                  order[1:])
+
+            # Gated: no photograph has been sent, so nothing on this page may
+            # name what it costs. Matched against this funnel's own figures —
+            # the live price, the struck one, and the long form — rather than
+            # against anything shaped like money, because the value cards name
+            # $4,000+ as what a mistake costs to undo, which is not a price.
+            cents = VCFG["pricing"]["amount_cents"]
+            figures = ["$%d" % (cents // 100), "%.2f USD" % (cents / 100.0),
+                       VCFG["checkout"]["price_was_display"]]
+            money = vpage.evaluate("""figs => Array.from(
+                document.querySelectorAll('#result-body *'))
+                .filter(n => n.children.length === 0
+                          && n.offsetParent !== null
+                          && figs.some(f => n.textContent.includes(f)))
+                .map(n => n.textContent.trim())""", figures)
+            check("no price anywhere while the gate is up", not money, money[:3])
+            check("the gate is the only control at the foot",
+                  vpage.eval_on_selector_all(
+                      "#commerce button", """ns => ns.filter(
+                          n => n.offsetParent !== null).map(n => n.className)""")
+                  == ["offer-gate__cta"],
+                  vpage.eval_on_selector_all(
+                      "#commerce button", """ns => ns.filter(
+                          n => n.offsetParent !== null).map(n => n.className)"""))
+            check("no consent row and no trust row with it",
+                  vpage.evaluate("""() => {
+                      const w = document.getElementById('withdrawal'),
+                            t = document.getElementById('trust');
+                      return (!w || w.offsetParent === null)
+                          && (!t || t.offsetParent === null); }"""))
+            check("no page errors on the visualizer walk", not verrors,
+                  verrors[:3])
+
+            vshot = os.path.join(SHOTS, "shot-result-viz-gated.png")
+            vpage.evaluate("window.scrollTo(0, 0)")
+            vpage.wait_for_timeout(400)
+            vpage.screenshot(path=vshot, full_page=True)
+            print("    %s  (%dpx tall)"
+                  % (vshot, vpage.evaluate("() => document.body.scrollHeight")))
             browser.close()
     finally:
         httpd.shutdown()

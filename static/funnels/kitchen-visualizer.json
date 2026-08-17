@@ -1787,7 +1787,6 @@
   ],
   "style_elements": {
     "title": "Your Style Elements",
-    "subline": "Recognized from your choices — specified in your full report.",
     "items": [
       {
         "id": "brass-hardware",
@@ -1945,8 +1944,7 @@
           "stone"
         ]
       }
-    ],
-    "promo": "Upload a photo of your kitchen and see it transformed to match your report."
+    ]
   },
   "styles": [
     {
@@ -2374,31 +2372,7 @@
         }
       }
     ],
-    "mistake_one": {
-      "title": "Mistake #1 of 5",
-      "locked_note": "Mistakes 2–5 — inside your full report"
-    },
-    "also": {
-      "title": "Also in your report",
-      "rows": [
-        {
-          "section": "materials",
-          "hook": "Your {worktop} + {metal} pairing has one expensive conflict — and one combination that always works."
-        },
-        {
-          "section": "dna",
-          "hook": "How your {palette} choices split between your two style influences."
-        },
-        {
-          "section": "splurge",
-          "hook": "Where your {floor} budget should actually go — floor and ceiling for each line."
-        },
-        {
-          "title": "Your Exact Paint Codes",
-          "hook": "The code for every colour above, its sheen level, and the order to apply them in."
-        }
-      ]
-    },
+    "free_layout": "visualizer",
     "visuals": {
       "moodboard_step": "color",
       "material_steps": [
@@ -2461,12 +2435,10 @@
     "title": "Your Kitchen, Transformed",
     "intro": "Upload one photo of your kitchen and see it redecorated in your style — same room, same layout, your palette.",
     "pre_purchase": true,
-    "price_note": "Your transformation + the full report — {price}",
     "privacy_note": "Your photo is private, used only for your visualization, deleted if you don't continue.",
     "teaser_title": "Your kitchen, ready",
     "before_label_pre": "Your kitchen",
     "locked_label": "Your {style} transformation",
-    "locked_cta": "Unlock to see it",
     "manifest_uploaded": "Your kitchen, reimagined — photo received ✓",
     "guidance": "Stand back, daylight on, whole kitchen in frame.",
     "upload_cta": "Choose a photo",
@@ -2519,21 +2491,13 @@
     "single_page": true,
     "express": true,
     "commerce": {
-      "lead": "Your kitchen redrawn in your style, from the photo you uploaded — plus one re-run if you want a different take.",
-      "lead_accent": "redrawn in your style",
-      "lead_report": "And the report behind it: which materials, colours and finishes make that kitchen real.",
       "consent": "One-time {price} — no subscription, ever. My report unlocks instantly.",
       "trust": [
         "Secure via Stripe",
         "One-time — no recurring charges",
         "PDF to your email"
       ],
-      "mid_line": "See your own kitchen in your style — in about a minute.",
-      "mid_line_accent": "your own kitchen",
-      "mid_button": "See it ↓",
       "sticky_label": "See my kitchen — {price}",
-      "sample_link": "See a sample page",
-      "sample_caption": "An example page. Yours is written from your own choices.",
       "value": [
         {
           "title": "Your kitchen, redrawn",
@@ -2571,9 +2535,5 @@
     "gate_cta": "Add your photo first",
     "gate_note": "We need your kitchen before we can redraw it. Takes 5 seconds.",
     "price_after_upload": true
-  },
-  "result": {
-    "mistakes_teaser": "You've seen mistake #1. The other four cost {style} owners $4,000+ to undo — and one involves your {worktop}.",
-    "value_banner": "The mistakes in this report cost renovators $4,000+ to undo. Catching one pays for it a thousand times over."
   }
 }
