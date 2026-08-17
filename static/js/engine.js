@@ -2307,38 +2307,49 @@
   function yoursStrip(block) {
     var style = styleById(winnerStyleId);
     var colors = (((style || {}).reveals || {}).palette || {}).colors || [];
-    var items = pickElements().slice(0, 3);
+    // Five blocks and four thumbs. `pickElements` is the same picker the free
+    // strip below uses, so a choice with no image of its own falls back to the
+    // style-matched one exactly as it already does.
+    colors = colors.slice(0, 5);
+    var items = pickElements().slice(0, 4);
     if (!colors.length && !items.length) return null;
 
     var node = elm("div", "viz-yours");
-    if (block.yours_title) {
-      node.appendChild(elm("p", "viz-yours__title", block.yours_title));
-    }
 
     if (colors.length) {
+      node.appendChild(elm("p", "viz-yours__label",
+                           block.palette_label || "YOUR PALETTE"));
       var swatches = elm("ul", "viz-yours__colors");
       colors.forEach(function (c) {
         var li = elm("li", "viz-yours__color");
-        var dot = elm("span", "viz-yours__dot");
-        dot.style.backgroundColor = swatchColor(c);
-        li.appendChild(dot);
-        li.appendChild(elm("span", "viz-yours__name", c.name || ""));
+        li.style.backgroundColor = swatchColor(c);
+        li.setAttribute("title", c.name || "");
         swatches.appendChild(li);
       });
       node.appendChild(swatches);
     }
 
-    // Labels, not thumbnails. Three 4:3 thumbs cost about 120px of height,
-    // and at 320 that was enough to push the upload box off the bottom of the
-    // card — which is a worse trade than it looks, because the box is the
-    // thing this section exists to get somebody to use. The pictures are
-    // already on the free result page below.
+    // The gallery thumbnails the free Style Elements strip already shows, in
+    // the same free form: the picture and its label, never the `spec` subline
+    // that belongs to the paid detail view.
     if (items.length) {
-      var chips = elm("ul", "viz-yours__items");
+      node.appendChild(elm("p", "viz-yours__label",
+                           block.materials_label || "YOUR MATERIALS"));
+      var grid = elm("ul", "viz-yours__items");
       items.forEach(function (item) {
-        chips.appendChild(elm("li", "viz-yours__item", item.label || ""));
+        var li = elm("li", "viz-yours__item");
+        var frame = elm("span", "viz-yours__thumb");
+        var img = document.createElement("img");
+        img.src = item.img;
+        img.alt = "";
+        img.loading = "lazy";
+        img.draggable = false;
+        frame.appendChild(img);
+        li.appendChild(frame);
+        li.appendChild(elm("span", "viz-yours__name", item.label || ""));
+        grid.appendChild(li);
       });
-      node.appendChild(chips);
+      node.appendChild(grid);
     }
 
     if (block.yours_note) {
@@ -2580,6 +2591,10 @@
     if (vizPre()) {
       host.appendChild(have ? vizTeaser(block) : vizDrop(block));
       renderManifestRows();
+      // The photo can arrive long after the offer rendered, and the bottom of
+      // the page has to hear about it: this is what takes the gate down and
+      // starts the wallet element.
+      renderGate();
       return;
     }
 
@@ -4094,6 +4109,7 @@
     renderPrice(el.price, cfg.checkout.price_suffix);
     renderExpectation();
     renderTrust();
+    renderGate();
 
     el.withdrawalText.textContent = cfg.checkout.eu_withdrawal_text || "";
     // The short line is the whole of what the box says now; the full clause it
@@ -4157,14 +4173,108 @@
     rows.forEach(function (row) {
       if (!row || !row.text) return;
       var li = elm("li", "offer-value__row" + (row.hero ? " is-hero" : ""));
-      li.appendChild(icon(row.hero ? "bolt" : "check", "offer-value__mark"));
-      var text = elm("span", "offer-value__text");
+      if (row.hero) li.appendChild(starNode());
+
+      var body = elm("div", "offer-value__body");
+      if (row.title) {
+        body.appendChild(elm("p", "offer-value__title", row.title));
+      }
+      var text = elm("p", "offer-value__text");
       // The accent lands on the figure alone. Bolding the whole sentence
       // emphasises nothing; bolding "$4,000+" is the point of the sentence.
       fillAccent(text, withPrice(row.text), row.accent || "");
-      li.appendChild(text);
+      body.appendChild(text);
+      li.appendChild(body);
       el.valueList.appendChild(li);
     });
+  }
+
+  function starNode() {
+    var svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("class", "offer-value__star");
+    svg.setAttribute("viewBox", "0 0 20 20");
+    svg.setAttribute("aria-hidden", "true");
+    var path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("d", "M10 1.6l2.4 5.3 5.8.6-4.3 3.9 1.2 5.7L10 14."
+                      + "2l-5.1 2.9 1.2-5.7L1.8 7.5l5.8-.6z");
+    svg.appendChild(path);
+    return svg;
+  }
+
+  // Whether this reader has actually handed over a kitchen. The whole bottom
+  // block turns on it.
+  function vizHasPhoto() {
+    return !!(vizState && vizState.has_source);
+  }
+
+  // No photograph, no payment — on either path.
+  //
+  // The redirect button was gated on the consent box and nothing else, and the
+  // wallet was gated on even less: `xpStart` ran the moment the offer
+  // rendered, so the Express Element mounted, a wallet button appeared, and
+  // `xpClick` only ever asked about the checkbox. Somebody with Apple Pay
+  // could therefore buy a transformation of a photograph they had not sent —
+  // and the intent was created before the photo existed too. That is what this
+  // gate closes, and it closes it in one place so neither path can be the one
+  // that was forgotten.
+  function renderGate() {
+    // Keyed on the price row rather than on the commerce block, so the gate
+    // covers the two-screen paywall too if that flag is ever turned back on.
+    if (!el.price) return;
+    if (!vizOn() || !vizPre()) { showGate(false); return; }
+    showGate(!vizHasPhoto());
+  }
+
+  function showGate(on) {
+    ensureGateNodes();
+    if (!el.gate) return;
+
+    el.gate.hidden = !on;
+    if (el.withdrawal) el.withdrawal.hidden = on;
+    if (el.trust) el.trust.hidden = on;
+    if (el.expectation) el.expectation.hidden = on || !expectationText();
+    if (el.price) el.price.classList.toggle("is-dimmed", on);
+    if (xpBlock) xpBlock.hidden = on;
+    else if (el.payButton) el.payButton.hidden = on;
+
+    // The element is never mounted while the gate is up, so there is no wallet
+    // button to press and no intent created for a purchase that cannot be
+    // fulfilled. Taken down, this is what lets it start.
+    if (!on) xpStart();
+  }
+
+  function ensureGateNodes() {
+    if (el.gate || !el.commerce) return;
+    var co = (cfg && cfg.checkout) || {};
+    if (!co.gate_cta) return;
+
+    el.gate = elm("div", "offer-gate");
+    var button = elm("button", "offer-gate__cta");
+    button.type = "button";
+    button.appendChild(elm("span", "offer-gate__arrow", "↑"));
+    button.appendChild(elm("span", null, co.gate_cta));
+    button.addEventListener("click", scrollToUpload);
+    el.gate.appendChild(button);
+    if (co.gate_note) {
+      el.gate.appendChild(elm("p", "offer-gate__note", co.gate_note));
+    }
+    // Directly under the price, where the pay control would be.
+    el.price.parentNode.insertBefore(el.gate, el.price.nextSibling);
+  }
+
+  function scrollToUpload() {
+    var zone = document.querySelector(".viz-drop");
+    if (!zone) return;
+    if (zone.scrollIntoView) {
+      zone.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    zone.classList.remove("is-nudged");
+    void zone.offsetWidth;
+    zone.classList.add("is-nudged");
+  }
+
+  function expectationText() {
+    return ((cfg && cfg.checkout) || {}).expectation || "";
   }
 
   function ensureLeadNodes() {
@@ -4203,7 +4313,7 @@
     // beside it is an invoice.
     node.appendChild(elm("span", "price-now", formatPriceShort()));
     if (co.price_launch_label) {
-      node.appendChild(elm("span", "price-note", co.price_launch_label));
+      node.appendChild(elm("span", "price-launch", co.price_launch_label));
     }
     if (suffix) node.appendChild(elm("span", "price-note", suffix));
 
@@ -4290,7 +4400,9 @@
     el.commerce.hidden = false;
     // After the block is on screen: the slot is measured against the pay
     // button, and a button inside a hidden container has no height to match.
-    xpStart();
+    // `renderGate` is what calls `xpStart` now — it only starts once there is
+    // a photograph to sell a transformation of.
+    renderGate();
     if (el.sticky) el.sticky.textContent = withPrice(copy.sticky_label || "");
     playPayMotion();
   }

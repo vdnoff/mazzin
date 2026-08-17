@@ -2439,8 +2439,9 @@
       }
     },
     "prompt_template": "Redecorate this exact kitchen in {style} style: cabinets in {dominant} ({dominant_hex}), {secondary} accents, {metal} hardware, {worktop} worktops, {wood} where timber shows. KEEP the room's exact layout, geometry, camera angle, perspective, window positions and appliance positions unchanged — this must be recognisably the same room from the same spot, redecorated, not a different kitchen. Photorealistic, natural daylight, no text, no people.",
-    "yours_title": "Your style, from your 13 choices",
-    "yours_note": "These exact colours and materials go into the image of your kitchen."
+    "yours_note": "All of it came from your own choices, and all of it goes into the image below.",
+    "palette_label": "YOUR PALETTE",
+    "materials_label": "YOUR MATERIALS"
   },
   "pricing": {
     "amount_cents": 300,
@@ -2471,14 +2472,17 @@
       "sample_caption": "An example page. Yours is written from your own choices.",
       "value": [
         {
-          "text": "A detailed image of your own kitchen, carrying your own style — generated for you and nobody else.",
+          "title": "Your kitchen, redrawn",
+          "text": "Your actual kitchen in your palette and your materials — made for you and nobody else, plus one re-run if you want a different take.",
           "hero": true
         },
         {
-          "text": "The full report, written around the style your 13 choices pointed at."
+          "title": "The full style report",
+          "text": "Which materials, colours and finishes make it real, and where to spend versus save. Emailed to you as a PDF to keep."
         },
         {
-          "text": "The 5 costly mistakes for your style — the ones that cost renovators $4,000+ to undo.",
+          "title": "The 5 costly mistakes",
+          "text": "The ones for your style — the mistakes that cost renovators $4,000+ to undo.",
           "accent": "$4,000+"
         }
       ]
@@ -2497,7 +2501,9 @@
     "price_was_display": "$7",
     "price_launch_label": "launch price",
     "expectation": "A style visualization of your own kitchen, not an architectural plan.",
-    "price_terms": "One-time payment. No subscription."
+    "price_terms": "One-time payment. No subscription. No account.",
+    "gate_cta": "Add your photo first",
+    "gate_note": "We need your kitchen before we can redraw it. Takes 5 seconds."
   },
   "result": {
     "mistakes_teaser": "You've seen mistake #1. The other four cost {style} owners $4,000+ to undo — and one involves your {worktop}.",
