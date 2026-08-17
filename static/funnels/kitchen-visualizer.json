@@ -2438,7 +2438,9 @@
         "fallback": "oak"
       }
     },
-    "prompt_template": "Redecorate this exact kitchen in {style} style: cabinets in {dominant} ({dominant_hex}), {secondary} accents, {metal} hardware, {worktop} worktops, {wood} where timber shows. KEEP the room's exact layout, geometry, camera angle, perspective, window positions and appliance positions unchanged — this must be recognisably the same room from the same spot, redecorated, not a different kitchen. Photorealistic, natural daylight, no text, no people."
+    "prompt_template": "Redecorate this exact kitchen in {style} style: cabinets in {dominant} ({dominant_hex}), {secondary} accents, {metal} hardware, {worktop} worktops, {wood} where timber shows. KEEP the room's exact layout, geometry, camera angle, perspective, window positions and appliance positions unchanged — this must be recognisably the same room from the same spot, redecorated, not a different kitchen. Photorealistic, natural daylight, no text, no people.",
+    "yours_title": "Your style, from your 13 choices",
+    "yours_note": "These exact colours and materials go into the image of your kitchen."
   },
   "pricing": {
     "amount_cents": 300,
@@ -2466,7 +2468,20 @@
       "mid_button": "See it ↓",
       "sticky_label": "See my kitchen — {price}",
       "sample_link": "See a sample page",
-      "sample_caption": "An example page. Yours is written from your own choices."
+      "sample_caption": "An example page. Yours is written from your own choices.",
+      "value": [
+        {
+          "text": "A detailed image of your own kitchen, carrying your own style — generated for you and nobody else.",
+          "hero": true
+        },
+        {
+          "text": "The full report, written around the style your 13 choices pointed at."
+        },
+        {
+          "text": "The 5 costly mistakes for your style — the ones that cost renovators $4,000+ to undo.",
+          "accent": "$4,000+"
+        }
+      ]
     },
     "title": "Your {style} Report",
     "proof_line": "Built from your 13 choices",
@@ -2481,7 +2496,8 @@
     "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right.",
     "price_was_display": "$7",
     "price_launch_label": "launch price",
-    "expectation": "A style visualization of your own kitchen, not an architectural plan."
+    "expectation": "A style visualization of your own kitchen, not an architectural plan.",
+    "price_terms": "One-time payment. No subscription."
   },
   "result": {
     "mistakes_teaser": "You've seen mistake #1. The other four cost {style} owners $4,000+ to undo — and one involves your {worktop}.",
