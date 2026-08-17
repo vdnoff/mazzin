@@ -210,3 +210,6 @@ bottom.
 
 ## 2026-08-17 — claude/paywall-value
 - paywall value
+
+## 2026-08-17 — claude/paywall-redesign
+- paywall redesign
