@@ -2545,6 +2545,7 @@
     "price_launch_label": "launch price",
     "expectation": "A style visualization of your own kitchen, not an architectural plan.",
     "price_terms": "One-time payment. No subscription. No account.",
+    "teaser_cta": "Unlock my transformation",
     "gate_cta": "Add your photo first",
     "gate_note": "We need your kitchen before we can redraw it. Takes 5 seconds.",
     "price_after_upload": true
