@@ -2567,7 +2567,8 @@
     "expectation": "A style visualization of your own kitchen, not an architectural plan.",
     "price_terms": "One-time payment. No subscription. No account.",
     "gate_cta": "Add your photo first",
-    "gate_note": "We need your kitchen before we can redraw it. Takes 5 seconds."
+    "gate_note": "We need your kitchen before we can redraw it. Takes 5 seconds.",
+    "price_after_upload": false
   },
   "result": {
     "mistakes_teaser": "You've seen mistake #1. The other four cost {style} owners $4,000+ to undo — and one involves your {worktop}.",
