@@ -204,3 +204,6 @@ bottom.
 
 ## 2026-08-17 — claude/fix-email-link
 - fix email link
+
+## 2026-08-17 — claude/viz-paywall
+- viz paywall
