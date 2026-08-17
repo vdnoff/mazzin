@@ -201,3 +201,6 @@ bottom.
 
 ## 2026-08-17 — claude/tests-into-repo
 - tests into repo
+
+## 2026-08-17 — claude/fix-email-link
+- fix email link
