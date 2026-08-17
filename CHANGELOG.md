@@ -234,3 +234,6 @@ bottom.
 
 ## 2026-08-17 — claude/material-swatches
 - material swatches
+
+## 2026-08-17 — claude/teaser-cta
+- teaser cta
