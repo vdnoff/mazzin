@@ -2397,7 +2397,7 @@
     "title": "Your Kitchen, Transformed",
     "intro": "Upload one photo of your kitchen and see it redecorated in your style — same room, same layout, your palette.",
     "pre_purchase": true,
-    "price_note": "Your transformation + full report — {price}, one-time",
+    "price_note": "Your transformation + the full report — {price}",
     "privacy_note": "Your photo is private, used only for your visualization, deleted if you don't continue.",
     "teaser_title": "Your kitchen, ready",
     "before_label_pre": "Your kitchen",
@@ -2441,58 +2441,47 @@
     "prompt_template": "Redecorate this exact kitchen in {style} style: cabinets in {dominant} ({dominant_hex}), {secondary} accents, {metal} hardware, {worktop} worktops, {wood} where timber shows. KEEP the room's exact layout, geometry, camera angle, perspective, window positions and appliance positions unchanged — this must be recognisably the same room from the same spot, redecorated, not a different kitchen. Photorealistic, natural daylight, no text, no people."
   },
   "pricing": {
-    "amount_cents": 700,
+    "amount_cents": 300,
     "currency": "usd",
-    "cta": "Unlock my full report"
+    "cta": "See my kitchen transformed"
   },
   "checkout": {
     "kicker": "Your report is ready",
-    "product_name": "Your Kitchen Style Report + Visualization — see your kitchen transformed",
+    "product_name": "Your kitchen, redrawn in your style — plus the report that makes it real",
     "product_image": "/static/creative_src/stripe_tile.png",
     "single_page": true,
     "express": true,
     "commerce": {
-      "anchor_head": "A {price} decision that saves you $4,000+",
-      "anchor_head_accent": "$4,000+",
-      "price_suffix": "one-time · no subscription",
+      "lead": "Your kitchen redrawn in your style, from the photo you uploaded — plus one re-run if you want a different take.",
+      "lead_accent": "redrawn in your style",
+      "lead_report": "And the report behind it: which materials, colours and finishes make that kitchen real.",
       "consent": "One-time {price} — no subscription, ever. My report unlocks instantly.",
       "trust": [
         "Secure via Stripe",
         "One-time — no recurring charges",
         "PDF to your email"
       ],
-      "mid_line": "Save $4,000+ on your renovation — starting now.",
-      "mid_line_accent": "$4,000+",
-      "mid_button": "See what's inside ↓",
-      "sticky_label": "Unlock full report — {price}",
+      "mid_line": "See your own kitchen in your style — in about a minute.",
+      "mid_line_accent": "your own kitchen",
+      "mid_button": "See it ↓",
+      "sticky_label": "See my kitchen — {price}",
       "sample_link": "See a sample page",
       "sample_caption": "An example page. Yours is written from your own choices."
     },
     "title": "Your {style} Report",
     "proof_line": "Built from your 13 choices",
-    "manifest": [
-      "Your kitchen, reimagined in your style — from your photo",
-      "Your complete color palette with exact paint codes",
-      "The 5 costly mistakes for your style — with fixes",
-      "Materials & combinations: what works, what to avoid",
-      "Ordered shopping list: what to buy first",
-      "Your style DNA breakdown",
-      "Splurge vs save: where your money matters"
-    ],
-    "manifest_hero": "reimagined",
-    "manifest_head": "What's inside — {n} sections, yours forever",
-    "anchor_head": "A {price} decision that protects a $20,000 renovation",
-    "anchor": "The mistakes in this report cost renovators $4,000+ to undo. Catching one pays for it a thousand times over.",
-    "reframe": "Less than a coffee. Cheaper than one sample pot of paint you'd buy wrong.",
-    "price_suffix": "one-time",
-    "cta_label": "Get my report for {price}",
+    "price_suffix": "",
+    "cta_label": "See my kitchen — {price}",
     "consent_prechecked": true,
     "trust": [
       "Secure payment via Stripe",
       "Instant delivery",
       "PDF copy to your email"
     ],
-    "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right."
+    "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right.",
+    "price_was_display": "$7",
+    "price_launch_label": "launch price",
+    "expectation": "A style visualization of your own kitchen, not an architectural plan."
   },
   "result": {
     "mistakes_teaser": "You've seen mistake #1. The other four cost {style} owners $4,000+ to undo — and one involves your {worktop}.",

@@ -149,6 +149,8 @@ def main():
           "report is attached" in body["html"])
     check("carries the result link",
           "?cs=cs_test_123" in body["html"])
+    check("  and the funnel it belongs to",
+          "/%s?cs=" % CONTENT["funnel"] in body["html"], body["html"][:0])
     check("footer says mazzin.com", "mazzin.com" in body["html"])
     check("no invented user counts or statistics",
           not any(w in body["html"].lower() for w in
@@ -156,6 +158,58 @@ def main():
                    "% of ", "rated", "reviews", "so far")),
           body["html"])
     check("pdf is a real pdf", pdf[:5] == b"%PDF-")
+
+    # --- the link, for the two ways a purchase can be identified ----------
+    #
+    # The case above is the hosted one, which is the only case this suite used
+    # to cover — and that gap is exactly how a broken link shipped. A wallet
+    # purchase has no checkout session at all: the token is on the row, under
+    # payment_intent, and the parameter is still called `cs`. Left untested,
+    # three Apple Pay buyers were emailed a link back to the quiz they had
+    # already finished.
+    def email_with(row):
+        """Send once against a purchases row, and hand back the html."""
+        recorder = FakePost()
+        real_post, requests.post = requests.post, recorder
+        real_key = config.RESEND_API_KEY
+        real_query = reports.database.query_one
+        config.RESEND_API_KEY = "test-key-not-real"
+        reports.database.query_one = lambda sql, params=None: row
+        try:
+            sent = reports.send_report_email("pur_link", "someone@example.com",
+                                             CONTENT)
+        finally:
+            requests.post = real_post
+            config.RESEND_API_KEY = real_key
+            reports.database.query_one = real_query
+        return sent, (recorder.payload or {}).get("html", "")
+
+    sent, out = email_with({"checkout_session": None,
+                            "payment_intent": "pi_3U5IT3P1W1DBbOcM14VE2MOU"})
+    check("a wallet purchase still gets its mail", sent)
+    check("  with a link built from the payment intent",
+          "?cs=pi_3U5IT3P1W1DBbOcM14VE2MOU" in out,
+          [l for l in out.split("\n") if "?cs=" in l][:1])
+    check("  pointing at the funnel, not the site root",
+          "/%s?cs=pi_" % CONTENT["funnel"] in out)
+    check("  and it is offered as a link to open",
+          "Open your report online" in out)
+
+    sent, out = email_with({"checkout_session": "cs_live_row",
+                            "payment_intent": "pi_ignored"})
+    check("a session on the row wins over the intent",
+          "?cs=cs_live_row" in out and "pi_ignored" not in out)
+
+    sent, out = email_with({"checkout_session": None, "payment_intent": None})
+    check("a purchase with neither still gets its mail", sent)
+    check("  and is offered NO link rather than one to the quiz",
+          "Open your report online" not in out and "?cs=" not in out,
+          [l for l in out.split("\n") if "cs=" in l][:1])
+    check("  with nothing left promising a link",
+          "stays at that link" not in out
+          and "stays available at that link" not in out)
+    check("  the only anchor left is the footer",
+          out.count("<a href=") == 1, out.count("<a href="))
 
     # Page text, not raw bytes: the content streams are compressed, so a
     # substring search over the file finds nothing whatever the page says.
