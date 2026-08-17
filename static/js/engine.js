@@ -3457,6 +3457,34 @@
   // page measures.
   var XP_BUTTON_HEIGHT = 55;
 
+  // What the sheet has to ask the wallet for, handed to `resolve` when the
+  // button is tapped.
+  //
+  // `emailRequired` is the whole of this fix. Apple Pay and Google Pay do NOT
+  // share the buyer's email address unless asked — the sheet simply never
+  // shows the field — so a purchase went through, the charge was read, the
+  // charge carried no email, and the report was generated for somebody who
+  // then received nothing. The hosted Checkout page always collected an email;
+  // the wallet only collects it on request, and nobody made the request.
+  //
+  // `billingAddressRequired` is stated rather than left to its default. The
+  // default is true today, but only while no shipping option is passed — it
+  // flips to false the moment one is — and `purchases.country` is fed from
+  // this address. A column that empties itself because an unrelated option was
+  // added later is not a thing to leave to a default.
+  //
+  // Nothing else is asked for. No phone: nothing stores one. No shipping:
+  // there is nothing to ship.
+  var XP_COLLECT = { emailRequired: true, billingAddressRequired: true };
+
+  // The fields Stripe accepts on `billing_details`, and the only ones that
+  // travel. An allowlist rather than a pass-through: whatever a future wallet
+  // decides to put in that object, what leaves this page is these keys or
+  // nothing.
+  var XP_BILLING_KEYS = ["name", "email", "phone"];
+  var XP_ADDRESS_KEYS = ["line1", "line2", "city", "state", "postal_code",
+                         "country"];
+
   function expressOn() {
     return ((cfg && cfg.checkout) || {}).express === true;
   }
@@ -3616,7 +3644,7 @@
       element.on("loaderror", function () { xpFallback(); });
       element.on("click", function (ev) { xpClick(ev); });
       element.on("cancel", function () { xpCancel(); });
-      element.on("confirm", function () { xpConfirm(stripe); });
+      element.on("confirm", function (ev) { xpConfirm(stripe, ev); });
 
       element.mount(xpMountNode);
     } catch (e) {
@@ -3651,10 +3679,7 @@
       return;
     }
     el.payError.hidden = true;
-    // No options: no email field and no address, because nothing here needs
-    // one. The address the report goes to is collected by Stripe on the
-    // hosted page and by the webhook on this one.
-    ev.resolve({});
+    ev.resolve(XP_COLLECT);
   }
 
   // Somebody looked at the sheet and closed it. That is not a failure and it
@@ -3665,13 +3690,64 @@
   // modal, so there is no second tap to defend against anyway.
   function xpCancel() { }
 
-  function xpConfirm(stripe) {
+  // What the wallet handed over, in the shape Stripe's `billing_details`
+  // takes, or null when it gave nothing usable.
+  //
+  // Rebuilt key by key rather than forwarded, the same way every payload this
+  // codebase sends is rebuilt: the object comes from a sheet we do not
+  // control, and an empty string is worse than an absent field because it
+  // would be stored as one.
+  function xpBillingDetails(details) {
+    if (!details) return null;
+    var out = {};
+    var any = false;
+
+    XP_BILLING_KEYS.forEach(function (key) {
+      var value = details[key];
+      if (typeof value === "string" && value) { out[key] = value; any = true; }
+    });
+
+    var from = details.address;
+    if (from) {
+      var address = {};
+      var found = false;
+      XP_ADDRESS_KEYS.forEach(function (key) {
+        var value = from[key];
+        if (typeof value === "string" && value) {
+          address[key] = value;
+          found = true;
+        }
+      });
+      if (found) { out.address = address; any = true; }
+    }
+    return any ? out : null;
+  }
+
+  function xpConfirm(stripe, ev) {
     var back = location.origin + "/" + slug + "?cs="
       + encodeURIComponent(xpIntentId());
 
+    var params = { return_url: back };
+
+    // The email's whole journey, and the reason it is spelled out here: the
+    // wallet gives it to the element, the element gives it to us on this
+    // event, and this hands it to Stripe as part of confirming the payment.
+    // It becomes the PaymentMethod's billing details, which become the
+    // charge's, which is where the webhook reads it — from Stripe, on the
+    // server, exactly as it reads the hosted page's. It never travels to our
+    // own API as a field of ours, because a client that can name the buyer's
+    // email is a client that can name somebody else's.
+    //
+    // Stripe's own wallet values win over anything passed here, so this cannot
+    // overwrite what Apple Pay actually said. It is the belt to that braces:
+    // asking for the email is what makes it exist, and this is what makes sure
+    // it is attached to the payment rather than only seen in this callback.
+    var billing = xpBillingDetails(ev && ev.billingDetails);
+    if (billing) params.payment_method_data = { billing_details: billing };
+
     stripe.confirmPayment({
       elements: xpElements,
-      confirmParams: { return_url: back },
+      confirmParams: params,
       redirect: "if_required"
     })
       .then(function (res) {

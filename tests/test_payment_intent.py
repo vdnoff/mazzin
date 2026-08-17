@@ -524,8 +524,17 @@ def main():
           landed.purchases[0][7] == "wallet@icloud.com", landed.purchases[0][7])
     check("  and the country out of the nested address",
           landed.purchases[0][8] == "GB", landed.purchases[0][8])
-    check("  the report runs and the email is armed",
-          len(landed.reports) == 1, landed.reports)
+    check("  the report runs", len(landed.reports) == 1, landed.reports)
+    # The half that was missing when a wallet purchase recorded with a NULL
+    # email: the row existed and the report was written, and nothing was ever
+    # sent. Recording the address is not delivering the PDF, so both are
+    # asserted rather than the first standing in for the second.
+    check("  AND the PDF is actually emailed to that address",
+          [e[1] for e in landed.emailed] == ["wallet@icloud.com"],
+          landed.emailed)
+    check("  to the purchase that was just written",
+          landed.emailed and landed.emailed[0][0] == landed.by_pi["pi_wallet"],
+          (landed.emailed, landed.by_pi))
     check("  Stripe was asked for the charge once, on the mode's key",
           len(fetched) == 1 and fetched[0] == ("ch_wallet", LIVE_KEY), fetched)
 
@@ -718,6 +727,41 @@ def main():
           visualizer.find_purchase is payments.find_purchase)
     check("  and no longer keeps a SELECT of its own",
           not hasattr(visualizer, "SELECT_PURCHASE_SQL"))
+
+    # --- the client half, as far as a server-side suite can reach it -------
+    #
+    # A STATIC check, and it is worth being plain about what that is worth. It
+    # reads engine.js as text. It cannot open a wallet sheet, cannot prove
+    # Stripe honours the option, and cannot prove the email reaches the charge
+    # — none of that is drivable without a real Apple Pay device.
+    #
+    # It is here anyway because a wallet purchase recording with a NULL email
+    # is a silent failure: the money arrives, the row is written, the report is
+    # generated, and the only symptom is a buyer who never gets an email. The
+    # one line that prevents it is `emailRequired`, and if it is ever dropped
+    # again nothing else in this repo would notice. Everything downstream of
+    # the sheet is covered properly above.
+    print("\n--- engine.js asks the wallet for an email (static check) ---")
+    engine = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "static", "js", "engine.js")
+    with open(engine, encoding="utf-8") as fh:
+        source = fh.read()
+
+    check("the element is told the email is required",
+          "emailRequired: true" in source)
+    check("  and the billing address too, so purchases.country is fed",
+          "billingAddressRequired: true" in source)
+    check("  both are what resolve() is handed on the tap",
+          "ev.resolve(XP_COLLECT)" in source)
+    check("  what the wallet returns is attached to the payment",
+          "payment_method_data = { billing_details: billing }" in source)
+    check("  built from the confirm event, not from anything of ours",
+          "xpBillingDetails(ev && ev.billingDetails)" in source)
+    check("no email is ever posted to our own API",
+          '"email"' not in source.split("function orderPayload")[1]
+          .split("function startCheckout")[0],
+          "orderPayload names an email")
 
     print("\n%d checks, %d failed" % (checks[0], len(fails)))
     for f in fails:
