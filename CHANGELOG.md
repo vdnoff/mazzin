@@ -237,3 +237,6 @@ bottom.
 
 ## 2026-08-17 — claude/teaser-cta
 - teaser cta
+
+## 2026-08-17 — claude/regen-dark-images
+- regenerate dark images
