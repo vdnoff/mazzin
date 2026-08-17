@@ -127,6 +127,9 @@
   var journeyStage = 0;
   var gateSeen = false;         // viz_gate_view is once a session, not a scroll
   var gateIO = null;            // its observer, dropped the moment it fires
+  var gateUp = false;           // the offer cannot be paid yet
+  var pixelCartFired = false;   // AddToCart: the first photo, once
+  var pixelPayFired = false;    // AddPaymentInfo: once, on either path
   // --- express checkout -----------------------------------------------------
   var xpState = "off";          // off | reserved | wallet | redirect
   var xpStarted = false;        // the whole attempt runs once per page
@@ -2434,10 +2437,26 @@
       // resize, the ordinary canvas, or raw off the camera. It is the only way
       // to see which of the three real devices actually take, which is the
       // question that started this.
+      var phase = vizPre() ? "pre" : "post";
       track("viz_upload", null, {
-        phase: vizPre() ? "pre" : "post",
+        phase: phase,
         path: vizUploadPath || "raw"
       });
+
+      // The signal the campaign is actually optimised against. At three
+      // dollars the Purchase volume will not leave Meta's learning phase for
+      // weeks, and a photograph of your own kitchen handed over before paying
+      // is the highest-intent thing that happens here in any volume.
+      //
+      // Pre-purchase only. The same act after the money is somebody who has
+      // already converted, and feeding those into the same event would teach
+      // the campaign to find people who have already bought — worse than
+      // sending nothing. Once a session, so replacing the photo does not
+      // count twice.
+      if (phase === "pre" && !pixelCartFired) {
+        pixelCartFired = true;
+        pixelTrack("AddToCart");
+      }
     }
     if (status === "ready" && !vizSeen.ready) {
       vizSeen.ready = true;
@@ -3485,7 +3504,7 @@
     // against — the tap that starts paying. The wallet button fires it too,
     // from its own click handler: they are two buttons now, and the one the
     // reader was given is not a thing Meta should be able to tell apart.
-    pixelTrack("AddPaymentInfo");
+    firePayPixel();
     if (!PAYMENTS_ENABLED || !el.withdrawalCheck.checked) return;
 
     el.payError.hidden = true;
@@ -3758,7 +3777,7 @@
   // their money.
   function xpClick(ev) {
     track("pay_tap", null, { method: "wallet" });
-    pixelTrack("AddPaymentInfo");
+    firePayPixel();
 
     // The withdrawal consent has to be given before the sheet opens, not
     // inside it — there is nothing in a wallet sheet that could carry it, and
@@ -4231,16 +4250,37 @@
     ensureGateNodes();
     if (!el.gate) return;
 
+    gateUp = !!on;
     el.gate.hidden = !on;
     if (el.withdrawal) el.withdrawal.hidden = on;
     if (el.trust) el.trust.hidden = on;
     if (el.expectation) el.expectation.hidden = on || !expectationText();
-    if (el.price) el.price.classList.toggle("is-dimmed", on);
+
+    // Two ways to treat the price before there is a photograph, and which one
+    // is live is a config value because it is going to be tested against the
+    // upload rate rather than argued about. Shown-and-dimmed is the default
+    // and today's behaviour; hidden is the other arm.
+    //
+    // Either way the price is on screen in full before any pay control is,
+    // because `showGate(false)` runs this before it starts the wallet. A
+    // price that first appears after the money has been asked for is the one
+    // ordering this must never produce.
+    var hide = on && ((cfg && cfg.checkout) || {}).price_after_upload === true;
+    if (el.price) {
+      el.price.hidden = hide;
+      el.price.classList.toggle("is-dimmed", on && !hide);
+    }
+
     if (xpBlock) xpBlock.hidden = on;
     else if (el.payButton) el.payButton.hidden = on;
 
     if (on) watchGate();
     else if (gateIO) { gateIO.disconnect(); gateIO = null; }
+
+    // The block just became something that can be paid. If the reader is
+    // already looking at it there will be no new intersection to wait for, so
+    // the postponed view is fired here; otherwise the observer still has it.
+    if (!on && commerceInView) firePaywallView();
 
     // The element is never mounted while the gate is up, so there is no wallet
     // button to press and no intent created for a purchase that cannot be
@@ -4729,9 +4769,37 @@
 
   function firePaywallView() {
     if (paywallTracked) return;
+    // Reaching a block that cannot take money is not reaching checkout. With
+    // the upload gate up, what is on screen is a dimmed price and a button
+    // asking for a photograph — telling Meta somebody arrived at checkout
+    // there would pollute the exact signal the upload event exists to be.
+    //
+    // Deliberately without setting the flag: this is a postponement, not a
+    // suppression. The next intersection after the gate comes down fires it,
+    // and `showGate` fires it directly if the block is already on screen.
+    if (gateUp) return;
     paywallTracked = true;
     track("paywall_view", null, { src: payIntent });
     pixelTrack("InitiateCheckout");
+  }
+
+  // AddPaymentInfo, once a session and on both paths.
+  //
+  // It was once per tap, which the redirect made look like once per session
+  // because the page is gone a moment later. The wallet is not: a dismissed
+  // sheet leaves the reader on the page and free to press again, so the same
+  // person would have sent two, three, four. Meta would then have been told
+  // that wallet readers reach payment more often than redirect readers, which
+  // is not true and is not something it should be able to tell apart at all.
+  //
+  // `pay_tap` is deliberately left counting every tap: how often a wallet
+  // sheet is opened and abandoned is a real thing to know, and our own table
+  // is the right place to know it. The pixel is the one that has to mean the
+  // same thing on both paths.
+  function firePayPixel() {
+    if (pixelPayFired) return;
+    pixelPayFired = true;
+    pixelTrack("AddPaymentInfo");
   }
 
   // --- boot ----------------------------------------------------------------
