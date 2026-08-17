@@ -1963,14 +1963,6 @@
         "palette": {
           "colors": [
             {
-              "name": "Oat Linen",
-              "rgb": [
-                229,
-                218,
-                200
-              ]
-            },
-            {
               "name": "Weathered Oak",
               "rgb": [
                 139,
@@ -1979,11 +1971,35 @@
               ]
             },
             {
+              "name": "Quarried Limestone",
+              "rgb": [
+                182,
+                172,
+                155
+              ]
+            },
+            {
+              "name": "Oat Linen",
+              "rgb": [
+                229,
+                218,
+                200
+              ]
+            },
+            {
               "name": "Burnt Clay",
               "rgb": [
                 164,
                 90,
                 52
+              ]
+            },
+            {
+              "name": "Brushed Steel",
+              "rgb": [
+                154,
+                158,
+                161
               ]
             }
           ],
@@ -2031,6 +2047,22 @@
         "palette": {
           "colors": [
             {
+              "name": "Pale Oak",
+              "rgb": [
+                203,
+                168,
+                127
+              ]
+            },
+            {
+              "name": "Pale Concrete",
+              "rgb": [
+                196,
+                198,
+                194
+              ]
+            },
+            {
               "name": "Chalk White",
               "rgb": [
                 244,
@@ -2039,19 +2071,19 @@
               ]
             },
             {
-              "name": "Pale Concrete",
-              "rgb": [
-                213,
-                214,
-                210
-              ]
-            },
-            {
               "name": "Graphite",
               "rgb": [
                 58,
                 61,
                 66
+              ]
+            },
+            {
+              "name": "Brushed Steel",
+              "rgb": [
+                150,
+                153,
+                155
               ]
             }
           ],
@@ -2104,6 +2136,22 @@
                 43,
                 43,
                 43
+              ]
+            },
+            {
+              "name": "Poured Concrete",
+              "rgb": [
+                109,
+                105,
+                97
+              ]
+            },
+            {
+              "name": "Warehouse Plaster",
+              "rgb": [
+                176,
+                169,
+                157
               ]
             },
             {
@@ -2174,11 +2222,19 @@
               ]
             },
             {
-              "name": "Aged Brass",
+              "name": "Honed Quartzite",
               "rgb": [
-                176,
-                141,
-                87
+                190,
+                186,
+                176
+              ]
+            },
+            {
+              "name": "Sage Wash",
+              "rgb": [
+                150,
+                157,
+                138
               ]
             },
             {
@@ -2187,6 +2243,14 @@
                 90,
                 70,
                 50
+              ]
+            },
+            {
+              "name": "Aged Brass",
+              "rgb": [
+                176,
+                141,
+                87
               ]
             }
           ],
