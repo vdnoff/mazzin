@@ -228,3 +228,6 @@ bottom.
 
 ## 2026-08-17 — claude/paywall-visual-fix
 - paywall: gate all price copy, dedupe, sizing, order
+
+## 2026-08-17 — claude/result-page-rebuild
+- result page rebuild
