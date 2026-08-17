@@ -192,3 +192,6 @@ bottom.
 
 ## 2026-08-16 — claude/express-ui
 - Express Checkout Element with redirect fallback
+
+## 2026-08-17 — claude/fix-billing-details
+- fix billing details
