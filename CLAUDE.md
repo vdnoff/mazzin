@@ -33,6 +33,7 @@ free style result, sees a partially-locked report, hits a paywall.
 | `static/js/engine.js` | Swipe UX, scoring, screens, tracking calls, checkout redirect + report polling | Holding payment state it can't prove |
 | `static/css/mazzin.css` | Mobile portrait styling | Desktop layout |
 | `deploy.sh` / `rollback.sh` | Server deploy + recovery | Being run from anywhere but the server |
+| `tests/` | Every suite, plus `run.sh` | Talking to a real database, Stripe or OpenAI |
 
 ## Rules
 
@@ -82,3 +83,13 @@ python3 -c "from app import app; print(app.url_map)"
 ```
 
 `/health` needs a real database; the funnel page does not.
+
+## Tests
+
+The suites live in `tests/` and are run with `tests/run.sh`, from any
+directory, optionally filtered by name (`tests/run.sh viz`).
+
+They need no database, no network and no Stripe or OpenAI key: every external
+call is monkeypatched and every fixture is built on the fly. Pass and fail are
+decided by each suite's exit code, never by reading its output — a traceback in
+the log can be the thing under test.
