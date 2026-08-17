@@ -216,3 +216,6 @@ bottom.
 
 ## 2026-08-17 — claude/palette-five
 - five colour palette
+
+## 2026-08-17 — claude/track-gate
+- track upload gate
