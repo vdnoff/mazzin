@@ -2,7 +2,7 @@
   "slug": "kitchen-visualizer",
   "funnel_id": "kitchen_visualizer_v1",
   "locale": "en",
-  "stripe_mode": "test",
+  "stripe_mode": "live",
   "meta": {
     "title": "What's Your Kitchen Style?",
     "og_image": "/static/galleries/kitchen/og.webp"
