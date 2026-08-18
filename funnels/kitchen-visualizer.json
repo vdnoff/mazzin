@@ -1829,7 +1829,7 @@
       },
       {
         "id": "dark-timber",
-        "label": "Dark timber",
+        "label": "Smoked oak",
         "spec": "Smoked oak — fumed, hard-wax finish",
         "image": "f6b",
         "img": "/static/galleries/kitchen/f6b.webp",
@@ -2487,7 +2487,7 @@
         "fallback": "oak"
       }
     },
-    "prompt_template": "Redecorate this exact kitchen in {style} style: cabinets in {dominant} ({dominant_hex}), {secondary} accents, {metal} hardware, {worktop} worktops, {wood} where timber shows. KEEP the room's exact layout, geometry, camera angle, perspective, window positions and appliance positions unchanged — this must be recognisably the same room from the same spot, redecorated, not a different kitchen. Photorealistic, natural daylight, no text, no people.",
+    "prompt_template": "Redecorate this exact kitchen in {style} style.\n\nCHANGE every surface in the room: cabinet doors and frames in {dominant} ({dominant_hex}), {secondary} on the walls and secondary surfaces, {metal} hardware, {worktop} worktops, {wood} where timber shows, splashback and open shelving to match — and the FLOOR. Replace the floor with a new floor in a material that suits {style} and this palette. The floor is the largest surface in the room and it changes with everything else; do not carry the original flooring through from the photograph.\n\nKEEP unchanged: the room's layout and geometry, the camera angle, camera position and perspective, the window and door positions, the ceiling, and where the units and appliances sit. This must be recognisably the same room photographed from the same spot, redecorated — not a different kitchen.\n\nEXPOSURE — this applies to every image without exception, whatever the style and whatever the palette. The photograph is BRIGHTLY and EVENLY exposed, as if taken at midday with the blinds open and every light on. Shadows stay open and hold full detail. Nothing in the frame is crushed to black. {style}, and colour names such as {dominant}, describe the SURFACES in the room — never the lighting, and never the exposure of the photograph. A dark green kitchen photographed in good light is correct; the same kitchen photographed at night is wrong. NOT low-key. NOT dim, dimly lit, moody, shadowed, atmospheric, dramatic, intimate or candlelit. NO crushed blacks, NO heavy vignette, NO underexposure. Where any word above could be read as asking for a darker photograph, it is not: expose it bright.\n\nPhotorealistic interior photograph. No text, no people.",
     "yours_note": "All of it came from your own choices, and all of it goes into the image below.",
     "palette_label": "YOUR PALETTE",
     "materials_label": "YOUR MATERIALS"

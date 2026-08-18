@@ -570,6 +570,84 @@ check("the link and caption are config copy",
       and "example" in com["sample_caption"].lower(),
       (com["sample_link"], com["sample_caption"]))
 
+print("\n--- the visualizer prompt: mood is not exposure ---")
+# Fourteen real renders came back a mean brightness of 86 against source
+# photos at 121 — systematically a third darker than the kitchen the reader
+# photographed, and the worst of them near-black and unviewable. The cause is
+# that an image model reads a word describing a SURFACE as a word describing
+# the LIGHT: "dark timber" is a plank, and it was being rendered as a dim room.
+#
+# The same mistake had already been made once in the gallery generation
+# prompts, so this is a test and not a memory. Every string this funnel feeds
+# into the edit instruction is checked for the vocabulary that turns a dark
+# kitchen into a dark photograph.
+EXPOSURE_WORDS = (
+    "dark", "darkly", "dim", "dimly", "moody", "moodily", "shadow",
+    "shadowed", "shadowy", "low-key", "lowkey", "dramatic", "dramatically",
+    "intimate", "candlelit", "candlelight", "atmospheric", "gloomy", "murky",
+    "sombre", "somber", "night", "nighttime", "dusk", "twilight", "unlit",
+    "underexposed", "silhouette", "noir", "smoky", "hazy",
+)
+
+VIZCFG = json.load(open(os.path.join(ROOT, "funnels/kitchen-visualizer.json")))
+VIZ = VIZCFG["visualizer"]
+_slots = VIZ.get("prompt_slots") or {}
+
+
+def _has_exposure_word(text):
+    """The exposure words in one string, matched on word boundaries.
+
+    Boundaries and not substrings: "dark" is the word, "Denmark" is not, and a
+    check that fires on the second is a check somebody switches off.
+    """
+    low = str(text or "").lower()
+    return [w for w in EXPOSURE_WORDS
+            if _re.search(r"(?<![a-z])%s(?![a-z])" % _re.escape(w), low)]
+
+
+# Everything that is interpolated into the template. The template's own text is
+# not in this list on purpose: it is where the negatives live, and it says
+# "NOT dim, dimly lit, moody" deliberately.
+carried = []
+for st in VIZCFG["styles"]:
+    carried.append(("styles[%s].name" % st["id"], st["name"]))
+for key, rule in sorted(_slots.items()):
+    carried.append(("prompt_slots.%s.fallback" % key, rule.get("fallback")))
+    tag = rule.get("tag")
+    for item in VIZCFG["style_elements"]["items"]:
+        if tag and tag in (item.get("tags") or []):
+            # `_slot_words` puts the LABEL in the prompt, never the spec.
+            carried.append(("style_elements[%s].label -> {%s}"
+                            % (item["id"], key), item.get("label")))
+
+for where, text in carried:
+    hits = _has_exposure_word(text)
+    check("  %-46s clean" % where, not hits, (text, hits))
+
+tpl = VIZ.get("prompt_template") or ""
+check("the template states the exposure requirement",
+      "BRIGHTLY" in tpl and "EVENLY" in tpl, tpl[:60])
+check("  unconditionally, for every style and palette",
+      "without exception" in tpl and "whatever the style" in tpl)
+check("  and separates surface from light in as many words",
+      "describe the SURFACES" in tpl and "never the exposure" in tpl)
+for neg in ("NOT low-key", "NOT dim", "NO crushed blacks",
+            "NO heavy vignette"):
+    check("  negative present: %-20s" % neg, neg in tpl, tpl[-400:])
+check("the floor is named among the surfaces that change",
+      "FLOOR" in tpl and "Replace the floor" in tpl)
+check("  and the source floor is refused explicitly",
+      "do not carry the original flooring through" in tpl.lower(), tpl[:200])
+check("the geometry that must not change is still listed",
+      all(w in tpl for w in ("KEEP unchanged", "camera angle", "perspective",
+                             "window and door positions")))
+# Every slot the template uses is one build_prompt can actually fill.
+_used = set(_re.findall(r"\{([a-z_]+)\}", tpl))
+_fillable = {"style", "dominant", "dominant_hex", "secondary", "accent",
+             "secondary_hex", "accent_hex"} | set(_slots)
+check("no placeholder in the template goes unanswered",
+      _used <= _fillable, str(sorted(_used - _fillable)))
+
 print("\n--- tracking: the interaction map ---")
 for name in ("mid_cta", "sticky_cta", "paywall_view", "paywall_open",
              "pay_tap", "checkout_error", "result_view"):
