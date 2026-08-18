@@ -33,7 +33,7 @@ import config              # noqa: E402
 import database            # noqa: E402
 import reports             # noqa: E402
 import visualizer          # noqa: E402
-from PIL import Image      # noqa: E402
+from PIL import Image, ImageStat   # noqa: E402
 from app import app        # noqa: E402
 
 CS = "cs_test_visualizer_token"
@@ -57,6 +57,59 @@ def photo(size=(900, 600), colour=(190, 120, 70)):
     out = io.BytesIO()
     Image.new("RGB", size, colour).save(out, "JPEG")
     return out.getvalue()
+
+
+def luma(raw):
+    """The mean luma of some encoded image bytes."""
+    return ImageStat.Stat(
+        Image.open(io.BytesIO(raw)).convert("L")).mean[0]
+
+
+def kitchen_like(size=(768, 768)):
+    """Something with the tonal shape of the renders this is about.
+
+    A flat grey rectangle would be lifted perfectly by any curve. What breaks a
+    correction is range: a bright window, mid walls, saturated cabinets and a
+    floor that has gone to almost nothing — which is exactly the render that
+    came back at 40 with seventy per cent of its pixels near black.
+    """
+    im = Image.new("RGB", size)
+    px = im.load()
+    w, h = size
+    for y in range(h):
+        for x in range(w):
+            if y < h * 0.30 and x > w * 0.60:
+                px[x, y] = (235, 238, 240)      # window
+            elif y < h * 0.55:
+                px[x, y] = (150, 146, 138)      # walls
+            elif y < h * 0.72:
+                px[x, y] = (60, 92, 70)         # green cabinets
+            else:
+                px[x, y] = (26, 28, 27)         # floor
+    return im
+
+
+def at_mean(target, size=(768, 768), quality=92):
+    """`kitchen_like`, exposed to land on a chosen mean luma, as JPEG bytes."""
+    base = kitchen_like(size)
+    lo, hi = 0.20, 4.0
+    for _ in range(30):
+        mid = (lo + hi) / 2.0
+        shifted = base.point(visualizer._gamma_lut(mid) * 3)
+        if ImageStat.Stat(shifted.convert("L")).mean[0] < target:
+            hi = mid
+        else:
+            lo = mid
+    out = io.BytesIO()
+    base.point(visualizer._gamma_lut((lo + hi) / 2.0) * 3).save(
+        out, "JPEG", quality=quality)
+    return out.getvalue()
+
+
+def near_black(raw, threshold=32):
+    """The share of pixels below `threshold` — what "unviewable" means here."""
+    hist = Image.open(io.BytesIO(raw)).convert("L").histogram()
+    return sum(hist[:threshold]) / float(sum(hist))
 
 
 # --- a database ------------------------------------------------------------
@@ -369,6 +422,10 @@ def main():
               .status_code == 400)
 
         print("\n--- generating ---")
+        # The reader's own photograph, as it sits on disk before any of this.
+        # The exposure lift must not go anywhere near it: what they uploaded is
+        # the "before" panel and the blurred teaser, and both are that file.
+        source_before = open(visualizer.source_path(501), "rb").read()
         res = client.post("/api/visualizer/generate?cs=" + CS)
         check("the call is accepted", res.status_code == 200, res.status_code)
         body = wait_for(client, CS, {"ready", "failed"})
@@ -382,6 +439,14 @@ def main():
         res = client.get(body["url"])
         check("  which serves the image", res.status_code == 200
               and res.headers["Content-Type"] == "image/jpeg", res.status_code)
+        check("  the reader's own photo was not touched on the way past",
+              open(visualizer.source_path(501), "rb").read() == source_before,
+              len(source_before))
+        stored = open(visualizer.result_path(501, 1), "rb").read()
+        returned = photo((1024, 1024), (40, 90, 120))
+        check("  and what was stored is the corrected render, not the raw one",
+              stored != returned and luma(stored) > luma(returned),
+              (luma(returned), luma(stored)))
 
         print("\n--- what the model was actually asked for ---")
         prompt = EDITS.calls[0]["prompt"]
@@ -585,6 +650,100 @@ def main():
           open(os.path.join(REPO, "funnels/kitchen-visualizer.json"), "rb").read()
           == open(os.path.join(REPO, "static/funnels/kitchen-visualizer.json"),
                   "rb").read())
+
+    print("\n--- the render is lifted to the exposure of the photograph ---")
+    # Fourteen real renders came back at a mean of 86 against source photos at
+    # 121, and the worst at 40-48 with most of their pixels near black. Three
+    # prompt wordings on one photo produced 40.8, 62.4 and 47.9 — noise — so
+    # the correction is after the render, not in front of it.
+    #
+    # No API call anywhere in here: `lift_exposure` takes bytes and returns
+    # bytes, and the images are built in this file.
+    check("the target is the source photos' own mean, near enough",
+          115 <= visualizer.EXPOSURE_TARGET <= 121,
+          visualizer.EXPOSURE_TARGET)
+    check("  and the gamma floor is where the wash-out was measured",
+          visualizer.EXPOSURE_GAMMA_FLOOR == 0.42,
+          visualizer.EXPOSURE_GAMMA_FLOOR)
+
+    dark = at_mean(45)
+    out, note = visualizer.lift_exposure(dark)
+    print("    dark   %5.1f -> %5.1f   near-black %.0f%% -> %.0f%%   %s"
+          % (luma(dark), luma(out), near_black(dark) * 100,
+             near_black(out) * 100, note))
+    check("a render at ~45 is lifted a long way",
+          luma(out) > luma(dark) + 30, (luma(dark), luma(out)))
+    check("  but stops at the floor rather than washing out",
+          "gamma 0.420" in note and "floored" in note, note)
+    check("  so it lands short of the target, deliberately",
+          luma(out) < visualizer.EXPOSURE_TARGET, luma(out))
+    check("  and much less of it is near black",
+          near_black(out) < near_black(dark) * 0.7,
+          (near_black(dark), near_black(out)))
+    # It stays higher than the other cases, and that is the floor doing its
+    # job rather than a shortfall: a render this dark would need gamma 0.30 to
+    # reach the target, and 0.30 was measured taking the greens to grey.
+
+    mid = at_mean(85)
+    out, note = visualizer.lift_exposure(mid)
+    print("    mid    %5.1f -> %5.1f   %s" % (luma(mid), luma(out), note))
+    check("a render at ~85 lands on the target",
+          abs(luma(out) - visualizer.EXPOSURE_TARGET) < 2.0, luma(out))
+    check("  with a gamma the search chose, not the floor",
+          "floored" not in note
+          and visualizer.EXPOSURE_GAMMA_FLOOR < float(
+              note.split("gamma ")[1]) < 1.0, note)
+
+    # The verified real case: a render measured at 62.4 went to 117.5.
+    close = at_mean(62)
+    out, note = visualizer.lift_exposure(close)
+    print("    62-ish %5.1f -> %5.1f   %s" % (luma(close), luma(out), note))
+    check("the 62-mean case reaches the target too",
+          luma(out) > 110, luma(out))
+    # The shape of the one real render this was verified against: 62.4 -> 117.5
+    # with near-black falling from 57% to 5%.
+    print("           near-black %.0f%% -> %.1f%%"
+          % (near_black(close) * 100, near_black(out) * 100))
+    check("  and its near-black all but disappears",
+          near_black(close) > 0.35 and near_black(out) < 0.05,
+          (near_black(close), near_black(out)))
+
+    bright = at_mean(140)
+    out, note = visualizer.lift_exposure(bright)
+    print("    bright %5.1f -> %5.1f   %s" % (luma(bright), luma(out), note))
+    check("an already-bright render is never darkened",
+          luma(out) >= luma(bright), (luma(bright), luma(out)))
+    check("  and comes back byte-identical, not re-encoded",
+          out == bright and out is bright, len(out) - len(bright))
+    check("  the note says so", "already at target" in note, note)
+
+    # Monotone in the right direction, over the whole range, so no input can
+    # come out darker than it went in.
+    worse = [m for m in (30, 45, 60, 75, 90, 105, 118, 130, 160, 200)
+             if luma(visualizer.lift_exposure(at_mean(m))[0])
+             < luma(at_mean(m)) - 0.5]
+    check("no exposure anywhere in the range comes out darker", not worse,
+          worse)
+
+    print("\n--- and a correction that fails costs nobody their render ---")
+    real_gamma = visualizer._gamma_lut
+
+    def explode(_g):
+        raise RuntimeError("synthetic")
+
+    visualizer._gamma_lut = explode
+    try:
+        out, note = visualizer.lift_exposure(dark)
+        check("the original render is what comes back",
+              out is dark, len(out))
+        check("  and the note says it was stored uncorrected",
+              "failed" in note, note)
+    finally:
+        visualizer._gamma_lut = real_gamma
+    check("undamaged afterwards",
+          visualizer.lift_exposure(at_mean(85))[0] != dark)
+    check("unreadable bytes are the same story, not a crash",
+          visualizer.lift_exposure(b"not an image")[0] == b"not an image")
 
     shutil.rmtree(tmp, ignore_errors=True)
     print("\n%d checks, %d failed" % (checks[0], len(fails)))
