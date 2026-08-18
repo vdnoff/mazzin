@@ -240,3 +240,6 @@ bottom.
 
 ## 2026-08-17 — claude/regen-dark-images
 - regenerate dark images
+
+## 2026-08-18 — claude/viz-prompt-fix
+- viz prompt
