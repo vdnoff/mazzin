@@ -246,3 +246,6 @@ bottom.
 
 ## 2026-08-18 — claude/viz-exposure-fix
 - viz exposure
+
+## 2026-08-18 — claude/viz-live-mode
+- viz live mode
