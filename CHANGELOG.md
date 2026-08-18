@@ -243,3 +243,6 @@ bottom.
 
 ## 2026-08-18 — claude/viz-prompt-fix
 - viz prompt
+
+## 2026-08-18 — claude/viz-exposure-fix
+- viz exposure
