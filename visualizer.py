@@ -1091,20 +1091,50 @@ BRAND_ACCENT = (192, 86, 33)
 # The band across the foot of the teaser: type as a fraction of the picture's
 # width, the band as a multiple of the type, and how dark the scrim is. All
 # three are relative so the band holds together at any size the model returns.
-TEASER_LABEL_SIZE = 0.080       # of the width — ~30px on a 373-wide teaser
-TEASER_BAND_RATIO = 2.4         # band height, as multiples of the type size
+TEASER_LABEL_SIZE = 0.088       # of the width — ~33px on a 373-wide teaser
+TEASER_BAND_RATIO = 2.9         # band height, as multiples of the type size
 TEASER_BAND_ALPHA = 204         # 80% of 255
 TEASER_BAND_PAD = 0.07          # clear space each side of the label
 TEASER_LABEL_MIN = 0.075        # of the width — below this it stops being read
+TEASER_LINE_LEAD = 1.18         # baseline to baseline, as multiples of the type
+
+TEASER_BAND_DEFAULT = ("Unlocks at full", "resolution")
 
 
-def _teaser_label(block):
-    """What the band says. Config copy, with a default that is not a blank."""
-    text = (block or {}).get("teaser_band")
-    if text is None:
-        return "Unlocks at full resolution"
-    text = str(text).strip()
-    return text or None
+def _teaser_lines(block):
+    """What the band says, as the lines it says it on.
+
+    One line of about fifteen characters is all this picture is wide enough
+    for: the panel is drawn roughly 138 CSS pixels across on a 320px phone, so
+    a single line long enough to hold a real sentence has to shrink to seven or
+    eight CSS pixels to fit, and at that size it is a smudge. Two lines buy the
+    sentence back at a size that can be read.
+
+    Config carries them separately rather than as one string this code splits.
+    Where the break falls is a copy decision — "Unlocks at full / resolution"
+    reads; "Unlocks at / full resolution" does not — and a split on width would
+    make it a function of whichever font the server happens to have.
+    """
+    block = block or {}
+    lines = [block.get("teaser_band_1"), block.get("teaser_band_2")]
+
+    # The single key this replaced, for a funnel JSON still cached from before
+    # the split. It is the whole band, not the first line of one.
+    if lines[0] is None and lines[1] is None:
+        legacy = block.get("teaser_band")
+        if legacy is not None:
+            lines = [legacy, None]
+        else:
+            lines = list(TEASER_BAND_DEFAULT)
+
+    out = []
+    for text in lines:
+        if text is None:
+            continue
+        text = str(text).strip()
+        if text:
+            out.append(text)
+    return out
 
 # The server may not carry any particular font. Probed in order, and if none of
 # them loads the wordmark falls back to Pillow's own bitmap face — smaller and
@@ -1227,50 +1257,64 @@ def build_teaser(render, block=None):
     # Sized from the picture's own width, not fixed: the panel is about 138
     # CSS pixels wide on a 320px phone, so the type has to survive a 0.37x
     # downscale, and a constant that looks right at 560 disappears at 373.
-    label = _teaser_label(block)
-    if label:
-        # Shrunk until it fits rather than trusted to. The starting size is
-        # right for the default copy in the font this server happens to carry,
-        # and both of those can change: a longer line, or a wider face, would
-        # otherwise run off both edges of the picture. The band follows the
-        # size it ends on, so the 2.4x relation holds whatever that is.
+    lines = _teaser_lines(block)
+    if lines:
+        # Shrunk until the widest line fits rather than trusted to. The starting
+        # size is right for the default copy in the font this server happens to
+        # carry, and both of those can change: a longer line, or a wider face,
+        # would otherwise run off both edges of the picture. The band follows
+        # the size it ends on, so the 2.9x relation holds whatever that is.
+        def widest(at):
+            probe = _brand_font(at)
+            return max(draw.textlength(line, font=probe) for line in lines)
+
         size = int(round(width * TEASER_LABEL_SIZE))
         floor = int(round(width * TEASER_LABEL_MIN))
         room = width * (1.0 - 2 * TEASER_BAND_PAD)
         while size > floor:
-            probe = _brand_font(size)
             try:
-                if draw.textlength(label, font=probe) <= room:
+                if widest(size) <= room:
                     break
             except Exception:
                 break
             size -= 1
-        # The floor is legibility, not aesthetics. This picture is drawn about
-        # 138 CSS pixels wide on a 320px phone — roughly a third of its own
-        # width — so type that shrinks to fit a long line arrives at seven or
-        # eight CSS pixels and says nothing at all. Below the floor the copy is
-        # too long for the band, and that is worth a log line rather than a
-        # silently unreadable caption. About fifteen characters is the budget.
+        # The floor is legibility, not aesthetics. Below it the copy is too long
+        # for the band even split in two, and that is worth a log line rather
+        # than a silently unreadable caption — or, worse, a line clipped off at
+        # the edge of the picture with nothing to say it happened.
         try:
-            if draw.textlength(label, font=_brand_font(size)) > room:
+            if widest(size) > room:
                 log.warning("visualizer: teaser band copy is too long for the "
-                            "picture (%d chars) — it will be tight", len(label))
+                            "picture (%s) — it will be tight",
+                            " / ".join(str(len(line)) for line in lines))
         except Exception:
             pass
+
+        font = _brand_font(size)
+        lead = size * TEASER_LINE_LEAD
+        # One reference extent for every line, not each line's own. Measured per
+        # string, "resolution" (no ascender, no descender) would sit at a
+        # different height from "Unlocks at full", and the band would look
+        # mis-set for a reason nobody could name.
+        try:
+            ref = font.getbbox("Hg")
+            line_h = ref[3] - ref[1]
+            top_bearing = ref[1]
+        except Exception:
+            line_h, top_bearing = size, 0
+        block_h = line_h + lead * (len(lines) - 1)
         band_h = int(round(size * TEASER_BAND_RATIO))
+
         draw.rectangle([0, height - band_h, width, height],
                        fill=(24, 18, 14, TEASER_BAND_ALPHA))
-        font = _brand_font(size)
-        try:
-            text_w = draw.textlength(label, font=font)
-            box = font.getbbox(label)
-            text_h = box[3] - box[1]
-            top_bearing = box[1]
-        except Exception:
-            text_w, text_h, top_bearing = width * 0.6, size, 0
-        draw.text((width / 2.0 - text_w / 2.0,
-                   height - band_h + (band_h - text_h) / 2.0 - top_bearing),
-                  label, font=font, fill=BRAND_CREAM + (255,))
+        top = height - band_h + (band_h - block_h) / 2.0 - top_bearing
+        for i, line in enumerate(lines):
+            try:
+                text_w = draw.textlength(line, font=font)
+            except Exception:
+                text_w = width * 0.6
+            draw.text((width / 2.0 - text_w / 2.0, top + i * lead),
+                      line, font=font, fill=BRAND_CREAM + (255,))
 
     out = Image.alpha_composite(out.convert("RGBA"), layer).convert("RGB")
 

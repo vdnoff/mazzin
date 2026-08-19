@@ -518,6 +518,57 @@ def main():
                   page.eval_on_selector(
                       ".viz-deliver",
                       "n => getComputedStyle(n).visibility") == "hidden")
+            check("  in a tinted panel rather than loose on the page",
+                  page.eval_on_selector(".viz-deliver", """n => {
+                      var s = getComputedStyle(n);
+                      return s.backgroundColor === 'rgb(253, 241, 231)'
+                             && s.borderTopWidth === '1px'
+                             && s.borderTopLeftRadius === '11px'
+                             && s.paddingTop === '14px'; }"""),
+                  page.eval_on_selector(".viz-deliver", """n => {
+                      var s = getComputedStyle(n);
+                      return [s.backgroundColor, s.borderTopWidth,
+                              s.borderTopLeftRadius, s.paddingTop]; }"""))
+            # The line naming what this is NOT, deleted from this funnel. It
+            # was placed above the value cards, where it framed them; three
+            # cards with icons say the same thing by showing what IS included,
+            # and a sentence about what a reader is not getting is a doubt
+            # planted in front of the offer.
+            check("  the expectation line is off this funnel",
+                  page.eval_on_selector_all(".offer-expectation",
+                                            "n => n.length") == 0
+                  and "expectation"
+                  not in CFG["kitchen-visualizer"]["checkout"])
+            # Three cards, each with a circular badge, and the hero's mark
+            # filled where the other two are stroked.
+            cards = page.eval_on_selector_all(".offer-value__row", """ns =>
+                ns.map(n => {
+                  var s = getComputedStyle(n);
+                  var b = n.querySelector('.offer-value__badge');
+                  var i = n.querySelector('.offer-value__icon');
+                  return {hero: n.classList.contains('is-hero'),
+                          badge: b ? Math.round(
+                            b.getBoundingClientRect().width) : 0,
+                          radius: b ? getComputedStyle(b).borderTopLeftRadius
+                                    : null,
+                          fill: i ? getComputedStyle(i).fill : null,
+                          border: s.borderTopWidth,
+                          bg: s.backgroundColor}; })""")
+            check("  three value cards, each badged",
+                  len(cards) == 3 and all(c["badge"] >= 20 for c in cards),
+                  [c["badge"] for c in cards])
+            check("  the badges are circles",
+                  all(c["radius"] == "50%" for c in cards),
+                  [c["radius"] for c in cards])
+            check("  the hero is filled, tinted and bordered 3px",
+                  cards[0]["hero"] and cards[0]["fill"] == "rgb(192, 86, 33)"
+                  and cards[0]["border"] == "3px"
+                  and cards[0]["bg"] == "rgb(253, 241, 231)",
+                  cards[0])
+            check("  and the other two are stroked, white and 2px",
+                  all(c["fill"] == "none" and c["border"] == "2px"
+                      and c["bg"] == "rgb(255, 255, 255)" for c in cards[1:]),
+                  cards[1:])
             check("  the replace link is gone from the teaser",
                   page.query_selector(".viz-pair-teaser ~ .viz-replace") is None
                   and page.eval_on_selector_all(
@@ -549,6 +600,15 @@ def main():
             page.wait_for_selector("#visualizer .viz-go", timeout=20000)
             check("no picker — the photo is already theirs",
                   page.query_selector(".viz-drop") is None)
+            # Waited for rather than asked about. An <img> that has not decoded
+            # yet has no box, so "is it visible" answers no for a picture that
+            # is on its way — a flake that says the photo was lost when it was
+            # merely late.
+            page.wait_for_function(
+                """() => { const i = document.querySelector(
+                     '.viz-shot .viz-img');
+                   return i && i.complete && i.naturalWidth > 0; }""",
+                timeout=15000)
             check("  their photo is on screen",
                   page.is_visible(".viz-shot .viz-img"))
             check("  and the transform button is one tap away",

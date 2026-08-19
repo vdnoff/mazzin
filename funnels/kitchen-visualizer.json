@@ -2453,7 +2453,8 @@
     "teaser_title": "Your kitchen, ready",
     "before_label_pre": "Your kitchen",
     "locked_label": "Your {style} transformation",
-    "teaser_band": "Unlocks in full",
+    "teaser_band_1": "Unlocks at full",
+    "teaser_band_2": "resolution",
     "preparing_title": "Redrawing your kitchen",
     "preparing_note": "About 30 seconds — keep reading, it appears here.",
     "deliver_label": "Unlocking sends you",
@@ -2558,13 +2559,13 @@
     "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right.",
     "price_was_display": "$7",
     "price_launch_label": "launch price",
-    "expectation": "A style visualization of your own kitchen, not an architectural plan.",
     "teaser_cta": "Unlock my transformation",
     "consent_skip_countries": [
       "CA"
     ],
     "gate_cta": "Add your photo first",
     "gate_note": "We need your kitchen before we can redraw it. Takes 5 seconds.",
+    "wait_note": "Your visualization is being prepared — the price and payment appear the moment it is ready.",
     "price_after_upload": true
   }
 }
