@@ -168,6 +168,13 @@ def to_jpeg(im, quality=92):
     return out.getvalue()
 
 
+def _teaser_url(auth):
+    """What the status endpoint says the browser may fetch, if anything."""
+    with app.test_client() as client:
+        body = client.get("/api/visualizer/status?" + auth).get_json() or {}
+    return body.get("teaser_url")
+
+
 def _write_source(session_id, raw):
     visualizer._write_atomic(visualizer.pending_source(session_id), raw)
 
@@ -217,6 +224,7 @@ class Fake:
         self.reports = {}         # purchase_id -> content dict
         self.lock = threading.Lock()
         self.claims = 0
+        self.sessions = set()     # (session_id, funnel) pairs that ran the quiz
 
     # -- the three database entry points --
     def query_one(self, sql, params=None):
@@ -229,6 +237,10 @@ class Fake:
         if "FROM reports" in sql:
             content = self.reports.get(params[0])
             return {"content": json.dumps(content)} if content else None
+        if "FROM events" in sql:
+            # What proves a session actually ran this funnel. The real one is
+            # an events row; here it is a set the test fills in.
+            return {"seen": 1} if params in self.sessions else None
         raise AssertionError("unexpected query_one: " + sql[:60])
 
     def execute(self, sql, params=None):
@@ -961,6 +973,69 @@ def main():
     finally:
         visualizer.generate_image = real_gen
         shutil.rmtree(visualizer.pending_dir(sess), ignore_errors=True)
+
+    print("\n--- the wire: an upload that really starts a render ---")
+    # `run_pre_render` was only ever called directly, with the style handed to
+    # it as a Python argument, so the one link that was broken — the browser
+    # naming the style on the request — was the only one with no test on it.
+    # This goes through the route.
+    SESS = "cccccccc-dddd-4eee-8fff-000000000000"
+    DB.sessions.add((SESS, "kitchen-visualizer"))
+    auth = "session_id=%s&funnel=kitchen-visualizer" % SESS
+
+    def pre_upload(**fields):
+        shutil.rmtree(visualizer.pending_dir(SESS), ignore_errors=True)
+        data = {"photo": (io.BytesIO(photo((1000, 1400))), "kitchen.jpg")}
+        data.update(fields)
+        with app.test_client() as client:
+            res = client.post("/api/visualizer/upload?" + auth, data=data,
+                              content_type="multipart/form-data")
+        for _ in range(80):                      # the worker is a thread
+            state = visualizer.read_pending(SESS)
+            if state.get("status") in (visualizer.PRE_READY,
+                                       visualizer.PRE_FAILED):
+                break
+            time.sleep(0.05)
+        return res, visualizer.read_pending(SESS)
+
+    visualizer.generate_image = lambda *a, **k: to_jpeg(textured(1024, 1536))
+    calls = []
+    real_gen = visualizer.generate_image
+    visualizer.generate_image = lambda *a, **k: (
+        calls.append(1) or to_jpeg(textured(1024, 1536)))
+    try:
+        style_id = json.load(open(os.path.join(
+            REPO, "funnels/kitchen-visualizer.json")))["styles"][0]["id"]
+        res, state = pre_upload(style=style_id,
+                                elements="brass-hardware,stone-worktop")
+        check("the upload is accepted", res.status_code == 200, res.status_code)
+        check("  and a render ran off the back of it",
+              state.get("status") == visualizer.PRE_READY, state)
+        check("  the image model was actually asked", len(calls) == 1, calls)
+        check("  both files are on disk",
+              os.path.isfile(visualizer.pending_result(SESS))
+              and os.path.isfile(visualizer.pending_teaser(SESS)))
+        check("  and the status endpoint offers the teaser, not the render",
+              _teaser_url(auth) is not None)
+
+        del calls[:]
+        res, state = pre_upload(style="not_a_style")
+        check("a style this funnel cannot produce is refused",
+              state.get("status") == visualizer.PRE_FAILED
+              and state.get("error") == "no_prompt", state)
+        check("  and nothing was sent to the image model", not calls, calls)
+        check("  the upload itself still succeeded, so the reader carries on",
+              res.status_code == 200, res.status_code)
+
+        del calls[:]
+        res, state = pre_upload()
+        check("no style at all is the same answer",
+              state.get("status") == visualizer.PRE_FAILED
+              and state.get("error") == "no_prompt", state)
+        check("  and again nothing was charged", not calls, calls)
+    finally:
+        visualizer.generate_image = real_gen
+        shutil.rmtree(visualizer.pending_dir(SESS), ignore_errors=True)
 
     shutil.rmtree(tmp, ignore_errors=True)
     print("\n%d checks, %d failed" % (checks[0], len(fails)))

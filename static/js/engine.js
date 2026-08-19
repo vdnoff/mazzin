@@ -3322,6 +3322,34 @@
       // field. Ours, not theirs: what the photograph was called on their phone
       // is not something this server needs to be told.
       body.append("photo", payload, "upload.jpg");
+
+      // Which result these thirteen taps produced, and which four fittings the
+      // reader was shown for it.
+      //
+      // The server cannot work either out. A session has no row and no report
+      // — that is deliberate, a table of people who did not buy is a table we
+      // decided not to keep — so the winner exists only here, and without it
+      // `_pre_purchase_content` finds no style and every pre-purchase render
+      // fails `no_prompt` before an image is ever asked for. Which is exactly
+      // what was happening.
+      //
+      // `winnerStyleId` and not a name or a label: it is the same expression
+      // `orderPayload` sends as `result_style` at checkout, from the same
+      // variable, so the render and the purchase cannot come to disagree about
+      // which style this reader got. Both are re-validated server-side against
+      // the funnel's own list — the browser makes a claim, the server decides.
+      //
+      // Only when there is one. On a paid page opened from an emailed link
+      // there was no quiz run in this tab, `winnerStyleId` is null, and
+      // appending it would send the string "null" for the server to reject.
+      if (winnerStyleId) body.append("style", winnerStyleId);
+      // The same four, and the same slice, that `yoursStrip` draws under YOUR
+      // MATERIALS — `pickElements` returns six and the row shows four, so
+      // sending six would render surfaces the reader was never shown.
+      var shown = pickElements().slice(0, 4).map(function (item) {
+        return item.id;
+      });
+      if (shown.length) body.append("elements", shown.join(","));
       // Counted when the server has it, not when the picker closed. A photo
       // the server refused is a `viz_failed`, and counting it as both would
       // make the upload-to-generate rate read better than it is.
