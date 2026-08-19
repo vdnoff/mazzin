@@ -255,3 +255,6 @@ bottom.
 
 ## 2026-08-19 — claude/real-teaser
 - real teaser
+
+## 2026-08-19 — claude/teaser-style-param
+- teaser style param
