@@ -650,7 +650,7 @@ check("no placeholder in the template goes unanswered",
 
 print("\n--- tracking: the interaction map ---")
 for name in ("mid_cta", "sticky_cta", "paywall_view", "paywall_open",
-             "pay_tap", "checkout_error", "result_view"):
+             "pay_tap", "pay_ready", "checkout_error", "result_view"):
     check("  %-15s allowed" % name, name in tracking.ALLOWED_EVENTS)
 check("purchase is still not client-assertable",
       "purchase" not in tracking.ALLOWED_EVENTS)
@@ -676,6 +676,106 @@ check("swipe payloads still validate",
       tracking._clean_extra("kitchen", "swipe",
                             {"pair": "hook:p1", "shown": ["hk1a", "hk1b"],
                              "chosen": "hk1a"})["chosen"] == "hk1a")
+
+print("\n--- what was shown, and what it was shown on ---")
+# Twelve sessions uploaded a photo, reached the offer and produced one tap
+# between them. `pay_tap` only ever answers for somebody who tapped, so the
+# question that costs money — what were the other eleven looking at — had no
+# field at all. These two give it one each: `pay_ready.control` is what was on
+# screen, and the device on `funnel_start` is what it was on screen on.
+for control in sorted(tracking.PAY_READY_CONTROL):
+    check("  pay_ready control=%-8s accepted" % control,
+          tracking._clean_extra("kitchen", "pay_ready", {"control": control})
+          == {"control": control})
+for bad in ({"control": "apple_pay"}, {"control": 1}, {}, {"method": "wallet"},
+            {"control": "wallet", "x": 1}, None):
+    try:
+        got = tracking._clean_extra("kitchen", "pay_ready", bad)
+        check("  pay_ready rejects %s" % json.dumps(bad), got is None and bad is None,
+              got)
+    except ValueError:
+        check("  pay_ready rejects %s" % json.dumps(bad), True)
+check("the two vocabularies match, so the rate is a plain division",
+      tracking.PAY_READY_CONTROL == tracking.PAY_TAP_METHOD,
+      (tracking.PAY_READY_CONTROL, tracking.PAY_TAP_METHOD))
+for ev in ("result_view", "pay_tap", "funnel_start", "viz_upload"):
+    try:
+        tracking._clean_extra("kitchen", ev, {"control": "wallet"})
+        check("  a control payload is refused on %-12s" % ev, False)
+    except ValueError:
+        check("  a control payload is refused on %-12s" % ev, True)
+# The device is server-derived, so a client must not be able to plant it or
+# overwrite it. `funnel_start` still takes no client payload at all.
+for planted in ({"platform": "ios"}, {"platform": "ios", "browser": "safari"}):
+    try:
+        tracking._clean_extra("kitchen", "funnel_start", planted)
+        check("  a client cannot send %s" % json.dumps(planted), False)
+    except ValueError:
+        check("  a client cannot send %s" % json.dumps(planted), True)
+
+# Real strings, including the ones the whole exercise is about: the Facebook
+# and Instagram in-app browsers claim to be Safari AND Chrome, so anything
+# testing for those first files every in-app session as an ordinary browser.
+UAS = [
+    ("ios", "facebook",
+     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/"
+     "605.1.15 (KHTML, like Gecko) Mobile/15E148 [FBAN/FBIOS;FBAV/468.0.0.36]"),
+    ("android", "facebook",
+     "Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, "
+     "like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/452]"),
+    ("ios", "instagram",
+     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/"
+     "605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 302.0.0.23.113"),
+    ("android", "instagram",
+     "Mozilla/5.0 (Linux; Android 13; SM-G991B) AppleWebKit/537.36 (KHTML, "
+     "like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36 Instagram 302.0 Android"),
+    ("ios", "safari",
+     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/"
+     "605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"),
+    ("ios", "chrome",
+     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/"
+     "605.1.15 (KHTML, like Gecko) CriOS/126.0 Mobile/15E148 Safari/604.1"),
+    ("android", "chrome",
+     "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, "
+     "like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36"),
+    ("android", "webview",
+     "Mozilla/5.0 (Linux; Android 13; SM-A536B Build/TP1A; wv) AppleWebKit/"
+     "537.36 (KHTML, like Gecko) Version/4.0 Chrome/120.0 Mobile Safari/537.36"),
+    ("android", "samsung",
+     "Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36 (KHTML, "
+     "like Gecko) SamsungBrowser/23.0 Chrome/115.0 Mobile Safari/537.36"),
+    ("desktop", "safari",
+     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 "
+     "(KHTML, like Gecko) Version/17.5 Safari/605.1.15"),
+    ("desktop", "edge",
+     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, "
+     "like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0"),
+    ("desktop", "firefox",
+     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 "
+     "Firefox/127.0"),
+    ("other", "other", "curl/8.4.0"),
+    ("other", "other", ""),
+    ("other", "other", None),
+]
+for want_platform, want_browser, ua in UAS:
+    got = tracking._device(ua)
+    check("  %-9s %-9s from %s" % (want_platform, want_browser,
+                                   (ua or "<none>")[:34]),
+          got == {"platform": want_platform, "browser": want_browser}, got)
+check("every value is inside its closed set",
+      all(tracking._device(ua)["platform"] in tracking.UA_PLATFORM
+          and tracking._device(ua)["browser"] in tracking.UA_BROWSER
+          for _, _, ua in UAS))
+check("only the head of the header is ever read",
+      tracking._device("Mozilla/5.0 (Linux; Android 13) " + "x" * 40000)
+      == {"platform": "android", "browser": "other"})
+# What is deliberately not kept. The raw UA is the most fingerprintable string
+# in the request and none of it is needed to answer the wallet question.
+d = tracking._device(UAS[0][2])
+check("the derived value is two keys and no more",
+      set(d) == {"platform", "browser"}, sorted(d))
+check("  and neither of them is the User-Agent itself",
+      not any("Mozilla" in str(v) or "FBAV" in str(v) for v in d.values()), d)
 
 print("\n--- engine/allowlist agreement ---")
 import re as _re
