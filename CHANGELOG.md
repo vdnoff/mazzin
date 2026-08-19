@@ -261,3 +261,6 @@ bottom.
 
 ## 2026-08-19 — claude/teaser-polish
 - teaser polish
+
+## 2026-08-19 — claude/paywall-v3
+- paywall v3
