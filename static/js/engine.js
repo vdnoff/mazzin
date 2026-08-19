@@ -129,6 +129,7 @@
   var gateIO = null;            // its observer, dropped the moment it fires
   var gateUp = false;           // the offer cannot be paid yet
   var pixelCartFired = false;   // AddToCart: the first photo, once
+  var payReadyFired = false;    // which control was shown, counted once
   var pixelPayFired = false;    // AddPaymentInfo: once, on either path
   // --- express checkout -----------------------------------------------------
   var xpState = "off";          // off | reserved | wallet | redirect
@@ -3782,6 +3783,36 @@
     xpSlot.classList.toggle("xp__off", !wallet);
     el.payButton.classList.toggle("xp__off", wallet);
     showSummary(state === "wallet");
+    // "reserved" is the placeholder, which is not a control — it is the space
+    // one will occupy while the question is still open. The answer is the
+    // other two, and both of them arrive through here: `xpMount` sets wallet
+    // when the element reports one, and `xpFallback` sets redirect on every
+    // way the attempt can end without one — no wallet, no intent, Stripe.js
+    // refusing to load, or the deadline.
+    if (state === "wallet" || state === "redirect") payReady(state);
+  }
+
+  // What the reader was actually shown, once a session.
+  //
+  // `pay_tap` says which button took a payment, which is only ever answered by
+  // somebody who pressed one — and the sessions that cost money are the ones
+  // that did not. Twelve of them reached this block, spent minutes on it, and
+  // left one tap between them; whether they were looking at an Apple Pay sheet
+  // or a trip to a hosted page is the first thing worth knowing and nothing
+  // recorded it.
+  //
+  // Deliberately not derived from the device. A phone can be an iPhone and
+  // still have no card in the wallet, and an in-app browser can suppress the
+  // button on hardware that would otherwise show it. What was shown and what
+  // it was shown on are two facts, and this is only the first.
+  function payReady(control) {
+    // Nothing is showable while the gate is up: what stands there is a button
+    // asking for a photograph, and counting that as a pay control would put a
+    // reader who never reached the offer in the denominator of a rate about
+    // people who did.
+    if (payReadyFired || gateUp) return;
+    payReadyFired = true;
+    track("pay_ready", null, { control: control });
   }
 
   // Exactly one price block, whichever way the wallet check goes.
@@ -4255,6 +4286,9 @@
     el.payError.hidden = true;
     updatePayButton();
     xpStart();
+    // Same reasoning as the single-page block: if no express attempt started,
+    // the button on this screen is the control and nothing else will say so.
+    if (!xpStarted) payReady("redirect");
     playPayMotion();
   }
 
@@ -4446,6 +4480,12 @@
     // button to press and no intent created for a purchase that cannot be
     // fulfilled. Taken down, this is what lets it start.
     if (!on) xpStart();
+
+    // A gated funnel with no express attempt: the gate has just come down and
+    // the redirect button is what is standing behind it. `xpStart` has already
+    // run and declined by this line, so `xpStarted` is asking whether an
+    // attempt is under way — if none is, what is on screen is the final answer.
+    if (!on && !xpStarted) payReady("redirect");
   }
 
   function ensureGateNodes() {
@@ -4703,6 +4743,13 @@
     // `renderGate` is what calls `xpStart` now — it only starts once there is
     // a photograph to sell a transformation of.
     renderGate();
+    // And the ungated case, which is most funnels. `showGate` gives up at its
+    // first line when there is no gate node to hide — /kitchen has no
+    // `gate_cta` and therefore no gate — so the call inside it never runs
+    // there, and the redirect button standing on this block from the moment it
+    // renders would have gone uncounted. `payReady` still refuses while the
+    // gate is up, so a gated funnel reaching here early is not miscounted.
+    if (!xpStarted) payReady("redirect");
     playPayMotion();
   }
 

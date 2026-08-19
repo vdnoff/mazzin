@@ -74,6 +74,16 @@ ALLOWED_EVENTS = {
     # never got that far, and those are opposite problems.
     "viz_gate_view",
     "viz_gate_tap",
+    # Which pay control the reader was actually shown, once per session, at the
+    # moment it appears. `pay_tap` already says which button took a payment —
+    # but only for somebody who tapped one, and the question that costs money
+    # is about the people who did not.
+    #
+    # Twelve sessions uploaded a photo, reached the offer, spent two to eight
+    # minutes on it and produced one tap and no purchase. Whether they were
+    # looking at an Apple Pay button or a trip to a hosted page is the first
+    # thing you would want to know, and nothing recorded it.
+    "pay_ready",
 }
 
 # `viz_upload` happens on both sides of the money now, and the two are
@@ -100,6 +110,31 @@ VIZ_UPLOAD_PATH = frozenset(("bitmap", "canvas", "raw"))
 # whose whole purpose is to be grouped by, and a typo in a client that ships to
 # everybody would become a category nobody notices is missing.
 PAY_TAP_METHOD = frozenset(("wallet", "redirect"))
+
+# Which control was on screen, as opposed to which one was pressed. The same
+# two words as `pay_tap.method` and deliberately the same two: the pair is only
+# useful read together, as a rate — of the people shown a wallet, how many
+# tapped it — and two vocabularies for one thing would make that a join with a
+# CASE in it.
+#
+# It is a separate set rather than a reuse of PAY_TAP_METHOD because the two
+# answer different questions and will not necessarily move together: a future
+# third control would be showable before it is tappable.
+PAY_READY_CONTROL = frozenset(("wallet", "redirect"))
+
+
+def _clean_pay_ready(value):
+    """`{"control": ...}` from a closed set, and nothing else.
+
+    Required, unlike `pay_tap`'s method: this event did not exist before the
+    payload did, so there is no cached engine.js that sends one without it.
+    """
+    if set(value) != {"control"}:
+        raise ValueError("extra")
+    control = value["control"]
+    if not isinstance(control, str) or control not in PAY_READY_CONTROL:
+        raise ValueError("extra")
+    return {"control": control}
 
 
 def _clean_pay_tap(value):
@@ -145,6 +180,88 @@ def _clean_viz_upload(value):
             raise ValueError("extra")
         out["path"] = path
     return out
+
+# --- what they were using ---------------------------------------------------
+
+# Two words about the device, derived here from the User-Agent header and
+# written onto the session's `funnel_start` row.
+#
+# Server-side and not client-reported, for two reasons. A client-sent field is
+# one more untrusted string to validate, and it is trivially spoofable — and
+# this one is going to be used to decide where to spend, so a value anybody can
+# set is a number nobody can act on. The header is already in the request.
+#
+# The raw User-Agent is NOT stored, here or anywhere. It carries the OS build,
+# the browser build and often the exact handset model, which together identify
+# a returning visitor far more precisely than anything else this app keeps —
+# and none of that is needed to answer "did the wallet show up on Instagram's
+# browser". What is stored is two enum values out of the sets below and
+# nothing else: no version, no device model, no screen size, no IP, no
+# Accept-Language.
+#
+# A UA that matches nothing lands on `other` rather than being dropped. A
+# growing `other` bucket is a prompt to come and look; a missing row is not.
+UA_PLATFORM = frozenset(("ios", "android", "desktop", "other"))
+UA_BROWSER = frozenset(("facebook", "instagram", "safari", "chrome",
+                        "firefox", "edge", "samsung", "webview", "other"))
+
+# Only the head of the header is read. A User-Agent is conventionally under
+# 256 characters and these tokens all appear early; a request arriving with
+# sixteen kilobytes of it should not turn into sixteen kilobytes of scanning
+# on the hottest path on the site.
+UA_SCAN_CHARS = 512
+
+# Order is the whole correctness of this. The Instagram in-app browser's UA
+# contains both "Safari" and "Chrome", and the Facebook one on Android does
+# too — so testing for Safari or Chrome first files every in-app session as an
+# ordinary browser, which is precisely the distinction this exists to draw.
+# In-app first, then the vendors that also claim to be Chrome, then Chrome,
+# then Safari last as the residue.
+_BROWSER_TOKENS = (
+    ("facebook", ("fban/", "fbav/", "fb_iab", "fbios", "fbsv/")),
+    ("instagram", ("instagram",)),
+    ("samsung", ("samsungbrowser",)),
+    ("edge", ("edg/", "edgios", "edga/")),
+    ("firefox", ("firefox/", "fxios")),
+    ("webview", ("; wv)", "; wv;")),
+    ("chrome", ("crios", "chrome/", "chromium")),
+    ("safari", ("safari/",)),
+)
+
+_PLATFORM_TOKENS = (
+    ("ios", ("iphone", "ipad", "ipod", "fbios", "crios", "fxios", "edgios")),
+    ("android", ("android",)),
+    ("desktop", ("windows", "macintosh", "cros", "x11", "linux")),
+)
+
+
+def _device(user_agent):
+    """`{"platform": ..., "browser": ...}` for one request.
+
+    Pure string work on a header that is already in memory: no I/O, no regex
+    backtracking, no allocation beyond one lowercased slice. It runs once per
+    session, on `funnel_start`, and adds nothing that can block or fail — a
+    header that is missing, empty or unrecognisable produces `other`/`other`
+    rather than an exception, because a device we cannot name is not a reason
+    to lose the event.
+    """
+    low = (user_agent or "")[:UA_SCAN_CHARS].lower()
+
+    platform = "other"
+    for name, tokens in _PLATFORM_TOKENS:
+        if any(token in low for token in tokens):
+            # Android before desktop: an Android UA says "Linux" too.
+            platform = name
+            break
+
+    browser = "other"
+    for name, tokens in _BROWSER_TOKENS:
+        if any(token in low for token in tokens):
+            browser = name
+            break
+
+    return {"platform": platform, "browser": browser}
+
 
 UUID_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
@@ -309,6 +426,8 @@ def _clean_extra(funnel, event, value):
         return _clean_viz_upload(value)
     if event == "pay_tap":
         return _clean_pay_tap(value)
+    if event == "pay_ready":
+        return _clean_pay_ready(value)
     if event != "swipe":
         raise ValueError("extra")
     if set(value) != SWIPE_EXTRA_KEYS:
@@ -370,6 +489,18 @@ def track():
         extra = _clean_extra(funnel, event, body.get("extra"))
     except ValueError:
         return "", 400
+
+    # After validation, never before. `_clean_extra` still refuses any `extra`
+    # a client sends on `funnel_start`, so this is the only way these two words
+    # can get onto the row — a request cannot supply them, and cannot overwrite
+    # them by supplying its own. That is the whole reason it is derived here
+    # from a header rather than accepted as a field.
+    #
+    # Once a session, on the first event of it, because the device does not
+    # change halfway through a quiz and paying for it on all twenty rows would
+    # be twenty copies of the same two words.
+    if event == "funnel_start":
+        extra = _device(request.headers.get("User-Agent"))
     # No cap needed any more: what comes back is three ids out of the funnel's
     # own config, so its length is bounded by the config rather than by the
     # request.
