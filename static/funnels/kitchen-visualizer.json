@@ -2448,10 +2448,14 @@
     "title": "Your Kitchen, Transformed",
     "intro": "Upload one photo of your kitchen and see it redecorated in your style — same room, same layout, your palette.",
     "pre_purchase": true,
+    "pre_purchase_render": true,
     "privacy_note": "Your photo is private, used only for your visualization, deleted if you don't continue.",
     "teaser_title": "Your kitchen, ready",
     "before_label_pre": "Your kitchen",
     "locked_label": "Your {style} transformation",
+    "preparing_title": "Redrawing your kitchen",
+    "preparing_note": "About 30 seconds — keep reading, it appears here.",
+    "deliver_note": "Paying sends you the full picture, unblurred and at full resolution, plus the report that specifies every surface in it.",
     "manifest_uploaded": "Your kitchen, reimagined — photo received ✓",
     "guidance": "Stand back, daylight on, whole kitchen in frame.",
     "upload_cta": "Choose a photo",
@@ -2504,7 +2508,7 @@
     "single_page": true,
     "express": true,
     "commerce": {
-      "consent": "One-time {price} — no subscription, ever. My report unlocks instantly.",
+      "consent": "Instant delivery — I waive my 14-day withdrawal right.",
       "trust": [
         "Secure via Stripe",
         "One-time — no recurring charges",
@@ -2544,8 +2548,10 @@
     "price_was_display": "$7",
     "price_launch_label": "launch price",
     "expectation": "A style visualization of your own kitchen, not an architectural plan.",
-    "price_terms": "One-time payment. No subscription. No account.",
     "teaser_cta": "Unlock my transformation",
+    "consent_skip_countries": [
+      "CA"
+    ],
     "gate_cta": "Add your photo first",
     "gate_note": "We need your kitchen before we can redraw it. Takes 5 seconds.",
     "price_after_upload": true

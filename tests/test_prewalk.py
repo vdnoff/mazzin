@@ -334,10 +334,23 @@ def main():
                   page.eval_on_selector("#report",
                                         "n => n.firstElementChild.id"))
             check("  with the picker showing", page.is_visible(".viz-drop"))
-            check("the price is on screen before a photo is asked for",
-                  page.inner_text(".viz-price")
-                  == "Your transformation + full report — $7, one-time",
-                  page.inner_text(".viz-price"))
+            # This asserted a `.viz-price` line inside the card, which was the
+            # contract before `checkout.price_after_upload` shipped. It is the
+            # opposite now, deliberately: nothing on this page names a price
+            # until there is a photograph to price, and the foot of the offer
+            # asks for the photograph instead. The property is still worth a
+            # check — it is just the other way round.
+            check("no price is named before a photo is asked for",
+                  page.query_selector(".viz-price") is None
+                  and not page.evaluate(
+                      """() => Array.from(document.querySelectorAll(
+                           '#result-body *')).some(function (n) {
+                           return n.children.length === 0
+                             && n.offsetParent !== null
+                             && /\$\d/.test(n.textContent)
+                             && !n.closest('.offer-value'); })"""))
+            check("  and the offer asks for the kitchen instead",
+                  page.is_visible(".offer-gate__cta"))
             check("  and what happens to the photo is answered unprompted",
                   page.inner_text(".viz-privacy") == VIZ["privacy_note"],
                   page.inner_text(".viz-privacy"))
@@ -404,15 +417,26 @@ def main():
             page.screenshot(path=os.path.join(SHOTS, "shot-pre-teaser.png"),
                             full_page=True)
 
-            print("\n--- the manifest notices ---")
-            rows = page.eval_on_selector_all(
-                ".commerce .manifest-row .manifest-text",
-                "ns => ns.map(n => n.textContent)")
-            check("the first row says the photo is already in",
-                  rows[0] == VIZ["manifest_uploaded"], rows[0])
-            check("  and the rest of the list is untouched",
-                  rows[1:] == CFG["kitchen-visualizer"]["checkout"]["manifest"][1:],
-                  rows[1:3])
+            print("\n--- what the offer says once the photo is in ---")
+            # The six-row manifest this used to read is off this funnel's page:
+            # the result-page rebuild replaced it with three value cards, and
+            # this funnel carries no `checkout.manifest` at all any more. What
+            # the block has to say at this point is that the gate is down, the
+            # price is finally named, and the reader is told what paying sends.
+            check("the manifest is gone from this funnel",
+                  page.eval_on_selector_all(".commerce .manifest-row",
+                                            "n => n.length") == 0
+                  and "manifest" not in CFG["kitchen-visualizer"]["checkout"])
+            check("the gate is down now that a photo exists",
+                  not page.is_visible(".offer-gate__cta"))
+            check("  so the price is named, once",
+                  page.eval_on_selector_all(
+                      "#commerce .price-now",
+                      "ns => ns.filter(n => n.offsetParent !== null).length")
+                  == 1)
+            check("  and what paying sends is spelled out under the panels",
+                  page.inner_text(".viz-deliver") == VIZ["deliver_note"],
+                  page.inner_text(".viz-deliver"))
 
             print("\n--- tapping the lock asks for the money ---")
             before = page.evaluate("window.scrollY")
@@ -462,7 +486,14 @@ def main():
                             full_page=True)
             page.close()
 
-            print("\n--- somebody who never uploaded still gets the old flow ---")
+            print("\n--- somebody who never uploaded cannot pay yet ---")
+            # This walked to the offer and paid without a photograph, then
+            # uploaded on the paid page. That route is closed on purpose: the
+            # upload gate refuses to show any pay control until a kitchen
+            # exists, because a wallet purchase with no photograph attached is
+            # a buyer who has paid for a transformation of nothing. What the
+            # section checks now is that the gate really is what stops them,
+            # and that it says so rather than simply showing a dead button.
             S.reset()
             page = browser.new_page(viewport={"width": 390, "height": 844})
             no_stripe(page)
@@ -470,19 +501,27 @@ def main():
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.goto("http://127.0.0.1:%d/kitchen-visualizer" % PORT)
             walk(page, "kitchen-visualizer")
-            page.click("#pay-button")
-            page.wait_for_url("**/kitchen-visualizer?cs=*", timeout=10000)
-            page.wait_for_selector("#visualizer", timeout=20000)
-            page.wait_for_selector(".viz-drop", timeout=20000)
-            check("the paid page asks for a photo, as it did before any of this",
-                  page.is_visible(".viz-drop"))
-            page.set_input_files(".viz-drop .viz-file", photo_file(tmp))
-            page.wait_for_selector(".viz-go", timeout=10000)
-            check("  and uploading there still works",
-                  bool(list(S.purchases.values())[0]["photo"]))
-            ups = [e[1] for e in S.events if e[0] == "viz_upload"]
-            check("  counted as the post phase",
-                  ups and ups[-1].get("phase") == "post", ups)
+            page.wait_for_selector("#commerce:not([hidden])", timeout=15000)
+            page.wait_for_timeout(700)
+            check("no pay control is on the page at all",
+                  page.eval_on_selector_all(
+                      "#commerce button",
+                      """ns => ns.filter(n => n.offsetParent !== null)
+                           .map(n => n.className)""") == ["offer-gate__cta"],
+                  page.eval_on_selector_all(
+                      "#commerce button",
+                      """ns => ns.filter(n => n.offsetParent !== null)
+                           .map(n => n.className)"""))
+            check("  and the reader is told what is missing",
+                  page.inner_text(".offer-gate__cta").strip().endswith(
+                      CFG["kitchen-visualizer"]["checkout"]["gate_cta"]),
+                  page.inner_text(".offer-gate__cta"))
+            check("  nothing was checked out", not S.checkouts, S.checkouts)
+            # Tapping it sends them back to the picker rather than to Stripe.
+            page.click(".offer-gate__cta")
+            page.wait_for_timeout(900)
+            check("  tapping it goes to the picker, not to a payment",
+                  page.is_visible(".viz-drop") and not S.checkouts)
             check("no page errors", not errors, errors[:3])
             page.close()
 
