@@ -249,3 +249,6 @@ bottom.
 
 ## 2026-08-18 — claude/viz-live-mode
 - viz live mode
+
+## 2026-08-19 — claude/track-device-wallet
+- device and pay control
