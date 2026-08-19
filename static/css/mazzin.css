@@ -1337,17 +1337,40 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* The accent frame, drawn INSIDE the box.
-   It was `box-shadow: 0 0 0 2px`, which paints outside the border box — and
-   the panel's right edge sits flush with #report's, which carries
-   `overflow: hidden`. So the right two pixels were clipped away on every
+/* The accent frame, drawn INSIDE the box and ON TOP of the picture in it.
+
+   Two things had to be got right and each of them broke the other one first.
+
+   It began as `box-shadow: 0 0 0 2px`, which paints OUTSIDE the border box —
+   and the panel's right edge sits flush with #report's, which carries
+   `overflow: hidden`. So the right two pixels were clipped away at every
    width: measured at 320, 360 and 390, the locked half's right edge and the
-   report's right edge are the same number, and the only clipping ancestor is
-   #report. An outline with a negative offset draws within the element instead,
-   so no ancestor's overflow can reach it and all four sides survive. */
-.viz-half.is-after {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
+   report's are the same number, and #report is the only clipping ancestor.
+
+   It became `outline` with a negative offset, which does draw within the
+   element — and vanished under the photograph. `.viz-shade` is positioned, so
+   the browser paints it after the ancestor's outline; the frame was still
+   there, still two pixels wide on all four sides by every computed style, and
+   visible only along the caption, where nothing was painted over it.
+
+   So: an absolutely positioned overlay in the element's own box, above the
+   picture, and transparent to a thumb. Inside the box, so nothing can clip it;
+   over the content, so nothing can cover it. */
+.viz-half.is-after,
+.viz-pair-teaser .viz-half.is-locked { position: relative; }
+
+.viz-half.is-after::before,
+.viz-pair-teaser .viz-half.is-locked::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  border: 2px solid var(--accent);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 /* One rectangle for both halves and for all three states of the right one.
@@ -1381,11 +1404,7 @@ body {
    because the claim is that the right one is the left one — a smaller or
    greyer placeholder would read as a diagram of the offer rather than as the
    offer. */
-.viz-pair-teaser .viz-half.is-locked {
-  cursor: pointer;
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
+.viz-pair-teaser .viz-half.is-locked { cursor: pointer; }
 
 .viz-shade {
   position: relative;
@@ -1481,9 +1500,20 @@ body {
    `visibility` and not `display`: the block holds its height from the first
    render, empty, so the pay button is in the same place before and after a
    render that arrives half a minute later. A reader whose thumb is already
-   moving towards that button must not have it slide out from under them. */
+   moving towards that button must not have it slide out from under them.
+
+   A panel rather than two loose rows. Between two photographs and a full-width
+   accent button, a bare label with two lines under it reads as leftover text;
+   a tinted box with an edge on it reads as a thing, and what that thing is is
+   the answer to the question the button is about to ask. Tinted in the same
+   accent-soft the hero offer card uses, so the two places on this page that
+   describe what is bought are visibly the same voice. */
 .viz-deliver {
   margin: 14px 0 0;
+  padding: 14px;
+  border: 1px solid rgba(192, 86, 33, 0.26);
+  border-radius: 11px;
+  background: var(--accent-soft);
   visibility: hidden;
 }
 
@@ -3156,18 +3186,65 @@ body.is-locked { overflow: hidden; }
   padding: 0;
 }
 
+/* Badge, then title over body text. The badge is out of the text column
+   entirely rather than indented into it, so a title that wraps wraps against
+   the same left edge as the sentence under it. */
 .offer-value__row {
-  position: relative;
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
   margin: 0 0 8px;
   padding: 11px 13px;
-  border: 1px solid var(--line);
+  border: 2px solid var(--line);
   border-radius: 12px;
+  background: #fff;
+}
+
+/* The text column, and the reason it is a column: without `min-width: 0` a
+   flex item refuses to shrink below its longest unbreakable word, and a card
+   with a long word in it would push its own right edge past the page. */
+.offer-value__body { min-width: 0; }
+
+/* One shape on every card. What separates the first from the other two is the
+   tint behind the mark, the fill of the mark and the border around the card —
+   never a different geometry, which would read as three unrelated things
+   rather than one list with a first item. */
+.offer-value__badge {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  /* Lifted so the badge's centre lands on the title's, not on the top of the
+     title's line box. */
+  margin-top: -4px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+}
+
+.offer-value__icon {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The hero's, and the only filled mark on the page. A solid shape reads before
+   an outline does, which is the hierarchy stated once more in one property. */
+.offer-value__icon.is-filled {
+  fill: var(--accent);
+  stroke: none;
 }
 
 .offer-value__title {
   margin: 0 0 3px;
   font-size: 14px;
   font-weight: 600;
+  line-height: 1.35;
   color: var(--ink);
 }
 
@@ -3180,12 +3257,24 @@ body.is-locked { overflow: hidden; }
 
 /* The one being bought: tinted, bordered in the accent, and titled louder
    than the two under it. The others are deliberately plain — a page where
-   everything is emphasised emphasises nothing. */
+   everything is emphasised emphasises nothing.
+
+   The fill is what carries this and not the border. A 3px edge and a 2px edge
+   are the same edge to anybody who is not comparing them side by side; a
+   warm field against two white ones is visible from across the room. */
 .offer-value__row.is-hero {
   margin-bottom: 12px;
-  padding: 13px 13px 13px 40px;
+  padding: 13px;
+  border-width: 3px;
   border-color: var(--accent);
   background: var(--accent-soft);
+}
+
+/* Deeper than the card it is sitting on, so the badge is still a shape on the
+   tint rather than a hole cut in it. */
+.offer-value__row.is-hero .offer-value__badge {
+  margin-top: -3px;
+  background: #F6D8C2;
 }
 
 .offer-value__row.is-hero .offer-value__title {
@@ -3194,15 +3283,6 @@ body.is-locked { overflow: hidden; }
 }
 
 .offer-value__row.is-hero .offer-value__text { color: #6b5744; }
-
-.offer-value__star {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  width: 16px;
-  height: 16px;
-  fill: var(--accent);
-}
 
 /* The figure, not the sentence around it. */
 .offer-value__text .money {
@@ -3230,6 +3310,41 @@ body.is-locked { overflow: hidden; }
    reads as a price that was waiting to be sprung. */
 .price.is-dimmed,
 .xp-summary__price.is-dimmed { opacity: 0.45; }
+
+/* --- the offer, while the render is still running --------------------------- */
+
+/* The container everything withheld lives in. Its height is the sum of the
+   rows inside it and nothing else, which is what lets those rows be taken away
+   and put back without the page under them moving a pixel. */
+.offer-hold { position: relative; }
+
+/* Invisible, not gone. `display: none` would take the height with it, and the
+   pay button coming back a hundred pixels from where the reader last saw it is
+   the exact failure this is built to prevent. */
+.offer-hold.is-held > *:not(.offer-wait) { visibility: hidden; }
+
+/* Out of flow, so it contributes no height of its own, and centred over the
+   space the price and the button are going to occupy. Muted and one line: this
+   is an explanation for a wait, not a second offer. */
+.offer-wait {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 14px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+  text-align: center;
+  visibility: hidden;
+}
+
+.offer-hold.is-held .offer-wait { visibility: visible; }
 
 /* --- the gate, before a photograph exists ---------------------------------- */
 

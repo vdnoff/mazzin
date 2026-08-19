@@ -892,6 +892,94 @@ def main():
     check("  including in the sharp half",
           sharp < detail(render), (sharp, detail(render)))
 
+    print("\n--- the band across its foot, on two lines ---")
+    # Measured against the picture the reader is actually shown: the panel is
+    # about 37% of the viewport, so a 373-wide teaser is drawn around 138 CSS
+    # pixels on a 320px phone. One line long enough to carry the sentence has
+    # to shrink to fit and arrives at seven or eight of those; two lines carry
+    # it at twelve. That is the whole reason this is two strings.
+    from PIL import ImageDraw
+
+    VBLK = visualizer.settings(config.load_funnel("kitchen-visualizer"))
+    lines = visualizer._teaser_lines(VBLK)
+    check("the config carries two lines",
+          len(lines) == 2 and all(lines), lines)
+    check("  and the default is two as well, if it does not",
+          visualizer._teaser_lines({}) == list(visualizer.TEASER_BAND_DEFAULT),
+          visualizer._teaser_lines({}))
+    check("  a funnel JSON from before the split still says something",
+          visualizer._teaser_lines({"teaser_band": "Unlocks in full"})
+          == ["Unlocks in full"])
+    check("  and one blank line is dropped rather than drawn",
+          visualizer._teaser_lines({"teaser_band_1": "Only this",
+                                    "teaser_band_2": "  "}) == ["Only this"])
+
+    def band_fit(block, width=tw):
+        """Type size, band height and the widest line, as the drawer sees it."""
+        d = ImageDraw.Draw(Image.new("RGB", (10, 10)))
+        rows = visualizer._teaser_lines(block)
+        size = int(round(width * visualizer.TEASER_LABEL_SIZE))
+        floor = int(round(width * visualizer.TEASER_LABEL_MIN))
+        room = width * (1.0 - 2 * visualizer.TEASER_BAND_PAD)
+        while size > floor:
+            f = visualizer._brand_font(size)
+            if max(d.textlength(r, font=f) for r in rows) <= room:
+                break
+            size -= 1
+        f = visualizer._brand_font(size)
+        return (size, int(round(size * visualizer.TEASER_BAND_RATIO)),
+                max(d.textlength(r, font=f) for r in rows), room, floor)
+
+    size, band_h, widest, room, floor = band_fit(VBLK)
+    print("    teaser %dx%d: type %dpx, band %dpx (%.1fx), widest line %.0f "
+          "of %.0f available" % (tw, th, size, band_h, band_h / float(size),
+                                 widest, room))
+    for vw, panel in ((320, tw * 0.37), (360, tw * 0.42), (390, tw * 0.464)):
+        print("      at %d: panel ~%.0f CSS px -> type %.1f, band %.1f"
+              % (vw, panel, size * panel / tw, band_h * panel / tw))
+    check("both lines fit inside the picture with room to spare",
+          widest <= room, (widest, room))
+    check("  at the full size, with no shrinking needed",
+          size == int(round(tw * visualizer.TEASER_LABEL_SIZE)), size)
+    check("  the band is 2.9x the type", band_h == int(round(size * 2.9)),
+          (band_h, size))
+    check("  and the type is 8.8% of the picture's width",
+          abs(size / float(tw) - 0.088) < 0.002, size / float(tw))
+    # The smallest width the reader ever sees it at. Twelve CSS pixels of bold
+    # cream on an 80% scrim is small; eight, which is where the one-line copy
+    # landed, is a smudge.
+    check("  which is still readable on the smallest phone",
+          size * 0.37 >= 11.0, size * 0.37)
+
+    # Copy nobody can fit. It must stop at the floor and say so, never run off
+    # the edge of the picture in silence.
+    long_size, _, long_w, long_room, long_floor = band_fit(
+        {"teaser_band_1": "An extraordinarily long first line of copy",
+         "teaser_band_2": "and a second one just as unreasonable"})
+    check("over-long copy shrinks to the floor and stops",
+          long_size == long_floor, (long_size, long_floor))
+    check("  and is still too wide there, which is the case being tested",
+          long_w > long_room, (long_w, long_room))
+
+    import logging
+    said = []
+
+    class Ear(logging.Handler):
+        def emit(self, record):
+            said.append(record.getMessage())
+
+    ear = Ear()
+    visualizer.log.addHandler(ear)
+    try:
+        wide = visualizer.build_teaser(render, {
+            "teaser_band_1": "An extraordinarily long first line of copy",
+            "teaser_band_2": "and a second one just as unreasonable"})
+    finally:
+        visualizer.log.removeHandler(ear)
+    check("  it says so in the log rather than clipping quietly",
+          any("too long" in line for line in said), said[:2])
+    check("  and still returns a picture", len(wide) > 0 and wide != render)
+
     print("\n--- one render per session, and the re-run survives it ---")
     sess = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
     shutil.rmtree(visualizer.pending_dir(sess), ignore_errors=True)

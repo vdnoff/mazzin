@@ -127,7 +127,8 @@
   var journeyStage = 0;
   var gateSeen = false;         // viz_gate_view is once a session, not a scroll
   var gateIO = null;            // its observer, dropped the moment it fires
-  var gateUp = false;           // the offer cannot be paid yet
+  var gateUp = false;           // no photograph yet, so the gate is showing
+  var payHeld = false;          // no pay control on screen, for any reason
   var pixelCartFired = false;   // AddToCart: the first photo, once
   var payReadyFired = false;    // which control was shown, counted once
   var readerCountry = null;     // two letters off the edge, or null for unknown
@@ -3919,7 +3920,19 @@
   // nothing below it can move when the choice is finally made. That is
   // structural rather than two numbers kept in step by hand: whichever way
   // this ends, the button under the reader's thumb is where it already was.
+  //
+  // Called twice on the focused page and once anywhere else. The offer block
+  // builds the slot as soon as it has a shape to build it in, so the space the
+  // wallet will occupy is in the layout from the first paint; `xpStart` calls
+  // it again when the render is done and there is finally something to sell,
+  // and finds it already standing. Reserving is DOM and nothing else — no
+  // script fetched, no intent created — which is the whole reason it can
+  // happen before the attempt is allowed to.
   function xpReserve() {
+    if (xpBlock) return;
+    if (!expressOn() || !PAYMENTS_ENABLED) return;
+    if (!el.payButton || !el.payButton.parentNode) return;
+
     var summary = xpSummary();
 
     xpBlock = elm("div", "xp");
@@ -3994,11 +4007,12 @@
   // button on hardware that would otherwise show it. What was shown and what
   // it was shown on are two facts, and this is only the first.
   function payReady(control) {
-    // Nothing is showable while the gate is up: what stands there is a button
-    // asking for a photograph, and counting that as a pay control would put a
-    // reader who never reached the offer in the denominator of a rate about
-    // people who did.
-    if (payReadyFired || gateUp) return;
+    // Nothing is showable while the block is held: what stands there is a
+    // button asking for a photograph, or a line saying the picture is being
+    // prepared, and counting either as a pay control would put a reader who
+    // never reached the offer in the denominator of a rate about people who
+    // did.
+    if (payReadyFired || payHeld) return;
     payReadyFired = true;
     track("pay_ready", null, { control: control });
   }
@@ -4289,7 +4303,14 @@
     mail: "M2.5 5h15v10h-15zM2.5 5.5l7.5 5.5 7.5-5.5",
     // The two things unlocking sends: a picture and a document.
     image: "M2.5 4h15v12h-15zM2.5 13l4.5-4 3.5 3 3-2.5 4 3.5",
-    doc: "M4.5 2h7l4 4v12h-11zM11.5 2v4.5h4M7 10h6M7 13h6"
+    doc: "M4.5 2h7l4 4v12h-11zM11.5 2v4.5h4M7 10h6M7 13h6",
+    // The three offer cards. The star is filled and the other two are drawn in
+    // line, which is the whole hierarchy in one property: a solid shape reads
+    // before an outline does, and the first card is the one being bought.
+    star: "M10 1.6l2.4 5.3 5.8.6-4.3 3.9 1.2 5.7L10 14.2l-5.1 2.9 1.2-5.7L1.8"
+          + " 7.5l5.8-.6z",
+    shield: "M10 2.2l6 2.2v5c0 3.9-2.5 6.8-6 8.4-3.5-1.6-6-4.5-6-8.4v-5z"
+            + "M7.1 9.9l2.2 2.2 3.7-3.9"
   };
 
   function icon(name, cls) {
@@ -4542,6 +4563,16 @@
     el.leadReport.hidden = !copy.lead_report;
   }
 
+  // What each card carries beside its title. Positional, not configured: there
+  // are three cards and the comment above says why there is no fourth, the
+  // order is the order of what is being sold, and a per-row icon key would be
+  // one more name a copywriter has to keep in step with that order.
+  //
+  // The hero's is overridden to the star wherever it sits, so a config that
+  // moves the hero moves its mark with it rather than leaving the star behind
+  // on a card that is no longer the one being bought.
+  var VALUE_ICONS = ["star", "doc", "shield"];
+
   // Three things, in the order they matter, and the first one carries the
   // weight because it is the one being bought. No fourth item, and nothing
   // about other customers: there are none yet, and a number nobody can stand
@@ -4554,17 +4585,32 @@
       el.valueHead.hidden = !copy.value_head;
       el.valueList = elm("ul", "offer-value");
       // Heading then cards then price, with nothing allowed between them:
-      // both are inserted immediately before the price row, in that order.
-      el.price.parentNode.insertBefore(el.valueHead, el.price);
-      el.price.parentNode.insertBefore(el.valueList, el.price);
+      // both are inserted immediately before the row that holds the price, in
+      // that order. On the focused page that row is the hold container and not
+      // the price itself — inserted before the price, the heading and the
+      // cards would be inside the block that goes invisible while the render
+      // runs, and the reader would be left waiting at a blank page instead of
+      // reading what they are waiting for.
+      var anchor = valueAnchor();
+      anchor.parentNode.insertBefore(el.valueHead, anchor);
+      anchor.parentNode.insertBefore(el.valueList, anchor);
     }
     el.valueList.textContent = "";
     el.valueList.hidden = !rows.length;
 
-    rows.forEach(function (row) {
+    rows.forEach(function (row, i) {
       if (!row || !row.text) return;
       var li = elm("li", "offer-value__row" + (row.hero ? " is-hero" : ""));
-      if (row.hero) li.appendChild(starNode());
+
+      // The badge is a circle with a mark in it, and it is the same shape on
+      // every card: what separates the hero is the tint behind it, the fill of
+      // the mark and the border around the card, not a different geometry.
+      var badge = elm("span", "offer-value__badge");
+      var name = row.hero ? "star" : (VALUE_ICONS[i] || "doc");
+      var mark = icon(name, "offer-value__icon"
+                            + (name === "star" ? " is-filled" : ""));
+      badge.appendChild(mark);
+      li.appendChild(badge);
 
       var body = elm("div", "offer-value__body");
       if (row.title) {
@@ -4580,16 +4626,8 @@
     });
   }
 
-  function starNode() {
-    var svg = document.createElementNS(SVG_NS, "svg");
-    svg.setAttribute("class", "offer-value__star");
-    svg.setAttribute("viewBox", "0 0 20 20");
-    svg.setAttribute("aria-hidden", "true");
-    var path = document.createElementNS(SVG_NS, "path");
-    path.setAttribute("d", "M10 1.6l2.4 5.3 5.8.6-4.3 3.9 1.2 5.7L10 14."
-                      + "2l-5.1 2.9 1.2-5.7L1.8 7.5l5.8-.6z");
-    svg.appendChild(path);
-    return svg;
+  function valueAnchor() {
+    return el.hold && el.hold.parentNode ? el.hold : el.price;
   }
 
   // Whether this reader has actually handed over a kitchen. The whole bottom
@@ -4608,20 +4646,79 @@
   // and the intent was created before the photo existed too. That is what this
   // gate closes, and it closes it in one place so neither path can be the one
   // that was forgotten.
+  //
+  // That one place is now three states rather than two, and the reason the
+  // second one is here rather than somewhere of its own is the same reason the
+  // first one is: every route to a pay control has to pass through a single
+  // function, or one of them is eventually the route somebody forgets.
+  //
+  // Three states below the panels, and which one is live is read from the
+  // server's own status body rather than from anything the page remembers.
+  //
+  //   no photo                  gate     "Add your photo first"
+  //   photo, render running     wait     one muted line, no price, no control
+  //   render finished or failed open     price, pay control, trust row
+  //
+  // `has_source` is what the upload wrote and separates the first from the
+  // other two; `teaser` — "working", then "ready" or absent — separates the
+  // second from the third. Both come off `/api/visualizer/status`, which is
+  // also what the poll refreshes, so the block changes state on the same
+  // answer that changes the panel above it.
+  //
+  // A funnel that does not render before the money never reports a teaser at
+  // all, and neither does an engine.js talking to a server that predates it:
+  // `vizTeaserWorking()` is false, and the block is open the moment there is a
+  // photograph, exactly as it was.
+  function offerState() {
+    if (!vizOn() || !vizPre()) return "open";
+    if (!vizHasPhoto()) return "gate";
+    // The note is the state. Withholding the price and the button while saying
+    // nothing about why is worse than not withholding them, so a funnel with
+    // no waiting copy configured — an older JSON off the CDN — keeps the two
+    // states it already had.
+    if (vizTeaserWorking() && waitNote()) return "wait";
+    return "open";
+  }
+
+  function waitNote() {
+    return ((cfg && cfg.checkout) || {}).wait_note || "";
+  }
+
   function renderGate() {
     // Keyed on the price row rather than on the commerce block, so the gate
     // covers the two-screen paywall too if that flag is ever turned back on.
     if (!el.price) return;
-    if (!vizOn() || !vizPre()) { showGate(false); return; }
-    showGate(!vizHasPhoto());
+    showOffer(offerState());
   }
 
-  function showGate(on) {
+  function showOffer(state) {
     ensureGateNodes();
     if (!el.gate) return;
 
-    gateUp = !!on;
+    var on = state === "gate";
+    var wait = state === "wait";
+
+    // The wallet's geometry, up front. Without this the block would be one
+    // bare button tall while the render ran and one grid cell tall after it,
+    // and the no-shift promise below would be a promise about a page that had
+    // not finished being built yet.
+    if (el.hold) xpReserve();
+
+    gateUp = on;
+    // What no pay control is on screen means, whatever the reason for it.
+    // Two events read this rather than the gate flag: neither `pay_ready` nor
+    // `paywall_view` is true of a block showing a line about a picture being
+    // prepared.
+    payHeld = on || wait;
+
     el.gate.hidden = !on;
+    // Held, not hidden. Every row below stays in the layout at its own height
+    // and goes invisible, which is what makes the block the same number of
+    // pixels tall in both states — so the legal line under it, and the whole
+    // of the page below that, cannot move when the render lands.
+    if (el.hold) el.hold.classList.toggle("is-held", wait);
+    if (el.wait) el.wait.textContent = waitNote();
+
     if (el.withdrawal) el.withdrawal.hidden = on;
     if (el.trust) el.trust.hidden = on;
     if (el.expectation) el.expectation.hidden = on || !expectationText();
@@ -4632,9 +4729,13 @@
     // and today's behaviour; hidden is the other arm.
     //
     // Either way the price is on screen in full before any pay control is,
-    // because `showGate(false)` runs this before it starts the wallet. A
+    // because `showOffer("open")` runs this before it starts the wallet. A
     // price that first appears after the money has been asked for is the one
     // ordering this must never produce.
+    //
+    // The waiting state is deliberately not in here. Its price is withheld by
+    // the hold going invisible, which keeps the row's height; hiding it would
+    // take the height with it and move the button when it came back.
     var hide = priceGated();
     if (el.price) {
       // `xpSet` owns this too once a wallet answer is in, so ask it rather
@@ -4651,13 +4752,25 @@
     if (el.vizPrice) el.vizPrice.hidden = hide;
     if (el.sticky) {
       var copy = commerceCopy();
-      el.sticky.textContent = hide
+      // The bar goes quiet for the wait as well. It is the same price the
+      // block below is withholding, carried down the whole scroll — a bar
+      // still shouting the number while the block says the picture is being
+      // prepared is the page contradicting itself on the reader's screen.
+      el.sticky.textContent = (hide || wait)
         ? (copy.sticky_label_gated || copy.sticky_label || "")
         : withPrice(copy.sticky_label || "");
     }
 
+    // Both, every time, and not one or the other.
+    //
+    // The gate goes up before the offer block has been assembled — the
+    // visualizer section renders first and asks for it — so the button is
+    // hidden directly, on its own, while there is no express slot to hide it
+    // through. The slot is built later, and a run that then cleared only the
+    // slot left the button carrying a `hidden` nobody was going to take off
+    // again: a block with a price, a consent box and no way to pay.
     if (xpBlock) xpBlock.hidden = on;
-    else if (el.payButton) el.payButton.hidden = on;
+    if (el.payButton) el.payButton.hidden = on && !xpBlock;
 
     if (on) watchGate();
     else if (gateIO) { gateIO.disconnect(); gateIO = null; }
@@ -4665,18 +4778,24 @@
     // The block just became something that can be paid. If the reader is
     // already looking at it there will be no new intersection to wait for, so
     // the postponed view is fired here; otherwise the observer still has it.
-    if (!on && commerceInView) firePaywallView();
+    if (!payHeld && commerceInView) firePaywallView();
 
     // The element is never mounted while the gate is up, so there is no wallet
     // button to press and no intent created for a purchase that cannot be
     // fulfilled. Taken down, this is what lets it start.
-    if (!on) xpStart();
+    //
+    // The waiting state holds it for the second reason as much as the first.
+    // A PaymentIntent is created against an order this session might never be
+    // able to fulfil — the render can still fail — and a wallet button under a
+    // panel that has no picture in it yet is a charge offered for something
+    // nobody has been shown.
+    if (!payHeld) xpStart();
 
     // A gated funnel with no express attempt: the gate has just come down and
     // the redirect button is what is standing behind it. `xpStart` has already
     // run and declined by this line, so `xpStarted` is asking whether an
     // attempt is under way — if none is, what is on screen is the final answer.
-    if (!on && !xpStarted) payReady("redirect");
+    if (!payHeld && !xpStarted) payReady("redirect");
   }
 
   function ensureGateNodes() {
@@ -4860,8 +4979,10 @@
     // `renderExpectation`, which puts it under the pay control here and over
     // the consent box on /kitchen.
     var rows = focusResult()
-      ? [ruleNode(), el.price, el.withdrawal, el.payButton, el.payError,
-         el.trust, el.legal]
+      ? [ruleNode(),
+         holdNode([el.price, el.withdrawal, el.payButton, el.payError,
+                   el.trust]),
+         el.legal]
       : [el.payAnchor, el.manifest, buildSampleLink(), el.price, el.withdrawal,
          el.payButton, el.payError, el.trust, el.legal];
     rows.forEach(function (node) {
@@ -4892,6 +5013,30 @@
       // is the same division drawn twice in two different languages.
       el.commerce.classList.add("commerce--focus");
     }
+  }
+
+  // Everything that is withheld while the render runs, in one box, plus the
+  // line that stands in for it.
+  //
+  // The box is what makes the promise keepable. Its height comes entirely from
+  // the rows inside it — the price, the consent, the pay control, the trust
+  // row — and those rows are in the document from the first paint whichever
+  // state the block is in. The waiting line is taken out of flow and laid over
+  // them, so it contributes nothing. There is therefore no arithmetic keeping
+  // the two states the same height: they are the same height because they are
+  // the same boxes.
+  //
+  // The legal line is deliberately outside. It is the fine print of the page
+  // rather than a term of this sale, and it is the thing directly underneath —
+  // the first thing that would visibly jump if any of this were wrong.
+  function holdNode(rows) {
+    el.hold = elm("div", "offer-hold");
+    el.wait = elm("p", "offer-wait", waitNote());
+    el.hold.appendChild(el.wait);
+    rows.forEach(function (node) {
+      if (node) el.hold.appendChild(node);
+    });
+    return el.hold;
   }
 
   function renderCommerce() {
@@ -5225,9 +5370,11 @@
     // there would pollute the exact signal the upload event exists to be.
     //
     // Deliberately without setting the flag: this is a postponement, not a
-    // suppression. The next intersection after the gate comes down fires it,
-    // and `showGate` fires it directly if the block is already on screen.
-    if (gateUp) return;
+    // suppression. The next intersection after the block opens fires it, and
+    // `showOffer` fires it directly if the block is already on screen. The
+    // waiting state is held for the same reason — a block whose price and
+    // button are not on it yet is not a checkout anybody has reached.
+    if (payHeld) return;
     paywallTracked = true;
     track("paywall_view", null, { src: payIntent });
     pixelTrack("InitiateCheckout");

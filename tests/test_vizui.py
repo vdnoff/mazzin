@@ -39,6 +39,8 @@ CS = "cs_test_uiwalk"
 CFG = {slug: json.load(open(os.path.join(ROOT, "funnels/%s.json" % slug)))
        for slug in ("kitchen", "kitchen-visualizer")}
 VIZ = CFG["kitchen-visualizer"]["visualizer"]
+VCO = CFG["kitchen-visualizer"]["checkout"]
+VCOM = VCO["commerce"]
 
 fails = []
 checks = [0]
@@ -65,6 +67,10 @@ class State:
         self.reset()
 
     def reset(self):
+        # Every attempt to create a PaymentIntent, counted. The offer block is
+        # not allowed to make one while the render is still running, and the
+        # only way to prove that is to count them where they would land.
+        self.intents = 0
         self.status = "none"
         self.generations = 0
         self.has_source = False
@@ -203,6 +209,10 @@ class Handler(WalkHandler):
             S.has_source = True
             S.status = "uploaded"
             return self._json(S.body())
+        if path == "/api/payment-intent":
+            S.intents += 1
+            return self._json({"client_secret": "pi_test_secret",
+                               "publishable_key": "pk_test_x"})
         if path == "/api/visualizer/generate":
             S.generates += 1
             S.generations += 1
@@ -567,6 +577,14 @@ def main():
                                         device_scale_factor=2)
                 errs = []
                 page.on("pageerror", lambda e: errs.append(str(e)))
+                # Every request at Stripe, whether it arrives or not. The
+                # element must not even be reached for while the render runs,
+                # and "no PaymentIntent" is only half of that — the script
+                # itself is a third-party fetch on a page that has not asked
+                # anybody for money yet.
+                hits = []
+                page.on("request", lambda r: "stripe.com" in r.url
+                        and hits.append(r.url))
                 page.goto("http://127.0.0.1:%d/kitchen-visualizer" % PORT)
                 page.wait_for_selector("#cards .card", timeout=10000)
                 for i, _step in enumerate(STEPS):
@@ -585,7 +603,7 @@ def main():
                                        timeout=20000)
                 page.wait_for_selector("#commerce:not([hidden])", timeout=15000)
                 page.wait_for_timeout(700)
-                return page, errs
+                return page, errs, hits
 
             PANEL = """() => {
               var shade = document.querySelector('.viz-half.is-locked .viz-shade');
@@ -636,17 +654,157 @@ def main():
                   var r = n.getBoundingClientRect();
                   var rep = document.getElementById('report')
                               .getBoundingClientRect();
-                  return {outline: s.outlineWidth + ' ' + s.outlineStyle,
-                          offset: s.outlineOffset,
+                  var fr = getComputedStyle(n, '::before');
+                  return {frame: fr.borderTopWidth + ' ' + fr.borderTopStyle
+                                 + ' ' + fr.borderTopColor,
+                          framePos: fr.position,
+                          frameZ: fr.zIndex,
+                          frameTaps: fr.pointerEvents,
+                          outline: s.outlineWidth + ' ' + s.outlineStyle,
                           shadow: s.boxShadow,
-                          rightGap: Math.round((rep.right - r.right) * 100) / 100};
-                })()
+                          rightGap: Math.round((rep.right - r.right) * 100) / 100,
+                          // All four, against the box that clips.
+                          inset: {
+                            left: Math.round((r.left - rep.left) * 100) / 100,
+                            right: Math.round((rep.right - r.right) * 100) / 100,
+                            top: Math.round((r.top - rep.top) * 100) / 100,
+                            bottom: Math.round((rep.bottom - r.bottom) * 100) / 100
+                          },
+                          rect: {x: r.x + window.scrollX, y: r.y + window.scrollY,
+                                 w: r.width, h: r.height}};
+                })(),
+                // --- the offer block below the panels ---
+                held: (function () {
+                  var h = document.querySelector('.offer-hold');
+                  return h ? h.classList.contains('is-held') : null;
+                })(),
+                waitShown: (function () {
+                  var w = document.querySelector('.offer-wait');
+                  return w ? getComputedStyle(w).visibility === 'visible' : null;
+                })(),
+                waitText: (document.querySelector('.offer-wait')
+                           || {}).textContent,
+                priceShown: (function () {
+                  var p = document.getElementById('price');
+                  if (!p) return null;
+                  return !p.hidden
+                         && getComputedStyle(p).visibility === 'visible'
+                         && p.getBoundingClientRect().height > 0;
+                })(),
+                // Anything in the block a thumb could press to pay. The pay
+                // button, the wallet grid, the gate — all of them.
+                // The wallet grid counts as one: while Stripe is still being
+                // asked, what stands there is a shimmer in the shape of a
+                // button, and the reader has no way to know it is not one yet.
+                controls: Array.prototype.filter.call(
+                  document.querySelectorAll('#commerce button, #commerce .xp'),
+                  function (n) {
+                    return n.offsetParent !== null
+                      && getComputedStyle(n).visibility === 'visible';
+                  }).map(function (n) { return n.id || n.className; }),
+                // The first thing under the held block. If this moves, so did
+                // everything below it.
+                legalTop: (function () {
+                  var n = document.getElementById('legal-links');
+                  return n ? Math.round((n.getBoundingClientRect().top
+                                         + window.scrollY) * 100) / 100 : null;
+                })(),
+                holdH: (function () {
+                  var h = document.querySelector('.offer-hold');
+                  return h ? Math.round(
+                    h.getBoundingClientRect().height * 100) / 100 : null;
+                })(),
+                docH: Math.round(document.documentElement.scrollHeight),
+                stripe: typeof window.Stripe,
+                // --- the three offer cards ---
+                cards: Array.prototype.map.call(
+                  document.querySelectorAll('.offer-value__row'),
+                  function (n) {
+                    var s = getComputedStyle(n);
+                    var badge = n.querySelector('.offer-value__badge');
+                    var ic = n.querySelector('.offer-value__icon');
+                    var r = n.getBoundingClientRect();
+                    var body = n.querySelector('.offer-value__body');
+                    return {
+                      hero: n.classList.contains('is-hero'),
+                      border: s.borderTopWidth,
+                      bg: s.backgroundColor,
+                      badge: badge ? Math.round(
+                        badge.getBoundingClientRect().width) : 0,
+                      badgeBg: badge
+                        ? getComputedStyle(badge).backgroundColor : null,
+                      fill: ic ? getComputedStyle(ic).fill : null,
+                      stroke: ic ? getComputedStyle(ic).stroke : null,
+                      // Text wider than the box it is in, at any width.
+                      spill: Math.round(n.scrollWidth - n.clientWidth),
+                      bodySpill: body
+                        ? Math.round(body.scrollWidth - body.clientWidth) : null,
+                      over: Math.round(
+                        (r.right - document.getElementById('commerce')
+                           .getBoundingClientRect().right) * 100) / 100
+                    };
+                  }),
+                // --- the tinted panel the delivery rows sit in ---
+                deliverBox: (function () {
+                  var d = document.querySelector('.viz-deliver');
+                  if (!d) return null;
+                  var s = getComputedStyle(d);
+                  var r = d.getBoundingClientRect();
+                  var rep = document.getElementById('report')
+                              .getBoundingClientRect();
+                  return {pad: s.paddingTop, radius: s.borderTopLeftRadius,
+                          bg: s.backgroundColor, border: s.borderTopWidth,
+                          spill: Math.round(d.scrollWidth - d.clientWidth),
+                          over: Math.round((r.right - rep.right) * 100) / 100};
+                })(),
+                bodyOver: Math.round(document.documentElement.scrollWidth
+                                     - window.innerWidth)
               }; }"""
+
+            ACCENT = (192, 86, 33)
+
+            def frame_sides(page, _rect, dpr=2):
+                """Which of the four edges of a box actually carry the accent.
+
+                Computed styles say the outline is asked for; they do not say it
+                survived an ancestor's overflow. This looks at the pixels — the
+                only thing that settles whether a reader sees a border. Sampled
+                a few pixels in from each corner so a rounded edge does not
+                answer for a straight one.
+                """
+                # The element's own screenshot rather than a clip computed from
+                # a rectangle: Playwright scrolls it into view and crops to its
+                # box, which is the same crop at every scroll position. A clip
+                # in page coordinates silently disagrees with one in viewport
+                # coordinates, and the disagreement looks exactly like a
+                # missing border.
+                shot = page.locator(".viz-half.is-locked").screenshot()
+                im = Image.open(io.BytesIO(shot)).convert("RGB")
+                w, h = im.size
+                band = max(3, int(round(3 * dpr)))
+                inset = int(round(14 * dpr))
+
+                def near(px):
+                    return all(abs(px[i] - ACCENT[i]) <= 40 for i in range(3))
+
+                def scan(points):
+                    return any(near(im.getpixel(p)) for p in points)
+
+                xs = range(inset, max(inset + 1, w - inset), 4)
+                ys = range(inset, max(inset + 1, h - inset), 4)
+                return {
+                    "top": scan([(x, y) for x in xs for y in range(band)]),
+                    "bottom": scan([(x, h - 1 - y) for x in xs
+                                    for y in range(band)]),
+                    "left": scan([(x, y) for y in ys for x in range(band)]),
+                    "right": scan([(w - 1 - x, y) for y in ys
+                                   for x in range(band)]),
+                }
 
             boxes = {}
             for width in (320, 360, 390):
                 S.reset(); S.has_source = True; S.teaser = "working"
-                page, errs = free_page(width)
+                page, errs, hits = free_page(width)
                 page.wait_for_selector(".viz-pair-teaser", timeout=20000)
                 page.wait_for_timeout(900)
                 waiting = page.evaluate(PANEL)
@@ -659,6 +817,37 @@ def main():
                 check("  the reader can still scroll",
                       page.evaluate("() => getComputedStyle(document.body)"
                                     ".overflow !== 'hidden'"))
+
+                # The offer block, while the picture is still being made. No
+                # number and nothing to press: what it costs is not a question
+                # worth asking about a thing nobody has been shown yet.
+                check("  the offer block is held",
+                      waiting["held"] is True, waiting["held"])
+                check("  no price is on it",
+                      waiting["priceShown"] is False, waiting["priceShown"])
+                check("  and no pay control either",
+                      waiting["controls"] == [], waiting["controls"])
+                check("  one muted line stands where they were",
+                      waiting["waitShown"] is True
+                      and waiting["waitText"] == VCO["wait_note"],
+                      (waiting["waitShown"], waiting["waitText"]))
+                # The discipline the upload gate already keeps, kept again.
+                check("  NO PaymentIntent was created", S.intents == 0,
+                      S.intents)
+                check("  nothing was asked of Stripe at all", hits == [], hits[:2])
+                check("  and window.Stripe is undefined",
+                      waiting["stripe"] == "undefined", waiting["stripe"])
+                check("  the bar at the foot names no price either",
+                      page.evaluate(
+                          "() => (document.getElementById('sticky-cta')"
+                          "|| {}).textContent")
+                      == VCOM["sticky_label_gated"],
+                      page.evaluate("() => (document.getElementById("
+                                    "'sticky-cta')||{}).textContent"))
+                if width == 390:
+                    page.screenshot(
+                        path=os.path.join(SHOTS, "shot-pre-wait.png"),
+                        full_page=True)
 
                 # The render lands. Nothing may move.
                 S.teaser = "ready"
@@ -712,25 +901,123 @@ def main():
                       waiting["payTop"] is not None
                       and abs(waiting["payTop"] - ready["payTop"]) < 0.5,
                       (waiting["payTop"], ready["payTop"]))
-                # The accent frame, and the reason it is an outline: the
-                # panel's right edge is flush with #report's, which clips.
-                check("  the frame is drawn inside the box, not outside it",
-                      ready["border"]["outline"] == "2px solid"
-                      and ready["border"]["offset"] == "-2px"
+
+                # The offer block, now that there is a picture to sell.
+                check("  the offer block opens with the render",
+                      ready["held"] is False and ready["waitShown"] is False,
+                      (ready["held"], ready["waitShown"]))
+                check("  the price is back",
+                      ready["priceShown"] is True, ready["priceShown"])
+                check("  and so is a pay control",
+                      any(c in ("pay-button", "xp")
+                          for c in ready["controls"]), ready["controls"])
+                check("  the intent is created only now", S.intents == 1,
+                      S.intents)
+                # The whole point of the hold. The block gave four rows back
+                # and the page under it did not move by a pixel.
+                check("  NOTHING BELOW THE BLOCK MOVED",
+                      waiting["legalTop"] is not None
+                      and abs(waiting["legalTop"] - ready["legalTop"]) < 0.5,
+                      (waiting["legalTop"], ready["legalTop"]))
+                check("  because the held block is the same height",
+                      abs(waiting["holdH"] - ready["holdH"]) < 0.5,
+                      (waiting["holdH"], ready["holdH"]))
+                check("  and the page is the same length",
+                      abs(waiting["docH"] - ready["docH"]) <= 1,
+                      (waiting["docH"], ready["docH"]))
+                print("      %d: pay button %.1f -> %.1f | legal line %.1f -> "
+                      "%.1f | held block %.1f -> %.1f | page %d -> %d"
+                      % (width, waiting["payTop"], ready["payTop"],
+                         waiting["legalTop"], ready["legalTop"],
+                         waiting["holdH"], ready["holdH"],
+                         waiting["docH"], ready["docH"]))
+
+                # The three cards, at this width.
+                cards = ready["cards"]
+                check("  three offer cards, each with a badge",
+                      len(cards) == 3
+                      and all(c["badge"] >= 20 for c in cards),
+                      [c["badge"] for c in cards])
+                check("  the hero is filled and bordered heavier",
+                      cards[0]["hero"] and cards[0]["border"] == "3px"
+                      and cards[0]["bg"] == "rgb(253, 241, 231)"
+                      and cards[0]["fill"] == "rgb(192, 86, 33)",
+                      (cards[0]["border"], cards[0]["bg"], cards[0]["fill"]))
+                check("  its badge is deeper than the card under it",
+                      cards[0]["badgeBg"] != cards[0]["bg"],
+                      (cards[0]["badgeBg"], cards[0]["bg"]))
+                check("  the other two are white, hairlined, stroked not filled",
+                      all(c["border"] == "2px"
+                          and c["bg"] == "rgb(255, 255, 255)"
+                          and c["fill"] == "none"
+                          and c["stroke"] == "rgb(192, 86, 33)"
+                          for c in cards[1:]),
+                      [(c["border"], c["bg"], c["fill"], c["stroke"])
+                       for c in cards[1:]])
+                check("  no card's text overflows its own box",
+                      all(c["spill"] <= 0 and c["bodySpill"] <= 0
+                          for c in cards),
+                      [(c["spill"], c["bodySpill"]) for c in cards])
+                check("  and no card reaches past the block it is in",
+                      all(c["over"] <= 0.5 for c in cards),
+                      [c["over"] for c in cards])
+
+                # The tinted panel the delivery rows moved into.
+                box = ready["deliverBox"]
+                check("  the delivery rows sit in a tinted panel",
+                      box["bg"] == "rgb(253, 241, 231)" and box["pad"] == "14px"
+                      and box["radius"] == "11px" and box["border"] == "1px",
+                      (box["bg"], box["pad"], box["radius"], box["border"]))
+                check("  which does not overflow",
+                      box["spill"] <= 0 and box["over"] <= 0.5,
+                      (box["spill"], box["over"]))
+                check("  and neither does the page itself",
+                      ready["bodyOver"] <= 0, ready["bodyOver"])
+                # The accent frame. Inside the box because the panel's right
+                # edge is flush with #report's, which clips; over the picture
+                # because a positioned child paints above an ancestor's
+                # outline, which is how the last version of this went missing
+                # on three sides while every computed style said it was there.
+                check("  the frame is an overlay inside the box, over the "
+                      "picture",
+                      ready["border"]["frame"]
+                      == "2px solid rgb(192, 86, 33)"
+                      and ready["border"]["framePos"] == "absolute"
+                      and ready["border"]["frameZ"] == "2"
+                      and ready["border"]["outline"] == "0px none"
                       and ready["border"]["shadow"] == "none",
                       ready["border"])
+                check("  and a thumb goes straight through it",
+                      ready["border"]["frameTaps"] == "none",
+                      ready["border"]["frameTaps"])
                 check("  so nothing of it falls outside the clipping ancestor",
                       ready["border"]["rightGap"] >= 0,
                       ready["border"]["rightGap"])
+                inset = ready["border"]["inset"]
+                check("  the panel is inside that ancestor on all four sides",
+                      all(v >= 0 for v in inset.values()), inset)
+                # And the pixels, which are the only thing that settles it. A
+                # computed style says the outline was asked for; it does not
+                # say an ancestor's overflow let it through.
+                sides = frame_sides(page, ready["border"]["rect"])
+                check("  THE ACCENT IS ON ALL FOUR EDGES, in pixels",
+                      all(sides.values()), sides)
                 check("  and the replace link is off the teaser",
                       page.eval_on_selector_all("#visualizer .viz-replace",
                                                 "n => n.length") == 0)
                 check("  no page errors", not errs, errs[:2])
+                # The two middle states, at the width the report is read at.
+                # Taken last, because a full-page shot puts the whole document
+                # in front of every IntersectionObserver on it.
+                if width == 390:
+                    page.screenshot(
+                        path=os.path.join(SHOTS, "shot-pre-ready.png"),
+                        full_page=True)
                 page.close()
 
             print("\n--- and when the render fails, the old blur is back ---")
             S.reset(); S.has_source = True; S.teaser = "failed"
-            page, errs = free_page()
+            page, errs, hits = free_page()
             page.wait_for_selector(".viz-pair-teaser", timeout=20000)
             page.wait_for_timeout(900)
             failed = page.evaluate(PANEL)
@@ -744,7 +1031,41 @@ def main():
                   page.eval_on_selector_all(".viz-lock", "n => n.length") == 1)
             check("  and the reader is not stopped from paying",
                   page.eval_on_selector("#commerce", "n => !n.hidden"))
+            # A failed render is a finished one as far as the offer goes. The
+            # reader still gets the report and the blurred panel is still
+            # theirs; holding the block for a picture that is never coming
+            # would be refusing money for a product we can still deliver.
+            check("  the offer block is open, not held",
+                  failed["held"] is False and failed["waitShown"] is False,
+                  (failed["held"], failed["waitShown"]))
+            check("  the price and a control are on it",
+                  failed["priceShown"] is True
+                  and any(c in ("pay-button", "xp")
+                          for c in failed["controls"]),
+                  (failed["priceShown"], failed["controls"]))
             check("  no page errors", not errs, errs[:2])
+            page.screenshot(path=os.path.join(SHOTS, "shot-pre-failed.png"),
+                            full_page=True)
+            page.close()
+
+            print("\n--- and with no photograph at all, the gate ---")
+            S.reset()
+            page, errs, hits = free_page()
+            page.wait_for_selector(".viz-drop", timeout=20000)
+            page.wait_for_timeout(900)
+            gated = page.evaluate(PANEL)
+            check("the offer is gated, not held",
+                  gated["held"] is False and gated["waitShown"] is False,
+                  (gated["held"], gated["waitShown"]))
+            check("  the gate is the only control",
+                  gated["controls"] == ["offer-gate__cta"], gated["controls"])
+            check("  no price is named", gated["priceShown"] is False,
+                  gated["priceShown"])
+            check("  and still nothing was asked of Stripe",
+                  S.intents == 0 and hits == [], (S.intents, hits[:2]))
+            check("  no page errors", not errs, errs[:2])
+            page.screenshot(path=os.path.join(SHOTS, "shot-pre-gate.png"),
+                            full_page=True)
             page.close()
 
             print("\n--- the withdrawal waiver, where it is required ---")
@@ -753,7 +1074,7 @@ def main():
                                        (None, True, "unknown means show it"),
                                        ("XX", True, "and so does XX")):
                 S.reset(); S.has_source = True; S.country = country
-                page, errs = free_page()
+                page, errs, hits = free_page()
                 page.wait_for_selector(".viz-pair-teaser", timeout=20000)
                 page.wait_for_timeout(900)
                 shown = page.evaluate(

@@ -615,13 +615,43 @@ def main():
                 .map(c => c.id || c.className.split(' ')[0])""")
             check("report is the visualizer block alone, then the offer",
                   order[:1] == ["visualizer"], order)
-            # The price row itself is not in this list, and that is the check
-            # below: gated, it is hidden, so what follows the value cards is
-            # the gate.
-            check("the offer runs rule, heading, value cards, gate, legal",
+            # The price row is not in this list and neither is the gate: both
+            # are inside the hold now, which is the box everything that can
+            # take money was moved into so it can be withheld while the render
+            # runs and given back without the page under it moving.
+            check("the offer runs rule, heading, value cards, the hold, legal",
                   order[1:] == ["result-rule", "offer-value__head",
-                                "offer-value", "offer-gate", "legal-links"],
+                                "offer-value", "offer-hold", "legal-links"],
                   order[1:])
+            held = vpage.evaluate("""() => {
+                var h = document.querySelector('#commerce .offer-hold');
+                if (!h) return null;
+                return {
+                    rows: ['#price', '#withdrawal', '#pay-button', '#trust',
+                           '.offer-gate']
+                            .filter(s => h.querySelector(s)),
+                    wait: h.querySelectorAll(':scope > .offer-wait').length,
+                    cards: h.querySelectorAll('.offer-value').length,
+                    legal: h.querySelectorAll('#legal-links').length
+                };
+            }""")
+            check("price, consent, pay control, trust and gate are in the hold",
+                  held and held["rows"] == ["#price", "#withdrawal",
+                                            "#pay-button", "#trust",
+                                            ".offer-gate"],
+                  held and held["rows"])
+            check("the waiting line is in it too, and out of flow",
+                  held and held["wait"] == 1
+                  and vpage.eval_on_selector(
+                      ".offer-hold > .offer-wait",
+                      "n => getComputedStyle(n).position") == "absolute",
+                  held and held["wait"])
+            # Deliberately outside it. A reader waiting half a minute for a
+            # picture must still have something to read, and what they are
+            # waiting FOR is exactly what these three cards say.
+            check("the value cards and the legal line stay outside it",
+                  held and held["cards"] == 0 and held["legal"] == 0,
+                  held and (held["cards"], held["legal"]))
 
             # Gated: no photograph has been sent, so nothing on this page may
             # name what it costs. Matched against this funnel's own figures —
