@@ -612,8 +612,35 @@ def main():
                 capsSeen: Array.prototype.every.call(
                   document.querySelectorAll('.viz-pair-teaser .viz-caption'),
                   function (n) { return n.getBoundingClientRect().height > 0; }),
-                deliver: (document.querySelector('.viz-deliver')
-                          || {}).textContent
+                deliverRows: document.querySelectorAll('.viz-deliver__row').length,
+                deliverOn: (function () {
+                  var d = document.querySelector('.viz-deliver');
+                  return d ? getComputedStyle(d).visibility === 'visible' : null;
+                })(),
+                deliverText: Array.prototype.map.call(
+                  document.querySelectorAll('.viz-deliver__text'),
+                  function (n) { return n.textContent; }),
+                deliverBold: Array.prototype.map.call(
+                  document.querySelectorAll('.viz-deliver__text .money'),
+                  function (n) { return n.textContent; }),
+                payTop: (function () {
+                  var b = document.querySelector('.viz-go--teaser');
+                  return b ? Math.round(
+                    (b.getBoundingClientRect().top + window.scrollY) * 100)
+                    / 100 : null;
+                })(),
+                border: (function () {
+                  var n = document.querySelector('.viz-half.is-locked');
+                  if (!n) return null;
+                  var s = getComputedStyle(n);
+                  var r = n.getBoundingClientRect();
+                  var rep = document.getElementById('report')
+                              .getBoundingClientRect();
+                  return {outline: s.outlineWidth + ' ' + s.outlineStyle,
+                          offset: s.outlineOffset,
+                          shadow: s.boxShadow,
+                          rightGap: Math.round((rep.right - r.right) * 100) / 100};
+                })()
               }; }"""
 
             boxes = {}
@@ -664,8 +691,40 @@ def main():
                       == "none")
                 check("  not draggable, as a courtesy", ready["draggable"]
                       is False)
-                check("  and what paying sends is spelled out underneath",
-                      ready["deliver"] == VIZ["deliver_note"], ready["deliver"])
+                # The rows: hidden while the render runs, shown with it, and
+                # the pay button in the same place either way.
+                check("  the rows were reserved while it was still working",
+                      waiting["deliverRows"] == 2
+                      and waiting["deliverOn"] is False,
+                      (waiting["deliverRows"], waiting["deliverOn"]))
+                check("  and they appear WITH the picture",
+                      ready["deliverRows"] == 2 and ready["deliverOn"] is True,
+                      (ready["deliverRows"], ready["deliverOn"]))
+                check("  saying what unlocking sends",
+                      ready["deliverText"] == [r["text"] for r
+                                               in VIZ["deliver_rows"]],
+                      ready["deliverText"])
+                check("  with only the promise half in bold",
+                      ready["deliverBold"] == [r["accent"] for r
+                                               in VIZ["deliver_rows"]],
+                      ready["deliverBold"])
+                check("  THE PAY BUTTON DOES NOT MOVE when they appear",
+                      waiting["payTop"] is not None
+                      and abs(waiting["payTop"] - ready["payTop"]) < 0.5,
+                      (waiting["payTop"], ready["payTop"]))
+                # The accent frame, and the reason it is an outline: the
+                # panel's right edge is flush with #report's, which clips.
+                check("  the frame is drawn inside the box, not outside it",
+                      ready["border"]["outline"] == "2px solid"
+                      and ready["border"]["offset"] == "-2px"
+                      and ready["border"]["shadow"] == "none",
+                      ready["border"])
+                check("  so nothing of it falls outside the clipping ancestor",
+                      ready["border"]["rightGap"] >= 0,
+                      ready["border"]["rightGap"])
+                check("  and the replace link is off the teaser",
+                      page.eval_on_selector_all("#visualizer .viz-replace",
+                                                "n => n.length") == 0)
                 check("  no page errors", not errs, errs[:2])
                 page.close()
 
@@ -675,6 +734,9 @@ def main():
             page.wait_for_selector(".viz-pair-teaser", timeout=20000)
             page.wait_for_timeout(900)
             failed = page.evaluate(PANEL)
+            check("the rows stay hidden when the render failed",
+                  failed["deliverRows"] == 2 and failed["deliverOn"] is False,
+                  (failed["deliverRows"], failed["deliverOn"]))
             check("the panel falls back to the blurred photograph",
                   failed["blurred"] is True
                   and "which=source" in (failed["src"] or ""), failed["src"])

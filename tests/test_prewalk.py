@@ -501,9 +501,27 @@ def main():
                       "#commerce .price-now",
                       "ns => ns.filter(n => n.offsetParent !== null).length")
                   == 1)
-            check("  and what paying sends is spelled out under the panels",
-                  page.inner_text(".viz-deliver") == VIZ["deliver_note"],
-                  page.inner_text(".viz-deliver"))
+            # The rows are built and reserved from the first render, so on
+            # this suite — whose stub never reports a teaser — they are in the
+            # document and deliberately not shown: "this image, unblurred"
+            # would be pointing at a blur of the reader's own kitchen.
+            check("  what unlocking sends is spelled out, in two rows",
+                  page.eval_on_selector_all(".viz-deliver__row",
+                                            "n => n.length") == 2)
+            check("  they sit above the pay control, not below it",
+                  page.evaluate("""() => {
+                    var d = document.querySelector('.viz-deliver'),
+                        b = document.querySelector('.viz-go--teaser');
+                    return !!d && !!b && d.getBoundingClientRect().bottom
+                           <= b.getBoundingClientRect().top + 1; }"""))
+            check("  and hidden while there is no render to point at",
+                  page.eval_on_selector(
+                      ".viz-deliver",
+                      "n => getComputedStyle(n).visibility") == "hidden")
+            check("  the replace link is gone from the teaser",
+                  page.query_selector(".viz-pair-teaser ~ .viz-replace") is None
+                  and page.eval_on_selector_all(
+                      "#visualizer .viz-replace", "n => n.length") == 0)
 
             print("\n--- tapping the lock asks for the money ---")
             before = page.evaluate("window.scrollY")

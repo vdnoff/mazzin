@@ -1337,7 +1337,18 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-.viz-half.is-after { box-shadow: 0 0 0 2px var(--accent); }
+/* The accent frame, drawn INSIDE the box.
+   It was `box-shadow: 0 0 0 2px`, which paints outside the border box — and
+   the panel's right edge sits flush with #report's, which carries
+   `overflow: hidden`. So the right two pixels were clipped away on every
+   width: measured at 320, 360 and 390, the locked half's right edge and the
+   report's right edge are the same number, and the only clipping ancestor is
+   #report. An outline with a negative offset draws within the element instead,
+   so no ancestor's overflow can reach it and all four sides survive. */
+.viz-half.is-after {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
 
 /* One rectangle for both halves and for all three states of the right one.
 
@@ -1372,7 +1383,8 @@ body {
    offer. */
 .viz-pair-teaser .viz-half.is-locked {
   cursor: pointer;
-  box-shadow: 0 0 0 2px var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .viz-shade {
@@ -1461,13 +1473,65 @@ body {
   .viz-wait__spin { animation: none; }
 }
 
-/* What the money actually sends, said under the half-blurred picture. */
+/* --- what unlocking sends ---------------------------------------------- */
+
+/* Between the pictures and the button, and only once there is a picture for
+   "this image" to mean.
+
+   `visibility` and not `display`: the block holds its height from the first
+   render, empty, so the pay button is in the same place before and after a
+   render that arrives half a minute later. A reader whose thumb is already
+   moving towards that button must not have it slide out from under them. */
 .viz-deliver {
-  margin: 12px 0 0;
-  font-size: 13px;
-  line-height: 1.45;
-  text-align: center;
+  margin: 14px 0 0;
+  visibility: hidden;
+}
+
+.viz-deliver.is-on { visibility: visible; }
+
+.viz-deliver__label {
+  margin: 0 0 7px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
   color: var(--muted);
+}
+
+.viz-deliver__list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.viz-deliver__row {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  font-size: 13.5px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+/* Line icons, stroked in the accent: the two things being sent are a picture
+   and a document, and at this size a drawn outline reads faster than a word. */
+.viz-deliver__icon {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.viz-deliver__text .money {
+  font-weight: 700;
+  color: var(--ink);
 }
 
 /* The withdrawal-right waiver, where it is not required. Off the page rather

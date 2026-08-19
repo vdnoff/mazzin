@@ -2760,6 +2760,14 @@
     // page is already asking for the photograph in its own words. Read from
     // `vizState` and not from `gateUp`, because `vizRender` builds this before
     // it calls `renderGate` and the flag is one render stale here.
+    // What unlocking actually sends, between the pictures and the button.
+    //
+    // It was a paragraph under the CTA, which is the wrong side of it: the
+    // reader decides at the button, and the answer to "what am I paying for"
+    // has to arrive before the question does. Two rows rather than a sentence
+    // because there are two things and a reader scanning sees two.
+    frag.appendChild(vizDeliver(block));
+
     var teaserCta = ((cfg && cfg.checkout) || {}).teaser_cta;
     if (teaserCta && vizHasPhoto()) {
       frag.appendChild(vizButton("viz-go viz-go--teaser", teaserCta,
@@ -2770,25 +2778,46 @@
       frag.appendChild(vizButton("viz-go", block.locked_cta, focusCta));
     }
 
-    // What the money actually buys, said where the blur is. The reader is
-    // looking at half a picture; without this the obvious reading is that the
-    // blur is the product and they are paying to have it taken off a thumbnail.
-    if (block.deliver_note) {
-      frag.appendChild(elm("p", "viz-deliver", block.deliver_note));
-    }
-
-    // A way back to the picker, and nothing louder than that. On the focused
-    // page the only control that asks for anything is the one at the foot, so
-    // this is a line of text under the panels rather than a second button
-    // competing with it.
-    var swap = elm("label", "viz-replace"
-                   + (focusResult() ? " is-quiet" : ""),
-                   block.replace_cta || "Use a different photo");
-    swap.appendChild(vizFileInput(block));
-    frag.appendChild(swap);
-
     vizWatchTeaser(pair);
     return frag;
+  }
+
+  // The two rows, and the reason they are built even when they are not shown.
+  //
+  // "This image, unblurred" refers to a picture. While the render is still
+  // running there is no picture, and if it failed what is on screen is the
+  // reader's own photograph behind a blur — in both cases the rows would be
+  // pointing at nothing. So they are hidden in both.
+  //
+  // Hidden, not absent. The block is in the document from the first render
+  // with its height reserved, and `visibility` is what turns it on: the pay
+  // button underneath must be in the same place before and after a render that
+  // lands twenty to thirty seconds after the reader started reading, because
+  // the one thing worse than a slow picture is a button that moves under a
+  // thumb already travelling towards it.
+  function vizDeliver(block) {
+    var box = elm("div", "viz-deliver");
+    var rows = block.deliver_rows || [];
+    if (block.deliver_label) {
+      box.appendChild(elm("p", "viz-deliver__label", block.deliver_label));
+    }
+    var list = elm("ul", "viz-deliver__list");
+    rows.forEach(function (row, i) {
+      if (!row || !row.text) return;
+      var li = elm("li", "viz-deliver__row");
+      li.appendChild(icon(i === 0 ? "image" : "doc", "viz-deliver__icon"));
+      var text = elm("span", "viz-deliver__text");
+      // The accent lands on the half that is the promise. Bolding the whole
+      // line emphasises nothing; bolding "unblurred, full resolution" is the
+      // reason the line is there.
+      fillAccent(text, row.text, row.accent || "");
+      li.appendChild(text);
+      list.appendChild(li);
+    });
+    box.appendChild(list);
+    box.classList.toggle("is-on", vizTeaserReady());
+    el.vizDeliver = box;
+    return box;
   }
 
   // What the teaser button does, and the whole of it.
@@ -4257,7 +4286,10 @@
     check: "M4 10.5l4 4 8-9",
     lock: "M6 9V6.5a4 4 0 018 0V9M4.5 9h11v8h-11z",
     bolt: "M11 2L4.5 11.5H9.5L9 18l6.5-9.5H10.5z",
-    mail: "M2.5 5h15v10h-15zM2.5 5.5l7.5 5.5 7.5-5.5"
+    mail: "M2.5 5h15v10h-15zM2.5 5.5l7.5 5.5 7.5-5.5",
+    // The two things unlocking sends: a picture and a document.
+    image: "M2.5 4h15v12h-15zM2.5 13l4.5-4 3.5 3 3-2.5 4 3.5",
+    doc: "M4.5 2h7l4 4v12h-11zM11.5 2v4.5h4M7 10h6M7 13h6"
   };
 
   function icon(name, cls) {
