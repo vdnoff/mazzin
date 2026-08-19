@@ -69,6 +69,11 @@ class Server:
         self.events = []          # (event, extra)
         self.checkouts = []
         self.generates = 0
+        # What the upload request carried besides the photograph. The whole
+        # pre-purchase render turns on the browser naming the style it
+        # computed, and until this was recorded nothing here could see whether
+        # it did.
+        self.upload_fields = []
 
     # -- the split the whole feature turns on --
     def who(self, query):
@@ -161,6 +166,32 @@ def report_body():
     }
 
 
+def multipart_fields(raw, content_type):
+    """The non-file parts of a multipart body, as {name: value}.
+
+    Written out rather than pulled in, for the same reason `_multipart` in
+    visualizer.py is: one body, four headers, and a dependency that has to be
+    installed before the suite runs is a worse trade.
+    """
+    marker = "boundary="
+    if marker not in content_type:
+        return {}
+    boundary = content_type.split(marker, 1)[1].strip().strip('"')
+    out = {}
+    for part in raw.split(("--" + boundary).encode()):
+        if b"\r\n\r\n" not in part:
+            continue
+        head, body = part.split(b"\r\n\r\n", 1)
+        head = head.decode("utf-8", "replace")
+        if 'filename="' in head:
+            continue                      # the photograph itself
+        if 'name="' not in head:
+            continue
+        name = head.split('name="', 1)[1].split('"', 1)[0]
+        out[name] = body.rstrip(b"\r\n-").decode("utf-8", "replace")
+    return out
+
+
 def parse_query(path):
     out = {}
     if "?" not in path:
@@ -220,6 +251,8 @@ class Handler(WalkHandler):
             kind, key = S.who(query)
             if not kind:
                 return self._json({"error": "bad_token"}, 400)
+            S.upload_fields.append(
+                multipart_fields(raw, self.headers.get("content-type") or ""))
             photo = jpeg(colour=(30, 120, 60))
             if kind == "pre":
                 S.pending[key] = photo
@@ -374,6 +407,40 @@ def main():
             check("  carrying which shrink path the browser took",
                   ups and ups[-1].get("path")
                   in ("bitmap", "canvas", "raw"), ups)
+
+            print("\n--- what the upload told the server ---")
+            # The server cannot know which of the four styles thirteen taps
+            # produced: a session has no row and no report, and the winner is
+            # computed in the browser. So the upload has to name it, and if it
+            # does not, `_pre_purchase_content` finds no style, `build_prompt`
+            # returns None, and every pre-purchase render fails `no_prompt`
+            # before an image is ever asked for.
+            #
+            # This is the link nothing was testing. `run_pre_render` was called
+            # directly with the style as a Python argument, so the wire — the
+            # one part that was broken — was the only part with no test on it.
+            fields = S.upload_fields[-1] if S.upload_fields else {}
+            style_ids = [st["id"] for st in CFG["kitchen-visualizer"]["styles"]]
+            check("the upload named a style", bool(fields.get("style")),
+                  fields)
+            check("  and it is one this funnel can actually produce",
+                  fields.get("style") in style_ids,
+                  (fields.get("style"), style_ids))
+            names = [st["name"] for st in CFG["kitchen-visualizer"]["styles"]]
+            check("  it is the id, not the display name",
+                  fields.get("style") not in names, fields.get("style"))
+            check("  and it is the style this run was actually given",
+                  fields.get("style") == page.eval_on_selector(
+                      "#result-name",
+                      "n => (%s)[n.textContent] || null"
+                      % json.dumps(dict(zip(names, style_ids)))),
+                  (fields.get("style"), page.inner_text("#result-name")))
+            element_ids = [i["id"] for i
+                           in CFG["kitchen-visualizer"]["style_elements"]["items"]]
+            sent = [e for e in (fields.get("elements") or "").split(",") if e]
+            check("  and the elements it showed came too",
+                  len(sent) == 4 and all(e in element_ids for e in sent),
+                  sent)
 
             print("\n--- the teaser ---")
             halves = page.eval_on_selector_all(
