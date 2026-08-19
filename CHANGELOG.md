@@ -258,3 +258,6 @@ bottom.
 
 ## 2026-08-19 — claude/teaser-style-param
 - teaser style param
+
+## 2026-08-19 — claude/teaser-polish
+- teaser polish
