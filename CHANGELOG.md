@@ -252,3 +252,6 @@ bottom.
 
 ## 2026-08-19 — claude/track-device-wallet
 - device and pay control
+
+## 2026-08-19 — claude/real-teaser
+- real teaser
