@@ -2453,13 +2453,24 @@
     "teaser_title": "Your kitchen, ready",
     "before_label_pre": "Your kitchen",
     "locked_label": "Your {style} transformation",
+    "teaser_band": "Unlocks in full",
     "preparing_title": "Redrawing your kitchen",
     "preparing_note": "About 30 seconds — keep reading, it appears here.",
-    "deliver_note": "Paying sends you the full picture, unblurred and at full resolution, plus the report that specifies every surface in it.",
+    "deliver_label": "Unlocking sends you",
+    "deliver_rows": [
+      {
+        "text": "This image, unblurred, full resolution",
+        "accent": "unblurred, full resolution"
+      },
+      {
+        "text": "The full report \u2014 every surface named",
+        "accent": "every surface named"
+      }
+    ],
     "manifest_uploaded": "Your kitchen, reimagined — photo received ✓",
+    "replace_cta": "Use a different photo",
     "guidance": "Stand back, daylight on, whole kitchen in frame.",
     "upload_cta": "Choose a photo",
-    "replace_cta": "Use a different photo",
     "generate_cta": "Transform my kitchen",
     "regenerate_cta": "Regenerate once",
     "download_cta": "Download",

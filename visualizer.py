@@ -1088,6 +1088,24 @@ TEASER_GRADIENT = 64            # the ramp is linear, so it resizes exactly
 BRAND_CREAM = (247, 242, 234)
 BRAND_ACCENT = (192, 86, 33)
 
+# The band across the foot of the teaser: type as a fraction of the picture's
+# width, the band as a multiple of the type, and how dark the scrim is. All
+# three are relative so the band holds together at any size the model returns.
+TEASER_LABEL_SIZE = 0.080       # of the width — ~30px on a 373-wide teaser
+TEASER_BAND_RATIO = 2.4         # band height, as multiples of the type size
+TEASER_BAND_ALPHA = 204         # 80% of 255
+TEASER_BAND_PAD = 0.07          # clear space each side of the label
+TEASER_LABEL_MIN = 0.075        # of the width — below this it stops being read
+
+
+def _teaser_label(block):
+    """What the band says. Config copy, with a default that is not a blank."""
+    text = (block or {}).get("teaser_band")
+    if text is None:
+        return "Unlocks at full resolution"
+    text = str(text).strip()
+    return text or None
+
 # The server may not carry any particular font. Probed in order, and if none of
 # them loads the wordmark falls back to Pillow's own bitmap face — smaller and
 # plainer, and still a wordmark, which is better than a teaser that fails to
@@ -1159,7 +1177,7 @@ def _padlock(draw, cx, cy, unit):
              start=180, end=360, fill=BRAND_CREAM, width=max(2, int(unit * 0.3)))
 
 
-def build_teaser(render):
+def build_teaser(render, block=None):
     """The locked half of a render, as its own small file. Returns bytes.
 
     Raises rather than degrading: the caller decides what a missing teaser
@@ -1197,27 +1215,62 @@ def build_teaser(render):
                   cx + unit * 1.7, cy + unit * 1.7], fill=(24, 18, 14, 150))
     _padlock(draw, cx, cy, unit)
 
-    # The wordmark, bottom right, on a pill dark enough to read over anything.
-    font = _brand_font(max(11, int(short * 0.062)))
-    word, dot = "mazzin", "."
-    try:
-        w_word = draw.textlength(word, font=font)
-        w_dot = draw.textlength(dot, font=font)
-        ascent = font.getbbox("M")[3] - font.getbbox("M")[1]
-    except Exception:
-        w_word, w_dot, ascent = short * 0.22, short * 0.03, short * 0.06
-    pad_x, pad_y = short * 0.045, short * 0.028
-    pill_w = w_word + w_dot + pad_x * 2
-    pill_h = ascent + pad_y * 2
-    x1 = width - short * 0.045
-    y1 = height - short * 0.045
-    x0, y0 = x1 - pill_w, y1 - pill_h
-    draw.rounded_rectangle([x0, y0, x1, y1], radius=pill_h / 2.0,
-                           fill=(24, 18, 14, 165))
-    tx = x0 + pad_x
-    ty = y0 + pad_y - (font.getbbox("M")[1] if hasattr(font, "getbbox") else 0)
-    draw.text((tx, ty), word, font=font, fill=BRAND_CREAM + (255,))
-    draw.text((tx + w_word, ty), dot, font=font, fill=BRAND_ACCENT + (255,))
+    # A band across the foot, saying what the blur is for.
+    #
+    # It replaces a "mazzin." pill that sat in the corner. The pill said whose
+    # picture this is, which the reader is not asking; the band says what
+    # happens if they pay, which is the only question the image raises. Full
+    # width rather than a corner mark because at this size a corner is a
+    # decoration and a band is a caption — and because a reader scanning two
+    # panels reads the bottom edge of both.
+    #
+    # Sized from the picture's own width, not fixed: the panel is about 138
+    # CSS pixels wide on a 320px phone, so the type has to survive a 0.37x
+    # downscale, and a constant that looks right at 560 disappears at 373.
+    label = _teaser_label(block)
+    if label:
+        # Shrunk until it fits rather than trusted to. The starting size is
+        # right for the default copy in the font this server happens to carry,
+        # and both of those can change: a longer line, or a wider face, would
+        # otherwise run off both edges of the picture. The band follows the
+        # size it ends on, so the 2.4x relation holds whatever that is.
+        size = int(round(width * TEASER_LABEL_SIZE))
+        floor = int(round(width * TEASER_LABEL_MIN))
+        room = width * (1.0 - 2 * TEASER_BAND_PAD)
+        while size > floor:
+            probe = _brand_font(size)
+            try:
+                if draw.textlength(label, font=probe) <= room:
+                    break
+            except Exception:
+                break
+            size -= 1
+        # The floor is legibility, not aesthetics. This picture is drawn about
+        # 138 CSS pixels wide on a 320px phone — roughly a third of its own
+        # width — so type that shrinks to fit a long line arrives at seven or
+        # eight CSS pixels and says nothing at all. Below the floor the copy is
+        # too long for the band, and that is worth a log line rather than a
+        # silently unreadable caption. About fifteen characters is the budget.
+        try:
+            if draw.textlength(label, font=_brand_font(size)) > room:
+                log.warning("visualizer: teaser band copy is too long for the "
+                            "picture (%d chars) — it will be tight", len(label))
+        except Exception:
+            pass
+        band_h = int(round(size * TEASER_BAND_RATIO))
+        draw.rectangle([0, height - band_h, width, height],
+                       fill=(24, 18, 14, TEASER_BAND_ALPHA))
+        font = _brand_font(size)
+        try:
+            text_w = draw.textlength(label, font=font)
+            box = font.getbbox(label)
+            text_h = box[3] - box[1]
+            top_bearing = box[1]
+        except Exception:
+            text_w, text_h, top_bearing = width * 0.6, size, 0
+        draw.text((width / 2.0 - text_w / 2.0,
+                   height - band_h + (band_h - text_h) / 2.0 - top_bearing),
+                  label, font=font, fill=BRAND_CREAM + (255,))
 
     out = Image.alpha_composite(out.convert("RGBA"), layer).convert("RGB")
 
@@ -1459,7 +1512,7 @@ def run_pre_render(session_id, cfg, block, style_id, element_ids):
         image, framing = match_ratio(image, jpeg)
 
         try:
-            teaser = build_teaser(image)
+            teaser = build_teaser(image, block)
         except Exception:
             # The render is fine and only the half-blurred copy of it is not.
             # Kept on disk anyway: a purchase still claims it, so the buyer
