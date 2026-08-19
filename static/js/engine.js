@@ -130,6 +130,7 @@
   var gateUp = false;           // the offer cannot be paid yet
   var pixelCartFired = false;   // AddToCart: the first photo, once
   var payReadyFired = false;    // which control was shown, counted once
+  var readerCountry = null;     // two letters off the edge, or null for unknown
   var pixelPayFired = false;    // AddPaymentInfo: once, on either path
   // --- express checkout -----------------------------------------------------
   var xpState = "off";          // off | reserved | wallet | redirect
@@ -2471,6 +2472,10 @@
   function vizApply(data) {
     vizState = data || null;
     var status = (data && data.status) || "none";
+    // Held separately as well: `vizState` is rebuilt on every poll and the
+    // consent control is rendered from other places too.
+    if (data && data.country) readerCountry = data.country;
+    renderConsent();
 
     if (vizUploading) {
       vizUploading = false;
@@ -2514,8 +2519,22 @@
     if (status === "generating") vizSeen = {};
 
     vizRender();
-    if (status === "generating") vizPoll();
+    // The paid render, and the one that happens before the money. Both are a
+    // picture being made while somebody watches, and both stop the poll the
+    // moment there is nothing left to wait for.
+    if (status === "generating" || vizTeaserWorking()) vizPoll();
     else vizStopPoll();
+  }
+
+  // Whether the locked panel is a render in progress rather than a picture.
+  // Absent on a funnel with the flag off, and absent from an engine.js reading
+  // a server that has not been deployed yet, so both fall through to the blur.
+  function vizTeaserWorking() {
+    return !!vizState && vizState.teaser === "working";
+  }
+
+  function vizTeaserReady() {
+    return !!vizState && vizState.teaser === "ready" && !!vizState.teaser_url;
   }
 
   function vizPoll() {
@@ -2681,20 +2700,38 @@
 
     var pair = elm("div", "viz-pair viz-pair-teaser");
 
+    // One shape for both halves, and it is the reader's own photograph's.
+    //
+    // The render comes back in one of three sizes the model will produce and
+    // is cropped server-side to this ratio, so the two files agree — but the
+    // box is set here regardless and before either picture has loaded, which
+    // is what makes the wait, the teaser and the fallback blur all occupy
+    // exactly the same rectangle. Nothing on this page moves when the render
+    // lands.
     var before = elm("figure", "viz-half");
-    before.appendChild(vizImg(vizSourceUrl()));
+    var shot = vizImg(vizSourceUrl());
+    shot.addEventListener("load", function () {
+      if (shot.naturalWidth && shot.naturalHeight) {
+        pair.style.setProperty(
+          "--viz-ratio",
+          String(Math.round(shot.naturalWidth / shot.naturalHeight * 1000)
+                 / 1000));
+      }
+    });
+    // The same wrapper the locked half uses, so the two media boxes are the
+    // same element under the same rule rather than two things kept in step by
+    // hand. The wash and the lock belong to the locked one and are turned off
+    // here by the modifier.
+    var frame = elm("div", "viz-shade is-plain");
+    frame.appendChild(shot);
+    before.appendChild(frame);
     before.appendChild(elm("figcaption", "viz-caption",
                            block.before_label_pre || block.before_label
                            || "Your kitchen"));
     pair.appendChild(before);
 
     var after = elm("figure", "viz-half is-locked");
-    var shade = elm("div", "viz-shade");
-    var blurred = vizImg(vizSourceUrl());
-    blurred.className = "viz-img is-blurred";
-    shade.appendChild(blurred);
-    shade.appendChild(icon("lock", "viz-lock"));
-    after.appendChild(shade);
+    after.appendChild(vizLockedBody(block));
     after.appendChild(elm("figcaption", "viz-caption",
                           fillHook(block.locked_label
                                    || "Your {style} transformation",
@@ -2733,6 +2770,13 @@
       frag.appendChild(vizButton("viz-go", block.locked_cta, focusCta));
     }
 
+    // What the money actually buys, said where the blur is. The reader is
+    // looking at half a picture; without this the obvious reading is that the
+    // blur is the product and they are paying to have it taken off a thumbnail.
+    if (block.deliver_note) {
+      frag.appendChild(elm("p", "viz-deliver", block.deliver_note));
+    }
+
     // A way back to the picker, and nothing louder than that. On the focused
     // page the only control that asks for anything is the one at the foot, so
     // this is a line of text under the panels rather than a second button
@@ -2764,6 +2808,59 @@
   function teaserTap() {
     payIntent = "teaser_cta";
     scrollToCommerce();
+  }
+
+  // What stands in the right-hand panel before the money, in the three states
+  // it can be in.
+  //
+  // The one that is new is the middle one: a real render of their kitchen with
+  // half of it blurred. It is a file the server built and downscaled, not a
+  // CSS filter over the real image — a filter is a decoration over bytes the
+  // browser already has, and anybody who opens the network tab has the picture
+  // unblurred. Here the blur is in the pixels and the pixels are a seventh of
+  // the render, so holding the file is not holding the product.
+  //
+  // The other two are the wait, and the blur the page has always shown when
+  // there is no render to show. Every one of them is the same box, because the
+  // reader must not have the page move under their thumb when the picture
+  // lands.
+  function vizLockedBody(block) {
+    var shade = elm("div", "viz-shade");
+
+    if (vizTeaserReady()) {
+      var real = vizImg(vizState.teaser_url);
+      real.className = "viz-img viz-img--teaser";
+      // A courtesy and nothing more, and worth saying so plainly: neither of
+      // these stops anybody who wants the file, and neither is meant to. What
+      // protects the render is that this is not the render.
+      real.draggable = false;
+      real.setAttribute("oncontextmenu", "return false");
+      shade.classList.add("is-real");
+      shade.appendChild(real);
+      shade.addEventListener("click", focusCta);
+      return shade;
+    }
+
+    if (vizTeaserWorking()) {
+      shade.classList.add("is-working");
+      var box = elm("div", "viz-wait");
+      box.appendChild(elm("span", "viz-wait__spin"));
+      box.appendChild(elm("p", "viz-wait__title",
+                          block.preparing_title || "Preparing your kitchen"));
+      box.appendChild(elm("p", "viz-wait__note",
+                          block.preparing_note || ""));
+      shade.appendChild(box);
+      return shade;
+    }
+
+    // The fallback, unchanged: their own photograph behind a blur and a lock.
+    // Reached when the funnel does not render early, when the render failed,
+    // and when this engine.js is talking to a server that predates any of it.
+    var blurred = vizImg(vizSourceUrl());
+    blurred.className = "viz-img is-blurred";
+    shade.appendChild(blurred);
+    shade.appendChild(icon("lock", "viz-lock"));
+    return shade;
   }
 
   function vizImg(src) {
@@ -3536,6 +3633,40 @@
 
   function withPrice(text) {
     return String(text || "").replace(/\{price\}/g, formatPriceShort());
+  }
+
+  // Whether the withdrawal-right waiver has to be shown to this reader.
+  //
+  // It is a legal control, so the interesting case is the one where we do not
+  // know: an absent country header, a proxy, a reader Cloudflare files as XX.
+  // Every one of those SHOWS the box. The only way it comes off the page is a
+  // country the config names explicitly, which makes turning it off somewhere
+  // a deliberate edit by somebody who has decided that country does not
+  // require it — never something that happens because a header went missing.
+  //
+  // In the UK the Consumer Contracts Regulations 2013 need the waiver before
+  // instant delivery. In Canada nothing equivalent applies. The list is config
+  // for that reason: it is a legal judgement, not a technical one.
+  function consentRequired() {
+    var country = (vizState && vizState.country) || readerCountry;
+    if (!country) return true;
+    var skip = ((cfg && cfg.checkout) || {}).consent_skip_countries;
+    if (!Array.isArray(skip)) return true;
+    for (var i = 0; i < skip.length; i++) {
+      if (String(skip[i]).toUpperCase() === country) return false;
+    }
+    return true;
+  }
+
+  // Shown, or taken off the page and treated as satisfied. Never left on the
+  // page disabled, and never hidden while still gating the button — a control
+  // somebody cannot see and cannot pass is a page that looks broken.
+  function renderConsent() {
+    if (!el.withdrawal) return;
+    var need = consentRequired();
+    el.withdrawal.classList.toggle("is-off", !need);
+    if (!need) el.withdrawalCheck.checked = true;
+    updatePayButton();
   }
 
   function updatePayButton() {
@@ -4622,13 +4753,17 @@
   function renderExpectation() {
     var text = ((cfg && cfg.checkout) || {}).expectation || "";
     if (!el.expectation) {
-      // Under the pay control on the focused page, over the consent box
-      // everywhere else. The order the block is read in runs price, consent,
-      // button — and a sentence about what the render is not, placed between
-      // the number and the tap, is an interruption at the worst moment. After
-      // the button it is what it is for: the thing that stops somebody
-      // expecting a drawing they could hand a builder.
-      var anchor = focusResult() ? el.trust : el.withdrawal;
+      // Above the value list on the focused page, over the consent box
+      // everywhere else.
+      //
+      // It has now been under the price and under the button, and both were
+      // wrong for the same reason: a sentence naming what the thing is NOT,
+      // read in the second before a tap, is a doubt planted at the moment of
+      // decision. Above the list it is a frame for what follows — here is what
+      // this is, and here is what you get — which is the job it was written
+      // for. `renderValue` inserts the heading and the cards before the price,
+      // so anchoring on the heading keeps this first of all of them.
+      var anchor = focusResult() ? (el.valueHead || el.price) : el.withdrawal;
       if (!text || !anchor || !anchor.parentNode) return;
       el.expectation = elm("p", "offer-expectation");
       anchor.parentNode.insertBefore(el.expectation, anchor);
@@ -4728,6 +4863,7 @@
 
     el.withdrawalText.textContent = withPrice(copy.consent || "");
     el.withdrawalCheck.checked = cfg.checkout.consent_prechecked === true;
+    renderConsent();
 
     renderTrust(copy.trust);
     el.payError.hidden = true;

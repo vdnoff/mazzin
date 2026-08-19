@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from PIL import Image                                    # noqa: E402
 from playwright.sync_api import sync_playwright          # noqa: E402
-from test_walk import Handler as WalkHandler, PORT            # noqa: E402
+from test_walk import Handler as WalkHandler, PORT, ANCHORS   # noqa: E402
 
 ROOT = REPO
 SHOTS = os.path.dirname(os.path.abspath(__file__))
@@ -75,6 +75,10 @@ class State:
         self.uploads = 0
         self.generates = 0
         self.server_lacks_it = False
+        # The pre-purchase render, as the status endpoint reports it: absent,
+        # being made, finished, or given up on.
+        self.teaser = None
+        self.country = None
 
     def tick(self):
         """The render finishing, on its own clock, like a worker would."""
@@ -99,6 +103,13 @@ class State:
         if self.status == "failed":
             out["retriable"] = True
             out["message"] = VIZ["error_text"]
+        if self.teaser:
+            out["teaser"] = self.teaser
+            if self.teaser == "ready":
+                out["teaser_url"] = ("/api/visualizer/image?which=teaser&cs="
+                                     + CS)
+        if self.country:
+            out["country"] = self.country
         return out
 
 
@@ -164,6 +175,11 @@ class Handler(WalkHandler):
                 return
             return self._json(S.body())
         if path == "/api/visualizer/image":
+            if "which=teaser" in self.path:
+                # Deliberately a different size as well as a different colour:
+                # the real one is a downscale, and the panel must not care.
+                return self._bytes(jpeg(size=(373, 560), colour=(40, 90, 60)),
+                                   "image/jpeg")
             which = "result" if "which=result" in self.path else "source"
             colour = (30, 60, 120) if which == "result" else (190, 120, 70)
             return self._bytes(jpeg(colour=colour), "image/jpeg")
@@ -528,6 +544,170 @@ def main():
                   S.uploads == 0 and S.generates == 0)
             check("no page errors", not errors, errors[:3])
             page.close()
+
+            # --- the locked panel, in its three states -----------------
+            #
+            # Before this, what an unpaid reader saw was their own photograph
+            # behind a CSS blur — the room they already have, with an orange
+            # wash on it. Thirteen of them read this page for minutes and
+            # bought nothing. The panel now holds a real render with half of it
+            # blurred into the file, a wait while that render is made, and the
+            # old blur when there is no render to show.
+            print("\n--- the locked panel: waiting, teaser, fallback ---")
+
+            # The un-bought page, which means walking the quiz: there is no
+            # `cs` to jump with, because the whole point is the reader who has
+            # not paid.
+            STEPS = CFG["kitchen-visualizer"]["swipe"]["steps"]
+
+
+            def free_page(width=390):
+                page = browser.new_page(viewport={"width": width,
+                                                  "height": 844},
+                                        device_scale_factor=2)
+                errs = []
+                page.on("pageerror", lambda e: errs.append(str(e)))
+                page.goto("http://127.0.0.1:%d/kitchen-visualizer" % PORT)
+                page.wait_for_selector("#cards .card", timeout=10000)
+                for i, _step in enumerate(STEPS):
+                    page.query_selector_all("#cards .card")[0].click()
+                    done = i + 1
+                    if done in ANCHORS and done < len(STEPS):
+                        page.wait_for_selector("#screen-interstitial.is-active",
+                                               timeout=12000)
+                        page.click("#mid-cta")
+                    if done < len(STEPS):
+                        page.wait_for_function(
+                            "q => document.getElementById('swipe-caption')"
+                            ".textContent === q",
+                            arg=STEPS[done]["question"], timeout=15000)
+                page.wait_for_selector("#result-body:not([hidden])",
+                                       timeout=20000)
+                page.wait_for_selector("#commerce:not([hidden])", timeout=15000)
+                page.wait_for_timeout(700)
+                return page, errs
+
+            PANEL = """() => {
+              var shade = document.querySelector('.viz-half.is-locked .viz-shade');
+              var pair = document.querySelector('.viz-pair-teaser');
+              var left = document.querySelector('.viz-pair-teaser .viz-half');
+              var img = shade && shade.querySelector('img');
+              var box = shade ? shade.getBoundingClientRect() : null;
+              return {
+                exists: !!shade,
+                cls: shade ? shade.className : null,
+                src: img ? img.getAttribute('src') : null,
+                blurred: img ? img.className.indexOf('is-blurred') !== -1 : null,
+                draggable: img ? img.draggable : null,
+                waiting: !!(shade && shade.querySelector('.viz-wait')),
+                waitTitle: (shade && shade.querySelector('.viz-wait__title')
+                            || {}).textContent,
+                w: box ? Math.round(box.width * 100) / 100 : null,
+                h: box ? Math.round(box.height * 100) / 100 : null,
+                leftH: left && left.querySelector('.viz-shade') ? Math.round(
+                  left.querySelector('.viz-shade')
+                      .getBoundingClientRect().height * 100) / 100 : null,
+                caps: document.querySelectorAll(
+                  '.viz-pair-teaser .viz-caption').length,
+                capsSeen: Array.prototype.every.call(
+                  document.querySelectorAll('.viz-pair-teaser .viz-caption'),
+                  function (n) { return n.getBoundingClientRect().height > 0; }),
+                deliver: (document.querySelector('.viz-deliver')
+                          || {}).textContent
+              }; }"""
+
+            boxes = {}
+            for width in (320, 360, 390):
+                S.reset(); S.has_source = True; S.teaser = "working"
+                page, errs = free_page(width)
+                page.wait_for_selector(".viz-pair-teaser", timeout=20000)
+                page.wait_for_timeout(900)
+                waiting = page.evaluate(PANEL)
+                check("%d: the panel is a wait, not an empty box" % width,
+                      waiting["waiting"] and waiting["cls"].find("is-working")
+                      != -1, waiting["cls"])
+                check("  it says what is happening",
+                      waiting["waitTitle"] == VIZ["preparing_title"],
+                      waiting["waitTitle"])
+                check("  the reader can still scroll",
+                      page.evaluate("() => getComputedStyle(document.body)"
+                                    ".overflow !== 'hidden'"))
+
+                # The render lands. Nothing may move.
+                S.teaser = "ready"
+                page.wait_for_selector(".viz-shade.is-real img", timeout=12000)
+                page.wait_for_function(
+                    """() => { const i = document.querySelector(
+                         '.viz-shade.is-real img');
+                       return i && i.complete && i.naturalWidth > 0; }""",
+                    timeout=12000)
+                page.wait_for_timeout(300)
+                ready = page.evaluate(PANEL)
+                boxes[width] = (waiting, ready)
+                check("  and the finished picture is the very same box",
+                      abs(waiting["w"] - ready["w"]) < 0.5
+                      and abs(waiting["h"] - ready["h"]) < 0.5,
+                      ((waiting["w"], waiting["h"]), (ready["w"], ready["h"])))
+                check("  both pictures are the same box",
+                      abs(ready["leftH"] - ready["h"]) < 0.5,
+                      (ready["leftH"], ready["h"]))
+                check("  and both captions survived the fixed ratio",
+                      ready["caps"] == 2 and ready["capsSeen"],
+                      (ready["caps"], ready["capsSeen"]))
+                check("  it is the teaser file, not the source",
+                      "which=teaser" in (ready["src"] or ""), ready["src"])
+                check("  with no CSS blur over it", ready["blurred"] is False)
+                check("  and no warm wash either",
+                      page.eval_on_selector(
+                          ".viz-shade.is-real",
+                          "n => getComputedStyle(n, '::after').content")
+                      == "none")
+                check("  not draggable, as a courtesy", ready["draggable"]
+                      is False)
+                check("  and what paying sends is spelled out underneath",
+                      ready["deliver"] == VIZ["deliver_note"], ready["deliver"])
+                check("  no page errors", not errs, errs[:2])
+                page.close()
+
+            print("\n--- and when the render fails, the old blur is back ---")
+            S.reset(); S.has_source = True; S.teaser = "failed"
+            page, errs = free_page()
+            page.wait_for_selector(".viz-pair-teaser", timeout=20000)
+            page.wait_for_timeout(900)
+            failed = page.evaluate(PANEL)
+            check("the panel falls back to the blurred photograph",
+                  failed["blurred"] is True
+                  and "which=source" in (failed["src"] or ""), failed["src"])
+            check("  with the lock back on it",
+                  page.eval_on_selector_all(".viz-lock", "n => n.length") == 1)
+            check("  and the reader is not stopped from paying",
+                  page.eval_on_selector("#commerce", "n => !n.hidden"))
+            check("  no page errors", not errs, errs[:2])
+            page.close()
+
+            print("\n--- the withdrawal waiver, where it is required ---")
+            for country, want, why in (("GB", True, "the UK requires it"),
+                                       ("CA", False, "Canada does not"),
+                                       (None, True, "unknown means show it"),
+                                       ("XX", True, "and so does XX")):
+                S.reset(); S.has_source = True; S.country = country
+                page, errs = free_page()
+                page.wait_for_selector(".viz-pair-teaser", timeout=20000)
+                page.wait_for_timeout(900)
+                shown = page.evaluate(
+                    """() => { const n = document.getElementById('withdrawal');
+                       if (!n) return null;
+                       return !n.hidden && !n.classList.contains('is-off')
+                              && getComputedStyle(n).display !== 'none'; }""")
+                ticked = page.evaluate(
+                    "() => document.getElementById('withdrawal-check').checked")
+                check("%-4s -> %-5s  (%s)" % (country or "none", want, why),
+                      shown is want, shown)
+                check("  and the box never silently gates the button",
+                      shown or ticked, (shown, ticked))
+                check("  no page errors", not errs, errs[:2])
+                page.close()
+
             browser.close()
     finally:
         httpd.shutdown()

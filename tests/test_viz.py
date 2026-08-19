@@ -106,6 +106,72 @@ def at_mean(target, size=(768, 768), quality=92):
     return out.getvalue()
 
 
+def textured(w, h, seed=7):
+    """An image with real high-frequency detail in every part of the frame.
+
+    A flat synthetic cannot test a blur: blurring a solid band leaves a solid
+    band, and the sharp half and the soft half measure identical. Detail is
+    what a downscale destroys and what a blur destroys, so detail is what the
+    teaser assertions have to be made of.
+    """
+    im = Image.new("RGB", (w, h))
+    px = im.load()
+    state = seed
+    for y in range(h):
+        for x in range(w):
+            state = (1103515245 * state + 12345) & 0x7FFFFFFF
+            n = state % 96
+            base = (150, 146, 138) if y < h * 0.55 else (58, 94, 70)
+            px[x, y] = (min(255, base[0] + n), min(255, base[1] + n),
+                        min(255, base[2] + n))
+    return im
+
+
+def detail(raw, region=None):
+    """Mean edge energy — how much high-frequency detail an image carries."""
+    from PIL import ImageFilter
+    with Image.open(io.BytesIO(raw)) as im:
+        grey = im.convert("L")
+    if region:
+        grey = grey.crop(region)
+    return ImageStat.Stat(grey.filter(ImageFilter.FIND_EDGES)).mean[0]
+
+
+def halves(raw):
+    """(top-left detail, bottom-right detail), sampled well clear of the seam.
+
+    The anti-diagonal is `x/W + y/H = 1`, so the two triangles are equal by
+    construction whatever the aspect. Sampled at 0.72 and 1.28 rather than at
+    the line itself, because the feather is deliberately a few pixels wide and
+    measuring inside it would measure the feather.
+    """
+    with Image.open(io.BytesIO(raw)) as im:
+        grey = im.convert("L")
+    from PIL import ImageFilter
+    edge = grey.filter(ImageFilter.FIND_EDGES)
+    w, h = edge.size
+    sharp, soft, n_sharp, n_soft = 0.0, 0.0, 0, 0
+    for y in range(2, h - 2, 2):
+        for x in range(2, w - 2, 2):
+            g = x / float(w - 1) + y / float(h - 1)
+            if g < 0.72:
+                sharp += edge.getpixel((x, y)); n_sharp += 1
+            elif g > 1.28:
+                soft += edge.getpixel((x, y)); n_soft += 1
+    return (sharp / max(1, n_sharp), soft / max(1, n_soft),
+            n_sharp, n_soft)
+
+
+def to_jpeg(im, quality=92):
+    out = io.BytesIO()
+    im.save(out, "JPEG", quality=quality)
+    return out.getvalue()
+
+
+def _write_source(session_id, raw):
+    visualizer._write_atomic(visualizer.pending_source(session_id), raw)
+
+
 def near_black(raw, threshold=32):
     """The share of pixels below `threshold` — what "unviewable" means here."""
     hist = Image.open(io.BytesIO(raw)).convert("L").histogram()
@@ -220,8 +286,11 @@ class Edits:
         self.fail_with = None
         self.delay = 0
 
-    def __call__(self, prompt, jpeg):
-        self.calls.append({"prompt": prompt, "bytes": len(jpeg)})
+    def __call__(self, prompt, jpeg, size=None):
+        # `size` is new: the render is asked for in the shape of the source
+        # photograph rather than always square, so the recorder keeps it and
+        # the sizing can be asserted through the real route.
+        self.calls.append({"prompt": prompt, "bytes": len(jpeg), "size": size})
         if self.delay:
             time.sleep(self.delay)
         if self.fail_with is not None:
@@ -461,6 +530,9 @@ def main():
               "{" not in prompt and "}" not in prompt, prompt)
         check("the layout instruction survived",
               "KEEP" in prompt and "camera angle" in prompt)
+        check("and it was asked for in the source photograph's shape",
+              EDITS.calls[0]["size"] == visualizer.edit_size(photo((900, 600))),
+              EDITS.calls[0]["size"])
 
         print("\n--- the second generation is the regenerate credit ---")
         res = client.post("/api/visualizer/generate?cs=" + CS)
@@ -744,6 +816,151 @@ def main():
           visualizer.lift_exposure(at_mean(85))[0] != dark)
     check("unreadable bytes are the same story, not a crash",
           visualizer.lift_exposure(b"not an image")[0] == b"not an image")
+
+    print("\n--- the render is shaped like the photograph it came from ---")
+    for sw, sh, want in ((1000, 1500, visualizer.EDIT_PORTRAIT),
+                         (1500, 1000, visualizer.EDIT_LANDSCAPE),
+                         (1000, 1000, visualizer.EDIT_SQUARE),
+                         (1000, 1100, visualizer.EDIT_SQUARE),
+                         (1000, 1200, visualizer.EDIT_PORTRAIT)):
+        got = visualizer.edit_size(to_jpeg(kitchen_like((sw, sh))))
+        check("  %4dx%-4d (h/w %.2f) asks for %s"
+              % (sw, sh, sh / float(sw), want), got == want, got)
+
+    def ratio_of(raw):
+        with Image.open(io.BytesIO(raw)) as im:
+            return im.size[1] / float(im.size[0])
+
+    print("  both panels end up the same shape:")
+    for sw, sh, rw, rh in ((1000, 1500, 1024, 1536), (1000, 1500, 1024, 1024),
+                           (1500, 1000, 1024, 1024)):
+        src = to_jpeg(kitchen_like((sw, sh)))
+        out, note = visualizer.match_ratio(to_jpeg(kitchen_like((rw, rh))), src)
+        check("    source %.2f, render %.2f -> %.2f"
+              % (sh / float(sw), rh / float(rw), ratio_of(out)),
+              abs(ratio_of(out) - ratio_of(src)) < 0.02, note)
+
+    # The cap. A panoramic source and a square render are three times apart;
+    # matching them exactly would cut two thirds of the render away.
+    src = to_jpeg(kitchen_like((1000, 3000)))
+    out, note = visualizer.match_ratio(to_jpeg(kitchen_like((1024, 1024))), src)
+    check("  a 3.00 source does not drag the render past the cap",
+          abs(ratio_of(out) - visualizer.RATIO_CAP) < 0.02, (ratio_of(out), note))
+    check("  and the log line says the cap is why", "capped" in note, note)
+    check("  an unreadable render is returned rather than lost",
+          visualizer.match_ratio(b"not an image", src)[0] == b"not an image")
+
+    print("\n--- the teaser is a different file from the render ---")
+    render = to_jpeg(textured(1024, 1536), quality=94)
+    teaser = visualizer.build_teaser(render)
+    with Image.open(io.BytesIO(teaser)) as im:
+        tw, th = im.size
+    sharp, soft, n_sharp, n_soft = halves(teaser)
+    print("    render 1024x1536 %d bytes  ->  teaser %dx%d %d bytes"
+          % (len(render), tw, th, len(teaser)))
+    print("    detail: sharp half %.1f, blurred half %.1f" % (sharp, soft))
+    check("it is not the render", teaser != render)
+    check("  nor a re-encode of it at the same size",
+          (tw, th) != (1024, 1536), (tw, th))
+    check("  its long side is the configured small one",
+          max(tw, th) == visualizer.TEASER_LONG_SIDE, max(tw, th))
+    check("  so it carries a fraction of the render's pixels",
+          tw * th < 1024 * 1536 * 0.2,
+          "%.1f%%" % (100.0 * tw * th / (1024 * 1536)))
+    check("  and it keeps the render's shape", abs(th / float(tw) - 1.5) < 0.02,
+          th / float(tw))
+
+    check("the split is 50/50 by area",
+          abs(n_sharp - n_soft) / float(n_sharp) < 0.02, (n_sharp, n_soft))
+    check("  the top-left half is sharp and the bottom-right is not",
+          sharp > soft * 2.0, (sharp, soft))
+    check("  no full-resolution detail survives anywhere in the file",
+          detail(teaser) < detail(render) * 0.75,
+          (detail(teaser), detail(render)))
+    check("  including in the sharp half",
+          sharp < detail(render), (sharp, detail(render)))
+
+    print("\n--- one render per session, and the re-run survives it ---")
+    sess = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+    shutil.rmtree(visualizer.pending_dir(sess), ignore_errors=True)
+    check("the first upload claims the render", visualizer.pending_spend(sess))
+    check("  a second does not", not visualizer.pending_spend(sess))
+    check("  and neither does a third, after a replaced photo",
+          not visualizer.pending_spend(sess))
+    check("the flag is what turns it on at all",
+          visualizer.pre_render_on({"pre_purchase_render": True})
+          and not visualizer.pre_render_on({"pre_purchase_render": 1})
+          and not visualizer.pre_render_on({})
+          and not visualizer.pre_render_on(None))
+    check("kitchen-visualizer has it on",
+          visualizer.pre_render_on(visualizer.settings(
+              config.load_funnel("kitchen-visualizer"))))
+    check("  and kitchen has no visualizer at all",
+          visualizer.settings(config.load_funnel("kitchen")) is None)
+    # The claim is a real file, so it survives a process restart the way the
+    # database row would.
+    check("the claim is on disk, not in memory",
+          os.path.isfile(os.path.join(visualizer.pending_dir(sess),
+                                      "render.claimed")))
+    check("the credit is what CLAIM_RENDER_SQL writes: one used, one left",
+          "generations = 1" in visualizer.CLAIM_RENDER_SQL
+          and "'ready', 1, 1" in visualizer.CLAIM_RENDER_SQL,
+          visualizer.CLAIM_RENDER_SQL)
+    check("  against a limit of two, so the re-run is intact",
+          visualizer.max_generations(visualizer.settings(
+              config.load_funnel("kitchen-visualizer"))) == 2)
+    check("  and attempts is untouched, because nothing was retried",
+          "attempts" not in visualizer.CLAIM_RENDER_SQL)
+
+    print("\n--- a failed render costs the reader nothing ---")
+    real_gen = visualizer.generate_image
+    visualizer.generate_image = lambda *a, **k: (_ for _ in ()).throw(
+        visualizer.GenerationError("http_500"))
+    try:
+        cfgv = config.load_funnel("kitchen-visualizer")
+        blockv = visualizer.settings(cfgv)
+        _write_source(sess, to_jpeg(kitchen_like((1000, 1400))))
+        visualizer.run_pre_render(sess, cfgv, blockv, "modern_rustic", [])
+        state = visualizer.read_pending(sess)
+        check("it does not raise, and says so in the state file",
+              state.get("status") == visualizer.PRE_FAILED, state)
+        check("  no teaser file was written",
+              not os.path.isfile(visualizer.pending_teaser(sess)))
+        check("  and no render either",
+              not os.path.isfile(visualizer.pending_result(sess)))
+    finally:
+        visualizer.generate_image = real_gen
+
+    visualizer.generate_image = lambda *a, **k: to_jpeg(textured(1024, 1536))
+    try:
+        visualizer.run_pre_render(sess, cfgv, blockv, "modern_rustic",
+                                  ["brass-hardware", "stone-worktop"])
+        state = visualizer.read_pending(sess)
+        check("a working render writes both files and says ready",
+              state.get("status") == visualizer.PRE_READY
+              and os.path.isfile(visualizer.pending_result(sess))
+              and os.path.isfile(visualizer.pending_teaser(sess)), state)
+        big = os.path.getsize(visualizer.pending_result(sess))
+        small = os.path.getsize(visualizer.pending_teaser(sess))
+        print("    render %d bytes on disk, teaser %d bytes served"
+              % (big, small))
+        check("  and the served file is the small one",
+              small < big / 2.0, (small, big))
+        check("an unknown style produces no prompt and no call",
+              visualizer._pre_purchase_content(cfgv, "not_a_style", []) is None)
+        content = visualizer._pre_purchase_content(
+            cfgv, "modern_rustic", ["brass-hardware", "nope"])
+        check("  and element ids are filtered against the config",
+              content["elements"] == ["brass-hardware"], content["elements"])
+        check("  the palette comes from the style the reader was shown",
+              content["sections"][0]["data"]["colors"][0]["name"]
+              == cfgv["styles"][0]["reveals"]["palette"]["colors"][0]["name"],
+              content["sections"][0]["data"]["colors"][0])
+        check("  with a real hex, so build_prompt does not refuse",
+              bool(visualizer.build_prompt(cfgv, blockv, content)))
+    finally:
+        visualizer.generate_image = real_gen
+        shutil.rmtree(visualizer.pending_dir(sess), ignore_errors=True)
 
     shutil.rmtree(tmp, ignore_errors=True)
     print("\n%d checks, %d failed" % (checks[0], len(fails)))
