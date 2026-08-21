@@ -728,6 +728,35 @@ around it, no code fence, no extra keys."""
 RETRY_NOTE = ("\n\nReturn only valid JSON: a single object in exactly the shape "
               "above, no code fence, no other text.")
 
+# The second ask, for a funnel that wants to be told what it got wrong. The
+# forensics behind `_drift_detail` have always known which field ran over and
+# by how much — they were written to a log line and thrown away, so the retry
+# repeated the prompt and the model repeated the overrun. This is that
+# knowledge reaching the one party who can act on it.
+#
+# Names, counts and declared bounds only. Nothing the model wrote comes back
+# to it through here except a banned phrase, which is the one case where the
+# word itself is the correction.
+RETRY_DRIFT = (
+    "\n\nYour previous answer was refused. What was wrong with it, field by "
+    "field:\n%s\n"
+    "Send the whole section again with those corrected. The character counts "
+    "are hard limits — count them before you answer. Everything not listed "
+    "above was fine and should come back as it was.")
+
+
+def _retry_prompt(prompt, notes):
+    """The second ask, with what the first one got wrong when we know it.
+
+    Without notes this is the line the file has always appended, byte for
+    byte, which is what kitchen still gets.
+    """
+    if not notes:
+        return prompt + RETRY_NOTE
+    return (prompt + RETRY_NOTE
+            + RETRY_DRIFT % "\n".join("  - " + note for note in notes))
+
+
 SPEC = {
     # Every array shows the number of entries that is actually wanted. It used
     # to show one, with a `// 5-7` comment beside it — but JSON has no comments
@@ -1035,44 +1064,124 @@ location, and never address them by name.
 around it, no code fence, no extra keys."""
 
 
+# What the prompt asks for is not what the validator allows, and the gap
+# between them is the point. The ceiling is where a section is thrown away;
+# the number the model is handed is where it is asked to stop, and the space
+# left over is what absorbs a sentence and a half.
+#
+# It has to be said out loud, in characters. A warm run of all four styles
+# lost `splurge` on every one of them — `why` came back between 663 and 770
+# characters against a ceiling of 600, deterministically — because the shape
+# below asked for "3-5 sentences" and never named a number. A retry that
+# repeats the prompt repeats the overrun, so the same four failed twice.
+PROMPT_BUDGET = 0.65
+
+
+def _budget(cap):
+    """A round number to ask for, comfortably under a validator ceiling."""
+    step = 5 if cap <= 100 else 10
+    target = int(cap * PROMPT_BUDGET)
+    return max(step, target - target % step)
+
+
+def _walk_caps(section_id):
+    """(path, field name, ceiling) for every capped text field in a section.
+
+    Read off SHAPE rather than written out again here, so a ceiling that moves
+    takes the prompts with it and no number in a prompt can quietly go stale.
+    """
+    out = []
+    for key, spec in (SHAPE.get(section_id) or {}).items():
+        if spec[0] == "text":
+            out.append((key, key, spec[2]))
+        elif spec[0] == "obj":
+            for field, rule in spec[1].items():
+                if rule[0] == "text":
+                    out.append(("%s.%s" % (key, field), field, rule[2]))
+        elif spec[0] == "list":
+            fields = spec[3]
+            if isinstance(fields, tuple):            # a list of plain strings
+                if fields[0] == "text":
+                    out.append(("%s[]" % key, key, fields[2]))
+            else:
+                for field, rule in fields.items():
+                    if rule[0] == "text":
+                        out.append(("%s[].%s" % (key, field), field, rule[2]))
+    return out
+
+
+def _budgets(section_id):
+    """{field name: the number to put in the prompt} for one section.
+
+    Keyed by the bare field name, because that is what the shape example says.
+    Where a name appears at two depths under different ceilings the tighter
+    one wins — one number in the prompt has to satisfy both.
+    """
+    out = {}
+    for _, field, cap in _walk_caps(section_id):
+        value = _budget(cap)
+        out[field] = min(value, out.get(field, value))
+    return out
+
+
+def _budget_lines(section_id):
+    """The hard-limit recap that closes every zodiac shape.
+
+    By path rather than by bare name — `saves[].why` — which is the same
+    vocabulary the drift notes use when one of them comes back too long, so
+    the correction and the original instruction read as the same thing.
+    """
+    budgets = _budgets(section_id)
+    return "\n".join(
+        "  %-22s %d characters maximum" % (path, budgets[field])
+        for path, field, _ in _walk_caps(section_id))
+
+
+def _zodiac_spec(text, section_id):
+    """One shape, with its budgets substituted and its recap appended."""
+    return (text % _budgets(section_id)) + """
+
+LENGTHS ARE HARD LIMITS. Count the characters and stay under every one of
+them — a single field over its limit costs the entire section, so write to
+the limit rather than to the sentence you had in mind:
+%s""" % _budget_lines(section_id)
+
+
 # The same six shapes, described for the other product. Keyed by the id the
 # renderer dispatches on, written about what the reader was actually sold.
-ZODIAC_SPEC = {
+_ZODIAC_SHAPES = {
     "palette": '''"palette": {
-  "intro": "1-2 sentences on what these colours do for this person's energy, and why these and not others",
+  "intro": "1-2 sentences on what these colours do for this person's energy, and why these and not others (max %(intro)d chars)",
   "colors": [
-    {"name": "the dominant power colour's name",
+    {"name": "the dominant power colour's name (max %(name)d chars)",
      "hex": "#RRGGBB — six hex digits, a real wearable value",
-     "role": "the everyday one - what they wear or keep around them most",
-     "finish": "matte, satin, metallic or natural",
-     "where": "exactly where to put it: a garment, a room, a stone, a piece worn on the body"},
-    {"name": "the second colour's name",
-     "hex": "#RRGGBB",
+     "role": "the everyday one, what they wear or keep near them most (max %(role)d chars)",
+     "finish": "matte, satin, metallic or natural (max %(finish)d chars)",
+     "where": "exactly where to put it: a garment, a room, a stone, a piece worn on the body (max %(where)d chars)"},
+    {"name": "the second colour's name", "hex": "#RRGGBB",
      "role": "the one for when they need to be seen",
-     "finish": "satin",
-     "where": "exactly where it goes"},
-    {"name": "the grounding colour's name",
-     "hex": "#RRGGBB",
+     "finish": "satin", "where": "exactly where it goes"},
+    {"name": "the grounding colour's name", "hex": "#RRGGBB",
      "role": "the weight that stops the other two burning out",
-     "finish": "matte",
-     "where": "exactly where it goes"},
-    {"name": "the accent colour's name",
-     "hex": "#RRGGBB",
+     "finish": "matte", "where": "exactly where it goes"},
+    {"name": "the accent colour's name", "hex": "#RRGGBB",
      "role": "used once and never twice",
-     "finish": "metallic",
-     "where": "exactly where it goes"}
+     "finish": "metallic", "where": "exactly where it goes"}
   ],
-  "closing_rule": "one sentence naming their three talismans or stones and the day of the week each is worth carrying"
+  "closing_rule": "one sentence naming their three talismans or stones and the day of the week each is worth carrying (max %(closing_rule)d chars)"
 }
 
-Send four colours. Name the talismans from the style's own list in
-`closing_rule` — they were sold under this section's title and have to appear.''',
+Four colours, each an object carrying all five keys. Spell the keys exactly
+as they appear: `intro`, `colors`, `closing_rule`, and inside each colour
+`name`, `hex`, `role`, `finish`, `where`. Name the talismans from the style's
+own list in `closing_rule` — they were sold under this section's title and
+have to appear.''',
 
     "mistakes": '''"mistakes": {
   "items": [
-    {"title": "the hidden strength, as a short phrase",
-     "body": "3-5 sentences: what the strength is, how it shows up in an ordinary week, and the blind spot on its other side",
-     "fix": "2-3 sentences on how to use it deliberately rather than accidentally, starting with a verb"},
+    {"title": "the hidden strength, as a short phrase (max %(title)d chars)",
+     "body": "what the strength is, how it shows up in an ordinary week, and the blind spot on its other side (max %(body)d chars — roughly three sentences, not five)",
+     "fix": "how to use it deliberately rather than accidentally, starting with a verb (max %(fix)d chars — two sentences)"},
     {"title": "the second one", "body": "...", "fix": "..."},
     {"title": "the third one", "body": "...", "fix": "..."},
     {"title": "the fourth one", "body": "...", "fix": "..."},
@@ -1080,61 +1189,74 @@ Send four colours. Name the talismans from the style's own list in
   ]
 }
 
-Exactly five. Every strength carries its own blind spot inside the same body —
-a strength with no cost is flattery. `fix` is how to spend the strength on
-purpose, never a warning.''',
+Exactly five, under the single key `items`, each an object with `title`,
+`body` and `fix` spelled exactly so. Every strength carries its own blind
+spot inside the same body — a strength with no cost is flattery. `fix` is how
+to spend the strength on purpose, never a warning.''',
 
     "materials": '''"materials": {
-  "intro": "1-2 sentences on the pattern underneath who this person is drawn to",
+  "intro": "1-2 sentences on the pattern underneath who this person is drawn to (max %(intro)d chars)",
   "pairs": [
-    {"combo": "their sign + another sign, e.g. \\"Leo + Aries\\"",
+    {"combo": "their sign + another sign, e.g. \\"Leo + Aries\\" (max %(combo)d chars)",
      "verdict": "works",
-     "why": "2-4 sentences on what that pairing is like to be inside, and what it asks of them"},
+     "why": "what that pairing is like to be inside, and what it asks of them (max %(why)d chars — three sentences at most)"},
     {"combo": "their sign + another sign", "verdict": "works", "why": "..."},
     {"combo": "their sign + another sign", "verdict": "avoid", "why": "..."},
     {"combo": "their sign + another sign", "verdict": "avoid", "why": "..."}
   ],
-  "rule": "one sentence on what to say, or ask for, in the first month with somebody"
+  "rule": "one sentence on what to say, or ask for, in the first month with somebody (max %(rule)d chars)"
 }
 
-Four pairings: two that work and two that cost. `combo` always leads with this
-reader's own sign. "avoid" means the pairing is expensive to be in, never that
-a person is bad.''',
+Four pairings under `pairs`, two that work and two that cost, each an object
+with `combo`, `verdict` and `why` spelled exactly so. `verdict` is the word
+"works" or the word "avoid" and nothing else. `combo` always leads with this
+reader's own sign. "avoid" means the pairing is expensive to be in, never
+that a person is bad.''',
 
     "splurge": '''"splurge": {
-  "splurge": {"item": "the kind of work or working environment this energy pays best in",
-              "why": "3-5 sentences on why their energy earns here, and what it looks like day to day"},
+  "splurge": {"item": "the kind of work or working environment this energy pays best in, as a short phrase (max %(item)d chars)",
+              "why": "why their energy earns here, and what it looks like day to day (max %(why)d chars — three sentences, not five)"},
   "saves": [
-    {"item": "a kind of work to stop accepting",
-     "why": "2-3 sentences on what it costs them specifically"},
+    {"item": "a kind of work to stop accepting, as a short phrase (max %(item)d chars)",
+     "why": "what it costs them specifically (max %(why)d chars — two sentences)"},
     {"item": "a second one", "why": "..."},
     {"item": "a third one", "why": "..."}
   ],
-  "split_note": "one sentence on how to divide a working week between the two"
+  "split_note": "one sentence on how to divide a working week between the two (max %(split_note)d chars)"
 }
 
-One place their energy earns and three to stop spending it on. This is the
-shape of the work, never money to put anywhere — no markets, no figures, and
-no advice about where to place anything.''',
+The three top-level keys are `splurge`, `saves` and `split_note`, spelled
+exactly so and nothing else. `splurge` is a single object with `item` and
+`why`; `saves` is a list of three objects with the same two keys;
+`split_note` is one string. Do not send `item` or `why` at the top level, and
+do not rename `split_note`.
+
+`item` is a short phrase — a job shape, not a sentence. One place their
+energy earns and three to stop spending it on. This is the shape of the work,
+never money to put anywhere: no markets, no figures, and no advice about
+where to place anything.''',
 
     "dna": '''"dna": {
   "narrative": [
-    "a paragraph of 4-6 sentences on how this person's element, energy and tone actually combine — the blueprint, in their own nouns",
-    "a second paragraph of 4-6 sentences on the one place those three pull against each other, and what that tension produces"
+    "a paragraph on how this person's element, energy and tone actually combine — the blueprint, in their own nouns (max %(narrative)d chars)",
+    "a second paragraph on the one place those three pull against each other, and what that tension produces (max %(narrative)d chars)"
   ],
   "implications": [
-    "one sentence naming something concrete this means for how they decide",
-    "one sentence naming something concrete it means for how they rest",
-    "one sentence naming something concrete it means for how other people read them"
+    "one sentence naming something concrete this means for how they decide (max %(implications)d chars)",
+    "one sentence on what it means for how they rest (max %(implications)d chars)",
+    "one sentence on what it means for how other people read them (max %(implications)d chars)"
   ]
 }
 
-Two paragraphs and three implications. This is the section that has to sound
-like it was written about this reader and nobody else.''',
+Two keys only, `narrative` and `implications`, each a list of plain strings —
+not objects. Two paragraphs and three implications. Each paragraph is its own
+entry in the list and carries its own limit; do not run them together into
+one long string. This is the section that has to sound like it was written
+about this reader and nobody else.''',
 
     "shopping": '''"shopping": {
   "items": [
-    {"name": "January", "priority_note": "1-2 sentences on what this month's energy is good for"},
+    {"name": "January (max %(name)d chars)", "priority_note": "what this month's energy is good for (max %(priority_note)d chars — one or two sentences)"},
     {"name": "February", "priority_note": "..."},
     {"name": "March", "priority_note": "..."},
     {"name": "April", "priority_note": "..."},
@@ -1150,15 +1272,19 @@ like it was written about this reader and nobody else.''',
   "skip": []
 }
 
-All twelve months, in calendar order, every one of them in `items`. `skip`
-is empty — send it as an empty array and put nothing in it.
+Two keys, `items` and `skip`, spelled exactly so. All twelve months in
+calendar order, every one of them an object under `items` with `name` and
+`priority_note`. `skip` is an empty list — send it, and put nothing in it.
 
-Mark exactly two months by opening their note with "Strongest month:" and
-exactly one by opening its note with "Quiet month:". The quiet one is for
-recovery rather than for starting things, and its note says what it is good
-for instead. Themes only — what a month is good for, never what is going to
-happen in it.''',
+`name` is the month and nothing else. Mark exactly two months by opening
+their note with "Strongest month:" and exactly one by opening its note with
+"Quiet month:". The quiet one is for recovery rather than for starting
+things, and its note says what it is good for instead. Themes only — what a
+month is good for, never what is going to happen in it.''',
 }
+
+ZODIAC_SPEC = dict((section_id, _zodiac_spec(text, section_id))
+                   for section_id, text in _ZODIAC_SHAPES.items())
 
 
 # What a reader gets when generation fails outright, so it has to be
@@ -1365,6 +1491,11 @@ KITCHEN_PROFILE = {
     "personal": PERSONAL,
     "cached": CACHED,
     "banned": (),
+    # Kitchen's retry is the bare note it has always been. Its prompts carry
+    # sentence counts rather than character budgets, so a drift list quoting
+    # ceilings it was never given would be answering a question it was not
+    # asked — that is a change to make deliberately, on its own evidence.
+    "retry_detail": False,
     "pdf_lead": "Your kitchen style report",
 }
 
@@ -1380,6 +1511,9 @@ ZODIAC_PROFILE = {
     # fifty-two rows a funnel for nothing the reader could tell apart.
     "personal": ("dna", "materials", "shopping"),
     "banned": ZODIAC_BANNED,
+    # These shapes state a budget for every capped field, so a refusal can be
+    # quoted back against a number the model was already given.
+    "retry_detail": True,
     "pdf_lead": "Your cosmic profile report",
 }
 
@@ -2172,8 +2306,12 @@ def _timeout_class():
 FENCE_RE = re.compile(r"^\s*```(?:json)?|```\s*$", re.IGNORECASE)
 
 
-def _parse_detail(text, want):
+def _parse_detail(text, want, notes=None):
     """(parsed, reason). `reason` is None on success, else why it was refused.
+
+    `notes`, when a list is passed, collects the field-level drift the
+    forensics produce — the same strings that go to the log. Callers that pass
+    nothing are unaffected, which is every kitchen call site.
 
     The reason is diagnostic only and is built from field names, offsets and
     exception classes — never from the model's words. It exists because a
@@ -2226,8 +2364,10 @@ def _parse_detail(text, want):
             # that would have named the field sat below the console's level.
             # Detail nobody can see is not detail. Names, types and counts
             # only; no value the model wrote reaches this.
-            log.warning("section %s field drift: %s", key,
-                        "; ".join(_drift_detail(key, value)))
+            drift = _drift_detail(key, value)
+            log.warning("section %s field drift: %s", key, "; ".join(drift))
+            if notes is not None:
+                notes.extend(drift)
             return None, "key %r failed its validator (shape drift)" % key
         extras = _extras(key, value)
         if extras:
@@ -2292,7 +2432,7 @@ def _attempt(client, prompt, max_tokens, label, system=None):
 
 
 def _generate(client, prompt, want, max_tokens=None, system=None,
-              banned=()):
+              banned=(), detail=False):
     """One section group. Returns {section_id: body}, or None.
 
     A single personalised section needs a fraction of the room a six-section
@@ -2306,8 +2446,11 @@ def _generate(client, prompt, want, max_tokens=None, system=None,
     if max_tokens is None:
         max_tokens = _group_tokens(want)
 
+    # `detail` is what turns the second attempt into a correction rather than
+    # a repetition. Off, this behaves exactly as it did.
+    notes = [] if detail else None
     text, stop = _attempt(client, prompt, max_tokens, label, system)
-    parsed, why = _parse_detail(text, want)
+    parsed, why = _parse_detail(text, want, notes)
     hit = _banned_hit(parsed, banned) if parsed is not None else None
     if hit:
         # A section that says the banned thing is refused even though it
@@ -2315,13 +2458,20 @@ def _generate(client, prompt, want, max_tokens=None, system=None,
         # the alternative — the stub, which never says them at all.
         why = "banned phrase %r" % hit
         parsed = None
+        if notes is not None:
+            notes.append('the phrase "%s" is not allowed anywhere in this '
+                         "section — say it another way" % hit)
     if parsed is not None:
         return parsed
+    # Truncation, a missing key, a renamed key: those never reach the field
+    # forensics, and they are exactly the failures worth naming on the retry.
+    if notes is not None and not notes and why:
+        notes.append(why)
     log.warning("section %s unusable: %s (%d chars, stop=%s, cap=%d) — retrying",
                 label, why, len(text or ""), stop, max_tokens)
 
-    text, stop = _attempt(client, prompt + RETRY_NOTE, max_tokens, label,
-                          system)
+    text, stop = _attempt(client, _retry_prompt(prompt, notes), max_tokens,
+                          label, system)
     parsed, why = _parse_detail(text, want)
     hit = _banned_hit(parsed, banned) if parsed is not None else None
     if hit:
@@ -2705,7 +2855,8 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                     _section_prompt(style, name, tag_scores, section_id,
                                     cfg, choices, funnel_slug),
                     (section_id,), _section_tokens(section_id),
-                    profile["system"], profile["banned"]),
+                    profile["system"], profile["banned"],
+                    profile["retry_detail"]),
             })
         if cached is None:
             group = profile["cached"]
@@ -2715,7 +2866,8 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                                       _cached_prompt(style, name, group,
                                                      funnel_slug),
                                       group, _group_tokens(group),
-                                      profile["system"], profile["banned"]),
+                                      profile["system"], profile["banned"],
+                                      profile["retry_detail"]),
             })
     job["tasks"] = tasks
     job["pool"] = pool
@@ -2877,7 +3029,8 @@ def warm_style_cache(funnel_slug, style_id, client=None):
                             _cached_prompt(style, name, (section_id,),
                                            funnel_slug),
                             (section_id,), _warm_tokens(section_id),
-                            profile["system"], profile["banned"])
+                            profile["system"], profile["banned"],
+                            profile["retry_detail"])
         except Exception as exc:
             log.warning("warm %s/%s/%s failed: %s", funnel_slug, style_id,
                         section_id, type(exc).__name__)
