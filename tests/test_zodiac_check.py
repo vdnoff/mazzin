@@ -773,6 +773,41 @@ check("kitchen's list is empty, so kitchen validates as it always did",
       reports._profile("kitchen")["banned"] == ()
       and reports._banned_hit("your future will", ()) is None)
 
+
+# The unit above says the phrase is spotted. This says what happens next: a
+# section that parsed but says one is thrown away and asked for again, and it
+# stubs rather than ships if the second answer says it too.
+class _Msg(object):
+    stop_reason = "end_turn"
+
+    def __init__(self, text):
+        self.content = [type("B", (), {"type": "text", "text": text})()]
+
+
+def _client(answers):
+    it = iter(answers)
+    return type("C", (), {"messages": type("M", (), {
+        "create": staticmethod(lambda **kw: _Msg(next(it)))})})
+
+
+_clean = json.dumps({"dna": reports._fill(reports.ZODIAC_STUBS["dna"], "X")})
+_dirty = json.dumps({"dna": {
+    "narrative": ["Our prediction is that your future will change. "
+                  + "x" * 60,
+                  "A second paragraph long enough to pass. " + "y" * 60],
+    "implications": ["one line here that is long enough",
+                     "another line here long enough"]}})
+check("a banned answer is thrown away and asked for again",
+      reports._generate(_client([_dirty, _clean]), "p", ("dna",), 700,
+                        reports.ZODIAC_SYSTEM, reports.ZODIAC_BANNED)
+      is not None)
+check("  and banned twice means a stub rather than shipping it",
+      reports._generate(_client([_dirty, _dirty]), "p", ("dna",), 700,
+                        reports.ZODIAC_SYSTEM, reports.ZODIAC_BANNED) is None)
+check("  kitchen keeps the same payload, because kitchen bans nothing",
+      reports._generate(_client([_dirty, _dirty]), "p", ("dna",), 700,
+                        reports.SYSTEM, ()) is not None)
+
 templates = {"SPEC[%s]" % k: v for k, v in reports.ZODIAC_SPEC.items()}
 templates.update({"STUB[%s]" % k: json.dumps(reports._fill(v, "Deep Water"))
                   for k, v in reports.ZODIAC_STUBS.items()})
