@@ -264,3 +264,6 @@ bottom.
 
 ## 2026-08-19 — claude/paywall-v3
 - paywall v3
+
+## 2026-08-21 — claude/zodiac-funnel
+- zodiac funnel v1: config + placeholder gallery
