@@ -270,3 +270,6 @@ bottom.
 
 ## 2026-08-21 — claude/zodiac-sign-adaptive
 - zodiac: adaptive sign step + season axis + archetype rebalance
+
+## 2026-08-21 — claude/zodiac-gallery-art
+- zodiac: real gallery art
