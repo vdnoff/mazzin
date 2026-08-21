@@ -53,7 +53,7 @@
                 "img": "/static/galleries/zodiac/zk1b.webp",
                 "label": "Starry night",
                 "tags": [
-                  "water",
+                  "air",
                   "moon",
                   "mystic"
                 ],
@@ -193,11 +193,20 @@
       },
       {
         "id": "sign",
-        "question": "Which sign speaks to you?",
-        "format": "grid6",
+        "question": "Tap your zodiac sign:",
+        "format": "grid4",
+        "adaptive": {
+          "axis": "season",
+          "variants": {
+            "spring": "p_spring",
+            "summer": "p_summer",
+            "autumn": "p_autumn",
+            "default": "p_winter"
+          }
+        },
         "pairs": [
           {
-            "id": "p1",
+            "id": "p_spring",
             "images": [
               {
                 "id": "sign_aries",
@@ -205,17 +214,18 @@
                 "label": "Aries",
                 "tags": [
                   "fire",
+                  "sun",
                   "bold"
                 ],
                 "colors": [
                   {
-                    "name": "Signal Red",
-                    "hex": "#C0392B",
+                    "name": "Ram Scarlet",
+                    "hex": "#D8452C",
                     "element": "upper field"
                   },
                   {
                     "name": "Ember Gold",
-                    "hex": "#D98C2B",
+                    "hex": "#D9822A",
                     "element": "mid field"
                   },
                   {
@@ -231,7 +241,8 @@
                 "label": "Taurus",
                 "tags": [
                   "earth",
-                  "calm"
+                  "calm",
+                  "moon"
                 ],
                 "colors": [
                   {
@@ -257,8 +268,8 @@
                 "label": "Gemini",
                 "tags": [
                   "air",
-                  "bold",
-                  "sun"
+                  "sun",
+                  "bold"
                 ],
                 "colors": [
                   {
@@ -278,6 +289,37 @@
                   }
                 ]
               },
+              {
+                "id": "sign_cusp",
+                "img": "/static/galleries/zodiac/sign_cusp.webp",
+                "label": "Born on a cusp",
+                "tags": [
+                  "mystic",
+                  "moon"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#C6C2DC",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#5A3E8E",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#1C1740",
+                    "element": "lower field"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p_summer",
+            "images": [
               {
                 "id": "sign_cancer",
                 "img": "/static/galleries/zodiac/sign_cancer.webp",
@@ -333,13 +375,237 @@
                 ]
               },
               {
+                "id": "sign_virgo",
+                "img": "/static/galleries/zodiac/sign_virgo.webp",
+                "label": "Virgo",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "sun"
+                ],
+                "colors": [
+                  {
+                    "name": "Wheat Gold",
+                    "hex": "#C8B87A",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#74905A",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#443422",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_cusp",
+                "img": "/static/galleries/zodiac/sign_cusp.webp",
+                "label": "Born on a cusp",
+                "tags": [
+                  "mystic",
+                  "moon"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#C6C2DC",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#5A3E8E",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#1C1740",
+                    "element": "lower field"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p_autumn",
+            "images": [
+              {
+                "id": "sign_libra",
+                "img": "/static/galleries/zodiac/sign_libra.webp",
+                "label": "Libra",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#DCE6EE",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#AEC8DE",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Dusk Lilac",
+                    "hex": "#8E8CB0",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_scorpio",
+                "img": "/static/galleries/zodiac/sign_scorpio.webp",
+                "label": "Scorpio",
+                "tags": [
+                  "water",
+                  "mystic",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Surface Teal",
+                    "hex": "#4E8290",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4A2E58",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Abyss Indigo",
+                    "hex": "#141E36",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_sagittarius",
+                "img": "/static/galleries/zodiac/sign_sagittarius.webp",
+                "label": "Sagittarius",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Arrow Gold",
+                    "hex": "#E8A83A",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Ember Rust",
+                    "hex": "#B85A24",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#38221A",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_cusp",
+                "img": "/static/galleries/zodiac/sign_cusp.webp",
+                "label": "Born on a cusp",
+                "tags": [
+                  "mystic",
+                  "moon"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#C6C2DC",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#5A3E8E",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#1C1740",
+                    "element": "lower field"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p_winter",
+            "images": [
+              {
+                "id": "sign_capricorn",
+                "img": "/static/galleries/zodiac/sign_capricorn.webp",
+                "label": "Capricorn",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Summit Grey",
+                    "hex": "#9EA093",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#8C8778",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Granite Dark",
+                    "hex": "#3A3A30",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_aquarius",
+                "img": "/static/galleries/zodiac/sign_aquarius.webp",
+                "label": "Aquarius",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Frost Sky",
+                    "hex": "#AEC6DE",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4E4080",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#3A4656",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
                 "id": "sign_pisces",
                 "img": "/static/galleries/zodiac/sign_pisces.webp",
                 "label": "Pisces",
                 "tags": [
                   "water",
-                  "mystic",
-                  "moon"
+                  "moon",
+                  "mystic"
                 ],
                 "colors": [
                   {
@@ -355,6 +621,32 @@
                   {
                     "name": "Midnight Indigo",
                     "hex": "#1A2446",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_cusp",
+                "img": "/static/galleries/zodiac/sign_cusp.webp",
+                "label": "Born on a cusp",
+                "tags": [
+                  "mystic",
+                  "moon"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#C6C2DC",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#5A3E8E",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#1C1740",
                     "element": "lower field"
                   }
                 ]
@@ -926,7 +1218,7 @@
                 "label": "Wave",
                 "tags": [
                   "water",
-                  "calm"
+                  "mystic"
                 ],
                 "colors": [
                   {
@@ -990,7 +1282,7 @@
                 "label": "Crescent",
                 "tags": [
                   "air",
-                  "calm"
+                  "mystic"
                 ],
                 "colors": [
                   {
@@ -1079,18 +1371,18 @@
                 "img": "/static/galleries/zodiac/fl10a.webp",
                 "label": "Lightning storm",
                 "tags": [
-                  "fire",
+                  "air",
                   "bold"
                 ],
                 "colors": [
                   {
                     "name": "Strike White",
-                    "hex": "#F2ECD8",
+                    "hex": "#F2F0E4",
                     "element": "strike"
                   },
                   {
-                    "name": "Storm Amber",
-                    "hex": "#C68A34",
+                    "name": "Storm Silver",
+                    "hex": "#9AA6B4",
                     "element": "cloud edge"
                   },
                   {
@@ -1103,25 +1395,25 @@
               {
                 "id": "fl10b",
                 "img": "/static/galleries/zodiac/fl10b.webp",
-                "label": "Calm sea at dusk",
+                "label": "Still mountain lake",
                 "tags": [
-                  "water",
+                  "earth",
                   "calm"
                 ],
                 "colors": [
                   {
-                    "name": "Dusk Rose",
-                    "hex": "#D6B0A6",
+                    "name": "Moon Silver",
+                    "hex": "#BFCBD6",
                     "element": "sky"
                   },
                   {
-                    "name": "Sea Mist",
-                    "hex": "#8FAEBE",
-                    "element": "horizon"
+                    "name": "Slate Green",
+                    "hex": "#6E8478",
+                    "element": "far shore"
                   },
                   {
-                    "name": "Tidal Teal",
-                    "hex": "#2C5A70",
+                    "name": "Bark Umber",
+                    "hex": "#33402F",
                     "element": "water"
                   }
                 ]
@@ -1381,7 +1673,8 @@
                 "label": "Rooted stone",
                 "tags": [
                   "earth",
-                  "calm"
+                  "calm",
+                  "moon"
                 ],
                 "colors": [
                   {
@@ -1586,7 +1879,8 @@
       "img": "/static/galleries/zodiac/es13c.webp",
       "tags": [
         "earth",
-        "calm"
+        "calm",
+        "moon"
       ]
     },
     {
@@ -1644,7 +1938,7 @@
         "img": "/static/galleries/zodiac/sy8d.webp",
         "tags": [
           "water",
-          "calm"
+          "mystic"
         ]
       },
       {
@@ -1903,7 +2197,8 @@
       "name": "Grounded Earth",
       "tags": [
         "earth",
-        "calm"
+        "calm",
+        "moon"
       ],
       "blurb": "Weight and patience — you build things that stay built, and the value of that stays invisible until the day it isn't.",
       "reveals": {

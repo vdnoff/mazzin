@@ -76,7 +76,7 @@ print("\n--- steps ---")
 WANT = [
     ("hook", "pair", "Which sky calls to you?"),
     ("season", "grid4", "When do you celebrate your birthday?"),
-    ("sign", "grid6", "Which sign speaks to you?"),
+    ("sign", "grid4", "Tap your zodiac sign:"),
     ("energy", "pair", "Choose your source of power"),
     ("landscape", "grid6", "Which world feels like home?"),
     ("palette", "grid6", "Which palette holds your energy?"),
@@ -98,13 +98,31 @@ for step, (sid, fmt, question) in zip(steps, WANT):
 check("only the drain step scores inverse",
       [s["id"] for s in steps if s.get("scoring") == "inverse"] == ["drain"],
       str([s["id"] for s in steps if s.get("scoring")]))
+sign_images = [i for p in by_step["sign"]["pairs"] for i in p["images"]]
 check("the sign step ids are sign_<name>",
-      all(i["id"].startswith("sign_") for i in
-          by_step["sign"]["pairs"][0]["images"]),
-      str([i["id"] for i in by_step["sign"]["pairs"][0]["images"]]))
-check("the six signs cover all four elements",
-      {t for i in by_step["sign"]["pairs"][0]["images"] for t in i["tags"]}
-      & ELEMENTS == ELEMENTS)
+      all(i["id"].startswith("sign_") for i in sign_images),
+      str(sorted({i["id"] for i in sign_images})))
+check("all twelve signs are reachable, plus the cusp",
+      {i["id"] for i in sign_images} == {"sign_" + n for n in (
+          "aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra",
+          "scorpio", "sagittarius", "capricorn", "aquarius", "pisces",
+          "cusp")},
+      str(sorted({i["id"] for i in sign_images})))
+check("every variant covers three elements and the cusp",
+      all({t for i in p["images"] for t in i["tags"]} & ELEMENTS
+          == {i["tags"][0] for i in p["images"]} & ELEMENTS
+          and len({i["tags"][0] for i in p["images"]} & ELEMENTS) == 3
+          for p in by_step["sign"]["pairs"]),
+      str([sorted({i["tags"][0] for i in p["images"]} & ELEMENTS)
+           for p in by_step["sign"]["pairs"]]))
+check("the four variants between them cover all four elements",
+      {i["tags"][0] for i in sign_images} & ELEMENTS == ELEMENTS)
+check("the cusp is the same card in every variant",
+      len({json.dumps(i, sort_keys=True) for i in sign_images
+           if i["id"] == "sign_cusp"}) == 1)
+check("the cusp is labelled and tagged as one",
+      all(i["label"] == "Born on a cusp" and i["tags"] == ["mystic", "moon"]
+          for i in sign_images if i["id"] == "sign_cusp"))
 check("the palette step is the moodboard step",
       cfg["report"]["visuals"]["moodboard_step"] == "palette")
 check("every palette option carries a colour family",
@@ -121,19 +139,61 @@ print("\n--- the adaptive axis engine.js actually knows ---")
 # The engine holds the axis vocabulary, not the config: `AXES` there maps an
 # axis name to the tags it is made of, and an axis it has never heard of
 # resolves to no leader at all — which silently collapses every variant onto
-# `default`. So an adaptive step in this config is only meaningful if engine.js
-# already carries its axis. It does not carry "season", which is why the sign
-# step is a plain grid6 rather than four seasonal variants.
+# `default`. That is a wrong funnel rather than a broken one, and nothing
+# else in this repo would catch it, so the whitelist is read out of engine.js
+# rather than restated here.
 engine = open(os.path.join(ROOT, "static/js/engine.js")).read()
 known = set(re.findall(r"(\w+):\s*\w+_AXIS",
-                       re.search(r"var AXES = \{([^}]*)\}", engine).group(1)))
-check("engine.js declares its axes", bool(known), str(known))
-check("season is not one of them — the sign step cannot adapt on it",
-      "season" not in known, str(sorted(known)))
+                       re.search(r"var AXES = \{([^}]*)\}",
+                                 engine, re.S).group(1)))
+check("engine.js declares its axes", bool(known), str(sorted(known)))
+check("season is one of them", "season" in known, str(sorted(known)))
+check("engine.js spells the season axis the way the season step tags do",
+      set(re.search(r"var SEASON_AXIS = \[([^\]]*)\]", engine).group(1)
+          .replace('"', "").replace(" ", "").split(",")) == SEASONS)
 declared = [(s["id"], (s.get("adaptive") or {}).get("axis"))
             for s in steps if s.get("adaptive")]
+check("the sign step is the only adaptive one, on season",
+      declared == [("sign", "season")], str(declared))
 check("no step adapts on an axis engine.js cannot resolve",
       all(axis in known for _, axis in declared), str(declared))
+
+rule = by_step["sign"]["adaptive"]
+pair_ids = {p["id"] for p in by_step["sign"]["pairs"]}
+check("every variant resolves to a pair that exists",
+      set(rule["variants"].values()) <= pair_ids,
+      str(set(rule["variants"].values()) - pair_ids))
+check("every pair of the step is reachable through some variant",
+      pair_ids <= set(rule["variants"].values()),
+      str(pair_ids - set(rule["variants"].values())))
+# adaptivePairId falls back to variants.default when the axis has no leader,
+# which on this funnel means somebody who somehow reached step 3 without
+# answering step 2. Without the key the draw goes random.
+check("there is a default", "default" in rule["variants"])
+season_images = by_step["season"]["pairs"][0]["images"]
+for key in rule["variants"]:
+    if key == "default":
+        continue
+    carriers = [i["id"] for i in season_images if key in i["tags"]]
+    check("  variant key %-7s is a tag exactly one season card carries" % key,
+          len(carriers) == 1, str(carriers))
+# Winter has no key of its own and rides `default`, which is the shape the
+# engine wants — but it means a missing key looks like a working funnel. So
+# resolve all four the way adaptivePairId does and require four distinct
+# grids: a season quietly sharing another's signs is the exact failure this
+# step was rebuilt to stop.
+resolved = {}
+for image in season_images:
+    for tag in image["tags"]:
+        resolved[tag] = (rule["variants"].get(tag)
+                         or rule["variants"]["default"])
+check("every season a card offers resolves to a grid",
+      set(resolved) == SEASONS and all(resolved.values()), str(resolved))
+check("and the four seasons resolve to four different grids",
+      len(set(resolved.values())) == 4, str(resolved))
+check("each grid holds the signs of its own season",
+      resolved == {"spring": "p_spring", "summer": "p_summer",
+                   "autumn": "p_autumn", "winter": "p_winter"}, str(resolved))
 
 print("\n--- images, colours, tags ---")
 HEX = set("0123456789ABCDEF")
@@ -165,7 +225,28 @@ for img in images:
               % (on_disk, path_ok, tags_ok, bool(colors_ok)))
 check("every referenced frame is on disk and well formed",
       not [f for f in fails if f.startswith("  image")])
-check("every image id is unique", len(by_id) == len(images), str(len(images)))
+# One id is deliberately shared: the cusp card is the same picture, label and
+# tags in all four seasonal grids, and every consumer of an image id either
+# set-ifies it (tracking's funnel index, payments' known-id set), keys by
+# step and pair rather than by image (pair_stats), or is indifferent to
+# identical duplicates (reports' by-id map, the engine's imageById). Splitting
+# it into four ids would buy nothing and put four identical frames on the CDN.
+check("no pair shows the same image twice",
+      all(len({i["id"] for i in p["images"]}) == len(p["images"])
+          for s in steps for p in s["pairs"]))
+where = collections.defaultdict(set)
+for s in steps:
+    for p in s["pairs"]:
+        for i in p["images"]:
+            where[i["id"]].add((s["id"], p["id"]))
+repeated = {i: v for i, v in where.items() if len(v) > 1}
+check("the only repeated id is the cusp", set(repeated) == {"sign_cusp"},
+      str(sorted(repeated)))
+check("and it is repeated only inside its own step",
+      all(len({s for s, _ in v}) == 1 for v in repeated.values()))
+check("every other image id is unique",
+      len(by_id) == len(images) - (len(repeated.get("sign_cusp", ())) - 1),
+      "%d ids, %d slots" % (len(by_id), len(images)))
 check("the gallery has a frame for every image and an og card",
       set(os.listdir(GALLERY))
       == {i["id"] + ".webp" for i in images} | {"og.webp"},
@@ -210,7 +291,7 @@ print("\n--- styles ---")
 WANT_STYLES = [
     ("radiant_fire", "Radiant Fire", ["fire", "sun", "bold"]),
     ("deep_water", "Deep Water", ["water", "moon", "mystic"]),
-    ("grounded_earth", "Grounded Earth", ["earth", "calm"]),
+    ("grounded_earth", "Grounded Earth", ["earth", "calm", "moon"]),
     ("celestial_air", "Celestial Air", ["air", "sun", "bold"]),
 ]
 check("four archetypes, named and tagged",
@@ -435,6 +516,12 @@ check("the hook slots are all actually used somewhere",
       str(sorted(set(cfg["report"]["hook_slots"]) - used)))
 
 print("\n--- scoring ---")
+# The axis vocabulary as engine.js holds it, so the walk below draws the
+# adaptive step exactly as a phone would.
+AXES = {name: [t.strip().strip('"') for t in body.split(",")]
+        for name, body in re.findall(
+            r"var (\w+)_AXIS = \[([^\]]*)\]", engine)}
+AXES = {k.lower(): v for k, v in AXES.items()}
 # computeWinner sums the run's tag scores over each style's tags, so a style
 # whose own persona does not win it is a style nobody can ever be given.
 
@@ -448,12 +535,33 @@ def winner(scores):
     return best
 
 
+def _variant(step, scores):
+    """The pair engine.js would draw, or None to leave it to the caller.
+
+    adaptivePairId: the leading tag on the step's axis picks the variant,
+    `default` covers the rest, and a rule naming a pair that is not there
+    falls through to the random draw.
+    """
+    rule = step.get("adaptive")
+    if not rule:
+        return None
+    leader, best = None, 0
+    for tag in AXES.get(rule["axis"], ()):
+        if scores.get(tag, 0) > best:
+            best, leader = scores.get(tag, 0), tag
+    wanted = (leader and rule["variants"].get(leader)) \
+        or rule["variants"].get("default")
+    return next((p for p in step["pairs"] if p["id"] == wanted), None)
+
+
 def play(pick):
     """One run, as engine.js scores it: -0.5 a tag on the inverse step, 1 on
-    every other."""
+    every other, and the adaptive step drawn from what came before it."""
     scores = {}
     for step in steps:
-        options = [i for p in step["pairs"] for i in p["images"]]
+        pair = _variant(step, scores)
+        options = ([i for i in pair["images"]] if pair
+                   else [i for p in step["pairs"] for i in p["images"]])
         weight = -0.5 if step.get("scoring") == "inverse" else 1
         for tag in pick(step, options)["tags"]:
             scores[tag] = scores.get(tag, 0) + weight
@@ -485,18 +593,26 @@ for style in cfg["styles"]:
 check("the inverse step can push a total negative — the floor is -Infinity",
       any(s.get("scoring") == "inverse" for s in steps))
 
-# Not a balance target — the archetypes are deliberately not equally weighted,
-# because the tag vocabulary puts fire and water on more frames than earth and
-# air. This is the floor under that: a style that a random walk can never
-# reach is one the funnel cannot actually award, and it would be invisible
-# from the checks above, which only ever play a style's own persona.
+# The balance the tags were retuned for, held to a band rather than a point.
+# A random walk is not a customer, but it is the one measure of this funnel
+# that does not depend on guessing who its customers are, and a retag that
+# quietly pushes an archetype out of reach shows up here and nowhere else —
+# the persona checks above only ever play a style against itself.
+#
+# The band is wide on purpose: 15-35% leaves room to move copy and frames
+# around without a failing suite, and still catches the 45/42/9/4 spread the
+# funnel shipped with before the sign step was made adaptive.
+FLOOR, CEILING = 15.0, 35.0
 rng = random.Random(20260821)
 seen = collections.Counter(
     winner(play(lambda s, o: rng.choice(o))) for _ in range(20000))
 for style in cfg["styles"]:
-    share = seen[style["id"]] / 200.0
-    check("  %-15s is reachable at random (%.1f%% of runs)"
-          % (style["id"], share), share >= 2.0)
+    share = 100.0 * seen[style["id"]] / 20000
+    check("  %-15s takes %4.1f%% of random walks (%.0f-%.0f)"
+          % (style["id"], share, FLOOR, CEILING),
+          FLOOR <= share <= CEILING)
+check("the four shares account for every walk",
+      sum(seen.values()) == 20000, str(sum(seen.values())))
 
 print("\n--- server side ---")
 import config  # noqa: E402
@@ -505,6 +621,16 @@ import tracking  # noqa: E402
 
 check("the slug is routable", config.funnel_exists("zodiac"))
 check("load_funnel returns this config", config.load_funnel("zodiac") == cfg)
+
+
+def _accepts(extra):
+    try:
+        tracking._clean_extra("zodiac", "swipe", extra)
+        return True
+    except ValueError:
+        return False
+
+
 choices = [s["pairs"][0]["images"][0]["id"] for s in steps]
 check("checkout accepts a 13-long choice list",
       payments._clean_choices(cfg, choices) == choices)
@@ -513,13 +639,29 @@ check("checkout rejects a 14-long list",
 check("tag scores validate against this vocabulary",
       payments._clean_tag_scores(cfg, {"fire": 6, "sun": 5, "bold": 4})
       == {"fire": 6, "sun": 5, "bold": 4})
-for sid in ("hook", "sign", "palette"):
-    shown = [i["id"] for i in by_step[sid]["pairs"][0]["images"]]
+for sid in ("hook", "season", "palette"):
+    pair = by_step[sid]["pairs"][0]
+    shown = [i["id"] for i in pair["images"]]
     got = tracking._clean_extra("zodiac", "swipe",
-                                {"pair": sid + ":p1", "shown": shown,
-                                 "chosen": shown[0]})
+                                {"pair": "%s:%s" % (sid, pair["id"]),
+                                 "shown": shown, "chosen": shown[0]})
     check("tracking accepts the %s step" % sid, got["chosen"] == shown[0],
           str(got))
+# Every seasonal grid, by its own pair key. The cusp is in all four `shown`
+# lists and tracking rejects a repeat inside one of them, so this is also
+# where a shared id would show up if it were a problem.
+for pair in by_step["sign"]["pairs"]:
+    shown = [i["id"] for i in pair["images"]]
+    got = tracking._clean_extra("zodiac", "swipe",
+                                {"pair": "sign:" + pair["id"],
+                                 "shown": shown, "chosen": "sign_cusp"})
+    check("  tracking accepts sign:%-8s and the cusp in it" % pair["id"],
+          got["chosen"] == "sign_cusp", str(got))
+check("tracking still rejects a pair key the funnel has no variant for",
+      not _accepts({"pair": "sign:p_autumn_2",
+                    "shown": [i["id"] for i
+                              in by_step["sign"]["pairs"][0]["images"]],
+                    "chosen": "sign_cusp"}))
 try:
     tracking._clean_extra("zodiac", "swipe",
                           {"pair": "hook:p1", "shown": ["hk1a", "zk1b"],
