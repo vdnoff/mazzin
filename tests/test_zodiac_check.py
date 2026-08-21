@@ -1030,6 +1030,179 @@ check("  and its opening line does not promise a renovation saving",
       "$4,000" not in reports._email_opening(content),
       reports._email_opening(content))
 
+print("\n--- every prompt states a length for every field that has one ---")
+# A warm run of all four styles lost `splurge` on every one of them, twice
+# each: `why` came back 663-770 characters against a ceiling of 600 because
+# the shape asked for "3-5 sentences" and named no number, and the retry
+# repeated the prompt so the model repeated the overrun.
+#
+# The caps are walked here off SHAPE directly rather than through the helper
+# reports.py uses, so a bug in that helper cannot hide by agreeing with
+# itself.
+BUDGET_RE = re.compile(r"^  (\S+)\s+(\d+) characters maximum$", re.M)
+HEADROOM = 0.75
+
+
+def declared_caps(section_id):
+    """{path: (floor, ceiling)} for every capped text field of a section."""
+    out = {}
+    for key, spec in reports.SHAPE[section_id].items():
+        if spec[0] == "text":
+            out[key] = (spec[1], spec[2])
+        elif spec[0] == "obj":
+            for field, rule in spec[1].items():
+                if rule[0] == "text":
+                    out["%s.%s" % (key, field)] = (rule[1], rule[2])
+        elif spec[0] == "list":
+            fields = spec[3]
+            if isinstance(fields, tuple):
+                if fields[0] == "text":
+                    out["%s[]" % key] = (fields[1], fields[2])
+            else:
+                for field, rule in fields.items():
+                    if rule[0] == "text":
+                        out["%s[].%s" % (key, field)] = (rule[1], rule[2])
+    return out
+
+
+for section_id, _ in SHAPE_OF:
+    spec = reports.ZODIAC_SPEC[section_id]
+    stated = dict((path, int(n)) for path, n in BUDGET_RE.findall(spec))
+    caps = declared_caps(section_id)
+    check("%-10s states a budget for every capped field" % section_id,
+          set(stated) == set(caps),
+          "missing %s, extra %s" % (sorted(set(caps) - set(stated)),
+                                    sorted(set(stated) - set(caps))))
+    for path in sorted(caps):
+        if path not in stated:
+            continue
+        floor, ceiling = caps[path]
+        asked = stated[path]
+        check("  %-24s asks %4d of %4d (%.0f%%)"
+              % ("%s.%s" % (section_id, path), asked, ceiling,
+                 100.0 * asked / ceiling),
+              floor < asked <= ceiling * HEADROOM,
+              "floor %d, ceiling %d" % (floor, ceiling))
+        # The number has to be beside the field in the shape too, not only in
+        # the recap: the shape example is what a model copies from.
+        check("    and says so beside the field itself",
+              "max %d chars" % asked in spec)
+
+print("\n--- and names its keys, because one style renamed them ---")
+# One warm run answered `splurge` with `item` and `why` at the top level
+# instead of splurge/saves/split_note, which is a whole section lost to a
+# spelling.
+for section_id, _ in SHAPE_OF:
+    spec = reports.ZODIAC_SPEC[section_id]
+    for key in reports.SHAPE[section_id]:
+        check("  %-10s names `%s`" % (section_id, key),
+              "`%s`" % key in spec or '"%s"' % key in spec)
+check("splurge says which keys are NOT top level",
+      "Do not send `item` or `why` at the top level"
+      in reports.ZODIAC_SPEC["splurge"])
+
+print("\n--- a refusal comes back as a correction, not a repetition ---")
+
+
+def _answers(seq):
+    """A stub client, and the list of prompts it was sent."""
+    it = iter(seq)
+    sent = []
+
+    def create(**kw):
+        sent.append(kw["messages"][0]["content"])
+        return _Msg(next(it))
+
+    return type("C", (), {"messages": type("M", (), {
+        "create": staticmethod(create)})}), sent
+
+
+GOOD = json.dumps({"splurge": reports._fill(reports.ZODIAC_STUBS["splurge"],
+                                            "Deep Water")})
+# The production shape of the failure: everything valid but one long `why`.
+OVERRUN = json.dumps({"splurge": {
+    "splurge": {"item": "Work with a visible edge", "why": "w" * 707},
+    "saves": [{"item": "Work that needs performing", "why": "y" * 200},
+              {"item": "Roles built on maintaining", "why": "y" * 200},
+              {"item": "Anything measured in hours", "why": "y" * 200}],
+    "split_note": "Give the deep half of the week to the work with an edge."}})
+
+client, sent = _answers([OVERRUN, GOOD])
+got = reports._generate(client, "SHAPE", ("splurge",), 900,
+                        reports.ZODIAC_SYSTEM, reports.ZODIAC_BANNED, True)
+check("a too-long answer is corrected on the retry", got is not None)
+check("  and the retry was asked twice, not once", len(sent) == 2, len(sent))
+retry = sent[1]
+check("  the retry names the field that overran",
+      "splurge.why" in retry, retry[-300:])
+check("  with the count it sent and the bound it broke",
+      "707 chars, want 15-600" in retry, retry[-300:])
+check("  and tells it the counts are hard limits",
+      "hard limits" in retry)
+check("  the first ask carried no correction",
+      "previous answer was refused" not in sent[0])
+
+# Key drift, the other production failure, has no field-level forensics
+# behind it — it fails before the validator — so the reason line is what has
+# to reach the retry.
+DRIFTED = json.dumps({"splurge": {"item": "x", "why": "y" * 40}})
+client, sent = _answers([DRIFTED, GOOD])
+check("key drift is corrected too",
+      reports._generate(client, "SHAPE", ("splurge",), 900,
+                        reports.ZODIAC_SYSTEM, reports.ZODIAC_BANNED, True)
+      is not None)
+check("  and the retry names the keys that went missing",
+      "missing 'splurge'" in sent[1] and "missing 'saves'" in sent[1],
+      sent[1][-300:])
+
+# A truncated answer never reaches the validator either.
+client, sent = _answers(['{"splurge": {"splurge": {"item": "x", "why', GOOD])
+reports._generate(client, "SHAPE", ("splurge",), 900, reports.ZODIAC_SYSTEM,
+                  reports.ZODIAC_BANNED, True)
+check("a truncated answer is told it was truncated",
+      "unterminated" in sent[1] or "truncated" in sent[1], sent[1][-200:])
+
+client, sent = _answers([json.dumps({"splurge": {
+    "splurge": {"item": "Work", "why": "Our prediction is " + "w" * 100},
+    "saves": [{"item": "Performing work", "why": "y" * 40},
+              {"item": "Maintaining work", "why": "y" * 40}],
+    "split_note": "s" * 40}}), GOOD])
+reports._generate(client, "SHAPE", ("splurge",), 900, reports.ZODIAC_SYSTEM,
+                  reports.ZODIAC_BANNED, True)
+check("a banned phrase is quoted back so it is not repeated",
+      'the phrase "prediction" is not allowed' in sent[1], sent[1][-300:])
+
+print("\n--- kitchen's retry is the one it has always been ---")
+client, sent = _answers([OVERRUN, GOOD])
+reports._generate(client, "SHAPE", ("splurge",), 900, reports.SYSTEM, (),
+                  False)
+check("byte for byte, prompt plus the bare note",
+      sent[1] == "SHAPE" + reports.RETRY_NOTE, repr(sent[1][-120:]))
+check("  with no drift block appended",
+      "previous answer was refused" not in sent[1])
+check("kitchen's profile does not ask for one",
+      reports._profile("kitchen")["retry_detail"] is False
+      and reports._profile("kitchen-visualizer")["retry_detail"] is False)
+check("zodiac's does",
+      reports._profile("zodiac")["retry_detail"] is True)
+check("and _parse_detail still answers the old way when nothing is passed",
+      reports._parse_detail(GOOD, ("splurge",))[0] is not None)
+
+print("\n--- the caps themselves are kitchen's and did not move ---")
+check("shopping still 4-12 items, 0-3 skips",
+      reports.SHAPE["shopping"]["items"][1:3] == (4, 12)
+      and reports.SHAPE["shopping"]["skip"][1:3] == (0, 3))
+check("no text ceiling anywhere is above 600",
+      max(c for sid in reports.SHAPE for _, c in declared_caps(sid).values())
+      == 600)
+check("every zodiac budget is derived from SHAPE, not written out again",
+      all(reports._budget(cap) == asked
+          for sid, _ in SHAPE_OF
+          for path, (floor, cap) in declared_caps(sid).items()
+          for asked in [dict((p, int(n)) for p, n in
+                             BUDGET_RE.findall(reports.ZODIAC_SPEC[sid]))
+                        [path]]))
+
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for f in fails:
     print("  FAIL " + f)
