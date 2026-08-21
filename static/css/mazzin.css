@@ -372,6 +372,36 @@ body {
 
 .cards.is-grid6 .card { border-radius: 14px; }
 
+/* Twelve signs, three across and four down. This is the one grid where the
+   reader is not comparing pictures — they are hunting for one card they
+   already know the name of — so the cells can be small as long as they are
+   still a comfortable target and the name on each is legible.
+
+   Three columns at 390px wide: the column is 100vw minus the shell's own
+   padding, less two 8px gaps, which leaves a cell around 112px across and,
+   at 4:5, about 140px tall. Both are well past the 44px minimum a finger
+   needs, and the whole block still fits above the fold with the question. */
+.cards.is-grid12 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 8px;
+  /* Four rows rather than three, so this asks for more height than grid6 and
+     is the one format allowed past .cards's shared ceiling — a twelfth cell
+     pushed off-screen is a sign nobody can pick. */
+  min-height: min(132vw, 62vh);
+  max-height: min(86vh, 190vw);
+}
+
+.cards.is-grid12 .card {
+  border-radius: 12px;
+  /* The floor a finger needs. The cells compute well above this at every
+     width this ships to; it is here so a narrower phone shrinks the gaps
+     rather than the target. */
+  min-height: 44px;
+  min-width: 44px;
+}
+
 .card {
   position: relative;
   flex: 1 1 0;
@@ -515,6 +545,68 @@ body {
   60% { opacity: 1; transform: scale(1.15); }
   100% { opacity: 1; transform: scale(1); }
 }
+
+/* --- permanent card labels -------------------------------------------------- */
+
+/* On a funnel that sets `label_mode: "center"`, every card carries its own
+   name in the middle of it from the moment it lands — not only in the chip
+   that arrives after a tap. Several zodiac steps read as "what am I even
+   tapping?" without it.
+
+   White type over a scrim rather than text-shadow alone. A shadow is enough
+   on a dark frame and gives up on a pale one: ls5f is a sky that measures
+   near-white through its middle band, and a shadowed white word on it is a
+   grey smudge. The scrim is a gradient centred on the text — dense where the
+   letters are, gone by the edges — so it never reads as a bar across the
+   picture, and it puts a floor under the contrast on the busiest frame
+   (dr11a) as well as the lightest. */
+.card-name {
+  /* The box is the whole card, not a strip across the middle of it. A short
+     full-width box clips the gradient flat at its top and bottom edges, which
+     puts a visible bar over the picture — the thing the gradient was chosen to
+     avoid. Given the full height it has room to fall away in both directions
+     and reads as a vignette centred on the word. */
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  font-family: var(--font-display, inherit);
+  font-size: clamp(15px, 4.6vw, 22px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  /* Dense enough for the hardest frame rather than for a typical one. ls5f
+     is a sky whose middle band measures near-white; a scrim tuned by eye on
+     the dark frames left white type on it at 2.6:1, which is unreadable and
+     was invisible until it was measured. At these stops the same frame holds
+     above 4.5:1 across the whole width the word occupies, and the dark
+     frames are far past it. */
+  background: radial-gradient(ellipse 96% 58% at 50% 50%,
+                              rgba(9, 11, 16, 0.74) 0%,
+                              rgba(9, 11, 16, 0.68) 42%,
+                              rgba(9, 11, 16, 0.46) 72%,
+                              rgba(9, 11, 16, 0) 100%);
+  pointer-events: none;
+}
+
+/* Twelve cells are narrow, so the name steps down with them rather than
+   wrapping a long sign across four lines. */
+.cards.is-grid12 .card-name {
+  font-size: clamp(13px, 3.4vw, 17px);
+  padding: 0 4px;
+}
+
+/* Under the selection wash the label goes with the rest of the card — the
+   chip that lands on top is the one carrying the name at that point, and two
+   copies of the same word stacked on each other reads as a rendering fault. */
+.cards.is-picking .card:not(.is-chosen) .card-name { opacity: 0.5; }
+.card.is-chosen .card-name { opacity: 0; transition: opacity 120ms ease-out; }
 
 /* --- selection label ------------------------------------------------------- */
 
