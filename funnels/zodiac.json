@@ -3,6 +3,8 @@
   "funnel_id": "zodiac_v1",
   "locale": "en",
   "stripe_mode": "test",
+  "result_module": "/static/js/result_zodiac.js",
+  "result_css": "/static/css/result_zodiac.css",
   "meta": {
     "title": "What's Your Cosmic Profile?",
     "og_image": "/static/galleries/zodiac/og.webp"
@@ -2148,6 +2150,7 @@
       {
         "id": "mistakes",
         "title": "5 Hidden Strengths & Blind Spots",
+        "teaser_line": "Four more, and the costliest one is last.",
         "enabled": true,
         "preview": [
           "It reads as obvious written down, and it still shapes more of your week than anything else on this list.",
@@ -2160,6 +2163,7 @@
       {
         "id": "dna",
         "title": "Your Cosmic Blueprint",
+        "teaser_line": "How your {palette} splits between your two strongest elements.",
         "enabled": true,
         "preview": [
           "Three axes, scored from your own taps, and one place where they pull hard against each other.",
@@ -2172,6 +2176,7 @@
       {
         "id": "materials",
         "title": "Love & Compatibility",
+        "teaser_line": "Why one sign keeps finding you.",
         "enabled": true,
         "preview": [
           "It is the pattern underneath the people you keep choosing, rather than a list of signs to avoid.",
@@ -2184,6 +2189,7 @@
       {
         "id": "splurge",
         "title": "Career & Money Path",
+        "teaser_line": "Where your {symbol} energy earns — and what to stop taking.",
         "enabled": true,
         "preview": [
           "Your earning rhythm is not flat and never was, and the shape of it is far more useful than an average.",
@@ -2196,6 +2202,7 @@
       {
         "id": "shopping",
         "title": "Your 12-Month Energy Map",
+        "teaser_line": "Two strong months. One quiet one.",
         "enabled": true,
         "preview": [
           "Twelve months, marked for the stretches where your energy is behind you and the two where it plainly is not.",
@@ -2328,7 +2335,7 @@
     "anchor": "A private session with an astrologer costs $75+. Your complete profile — {price}, once.",
     "reframe": "Less than two coffees. Yours forever.",
     "price_suffix": "one-time",
-    "cta_label": "Get my profile for {price}",
+    "cta_label": "Open my full profile — {price}",
     "consent_prechecked": true,
     "trust": [
       "Secure payment via Stripe",
@@ -2340,5 +2347,14 @@
   "result": {
     "mistakes_teaser": "You've seen strength #1. The other four run deeper — one explains your {moonphase} choice.",
     "value_banner": "Five strengths, a compatibility read and a twelve-month energy map — all of it built from your own 12 signals, yours to keep."
+  },
+  "result_copy": {
+    "kicker": "YOUR COSMIC PROFILE",
+    "blend_note": "rare blend",
+    "taps_caption": "Read from your taps:",
+    "balance_title": "Your element balance",
+    "strength_lead": "Your {symbol} and your {moonphase} put this one first.",
+    "offer_sub": "Your complete profile — once, forever.",
+    "locked_note": "Locked"
   }
 }

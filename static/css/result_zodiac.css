@@ -1,0 +1,408 @@
+/* The zodiac result page.
+ *
+ * Loaded only by a funnel whose config names it, and scoped under
+ * `.result-module` so nothing in here can reach a page it was not asked onto.
+ * mazzin.css is untouched: kitchen's result is the same document it was.
+ *
+ * The palette is the gallery's — deep indigo through to the gold the sign
+ * glyphs are drawn in — because the page and the artwork on it should look
+ * like one thing.
+ */
+
+.result-module {
+  --zr-ink: #0E1430;
+  --zr-panel: #141B3C;
+  --zr-panel-2: #1B2350;
+  --zr-line: rgba(232, 200, 120, 0.22);
+  --zr-gold: #E8C878;
+  --zr-text: #EDEFF6;
+  --zr-muted: #9AA2C4;
+  --zr-faint: #6E77A0;
+
+  /* Full bleed, exactly. body carries `padding: 0 18px`, so the pull has to
+     be that number and not a rounded one — at -20px the page scrolled two
+     pixels sideways on a phone, which is a small number and a real defect. */
+  margin: 0 -18px;
+  padding: 26px 18px 40px;
+  background:
+    radial-gradient(120% 60% at 50% 0%, #1A2250 0%, rgba(14, 20, 48, 0) 70%),
+    var(--zr-ink);
+  color: var(--zr-text);
+  text-align: left;
+}
+
+/* --- a) kicker -------------------------------------------------------------- */
+
+.zr-kicker {
+  margin: 0 0 16px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-align: center;
+  color: var(--zr-gold);
+}
+
+/* --- b) the cosmic ID ------------------------------------------------------- */
+
+.zr-hero {
+  padding: 22px 20px 24px;
+  border: 1px solid var(--zr-line);
+  border-radius: 20px;
+  background: linear-gradient(180deg, var(--zr-panel-2) 0%, var(--zr-panel) 100%);
+  text-align: center;
+}
+
+/* The sign frame, masked to a disc. The glyph is centred in the art, so the
+   crop is the glyph and nothing has to be drawn over it. */
+.zr-glyph {
+  display: block;
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 14px;
+  border: 2px solid var(--zr-gold);
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 0 6px rgba(232, 200, 120, 0.08);
+}
+
+.zr-glyph img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.zr-sign {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--zr-text);
+}
+
+.zr-cross {
+  margin: 4px 0 18px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--zr-gold);
+}
+
+.zr-bar {
+  height: 8px;
+  margin: 0 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.zr-bar-fill { display: block; height: 100%; border-radius: 999px; }
+
+.zr-sub {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--zr-muted);
+}
+
+/* --- c) read from your taps -------------------------------------------------- */
+
+.zr-taps { margin: 24px 0 6px; }
+
+.zr-taps-caption {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--zr-faint);
+}
+
+.zr-taps-row {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.zr-tap { flex: 1 1 0; min-width: 0; }
+
+.zr-tap img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Two lines rather than one truncated word: at five to a row a cell is about
+   sixty pixels, and "Candlelit room" on one line is "Candlelit ro…". */
+.zr-tap-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  margin-top: 5px;
+  min-height: 24px;
+  font-size: 10px;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--zr-faint);
+  overflow: hidden;
+}
+
+/* --- d) the constellation path ----------------------------------------------- */
+
+.zr-path {
+  position: relative;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The line the nodes sit on. Behind them, stopping at the last one rather
+   than running off the end of the list. */
+.zr-path::before {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 10px;
+  bottom: 26px;
+  width: 1px;
+  background: linear-gradient(180deg,
+                              var(--zr-gold) 0%,
+                              rgba(232, 200, 120, 0.35) 35%,
+                              rgba(232, 200, 120, 0.08) 100%);
+}
+
+.zr-node {
+  position: relative;
+  padding: 0 0 22px 38px;
+}
+
+.zr-node:last-child { padding-bottom: 4px; }
+
+.zr-node-mark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 23px;
+  text-align: center;
+}
+
+.zr-node.is-open .zr-node-mark {
+  color: var(--zr-ink);
+  background: var(--zr-gold);
+  box-shadow: 0 0 0 4px rgba(232, 200, 120, 0.14);
+}
+
+.zr-node.is-locked .zr-node-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--zr-faint);
+  background: var(--zr-panel-2);
+  border: 1px solid rgba(154, 162, 196, 0.35);
+}
+
+.zr-node.is-locked .zr-node-mark svg {
+  display: block;
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: var(--zr-faint);
+  stroke-width: 1.6;
+}
+
+.zr-node-title {
+  margin: 1px 0 0;
+  font-family: var(--font-display, inherit);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.zr-node.is-locked .zr-node-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--zr-muted);
+}
+
+.zr-lock {
+  position: absolute;
+  right: 0;
+  top: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--zr-faint);
+}
+
+.zr-teaser {
+  margin: 5px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--zr-faint);
+}
+
+/* the four-element chart */
+.zr-balance {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin: 14px 0 0;
+  height: 92px;
+}
+
+.zr-bal {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.zr-bal-track {
+  display: flex;
+  align-items: flex-end;
+  height: 62px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.zr-bal-fill {
+  display: block;
+  width: 100%;
+  border-radius: 6px;
+  min-height: 3px;
+}
+
+.zr-bal-name {
+  margin-top: 6px;
+  font-size: 11px;
+  text-align: center;
+  color: var(--zr-muted);
+}
+
+.zr-bal-pct {
+  font-size: 10px;
+  text-align: center;
+  color: var(--zr-faint);
+}
+
+/* the free strength */
+.zr-lead {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--zr-gold);
+}
+
+.zr-strength-title {
+  margin: 10px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--zr-text);
+}
+
+.zr-strength-body,
+.zr-strength-fix {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--zr-muted);
+}
+
+.zr-strength-fix { color: var(--zr-gold); }
+
+/* --- e) the offer ------------------------------------------------------------ */
+
+.zr-offer {
+  margin: 28px 0 0;
+  padding: 22px 18px 18px;
+  border: 1px solid var(--zr-line);
+  border-radius: 20px;
+  background: var(--zr-panel);
+  text-align: center;
+}
+
+.zr-anchor {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--zr-text);
+}
+
+.zr-gold { color: var(--zr-gold); }
+
+.zr-offer-sub {
+  margin: 6px 0 18px;
+  font-size: 13px;
+  color: var(--zr-muted);
+}
+
+/* engine.js's own consent box and pay button, restyled where they now sit.
+   Same elements, same listeners — this is paint, not plumbing. */
+.zr-offer .withdrawal {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin: 0 0 14px;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: left;
+  color: var(--zr-muted);
+}
+
+.zr-offer .withdrawal.is-off { display: none; }
+
+.zr-offer .withdrawal input { margin: 2px 0 0; accent-color: var(--zr-gold); }
+
+.zr-offer .cta {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 16px 18px;
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--font-display, inherit);
+  font-size: 16px;
+  font-weight: 700;
+  color: #221A05;
+  background: linear-gradient(180deg, #F2D68F 0%, var(--zr-gold) 100%);
+  box-shadow: 0 6px 20px rgba(232, 200, 120, 0.22);
+  cursor: pointer;
+}
+
+.zr-offer .cta:disabled {
+  color: var(--zr-faint);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: none;
+  cursor: default;
+}
+
+.zr-offer .pay-error {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: #F0A0A0;
+}
+
+.zr-trust {
+  margin: 14px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--zr-faint);
+}
+
+.zr-offer .legal-links {
+  margin: 12px 0 0;
+  font-size: 11px;
+}
+
+.zr-offer .legal-links a { color: var(--zr-faint); }
+
+@media (prefers-reduced-motion: reduce) {
+  .result-module * { animation: none !important; transition: none !important; }
+}
