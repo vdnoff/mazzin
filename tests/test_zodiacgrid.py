@@ -3,13 +3,21 @@
 
 Two things here cannot be checked from the config. Whether twelve cells fit a
 phone with the question above them is a fact about a layout engine, not about
-JSON; and whether a white word is readable on a particular photograph is a
-fact about that photograph. Both were wrong at some point in writing this —
-the signs arrived shuffled, and the label sat at 2.6:1 on the lightest frame —
-and neither was visible without rendering the page.
+JSON; and whether a white word is readable is a fact about what is behind it.
+Both were wrong at some point in writing this — the signs arrived shuffled,
+and an earlier label sat at 2.6:1 on the lightest frame — and neither was
+visible without rendering the page.
 
-Contrast is measured over the rectangle the word actually occupies, with the
-word blanked in place so nothing measured is its own antialiasing.
+The label is a pill below the picture now, so the third thing checked here is
+that it stays there: the middle of every cell, where a glyph or a horizon is,
+has to come out exactly as painted.
+
+Contrast is measured over the rectangle the word occupies, with the type made
+transparent so nothing measured is its own antialiasing. Transparent rather
+than blanked: the pill is sized to its content, so emptying the text shrinks
+it out from under the crop and what gets measured is the artwork — which
+reads as a comfortable pass on a dark frame and a wild failure on a pale one,
+and is not a measurement of anything.
 
     python3 tests/test_zodiacgrid.py
 """
@@ -129,7 +137,7 @@ def advance(page):
 
 
 def measure(page, index, image_id):
-    """Worst-pixel contrast under the label of one card."""
+    """Worst-pixel contrast under one card's label, and where its pill sits."""
     box = page.evaluate("""(i) => {
         const card = document.querySelectorAll('#cards .card')[i];
         const name = card.querySelector('.card-name');
@@ -138,27 +146,35 @@ def measure(page, index, image_id):
         range.selectNodeContents(name);
         const t = range.getBoundingClientRect();
         const c = card.getBoundingClientRect();
-        name.dataset.keep = name.textContent;
-        name.textContent = ' ';
-        return [t.left - c.left, t.top - c.top, t.width, t.height];
+        const p = name.getBoundingClientRect();
+        const cs = getComputedStyle(name);
+        // Transparent, not emptied: the pill is content-sized, so emptying it
+        // moves the box out from under the crop below.
+        name.style.color = 'transparent';
+        return {text: [t.left - c.left, t.top - c.top, t.width, t.height],
+                pill: [p.left - c.left, p.top - c.top, p.width, p.height],
+                cell: [c.width, c.height],
+                background: cs.backgroundImage,
+                lines: Math.round(t.height / parseFloat(cs.lineHeight))};
     }""", index)
-    if not box or box[2] < 1:
+    if not box or box["text"][2] < 1:
         return None
-    page.wait_for_timeout(120)
+    page.wait_for_timeout(150)
     path = os.path.join(SHOTS, "grid12_%s.png" % image_id)
     page.locator("#cards .card").nth(index).screenshot(path=path)
     page.evaluate("""(i) => {
-        const n = document.querySelectorAll('#cards .card')[i]
-            .querySelector('.card-name');
-        n.textContent = n.dataset.keep;
+        document.querySelectorAll('#cards .card')[i]
+            .querySelector('.card-name').style.color = '';
     }""", index)
+    t = box["text"]
     with Image.open(path) as shot:
         crop = shot.convert("RGB").crop(
-            (int(box[0] * DSF), int(box[1] * DSF),
-             int((box[0] + box[2]) * DSF), int((box[1] + box[3]) * DSF)))
+            (int(t[0] * DSF), int(t[1] * DSF),
+             int((t[0] + t[2]) * DSF), int((t[1] + t[3]) * DSF)))
         levels = [luminance(p) for p in crop.convert("RGB").getdata()]
     os.remove(path)
-    return min(contrast(v) for v in levels)
+    box["worst"] = min(contrast(v) for v in levels)
+    return box
 
 
 def run(page):
@@ -189,6 +205,9 @@ def run(page):
     names = page.eval_on_selector_all(
         "#cards .card-name", "ns => ns.map(n => n.innerText.trim())")
     check("  every cell is named", len(names) == 12, str(names))
+    check("  by a pill, one per cell", len(names) == 12
+          and page.locator("#cards .card-name").count()
+          == page.locator("#cards .card").count())
     # engine.js shuffles a pair unless the step opts out, and a shuffled
     # zodiac makes the reader scan all twelve for one they could point at.
     check("  in classical order, Aries to Pisces", names == ZODIAC, str(names))
@@ -227,7 +246,7 @@ def run(page):
           page.locator("#cards .card").count() != 12,
           page.locator("#cards .card").count())
 
-    print("\n--- the label is readable on the frames that test it ---")
+    print("\n--- the label leaves the picture alone ---")
     page.goto("http://127.0.0.1:%d/zodiac" % PORT)
     page.wait_for_selector("#cards .card", timeout=20000)
     seen = {}
@@ -246,10 +265,26 @@ def run(page):
             break
     for image_id, step in sorted(PROBES.items()):
         got = seen.get(image_id)
-        check("  %-11s (%-9s) worst pixel %s"
-              % (image_id, step,
-                 ("%.1f:1" % got) if got else "not reached"),
-              got is not None and got >= MIN_CONTRAST,
+        if got is None:
+            check("  %-11s (%-9s) reached" % (image_id, step), False,
+                  "never drawn")
+            continue
+        cell_h = got["cell"][1]
+        pill_top = got["pill"][1]
+        covered = 100.0 * got["pill"][2] * got["pill"][3] / (
+            got["cell"][0] * cell_h)
+        # The whole point of this mode. A label over the middle of the cell is
+        # a label over the glyph, the horizon or the face the frame is of.
+        check("  %-11s (%-9s) leaves the middle of the cell clear"
+              % (image_id, step), pill_top > cell_h / 2,
+              "pill top %.0f, centre %.0f" % (pill_top, cell_h / 2))
+        check("    covering %.0f%% of it, low and small" % covered,
+              covered < 20, "%.0f%%" % covered)
+        check("    and painting nothing over the art",
+              got["background"] == "none", got["background"])
+        check("    on one line, not three", got["lines"] == 1, got["lines"])
+        check("    white on it reads at %.1f:1" % got["worst"],
+              got["worst"] >= MIN_CONTRAST,
               "below %.1f:1" % MIN_CONTRAST)
 
     print("\n--- and kitchen is left alone ---")

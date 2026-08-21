@@ -548,58 +548,69 @@ body {
 
 /* --- permanent card labels -------------------------------------------------- */
 
-/* On a funnel that sets `label_mode: "center"`, every card carries its own
-   name in the middle of it from the moment it lands — not only in the chip
-   that arrives after a tap. Several zodiac steps read as "what am I even
-   tapping?" without it.
+/* On a funnel that sets `label_mode: "badge"`, every card carries its own name
+   from the moment it lands, not only in the chip that arrives after a tap.
+   Several zodiac steps read as "what am I even tapping?" without one.
 
-   White type over a scrim rather than text-shadow alone. A shadow is enough
-   on a dark frame and gives up on a pale one: ls5f is a sky that measures
-   near-white through its middle band, and a shadowed white word on it is a
-   grey smudge. The scrim is a gradient centred on the text — dense where the
-   letters are, gone by the edges — so it never reads as a bar across the
-   picture, and it puts a floor under the contrast on the busiest frame
-   (dr11a) as well as the lightest. */
+   Nothing here touches the picture. The first version of this put the name
+   across the middle of the card over a radial scrim, and the scrim was the
+   whole problem: it measured well — 7:1 on the palest frame in the gallery —
+   and on a phone it dulled every photograph it sat on, then landed squarely
+   on the glyph the sign step exists to show. Contrast that is bought by
+   dimming the product is contrast bought too dearly.
+
+   So the label is a pill below the image rather than a wash across it. It
+   carries its own background, which means its legibility owes the artwork
+   nothing and holds on a frame we have not drawn yet; and it sits low enough
+   that the middle of every cell — where a glyph, a horizon or a face is —
+   stays exactly as painted. */
 .card-name {
-  /* The box is the whole card, not a strip across the middle of it. A short
-     full-width box clips the gradient flat at its top and bottom edges, which
-     puts a visible bar over the picture — the thing the gradient was chosen to
-     avoid. Given the full height it has room to fall away in both directions
-     and reads as a vignette centred on the word. */
   position: absolute;
   z-index: 3;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 8px;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  max-width: 90%;
+  padding: 6px 14px;
+  border-radius: 999px;
   font-family: var(--font-display, inherit);
-  font-size: clamp(15px, 4.6vw, 22px);
+  font-size: 15px;
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.2;
   letter-spacing: 0.01em;
   text-align: center;
   color: #fff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
-  /* Dense enough for the hardest frame rather than for a typical one. ls5f
-     is a sky whose middle band measures near-white; a scrim tuned by eye on
-     the dark frames left white type on it at 2.6:1, which is unreadable and
-     was invisible until it was measured. At these stops the same frame holds
-     above 4.5:1 across the whole width the word occupies, and the dark
-     frames are far past it. */
-  background: radial-gradient(ellipse 96% 58% at 50% 50%,
-                              rgba(9, 11, 16, 0.74) 0%,
-                              rgba(9, 11, 16, 0.68) 42%,
-                              rgba(9, 11, 16, 0.46) 72%,
-                              rgba(9, 11, 16, 0) 100%);
+  /* One line, always. A sign that will not fit is truncated rather than
+     allowed to grow the pill into the picture it is supposed to stay out of. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* The opaque value is the default and the blur is the enhancement, so a
+     browser without backdrop-filter gets the readable one rather than the
+     transparent one. */
+  background: rgba(16, 20, 40, 0.88);
   pointer-events: none;
 }
 
-/* Twelve cells are narrow, so the name steps down with them rather than
-   wrapping a long sign across four lines. */
+@supports ((backdrop-filter: blur(4px)) or (-webkit-backdrop-filter: blur(4px))) {
+  .card-name {
+    background: rgba(16, 20, 40, 0.75);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
+}
+
+/* Subordinate to the art, and sized to the cell it sits in. Twelve cells are
+   narrow enough that the pair size would leave "Sagittarius" as three
+   characters and an ellipsis. */
+.cards.is-grid6 .card-name { font-size: 14px; padding: 5px 12px; }
+
 .cards.is-grid12 .card-name {
-  font-size: clamp(13px, 3.4vw, 17px);
-  padding: 0 4px;
+  font-size: 12px;
+  padding: 4px 9px;
+  bottom: 6px;
+  max-width: 94%;
+  letter-spacing: 0;
 }
 
 /* Under the selection wash the label goes with the rest of the card — the

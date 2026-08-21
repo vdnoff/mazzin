@@ -584,7 +584,13 @@
     // comparing pictures — where a kitchen pair is a photograph that would
     // only be covered up by a word. So it is a funnel-level flag, and a
     // config without it renders exactly what it always did.
-    if (labelMode() === "center" && item.label) {
+    //
+    // `badge` is the only mode. The first attempt at this put the name across
+    // the middle of the card over a scrim, and on a phone the scrim muddied
+    // every frame and sat on top of the sign glyph — the art is the product,
+    // and a label that dims it is a label that costs more than it earns. The
+    // pill sits under the picture instead and touches nothing.
+    if (labelMode() === "badge" && item.label) {
       var name = document.createElement("span");
       name.className = "card-name";
       name.setAttribute("aria-hidden", "true");   // the button already says it

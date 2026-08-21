@@ -12,7 +12,7 @@
     "subtext": "Your full profile in 60 seconds of taps",
     "subtext_accent": "60 seconds",
     "hint": "Tap your choice",
-    "label_mode": "center",
+    "label_mode": "badge",
     "steps": [
       {
         "id": "hook",
