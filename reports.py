@@ -239,12 +239,15 @@ SHAPE = {
                              "why": _t(15)}),
     },
     "shopping": {
-        # 4-8 rather than the 5-7 the prompt asks for: a list one short is
-        # still a shopping list, and the stub replacing it is worse than an
-        # off-by-one.
-        "items": _lst(4, 8, {"name": _t(2, 140),
-                             "priority_note": _t(10)}, bare=True),
-        "skip": _lst(1, 3, {"name": _t(2, 140), "why": _t(10)}, bare=True),
+        # 4-12 rather than the 5-7 kitchen's prompt asks for: a list one
+        # short is still a shopping list, and the stub replacing it is worse
+        # than an off-by-one. The twelve is the zodiac funnel, whose year map
+        # is this shape with a month on every row — the ceiling has always
+        # been the outer wall rather than the target, and kitchen's prompt
+        # still asks for five to seven.
+        "items": _lst(4, 12, {"name": _t(2, 140),
+                              "priority_note": _t(10)}, bare=True),
+        "skip": _lst(0, 3, {"name": _t(2, 140), "why": _t(10)}, bare=True),
     },
     "dna": {
         "narrative": _lst(1, 3, _t(40)),
@@ -384,7 +387,12 @@ def _as_row(value, fields, bare=False):
 def _list_field(section_id, key, container):
     """The validated rows of one declared list field, or None."""
     _, low, high, fields, bare = SHAPE[section_id][key]
-    got = _items(_pick(container, key), low, high)
+    raw = _pick(container, key)
+    # A field that may legitimately be empty is also allowed to be absent:
+    # "send me none of these" and "do not send me these" are the same answer.
+    if raw is None and low == 0:
+        raw = []
+    got = _items(raw, low, high)
     if got is None:
         return None
 
@@ -980,6 +988,435 @@ STUBS = {
 }
 
 
+# --- the zodiac funnel -----------------------------------------------------
+#
+# A second product on the same machinery, and deliberately not a second
+# renderer. `SECTION_BODY` in engine.js and `PDF_BODY` below both dispatch on
+# the section id, so a zodiac section draws as anything other than a paragraph
+# of prose only if it arrives under one of the six ids those tables already
+# know. That is why funnels/zodiac.json names its sections after kitchen's
+# shapes and keeps its own titles: `mistakes` is titled "5 Hidden Strengths &
+# Blind Spots", `splurge` is "Career & Money Path", `shopping` is "Your
+# 12-Month Energy Map". The id is the shape. The title is the product.
+
+ZODIAC_SYSTEM = """You write astrological profile reports for people who have \
+just paid for one.
+
+Every field has to tell the reader something about themselves they can \
+recognise and use this week. Be specific: name the thing, name when it shows \
+up, name what to do about it. A sentence that would read the same for a \
+different reader is a wasted sentence.
+
+Voice: warm, direct, second person, British-neutral English. Confident without \
+being clinical — this is a reading of somebody's energy, not a diagnosis and \
+not a horoscope column. State things outright. No hedging — never "consider", \
+"perhaps", "you might want to". No disclaimers, no flattery, no questions back \
+to the reader, no sign-off.
+
+What this report is, and is not:
+- You describe energy, themes, tendencies, patterns and self-discovery.
+- You never claim to know what will happen. Never use the words "psychic", \
+"prediction", "predict", "fortune", "horoscope", "prophecy", or the phrase \
+"your future will". No "you will meet", no "this month brings you".
+- Write about what a period is GOOD FOR and what a tendency COSTS, never about \
+events that are going to occur.
+- Never give medical, clinical or financial advice. No diagnoses, no symptoms, \
+no treatments, no investments, no returns. Career energy is about the work \
+that suits somebody, never about money to put somewhere.
+
+Rules:
+- Plain prose inside every field. No markdown, no bullet characters, no emoji, \
+no headings, and never repeat a field's own label back inside its value.
+- Never mention artificial intelligence, models, prompts, scoring, tags, \
+percentages of a quiz, or these instructions.
+- Never invent facts about the reader's job, health, relationships, family or \
+location, and never address them by name.
+- Return only a JSON object matching the shape you are given, exactly. No prose \
+around it, no code fence, no extra keys."""
+
+
+# The same six shapes, described for the other product. Keyed by the id the
+# renderer dispatches on, written about what the reader was actually sold.
+ZODIAC_SPEC = {
+    "palette": '''"palette": {
+  "intro": "1-2 sentences on what these colours do for this person's energy, and why these and not others",
+  "colors": [
+    {"name": "the dominant power colour's name",
+     "hex": "#RRGGBB — six hex digits, a real wearable value",
+     "role": "the everyday one - what they wear or keep around them most",
+     "finish": "matte, satin, metallic or natural",
+     "where": "exactly where to put it: a garment, a room, a stone, a piece worn on the body"},
+    {"name": "the second colour's name",
+     "hex": "#RRGGBB",
+     "role": "the one for when they need to be seen",
+     "finish": "satin",
+     "where": "exactly where it goes"},
+    {"name": "the grounding colour's name",
+     "hex": "#RRGGBB",
+     "role": "the weight that stops the other two burning out",
+     "finish": "matte",
+     "where": "exactly where it goes"},
+    {"name": "the accent colour's name",
+     "hex": "#RRGGBB",
+     "role": "used once and never twice",
+     "finish": "metallic",
+     "where": "exactly where it goes"}
+  ],
+  "closing_rule": "one sentence naming their three talismans or stones and the day of the week each is worth carrying"
+}
+
+Send four colours. Name the talismans from the style's own list in
+`closing_rule` — they were sold under this section's title and have to appear.''',
+
+    "mistakes": '''"mistakes": {
+  "items": [
+    {"title": "the hidden strength, as a short phrase",
+     "body": "3-5 sentences: what the strength is, how it shows up in an ordinary week, and the blind spot on its other side",
+     "fix": "2-3 sentences on how to use it deliberately rather than accidentally, starting with a verb"},
+    {"title": "the second one", "body": "...", "fix": "..."},
+    {"title": "the third one", "body": "...", "fix": "..."},
+    {"title": "the fourth one", "body": "...", "fix": "..."},
+    {"title": "the fifth one", "body": "...", "fix": "..."}
+  ]
+}
+
+Exactly five. Every strength carries its own blind spot inside the same body —
+a strength with no cost is flattery. `fix` is how to spend the strength on
+purpose, never a warning.''',
+
+    "materials": '''"materials": {
+  "intro": "1-2 sentences on the pattern underneath who this person is drawn to",
+  "pairs": [
+    {"combo": "their sign + another sign, e.g. \\"Leo + Aries\\"",
+     "verdict": "works",
+     "why": "2-4 sentences on what that pairing is like to be inside, and what it asks of them"},
+    {"combo": "their sign + another sign", "verdict": "works", "why": "..."},
+    {"combo": "their sign + another sign", "verdict": "avoid", "why": "..."},
+    {"combo": "their sign + another sign", "verdict": "avoid", "why": "..."}
+  ],
+  "rule": "one sentence on what to say, or ask for, in the first month with somebody"
+}
+
+Four pairings: two that work and two that cost. `combo` always leads with this
+reader's own sign. "avoid" means the pairing is expensive to be in, never that
+a person is bad.''',
+
+    "splurge": '''"splurge": {
+  "splurge": {"item": "the kind of work or working environment this energy pays best in",
+              "why": "3-5 sentences on why their energy earns here, and what it looks like day to day"},
+  "saves": [
+    {"item": "a kind of work to stop accepting",
+     "why": "2-3 sentences on what it costs them specifically"},
+    {"item": "a second one", "why": "..."},
+    {"item": "a third one", "why": "..."}
+  ],
+  "split_note": "one sentence on how to divide a working week between the two"
+}
+
+One place their energy earns and three to stop spending it on. This is the
+shape of the work, never money to put anywhere — no markets, no figures, and
+no advice about where to place anything.''',
+
+    "dna": '''"dna": {
+  "narrative": [
+    "a paragraph of 4-6 sentences on how this person's element, energy and tone actually combine — the blueprint, in their own nouns",
+    "a second paragraph of 4-6 sentences on the one place those three pull against each other, and what that tension produces"
+  ],
+  "implications": [
+    "one sentence naming something concrete this means for how they decide",
+    "one sentence naming something concrete it means for how they rest",
+    "one sentence naming something concrete it means for how other people read them"
+  ]
+}
+
+Two paragraphs and three implications. This is the section that has to sound
+like it was written about this reader and nobody else.''',
+
+    "shopping": '''"shopping": {
+  "items": [
+    {"name": "January", "priority_note": "1-2 sentences on what this month's energy is good for"},
+    {"name": "February", "priority_note": "..."},
+    {"name": "March", "priority_note": "..."},
+    {"name": "April", "priority_note": "..."},
+    {"name": "May", "priority_note": "..."},
+    {"name": "June", "priority_note": "..."},
+    {"name": "July", "priority_note": "..."},
+    {"name": "August", "priority_note": "..."},
+    {"name": "September", "priority_note": "..."},
+    {"name": "October", "priority_note": "..."},
+    {"name": "November", "priority_note": "..."},
+    {"name": "December", "priority_note": "..."}
+  ],
+  "skip": []
+}
+
+All twelve months, in calendar order, every one of them in `items`. `skip`
+is empty — send it as an empty array and put nothing in it.
+
+Mark exactly two months by opening their note with "Strongest month:" and
+exactly one by opening its note with "Quiet month:". The quiet one is for
+recovery rather than for starting things, and its note says what it is good
+for instead. Themes only — what a month is good for, never what is going to
+happen in it.''',
+}
+
+
+# What a reader gets when generation fails outright, so it has to be
+# publishable rather than apologetic — and true of the archetype, since the
+# style name is the only thing it knows.
+ZODIAC_STUBS = {
+    "palette": {
+        "intro": "A {name} palette runs on one colour you live in, one you "
+                 "reach for when a room needs to turn, and one carrying the "
+                 "weight so the other two do not burn out.",
+        "colors": [
+            {"name": "Everyday Ground", "hex": "#B9AE9C",
+             "role": "the one worn most", "finish": "matte",
+             "where": "The layer closest to you on an ordinary day."},
+            {"name": "Signal", "hex": "#C0563A",
+             "role": "for when you need the room to turn", "finish": "satin",
+             "where": "One garment, or one object where the eye lands."},
+            {"name": "Anchor", "hex": "#2E3440",
+             "role": "the weight underneath", "finish": "matte",
+             "where": "Shoes, outerwear, and the corners of a room."},
+            {"name": "Rare Metal", "hex": "#C9A227",
+             "role": "used once and never twice", "finish": "metallic",
+             "where": "A single piece worn at the collarbone or the wrist."},
+        ],
+        "closing_rule": "Carry one stone rather than three, and give it a day "
+                        "of the week rather than a habit.",
+    },
+    "mistakes": {
+        "items": [
+            {"title": "You read your own certainty as evidence",
+             "body": "A {name} profile decides quickly and trusts the "
+                     "speed of it. Most of the time the speed is earned. "
+                     "The cost is that a decision made out of restlessness "
+                     "feels identical, from the inside, to one made out of "
+                     "conviction.",
+             "fix": "Give any decision you can explain in ten seconds one "
+                    "night before acting on it. What survives the morning was "
+                    "conviction."},
+            {"title": "You hold the useful thing until the moment is clean",
+             "body": "You notice more than the people around you and you say "
+                     "less of it. The read is usually right and it usually "
+                     "arrives late, by which point the situation has resolved "
+                     "without you in it.",
+             "fix": "Set a ceiling of three days between noticing something "
+                    "and naming it, clumsy wording included."},
+            {"title": "You absorb the cost rather than name it",
+             "body": "You take the extra hour and the awkward conversation, "
+                     "and you take them quietly enough that nobody learns "
+                     "they were extra. Over a few years the baseline "
+                     "moves.",
+             "fix": "Say what it took, once, at the moment it happens, "
+                    "without asking for anything back."},
+            {"title": "You leave at the point it stops being interesting",
+             "body": "You see the shape of a thing early, which is the hard "
+                     "part. Once the shape is clear the rest reads as admin, "
+                     "and the value gets collected by whoever stayed.",
+             "fix": "Pick one thing a quarter and stay past the boredom. Not "
+                    "everything — one."},
+            {"title": "You mistake being steady for being fine",
+             "body": "Steadiness is what people rely on you for, and it makes "
+                     "a poor instrument for measuring yourself. The weeks "
+                     "that cost you most tend to look identical from "
+                     "outside.",
+             "fix": "Keep one measure of how a week went that is not how much "
+                    "of it you got through."},
+        ],
+    },
+    "materials": {
+        "intro": "The pattern underneath who you are drawn to is steadier "
+                 "than the people themselves, and it is worth knowing "
+                 "before the next one.",
+        "pairs": [
+            {"combo": "Your sign + a fire sign", "verdict": "works",
+             "why": "Pace matches, and neither of you waits for the other "
+                    "to finish deciding. It asks you to say the quiet part "
+                    "early."},
+            {"combo": "Your sign + an earth sign", "verdict": "works",
+             "why": "They hold the ground you move across. It asks you to "
+                    "notice the holding rather than to assume it."},
+            {"combo": "Your sign + a mirror of yourself", "verdict": "avoid",
+             "why": "Two of the same energy make a fast start and a short "
+                    "middle. Nothing in the pairing slows anything down."},
+            {"combo": "Your sign + somebody who needs managing",
+             "verdict": "avoid",
+             "why": "You are good at carrying, which is exactly why this one "
+                    "costs you more than it costs them."},
+        ],
+        "rule": "In the first month ask the second question rather than the "
+                "first — the answer to that one tells you something.",
+    },
+    "splurge": {
+        "splurge": {
+            "item": "Work with a visible edge and a short feedback loop",
+            "why": "A {name} energy earns where the result comes back quickly "
+                   "enough to steer by. Long horizons with no signal are "
+                   "where it drifts, and no amount of discipline "
+                   "substitutes for a loop that closes.",
+        },
+        "saves": [
+            {"item": "Work that needs performing",
+             "why": "The energy it takes to be a version of yourself all day "
+                    "is energy not spent on the work itself."},
+            {"item": "Roles built entirely on maintaining",
+             "why": "You will do it well, and it will cost you more than it "
+                    "costs somebody suited to it."},
+            {"item": "Anything measured only in hours",
+             "why": "It rewards presence over judgement, and judgement is the "
+                    "thing you actually have."},
+        ],
+        "split_note": "Give the deep half of the week to the work with an "
+                      "edge, and let the maintaining fill the shallow half.",
+    },
+    "dna": {
+        "narrative": [
+            "A {name} blueprint runs on three things at once: the element you "
+            "return to under pressure, the energy you keep time by, and the "
+            "tone other people read first. Most of the time the three agree, "
+            "and while they do you are easy to be around and easy to read "
+            "for yourself.",
+            "The interesting part is where they pull against each other. The "
+            "tone arrives before the element does, so people meet the surface "
+            "and adjust to it, and a certain amount of every week goes on "
+            "correcting an impression you did not set out to make.",
+        ],
+        "implications": [
+            "You decide faster than you can explain, which is worth trusting "
+            "and worth writing down.",
+            "Rest that looks like doing nothing does not restore you; rest "
+            "with a shape does.",
+            "People read your tone as your whole position, so the thing you "
+            "say lightly is the thing they carry away.",
+        ],
+    },
+    "shopping": {
+        "items": [
+            {"name": "January", "priority_note": "Good for deciding what the "
+             "year is actually for, before anyone asks you to commit to it."},
+            {"name": "February", "priority_note": "Strongest month: the quiet "
+             "one where what you start goes unnoticed long enough to get "
+             "properly built."},
+            {"name": "March", "priority_note": "Good for saying the thing you "
+             "have been holding since the autumn."},
+            {"name": "April", "priority_note": "Good for beginnings that need "
+             "other people in them."},
+            {"name": "May", "priority_note": "Good for consolidating rather "
+             "than adding — a month to finish, not to open."},
+            {"name": "June", "priority_note": "Good for being visible on "
+             "purpose rather than by accident."},
+            {"name": "July", "priority_note": "Good for the conversations you "
+             "have been scheduling around."},
+            {"name": "August", "priority_note": "Good for rest with a "
+             "shape to it, and poor for decisions."},
+            {"name": "September", "priority_note": "Strongest month: momentum "
+             "returns and your judgement is at its sharpest — spend it on one "
+             "thing rather than four."},
+            {"name": "October", "priority_note": "Good for repair work, in "
+             "what you have built and in who you built it with."},
+            {"name": "November", "priority_note": "Good for narrowing: what "
+             "survives this month is what mattered."},
+            {"name": "December", "priority_note": "Quiet month: your energy "
+             "turns inward whether or not the calendar agrees, and anything "
+             "started here gets rebuilt in January. Good for looking back."},
+        ],
+        "skip": [],
+    },
+}
+
+
+# The system prompt asks; this refuses. Two of these are a Terms line rather
+# than a matter of taste, which is why the check runs on what the model wrote
+# instead of trusting what it was told. Word-boundaried, so "unpredictable"
+# and "fortunate" are not casualties.
+ZODIAC_BANNED = tuple(re.compile(p, re.IGNORECASE) for p in (
+    r"\bpsychic\w*\b",
+    r"\bpredict(?:s|ed|ing|ion|ions|ive|ably)?\b",
+    r"\bfortune(?:s|\s*-?\s*tell\w*)?\b",
+    r"\byour future will\b",
+    r"\bclairvoyan\w*\b",
+    r"\bhoroscope\w*\b",
+    r"\bprophec(?:y|ies)\b",
+    r"\bdestined to\b",
+    r"\bfated to\b",
+    # the medical and financial half of the same line
+    r"\bdiagnos(?:e|es|ed|is|tic)\w*\b",
+    r"\bsymptoms?\b",
+    r"\b(?:treatment|medication|prescri\w+)\b",
+    r"\b(?:invest|invests|investing|investment|investments|portfolio)\b",
+    r"\breturns on\b",
+    r"\bfinancial advice\b",
+))
+
+# What a funnel needs that its JSON does not carry: the voice, the shapes
+# described in that voice, the fallbacks, and which sections are worth holding
+# per style. Anything not registered here is kitchen — /kitchen-visualizer
+# included, which is kitchen's config with a photo step bolted on.
+KITCHEN_PROFILE = {
+    "system": SYSTEM,
+    "spec": SPEC,
+    "stubs": STUBS,
+    "personal": PERSONAL,
+    "cached": CACHED,
+    "banned": (),
+    "pdf_lead": "Your kitchen style report",
+}
+
+ZODIAC_PROFILE = {
+    "system": ZODIAC_SYSTEM,
+    "spec": ZODIAC_SPEC,
+    "stubs": ZODIAC_STUBS,
+    # Archetype-driven, so identical for everyone who lands on a style and
+    # work no buyer should pay for in latency. warm_cache.py fills these.
+    "cached": ("palette", "mistakes", "splurge"),
+    # Sign-driven: these three weave the reader's own sign and their own taps,
+    # so they are written per purchase. Caching them per sign x style would be
+    # fifty-two rows a funnel for nothing the reader could tell apart.
+    "personal": ("dna", "materials", "shopping"),
+    "banned": ZODIAC_BANNED,
+    "pdf_lead": "Your cosmic profile report",
+}
+
+PROFILES = {"zodiac": ZODIAC_PROFILE}
+
+
+def _profile(funnel_slug):
+    """The report profile for a funnel. Unregistered means kitchen."""
+    return PROFILES.get(funnel_slug or "", KITCHEN_PROFILE)
+
+
+def personal_sections(funnel_slug):
+    """The sections written fresh for every purchase."""
+    return _profile(funnel_slug)["personal"]
+
+
+def cached_sections(funnel_slug):
+    """The sections held per style — what warm_cache.py fills."""
+    return _profile(funnel_slug)["cached"]
+
+
+def _banned_hit(value, patterns):
+    """The first banned phrase anywhere in a generated section, or None."""
+    if not patterns:
+        return None
+    if isinstance(value, str):
+        for rx in patterns:
+            found = rx.search(value)
+            if found:
+                return found.group(0)
+        return None
+    if isinstance(value, dict):
+        value = list(value.values())
+    if isinstance(value, (list, tuple)):
+        for item in value:
+            hit = _banned_hit(item, patterns)
+            if hit:
+                return hit
+    return None
+
+
 def _fill(value, name):
     """Template {name} through a nested stub structure."""
     if isinstance(value, str):
@@ -1007,10 +1444,11 @@ def _style_name(cfg, result_style):
 # --- prompts ---------------------------------------------------------------
 
 
-def _sections_block(ids):
+def _sections_block(ids, spec=None):
+    spec = SPEC if spec is None else spec
     return "\n\n".join(
         ["Return exactly this JSON object. Every key is required."]
-        + [SPEC[section_id] for section_id in ids]
+        + [spec[section_id] for section_id in ids]
         + ["Wrap those in one object: {%s}."
            % ", ".join('"%s": {...}' % s for s in ids)]
     )
@@ -1035,7 +1473,7 @@ def _config_hex(colour):
     return raw if isinstance(raw, str) and HEX_RE.match(raw) else None
 
 
-def _stub_for(section_id, name, style=None):
+def _stub_for(section_id, name, style=None, stubs=None):
     """The placeholder for one section, or None if it has no placeholder.
 
     The mistakes stub is the one that cannot be purely generic any more. The
@@ -1045,7 +1483,7 @@ def _stub_for(section_id, name, style=None):
     the reader is least inclined to be forgiving. So the promised one goes in
     front and the generic list fills in behind it.
     """
-    stub = STUBS.get(section_id)
+    stub = (STUBS if stubs is None else stubs).get(section_id)
     if stub is None:
         return None
     if section_id == "mistakes":
@@ -1395,7 +1833,144 @@ def _palette_block(cfg, choices):
     )
 
 
-def _section_prompt(style, name, tag_scores, section_id, cfg=None, choices=None):
+# --- the reader's own sign -------------------------------------------------
+#
+# Recoverable from the run without storing anything new: the sign step's
+# image ids are `sign_<name>`, and the season step's tag is what chose which
+# three of them were on screen. Both are already in `choices`.
+
+SIGN_PREFIX = "sign_"
+CUSP_ID = "sign_cusp"
+
+SEASON_TAGS = ("spring", "summer", "autumn", "winter")
+
+
+def _season_of(cfg, choices):
+    """(tag, label) for the season they tapped, or (None, None)."""
+    chosen = _chosen_on_step(cfg, choices, "season")
+    if not chosen:
+        return None, None
+    item = _images_by_id(cfg).get(chosen) or {}
+    for tag in item.get("tags") or []:
+        if tag in SEASON_TAGS:
+            return tag, (item.get("label") or tag.title())
+    return None, None
+
+
+def _season_signs(cfg, season_tag):
+    """The sign labels that season's grid offers, in the order it shows them.
+
+    Read off the adaptive step rather than from a table here, so a config that
+    moves a sign between seasons does not leave this file quietly wrong.
+    """
+    for step in (cfg.get("swipe") or {}).get("steps") or []:
+        if step.get("id") != "sign":
+            continue
+        rule = step.get("adaptive") or {}
+        variants = rule.get("variants") or {}
+        wanted = variants.get(season_tag) or variants.get("default")
+        for pair in step.get("pairs") or []:
+            if pair.get("id") != wanted:
+                continue
+            return [i.get("label") for i in pair.get("images") or []
+                    if i.get("id") != CUSP_ID and i.get("label")]
+    return []
+
+
+def _sign(cfg, choices):
+    """What this run says about the reader's sign, or None.
+
+    `cusp` is the honest case and the reason this returns a dict rather than a
+    name: somebody who tapped "Born on a cusp" told us their season and
+    nothing finer, so the report has to speak to the blend of that season's
+    energies and must never settle on one sign for them.
+    """
+    chosen = _chosen_on_step(cfg, choices, "sign")
+    if not chosen or not str(chosen).startswith(SIGN_PREFIX):
+        return None
+    season, season_label = _season_of(cfg, choices)
+    item = _images_by_id(cfg).get(chosen) or {}
+    out = {
+        "id": chosen,
+        "cusp": chosen == CUSP_ID,
+        "season": season,
+        "season_label": season_label,
+        "neighbours": _season_signs(cfg, season) if season else [],
+        "tags": list(item.get("tags") or []),
+    }
+    out["label"] = None if out["cusp"] else (
+        item.get("label") or chosen[len(SIGN_PREFIX):].title())
+    return out
+
+
+def _sign_block(cfg, choices):
+    """How the sign is handed to the model, or None when there is no sign."""
+    sign = _sign(cfg, choices)
+    if not sign:
+        return None
+    if not sign["cusp"]:
+        line = ("REQUIRED — this reader's sign is %s. Name it, in that word, "
+                "at least once in this section, and write the section as "
+                "though you are writing about a %s rather than about people "
+                "in general." % (sign["label"], sign["label"]))
+        if sign["tags"]:
+            line += (" Their sign carries these energies: %s."
+                     % ", ".join(sign["tags"]))
+        return line
+
+    # The cusp. Everything below is deliberately what we do NOT know.
+    where = sign["season_label"] or "their season"
+    span = sign["neighbours"]
+    span_text = (" — the signs that season covers are %s"
+                 % ", ".join(span)) if span else ""
+    return (
+        "REQUIRED — this reader was born on a cusp and did not give a single "
+        "sign. They told us their season: %s%s. Write to somebody carrying two "
+        "adjacent energies at once rather than one: say \"born on a cusp\" in "
+        "this section, describe the blend and what it costs to sit between "
+        "two things, and name the season. Never assert that they are any one "
+        "of those signs, never pick one for them, and never ask them for a "
+        "birth date." % (where, span_text))
+
+
+def _zodiac_choice_block(cfg, choices, tag_scores=None):
+    """The taps this section has to be visibly written from.
+
+    The differentiator between a report and a horoscope column is that this
+    one names things the reader did twenty seconds ago. Every per-purchase
+    section carries this, and the requirement is not decorative: a section
+    that mentions none of them reads as bought copy.
+    """
+    if not choices:
+        return None
+    images = _images_by_id(cfg)
+    wanted = [("sign", "their sign"),
+              ("moonphase", "the moon they chose"),
+              ("symbol", "the talisman they chose"),
+              ("palette", "the palette they chose"),
+              ("landscape", "the landscape they chose"),
+              ("sanctuary", "where they said they recharge")]
+    lines = []
+    for step_id, description in wanted:
+        chosen = _chosen_on_step(cfg, choices, step_id)
+        item = images.get(chosen) if chosen else None
+        label = (item or {}).get("label")
+        if not label or chosen == CUSP_ID:
+            continue
+        lines.append("- %s: %s" % (description, label))
+    if not lines:
+        return None
+    return (
+        "REQUIRED — what this person actually tapped, in their own run:\n"
+        + "\n".join(lines)
+        + "\nAt least one of these must appear in this section by name, used "
+          "as evidence for something you are saying about them rather than "
+          "listed back at them. More than one is better. Never say that they "
+          "tapped or chose anything — write as though you already knew.")
+
+
+def _section_prompt(style, name, tag_scores, section_id, cfg=None,
+                    choices=None, funnel_slug=None):
     """One personalised section on its own.
 
     Each section is its own call now, so each carries the whole style and
@@ -1407,21 +1982,34 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None, choices=None)
     the sequence as something they may point at. Without it every section falls
     back to the tag-based behaviour unchanged.
     """
+    profile = _profile(funnel_slug)
+    zodiac = profile is ZODIAC_PROFILE
+
     parts = [_style_block(style, name)]
     parts.append(_leaning_block(tag_scores))
 
     extra = None
     if cfg is not None and choices:
-        extra = (_palette_block(cfg, choices) if section_id == "palette"
-                 else _choice_block(cfg, choices, tag_scores))
+        if zodiac:
+            # The zodiac palette is a wardrobe rather than a paint schedule,
+            # so the colour-family block kitchen builds for it does not apply.
+            extra = _zodiac_choice_block(cfg, choices, tag_scores)
+        else:
+            extra = (_palette_block(cfg, choices) if section_id == "palette"
+                     else _choice_block(cfg, choices, tag_scores))
     if extra:
         parts.append(extra)
+
+    if zodiac and cfg is not None and choices:
+        sign = _sign_block(cfg, choices)
+        if sign:
+            parts.append(sign)
 
     # The first mistake was given away in full, numbered, with the promise
     # that the other four are in here. So it has to BE the first item rather
     # than a similar one: a reader who bought on "mistakes 2-5" and found five
     # unfamiliar ones has been told the truth about the count and nothing else.
-    if section_id == "mistakes":
+    if section_id == "mistakes" and not zodiac:
         first = _mistake_one(style)
         if first:
             parts.append(
@@ -1438,7 +2026,7 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None, choices=None)
     # elements were named on the result screen before any money changed hands,
     # with the promise that the report specifies each one — so this section is
     # required to, by name, rather than left to mention them if it happens to.
-    if section_id == "materials" and cfg is not None and choices:
+    if section_id == "materials" and not zodiac and cfg is not None and choices:
         specs = _element_specs(cfg, choices, tag_scores)
         if specs:
             parts.append(
@@ -1453,20 +2041,37 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None, choices=None)
                   "them where they belong together, and you may add to them, "
                   "but nothing on the list may be missing.")
 
-    parts.append(_sections_block((section_id,)))
+    parts.append(_sections_block((section_id,), profile["spec"]))
     return "\n\n".join(parts)
 
 
-def _cached_prompt(style, name, ids=CACHED):
+def _cached_prompt(style, name, ids=None, funnel_slug=None):
     """The per-style sections. `ids` narrows it to a subset for the warmer."""
-    return "\n\n".join(
-        [
-            _style_block(style, name),
-            "Write for anyone with this style. Nothing here is specific to one "
-            "person.",
-            _sections_block(ids),
-        ]
-    )
+    profile = _profile(funnel_slug)
+    if ids is None:
+        ids = profile["cached"]
+    parts = [
+        _style_block(style, name),
+        "Write for anyone with this style. Nothing here is specific to one "
+        "person.",
+    ]
+    # The free result gave hidden strength #1 away in full, numbered, with the
+    # promise that the other four are inside. On kitchen that section is
+    # personalised and the requirement lives there; here it is cached, and it
+    # can be, because the strength belongs to the archetype rather than to the
+    # reader. Either way item 1 has to be the one already on screen.
+    if profile is ZODIAC_PROFILE and "mistakes" in ids:
+        first = _mistake_one(style)
+        if first:
+            parts.append(
+                "REQUIRED — item 1 of the five was already given to this "
+                "person in full, for free, as \"Hidden Strength #1 of 5\". "
+                "Reproduce it as item 1, in these words:\n"
+                "  title: %s\n  body: %s\n  fix: %s\n"
+                "Items 2 onward are yours to write and must all be different "
+                "from it." % (first["title"], first["body"], first["fix"]))
+    parts.append(_sections_block(ids, profile["spec"]))
+    return "\n\n".join(parts)
 
 
 # --- model -----------------------------------------------------------------
@@ -1639,7 +2244,7 @@ def _parse(text, want):
     return _parse_detail(text, want)[0]
 
 
-def _ask(client, prompt, max_tokens):
+def _ask(client, prompt, max_tokens, system=None):
     """(text, stop_reason). The stop reason is how truncation announces itself.
 
     `max_tokens` there means the model was still writing when it ran out of
@@ -1653,7 +2258,7 @@ def _ask(client, prompt, max_tokens):
             model=config.ANTHROPIC_MODEL,
             max_tokens=max_tokens,
             temperature=TEMPERATURE,
-            system=SYSTEM,
+            system=SYSTEM if system is None else system,
             messages=[{"role": "user", "content": prompt}],
         )
     finally:
@@ -1664,7 +2269,7 @@ def _ask(client, prompt, max_tokens):
     return text, getattr(message, "stop_reason", None)
 
 
-def _attempt(client, prompt, max_tokens, label):
+def _attempt(client, prompt, max_tokens, label, system=None):
     """One prompt, retried once if it times out.
 
     A timeout is the one failure worth repeating immediately: it means the
@@ -1674,15 +2279,16 @@ def _attempt(client, prompt, max_tokens, label):
     """
     timeout = _timeout_class()
     try:
-        return _ask(client, prompt, max_tokens)
+        return _ask(client, prompt, max_tokens, system)
     except Exception as exc:
         if timeout is None or not isinstance(exc, timeout):
             raise
         log.warning("section %s timed out — retrying once", label)
-    return _ask(client, prompt, max_tokens)
+    return _ask(client, prompt, max_tokens, system)
 
 
-def _generate(client, prompt, want, max_tokens=None):
+def _generate(client, prompt, want, max_tokens=None, system=None,
+              banned=()):
     """One section group. Returns {section_id: body}, or None.
 
     A single personalised section needs a fraction of the room a six-section
@@ -1696,15 +2302,27 @@ def _generate(client, prompt, want, max_tokens=None):
     if max_tokens is None:
         max_tokens = _group_tokens(want)
 
-    text, stop = _attempt(client, prompt, max_tokens, label)
+    text, stop = _attempt(client, prompt, max_tokens, label, system)
     parsed, why = _parse_detail(text, want)
+    hit = _banned_hit(parsed, banned) if parsed is not None else None
+    if hit:
+        # A section that says the banned thing is refused even though it
+        # parsed. The words are a Terms line, and a retry is far cheaper than
+        # the alternative — the stub, which never says them at all.
+        why = "banned phrase %r" % hit
+        parsed = None
     if parsed is not None:
         return parsed
     log.warning("section %s unusable: %s (%d chars, stop=%s, cap=%d) — retrying",
                 label, why, len(text or ""), stop, max_tokens)
 
-    text, stop = _attempt(client, prompt + RETRY_NOTE, max_tokens, label)
+    text, stop = _attempt(client, prompt + RETRY_NOTE, max_tokens, label,
+                          system)
     parsed, why = _parse_detail(text, want)
+    hit = _banned_hit(parsed, banned) if parsed is not None else None
+    if hit:
+        why = "banned phrase %r" % hit
+        parsed = None
     if parsed is None:
         log.warning("section %s given up: %s (%d chars, stop=%s, cap=%d)",
                     label, why, len(text or ""), stop, max_tokens)
@@ -1768,8 +2386,9 @@ def _read_cache(funnel_slug, result_style):
                     "regenerating on the purchase path; run warm_cache.py",
                     funnel_slug, result_style, CACHE_SCHEMA, stale)
 
-    if all(section_id in out for section_id in CACHED):
-        return dict((section_id, out[section_id]) for section_id in CACHED)
+    wanted = cached_sections(funnel_slug)
+    if all(section_id in out for section_id in wanted):
+        return dict((section_id, out[section_id]) for section_id in wanted)
     return None
 
 
@@ -1924,7 +2543,8 @@ def _absorb(job, task, result):
         if section_id in job["built"]:
             continue                      # already have it (a cache hit)
         job["built"][section_id] = _stub_for(
-            section_id, job["name"], _style(job["cfg"], job["style_id"]))
+            section_id, job["name"], _style(job["cfg"], job["style_id"]),
+            _profile(job["funnel"])["stubs"])
         job["paths"][section_id] = "stub"
     return False
 
@@ -2006,12 +2626,13 @@ def _run(job):
     _fire(job["on_final"], content, job["purchase_id"])
 
 
-def _personal_order(cfg):
+def _personal_order(cfg, funnel_slug=None):
     """The personalised sections, in the order the report displays them."""
+    personal = personal_sections(funnel_slug)
     ordered = [s.get("id") for s in cfg.get("report", {}).get("sections", [])
-               if s.get("id") in PERSONAL]
+               if s.get("id") in personal]
     # A config that has dropped or renamed one still has to generate the rest.
-    return ordered + [i for i in PERSONAL if i not in ordered]
+    return ordered + [i for i in personal if i not in ordered]
 
 
 def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
@@ -2036,6 +2657,7 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     cfg = config.load_funnel(funnel_slug)
     style = _style(cfg, result_style)
     name = _style_name(cfg, result_style)
+    profile = _profile(funnel_slug)
 
     cached = _read_cache(funnel_slug, result_style)
     client = _api() if style else None
@@ -2044,7 +2666,7 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     paths = {}
     if cached:
         built.update(cached)
-        for section_id in CACHED:
+        for section_id in cached:
             paths[section_id] = "cache"
 
     # The six the free result named, resolved once here and carried on every
@@ -2071,21 +2693,25 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
         # goes last because it is the one nobody is looking at first.
         pool = concurrent.futures.ThreadPoolExecutor(
             max_workers=max(1, int(config.LLM_MAX_CONCURRENCY or 1)))
-        for section_id in _personal_order(cfg):
+        for section_id in _personal_order(cfg, funnel_slug):
             tasks.append({
                 "ids": (section_id,), "cache": False,
                 "future": pool.submit(
                     _generate, client,
                     _section_prompt(style, name, tag_scores, section_id,
-                                    cfg, choices),
-                    (section_id,), _section_tokens(section_id)),
+                                    cfg, choices, funnel_slug),
+                    (section_id,), _section_tokens(section_id),
+                    profile["system"], profile["banned"]),
             })
         if cached is None:
+            group = profile["cached"]
             tasks.append({
-                "ids": CACHED, "cache": True,
+                "ids": group, "cache": True,
                 "future": pool.submit(_generate, client,
-                                      _cached_prompt(style, name), CACHED,
-                                      _group_tokens(CACHED)),
+                                      _cached_prompt(style, name, group,
+                                                     funnel_slug),
+                                      group, _group_tokens(group),
+                                      profile["system"], profile["banned"]),
             })
     job["tasks"] = tasks
     job["pool"] = pool
@@ -2095,7 +2721,8 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
         # nothing to wait for.
         for section_id in [s.get("id") for s in cfg.get("report", {}).get("sections", [])]:
             if section_id not in built:
-                built[section_id] = _stub_for(section_id, name, style)
+                built[section_id] = _stub_for(section_id, name, style,
+                                              profile["stubs"])
                 paths[section_id] = "stub"
         content = _assemble(cfg, funnel_slug, result_style, name, built, paths,
                             True, elements, visuals)
@@ -2161,8 +2788,9 @@ def copy_style_cache(from_slug, to_slug, style_id):
     if source is None or have is None:
         return result("failed", detail="cache read failed")
 
-    present = [s for s in CACHED if s in have]
-    missing = [s for s in CACHED if s not in have]
+    wanted = cached_sections(to_slug)
+    present = [s for s in wanted if s in have]
+    missing = [s for s in wanted if s not in have]
     if not missing:
         return result("cached", cached=present, stale=stale)
 
@@ -2177,7 +2805,7 @@ def copy_style_cache(from_slug, to_slug, style_id):
     # be reported as a warm cache and found by the first buyer.
     have, stale = _cache_state(to_slug, style_id)
     have = have or {}
-    still = [s for s in CACHED if s not in have]
+    still = [s for s in wanted if s not in have]
     copied = sorted(copyable)
     if still:
         return result("partial" if len(still) < len(missing) else "failed",
@@ -2225,8 +2853,9 @@ def warm_style_cache(funnel_slug, style_id, client=None):
     if have is None:
         return result("failed", detail="cache read failed")
 
-    present = [s for s in CACHED if s in have]
-    missing = [s for s in CACHED if s not in have]
+    wanted = cached_sections(funnel_slug)
+    present = [s for s in wanted if s in have]
+    missing = [s for s in wanted if s not in have]
     if not missing:
         return result("cached", cached=present, stale=stale)
 
@@ -2239,8 +2868,12 @@ def warm_style_cache(funnel_slug, style_id, client=None):
     warmed, failed = [], []
     for section_id in missing:
         try:
-            got = _generate(client, _cached_prompt(style, name, (section_id,)),
-                            (section_id,), _warm_tokens(section_id))
+            profile = _profile(funnel_slug)
+            got = _generate(client,
+                            _cached_prompt(style, name, (section_id,),
+                                           funnel_slug),
+                            (section_id,), _warm_tokens(section_id),
+                            profile["system"], profile["banned"])
         except Exception as exc:
             log.warning("warm %s/%s/%s failed: %s", funnel_slug, style_id,
                         section_id, type(exc).__name__)
@@ -2549,6 +3182,8 @@ def _pdf_shopping(d):
         % (i + 1, _e(it["name"]), _e(it["priority_note"]))
         for i, it in enumerate(d["items"])
     )
+    if not d.get("skip"):
+        return items
     skips = "".join(
         "<p><b class='struck'>%s</b> %s</p>" % (_e(s["name"]), _e(s["why"]))
         for s in d["skip"]
@@ -2622,7 +3257,8 @@ def _pdf_html(content):
         # Resolved against config.STATIC_DIR, which is the base_url build_pdf
         # renders with. A missing file loses the logo and nothing else.
         '<img class="cover-logo" src="brand/logo.svg" alt="Mazzin">',
-        '<p class="cover-lead">Your kitchen style report</p>',
+        '<p class="cover-lead">%s</p>'
+        % _e(_profile(content.get("funnel"))["pdf_lead"]),
         '<h1 class="cover-name">%s</h1>' % name,
         '<div class="rule"></div>',
         '<p class="cover-note">Keep this — your report also stays available '
@@ -2717,11 +3353,27 @@ COPY_VISUALIZER = {
     "keep": "Your kitchen stays at that link, and the PDF is yours to keep.",
 }
 
+COPY_ZODIAC = {
+    "headline": "Your profile is ready.",
+    "subject": "Your %s cosmic profile — Mazzin",
+    "body": "Your complete %s profile is attached.",
+    "keep": "It stays available at that link, and the PDF is yours to keep.",
+}
+
 
 def _email_copy(content):
-    """Which of the two mails this purchase gets."""
+    """Which of the three mails this purchase gets.
+
+    Kitchen's two are chosen by what the funnel carries rather than by its
+    slug, so a clone gets the right voice by having a `visualizer` block or
+    not having one. The third is a different product and is chosen by the
+    profile, the same place the voice and the shapes come from.
+    """
+    funnel = content.get("funnel") or ""
+    if _profile(funnel) is ZODIAC_PROFILE:
+        return COPY_ZODIAC
     try:
-        cfg = config.load_funnel(content.get("funnel") or "")
+        cfg = config.load_funnel(funnel)
     except Exception:
         return COPY_REPORT
     block = (cfg or {}).get("visualizer") or {}
@@ -2769,7 +3421,13 @@ def _email_opening(content):
     there than on the way in reads as the number getting smaller.
     """
     price = _price_paid(content)
-    if _email_copy(content) is COPY_VISUALIZER:
+    copy = _email_copy(content)
+    if copy is COPY_ZODIAC:
+        if price:
+            return ("You just spent %s on a read of the energy you have been "
+                    "running on all along." % html.escape(price))
+        return ("A read of the energy you have been running on all along.")
+    if copy is COPY_VISUALIZER:
         if price:
             return ("Your own kitchen, redrawn in the style your choices "
                     "pointed at — for %s." % html.escape(price))

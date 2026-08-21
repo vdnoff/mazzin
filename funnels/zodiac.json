@@ -2085,23 +2085,23 @@
           ],
           "lucky_days": "Tuesday and Sunday — the first for starting things, the second for finishing them."
         },
-        "strengths": {
+        "mistakes": {
           "setup": "That one is the easiest of the five to live with. The other four cut deeper, and the one costing you most right now is",
           "trigger": "the speed you decide at, not the decision,"
         },
-        "profile": {
+        "dna": {
           "setup": "Fire and sun read as the same thing from outside and pull opposite ways inside, and the split shows",
           "trigger": "in the choices you made fastest,"
         },
-        "love": {
+        "materials": {
           "setup": "You are read as certain long before you feel it, and the person who lasts is the one who",
           "trigger": "waits out the first week,"
         },
-        "career": {
+        "splurge": {
           "setup": "Your earning pattern is not flat and was never meant to be, and the month it turns is",
           "trigger": "the one straight after you get bored,"
         },
-        "year": {
+        "shopping": {
           "setup": "Two windows in the next twelve months carry most of your momentum, and the first opens",
           "trigger": "earlier than you would plan for,"
         },
@@ -2165,23 +2165,23 @@
           ],
           "lucky_days": "Monday and Thursday — Monday for reading a situation, Thursday for saying it out loud."
         },
-        "strengths": {
+        "mistakes": {
           "setup": "That one you already half knew. The other four are the ones people close to you have noticed and not mentioned, and the loudest is",
           "trigger": "what you do with a silence,"
         },
-        "profile": {
+        "dna": {
           "setup": "Water and moon agree on nearly everything, which is why the mystic third of you gets missed — it surfaces",
           "trigger": "in what you refuse without explaining,"
         },
-        "love": {
+        "materials": {
           "setup": "You give depth early and access late, and that mismatch is what gets misread as",
           "trigger": "distance, when it is timing,"
         },
-        "career": {
+        "splurge": {
           "setup": "Money follows your attention rather than your effort, and the pattern breaks",
           "trigger": "whenever you take a role that needs performing,"
         },
-        "year": {
+        "shopping": {
           "setup": "Your strongest stretch this year is not the busy one, and it starts",
           "trigger": "the month you stop chasing it,"
         },
@@ -2245,23 +2245,23 @@
           ],
           "lucky_days": "Friday and Saturday — Friday to settle things, Saturday to begin them."
         },
-        "strengths": {
+        "mistakes": {
           "setup": "That one is the cheapest of the five to correct. The other four have been running for years, and at the top of that list is",
           "trigger": "what you agree to out of steadiness,"
         },
-        "profile": {
+        "dna": {
           "setup": "Earth reads as calm and calm gets read as agreement, and the difference shows",
           "trigger": "in the things you never mention twice,"
         },
-        "love": {
+        "materials": {
           "setup": "You are the person other people steady themselves against, and what nobody checks is",
           "trigger": "who you lean on,"
         },
-        "career": {
+        "splurge": {
           "setup": "You are underpaid in a specific and fixable way, and the fix is",
           "trigger": "a number said once, with no reason after it,"
         },
-        "year": {
+        "shopping": {
           "setup": "The twelve months ahead have one real hinge in them, and it is",
           "trigger": "a decision you have already been circling,"
         },
@@ -2325,23 +2325,23 @@
           ],
           "lucky_days": "Wednesday and Sunday — Wednesday for talking, Sunday for deciding what it meant."
         },
-        "strengths": {
+        "mistakes": {
           "setup": "That one is the visible half. The other four sit under it, and the one shaping most of your weeks is",
           "trigger": "how you handle the third day,"
         },
-        "profile": {
+        "dna": {
           "setup": "Air and sun make you legible and bold makes you memorable, and the tension between them lands",
           "trigger": "in what you start and hand over,"
         },
-        "love": {
+        "materials": {
           "setup": "You are easy to meet and hard to reach, and the person who gets through is the one who",
           "trigger": "asks the second question,"
         },
-        "career": {
+        "splurge": {
           "setup": "Your best money comes from the part of the work you find least interesting, and it is",
           "trigger": "the follow-through, not the idea,"
         },
-        "year": {
+        "shopping": {
           "setup": "One window this year is worth more than the other eleven months together, and it opens",
           "trigger": "the week you almost cancel,"
         },
@@ -2383,7 +2383,7 @@
         }
       },
       {
-        "id": "strengths",
+        "id": "mistakes",
         "title": "5 Hidden Strengths & Blind Spots",
         "enabled": true,
         "preview": [
@@ -2395,7 +2395,7 @@
         }
       },
       {
-        "id": "profile",
+        "id": "dna",
         "title": "Your Cosmic Blueprint",
         "enabled": true,
         "preview": [
@@ -2407,7 +2407,7 @@
         }
       },
       {
-        "id": "love",
+        "id": "materials",
         "title": "Love & Compatibility",
         "enabled": true,
         "preview": [
@@ -2419,7 +2419,7 @@
         }
       },
       {
-        "id": "career",
+        "id": "splurge",
         "title": "Career & Money Path",
         "enabled": true,
         "preview": [
@@ -2431,7 +2431,7 @@
         }
       },
       {
-        "id": "year",
+        "id": "shopping",
         "title": "Your 12-Month Energy Map",
         "enabled": true,
         "preview": [
@@ -2451,15 +2451,15 @@
       "title": "Also in your profile",
       "rows": [
         {
-          "section": "profile",
+          "section": "dna",
           "hook": "How your {palette} choices split between your two strongest elements."
         },
         {
-          "section": "career",
+          "section": "splurge",
           "hook": "Where your {symbol} energy earns — and the one kind of work to stop taking."
         },
         {
-          "section": "year",
+          "section": "shopping",
           "hook": "The two months your {sign} energy runs with you, and the one to stay quiet through."
         },
         {
@@ -2547,9 +2547,7 @@
       "mid_line": "Your complete energy map, for less than two coffees.",
       "mid_line_accent": "two coffees",
       "mid_button": "See what's inside ↓",
-      "sticky_label": "Unlock full profile — {price}",
-      "sample_link": "See a sample page",
-      "sample_caption": "An example page. Yours is written from your own choices."
+      "sticky_label": "Unlock full profile — {price}"
     },
     "title": "Your {style} Profile",
     "proof_line": "Built from your 13 choices",
