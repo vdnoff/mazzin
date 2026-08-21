@@ -56,12 +56,27 @@ check("funnel_id is zodiac_v1", cfg["funnel_id"] == "zodiac_v1",
       cfg["funnel_id"])
 check("locale is en", cfg["locale"] == "en", cfg["locale"])
 check("pairs_count == number of steps",
-      cfg["swipe"]["pairs_count"] == len(steps) == 13,
+      cfg["swipe"]["pairs_count"] == len(steps) == 12,
       "%s vs %s" % (cfg["swipe"]["pairs_count"], len(steps)))
-check("analyzing copy names the 13 signals",
-      "13 signals" in cfg["analyzing"]["messages"][0],
+check("analyzing copy names the 12 signals",
+      "12 signals" in cfg["analyzing"]["messages"][0],
       cfg["analyzing"]["messages"][0])
-check("checkout proof line names 13", "13" in cfg["checkout"]["proof_line"])
+check("checkout proof line names 12", "12" in cfg["checkout"]["proof_line"])
+# The count is claimed in five places and the season step took one tap out of
+# all of them. A stale thirteen is the kind of line nobody notices is wrong
+# until a reader counts.
+check("nothing anywhere still claims thirteen",
+      not re.search(r"\b13\b", json.dumps(cfg, ensure_ascii=False)),
+      str(re.findall(r'"[^"]*\b13\b[^"]*"',
+                     json.dumps(cfg, ensure_ascii=False))[:3]))
+check("every claim of twelve agrees with the step count",
+      all(str(len(steps)) in text for text in
+          (cfg["analyzing"]["messages"][0], cfg["checkout"]["proof_line"],
+           cfg["result"]["value_banner"])))
+# Cards name themselves on this funnel, permanently, rather than only in the
+# chip after a tap.
+check("label_mode is center", cfg["swipe"].get("label_mode") == "center",
+      cfg["swipe"].get("label_mode"))
 check("accent is a fragment of the subtext",
       cfg["swipe"]["subtext_accent"] in cfg["swipe"]["subtext"],
       "%r not in %r" % (cfg["swipe"]["subtext_accent"],
@@ -75,8 +90,7 @@ check("no stripe_mode — the default is what this funnel wants",
 print("\n--- steps ---")
 WANT = [
     ("hook", "pair", "Which sky calls to you?"),
-    ("season", "grid4", "When do you celebrate your birthday?"),
-    ("sign", "grid4", "Tap your zodiac sign:"),
+    ("sign", "grid12", "Tap your zodiac sign:"),
     ("energy", "pair", "Choose your source of power"),
     ("landscape", "grid6", "Which world feels like home?"),
     ("palette", "grid6", "Which palette holds your energy?"),
@@ -91,128 +105,119 @@ WANT = [
 check("step ids and order", [s["id"] for s in steps] == [w[0] for w in WANT],
       str([s["id"] for s in steps]))
 for step, (sid, fmt, question) in zip(steps, WANT):
-    check("  %-10s is %-5s and asks its question" % (sid, fmt),
+    check("  %-10s is %-6s and asks its question" % (sid, fmt),
           step["id"] == sid and step["format"] == fmt
           and step["question"] == question,
           "%s / %s / %r" % (step["id"], step["format"], step["question"]))
 check("only the drain step scores inverse",
       [s["id"] for s in steps if s.get("scoring") == "inverse"] == ["drain"],
       str([s["id"] for s in steps if s.get("scoring")]))
-sign_images = [i for p in by_step["sign"]["pairs"] for i in p["images"]]
-check("the sign step ids are sign_<name>",
-      all(i["id"].startswith("sign_") for i in sign_images),
-      str(sorted({i["id"] for i in sign_images})))
-check("all twelve signs are reachable, plus the cusp",
-      {i["id"] for i in sign_images} == {"sign_" + n for n in (
-          "aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra",
-          "scorpio", "sagittarius", "capricorn", "aquarius", "pisces",
-          "cusp")},
-      str(sorted({i["id"] for i in sign_images})))
-check("every variant covers three elements and the cusp",
-      all({t for i in p["images"] for t in i["tags"]} & ELEMENTS
-          == {i["tags"][0] for i in p["images"]} & ELEMENTS
-          and len({i["tags"][0] for i in p["images"]} & ELEMENTS) == 3
-          for p in by_step["sign"]["pairs"]),
-      str([sorted({i["tags"][0] for i in p["images"]} & ELEMENTS)
-           for p in by_step["sign"]["pairs"]]))
-check("the four variants between them cover all four elements",
-      {i["tags"][0] for i in sign_images} & ELEMENTS == ELEMENTS)
-check("the cusp is the same card in every variant",
-      len({json.dumps(i, sort_keys=True) for i in sign_images
-           if i["id"] == "sign_cusp"}) == 1)
-check("the cusp is labelled and tagged as one",
-      all(i["label"] == "Born on a cusp" and i["tags"] == ["mystic", "moon"]
-          for i in sign_images if i["id"] == "sign_cusp"))
-check("the palette step is the moodboard step",
-      cfg["report"]["visuals"]["moodboard_step"] == "palette")
-check("every palette option carries a colour family",
-      all(i.get("color_family") for i in
-          by_step["palette"]["pairs"][0]["images"]))
-check("colour families are unique",
-      len({i["color_family"]
-           for i in by_step["palette"]["pairs"][0]["images"]}) == 6)
-check("no other step carries a colour family",
-      not [i["id"] for s in steps if s["id"] != "palette"
-           for p in s["pairs"] for i in p["images"] if "color_family" in i])
+# The season step existed only to steer the adaptive draw. With twelve signs
+# on one screen it asked for a birthday to save nobody anything.
+check("there is no season step", "season" not in by_step, sorted(by_step))
+check("and no season tag survives on any image",
+      not [i["id"] for i in images if set(i["tags"]) & SEASONS],
+      str([i["id"] for i in images if set(i["tags"]) & SEASONS]))
+check("the sign step is second, right after the hook",
+      [s["id"] for s in steps][:2] == ["hook", "sign"])
 
-print("\n--- the adaptive axis engine.js actually knows ---")
-# The engine holds the axis vocabulary, not the config: `AXES` there maps an
-# axis name to the tags it is made of, and an axis it has never heard of
-# resolves to no leader at all — which silently collapses every variant onto
-# `default`. That is a wrong funnel rather than a broken one, and nothing
-# else in this repo would catch it, so the whitelist is read out of engine.js
-# rather than restated here.
+print("\n--- the twelve signs, on one screen ---")
+ZODIAC = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+          "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius",
+          "Pisces"]
+sign = by_step["sign"]
+check("one pair, not four seasonal ones", len(sign["pairs"]) == 1,
+      str([p["id"] for p in sign["pairs"]]))
+sign_images = sign["pairs"][0]["images"]
+check("twelve cards on it", len(sign_images) == 12, str(len(sign_images)))
+check("all twelve signs, in classical order",
+      [i["label"] for i in sign_images] == ZODIAC,
+      str([i["label"] for i in sign_images]))
+check("ids are sign_<name>, lowercased",
+      [i["id"] for i in sign_images]
+      == ["sign_" + n.lower() for n in ZODIAC],
+      str([i["id"] for i in sign_images]))
+check("each sign carries exactly one element",
+      all(len(set(i["tags"]) & ELEMENTS) == 1 for i in sign_images),
+      str([i["id"] for i in sign_images
+           if len(set(i["tags"]) & ELEMENTS) != 1]))
+check("three of each element across the twelve",
+      sorted(collections.Counter(
+          (set(i["tags"]) & ELEMENTS).pop() for i in sign_images).values())
+      == [3, 3, 3, 3])
+# engine.js shuffles a pair so a habitual left-tapper cannot score the same
+# way twice. That assumes the cards are alternatives being weighed; a reader
+# hunting for their own sign wants the order they already know.
+check("the step opts out of the shuffle", sign.get("shuffle") is False,
+      str(sign.get("shuffle")))
+check("nothing else opts out",
+      [s["id"] for s in steps if s.get("shuffle") is False] == ["sign"],
+      str([s["id"] for s in steps if "shuffle" in s]))
+check("the cusp card is gone from the quiz",
+      "sign_cusp" not in {i["id"] for i in images})
+# Kept deliberately: the branch costs nothing and a funnel that cannot show
+# twelve at once would want it back.
+check("  but its art is still on disk",
+      os.path.isfile(os.path.join(GALLERY, "sign_cusp.webp")))
+
+print("\n--- the formats engine.js can actually draw ---")
+# The config names a format; engine.js decides what a format is. A step
+# asking for one that is not in GRID_SIZE falls back to a two-up pair, which
+# is a wrong funnel rather than a broken one — twelve signs would arrive as
+# two — so the table is read out of the engine rather than restated here.
 engine = open(os.path.join(ROOT, "static/js/engine.js")).read()
+sizes = dict((name, int(size)) for name, size in re.findall(
+    r"(grid\d+):\s*(\d+)",
+    re.search(r"var GRID_SIZE = \{([^}]*)\}", engine).group(1)))
+check("engine.js declares its grids", bool(sizes), str(sizes))
+check("grid12 is one of them and means twelve", sizes.get("grid12") == 12,
+      str(sizes))
+check("every format this funnel asks for is one the engine has",
+      all(s["format"] == "pair" or s["format"] in sizes for s in steps),
+      str(sorted({s["format"] for s in steps})))
+for step in steps:
+    want = sizes.get(step["format"], 2)
+    for pair in step["pairs"]:
+        check("  %-10s %-4s holds the %d its format draws"
+              % (step["id"], pair["id"], want),
+              len(pair["images"]) == want, str(len(pair["images"])))
+# The class is what the stylesheet lays out on, and renderStep now derives it
+# from the same table rather than naming formats one at a time.
+check("engine.js derives the grid class from that table",
+      'classList.toggle("is-" + name' in engine)
+css = open(os.path.join(ROOT, "static/css/mazzin.css")).read()
+for name in sorted(sizes):
+    check("  mazzin.css lays out .cards.is-%s" % name,
+          ".cards.is-%s {" % name in css)
+
+print("\n--- the season axis outlives the step that used it ---")
+# Nothing adapts any more. The axis stays declared because removing it would
+# be a change to shared code for no gain, and a funnel that wants seasonal
+# variants back should find it there.
+check("no step adapts on anything",
+      not [s["id"] for s in steps if s.get("adaptive")],
+      str([s["id"] for s in steps if s.get("adaptive")]))
 known = set(re.findall(r"(\w+):\s*\w+_AXIS",
                        re.search(r"var AXES = \{([^}]*)\}",
                                  engine, re.S).group(1)))
-check("engine.js declares its axes", bool(known), str(sorted(known)))
-check("season is one of them", "season" in known, str(sorted(known)))
-check("engine.js spells the season axis the way the season step tags do",
+check("engine.js still carries the season axis", "season" in known,
+      str(sorted(known)))
+check("  spelled the way the season tags were",
       set(re.search(r"var SEASON_AXIS = \[([^\]]*)\]", engine).group(1)
           .replace('"', "").replace(" ", "").split(",")) == SEASONS)
-declared = [(s["id"], (s.get("adaptive") or {}).get("axis"))
-            for s in steps if s.get("adaptive")]
-check("the sign step is the only adaptive one, on season",
-      declared == [("sign", "season")], str(declared))
-check("no step adapts on an axis engine.js cannot resolve",
-      all(axis in known for _, axis in declared), str(declared))
-
-rule = by_step["sign"]["adaptive"]
-pair_ids = {p["id"] for p in by_step["sign"]["pairs"]}
-check("every variant resolves to a pair that exists",
-      set(rule["variants"].values()) <= pair_ids,
-      str(set(rule["variants"].values()) - pair_ids))
-check("every pair of the step is reachable through some variant",
-      pair_ids <= set(rule["variants"].values()),
-      str(pair_ids - set(rule["variants"].values())))
-# adaptivePairId falls back to variants.default when the axis has no leader,
-# which on this funnel means somebody who somehow reached step 3 without
-# answering step 2. Without the key the draw goes random.
-check("there is a default", "default" in rule["variants"])
-season_images = by_step["season"]["pairs"][0]["images"]
-for key in rule["variants"]:
-    if key == "default":
-        continue
-    carriers = [i["id"] for i in season_images if key in i["tags"]]
-    check("  variant key %-7s is a tag exactly one season card carries" % key,
-          len(carriers) == 1, str(carriers))
-# Winter has no key of its own and rides `default`, which is the shape the
-# engine wants — but it means a missing key looks like a working funnel. So
-# resolve all four the way adaptivePairId does and require four distinct
-# grids: a season quietly sharing another's signs is the exact failure this
-# step was rebuilt to stop.
-resolved = {}
-for image in season_images:
-    for tag in image["tags"]:
-        resolved[tag] = (rule["variants"].get(tag)
-                         or rule["variants"]["default"])
-check("every season a card offers resolves to a grid",
-      set(resolved) == SEASONS and all(resolved.values()), str(resolved))
-check("and the four seasons resolve to four different grids",
-      len(set(resolved.values())) == 4, str(resolved))
-check("each grid holds the signs of its own season",
-      resolved == {"spring": "p_spring", "summer": "p_summer",
-                   "autumn": "p_autumn", "winter": "p_winter"}, str(resolved))
 
 print("\n--- images, colours, tags ---")
 HEX = set("0123456789ABCDEF")
-for step in steps:
-    for pair in step["pairs"]:
-        want = GRID.get(step["format"], 2)
-        check("step %-10s pair %-4s has %d images"
-              % (step["id"], pair["id"], want), len(pair["images"]) == want,
-              str(len(pair["images"])))
 for img in images:
     name = img["img"].rsplit("/", 1)[-1]
     on_disk = os.path.exists(os.path.join(GALLERY, name))
     path_ok = img["img"] == "/static/galleries/zodiac/%s.webp" % img["id"]
     tags = img["tags"]
-    # One tag is legal only on the season step, where the tag is the service
-    # axis and carries no style weight. Everywhere else two or three.
-    seasonal = set(tags) <= SEASONS
+    # Two or three, everywhere. The one-tag exception belonged to the season
+    # step, which was the only place a tag no style scores against was
+    # allowed, and that step is gone.
     tags_ok = (set(tags) <= VOCAB and len(set(tags)) == len(tags)
-               and (len(tags) == 1 if seasonal else 2 <= len(tags) <= 3))
+               and 2 <= len(tags) <= 3)
     colors_ok = (img.get("colors")
                  and all(c["hex"][0] == "#" and len(c["hex"]) == 7
                          and set(c["hex"][1:].upper()) <= HEX
@@ -240,36 +245,46 @@ for s in steps:
         for i in p["images"]:
             where[i["id"]].add((s["id"], p["id"]))
 repeated = {i: v for i, v in where.items() if len(v) > 1}
-check("the only repeated id is the cusp", set(repeated) == {"sign_cusp"},
+# The cusp was the one id that appeared in more than one pair, because the
+# same card sat in all four seasonal grids. With one grid there is nothing
+# left to share and every id is its own card again.
+check("no id appears in more than one pair", not repeated,
       str(sorted(repeated)))
-check("and it is repeated only inside its own step",
-      all(len({s for s, _ in v}) == 1 for v in repeated.values()))
-check("every other image id is unique",
-      len(by_id) == len(images) - (len(repeated.get("sign_cusp", ())) - 1),
+check("every image id is unique", len(by_id) == len(images),
       "%d ids, %d slots" % (len(by_id), len(images)))
-check("the gallery has a frame for every image and an og card",
-      set(os.listdir(GALLERY))
-      == {i["id"] + ".webp" for i in images} | {"og.webp"},
-      str(sorted(set(os.listdir(GALLERY))
-                 ^ ({i["id"] + ".webp" for i in images} | {"og.webp"}))))
+# Every image the quiz can draw has a frame. The reverse no longer holds:
+# the four season frames and the cusp outlived the step and the card that
+# used them, and deleting art is not something a config change should do.
+RETIRED = {"se2a.webp", "se2b.webp", "se2c.webp", "se2d.webp",
+           "sign_cusp.webp"}
+on_disk = set(os.listdir(GALLERY))
+wanted = {i["id"] + ".webp" for i in images} | {"og.webp"}
+check("the gallery has a frame for every image the quiz draws",
+      wanted <= on_disk, str(sorted(wanted - on_disk)))
+check("  and carries nothing beyond those but the retired frames",
+      on_disk - wanted == RETIRED, str(sorted((on_disk - wanted) ^ RETIRED)))
 check("og_image points at that card",
       cfg["meta"]["og_image"] == "/static/galleries/zodiac/og.webp")
-check("the season tags live only on the season step",
-      {i["id"] for i in images if set(i["tags"]) & SEASONS}
-      == {i["id"] for i in by_step["season"]["pairs"][0]["images"]})
-check("the four seasons appear exactly once each",
-      sorted(t for i in by_step["season"]["pairs"][0]["images"]
-             for t in i["tags"]) == sorted(SEASONS))
+check("no season tag survives anywhere in the quiz",
+      not {t for i in images for t in i["tags"]} & SEASONS)
 
 print("\n--- interstitials ---")
 anchors = [i["after_step"] for i in cfg["interstitials"]]
 check("anchors are 4/7/10", anchors == [4, 7, 10], str(anchors))
 names = [steps[a - 1]["id"] for a in anchors]
-check("anchors land after energy/moment/flow",
-      names == ["energy", "moment", "flow"], str(names))
-check("last anchor leaves three steps", len(steps) - anchors[-1] == 3)
-check("'Three more' copy matches",
-      "Three more" in cfg["interstitials"][2]["sub"])
+check("anchors land after landscape/symbol/drain",
+      names == ["landscape", "symbol", "drain"], str(names))
+# One step fewer, so the last anchor now has two behind it rather than
+# three — and the line that counts them had to move with it.
+check("last anchor leaves two steps", len(steps) - anchors[-1] == 2)
+check("'Two more' copy matches",
+      "Two more" in cfg["interstitials"][2]["sub"],
+      cfg["interstitials"][2]["sub"])
+# Written out, because that is how the line reads it.
+COUNTED = {1: "One more", 2: "Two more", 3: "Three more"}
+check("  and it counts the steps that are actually left",
+      COUNTED[len(steps) - anchors[-1]] in cfg["interstitials"][2]["sub"],
+      cfg["interstitials"][2]["sub"])
 check("the last one is templated on progress",
       "{pct}" in cfg["interstitials"][2]["line"])
 # `canFill` in engine.js suppresses an interstitial whose tokens it cannot
@@ -450,7 +465,8 @@ checkout = cfg["checkout"]
 check("product name", checkout["product_name"] == "Your Cosmic Profile Report",
       checkout["product_name"])
 check("single page", checkout["single_page"] is True)
-check("proof line", checkout["proof_line"] == "Built from your 13 choices")
+check("proof line", checkout["proof_line"] == "Built from your 12 choices",
+      checkout["proof_line"])
 check("anchor names the session it undercuts",
       "$75" in checkout["anchor"] and "{price}" in checkout["anchor"],
       checkout["anchor"])
@@ -659,7 +675,7 @@ check("checkout rejects a 14-long list",
 check("tag scores validate against this vocabulary",
       payments._clean_tag_scores(cfg, {"fire": 6, "sun": 5, "bold": 4})
       == {"fire": 6, "sun": 5, "bold": 4})
-for sid in ("hook", "season", "palette"):
+for sid in ("hook", "sign", "palette"):
     pair = by_step[sid]["pairs"][0]
     shown = [i["id"] for i in pair["images"]]
     got = tracking._clean_extra("zodiac", "swipe",
@@ -667,20 +683,31 @@ for sid in ("hook", "season", "palette"):
                                  "shown": shown, "chosen": shown[0]})
     check("tracking accepts the %s step" % sid, got["chosen"] == shown[0],
           str(got))
-# Every seasonal grid, by its own pair key. The cusp is in all four `shown`
-# lists and tracking rejects a repeat inside one of them, so this is also
-# where a shared id would show up if it were a problem.
-for pair in by_step["sign"]["pairs"]:
-    shown = [i["id"] for i in pair["images"]]
-    got = tracking._clean_extra("zodiac", "swipe",
-                                {"pair": "sign:" + pair["id"],
-                                 "shown": shown, "chosen": "sign_cusp"})
-    check("  tracking accepts sign:%-8s and the cusp in it" % pair["id"],
-          got["chosen"] == "sign_cusp", str(got))
-check("tracking still rejects a pair key the funnel has no variant for",
-      not _accepts({"pair": "sign:p_autumn_2",
-                    "shown": [i["id"] for i
-                              in by_step["sign"]["pairs"][0]["images"]],
+# Twelve on one grid. `_clean_extra` gates the shown list on a closed set of
+# sizes, and a twelve-up step is a swipe nothing could record until that set
+# grew — a whole step of the funnel silently dropping its events.
+SIGN_SHOWN = [i["id"] for i in sign_images]
+check("tracking accepts a twelve-image shown list",
+      len(SIGN_SHOWN) == 12
+      and tracking._clean_extra(
+          "zodiac", "swipe",
+          {"pair": "sign:p1", "shown": SIGN_SHOWN,
+           "chosen": "sign_leo"})["chosen"] == "sign_leo")
+check("  and the size set is the engine's grid table plus the pair",
+      tracking.SHOWN_SIZES == frozenset([2] + sorted(sizes.values())),
+      "%s vs %s" % (sorted(tracking.SHOWN_SIZES),
+                    sorted(set([2] + list(sizes.values())))))
+for bad in (11, 13):
+    padded = (SIGN_SHOWN + ["sign_cusp"])[:bad]
+    check("  a %d-image shown list is still refused" % bad,
+          not _accepts({"pair": "sign:p1", "shown": padded,
+                        "chosen": SIGN_SHOWN[0]}))
+check("tracking still rejects a pair key this funnel has no variant for",
+      not _accepts({"pair": "sign:p_autumn", "shown": SIGN_SHOWN,
+                    "chosen": "sign_leo"}))
+check("  and a card the step does not offer",
+      not _accepts({"pair": "sign:p1",
+                    "shown": SIGN_SHOWN[:11] + ["sign_cusp"],
                     "chosen": "sign_cusp"}))
 try:
     tracking._clean_extra("zodiac", "swipe",
@@ -830,62 +857,64 @@ for step in steps:
     run[step["id"]] = step["pairs"][0]["images"][0]["id"]
 
 
-def walk_with(season_id, sign_id):
-    """A full 13-choice run that tapped one season and one sign."""
-    out = []
-    for step in steps:
-        if step["id"] == "season":
-            out.append(season_id)
-        elif step["id"] == "sign":
-            out.append(sign_id)
-        else:
-            out.append(run[step["id"]])
-    return out
+def walk_with(sign_id):
+    """A full 12-choice run that tapped one sign."""
+    return [sign_id if s["id"] == "sign" else run[s["id"]] for s in steps]
 
 
-season_of = {}
-for image in by_step["season"]["pairs"][0]["images"]:
-    season_of[image["tags"][0]] = image["id"]
-variant_of = by_step["sign"]["adaptive"]["variants"]
-seen_signs = set()
-for pair in by_step["sign"]["pairs"]:
-    season = [t for t, v in variant_of.items() if v == pair["id"]]
-    season = season[0] if season and season[0] != "default" else "winter"
-    for image in pair["images"]:
-        if image["id"] == "sign_cusp":
-            continue
-        seen_signs.add(image["id"])
-        got = reports._sign(cfg, walk_with(season_of[season], image["id"]))
-        check("  %-18s reads back as %-12s"
-              % (image["id"], got and got.get("label")),
-              got is not None and got["cusp"] is False
-              and got["label"] == image["label"]
-              and got["season"] == season,
-              str(got))
-check("all twelve signs resolve", len(seen_signs) == 12, str(len(seen_signs)))
-
-for season, season_image in sorted(season_of.items()):
-    got = reports._sign(cfg, walk_with(season_image, "sign_cusp"))
-    block = reports._sign_block(cfg, walk_with(season_image, "sign_cusp"))
-    grid = [i["label"] for i in
-            by_step["sign"]["pairs"][
-                [p["id"] for p in by_step["sign"]["pairs"]].index(
-                    variant_of.get(season) or variant_of["default"])]["images"]
-            if i["id"] != "sign_cusp"]
-    check("  cusp in %-7s blends the season, names no single sign" % season,
-          got["cusp"] is True and got["label"] is None
-          and got["season"] == season and got["neighbours"] == grid
-          and "born on a cusp" in block
-          and "Never assert that they are any one" in block,
+for image in sign_images:
+    got = reports._sign(cfg, walk_with(image["id"]))
+    check("  %-18s reads back as %-12s"
+          % (image["id"], got and got.get("label")),
+          got is not None and got["cusp"] is False
+          and got["label"] == image["label"]
+          and set(got["tags"]) == set(image["tags"]),
           str(got))
-check("the thirteenth id is the cusp and it is the only one",
-      len(seen_signs) + 1 == 13 and "sign_cusp" not in seen_signs)
+check("all twelve signs resolve",
+      len({i["id"] for i in sign_images}) == 12)
+# The season step is gone, so there is no season to read. That has to degrade
+# rather than throw: _sign still answers, and answers with a sign.
+check("a run with no season in it still names the sign",
+      reports._sign(cfg, walk_with("sign_leo"))["season"] is None
+      and reports._sign(cfg, walk_with("sign_leo"))["label"] == "Leo")
+check("  and the prompt block says the sign rather than a season",
+      "this reader's sign is Leo"
+      in reports._sign_block(cfg, walk_with("sign_leo")))
 check("a run with no sign step answered reads back as no sign",
       reports._sign(cfg, [run[s["id"]] for s in steps
                           if s["id"] != "sign"]) is None)
 
+# The cusp is unreachable: no card offers it. The branch that handled one is
+# kept anyway — it costs nothing, and a funnel that cannot show twelve at
+# once will want it back — so it has to stay sound rather than merely unused.
+# Exercised against a config with the card put back, which is the only way to
+# reach it and the reason this is not simply deleted.
+check("no card can reach the cusp",
+      "sign_cusp" not in {i["id"] for i in images}
+      and reports._sign(cfg, walk_with("sign_cusp")) is None)
+revived = json.loads(json.dumps(cfg))
+for step in revived["swipe"]["steps"]:
+    if step["id"] == "sign":
+        step["pairs"][0]["images"].append({
+            "id": "sign_cusp", "label": "Born on a cusp",
+            "img": "/static/galleries/zodiac/sign_cusp.webp",
+            "tags": ["mystic", "moon"],
+            "colors": sign_images[0]["colors"]})
+cusp_run = [reports.CUSP_ID if s["id"] == "sign" else run[s["id"]]
+            for s in steps]
+cusp = reports._sign(revived, cusp_run)
+check("the cusp branch still answers when a config offers one",
+      cusp is not None and cusp["cusp"] is True
+      and cusp["label"] is None, str(cusp))
+check("  and still refuses to name a single sign",
+      "born on a cusp" in reports._sign_block(revived, cusp_run)
+      and "Never assert that they are any one"
+      in reports._sign_block(revived, cusp_run))
+check("  its art is still on disk for the day it comes back",
+      os.path.isfile(os.path.join(GALLERY, "sign_cusp.webp")))
+
 print("\n--- every per-purchase section is written from real taps ---")
-leo = walk_with(season_of["summer"], "sign_leo")
+leo = walk_with("sign_leo")
 style = cfg["styles"][0]
 for section_id in PERSONAL_TRIO:
     prompt = reports._section_prompt(style, "Radiant Fire", {"fire": 8},
@@ -898,12 +927,16 @@ for section_id in PERSONAL_TRIO:
     check("  %-10s is not handed kitchen's voice or shapes" % section_id,
           "kitchen" not in prompt.lower()
           and reports.SPEC[section_id] not in prompt)
-cusp_prompt = reports._section_prompt(
-    style, "Radiant Fire", {"fire": 8}, "dna", cfg,
-    walk_with(season_of["summer"], "sign_cusp"), "zodiac")
-check("a cusp run never has a single sign put in its prompt",
-      "born on a cusp" in cusp_prompt
-      and not re.search(r"this reader's sign is", cusp_prompt), "")
+# The prompt has to follow the tap rather than the archetype: a Pisces who
+# scored as Radiant Fire is a real run, and the section is written for the
+# Pisces. The cusp wording must not appear at all now that no card offers it.
+other = reports._section_prompt(style, "Radiant Fire", {"fire": 8}, "dna",
+                                cfg, walk_with("sign_pisces"), "zodiac")
+check("the prompt names the sign that was tapped, not the style's",
+      "this reader's sign is Pisces" in other
+      and "Leo" not in other, "")
+check("  and says nothing about a cusp when none was offered",
+      "born on a cusp" not in other)
 cached_prompt = reports._cached_prompt(style, "Radiant Fire", CACHED_TRIO,
                                        "zodiac")
 check("the cached prompt is style-only and names no tap",
@@ -1202,6 +1235,40 @@ check("every zodiac budget is derived from SHAPE, not written out again",
           for asked in [dict((p, int(n)) for p, n in
                              BUDGET_RE.findall(reports.ZODIAC_SPEC[sid]))
                         [path]]))
+
+print("\n--- what the kitchen funnels must not have picked up ---")
+# engine.js, mazzin.css and tracking.py all moved for this funnel. Every one
+# of those changes is reached through a config flag or a table entry, so the
+# proof that kitchen is untouched is that its configs ask for none of them.
+for slug in ("kitchen", "kitchen-visualizer"):
+    other = json.load(open(os.path.join(ROOT, "funnels/%s.json" % slug)))
+    other_steps = other["swipe"]["steps"]
+    check("%-18s sets no label_mode" % slug,
+          "label_mode" not in other["swipe"],
+          str(other["swipe"].get("label_mode")))
+    check("  so its cards name themselves only after a tap",
+          not any("label_mode" in json.dumps(st)
+                  for st in other_steps))
+    check("  no step of it asks for grid12",
+          not [st["id"] for st in other_steps if st["format"] == "grid12"],
+          str(sorted({st["format"] for st in other_steps})))
+    check("  and none opts out of the shuffle",
+          not [st["id"] for st in other_steps if st.get("shuffle") is False],
+          str([st["id"] for st in other_steps if "shuffle" in st]))
+    check("  its shown sizes were all legal before this change",
+          all(sizes.get(st["format"], 2) in (2, 4, 6) for st in other_steps))
+# The label node itself is gated on the flag in engine.js, not on the format,
+# so the gate is worth reading rather than trusting.
+check("engine.js draws a permanent label only when a funnel asks for one",
+      'labelMode() === "center"' in engine
+      and 'cfg.swipe.label_mode' in engine)
+check("  and the flag is absent by default rather than off",
+      'label_mode) || ""' in engine)
+check("mazzin.css styles that label under its own class",
+      ".card-name {" in css and ".cards.is-grid12 .card-name {" in css)
+check("the shuffle opt-out is per step and defaults to shuffling",
+      "st.shuffle === false" in engine)
+
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for f in fails:
