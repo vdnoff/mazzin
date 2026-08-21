@@ -84,8 +84,13 @@ check("accent is a fragment of the subtext",
 check("subtext accent names the time",
       cfg["swipe"]["subtext_accent"] == "60 seconds",
       cfg["swipe"].get("subtext_accent"))
-check("no stripe_mode — the default is what this funnel wants",
-      "stripe_mode" not in cfg)
+# On the sandbox key set while this is being walked end to end, so 4242
+# takes a real trip through checkout, the webhook and report generation
+# without money moving. payments._stripe_mode reads exactly "test" and calls
+# everything else live, so a typo here is a live charge rather than an error
+# — which is why the value is pinned rather than merely checked for presence.
+check("stripe_mode is the literal test", cfg.get("stripe_mode") == "test",
+      repr(cfg.get("stripe_mode")))
 
 print("\n--- steps ---")
 WANT = [
@@ -453,10 +458,22 @@ for style in cfg["styles"]:
           len(hits) >= 2 * len(drawn), str(len(hits)))
 
 print("\n--- pricing and checkout ---")
-check("price is 700 usd",
-      cfg["pricing"]["amount_cents"] == 700
+check("price is 300 usd",
+      cfg["pricing"]["amount_cents"] == 300
       and cfg["pricing"]["currency"] == "usd",
       str(cfg["pricing"]))
+# The price is written once and rendered everywhere from that one number.
+# A funnel that hardcodes it in a sentence is a funnel that goes stale in one
+# place the next time it moves, so no string may carry our own figure.
+shown = "$%d" % (cfg["pricing"]["amount_cents"] // 100)
+priced = [t for t in re.findall(r'"([^"]*\$[^"]*)"',
+                                json.dumps(cfg, ensure_ascii=False))
+          if shown in t]
+check("  and no copy states it — every mention is the {price} token",
+      not priced, str(priced))
+check("  which the engine fills from amount_cents",
+      "cfg.pricing.amount_cents" in engine
+      and "{price}" in cfg["checkout"]["cta_label"])
 check("price is an integer number of cents",
       isinstance(cfg["pricing"]["amount_cents"], int))
 check("cta names the profile",
@@ -656,6 +673,16 @@ MONTHS = ["January", "February", "March", "April", "May", "June", "July",
           "August", "September", "October", "November", "December"]
 
 check("the slug is routable", config.funnel_exists("zodiac"))
+# The mode is pinned as a string above; this is the half that matters — that
+# payments.py agrees the string means test, and reaches for the test key set
+# rather than falling back to the live one.
+check("payments reads this funnel as a test-mode funnel",
+      payments._stripe_mode(cfg) == payments.TEST,
+      payments._stripe_mode(cfg))
+check("  and kitchen is still live", payments._stripe_mode(
+    config.load_funnel("kitchen")) == payments.LIVE)
+check("  a mode payments does not know would be live, not an error",
+      payments._stripe_mode({"stripe_mode": "sandbox"}) == payments.LIVE)
 check("load_funnel returns this config", config.load_funnel("zodiac") == cfg)
 
 
