@@ -273,3 +273,6 @@ bottom.
 
 ## 2026-08-21 — claude/zodiac-gallery-art
 - zodiac: real gallery art
+
+## 2026-08-21 — claude/zodiac-reports
+- zodiac: report generation, cache, PDF assets
