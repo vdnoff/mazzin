@@ -285,3 +285,6 @@ bottom.
 
 ## 2026-08-21 — claude/zodiac-label-badge
 - zodiac: badge labels — clean art, bottom pill
+
+## 2026-08-21 — claude/zodiac-price-sandbox
+- zodiac: $3 + sandbox mode
