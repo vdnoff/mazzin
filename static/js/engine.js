@@ -2191,6 +2191,173 @@
     io.observe(el.cta);
   }
 
+  // --- a funnel's own result page --------------------------------------------
+  //
+  // One funnel now wants a result page that is not this one's. Rather than a
+  // second design growing inside these five thousand lines behind flags, a
+  // config may name a script and a stylesheet and take the page over: this
+  // file computes the run — the winner, the tallies, what was tapped, what is
+  // locked — hands it across, and stops drawing.
+  //
+  // The seam is deliberately narrow and one-directional. A module renders the
+  // pre-purchase page and nothing else: the paid report is drawn by
+  // `buildSection` off SECTION_BODY for every funnel, unconditionally, and
+  // payment is never handed over — the module is given the consent box and the
+  // pay button this file already built and wired, to place where it wants
+  // them. It cannot make a payment; it can only put ours somewhere.
+  //
+  // A funnel with no `result_module` never reaches any of this.
+
+  var moduleAssets = {};
+
+  function resultModule() {
+    return (cfg && cfg.result_module) || "";
+  }
+
+  // Script and stylesheet, once each, in that order — the module's own render
+  // measures nothing, but a page that paints unstyled and then restyles is a
+  // flash the reader sees.
+  function loadAsset(url, done) {
+    if (!url) return done();
+    if (moduleAssets[url] === "done") return done();
+    if (moduleAssets[url]) return moduleAssets[url].push(done);
+    var waiting = moduleAssets[url] = [done];
+    function settle() {
+      moduleAssets[url] = "done";
+      waiting.forEach(function (fn) { fn(); });
+    }
+    var node;
+    if (/\.css($|\?)/.test(url)) {
+      node = document.createElement("link");
+      node.rel = "stylesheet";
+      node.href = url;
+    } else {
+      node = document.createElement("script");
+      node.src = url;
+      node.async = false;
+    }
+    node.onload = settle;
+    // A module that will not load must not leave the reader on a blank page,
+    // so a failure settles too and `renderModuleResult` falls back to this
+    // file's own result.
+    node.onerror = settle;
+    document.head.appendChild(node);
+  }
+
+  // The run's tallies for a named set of tags, in the order asked for.
+  //
+  // Which tags are elements and which are energy is not something this file
+  // can know — the vocabulary belongs to the funnel, and this one has three
+  // axes where kitchen has two. So the raw scores go across and the module,
+  // which does know, asks for the groups it wants.
+  function tallyOf(names) {
+    return (names || []).map(function (tag) {
+      return { tag: tag, score: scores[tag] || 0 };
+    });
+  }
+
+  // What the module is given. Everything in here is the finished run — nothing
+  // it is handed can be recomputed by a page that was reached through a
+  // redirect, which is the same reason the paid view stores its elements.
+  function resultContext(win) {
+    var picks = {};
+    ((cfg.swipe && cfg.swipe.steps) || []).forEach(function (step) {
+      var id = chosenOnStep(step.id);
+      var item = id && imageById(id);
+      if (item) picks[step.id] = item;
+    });
+
+    var collapsed = collapsedIds();
+    var sections = ((cfg.report && cfg.report.sections) || [])
+      .filter(function (sec) { return sec.enabled !== false; })
+      .map(function (sec) {
+        return {
+          id: sec.id,
+          title: sec.title,
+          teaser_line: sec.teaser_line || "",
+          locked: ((sec.reveal || {}).mode || "locked") !== "visible",
+          collapsed: !!collapsed[sec.id],
+          reveal: (win.reveals || {})[sec.id] || null
+        };
+      });
+
+    return {
+      cfg: cfg,
+      style: {
+        id: win.id, name: win.name, blurb: win.blurb || "",
+        tags: (win.tags || []).slice(),
+        reveals: win.reveals || {}
+      },
+      tally: tallyOf,
+      picks: picks,
+      chosen: chosen.slice(),
+      scores: JSON.parse(JSON.stringify(scores)),
+      hookWords: hookWordsFor(win),
+      fillHook: function (text) { return fillHook(text, hookWordsFor(win)); },
+      strength: (win.reveals || {}).mistake_one || null,
+      strengthCopy: (cfg.report && cfg.report.mistake_one) || {},
+      sections: sections,
+      price: formatPriceShort(),
+      withPrice: withPrice,
+      // The offer, as this file built it. `nodes` are real, live and already
+      // listening — the consent box gates the button, the button takes the
+      // money — and a module places them rather than making its own.
+      commerce: commerceCopy(),
+      nodes: {
+        commerce: el.commerce, consent: el.withdrawal, payButton: el.payButton,
+        payError: el.payError, trust: el.trust, price: el.price,
+        manifest: el.manifest, anchor: el.payAnchor, legal: el.legal
+      },
+      checkout: startCheckout,
+      track: function (name, extra) { track(name, null, extra); }
+    };
+  }
+
+  function renderModuleResult(win) {
+    var css = (cfg && cfg.result_css) || "";
+    var root = el.moduleRoot;
+    if (!root) {
+      root = elm("div", "result-module");
+      root.id = "result-module";
+      el.report.parentNode.insertBefore(root, el.report);
+      el.moduleRoot = root;
+    }
+    // This file's own result furniture stays out of the way rather than being
+    // deleted: the paid view rebuilds on these same nodes after a purchase.
+    el.report.hidden = true;
+    el.cta.hidden = true;
+    [el.resultKicker, el.resultName, el.resultBlurb].forEach(function (node) {
+      if (node) node.hidden = true;
+    });
+    // Built and wired here, placed by the module. Everything the offer needs
+    // to be legal and to work exists before the module has drawn anything.
+    renderCommerce();
+
+    loadAsset(css, function () {
+      loadAsset(cfg.result_module, function () {
+        var mod = window.MazzinResult;
+        if (!mod || typeof mod.render !== "function") {
+          // The module did not arrive. Put this file's own page back rather
+          // than leaving a finished quiz on an empty screen.
+          root.hidden = true;
+          el.report.hidden = false;
+          el.cta.hidden = true;
+          [el.resultKicker, el.resultName, el.resultBlurb]
+            .forEach(function (node) { if (node) node.hidden = false; });
+          renderLockedReport(win);
+          return;
+        }
+        try {
+          mod.render(root, resultContext(win));
+        } catch (e) {
+          root.hidden = true;
+          el.report.hidden = false;
+          renderLockedReport(win);
+        }
+      });
+    });
+  }
+
   function startResult() {
     show("screen-result");
     el.analyzingText.textContent = cfg.analyzing.text;
@@ -2208,7 +2375,12 @@
       el.resultBlurb.textContent = win.blurb || "";
       singlePage = wantsSinglePage();
 
-      if (singlePage) {
+      if (resultModule()) {
+        // The delegation. A funnel that names a module draws its own
+        // pre-purchase page; everything after it here — the tracking, the
+        // pixel, the scroll watchers — is the same for both.
+        renderModuleResult(win);
+      } else if (singlePage) {
         // No result CTA and no value banner: the button is the one at the
         // bottom of the page now, and the anchor card carries what the banner
         // used to say — once, where the decision is actually made.
