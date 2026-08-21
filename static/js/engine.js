@@ -340,15 +340,24 @@
     return GRID_SIZE[stepFormat(st)] || 2;
   }
 
-  // The two axes a step can adapt on. The config names the axis; what the
+  // The axes a step can adapt on. The config names the axis; what the
   // axis is made of lives here, because it is the same vocabulary the styles
   // are scored against and it should not be restatable per funnel.
+  //
+  // Season is the odd one: it is answered outright by a step that asks which
+  // one somebody was born in, rather than accumulated over several taps, and
+  // no style is scored against it. It is here for the same reason the other
+  // two are — an axis this file has never heard of resolves to no leader at
+  // all, which collapses every variant onto `default` silently.
   var TONE_AXIS = ["warm", "cool", "dark", "bright"];
   var TONE_OPPOSITE = {
     warm: "cool", cool: "warm", dark: "bright", bright: "dark"
   };
   var MATERIAL_AXIS = ["wood", "stone", "metal"];
-  var AXES = { tone: TONE_AXIS, material: MATERIAL_AXIS };
+  var SEASON_AXIS = ["spring", "summer", "autumn", "winter"];
+  var AXES = {
+    tone: TONE_AXIS, material: MATERIAL_AXIS, season: SEASON_AXIS
+  };
 
   // The tag they have chosen most on one axis, or null when the axis has not
   // come up yet. Ties go to the first listed, so the same run always resolves
