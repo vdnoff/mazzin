@@ -75,7 +75,7 @@ check("every claim of twelve agrees with the step count",
            cfg["result"]["value_banner"])))
 # Cards name themselves on this funnel, permanently, rather than only in the
 # chip after a tap.
-check("label_mode is center", cfg["swipe"].get("label_mode") == "center",
+check("label_mode is badge", cfg["swipe"].get("label_mode") == "badge",
       cfg["swipe"].get("label_mode"))
 check("accent is a fragment of the subtext",
       cfg["swipe"]["subtext_accent"] in cfg["swipe"]["subtext"],
@@ -1260,12 +1260,40 @@ for slug in ("kitchen", "kitchen-visualizer"):
 # The label node itself is gated on the flag in engine.js, not on the format,
 # so the gate is worth reading rather than trusting.
 check("engine.js draws a permanent label only when a funnel asks for one",
-      'labelMode() === "center"' in engine
+      'labelMode() === "badge"' in engine
       and 'cfg.swipe.label_mode' in engine)
 check("  and the flag is absent by default rather than off",
       'label_mode) || ""' in engine)
+check("  badge is the only mode there is",
+      "labelMode() ===" in engine
+      and len(re.findall(r'labelMode\(\) === "(\w+)"', engine)) == 1
+      and re.findall(r'labelMode\(\) === "(\w+)"', engine) == ["badge"],
+      str(re.findall(r'labelMode\(\) === "(\w+)"', engine)))
 check("mazzin.css styles that label under its own class",
       ".card-name {" in css and ".cards.is-grid12 .card-name {" in css)
+
+# The label used to be a scrim across the whole card, and the scrim was the
+# thing that had to go: it dimmed every frame it sat on and covered the sign
+# glyph. The art is the product. A rule that paints over it is the regression
+# this mode exists to prevent, so the stylesheet is read for one.
+label_rule = css[css.index(".card-name {"):]
+label_rule = label_rule[:label_rule.index("}")]
+check("the label paints no gradient over the picture",
+      "gradient" not in label_rule, label_rule)
+check("  nowhere in the stylesheet, in fact",
+      "radial-gradient" not in css)
+check("  it is a pill, not a panel",
+      "border-radius: 999px" in label_rule
+      and "bottom:" in label_rule and "inset: 0" not in label_rule)
+check("  carrying its own background rather than borrowing the art's",
+      "rgba(16, 20, 40, 0.88)" in label_rule)
+check("  with the blur as an enhancement over that, not instead of it",
+      "backdrop-filter: blur(4px)" in css
+      and css.index("rgba(16, 20, 40, 0.88)")
+      < css.index("rgba(16, 20, 40, 0.75)"))
+check("  and one line only, truncated rather than grown",
+      "white-space: nowrap" in label_rule
+      and "text-overflow: ellipsis" in label_rule)
 check("the shuffle opt-out is per step and defaults to shuffling",
       "st.shuffle === false" in engine)
 
