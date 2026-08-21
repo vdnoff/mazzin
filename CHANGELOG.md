@@ -282,3 +282,6 @@ bottom.
 
 ## 2026-08-21 — claude/zodiac-grid12-labels
 - zodiac: direct 12-sign step + always-visible centered labels
+
+## 2026-08-21 — claude/zodiac-label-badge
+- zodiac: badge labels — clean art, bottom pill
