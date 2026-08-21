@@ -2,6 +2,7 @@
   "slug": "zodiac",
   "funnel_id": "zodiac_v1",
   "locale": "en",
+  "stripe_mode": "test",
   "meta": {
     "title": "What's Your Cosmic Profile?",
     "og_image": "/static/galleries/zodiac/og.webp"
@@ -2287,7 +2288,7 @@
     }
   },
   "pricing": {
-    "amount_cents": 700,
+    "amount_cents": 300,
     "currency": "usd",
     "cta": "Unlock my full profile"
   },
