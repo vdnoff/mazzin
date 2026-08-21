@@ -3697,6 +3697,15 @@
       el.analyzing.hidden = true;
       el.resultBody.hidden = false;
       el.cta.hidden = true;
+      // A funnel with its own result page hid this container and put its own
+      // page in front of it. The paid report is drawn into it by every funnel
+      // — that path is never delegated — so it comes back, and the module's
+      // page goes. Unreachable today, because both ways of paying navigate
+      // and the reader returns on a fresh load: it is here so that the day
+      // one of them confirms in place, the report is not written into a
+      // hidden div.
+      el.report.hidden = false;
+      if (el.moduleRoot) el.moduleRoot.hidden = true;
       if (el.ctaNote) el.ctaNote.hidden = true;
       el.resultName.textContent = content.style_name || "";
       revealHead();
