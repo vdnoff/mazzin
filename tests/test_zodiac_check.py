@@ -337,14 +337,20 @@ check("style ids are unique", len({s["id"] for s in cfg["styles"]}) == 4)
 
 print("\n--- report ---")
 check("six sections", len(sections) == 6, str(len(sections)))
+# The ids are kitchen's because both renderers dispatch on them —
+# SECTION_BODY[sec.id] in engine.js, PDF_BODY[id] in reports.py — and an id
+# neither table knows falls through to a bare paragraph. The titles are the
+# product. Pinned as pairs so a rename on either side has to be deliberate.
+SHAPE_OF = [
+    ("palette", "Your Power Palette & Talismans"),
+    ("mistakes", "5 Hidden Strengths & Blind Spots"),
+    ("dna", "Your Cosmic Blueprint"),
+    ("materials", "Love & Compatibility"),
+    ("splurge", "Career & Money Path"),
+    ("shopping", "Your 12-Month Energy Map"),
+]
 check("section ids and titles",
-      [(s["id"], s["title"]) for s in sections]
-      == [("palette", "Your Power Palette & Talismans"),
-          ("strengths", "5 Hidden Strengths & Blind Spots"),
-          ("profile", "Your Cosmic Blueprint"),
-          ("love", "Love & Compatibility"),
-          ("career", "Career & Money Path"),
-          ("year", "Your 12-Month Energy Map")],
+      [(s["id"], s["title"]) for s in sections] == SHAPE_OF,
       str([s["id"] for s in sections]))
 # renderLockedReport draws the swatch grid for the first visible section that
 # carries colours, and drops the free strength in directly behind it. A
@@ -456,8 +462,13 @@ check("manifest carries one row per section",
 hero = checkout["manifest_hero"]
 hits = [r for r in checkout["manifest"] if hero.lower() in r.lower()]
 check("manifest hero matches exactly one row", len(hits) == 1, str(hits))
-check("the hero is the strengths section",
-      hero == "strengths" and hero in locked, hero)
+# The hero is a fragment of manifest copy rather than a section id — the
+# engine uses it to bold one row — so it names the strengths in words while
+# the section itself is `mistakes`.
+strengths_id = [i for i, t in SHAPE_OF if "Strengths" in t][0]
+check("the hero row names the strengths section",
+      hero == "strengths" and hero.lower() in hits[0].lower()
+      and strengths_id in locked, "%s / %s" % (hero, strengths_id))
 check("trust lines are the ones kitchen ships",
       checkout["trust"] == ["Secure payment via Stripe", "Instant delivery",
                             "PDF copy to your email"], str(checkout["trust"]))
@@ -616,8 +627,17 @@ check("the four shares account for every walk",
 
 print("\n--- server side ---")
 import config  # noqa: E402
+import database  # noqa: E402
 import payments  # noqa: E402
+import reports  # noqa: E402
 import tracking  # noqa: E402
+
+# Kitchen, for the checks that this funnel's arrival left it alone.
+kitchen_cfg = json.load(open(os.path.join(ROOT, "funnels/kitchen.json")))
+kitchen_choices = [s["pairs"][0]["images"][0]["id"]
+                   for s in kitchen_cfg["swipe"]["steps"]]
+MONTHS = ["January", "February", "March", "April", "May", "June", "July",
+          "August", "September", "October", "November", "December"]
 
 check("the slug is routable", config.funnel_exists("zodiac"))
 check("load_funnel returns this config", config.load_funnel("zodiac") == cfg)
@@ -670,6 +690,345 @@ try:
 except ValueError:
     check("tracking rejects an image from another funnel", True)
 check("tracking allows step 13", tracking._clean_step(13) == 13)
+
+print("\n--- the report is drawn by ids the renderers already know ---")
+# The whole reason zodiac's sections are named after kitchen's: neither
+# renderer sniffs the shape, both switch on the id, and an id they do not
+# carry silently degrades a paid section to one paragraph of prose.
+engine_body = set(re.findall(
+    r"(\w+):\s*\w+Body", re.search(r"var SECTION_BODY = \{([^}]*)\}",
+                                   engine, re.S).group(1)))
+check("engine.js draws these six and no others",
+      engine_body == {i for i, _ in SHAPE_OF}, str(sorted(engine_body)))
+check("reports.py's PDF draws the same six",
+      set(reports.PDF_BODY) == {i for i, _ in SHAPE_OF},
+      str(sorted(reports.PDF_BODY)))
+check("every zodiac section maps onto one of them",
+      [i for i, _ in SHAPE_OF] == [s["id"] for s in sections])
+check("and no two sections claim the same shape",
+      len({i for i, _ in SHAPE_OF}) == len(SHAPE_OF))
+check("every section has a validator, a spec and a stub",
+      all(i in reports.VALIDATORS and i in reports.ZODIAC_SPEC
+          and i in reports.ZODIAC_STUBS for i, _ in SHAPE_OF))
+check("every stub survives the validator that will police the real thing",
+      all(reports.VALIDATORS[i](reports._fill(reports.ZODIAC_STUBS[i],
+                                              "Deep Water")) is not None
+          for i, _ in SHAPE_OF),
+      str([i for i, _ in SHAPE_OF
+           if reports.VALIDATORS[i](
+               reports._fill(reports.ZODIAC_STUBS[i], "Deep Water")) is None]))
+
+print("\n--- what is cached, and what is written per purchase ---")
+CACHED_TRIO = ("palette", "mistakes", "splurge")
+PERSONAL_TRIO = ("dna", "materials", "shopping")
+check("zodiac caches exactly the archetype trio",
+      reports.cached_sections("zodiac") == CACHED_TRIO,
+      str(reports.cached_sections("zodiac")))
+check("and personalises exactly the sign-driven trio",
+      reports.personal_sections("zodiac") == PERSONAL_TRIO,
+      str(reports.personal_sections("zodiac")))
+check("the two together are every section, once",
+      sorted(CACHED_TRIO + PERSONAL_TRIO) == sorted(i for i, _ in SHAPE_OF))
+# The split is the COGS decision: 4 cached calls a style against 3 fresh calls
+# a purchase. Kitchen's split is the other overlap and must not have moved.
+check("kitchen still caches shopping/dna/splurge",
+      reports.cached_sections("kitchen") == ("shopping", "dna", "splurge"),
+      str(reports.cached_sections("kitchen")))
+check("kitchen still personalises palette/materials/mistakes",
+      reports.personal_sections("kitchen")
+      == ("palette", "materials", "mistakes"),
+      str(reports.personal_sections("kitchen")))
+check("a funnel nobody registered is kitchen",
+      reports.cached_sections("kitchen-visualizer") == reports.CACHED
+      and reports.cached_sections("") == reports.CACHED)
+check("the warmer asks the funnel rather than the module",
+      "reports.cached_sections(" in open(
+          os.path.join(ROOT, "scripts/warm_cache.py")).read())
+
+print("\n--- the words this vertical may not say, enforced twice ---")
+# Once in the prompt, which is an instruction, and once on the way back,
+# which is not. The second is the one that holds when a model ignores the
+# first, and it is a Terms line rather than a matter of house style.
+BAN_SAMPLES = [
+    "your future will be brighter", "a psychic reading", "this prediction",
+    "we predict a strong month", "your fortune changes", "a horoscope for you",
+    "you are destined to lead", "a diagnosis of burnout",
+    "the symptoms of overwork", "invest in property this spring",
+    "financial advice for the year", "clairvoyant insight",
+]
+for phrase in BAN_SAMPLES:
+    check("  refuses %-34s" % ('"%s"' % phrase),
+          reports._banned_hit(phrase, reports.ZODIAC_BANNED) is not None)
+KEEP = ["unpredictable weather", "a fortunate turn",
+        "the treatment of a theme", "you are predisposed to act",
+        "returns to the same question"]
+for phrase in KEEP:
+    check("  allows  %-34s" % ('"%s"' % phrase),
+          reports._banned_hit(phrase, reports.ZODIAC_BANNED) is None)
+check("the check reaches into nested section data",
+      reports._banned_hit(
+          {"items": [{"body": "ok"}, {"body": "our prediction"}]},
+          reports.ZODIAC_BANNED) == "prediction")
+check("kitchen's list is empty, so kitchen validates as it always did",
+      reports._profile("kitchen")["banned"] == ()
+      and reports._banned_hit("your future will", ()) is None)
+
+
+# The unit above says the phrase is spotted. This says what happens next: a
+# section that parsed but says one is thrown away and asked for again, and it
+# stubs rather than ships if the second answer says it too.
+class _Msg(object):
+    stop_reason = "end_turn"
+
+    def __init__(self, text):
+        self.content = [type("B", (), {"type": "text", "text": text})()]
+
+
+def _client(answers):
+    it = iter(answers)
+    return type("C", (), {"messages": type("M", (), {
+        "create": staticmethod(lambda **kw: _Msg(next(it)))})})
+
+
+_clean = json.dumps({"dna": reports._fill(reports.ZODIAC_STUBS["dna"], "X")})
+_dirty = json.dumps({"dna": {
+    "narrative": ["Our prediction is that your future will change. "
+                  + "x" * 60,
+                  "A second paragraph long enough to pass. " + "y" * 60],
+    "implications": ["one line here that is long enough",
+                     "another line here long enough"]}})
+check("a banned answer is thrown away and asked for again",
+      reports._generate(_client([_dirty, _clean]), "p", ("dna",), 700,
+                        reports.ZODIAC_SYSTEM, reports.ZODIAC_BANNED)
+      is not None)
+check("  and banned twice means a stub rather than shipping it",
+      reports._generate(_client([_dirty, _dirty]), "p", ("dna",), 700,
+                        reports.ZODIAC_SYSTEM, reports.ZODIAC_BANNED) is None)
+check("  kitchen keeps the same payload, because kitchen bans nothing",
+      reports._generate(_client([_dirty, _dirty]), "p", ("dna",), 700,
+                        reports.SYSTEM, ()) is not None)
+
+templates = {"SPEC[%s]" % k: v for k, v in reports.ZODIAC_SPEC.items()}
+templates.update({"STUB[%s]" % k: json.dumps(reports._fill(v, "Deep Water"))
+                  for k, v in reports.ZODIAC_STUBS.items()})
+dirty = {k: reports._banned_hit(v, reports.ZODIAC_BANNED)
+         for k, v in templates.items()}
+dirty = {k: v for k, v in dirty.items() if v}
+check("no zodiac prompt template or stub says one itself", not dirty,
+      str(dirty))
+# The system prompt is the exception and has to be: it names them to ban them.
+check("the system prompt does name them, in order to forbid them",
+      reports._banned_hit(reports.ZODIAC_SYSTEM, reports.ZODIAC_BANNED)
+      is not None)
+for word in ("psychic", "prediction", "fortune", "your future will"):
+    check("  system prompt forbids %-16s" % word,
+          word in reports.ZODIAC_SYSTEM.lower())
+
+print("\n--- the reader's own sign, out of the run ---")
+run = {}
+for step in steps:
+    run[step["id"]] = step["pairs"][0]["images"][0]["id"]
+
+
+def walk_with(season_id, sign_id):
+    """A full 13-choice run that tapped one season and one sign."""
+    out = []
+    for step in steps:
+        if step["id"] == "season":
+            out.append(season_id)
+        elif step["id"] == "sign":
+            out.append(sign_id)
+        else:
+            out.append(run[step["id"]])
+    return out
+
+
+season_of = {}
+for image in by_step["season"]["pairs"][0]["images"]:
+    season_of[image["tags"][0]] = image["id"]
+variant_of = by_step["sign"]["adaptive"]["variants"]
+seen_signs = set()
+for pair in by_step["sign"]["pairs"]:
+    season = [t for t, v in variant_of.items() if v == pair["id"]]
+    season = season[0] if season and season[0] != "default" else "winter"
+    for image in pair["images"]:
+        if image["id"] == "sign_cusp":
+            continue
+        seen_signs.add(image["id"])
+        got = reports._sign(cfg, walk_with(season_of[season], image["id"]))
+        check("  %-18s reads back as %-12s"
+              % (image["id"], got and got.get("label")),
+              got is not None and got["cusp"] is False
+              and got["label"] == image["label"]
+              and got["season"] == season,
+              str(got))
+check("all twelve signs resolve", len(seen_signs) == 12, str(len(seen_signs)))
+
+for season, season_image in sorted(season_of.items()):
+    got = reports._sign(cfg, walk_with(season_image, "sign_cusp"))
+    block = reports._sign_block(cfg, walk_with(season_image, "sign_cusp"))
+    grid = [i["label"] for i in
+            by_step["sign"]["pairs"][
+                [p["id"] for p in by_step["sign"]["pairs"]].index(
+                    variant_of.get(season) or variant_of["default"])]["images"]
+            if i["id"] != "sign_cusp"]
+    check("  cusp in %-7s blends the season, names no single sign" % season,
+          got["cusp"] is True and got["label"] is None
+          and got["season"] == season and got["neighbours"] == grid
+          and "born on a cusp" in block
+          and "Never assert that they are any one" in block,
+          str(got))
+check("the thirteenth id is the cusp and it is the only one",
+      len(seen_signs) + 1 == 13 and "sign_cusp" not in seen_signs)
+check("a run with no sign step answered reads back as no sign",
+      reports._sign(cfg, [run[s["id"]] for s in steps
+                          if s["id"] != "sign"]) is None)
+
+print("\n--- every per-purchase section is written from real taps ---")
+leo = walk_with(season_of["summer"], "sign_leo")
+style = cfg["styles"][0]
+for section_id in PERSONAL_TRIO:
+    prompt = reports._section_prompt(style, "Radiant Fire", {"fire": 8},
+                                     section_id, cfg, leo, "zodiac")
+    check("  %-10s names the sign and demands a tap by name" % section_id,
+          "Leo" in prompt and "REQUIRED" in prompt
+          and "the moon they chose" in prompt
+          and reports.ZODIAC_SPEC[section_id] in prompt,
+          section_id)
+    check("  %-10s is not handed kitchen's voice or shapes" % section_id,
+          "kitchen" not in prompt.lower()
+          and reports.SPEC[section_id] not in prompt)
+cusp_prompt = reports._section_prompt(
+    style, "Radiant Fire", {"fire": 8}, "dna", cfg,
+    walk_with(season_of["summer"], "sign_cusp"), "zodiac")
+check("a cusp run never has a single sign put in its prompt",
+      "born on a cusp" in cusp_prompt
+      and not re.search(r"this reader's sign is", cusp_prompt), "")
+cached_prompt = reports._cached_prompt(style, "Radiant Fire", CACHED_TRIO,
+                                       "zodiac")
+check("the cached prompt is style-only and names no tap",
+      "Nothing here is specific to one person." in cached_prompt
+      and "the moon they chose" not in cached_prompt)
+check("and it still reproduces the free strength as item 1",
+      style["reveals"]["mistake_one"]["title"] in cached_prompt)
+check("kitchen's prompts are untouched by any of this",
+      reports.SPEC["palette"] in reports._section_prompt(
+          kitchen_cfg["styles"][0], "Modern Rustic", {"warm": 4}, "palette",
+          kitchen_cfg, kitchen_choices))
+
+print("\n--- print copies for the PDF ---")
+vis = cfg["report"]["visuals"]
+need = set()
+for defaults in vis["defaults"].values():
+    need.update([defaults["moodboard"]] + defaults["materials"])
+for step_id in [vis["moodboard_step"]] + list(vis["material_steps"]):
+    need.update(i["id"] for p in by_step[step_id]["pairs"]
+                for i in p["images"])
+missing = [i for i in sorted(need)
+           if not os.path.isfile(os.path.join(ROOT, "static/img/print",
+                                              i + ".jpg"))]
+check("every image the zodiac report can draw has a print copy",
+      not missing, str(missing))
+
+
+def print_size(image_id):
+    return os.path.getsize(
+        os.path.join(ROOT, "static/img/print", image_id + ".jpg"))
+
+
+heavy = [(i, print_size(i) // 1024) for i in sorted(need)
+         if print_size(i) > 60 * 1024]
+check("  and none is heavy enough to bloat a mailbox", not heavy, str(heavy))
+check("  the PDF points at them rather than the gallery originals",
+      reports._print_src("pl6a", {"img": "/static/galleries/zodiac/pl6a.webp"})
+      == "img/print/pl6a.jpg")
+
+print("\n--- a purchase, end to end, with nothing real behind it ---")
+# No database, no key, no model: `_api` off is the documented stub path, and
+# what it produces has to be a publishable report rather than six blank
+# sections — which is exactly what /zodiac delivered before this.
+_saved = (database.execute, database.query_all, reports._api)
+database.execute = lambda *a, **k: None
+database.query_all = lambda *a, **k: []
+reports._api = lambda: None
+try:
+    content = reports.start_report(1, "zodiac", "deep_water",
+                                   {"water": 8, "moon": 6, "mystic": 5},
+                                   choices=leo)
+finally:
+    database.execute, database.query_all, reports._api = _saved
+
+check("the report is stored complete rather than partial",
+      content["version"] == "stub-2", content["version"])
+check("it carries all six sections, in the config's order",
+      [s["id"] for s in content["sections"]] == [i for i, _ in SHAPE_OF],
+      str([s["id"] for s in content["sections"]]))
+check("with the zodiac titles rather than kitchen's",
+      [s["title"] for s in content["sections"]] == [t for _, t in SHAPE_OF])
+check("every section arrives with data the renderer can draw",
+      all(isinstance(s["data"], dict) and s["data"]
+          for s in content["sections"]),
+      str([s["id"] for s in content["sections"]
+           if not isinstance(s["data"], dict)]))
+check("the style name is the archetype", content["style_name"] == "Deep Water")
+check("the free result's elements are carried into the paid view",
+      len(content.get("elements") or []) == 6, str(content.get("elements")))
+check("and the photographs it is illustrated with",
+      set(content.get("visuals") or {}) == {"moodboard", "materials"},
+      str(content.get("visuals")))
+
+by_section = {s["id"]: s["data"] for s in content["sections"]}
+check("the year map is twelve months, in calendar order",
+      [i["name"] for i in by_section["shopping"]["items"]] == MONTHS,
+      str([i["name"] for i in by_section["shopping"]["items"]]))
+check("  nothing is struck out under a Skip heading",
+      by_section["shopping"]["skip"] == [],
+      str(by_section["shopping"]["skip"]))
+notes = [i["priority_note"] for i in by_section["shopping"]["items"]]
+check("  two months are marked strongest",
+      sum(n.startswith("Strongest month:") for n in notes) == 2)
+check("  one is marked quiet",
+      sum(n.startswith("Quiet month:") for n in notes) == 1)
+check("the strengths section is five of them",
+      len(by_section["mistakes"]["items"]) == 5,
+      str(len(by_section["mistakes"]["items"])))
+check("the palette is four colours with real hex values",
+      len(by_section["palette"]["colors"]) == 4
+      and all(reports.HEX_RE.match(c["hex"])
+              for c in by_section["palette"]["colors"]))
+check("compatibility runs two that work and two that cost",
+      sorted(p["verdict"] for p in by_section["materials"]["pairs"])
+      == ["avoid", "avoid", "works", "works"])
+check("nothing delivered says a banned word",
+      reports._banned_hit(content["sections"], reports.ZODIAC_BANNED) is None,
+      str(reports._banned_hit(content["sections"], reports.ZODIAC_BANNED)))
+
+print("\n--- and the PDF a buyer is emailed ---")
+html_out = reports._pdf_html(content)
+check("the cover names this product",
+      "Your cosmic profile report" in html_out
+      and "Your kitchen style report" not in html_out)
+for _, title in SHAPE_OF:
+    check("  carries %-34s" % title,
+          title.replace("&", "&amp;") in html_out)
+check("it draws the print copies of this run's own images",
+      'src="img/print/' in html_out
+      and "galleries/zodiac" not in html_out,
+      str(re.findall(r'<img src="([^"]+)"', html_out)))
+check("the year map has no empty Skip block in print",
+      "<b>Skip</b>" not in reports._pdf_section_body(
+          {"id": "shopping", "data": by_section["shopping"]}, True))
+pdf = reports.build_pdf(content)
+check("weasyprint renders it", pdf is not None and pdf[:4] == b"%PDF")
+check("  and it is small enough to email",
+      pdf is not None and len(pdf) < 3 * 1024 * 1024,
+      "%d KB" % (len(pdf) // 1024) if pdf else "none")
+check("the mail is the zodiac mail, not the kitchen one",
+      reports._email_copy(content) is reports.COPY_ZODIAC
+      and "kitchen" not in reports.COPY_ZODIAC["subject"].lower())
+check("  and its opening line does not promise a renovation saving",
+      "$4,000" not in reports._email_opening(content),
+      reports._email_opening(content))
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for f in fails:

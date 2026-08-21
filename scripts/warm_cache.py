@@ -98,10 +98,13 @@ def main(argv=None):
             if args.dry_run:
                 have, stale = reports._cache_state(slug, style_id)
                 have = have or {}
-                missing = [s for s in reports.CACHED if s not in have]
+                # Which sections are cached is the funnel's business, not
+                # this script's: /zodiac holds a different three from /kitchen.
+                wanted = reports.cached_sections(slug)
+                missing = [s for s in wanted if s not in have]
                 row = {"funnel": slug, "style": style_id,
                        "status": "cached" if not missing else "failed",
-                       "cached": sorted(have), "warmed": [],
+                       "cached": [s for s in wanted if s in have], "warmed": [],
                        "failed": missing, "stale": stale,
                        "detail": "dry run"}
             elif args.copy_from:
