@@ -279,3 +279,6 @@ bottom.
 
 ## 2026-08-21 — claude/zodiac-prompt-lengths
 - zodiac: prompt length budgets + informative drift retry
+
+## 2026-08-21 — claude/zodiac-grid12-labels
+- zodiac: direct 12-sign step + always-visible centered labels
