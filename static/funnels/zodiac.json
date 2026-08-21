@@ -7,11 +7,12 @@
     "og_image": "/static/galleries/zodiac/og.webp"
   },
   "swipe": {
-    "pairs_count": 13,
+    "pairs_count": 12,
     "headline": "Your cosmic profile analysis",
     "subtext": "Your full profile in 60 seconds of taps",
     "subtext_accent": "60 seconds",
     "hint": "Tap your choice",
+    "label_mode": "center",
     "steps": [
       {
         "id": "hook",
@@ -80,133 +81,13 @@
         ]
       },
       {
-        "id": "season",
-        "question": "When do you celebrate your birthday?",
-        "format": "grid4",
+        "id": "sign",
+        "question": "Tap your zodiac sign:",
+        "format": "grid12",
+        "shuffle": false,
         "pairs": [
           {
             "id": "p1",
-            "images": [
-              {
-                "id": "se2a",
-                "img": "/static/galleries/zodiac/se2a.webp",
-                "label": "Spring",
-                "tags": [
-                  "spring"
-                ],
-                "colors": [
-                  {
-                    "name": "Fresh Leaf",
-                    "hex": "#A8CC7A",
-                    "element": "canopy"
-                  },
-                  {
-                    "name": "Blossom Pink",
-                    "hex": "#E9B7C4",
-                    "element": "blossom"
-                  },
-                  {
-                    "name": "New Grass",
-                    "hex": "#6C9448",
-                    "element": "ground"
-                  }
-                ]
-              },
-              {
-                "id": "se2b",
-                "img": "/static/galleries/zodiac/se2b.webp",
-                "label": "Summer",
-                "tags": [
-                  "summer"
-                ],
-                "colors": [
-                  {
-                    "name": "Sun Gold",
-                    "hex": "#F6C64A",
-                    "element": "light"
-                  },
-                  {
-                    "name": "Warm Sand",
-                    "hex": "#E2A657",
-                    "element": "field"
-                  },
-                  {
-                    "name": "Deep Meadow",
-                    "hex": "#8A9B3C",
-                    "element": "ground"
-                  }
-                ]
-              },
-              {
-                "id": "se2c",
-                "img": "/static/galleries/zodiac/se2c.webp",
-                "label": "Autumn",
-                "tags": [
-                  "autumn"
-                ],
-                "colors": [
-                  {
-                    "name": "Amber Leaf",
-                    "hex": "#E0973C",
-                    "element": "canopy"
-                  },
-                  {
-                    "name": "Rust Copper",
-                    "hex": "#B5602C",
-                    "element": "fallen leaves"
-                  },
-                  {
-                    "name": "Bark Umber",
-                    "hex": "#5A3A1E",
-                    "element": "ground"
-                  }
-                ]
-              },
-              {
-                "id": "se2d",
-                "img": "/static/galleries/zodiac/se2d.webp",
-                "label": "Winter",
-                "tags": [
-                  "winter"
-                ],
-                "colors": [
-                  {
-                    "name": "Ice White",
-                    "hex": "#DCE6EF",
-                    "element": "sky"
-                  },
-                  {
-                    "name": "Frost Blue",
-                    "hex": "#9FB6CC",
-                    "element": "snow light"
-                  },
-                  {
-                    "name": "Slate Night",
-                    "hex": "#3E4C5E",
-                    "element": "treeline"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "sign",
-        "question": "Tap your zodiac sign:",
-        "format": "grid4",
-        "adaptive": {
-          "axis": "season",
-          "variants": {
-            "spring": "p_spring",
-            "summer": "p_summer",
-            "autumn": "p_autumn",
-            "default": "p_winter"
-          }
-        },
-        "pairs": [
-          {
-            "id": "p_spring",
             "images": [
               {
                 "id": "sign_aries",
@@ -290,37 +171,6 @@
                 ]
               },
               {
-                "id": "sign_cusp",
-                "img": "/static/galleries/zodiac/sign_cusp.webp",
-                "label": "Born on a cusp",
-                "tags": [
-                  "mystic",
-                  "moon"
-                ],
-                "colors": [
-                  {
-                    "name": "Moon Silver",
-                    "hex": "#C6C2DC",
-                    "element": "upper field"
-                  },
-                  {
-                    "name": "Deep Violet",
-                    "hex": "#5A3E8E",
-                    "element": "mid field"
-                  },
-                  {
-                    "name": "Midnight Indigo",
-                    "hex": "#1C1740",
-                    "element": "lower field"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "p_summer",
-            "images": [
-              {
                 "id": "sign_cancer",
                 "img": "/static/galleries/zodiac/sign_cancer.webp",
                 "label": "Cancer",
@@ -401,37 +251,6 @@
                   }
                 ]
               },
-              {
-                "id": "sign_cusp",
-                "img": "/static/galleries/zodiac/sign_cusp.webp",
-                "label": "Born on a cusp",
-                "tags": [
-                  "mystic",
-                  "moon"
-                ],
-                "colors": [
-                  {
-                    "name": "Moon Silver",
-                    "hex": "#C6C2DC",
-                    "element": "upper field"
-                  },
-                  {
-                    "name": "Deep Violet",
-                    "hex": "#5A3E8E",
-                    "element": "mid field"
-                  },
-                  {
-                    "name": "Midnight Indigo",
-                    "hex": "#1C1740",
-                    "element": "lower field"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "p_autumn",
-            "images": [
               {
                 "id": "sign_libra",
                 "img": "/static/galleries/zodiac/sign_libra.webp",
@@ -514,37 +333,6 @@
                 ]
               },
               {
-                "id": "sign_cusp",
-                "img": "/static/galleries/zodiac/sign_cusp.webp",
-                "label": "Born on a cusp",
-                "tags": [
-                  "mystic",
-                  "moon"
-                ],
-                "colors": [
-                  {
-                    "name": "Moon Silver",
-                    "hex": "#C6C2DC",
-                    "element": "upper field"
-                  },
-                  {
-                    "name": "Deep Violet",
-                    "hex": "#5A3E8E",
-                    "element": "mid field"
-                  },
-                  {
-                    "name": "Midnight Indigo",
-                    "hex": "#1C1740",
-                    "element": "lower field"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "p_winter",
-            "images": [
-              {
                 "id": "sign_capricorn",
                 "img": "/static/galleries/zodiac/sign_capricorn.webp",
                 "label": "Capricorn",
@@ -621,32 +409,6 @@
                   {
                     "name": "Midnight Indigo",
                     "hex": "#1A2446",
-                    "element": "lower field"
-                  }
-                ]
-              },
-              {
-                "id": "sign_cusp",
-                "img": "/static/galleries/zodiac/sign_cusp.webp",
-                "label": "Born on a cusp",
-                "tags": [
-                  "mystic",
-                  "moon"
-                ],
-                "colors": [
-                  {
-                    "name": "Moon Silver",
-                    "hex": "#C6C2DC",
-                    "element": "upper field"
-                  },
-                  {
-                    "name": "Deep Violet",
-                    "hex": "#5A3E8E",
-                    "element": "mid field"
-                  },
-                  {
-                    "name": "Midnight Indigo",
-                    "hex": "#1C1740",
                     "element": "lower field"
                   }
                 ]
@@ -1749,7 +1511,7 @@
       "template": "almost",
       "kicker": "Calibrating",
       "line": "Profile {pct}% calibrated. Final signals.",
-      "sub": "Three more, then the read.",
+      "sub": "Two more, then the read.",
       "cta": "Continue analysis"
     }
   ],
@@ -2357,14 +2119,14 @@
     "duration_ms": 2500,
     "text": "Reading your signals",
     "messages": [
-      "Reading your 13 signals…",
-      "Weighing your 13 signals against the four elements…",
+      "Reading your 12 signals…",
+      "Weighing your 12 signals against the four elements…",
       "Isolating your dominant energy…"
     ]
   },
   "report": {
     "generating_messages": [
-      "Our AI is weighing your 13 signals against the four elements…",
+      "Our AI is weighing your 12 signals against the four elements…",
       "Searching for the combinations that fit YOU…",
       "Cross-referencing your element and energy picks…",
       "Almost there — writing your profile…"
@@ -2550,7 +2312,7 @@
       "sticky_label": "Unlock full profile — {price}"
     },
     "title": "Your {style} Profile",
-    "proof_line": "Built from your 13 choices",
+    "proof_line": "Built from your 12 choices",
     "manifest": [
       "Your power palette with exact codes, plus your three talismans",
       "5 hidden strengths and blind spots — with what to do about each",
@@ -2576,6 +2338,6 @@
   },
   "result": {
     "mistakes_teaser": "You've seen strength #1. The other four run deeper — one explains your {moonphase} choice.",
-    "value_banner": "Five strengths, a compatibility read and a twelve-month energy map — all of it built from your own 13 signals, yours to keep."
+    "value_banner": "Five strengths, a compatibility read and a twelve-month energy map — all of it built from your own 12 signals, yours to keep."
   }
 }
