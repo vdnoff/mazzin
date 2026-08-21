@@ -276,3 +276,6 @@ bottom.
 
 ## 2026-08-21 — claude/zodiac-reports
 - zodiac: report generation, cache, PDF assets
+
+## 2026-08-21 — claude/zodiac-prompt-lengths
+- zodiac: prompt length budgets + informative drift retry
