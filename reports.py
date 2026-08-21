@@ -1344,7 +1344,11 @@ ZODIAC_BANNED = tuple(re.compile(p, re.IGNORECASE) for p in (
     # the medical and financial half of the same line
     r"\bdiagnos(?:e|es|ed|is|tic)\w*\b",
     r"\bsymptoms?\b",
-    r"\b(?:treatment|medication|prescri\w+)\b",
+    # "treatment" on its own is ordinary English — the treatment of a theme —
+    # and a false positive here costs a retry and then a stub, which a paying
+    # reader pays for. Medical sense only.
+    r"\bmedical treatment\b",
+    r"\b(?:medication|prescri\w+|therapist)\b",
     r"\b(?:invest|invests|investing|investment|investments|portfolio)\b",
     r"\breturns on\b",
     r"\bfinancial advice\b",
