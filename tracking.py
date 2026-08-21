@@ -86,6 +86,12 @@ ALLOWED_EVENTS = {
     "pay_ready",
 }
 
+# How many cells one swipe step can have drawn. This is engine.js's GRID_SIZE
+# plus the pair, and it is a closed set for the same reason the event names
+# are: the number is the client's word about our own layout, and a swipe
+# claiming a size no format produces is not a swipe this funnel served.
+SHOWN_SIZES = frozenset((2, 4, 6, 12))
+
 # `viz_upload` happens on both sides of the money now, and the two are
 # different events wearing one name: one is somebody still deciding, the other
 # is somebody who has already paid. A closed set of two, for the same reason
@@ -441,11 +447,13 @@ def _clean_extra(funnel, event, value):
     if not isinstance(pair, str) or pair not in index["pairs"]:
         raise ValueError("extra")
 
-    # Two for a pair step, four for a grid, six for the palette grid.
-    # Anything else is not a step this engine can render, whatever the client
-    # says it drew.
+    # Two for a pair step, four for a grid, six for a palette grid, twelve for
+    # a whole zodiac at once. The set mirrors GRID_SIZE in engine.js, which is
+    # the only thing that decides how many cells a step can draw — anything
+    # else is not a step this engine can render, whatever the client says it
+    # drew.
     shown = value["shown"]
-    if not isinstance(shown, list) or len(shown) not in (2, 4, 6):
+    if not isinstance(shown, list) or len(shown) not in SHOWN_SIZES:
         raise ValueError("extra")
     for image_id in shown:
         if not isinstance(image_id, str) or image_id not in index["images"]:

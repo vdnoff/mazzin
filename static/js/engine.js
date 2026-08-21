@@ -326,10 +326,13 @@
     return [];
   }
 
-  // A step shows two images side by side, four in a grid, or six in three
-  // rows of two. All of them are one question and one tap; the format only
-  // changes how many things are being compared at once.
-  var GRID_SIZE = { grid4: 4, grid6: 6 };
+  // A step shows two images side by side, four in a grid, six in three rows
+  // of two, or twelve in four rows of three. All of them are one question and
+  // one tap; the format only changes how many things are being compared at
+  // once. Everything downstream reads this table rather than naming a format,
+  // so a new one is an entry here plus the CSS that lays it out.
+  var GRID_SIZE = { grid4: 4, grid6: 6, grid12: 12 };
+  var GRID_NAMES = Object.keys(GRID_SIZE);
 
   function stepFormat(st) {
     var f = st && st.format;
@@ -338,6 +341,12 @@
 
   function stepSize(st) {
     return GRID_SIZE[stepFormat(st)] || 2;
+  }
+
+  // Whether card labels are on screen all the time or only in the chip after
+  // a tap. Absent is the tap-reveal behaviour every funnel has had.
+  function labelMode() {
+    return (cfg && cfg.swipe && cfg.swipe.label_mode) || "";
   }
 
   // The axes a step can adapt on. The config names the axis; what the
@@ -394,6 +403,15 @@
   // One pair, order shuffled. Which image is on the left is not part of the
   // question, and leaving it fixed would let a habitual left-tapper score the
   // same way every run.
+  //
+  // A step may opt out with `"shuffle": false`, and one kind of step has to.
+  // Shuffling assumes the cards are alternatives being weighed, so their order
+  // carries no meaning and randomising it only removes a bias. That stops
+  // being true when the set has an order of its own: a reader scanning twelve
+  // zodiac signs is looking for the one that is already theirs, and Aries to
+  // Pisces is where they expect to find it. Dealing that shuffled does not
+  // remove a bias, it just makes them read all twelve. Absent, every step
+  // shuffles exactly as it always has.
   function pickPair(index) {
     var st = stepAt(index);
     var pairs = pairsOf(st);
@@ -409,6 +427,9 @@
     var size = stepSize(st);
     var images = (pick.images || []).slice(0, size);
     if (images.length < size) return null;
+    if (st && st.shuffle === false) {
+      return { id: pick.id || "p1", images: images };
+    }
     return { id: pick.id || "p1", images: shuffled(images) };
   }
 
@@ -557,6 +578,20 @@
 
     card.appendChild(img);
 
+    // Some funnels name every card on screen, permanently, rather than only
+    // in the chip that lands after a tap. A zodiac grid of twelve glyphs is
+    // unreadable without it — the reader is looking for their own sign, not
+    // comparing pictures — where a kitchen pair is a photograph that would
+    // only be covered up by a word. So it is a funnel-level flag, and a
+    // config without it renders exactly what it always did.
+    if (labelMode() === "center" && item.label) {
+      var name = document.createElement("span");
+      name.className = "card-name";
+      name.setAttribute("aria-hidden", "true");   // the button already says it
+      name.textContent = item.label;
+      card.appendChild(name);
+    }
+
     var check = document.createElement("span");
     check.className = "check";
     check.setAttribute("aria-hidden", "true");
@@ -582,8 +617,12 @@
     el.cards.innerHTML = "";
     el.cards.classList.remove("is-picking", "is-leaving");
     var fmt = stepFormat(st);
-    el.cards.classList.toggle("is-grid4", fmt === "grid4");
-    el.cards.classList.toggle("is-grid6", fmt === "grid6");
+    // One class per known grid, off the table above. A pair carries none of
+    // them, which is what it carried before, and a format added to the table
+    // gets its class without this line being touched again.
+    GRID_NAMES.forEach(function (name) {
+      el.cards.classList.toggle("is-" + name, fmt === name);
+    });
     // Read by the per-card animation-delay. An engine.js that predates this
     // sets nothing and the CSS falls back to its own default, which is the
     // uncapped per-card figure — later, never broken.
