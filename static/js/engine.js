@@ -2322,6 +2322,94 @@
     };
   }
 
+  // The delivered half of the same seam. Everything the pre-purchase page
+  // needed the run for — the tallies, the taps, the winner — is gone by now:
+  // this page is reached through a link in an email, in a tab that never ran
+  // the quiz. So the context is built from the stored report instead, which
+  // is exactly why the sign, the elements and the visuals were put in it.
+  function deliveredContext(content, complete) {
+    var style = styleById(content.style_id) || {};
+    var sections = (content.sections || []).map(function (sec) {
+      return {
+        id: sec.id, title: sec.title, data: sec.data,
+        // Everything is open now. The lock state is the one thing that
+        // differs from the page before the money.
+        locked: false
+      };
+    });
+    return {
+      cfg: cfg,
+      delivered: true,
+      complete: !!complete,
+      style: {
+        id: content.style_id, name: content.style_name || style.name || "",
+        blurb: style.blurb || "", tags: (style.tags || []).slice(),
+        reveals: style.reveals || {}
+      },
+      sign: content.sign || "",
+      elements: (content.elements || []).slice(),
+      visuals: content.visuals || {},
+      images: _imagesById(),
+      sections: sections,
+      version: content.version || "",
+      typed: isTyped(content.version)
+    };
+  }
+
+  function _imagesById() {
+    var out = {};
+    ((cfg && cfg.swipe && cfg.swipe.steps) || []).forEach(function (step) {
+      (step.pairs || []).forEach(function (pair) {
+        (pair.images || []).forEach(function (item) {
+          if (item && item.id) out[item.id] = item;
+        });
+      });
+    });
+    return out;
+  }
+
+  function renderModuleDelivered(content, complete) {
+    var root = el.moduleRoot;
+    if (!root) {
+      root = elm("div", "result-module");
+      root.id = "result-module";
+      el.report.parentNode.insertBefore(root, el.report);
+      el.moduleRoot = root;
+    }
+    // The built-in document and its heading furniture stay off: this page has
+    // its own, and two kickers is worse than the wrong one.
+    el.report.hidden = true;
+    [el.resultKicker, el.resultName, el.resultBlurb].forEach(function (node) {
+      if (node) node.hidden = true;
+    });
+    root.hidden = false;
+
+    var css = (cfg && cfg.result_css) || "";
+    loadAsset(css, function () {
+      loadAsset(cfg.result_module, function () {
+        var mod = window.MazzinResult;
+        if (!mod || typeof mod.delivered !== "function") {
+          // No module, or one that predates this: the report is the thing
+          // that was paid for, so it is drawn the way it always was rather
+          // than not at all.
+          root.hidden = true;
+          el.report.hidden = false;
+          [el.resultKicker, el.resultName, el.resultBlurb]
+            .forEach(function (node) { if (node) node.hidden = false; });
+          renderUnlockedReport(content);
+          return;
+        }
+        try {
+          mod.delivered(root, deliveredContext(content, complete));
+        } catch (e) {
+          root.hidden = true;
+          el.report.hidden = false;
+          renderUnlockedReport(content);
+        }
+      });
+    });
+  }
+
   function renderModuleResult(win) {
     var css = (cfg && cfg.result_css) || "";
     var root = el.moduleRoot;
@@ -2372,6 +2460,7 @@
     el.analyzingText.textContent = cfg.analyzing.text;
     el.analyzing.hidden = false;
     el.resultBody.hidden = true;
+    startFade();
     startAnalyzing();
 
     setTimeout(function () {
@@ -2428,6 +2517,38 @@
   // their own choices, then the comparison, then the verdict — makes the same
   // wait read as work being done on their behalf. The messages divide the
   // configured duration between them, so the screen never cuts away mid-line.
+  // A funnel may name a theme, which is one class on the body and nothing
+  // else — the stylesheet decides what it means. A config without one leaves
+  // the page exactly as it was.
+  function applyTheme() {
+    var theme = (cfg && cfg.theme) || "";
+    if (/^[a-z0-9-]{1,24}$/.test(theme)) {
+      document.body.classList.add("theme-" + theme);
+    }
+  }
+
+  // The quiz is a light page and the reading is a dark one. Without this the
+  // change lands in a single frame with the result, which reads as a
+  // different site rather than as an arrival — so the page darkens across the
+  // wait it already has, and the result is where it was going.
+  //
+  // Config, not inference: absent, nothing here runs and the body keeps the
+  // background it always had.
+  function startFade() {
+    var to = (cfg && cfg.swipe && cfg.swipe.analyzing_fade_to) || "";
+    if (!/^#[0-9a-fA-F]{3,8}$/.test(to)) return;
+    var ms = Math.max(400, (cfg.analyzing && cfg.analyzing.duration_ms) || 2500);
+    var body = document.body;
+    body.style.setProperty("--fade-to", to);
+    body.style.setProperty("--fade-ms", ms + "ms");
+    // The copy switches once the ground behind it is already dark rather than
+    // easing alongside it, which would spend the middle of the wait as grey
+    // type on a grey field.
+    body.style.setProperty("--fade-swap", Math.round(ms * 0.45) + "ms");
+    // Next frame, so the starting colour is painted before the transition.
+    requestAnimationFrame(function () { body.classList.add("is-fading"); });
+  }
+
   function startAnalyzing() {
     var lines = (cfg.analyzing && cfg.analyzing.messages) || [];
     var bar = el.analyzingBar;
@@ -3718,6 +3839,19 @@
       if (el.ctaNote) el.ctaNote.hidden = true;
       el.resultName.textContent = content.style_name || "";
       revealHead();
+    }
+
+    // A funnel that drew its own page before the money draws its own page
+    // after it. Without this the reader pays on a dark celestial page and the
+    // thing they bought opens as somebody else's document — a light layout
+    // whose kicker says "YOUR PERFECT STYLE IS".
+    //
+    // The section data is untouched by any of this: the module is handed the
+    // same payload `renderUnlockedReport` would have drawn, and what changes
+    // is the layout around it.
+    if (resultModule()) {
+      renderModuleDelivered(content, complete);
+      return;
     }
 
     applyStyleCopy();
@@ -5914,6 +6048,7 @@
       .then(function (data) {
         cfg = data;
         document.title = (cfg.meta && cfg.meta.title) || document.title;
+        applyTheme();
         wire();
         if (unlocked) { applyStyleCopy(); reflowUnlocked(); }
         else startQuiz();

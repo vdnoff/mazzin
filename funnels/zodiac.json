@@ -2,6 +2,7 @@
   "slug": "zodiac",
   "funnel_id": "zodiac_v1",
   "locale": "en",
+  "theme": "zodiac",
   "stripe_mode": "test",
   "result_module": "/static/js/result_zodiac.js",
   "result_css": "/static/css/result_zodiac.css",
@@ -16,6 +17,7 @@
     "subtext_accent": "60 seconds",
     "hint": "Tap your choice",
     "label_mode": "badge",
+    "analyzing_fade_to": "#0E1430",
     "steps": [
       {
         "id": "hook",
@@ -2356,6 +2358,7 @@
     "balance_title": "Your element balance",
     "strength_lead": "Your {symbol} and your {moonphase} put this one first.",
     "offer_sub": "Your complete profile — once, forever.",
-    "locked_note": "Locked"
+    "locked_note": "Locked",
+    "delivered_note": "A PDF of this profile is in your inbox. This page stays at the link you were sent back to."
   }
 }

@@ -764,13 +764,22 @@ check("and no two sections claim the same shape",
 check("every section has a validator, a spec and a stub",
       all(i in reports.VALIDATORS and i in reports.ZODIAC_SPEC
           and i in reports.ZODIAC_STUBS for i, _ in SHAPE_OF))
+# Built rather than read out of the table: the palette stub's colours are
+# this archetype's own and are filled in at build time, so the raw entry is
+# deliberately not a section yet.
+def built_stub(section_id, style):
+    return reports._stub_for(section_id, style["name"], style,
+                             reports.ZODIAC_STUBS)
+
+
 check("every stub survives the validator that will police the real thing",
-      all(reports.VALIDATORS[i](reports._fill(reports.ZODIAC_STUBS[i],
-                                              "Deep Water")) is not None
-          for i, _ in SHAPE_OF),
-      str([i for i, _ in SHAPE_OF
-           if reports.VALIDATORS[i](
-               reports._fill(reports.ZODIAC_STUBS[i], "Deep Water")) is None]))
+      all(reports.VALIDATORS[i](built_stub(i, style)) is not None
+          for i, _ in SHAPE_OF for style in cfg["styles"]),
+      str([(i, style["id"]) for i, _ in SHAPE_OF for style in cfg["styles"]
+           if reports.VALIDATORS[i](built_stub(i, style)) is None]))
+check("  and every palette stub is the archetype's own four colours",
+      all([(c["name"], c["hex"]) for c in built_stub("palette", s)["colors"]]
+          == reports._style_colors(s) for s in cfg["styles"]))
 
 print("\n--- what is cached, and what is written per purchase ---")
 CACHED_TRIO = ("palette", "mistakes", "splurge")
@@ -1065,9 +1074,13 @@ check("nothing delivered says a banned word",
 
 print("\n--- and the PDF a buyer is emailed ---")
 html_out = reports._pdf_html(content)
+cover_out = html_out.split('<section class="cover">')[1].split("</section>")[0]
 check("the cover names this product",
-      "Your cosmic profile report" in html_out
-      and "Your kitchen style report" not in html_out)
+      cfg["result_copy"]["kicker"] in cover_out
+      and "Your kitchen style report" not in html_out, cover_out[:160])
+check("  as the hero card off the result page",
+      '<div class="cover-card">' in cover_out
+      and 'class="cover-el' in cover_out)
 for _, title in SHAPE_OF:
     check("  carries %-34s" % title,
           title.replace("&", "&amp;") in html_out)
@@ -1101,6 +1114,11 @@ print("\n--- every prompt states a length for every field that has one ---")
 # itself.
 BUDGET_RE = re.compile(r"^  (\S+)\s+(\d+) characters maximum$", re.M)
 HEADROOM = 0.75
+
+# The palette's names and codes are the reader's own power colours, handed to
+# the model in the prompt and reproduced exactly. They are the only fields in
+# the six sections the model does not write.
+COPIED = {("palette", "colors[].name"), ("palette", "colors[].hex")}
 
 
 def declared_caps(section_id):
@@ -1145,6 +1163,13 @@ for section_id, _ in SHAPE_OF:
               "floor %d, ceiling %d" % (floor, ceiling))
         # The number has to be beside the field in the shape too, not only in
         # the recap: the shape example is what a model copies from.
+        # Except the two the model is told to copy character for character
+        # out of the config: a length beside a field whose value is given is
+        # an invitation to edit it.
+        if (section_id, path) in COPIED:
+            check("    is copied, so states no length beside it",
+                  "max %d chars" % asked not in spec)
+            continue
         check("    and says so beside the field itself",
               "max %d chars" % asked in spec)
 
@@ -1303,12 +1328,19 @@ check("mazzin.css styles that label under its own class",
 # thing that had to go: it dimmed every frame it sat on and covered the sign
 # glyph. The art is the product. A rule that paints over it is the regression
 # this mode exists to prevent, so the stylesheet is read for one.
-label_rule = css[css.index(".card-name {"):]
+label_rule = css[css.index("\n.card-name {") + 1:]
 label_rule = label_rule[:label_rule.index("}")]
 check("the label paints no gradient over the picture",
       "gradient" not in label_rule, label_rule)
-check("  nowhere in the stylesheet, in fact",
-      "radial-gradient" not in css)
+# Anywhere a card is painted, rather than anywhere at all: the interstitial
+# between steps is allowed a gradient, and does have one. What may not have
+# one is anything drawn over the artwork.
+card_rules = [block for block in css.split("}")
+              if ".card" in block.split("{")[0]]
+check("  nowhere a card is painted, in fact",
+      not [b for b in card_rules if "gradient" in b.split("{")[-1]],
+      str([b.split("{")[0].strip() for b in card_rules
+           if "gradient" in b.split("{")[-1]]))
 check("  it is a pill, not a panel",
       "border-radius: 999px" in label_rule
       and "bottom:" in label_rule and "inset: 0" not in label_rule)
@@ -1354,7 +1386,7 @@ check("  it places the nodes engine.js wired instead",
 stray = [line for line in module_css.split("\n")
          if line and not line[0].isspace()
          and not line.startswith(("/*", "*", "}", "@", ".result-module",
-                                  ".zr-"))]
+                                  ".zr-", "body:has(.result-module)"))]
 check("every rule in the stylesheet is scoped to this module",
       not stray, str(stray[:3]))
 check("  and mazzin.css was not touched for it",
@@ -1402,11 +1434,51 @@ for label, text in ([("blend_note", copy.get("blend_note", "")),
     hit = reports._banned_hit(text, reports.ZODIAC_BANNED)
     check("  %-20s says nothing banned" % label, hit is None, hit)
 
+print("\n--- the bridges between a light quiz and a dark report ---")
+# Three config keys, each of which changes something a kitchen funnel also
+# draws. Every one of them is read behind a test for its own presence, so a
+# funnel that does not set it renders exactly what it always did — which is
+# what the second half of this block is for.
+check("the funnel names a theme", cfg.get("theme") == "zodiac",
+      cfg.get("theme"))
+check("  engine.js puts it on the body as a class",
+      "theme-" in engine and "cfg.theme" in engine)
+check("  and only ever a name it can vouch for",
+      "/^[a-z0-9-]{1,24}$/.test(theme)" in engine)
+check("  mazzin.css paints the quiz furniture under it",
+      all(("body.theme-zodiac %s" % sel) in css
+          for sel in (".pip.is-done {", ".card.is-chosen .card-name {",
+                      "#screen-interstitial.is-active {")),
+      "")
+check("the analysing screen is told where to land",
+      re.match(r"^#[0-9A-Fa-f]{6}$",
+               cfg["swipe"].get("analyzing_fade_to") or ""),
+      cfg["swipe"].get("analyzing_fade_to"))
+check("  which is the ground the report opens on",
+      cfg["swipe"]["analyzing_fade_to"].upper() == "#0E1430")
+check("  engine.js reads it and validates it as a colour",
+      "analyzing_fade_to" in engine
+      and "/^#[0-9a-fA-F]{3,8}$/.test(to)" in engine)
+check("  and the fade itself is one class on the body",
+      "is-fading" in engine and "body.is-fading {" in css)
+check("  taking as long as the screen it runs under",
+      "cfg.analyzing && cfg.analyzing.duration_ms" in engine)
+check("the delivered page has a line about where else it is",
+      "PDF" in (cfg["result_copy"].get("delivered_note") or ""),
+      cfg["result_copy"].get("delivered_note"))
+check("  and the module draws it only once the report is whole",
+      "ctx.complete && copy.delivered_note" in module)
+
+
 print("\n--- and kitchen brings none ---")
 for slug in ("kitchen", "kitchen-visualizer"):
     other = json.load(open(os.path.join(ROOT, "funnels/%s.json" % slug)))
     check("%-18s names no result module" % slug,
           "result_module" not in other and "result_css" not in other)
+    check("  no theme, so no rule in the sheet can reach it",
+          "theme" not in other)
+    check("  and nothing telling its analysing screen to go dark",
+          "analyzing_fade_to" not in other["swipe"])
     check("  and no section of it carries a teaser line",
           not [s for s in other["report"]["sections"] if s.get("teaser_line")])
 check("engine.js only delegates when a funnel asks",

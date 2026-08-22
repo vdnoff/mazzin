@@ -1151,31 +1151,34 @@ the limit rather than to the sentence you had in mind:
 # renderer dispatches on, written about what the reader was actually sold.
 _ZODIAC_SHAPES = {
     "palette": '''"palette": {
-  "intro": "1-2 sentences on what these colours do for this person's energy, and why these and not others (max %(intro)d chars)",
+  "intro": "1-2 sentences on what these four colours do for this person's energy (max %(intro)d chars)",
   "colors": [
-    {"name": "the dominant power colour's name (max %(name)d chars)",
-     "hex": "#RRGGBB — six hex digits, a real wearable value",
-     "role": "the everyday one, what they wear or keep near them most (max %(role)d chars)",
-     "finish": "matte, satin, metallic or natural (max %(finish)d chars)",
-     "where": "exactly where to put it: a garment, a room, a stone, a piece worn on the body (max %(where)d chars)"},
-    {"name": "the second colour's name", "hex": "#RRGGBB",
-     "role": "the one for when they need to be seen",
-     "finish": "satin", "where": "exactly where it goes"},
-    {"name": "the grounding colour's name", "hex": "#RRGGBB",
-     "role": "the weight that stops the other two burning out",
-     "finish": "matte", "where": "exactly where it goes"},
-    {"name": "the accent colour's name", "hex": "#RRGGBB",
-     "role": "used once and never twice",
-     "finish": "metallic", "where": "exactly where it goes"}
+    {"name": "COPY THE FIRST NAME FROM THE LIST ABOVE, EXACTLY",
+     "hex": "COPY ITS CODE FROM THE LIST ABOVE, EXACTLY",
+     "role": "what this colour is FOR - the kind of day or moment to reach for it (max %(role)d chars)",
+     "finish": "when to use it: a day of the week, a time of day, or a kind of occasion (max %(finish)d chars)",
+     "where": "how to carry it - worn, kept in a pocket, on a desk, in a room they spend time in (max %(where)d chars)"},
+    {"name": "the second name from the list, exactly", "hex": "its code, exactly",
+     "role": "...", "finish": "...", "where": "..."},
+    {"name": "the third name from the list, exactly", "hex": "its code, exactly",
+     "role": "...", "finish": "...", "where": "..."},
+    {"name": "the fourth name from the list, exactly", "hex": "its code, exactly",
+     "role": "...", "finish": "...", "where": "..."}
   ],
   "closing_rule": "one sentence naming their three talismans or stones and the day of the week each is worth carrying (max %(closing_rule)d chars)"
 }
 
-Four colours, each an object carrying all five keys. Spell the keys exactly
-as they appear: `intro`, `colors`, `closing_rule`, and inside each colour
-`name`, `hex`, `role`, `finish`, `where`. Name the talismans from the style's
-own list in `closing_rule` — they were sold under this section's title and
-have to appear.''',
+THE COLOURS ARE NOT YOURS TO CHOOSE. Four of them are given above, with their
+codes. Reproduce all four, in that order, with the name and the code exactly
+as written - character for character. Invent no colour, rename none, and write
+no code that is not on that list. A section carrying a colour that is not
+theirs is thrown away and asked for again.
+
+What you write is what each one is FOR. This is not a paint chart and not a
+clothing catalogue: never the words "matte", "satin", "eggshell", "gloss",
+"sheen", "swatch" or "paint", no garment descriptions, no decorating. Write
+about momentum, steadiness, being seen, being left alone - the days a colour
+is worth reaching for and the days it is not.''',
 
     "mistakes": '''"mistakes": {
   "items": [
@@ -1290,25 +1293,39 @@ ZODIAC_SPEC = dict((section_id, _zodiac_spec(text, section_id))
 # What a reader gets when generation fails outright, so it has to be
 # publishable rather than apologetic — and true of the archetype, since the
 # style name is the only thing it knows.
+# The zodiac palette stub's colours are not written here; they are this
+# reader's own, read off the config at build time.
+FROM_CONFIG = "from-config"
+
+# What each of the four is for, by position: the same order the config lists
+# them in, which is the order the free result drew the swatches in. Written
+# about days and momentum rather than finishes — this document is not a paint
+# chart, and the stub is held to the rule the prompt states.
+ZODIAC_COLOR_TEXT = [
+    ("the one to live in",
+     "ordinary days, and the ones you would like to stay ordinary",
+     "The layer closest to you — what goes on without a decision."),
+    ("for the day something has to move",
+     "one day a week, picked in advance rather than in the moment",
+     "One thing where the eye lands: a cuff, a strap, a scarf."),
+    ("the weight underneath",
+     "long days, and rooms you have to hold for other people",
+     "Shoes, outer layers, and the corners of the room you work in."),
+    ("used once and never twice",
+     "the evening that matters, and none of the ones that do not",
+     "A single piece at the collarbone or the wrist."),
+]
+
 ZODIAC_STUBS = {
     "palette": {
         "intro": "A {name} palette runs on one colour you live in, one you "
                  "reach for when a room needs to turn, and one carrying the "
                  "weight so the other two do not burn out.",
-        "colors": [
-            {"name": "Everyday Ground", "hex": "#B9AE9C",
-             "role": "the one worn most", "finish": "matte",
-             "where": "The layer closest to you on an ordinary day."},
-            {"name": "Signal", "hex": "#C0563A",
-             "role": "for when you need the room to turn", "finish": "satin",
-             "where": "One garment, or one object where the eye lands."},
-            {"name": "Anchor", "hex": "#2E3440",
-             "role": "the weight underneath", "finish": "matte",
-             "where": "Shoes, outerwear, and the corners of a room."},
-            {"name": "Rare Metal", "hex": "#C9A227",
-             "role": "used once and never twice", "finish": "metallic",
-             "where": "A single piece worn at the collarbone or the wrist."},
-        ],
+        # Filled from the style's own four power colours at build time. The
+        # model is forbidden to invent a colour here, and the fallback the
+        # reader gets when there is no model must not be allowed to either —
+        # the page that took the money showed them four swatches by name.
+        "colors": FROM_CONFIG,
         "closing_rule": "Carry one stone rather than three, and give it a day "
                         "of the week rather than a habit.",
     },
@@ -1511,6 +1528,16 @@ ZODIAC_PROFILE = {
     # fifty-two rows a funnel for nothing the reader could tell apart.
     "personal": ("dna", "materials", "shopping"),
     "banned": ZODIAC_BANNED,
+    # Checks that run over a parsed section before it is accepted, bound to
+    # the style — the colours a reader was promised are per archetype, and a
+    # validator keyed on a section id alone cannot know them. Attached below,
+    # where the rules exist.
+    "verify": None,
+    # A section whose prompt has changed enough that an answer cached under
+    # the old one is the wrong answer. The tag travels with the row, so only
+    # the sections named here go stale — kitchen declares no revisions and
+    # every one of its rows stays valid.
+    "cache_rev": {"palette": "colors2"},
     "pdf_css": None,        # filled below, once ZODIAC_PDF_CSS is defined
     # The wordmark is dark ink, which on a dark page is a rectangle of
     # nothing. The light cut already exists and is what this document wants.
@@ -1521,6 +1548,11 @@ ZODIAC_PROFILE = {
     # quoted back against a number the model was already given.
     "retry_detail": True,
     "pdf_lead": "Your cosmic profile report",
+    # The cover this funnel draws instead of the plain one, and the node
+    # markers down its sections. Both are the result page's own furniture,
+    # brought to paper; a funnel that sets neither prints what it always did.
+    "pdf_cover": None,      # filled below, once _zodiac_cover is defined
+    "pdf_node": True,
 }
 
 PROFILES = {"zodiac": ZODIAC_PROFILE}
@@ -1540,6 +1572,97 @@ def cached_sections(funnel_slug):
     """The sections held per style — what warm_cache.py fills."""
     return _profile(funnel_slug)["cached"]
 
+
+
+def _style_colors(style):
+    """[(name, #RRGGBB)] for a style's power colours, in config order."""
+    palette = ((style or {}).get("reveals") or {}).get("palette") or {}
+    out = []
+    for colour in (palette.get("colors") or []):
+        code = _config_hex(colour)
+        name = colour.get("name")
+        if name and code:
+            out.append((name.strip(), code.upper()))
+    return out
+
+
+def _palette_required(style):
+    """The four colours, stated as the only ones this section may carry."""
+    colours = _style_colors(style)
+    if not colours:
+        return None
+    return (
+        "REQUIRED — these are this reader's power colours. They are the only "
+        "four the palette section may contain, in this order, with these "
+        "names and these codes exactly:\n"
+        + "\n".join("  %d. %s  %s" % (i + 1, name, code)
+                    for i, (name, code) in enumerate(colours))
+        + "\nCopy each name and each code character for character. Do not "
+          "rename one, do not adjust a code, and do not add a fifth. What you "
+          "write about them is what each is for.")
+
+
+# Colours a reader was told are theirs are a promise the free page already
+# made: the swatches were on screen before any money changed hands, with the
+# codes withheld as the thing being sold. A generated section that renames one
+# or prints a code we never chose is not a style note gone slightly wrong — it
+# is the document contradicting the page that sold it.
+def _verify_palette(data, style):
+    want = _style_colors(style)
+    if not want:
+        return None
+    got = data.get("colors") or []
+    if len(got) != len(want):
+        return ("palette carries %d colours, want the %d in the config"
+                % (len(got), len(want)))
+    for i, (name, code) in enumerate(want):
+        mine = got[i] or {}
+        if (mine.get("name") or "").strip().lower() != name.lower():
+            return ("colors[%d].name is %r, want %r"
+                    % (i, (mine.get("name") or "")[:40], name))
+        clean = _hex(mine.get("hex") or "")
+        if not clean or clean.upper() != code:
+            return ("colors[%d].hex is %r, want %s"
+                    % (i, (mine.get("hex") or "")[:12], code))
+    return None
+
+
+# The vocabulary this section is not written in. A palette that reaches for
+# "matte" is describing paint, which is the other product.
+PAINT_WORDS = re.compile(
+    r"\b(matte|matt|satin|eggshell|gloss(y)?|sheen|swatch|undercoat|"
+    r"emulsion|paint(ed|work)?)\b", re.IGNORECASE)
+
+
+def _verify_no_paint(data, style):
+    hit = PAINT_WORDS.search(json.dumps(data, ensure_ascii=False))
+    return ("palette uses %r, which belongs to the other product"
+            % hit.group(0)) if hit else None
+
+
+ZODIAC_VERIFY = {
+    "palette": (_verify_palette, _verify_no_paint),
+}
+
+ZODIAC_PROFILE["verify"] = ZODIAC_VERIFY
+
+
+def _verify_for(profile, style):
+    """A check to run over a parsed section, or None. Bound to the style,
+    because that is where the truth about the colours lives."""
+    rules = profile.get("verify")
+    if not rules:
+        return None
+
+    def verify(want, parsed):
+        for section_id in want:
+            for rule in rules.get(section_id) or ():
+                problem = rule((parsed or {}).get(section_id) or {}, style)
+                if problem:
+                    return problem
+        return None
+
+    return verify
 
 def _banned_hit(value, patterns):
     """The first banned phrase anywhere in a generated section, or None."""
@@ -1630,6 +1753,9 @@ def _stub_for(section_id, name, style=None, stubs=None):
     stub = (STUBS if stubs is None else stubs).get(section_id)
     if stub is None:
         return None
+    if isinstance(stub, dict) and stub.get("colors") == FROM_CONFIG:
+        stub = dict(stub)
+        stub["colors"] = _stub_colors(style)
     if section_id == "mistakes":
         first = _mistake_one(style)
         if first:
@@ -1637,6 +1763,26 @@ def _stub_for(section_id, name, style=None, stubs=None):
             # Four behind it: five items, inside the 4-6 the schema allows.
             stub["items"] = [first] + list(stub["items"])[:4]
     return _fill(stub, name)
+
+
+def _stub_colors(style):
+    """The four swatches for a palette stub, out of the style's own reveals.
+
+    A config missing its palette — an older one, or one being written — falls
+    back to four neutrals rather than to nothing: the section schema wants
+    three to five colours, and a stub that fails validation is a section the
+    reader simply does not get.
+    """
+    colours = _style_colors(style)[:len(ZODIAC_COLOR_TEXT)]
+    if not colours:
+        colours = [("Everyday Ground", "#B9AE9C"), ("Signal", "#C0563A"),
+                   ("Anchor", "#2E3440"), ("Rare Metal", "#C9A227")]
+    out = []
+    for index, (name, code) in enumerate(colours):
+        role, when, where = ZODIAC_COLOR_TEXT[index]
+        out.append({"name": name, "hex": code, "role": role,
+                    "finish": when, "where": where})
+    return out
 
 
 def _mistake_one(style):
@@ -2204,6 +2350,10 @@ def _cached_prompt(style, name, ids=None, funnel_slug=None):
     # personalised and the requirement lives there; here it is cached, and it
     # can be, because the strength belongs to the archetype rather than to the
     # reader. Either way item 1 has to be the one already on screen.
+    if profile is ZODIAC_PROFILE and "palette" in ids:
+        required = _palette_required(style)
+        if required:
+            parts.append(required)
     if profile is ZODIAC_PROFILE and "mistakes" in ids:
         first = _mistake_one(style)
         if first:
@@ -2438,7 +2588,7 @@ def _attempt(client, prompt, max_tokens, label, system=None):
 
 
 def _generate(client, prompt, want, max_tokens=None, system=None,
-              banned=(), detail=False):
+              banned=(), detail=False, verify=None):
     """One section group. Returns {section_id: body}, or None.
 
     A single personalised section needs a fraction of the room a six-section
@@ -2467,6 +2617,15 @@ def _generate(client, prompt, want, max_tokens=None, system=None,
         if notes is not None:
             notes.append('the phrase "%s" is not allowed anywhere in this '
                          "section — say it another way" % hit)
+    wrong = verify(want, parsed) if (verify and parsed is not None) else None
+    if wrong:
+        # Shape-valid and still not this reader's. The validators police the
+        # form; this polices the facts, and a colour the config never gave is
+        # the document contradicting the page that sold it.
+        why = wrong
+        parsed = None
+        if notes is not None:
+            notes.append(wrong)
     if parsed is not None:
         return parsed
     # Truncation, a missing key, a renamed key: those never reach the field
@@ -2482,6 +2641,10 @@ def _generate(client, prompt, want, max_tokens=None, system=None,
     hit = _banned_hit(parsed, banned) if parsed is not None else None
     if hit:
         why = "banned phrase %r" % hit
+        parsed = None
+    wrong = verify(want, parsed) if (verify and parsed is not None) else None
+    if wrong:
+        why = wrong
         parsed = None
     if parsed is None:
         log.warning("section %s given up: %s (%d chars, stop=%s, cap=%d)",
@@ -2516,10 +2679,10 @@ def _cache_state(funnel_slug, result_style):
                 continue
         if not isinstance(content, dict):
             continue
-        if content.get("v") != CACHE_SCHEMA:
+        section_id = row.get("section_id")
+        if content.get("v") != _cache_tag(funnel_slug, section_id):
             stale += 1
             continue
-        section_id = row.get("section_id")
         data = content.get("data")
         if section_id in VALIDATORS and isinstance(data, dict):
             clean = VALIDATORS[section_id](data)
@@ -2552,6 +2715,17 @@ def _read_cache(funnel_slug, result_style):
     return None
 
 
+def _cache_tag(funnel_slug, section_id):
+    """What a cached row must be stamped with to still count.
+
+    The schema, plus a per-section revision where a funnel has declared one.
+    A section with no revision is tagged exactly as it always was, which is
+    what keeps every existing kitchen row valid.
+    """
+    rev = (_profile(funnel_slug).get("cache_rev") or {}).get(section_id)
+    return CACHE_SCHEMA + (":" + rev if rev else "")
+
+
 def _write_cache(funnel_slug, result_style, sections):
     for section_id, data in sections.items():
         try:
@@ -2561,8 +2735,8 @@ def _write_cache(funnel_slug, result_style, sections):
                     funnel_slug,
                     result_style,
                     section_id,
-                    json.dumps({"v": CACHE_SCHEMA, "data": data},
-                               separators=(",", ":")),
+                    json.dumps({"v": _cache_tag(funnel_slug, section_id),
+                                "data": data}, separators=(",", ":")),
                 ),
             )
         except Exception:
@@ -2873,7 +3047,7 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                                     cfg, choices, funnel_slug),
                     (section_id,), _section_tokens(section_id),
                     profile["system"], profile["banned"],
-                    profile["retry_detail"]),
+                    profile["retry_detail"], _verify_for(profile, style)),
             })
         if cached is None:
             group = profile["cached"]
@@ -2884,7 +3058,8 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                                                      funnel_slug),
                                       group, _group_tokens(group),
                                       profile["system"], profile["banned"],
-                                      profile["retry_detail"]),
+                                      profile["retry_detail"],
+                                      _verify_for(profile, style)),
             })
     job["tasks"] = tasks
     job["pool"] = pool
@@ -3047,7 +3222,8 @@ def warm_style_cache(funnel_slug, style_id, client=None):
                                            funnel_slug),
                             (section_id,), _warm_tokens(section_id),
                             profile["system"], profile["banned"],
-                            profile["retry_detail"])
+                            profile["retry_detail"],
+                            _verify_for(profile, style))
         except Exception as exc:
             log.warning("warm %s/%s/%s failed: %s", funnel_slug, style_id,
                         section_id, type(exc).__name__)
@@ -3285,7 +3461,6 @@ figure figcaption { color: #868FB6; }
 .fix,
 .num,
 .splurge b { color: #E8C878; }
-.cover-cross { color: #E8C878; font-size: 0.6em; }
 .where { color: #C3C9E4; }
 
 /* Panels and rules: the same boxes, drawn on dark. */
@@ -3300,6 +3475,92 @@ figure figcaption { color: #868FB6; }
 figure figcaption { background: #141B3C; }
 .badge.works { background: #22321F; color: #A8D8B0; }
 .badge.avoid { background: #32222A; color: #E8A8A8; }
+
+/* The cover is the hero card off the result page, on paper: the same kicker,
+   the same sign over archetype, the same element bar. Somebody who paid on
+   that page and then opens this file should recognise it as the same
+   document, not as a printout of a different product. */
+.cover { text-align: center; }
+.cover-logo { margin-left: auto; margin-right: auto; }
+.cover-kicker {
+  margin: 0 0 7mm;
+  font-size: 9pt;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #E8C878;
+}
+.cover-card {
+  padding: 13mm 10mm 11mm;
+  border: 0.3mm solid #2C355F;
+  border-radius: 4mm;
+  background: #141B3C;
+}
+.cover-card .cover-name { margin-bottom: 0; }
+.cover-x {
+  margin: 3mm 0 0;
+  font-size: 15pt;
+  font-weight: 600;
+  color: #E8C878;
+}
+.cover-card .rule { margin: 7mm auto 6mm; }
+.cover-blurb { margin: 0 0 9mm; font-size: 11pt; color: #C3C9E4; }
+
+/* Four cells on one line, as inline-blocks rather than a flex row: the row is
+   short, and flex containers and page breaks are a fight this document has no
+   reason to pick. */
+.cover-el {
+  display: inline-block;
+  margin: 0 1.1mm;
+  padding: 1.7mm 4mm;
+  border: 0.25mm solid #2C355F;
+  border-radius: 8mm;
+  font-size: 8.5pt;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #868FB6;
+}
+.cover-el-dot {
+  display: inline-block;
+  width: 2.2mm;
+  height: 2.2mm;
+  margin-right: 1.8mm;
+  border-radius: 50%;
+  opacity: 0.45;
+}
+.cover-el.own {
+  color: #E8C878;
+  border-color: rgba(232, 200, 120, 0.45);
+  background: rgba(232, 200, 120, 0.10);
+}
+.cover-el.own .cover-el-dot { opacity: 1; }
+.cover-note { text-align: center; }
+
+/* The path. A hairline down the left of every section and a gold node on each
+   title, which is the constellation on the web page redrawn in the one way
+   print can hold it. The node hangs in the gutter on a negative margin: it is
+   part of the title line, so it can never be orphaned from its heading, and a
+   section that breaks across pages keeps the line running down both. */
+.section {
+  padding-left: 11mm;
+  border-left: 0.3mm solid #2C355F;
+}
+.section-title .node {
+  display: inline-block;
+  width: 7mm;
+  height: 7mm;
+  margin-left: -14.5mm;
+  margin-right: 1.5mm;
+  border-radius: 50%;
+  background: #E8C878;
+  color: #0E1430;
+  font-size: 10pt;
+  font-weight: 700;
+  line-height: 7mm;
+  text-align: center;
+  vertical-align: 0.8mm;
+}
 """
 
 
@@ -3476,6 +3737,59 @@ def _pdf_section_body(section, structured):
     return "<p>%s</p>" % _e(section.get("body"))
 
 
+# The gallery's four families, in the order the result page draws them and in
+# the same four inks. One document, one vocabulary.
+PDF_ELEMENTS = [
+    ("fire", "Fire", "#E08A3C"),
+    ("earth", "Earth", "#7E9B5E"),
+    ("air", "Air", "#9CC3DF"),
+    ("water", "Water", "#4E8FA0"),
+]
+
+
+def _zodiac_cover(content, profile, cfg):
+    """The zodiac cover: the result page's hero card, on paper.
+
+    The element it lights is the archetype's own, read off the style's tags,
+    not a tally — by the time a PDF is built the run is long gone, and a bar
+    that prints a percentage nobody measured is worse than one that prints
+    none. A config that would not load costs the blurb and the lit cell; the
+    cover still names the sign, the archetype and the four elements.
+    """
+    style = _style(cfg, content.get("style_id")) if cfg else None
+    tags = (style or {}).get("tags") or []
+    own = next((tag for tag, _n, _h in PDF_ELEMENTS if tag in tags), "")
+    cells = "".join(
+        '<span class="cover-el%s">'
+        '<i class="cover-el-dot" style="background: %s"></i>%s</span>'
+        % (" own" if tag == own else "", hexcode, _e(label))
+        for tag, label, hexcode in PDF_ELEMENTS
+    )
+    name = _e(content.get("style_name") or "Your style")
+    sign = _e(content.get("sign"))
+    blurb = _e((style or {}).get("blurb"))
+    return [
+        '<section class="cover">',
+        '<img class="cover-logo" src="%s" alt="Mazzin">'
+        % _e(profile.get("pdf_logo") or "brand/logo.svg"),
+        '<p class="cover-kicker">%s</p>'
+        % _e(((cfg or {}).get("result_copy") or {}).get("kicker")
+             or profile["pdf_lead"]),
+        '<div class="cover-card">',
+        '<h1 class="cover-name">%s</h1>' % (sign or name),
+        ('<p class="cover-x">&#215; %s</p>' % name) if sign else "",
+        '<div class="rule"></div>',
+        ('<p class="cover-blurb">%s</p>' % blurb) if blurb else "",
+        '<div class="cover-elements">%s</div>' % cells,
+        "</div>",
+        '<p class="cover-note">%s</p>' % _e(profile.get("pdf_note") or ""),
+        "</section>",
+    ]
+
+
+ZODIAC_PROFILE["pdf_cover"] = _zodiac_cover
+
+
 def _pdf_html(content):
     name = _e(content.get("style_name") or "Your style")
     structured = _is_schema2(content.get("version"))
@@ -3490,40 +3804,49 @@ def _pdf_html(content):
     state = _pdf_visuals()
     state.clear()
     visuals = content.get("visuals") or {}
-    if visuals:
+    cover = profile.get("pdf_cover")
+    cfg = None
+    if visuals or cover:
         try:
             cfg = config.load_funnel(content.get("funnel"))
         except (KeyError, ValueError, OSError):
             cfg = None
-        if cfg is not None:
-            state["images"] = _images_by_id(cfg)
-            state["moodboard"] = visuals.get("moodboard")
-            state["materials"] = list(visuals.get("materials") or [])
+    if visuals and cfg is not None:
+        state["images"] = _images_by_id(cfg)
+        state["moodboard"] = visuals.get("moodboard")
+        state["materials"] = list(visuals.get("materials") or [])
 
-    blocks = [
+    if cover:
+        blocks = [block for block in cover(content, profile, cfg) if block]
+    else:
+        blocks = [
         '<section class="cover">',
-        # Resolved against config.STATIC_DIR, which is the base_url build_pdf
-        # renders with. A missing file loses the logo and nothing else.
-        '<img class="cover-logo" src="%s" alt="Mazzin">'
-        % _e(profile.get("pdf_logo") or "brand/logo.svg"),
-        '<p class="cover-lead">%s</p>'
-        % _e(profile["pdf_lead"]),
-        '<h1 class="cover-name">%s</h1>'
-        % (("%s <span class=\"cover-cross\">&#215; %s</span>"
-            % (_e(content.get("sign")), name)) if content.get("sign")
-           else name),
-        '<div class="rule"></div>',
-        '<p class="cover-note">%s</p>' % _e(
-            profile.get("pdf_note")
-            or ("Keep this — your report also stays available at the link "
-                "you were sent back to after checkout.")),
-        "</section>",
-    ]
-    for section in content.get("sections") or []:
+            # Resolved against config.STATIC_DIR, which is the base_url
+            # build_pdf renders with. A missing file loses the logo and
+            # nothing else.
+            '<img class="cover-logo" src="%s" alt="Mazzin">'
+            % _e(profile.get("pdf_logo") or "brand/logo.svg"),
+            '<p class="cover-lead">%s</p>'
+            % _e(profile["pdf_lead"]),
+            '<h1 class="cover-name">%s</h1>'
+            % (("%s <span class=\"cover-cross\">&#215; %s</span>"
+                % (_e(content.get("sign")), name)) if content.get("sign")
+               else name),
+            '<div class="rule"></div>',
+            '<p class="cover-note">%s</p>' % _e(
+                profile.get("pdf_note")
+                or ("Keep this — your report also stays available at the link "
+                    "you were sent back to after checkout.")),
+            "</section>",
+        ]
+    node = profile.get("pdf_node")
+    for index, section in enumerate(content.get("sections") or [], 1):
+        mark = ('<span class="node">%d</span>' % index) if node else ""
         blocks.append(
-            '<div class="section"><h2 class="section-title">%s'
+            '<div class="section"><h2 class="section-title">%s%s'
             '<span class="bar"></span></h2>%s</div>'
-            % (_e(section.get("title")), _pdf_section_body(section, structured))
+            % (mark, _e(section.get("title")),
+               _pdf_section_body(section, structured))
         )
     return (
         '<!doctype html><html lang="en"><head><meta charset="utf-8">'

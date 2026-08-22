@@ -9,6 +9,13 @@ carry falls through to a bare paragraph. That failure is silent and it looks
 like a styling problem, so it is worth a browser rather than an assertion
 about a dict.
 
+The zodiac funnel now draws its delivered report through its own result
+module, so this file serves that module as a 404 and tests what engine.js
+falls back to when the CDN does not hand it over. That fallback is the reason
+the ids were chosen the way they were, and it is the path a reader lands on
+when a deploy is half-propagated — which is exactly when nobody is watching.
+The module's own delivered view is tested in test_zodiacdelivered.py.
+
 The report served here is a real one: reports.start_report with generation
 switched off, which is the documented no-key path, so what the page is handed
 is the same object a purchase would store. No database, no Stripe, no model.
@@ -73,6 +80,7 @@ def build():
 
 
 CONTENT = build()
+MODULE = config.load_funnel("zodiac")["result_module"]
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -94,6 +102,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                                "report": CONTENT})
         if path == "/zodiac":
             self.path = "/static/funnel.html"
+        # The one asset this suite withholds: with no module to hand over,
+        # engine.js draws the report itself, which is what is under test.
+        if path == MODULE:
+            self.send_error(404)
+            return
         return super().do_GET()
 
     def do_POST(self):
@@ -135,6 +148,10 @@ def main():
             page = browser.new_page(viewport={"width": 390, "height": 844})
             page.goto("http://127.0.0.1:%d/zodiac?cs=cs_test_123" % PORT)
             page.wait_for_selector("#report .section", timeout=20000)
+            check("the module was withheld, so the fallback drew",
+                  page.locator("#result-module").count() == 0
+                  or page.get_attribute("#result-module", "hidden")
+                  is not None)
             page.wait_for_timeout(600)
             run(page)
             browser.close()

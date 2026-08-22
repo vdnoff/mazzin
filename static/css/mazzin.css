@@ -63,6 +63,94 @@ body {
   padding: 14px 0 calc(24px + env(safe-area-inset-bottom, 0px));
 }
 
+/* --- a funnel's own colours ------------------------------------------------ */
+
+/* Set from `theme` in the config, so a funnel that names none is untouched by
+   every rule below. Deliberately narrow: only the two things that are read as
+   progress, and the screen between steps. Repainting `--accent` wholesale
+   would gold the hint dot and the reaction chip too, and gold on white is
+   1.6:1 — a token that works on this funnel's dark screens and nowhere else.
+*/
+body.theme-zodiac .pip { background: rgba(232, 200, 120, 0.24); }
+body.theme-zodiac .pip.is-done { background: #E8C878; }
+
+/* The selected badge takes the funnel's own accent too — the default is the
+   rust every other funnel confirms in, and on a gold-and-indigo card that is
+   the one colour on screen belonging to somebody else. */
+body.theme-zodiac .card.is-chosen .card-name {
+  color: #221A05;
+  background: #E8C878;
+}
+
+body.theme-zodiac .analyzing-bar { background: rgba(232, 200, 120, 0.20); }
+body.theme-zodiac .analyzing-bar-fill {
+  background: linear-gradient(90deg,
+    rgba(232, 200, 120, 0.20) 0%, #E8C878 45%, #E8C878 55%,
+    rgba(232, 200, 120, 0.20) 100%);
+}
+
+/* The beat between steps, as a glimpse of what is being read. */
+body.theme-zodiac #screen-interstitial.is-active {
+  background:
+    radial-gradient(120% 55% at 50% 0%, #1A2250 0%, rgba(14, 20, 48, 0) 70%),
+    #0E1430;
+  color: #EDEFF6;
+}
+
+body.theme-zodiac .mid-kicker { color: #E8C878; }
+body.theme-zodiac .mid-line { color: #EDEFF6; }
+body.theme-zodiac .mid-sub,
+body.theme-zodiac .mid-next,
+body.theme-zodiac .mid-working { color: #A8AECC; }
+body.theme-zodiac .mid-progress-label { color: #868FB6; }
+
+body.theme-zodiac .mid-spinner {
+  border-color: rgba(232, 200, 120, 0.28);
+  border-top-color: #E8C878;
+}
+
+body.theme-zodiac #screen-interstitial .cta,
+body.theme-zodiac #mid-cta {
+  color: #221A05;
+  background: linear-gradient(180deg, #F2D68F 0%, #E8C878 100%);
+}
+
+/* The arrival. The quiz is a light page and the reading is a dark one, and
+   without this the change happens in a single frame at the moment the result
+   lands — which reads as a different site rather than as a door opening. The
+   page darkens across the analysing wait instead, so the result is where the
+   page was already going.
+
+   `ease-out` rather than a linear ramp: it has to be dark enough to carry
+   light type by the time the copy switches below, and ease-out is most of the
+   way there at the halfway point. */
+body.is-fading {
+  background-color: var(--fade-to, #ffffff);
+  transition: background-color var(--fade-ms, 2500ms) ease-out;
+}
+
+/* Switched rather than crossfaded, at a point where the ground behind it has
+   already gone dark. A colour eased across the whole wait would spend the
+   middle of it as grey type on a grey field. */
+body.is-fading .analyzing-text,
+body.is-fading .analyzing-note,
+body.is-fading .analyzing-status {
+  transition: color 260ms ease-out var(--fade-swap, 1100ms);
+}
+
+body.is-fading .analyzing-text { color: #EDEFF6; }
+body.is-fading .analyzing-note,
+body.is-fading .analyzing-status { color: #A8AECC; }
+
+body.is-fading .dots span { background: #868FB6; }
+
+@media (prefers-reduced-motion: reduce) {
+  body.is-fading { transition: none; }
+  body.is-fading .analyzing-text,
+  body.is-fading .analyzing-note,
+  body.is-fading .analyzing-status { transition: none; }
+}
+
 /* --- swipe --------------------------------------------------------------- */
 
 /* One flex column over the viewport. The wrappers in the markup collapse with
@@ -620,11 +708,46 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* Under the selection wash the label goes with the rest of the card — the
-   chip that lands on top is the one carrying the name at that point, and two
-   copies of the same word stacked on each other reads as a rendering fault. */
+/* On a funnel whose cards name themselves, the tap-reveal chip is not a
+   second opinion — it is the same word again, in a white pill, on top of the
+   badge that was already saying it. So in badge mode it does not render at
+   all, and the badge itself becomes the selected state.
+
+   Scoped by `:has(.card-name)`, which is exactly what badge mode is: no
+   funnel-name in a selector, no class for engine.js to remember to set, and
+   a browser without `:has()` falls back to the chip it has always drawn. */
+.cards:has(.card-name) .reaction { display: none !important; }
+
+/* The big corner badge goes too. At twelve-up it is 34px over a 111px cell
+   and lands on the pill; the check below is the compact version of the same
+   confirmation, inside the label rather than beside it. */
+.cards:has(.card-name) .check { display: none; }
+
 .cards.is-picking .card:not(.is-chosen) .card-name { opacity: 0.5; }
-.card.is-chosen .card-name { opacity: 0; transition: opacity 120ms ease-out; }
+
+/* The badge stays exactly where it was and gains a tick. Nothing moves, so
+   the eye does not have to find the name again to check it got the right
+   one — which is the whole reason this funnel names its cards. */
+.card.is-chosen .card-name {
+  opacity: 1;
+  color: #16181d;
+  background: var(--accent, #C05621);
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+
+.card.is-chosen .card-name::after {
+  content: "\2713";
+  margin-left: 6px;
+  font-weight: 700;
+}
+
+@supports ((backdrop-filter: blur(4px)) or (-webkit-backdrop-filter: blur(4px))) {
+  .card.is-chosen .card-name {
+    background: var(--accent, #C05621);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
 
 /* --- selection label ------------------------------------------------------- */
 
