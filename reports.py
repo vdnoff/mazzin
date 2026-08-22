@@ -3461,7 +3461,6 @@ figure figcaption { color: #868FB6; }
 .fix,
 .num,
 .splurge b { color: #E8C878; }
-.cover-cross { color: #E8C878; font-size: 0.6em; }
 .where { color: #C3C9E4; }
 
 /* Panels and rules: the same boxes, drawn on dark. */

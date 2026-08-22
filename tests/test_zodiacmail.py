@@ -122,8 +122,12 @@ def main():
     pdf_html = reports._pdf_html(zodiac)
     check("the page itself is dark",
           "@page { background: #0E1430; }" in pdf_html)
+    # Asserted on the markup, not on the document: the class names are all
+    # in the embedded stylesheet too, so `"cover-x" in pdf_html` is true of a
+    # cover that never drew one.
+    cover = pdf_html.split('<section class="cover">')[1].split("</section>")[0]
     check("  the cover carries the sign beside the archetype",
-          "Scorpio" in pdf_html and "cover-cross" in pdf_html)
+          ">Scorpio<" in cover and 'class="cover-x"' in cover, cover[:120])
     check("  it says profile where the other says report",
           "your profile also stays available" in pdf_html)
     check("  and takes the light cut of the wordmark",
@@ -152,8 +156,17 @@ def main():
           "%d KB" % (len(pdf) // 1024) if pdf else "none")
 
     print("\n--- and kitchen's two are the ones it always sent ---")
-    old_src = subprocess.run(["git", "show", "HEAD~4:reports.py"],
-                             capture_output=True, text=True, cwd=REPO).stdout
+    # The branch point rather than a count of commits: HEAD~4 was right on the
+    # day it was written and means something different after every commit
+    # since. Once this work is on main the two files are the same file and the
+    # comparison is trivially true, which is the correct outcome — the claim
+    # is "kitchen did not change", not "kitchen differs from something".
+    old_src = ""
+    for ref in ("origin/main:reports.py", "main:reports.py"):
+        old_src = subprocess.run(["git", "show", ref], capture_output=True,
+                                 text=True, cwd=REPO).stdout
+        if old_src:
+            break
     if not old_src:
         check("the committed file could be read", False, "git show failed")
     else:
