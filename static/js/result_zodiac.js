@@ -336,5 +336,215 @@
     root.hidden = false;
   }
 
-  window.MazzinResult = { render: render };
+  // --- the delivered report --------------------------------------------------
+  //
+  // The same page after the money. The reader paid on a dark celestial page
+  // and the thing they bought has to open as the same document — before this
+  // it opened as the kitchen layout, whose kicker literally says "YOUR PERFECT
+  // STYLE IS".
+  //
+  // Structurally it is the pre-purchase page with the locks off: the same
+  // kicker, the same hero, the same path, and every node a gold star with its
+  // section's real content inside it. What is new here is the content — six
+  // shapes that only exist once somebody has bought them.
+
+  function swatches(data) {
+    var wrap = elm("div", "zr-swatches");
+    (data.colors || []).forEach(function (colour) {
+      var row = elm("div", "zr-swatch");
+      var dot = elm("span", "zr-swatch-dot");
+      dot.style.background = colour.hex || "#000";
+      row.appendChild(dot);
+      var text = elm("div", "zr-swatch-text");
+      var head = elm("p", "zr-swatch-head");
+      head.appendChild(elm("span", "zr-swatch-name", colour.name || ""));
+      head.appendChild(elm("span", "zr-swatch-hex", colour.hex || ""));
+      text.appendChild(head);
+      if (colour.role) text.appendChild(elm("p", "zr-swatch-role", colour.role));
+      if (colour.where) {
+        text.appendChild(elm("p", "zr-swatch-where", colour.where));
+      }
+      row.appendChild(text);
+      wrap.appendChild(row);
+    });
+    var frag = document.createDocumentFragment();
+    if (data.intro) frag.appendChild(elm("p", "zr-body", data.intro));
+    frag.appendChild(wrap);
+    if (data.closing_rule) {
+      frag.appendChild(elm("p", "zr-note", data.closing_rule));
+    }
+    return frag;
+  }
+
+  function strengths(data) {
+    var list = elm("ol", "zr-list");
+    (data.items || []).forEach(function (item, i) {
+      var row = elm("li", "zr-item");
+      row.appendChild(elm("span", "zr-item-num", String(i + 1)));
+      var body = elm("div", "zr-item-body");
+      body.appendChild(elm("h3", "zr-item-title", item.title || ""));
+      if (item.body) body.appendChild(elm("p", "zr-body", item.body));
+      if (item.fix) body.appendChild(elm("p", "zr-fix", "→ " + item.fix));
+      row.appendChild(body);
+      list.appendChild(row);
+    });
+    return list;
+  }
+
+  function compatibility(data) {
+    var frag = document.createDocumentFragment();
+    if (data.intro) frag.appendChild(elm("p", "zr-body", data.intro));
+    var list = elm("ul", "zr-verdicts");
+    (data.pairs || []).forEach(function (pair) {
+      var row = elm("li", "zr-verdict");
+      var head = elm("p", "zr-verdict-head");
+      head.appendChild(elm("span", "zr-combo", pair.combo || ""));
+      var tag = elm("span", "zr-tag is-" + (pair.verdict || "works"),
+                    (pair.verdict || "").toUpperCase());
+      head.appendChild(tag);
+      row.appendChild(head);
+      if (pair.why) row.appendChild(elm("p", "zr-body", pair.why));
+      list.appendChild(row);
+    });
+    frag.appendChild(list);
+    if (data.rule) frag.appendChild(elm("p", "zr-note", data.rule));
+    return frag;
+  }
+
+  function blueprint(data) {
+    var frag = document.createDocumentFragment();
+    (data.narrative || []).forEach(function (para) {
+      frag.appendChild(elm("p", "zr-body", para));
+    });
+    var list = elm("ul", "zr-implications");
+    (data.implications || []).forEach(function (line) {
+      list.appendChild(elm("li", null, line));
+    });
+    if (list.childNodes.length) frag.appendChild(list);
+    return frag;
+  }
+
+  function career(data) {
+    var frag = document.createDocumentFragment();
+    var head = elm("div", "zr-splurge");
+    head.appendChild(elm("p", "zr-splurge-head",
+                         (data.splurge && data.splurge.item) || ""));
+    if (data.splurge && data.splurge.why) {
+      head.appendChild(elm("p", "zr-body", data.splurge.why));
+    }
+    frag.appendChild(head);
+    var list = elm("ul", "zr-saves");
+    (data.saves || []).forEach(function (row) {
+      var item = elm("li", "zr-save");
+      item.appendChild(elm("span", "zr-save-item", row.item || ""));
+      if (row.why) item.appendChild(document.createTextNode(" " + row.why));
+      list.appendChild(item);
+    });
+    if (list.childNodes.length) {
+      frag.appendChild(elm("p", "zr-sub-head", "Where to stop spending it"));
+      frag.appendChild(list);
+    }
+    if (data.split_note) {
+      frag.appendChild(elm("p", "zr-note", data.split_note));
+    }
+    return frag;
+  }
+
+  function months(data) {
+    var list = elm("ol", "zr-months");
+    (data.items || []).forEach(function (item) {
+      var row = elm("li", "zr-month");
+      row.appendChild(elm("span", "zr-month-name", item.name || ""));
+      row.appendChild(elm("span", "zr-month-note", item.priority_note || ""));
+      list.appendChild(row);
+    });
+    var frag = document.createDocumentFragment();
+    frag.appendChild(list);
+    // `skip` is empty on this funnel by design — the quiet month is marked in
+    // its own note rather than struck out — but a report written before that
+    // was true can still carry one, and dropping it would lose a month.
+    (data.skip || []).forEach(function (row) {
+      var quiet = elm("p", "zr-note");
+      quiet.appendChild(elm("span", "zr-month-name", row.name || ""));
+      quiet.appendChild(document.createTextNode(" " + (row.why || "")));
+      frag.appendChild(quiet);
+    });
+    return frag;
+  }
+
+  // Keyed on the id the section arrived under, which is the same id engine.js
+  // and the PDF dispatch on. A section this does not know renders as its own
+  // prose rather than not at all.
+  var DELIVERED_BODY = {
+    palette: swatches,
+    mistakes: strengths,
+    materials: compatibility,
+    dna: blueprint,
+    splurge: career,
+    shopping: months
+  };
+
+  function deliveredNode(section) {
+    var item = node("open", section.title || "");
+    var body = item.querySelector(".zr-node-body");
+    var build = section.data && DELIVERED_BODY[section.id];
+    if (build) {
+      try {
+        body.appendChild(build(section.data));
+        return item;
+      } catch (e) { /* fall through to prose */ }
+    }
+    if (section.body) body.appendChild(elm("p", "zr-body", section.body));
+    return item;
+  }
+
+  // The hero, without a run behind it. The percentage and the balance chart
+  // came from tallies this tab never had, so the delivered card carries the
+  // identity and drops the arithmetic rather than inventing it.
+  function deliveredHero(ctx, copy) {
+    var card = elm("section", "zr-hero");
+    var pick = ctx.images[signImageId(ctx)];
+    card.appendChild(glyph(pick));
+    card.appendChild(elm("h1", "zr-sign", ctx.sign || ctx.style.name));
+    if (ctx.sign) card.appendChild(elm("p", "zr-cross", "× " + ctx.style.name));
+    if (ctx.style.blurb) {
+      card.appendChild(elm("p", "zr-sub", ctx.style.blurb));
+    }
+    return card;
+  }
+
+  // The sign's own frame, found by name. The stored report keeps the sign as
+  // a label rather than an id, because that is what the mail and the PDF need.
+  function signImageId(ctx) {
+    var want = (ctx.sign || "").toLowerCase();
+    if (!want) return "";
+    var ids = Object.keys(ctx.images);
+    for (var i = 0; i < ids.length; i++) {
+      if (ids[i] === "sign_" + want) return ids[i];
+    }
+    return "";
+  }
+
+  function delivered(root, ctx) {
+    var copy = (ctx.cfg && ctx.cfg.result_copy) || {};
+    root.innerHTML = "";
+    root.classList.add("is-delivered");
+    root.appendChild(kicker(copy));
+    root.appendChild(deliveredHero(ctx, copy));
+
+    var list = elm("ol", "zr-path");
+    ctx.sections.forEach(function (section) {
+      list.appendChild(deliveredNode(section));
+    });
+    root.appendChild(list);
+
+    // No offer here, obviously. What replaces it is the one line the reader
+    // still needs: where else this document is.
+    if (ctx.complete && copy.delivered_note) {
+      root.appendChild(elm("p", "zr-footnote", copy.delivered_note));
+    }
+    root.hidden = false;
+  }
+
+  window.MazzinResult = { render: render, delivered: delivered };
 }());

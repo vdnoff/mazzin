@@ -2358,6 +2358,7 @@
     "balance_title": "Your element balance",
     "strength_lead": "Your {symbol} and your {moonphase} put this one first.",
     "offer_sub": "Your complete profile — once, forever.",
-    "locked_note": "Locked"
+    "locked_note": "Locked",
+    "delivered_note": "A PDF of this profile is in your inbox. This page stays at the link you were sent back to."
   }
 }

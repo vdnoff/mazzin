@@ -2322,6 +2322,94 @@
     };
   }
 
+  // The delivered half of the same seam. Everything the pre-purchase page
+  // needed the run for — the tallies, the taps, the winner — is gone by now:
+  // this page is reached through a link in an email, in a tab that never ran
+  // the quiz. So the context is built from the stored report instead, which
+  // is exactly why the sign, the elements and the visuals were put in it.
+  function deliveredContext(content, complete) {
+    var style = styleById(content.style_id) || {};
+    var sections = (content.sections || []).map(function (sec) {
+      return {
+        id: sec.id, title: sec.title, data: sec.data,
+        // Everything is open now. The lock state is the one thing that
+        // differs from the page before the money.
+        locked: false
+      };
+    });
+    return {
+      cfg: cfg,
+      delivered: true,
+      complete: !!complete,
+      style: {
+        id: content.style_id, name: content.style_name || style.name || "",
+        blurb: style.blurb || "", tags: (style.tags || []).slice(),
+        reveals: style.reveals || {}
+      },
+      sign: content.sign || "",
+      elements: (content.elements || []).slice(),
+      visuals: content.visuals || {},
+      images: _imagesById(),
+      sections: sections,
+      version: content.version || "",
+      typed: isTyped(content.version)
+    };
+  }
+
+  function _imagesById() {
+    var out = {};
+    ((cfg && cfg.swipe && cfg.swipe.steps) || []).forEach(function (step) {
+      (step.pairs || []).forEach(function (pair) {
+        (pair.images || []).forEach(function (item) {
+          if (item && item.id) out[item.id] = item;
+        });
+      });
+    });
+    return out;
+  }
+
+  function renderModuleDelivered(content, complete) {
+    var root = el.moduleRoot;
+    if (!root) {
+      root = elm("div", "result-module");
+      root.id = "result-module";
+      el.report.parentNode.insertBefore(root, el.report);
+      el.moduleRoot = root;
+    }
+    // The built-in document and its heading furniture stay off: this page has
+    // its own, and two kickers is worse than the wrong one.
+    el.report.hidden = true;
+    [el.resultKicker, el.resultName, el.resultBlurb].forEach(function (node) {
+      if (node) node.hidden = true;
+    });
+    root.hidden = false;
+
+    var css = (cfg && cfg.result_css) || "";
+    loadAsset(css, function () {
+      loadAsset(cfg.result_module, function () {
+        var mod = window.MazzinResult;
+        if (!mod || typeof mod.delivered !== "function") {
+          // No module, or one that predates this: the report is the thing
+          // that was paid for, so it is drawn the way it always was rather
+          // than not at all.
+          root.hidden = true;
+          el.report.hidden = false;
+          [el.resultKicker, el.resultName, el.resultBlurb]
+            .forEach(function (node) { if (node) node.hidden = false; });
+          renderUnlockedReport(content);
+          return;
+        }
+        try {
+          mod.delivered(root, deliveredContext(content, complete));
+        } catch (e) {
+          root.hidden = true;
+          el.report.hidden = false;
+          renderUnlockedReport(content);
+        }
+      });
+    });
+  }
+
   function renderModuleResult(win) {
     var css = (cfg && cfg.result_css) || "";
     var root = el.moduleRoot;
@@ -3751,6 +3839,19 @@
       if (el.ctaNote) el.ctaNote.hidden = true;
       el.resultName.textContent = content.style_name || "";
       revealHead();
+    }
+
+    // A funnel that drew its own page before the money draws its own page
+    // after it. Without this the reader pays on a dark celestial page and the
+    // thing they bought opens as somebody else's document — a light layout
+    // whose kicker says "YOUR PERFECT STYLE IS".
+    //
+    // The section data is untouched by any of this: the module is handed the
+    // same payload `renderUnlockedReport` would have drawn, and what changes
+    // is the layout around it.
+    if (resultModule()) {
+      renderModuleDelivered(content, complete);
+      return;
     }
 
     applyStyleCopy();

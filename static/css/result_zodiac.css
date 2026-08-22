@@ -9,6 +9,15 @@
  * like one thing.
  */
 
+/* The ground behind the page as well as under it. The module full-bleeds its
+   own width, but the shell's padding sits above and below it — and on the
+   delivered page, reached from a link in an email, the analysing fade never
+   ran, so the body is still the quiz's white. This stylesheet only loads for
+   a funnel that asked for it, so naming the colour here is naming it once. */
+body:has(.result-module) {
+  background-color: #0E1430;
+}
+
 .result-module {
   --zr-ink: #0E1430;
   --zr-panel: #141B3C;
@@ -448,4 +457,188 @@
 
 @media (prefers-reduced-motion: reduce) {
   .result-module * { animation: none !important; transition: none !important; }
+}
+
+/* --- the delivered report ---------------------------------------------------
+
+   The same page with the locks off. Every node is open, so the type inside
+   them is the document rather than a teaser and is sized as such — this is
+   read on a phone, at length, by somebody who paid for it. */
+
+.result-module.is-delivered .zr-hero { margin-bottom: 4px; }
+
+.zr-body {
+  margin: 10px 0 0;
+  font-size: 15px;
+  line-height: 1.62;
+  color: var(--zr-muted);
+}
+
+.zr-note {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-left: 2px solid var(--zr-gold);
+  border-radius: 0 8px 8px 0;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--zr-text);
+}
+
+.zr-sub-head {
+  margin: 16px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--zr-faint);
+}
+
+.zr-fix { margin: 8px 0 0; font-size: 15px; line-height: 1.6;
+          color: var(--zr-gold); }
+
+/* the palette, paid */
+.zr-swatches { margin: 14px 0 0; }
+
+.zr-swatch { display: flex; gap: 12px; margin: 0 0 14px; }
+
+.zr-swatch-dot {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.zr-swatch-text { min-width: 0; }
+
+.zr-swatch-head { margin: 0; display: flex; gap: 8px; align-items: baseline;
+                  flex-wrap: wrap; }
+
+.zr-swatch-name { font-size: 15px; font-weight: 700; color: var(--zr-text); }
+
+.zr-swatch-hex {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--zr-gold);
+}
+
+.zr-swatch-role { margin: 3px 0 0; font-size: 13px; line-height: 1.45;
+                  color: var(--zr-faint); }
+.zr-swatch-where { margin: 4px 0 0; font-size: 14px; line-height: 1.55;
+                   color: var(--zr-muted); }
+
+/* the five strengths */
+.zr-list { margin: 14px 0 0; padding: 0; list-style: none; }
+
+.zr-item { display: flex; gap: 12px; margin: 0 0 20px; }
+
+.zr-item-num {
+  flex: none;
+  width: 22px;
+  font-family: var(--font-display, inherit);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--zr-gold);
+}
+
+.zr-item-body { min-width: 0; }
+
+.zr-item-title { margin: 0; font-size: 16px; font-weight: 700;
+                 line-height: 1.35; color: var(--zr-text); }
+
+/* compatibility */
+.zr-verdicts { margin: 14px 0 0; padding: 0; list-style: none; }
+
+.zr-verdict { margin: 0 0 16px; }
+
+.zr-verdict-head { margin: 0; display: flex; gap: 8px; align-items: center;
+                   flex-wrap: wrap; }
+
+.zr-combo { font-size: 15px; font-weight: 700; color: var(--zr-text); }
+
+.zr-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.zr-tag.is-works { color: #A8D8B0; background: rgba(120, 200, 140, 0.15); }
+.zr-tag.is-avoid { color: #E8A8A8; background: rgba(220, 120, 120, 0.15); }
+
+/* the blueprint */
+.zr-implications {
+  margin: 14px 0 0;
+  padding: 0 0 0 18px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--zr-muted);
+}
+
+.zr-implications li { margin: 0 0 8px; }
+.zr-implications li::marker { color: var(--zr-gold); }
+
+/* career */
+.zr-splurge {
+  margin: 14px 0 0;
+  padding: 14px 16px;
+  border: 1px solid var(--zr-line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.zr-splurge-head { margin: 0; font-size: 15px; font-weight: 700;
+                   color: var(--zr-gold); }
+.zr-splurge .zr-body { margin-top: 8px; }
+
+.zr-saves { margin: 10px 0 0; padding: 0; list-style: none; }
+
+.zr-save {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--zr-muted);
+}
+
+.zr-save-item { font-weight: 700; color: var(--zr-text); }
+
+/* the year */
+.zr-months { margin: 14px 0 0; padding: 0; list-style: none;
+             counter-reset: zr-month; }
+
+.zr-month {
+  position: relative;
+  margin: 0 0 12px;
+  padding-left: 26px;
+  counter-increment: zr-month;
+}
+
+.zr-month::before {
+  content: counter(zr-month);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  font-family: var(--font-display, inherit);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--zr-gold);
+}
+
+.zr-month-name { display: block; font-size: 15px; font-weight: 700;
+                 color: var(--zr-text); }
+.zr-month-note { display: block; margin-top: 2px; font-size: 14px;
+                 line-height: 1.55; color: var(--zr-muted); }
+
+/* what stands where the offer was */
+.zr-footnote {
+  margin: 30px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--zr-line);
+  font-size: 13px;
+  line-height: 1.55;
+  text-align: center;
+  color: var(--zr-faint);
 }
