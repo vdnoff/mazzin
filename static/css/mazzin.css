@@ -131,6 +131,43 @@ body.is-fading {
   transition: background-color var(--fade-ms, 2500ms) ease-out;
 }
 
+/* The html element is painted too. `html, body { background: var(--bg) }` at
+   the top of this sheet means darkening the body alone darkens a 560px column
+   centred in a white page — which is the half-white arrival, and is worse the
+   wider the screen. The canvas has to go with it. */
+html:has(body.is-fading) {
+  background-color: var(--fade-to, #ffffff);
+  transition: background-color var(--fade-ms, 2500ms) ease-out;
+}
+
+/* Arrived rather than faded to: somebody opening the link in their mail has
+   no light screen behind them, so there is nothing to animate away from and
+   an animation would be a white flash with a name. */
+body.is-arrived,
+html:has(body.is-arrived),
+body.is-arrived .analyzing-text,
+body.is-arrived .analyzing-note,
+body.is-arrived .analyzing-status { transition: none; }
+
+/* The wait after the money, which is this funnel's screen too: the profile is
+   being written and mailed, and until this it was being written on white. */
+body.is-fading .analyzing-bar { background: rgba(232, 200, 120, 0.20); }
+body.is-fading .analyzing-bar-fill {
+  background: linear-gradient(90deg,
+    rgba(232, 200, 120, 0.20) 0%, #E8C878 45%, #E8C878 55%,
+    rgba(232, 200, 120, 0.20) 100%);
+  background-size: 220% 100%;
+}
+body.is-fading .result-kicker { color: #E8C878; }
+body.is-fading .result-name { color: #EDEFF6; }
+body.is-fading .result-match,
+body.is-fading .result-blurb { color: #A8AECC; }
+
+/* The one accent this screen gets. There is no kicker on it and nothing to
+   press — three dots and a rotating line — so the gold goes where the eye
+   already is while it waits. */
+body.is-arrived .dots span { background: rgba(232, 200, 120, 0.55); }
+
 /* Switched rather than crossfaded, at a point where the ground behind it has
    already gone dark. A colour eased across the whole wait would spend the
    middle of it as grey type on a grey field. */
