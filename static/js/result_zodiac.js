@@ -360,7 +360,11 @@
       head.appendChild(elm("span", "zr-swatch-name", colour.name || ""));
       head.appendChild(elm("span", "zr-swatch-hex", colour.hex || ""));
       text.appendChild(head);
-      if (colour.role) text.appendChild(elm("p", "zr-swatch-role", colour.role));
+      // Role and when, on one line, the way the PDF sets them. `finish` is
+      // this funnel's "when to reach for it" — the free page never showed it
+      // and dropping it here would lose a line they paid for.
+      var when = [colour.role, colour.finish].filter(Boolean).join(" \u00B7 ");
+      if (when) text.appendChild(elm("p", "zr-swatch-role", when));
       if (colour.where) {
         text.appendChild(elm("p", "zr-swatch-where", colour.where));
       }
@@ -510,7 +514,28 @@
     if (ctx.style.blurb) {
       card.appendChild(elm("p", "zr-sub", ctx.style.blurb));
     }
+    card.appendChild(deliveredElements(ctx));
     return card;
+  }
+
+  // The element bar, after the money. The quiz tally is gone by now — someone
+  // opening this from a link in their mail has no run left to count — so the
+  // bar names the archetype's own element out of its tags rather than
+  // inventing a percentage nobody measured. All four are drawn; one is lit.
+  function deliveredElements(ctx) {
+    var own = (ctx.style.tags || []).filter(function (tag) {
+      return ELEMENTS.indexOf(tag) !== -1;
+    })[0] || "";
+    var row = elm("div", "zr-elements");
+    ELEMENTS.forEach(function (tag) {
+      var cell = elm("span", "zr-el" + (tag === own ? " is-own" : ""));
+      var dot = elm("i", "zr-el-dot");
+      dot.style.background = ELEMENT_COLOR[tag] || "#A8AECC";
+      cell.appendChild(dot);
+      cell.appendChild(elm("span", "zr-el-name", ELEMENT_NAME[tag] || tag));
+      row.appendChild(cell);
+    });
+    return row;
   }
 
   // The sign's own frame, found by name. The stored report keeps the sign as

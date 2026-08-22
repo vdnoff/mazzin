@@ -467,6 +467,47 @@ body:has(.result-module) {
 
 .result-module.is-delivered .zr-hero { margin-bottom: 4px; }
 
+/* The element bar on the delivered card. Four cells, one lit: the reader's
+   own element, taken from the archetype rather than from a tally that no
+   longer exists by the time this page is opened from a mail. */
+.zr-elements {
+  display: flex;
+  gap: 6px;
+  margin: 18px 0 0;
+}
+
+.zr-el {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 4px;
+  border: 1px solid var(--zr-line);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--zr-faint);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.zr-el-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  opacity: 0.45;
+}
+
+.zr-el.is-own {
+  color: var(--zr-gold);
+  border-color: rgba(232, 200, 120, 0.45);
+  background: rgba(232, 200, 120, 0.10);
+}
+
+.zr-el.is-own .zr-el-dot { opacity: 1; }
+
 .zr-body {
   margin: 10px 0 0;
   font-size: 15px;
