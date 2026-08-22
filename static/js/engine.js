@@ -2306,7 +2306,12 @@
       nodes: {
         commerce: el.commerce, consent: el.withdrawal, payButton: el.payButton,
         payError: el.payError, trust: el.trust, price: el.price,
-        manifest: el.manifest, anchor: el.payAnchor, legal: el.legal
+        manifest: el.manifest, anchor: el.payAnchor, legal: el.legal,
+        // The wallet's own block, when a funnel offers one. `xpReserve` puts
+        // it beside the pay button while that button is still in the commerce
+        // container, so a module that moves the button has to move this with
+        // it or leave the wallet behind in a box it just hid.
+        wallet: xpBlock
       },
       checkout: startCheckout,
       track: function (name, extra) { track(name, null, extra); }
@@ -5319,6 +5324,17 @@
     // `renderGate` is what calls `xpStart` now — it only starts once there is
     // a photograph to sell a transformation of.
     renderGate();
+    // A funnel with no gate never reaches the `xpStart` inside `showOffer` —
+    // that call sits below an early return for the missing gate node, which
+    // was right while the only funnel offering a wallet was the gated one.
+    // /zodiac offers one and has no photograph to gate on, so nothing was
+    // holding the wallet back and nothing was starting it either.
+    //
+    // Inert for the funnels that were here first: `xpStart` returns at its
+    // own first line unless `checkout.express` is true, so /kitchen fetches
+    // nothing from Stripe and behaves exactly as before, and a gated funnel
+    // still starts express from `showOffer` when its gate comes down.
+    if (!el.gate) xpStart();
     // And the ungated case, which is most funnels. `showGate` gives up at its
     // first line when there is no gate node to hide — /kitchen has no
     // `gate_cta` and therefore no gate — so the call inside it never runs

@@ -266,10 +266,29 @@
     card.appendChild(anchor);
     card.appendChild(elm("p", "zr-offer-sub", copy.offer_sub || ""));
 
-    // Live nodes, not copies of them.
-    [nodes.consent, nodes.payButton, nodes.payError].forEach(function (n) {
-      if (n) card.appendChild(n);
-    });
+    // Live nodes, not copies of them. The consent box is placed only where a
+    // funnel asks for one: `withdrawal_consent: false` takes it off the page
+    // for everybody, which is a different thing from the country list
+    // `consent_skip_countries` drives and deliberately not that.
+    //
+    // Taken off, it still has to be satisfied — it is what enables the pay
+    // button — so it is ticked here rather than left to whatever
+    // `consent_prechecked` happens to say. A hidden control that disables the
+    // only button on the page is a page that looks broken.
+    var wantsConsent = ctx.cfg.checkout.withdrawal_consent !== false;
+    if (!wantsConsent && nodes.consent) {
+      var box = nodes.consent.querySelector("input[type=checkbox]");
+      if (box && !box.checked) {
+        box.checked = true;
+        box.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      nodes.consent.hidden = true;
+    }
+    // The wallet above the button it replaces, so the order a reader takes
+    // the block in — what it costs, how to pay, what it is not — is the same
+    // whether the fast path appeared or not.
+    [wantsConsent ? nodes.consent : null, nodes.wallet, nodes.payButton,
+     nodes.payError].forEach(function (n) { if (n) card.appendChild(n); });
 
     var trust = (ctx.commerce.trust || ctx.cfg.checkout.trust || []);
     if (trust.length) {
