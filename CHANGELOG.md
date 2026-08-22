@@ -291,3 +291,6 @@ bottom.
 
 ## 2026-08-22 — claude/zodiac-result-module
 - zodiac: dedicated result module — cosmic ID + constellation path + folio offer
+
+## 2026-08-22 — claude/zodiac-paywall-polish
+- zodiac: express pay, readability, no consent, dark email, copy + badge fixes
