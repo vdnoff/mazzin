@@ -294,3 +294,6 @@ bottom.
 
 ## 2026-08-22 — claude/zodiac-paywall-polish
 - zodiac: express pay, readability, no consent, dark email, copy + badge fixes
+
+## 2026-08-22 — claude/zodiac-dr11a-regen
+- zodiac: dr11a regen
