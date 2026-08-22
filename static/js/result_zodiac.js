@@ -287,8 +287,9 @@
     // The wallet above the button it replaces, so the order a reader takes
     // the block in — what it costs, how to pay, what it is not — is the same
     // whether the fast path appeared or not.
-    [wantsConsent ? nodes.consent : null, nodes.wallet, nodes.payButton,
-     nodes.payError].forEach(function (n) { if (n) card.appendChild(n); });
+    [wantsConsent ? nodes.consent : null, nodes.walletSummary, nodes.wallet,
+     nodes.payButton, nodes.payError]
+      .forEach(function (n) { if (n) card.appendChild(n); });
 
     var trust = (ctx.commerce.trust || ctx.cfg.checkout.trust || []);
     if (trust.length) {

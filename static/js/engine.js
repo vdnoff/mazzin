@@ -2311,7 +2311,11 @@
         // it beside the pay button while that button is still in the commerce
         // container, so a module that moves the button has to move this with
         // it or leave the wallet behind in a box it just hid.
-        wallet: xpBlock
+        //
+        // `walletSummary` is the price row the wallet path shows in place of
+        // the ordinary one, and it travels for the same reason: `xpReserve`
+        // files it next to `el.price`, which a module is free to leave behind.
+        wallet: xpBlock, walletSummary: el.xpSummary
       },
       checkout: startCheckout,
       track: function (name, extra) { track(name, null, extra); }
