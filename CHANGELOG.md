@@ -288,3 +288,6 @@ bottom.
 
 ## 2026-08-21 — claude/zodiac-price-sandbox
 - zodiac: $3 + sandbox mode
+
+## 2026-08-22 — claude/zodiac-result-module
+- zodiac: dedicated result module — cosmic ID + constellation path + folio offer
