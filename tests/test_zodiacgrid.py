@@ -211,6 +211,25 @@ def run(page):
     # engine.js shuffles a pair unless the step opts out, and a shuffled
     # zodiac makes the reader scan all twelve for one they could point at.
     check("  in classical order, Aries to Pisces", names == ZODIAC, str(names))
+    # The badge is what makes a sign findable, so a truncated one defeats the
+    # step. Sagittarius is the longest of the twelve and the one that broke.
+    clipped = page.eval_on_selector_all(".card-name", """ns => ns
+        .filter(n => n.scrollWidth > n.clientWidth + 1)
+        .map(n => n.innerText.trim())""")
+    check("  every name whole, none truncated", not clipped, str(clipped))
+    widest = page.eval_on_selector_all(".card-name", """ns => {
+        let out = ['', 0, 0];
+        ns.forEach(n => {
+            const w = n.getBoundingClientRect().width;
+            if (w > out[1]) out = [n.innerText.trim(), Math.round(w),
+                                   Math.round(n.parentNode
+                                     .getBoundingClientRect().width)];
+        });
+        return out;
+    }""")
+    check("  the longest (%s) fits in its cell at %dpx of %dpx"
+          % (widest[0], widest[1], widest[2]),
+          widest[1] < widest[2] - 6, str(widest))
 
     boxes = page.eval_on_selector_all("#cards .card", """ns => ns.map(n => {
         const r = n.getBoundingClientRect();
@@ -219,10 +238,17 @@ def run(page):
     smallest = min(min(b) for b in boxes)
     check("  every tap target clears 44px (smallest %dpx)" % smallest,
           smallest >= 44, smallest)
+    check("  the badge type stepped down for the narrow cells",
+          page.eval_on_selector(
+              ".cards.is-grid12 .card-name",
+              "n => parseFloat(getComputedStyle(n).fontSize)") <= 12)
     bottom = page.evaluate(
         "document.querySelector('#cards').getBoundingClientRect().bottom")
     check("  and the twelfth cell is on screen, not below the fold",
           bottom <= 844, "%d of 844" % round(bottom))
+    check("  and the page does not scroll sideways",
+          page.evaluate("document.documentElement.scrollWidth") <= 380,
+          page.evaluate("document.documentElement.scrollWidth"))
 
     print("\n--- a tap on it registers ---")
     leo = names.index("Leo")
@@ -310,7 +336,9 @@ def main():
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(executable_path=CHROME)
-            page = browser.new_page(viewport={"width": 390, "height": 844},
+            # 380 rather than 390: it is the narrower of the two common
+            # phone widths and the one "Sagittarius" has to fit at.
+            page = browser.new_page(viewport={"width": 380, "height": 844},
                                     device_scale_factor=DSF)
             run(page)
             browser.close()

@@ -1422,6 +1422,85 @@ check("  and it takes its container back before drawing",
       "el.report.hidden = false;\n      if (el.moduleRoot)" in engine)
 
 
+print("\n--- the offer takes a wallet, and asks for no consent ---")
+check("express is on", cfg["checkout"].get("express") is True,
+      cfg["checkout"].get("express"))
+check("  the same key kitchen-visualizer turns on",
+      "express" in json.load(open(os.path.join(
+          ROOT, "funnels/kitchen-visualizer.json")))["checkout"])
+# /api/payment-intent validates any funnel through the same order builder as
+# /api/checkout. Worth asserting rather than assuming: a funnel allowlist
+# appearing there later would break this one silently.
+check("  and payments needs no registration for it",
+      payments._validated_order.__doc__ is not None
+      and "express" not in open(os.path.join(ROOT, "payments.py")).read())
+# `xpStart` hangs off `showOffer`, which returns early when a funnel has no
+# gate node. Both funnels here are gateless, so without this the flag would
+# be a config key that did nothing.
+check("engine.js starts express for a funnel with no gate",
+      "if (!el.gate) xpStart();" in engine)
+check("  and the wallet's own nodes travel with the pay button",
+      "wallet: xpBlock" in engine and "walletSummary" in engine
+      and "nodes.wallet" in module and "nodes.walletSummary" in module)
+
+check("the consent box is off for everyone",
+      cfg["checkout"].get("withdrawal_consent") is False,
+      cfg["checkout"].get("withdrawal_consent"))
+check("  which is not the country list",
+      "consent_skip_countries" not in cfg["checkout"])
+check("  and the line it stood next to is gone",
+      "consent" not in cfg["checkout"]["commerce"])
+check("the module places it only when a funnel wants one",
+      "withdrawal_consent !== false" in module)
+check("  and ticks it when it does not, so the button is not dead",
+      "box.checked = true" in module)
+for slug in ("kitchen", "kitchen-visualizer"):
+    other = json.load(open(os.path.join(ROOT, "funnels/%s.json" % slug)))
+    check("%-18s keeps its consent box" % slug,
+          other["checkout"].get("withdrawal_consent") is not False)
+    check("  and its consent line", "consent" in other["checkout"]["commerce"])
+
+print("\n--- the header names the product ---")
+check("subtext names it",
+      cfg["swipe"]["subtext"] == "Your Cosmic Profile in 60 seconds of taps",
+      cfg["swipe"]["subtext"])
+check("  with the accent still on the time",
+      cfg["swipe"]["subtext_accent"] == "60 seconds"
+      and cfg["swipe"]["subtext_accent"] in cfg["swipe"]["subtext"])
+check("  and the headline still pairs with it",
+      cfg["swipe"]["headline"].lower().startswith("your cosmic profile"),
+      cfg["swipe"]["headline"])
+
+print("\n--- the mail and the report are this funnel's ---")
+check("zodiac has a dark stylesheet for the PDF",
+      bool(reports._profile("zodiac").get("pdf_css")))
+check("  and kitchen has none, so it renders the sheet it always did",
+      reports._profile("kitchen").get("pdf_css") is None
+      and reports._profile("kitchen-visualizer").get("pdf_css") is None)
+check("the dark sheet covers every ink the base sheet uses",
+      all(sel in reports.ZODIAC_PDF_CSS for sel in
+          (".cover-name", ".section-title", ".callout", ".swatch-text b",
+           ".numbered b", ".verdict b", ".skip b", ".saves b",
+           ".implication", ".hex", ".struck", ".cover-lead", ".cover-note",
+           "figure figcaption")),
+      "a selector the base sheet paints dark is unaccounted for")
+check("  including the page ground itself",
+      "@page { background: #0E1430; }" in reports.ZODIAC_PDF_CSS)
+check("the mail is a table, not a div",
+      "<table" in reports.ZODIAC_EMAIL_HTML
+      and "<div" not in reports.ZODIAC_EMAIL_HTML)
+check("  carrying bgcolor as well as CSS, for the light-mode clients",
+      reports.ZODIAC_EMAIL_HTML.count('bgcolor="#0E1430"') >= 6)
+check("  with no style block and no web font",
+      "<style" not in reports.ZODIAC_EMAIL_HTML
+      and "@font-face" not in reports.ZODIAC_EMAIL_HTML
+      and "fonts.googleapis" not in reports.ZODIAC_EMAIL_HTML)
+check("  and the gold the page ends on",
+      "#E8C878" in reports.ZODIAC_EMAIL_HTML)
+check("kitchen's mail template is untouched",
+      reports.EMAIL_HTML.startswith('<div style="font-family:-apple-system'))
+
+
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for f in fails:
     print("  FAIL " + f)

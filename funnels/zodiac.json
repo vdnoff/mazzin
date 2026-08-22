@@ -12,7 +12,7 @@
   "swipe": {
     "pairs_count": 12,
     "headline": "Your cosmic profile analysis",
-    "subtext": "Your full profile in 60 seconds of taps",
+    "subtext": "Your Cosmic Profile in 60 seconds of taps",
     "subtext_accent": "60 seconds",
     "hint": "Tap your choice",
     "label_mode": "badge",
@@ -2304,11 +2304,12 @@
     "product_name": "Your Cosmic Profile Report",
     "product_image": "/static/creative_src/stripe_tile.png",
     "single_page": true,
+    "express": true,
+    "withdrawal_consent": false,
     "commerce": {
       "anchor_head": "A {price} profile instead of a $75 session",
       "anchor_head_accent": "$75",
       "price_suffix": "one-time · no subscription",
-      "consent": "One-time {price} — no subscription, ever. My profile unlocks instantly.",
       "trust": [
         "Secure via Stripe",
         "One-time — no recurring charges",

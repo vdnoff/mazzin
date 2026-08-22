@@ -71,6 +71,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             posted.append((path, json.loads(raw or b"{}")))
         except ValueError:
             posted.append((path, {}))
+        if path == "/api/payment-intent":
+            # Enough for engine.js to get past the request. Stripe.js itself
+            # cannot load here, so the attempt always ends in the redirect
+            # fallback — which is the other thing worth asserting.
+            return self._json({"client_secret": "pi_stub_secret_x",
+                               "publishable_key": "pk_test_stub",
+                               "amount_cents": 300, "currency": "usd"})
         if path == "/api/checkout":
             # Far enough for the button to have done its job, and no further.
             return self._json({"url": "http://127.0.0.1:%d/stubbed" % PORT})
@@ -242,11 +249,33 @@ def run(page):
               "%r / %r" % (got["title"], got["teaser"]))
         check("    with a lock on its node", got["lock"], got["lock"])
 
+    print("\n--- no consent box, anywhere on the page ---")
+    # Off for everyone rather than off outside a country list. The element
+    # still exists — it is what enables the button — but nothing on screen
+    # asks for it and nothing shows it.
+    check("no consent control is on the page",
+          page.locator("#withdrawal:visible").count() == 0
+          and page.locator(".zr-offer #withdrawal").count() == 0)
+    check("  and no checkbox of any kind is",
+          page.locator("#result-module input[type=checkbox]").count() == 0)
+    check("  yet the button is live, so it is satisfied not stranded",
+          page.eval_on_selector("#withdrawal-check", "n => n.checked") is True
+          and page.get_attribute(".zr-offer #pay-button",
+                                 "disabled") is None)
+
+    print("\n--- and a wallet was offered ---")
+    check("the funnel asked for a payment intent",
+          any(path == "/api/payment-intent" for path, _ in posted))
+    check("  and the wallet's block sits in the offer card",
+          page.locator(".zr-offer #xp-slot").count() == 1)
+    # Stripe.js is a third-party script and does not load in here, so every
+    # run ends on the redirect fallback. That the fallback still works is
+    # worth as much as the wallet: it is what a blocked reader gets.
+    check("  falling back to the redirect button when Stripe cannot load",
+          page.get_attribute(".zr-offer #pay-button", "disabled") is None,
+          "button dead after fallback")
+
     print("\n--- the offer is engine.js's, placed here ---")
-    check("the consent box is inside the offer card",
-          page.locator(".zr-offer #withdrawal").count() == 1)
-    check("  and it is the shell's own element, not a copy",
-          page.locator("#withdrawal").count() == 1)
     check("the pay button is inside it too",
           page.locator(".zr-offer #pay-button").count() == 1)
     check("  labelled from the config",
@@ -264,15 +293,46 @@ def run(page):
               for part in cfg["checkout"]["commerce"]["trust"]),
           page.inner_text(".zr-trust"))
 
+    print("\n--- and it can be read on a phone ---")
+    # The token these carry measured 4.14:1 on this background, under the 4.5
+    # a body size needs, and it was the colour of every teaser line.
+    MINIMUM = {".zr-node.is-locked .zr-node-title": 17,
+               ".zr-teaser": 14, ".zr-lead": 14, ".zr-strength-body": 15,
+               ".zr-sub": 14, ".zr-trust": 12}
+    for selector, floor in sorted(MINIMUM.items()):
+        got = page.eval_on_selector(selector, """n => {
+            const c = getComputedStyle(n);
+            return [parseFloat(c.fontSize),
+                    parseFloat(c.lineHeight) / parseFloat(c.fontSize)];
+        }""")
+        check("  %-34s at %gpx" % (selector, got[0]), got[0] >= floor,
+              "below %dpx" % floor)
+    for selector in (".zr-teaser", ".zr-strength-body"):
+        got = page.eval_on_selector(selector, """n => {
+            const c = getComputedStyle(n);
+            return parseFloat(c.lineHeight) / parseFloat(c.fontSize);
+        }""")
+        check("  %-34s breathes at %.2f" % (selector, got), got >= 1.45,
+              "under 1.45")
+    # 17px headings ran under the LOCKED badge; the text rect is what says so,
+    # because the element's box is full width whatever its padding.
+    collisions = page.evaluate("""() => {
+        const out = [];
+        document.querySelectorAll('.zr-node.is-locked').forEach(node => {
+            const el = node.querySelector('.zr-node-title');
+            const r = document.createRange();
+            r.selectNodeContents(el);
+            const t = r.getBoundingClientRect();
+            const badge = node.querySelector('.zr-lock');
+            const lock = badge.getBoundingClientRect();
+            if (t.right > lock.left) out.push(el.innerText.trim());
+        });
+        return out;
+    }""")
+    check("  no heading runs under the LOCKED badge", not collisions,
+          str(collisions))
+
     print("\n--- and it takes a payment ---")
-    # Unchecking must lock the button: this is the withdrawal waiver still
-    # doing its job from inside a card it did not start in.
-    page.uncheck(".zr-offer #withdrawal-check")
-    page.wait_for_timeout(200)
-    check("unchecking consent disables the button",
-          page.get_attribute(".zr-offer #pay-button", "disabled") is not None)
-    page.check(".zr-offer #withdrawal-check")
-    page.wait_for_timeout(200)
     before = len([p for p in posted if p[0] == "/api/checkout"])
     page.locator(".zr-offer #pay-button").click()
     page.wait_for_timeout(1500)
@@ -288,7 +348,7 @@ def run(page):
 
 def kitchen(page):
     """The other funnels must never touch any of this."""
-    print("\n--- and kitchen keeps the built-in page ---")
+    print("\n--- and kitchen keeps the built-in page, and its consent ---")
     page.goto("http://127.0.0.1:%d/kitchen" % PORT)
     page.wait_for_selector("#cards .card", timeout=20000)
     for _ in range(16):
@@ -315,7 +375,19 @@ def kitchen(page):
           page.locator("#report .swatch-list").count() == 1)
     check("  and the consent box where it has always been",
           page.locator("#commerce #withdrawal").count() == 1
-          and page.locator(".zr-offer").count() == 0)
+          and not page.locator(".zr-offer").count())
+    check("  visible, and gating its button",
+          page.locator("#commerce #withdrawal").is_visible())
+    page.uncheck("#withdrawal-check")
+    page.wait_for_timeout(250)
+    check("    unchecking it disables the pay button",
+          page.get_attribute("#pay-button", "disabled") is not None)
+    page.check("#withdrawal-check")
+    page.wait_for_timeout(250)
+    check("    and checking it enables it again",
+          page.get_attribute("#pay-button", "disabled") is None)
+    check("  with no wallet, because kitchen asks for none",
+          page.locator("#xp-slot").count() == 0)
 
 
 def main():
@@ -327,9 +399,20 @@ def main():
             browser = pw.chromium.launch(executable_path=CHROME)
             page = browser.new_page(viewport={"width": 390, "height": 844})
             page.errors = []
-            page.on("pageerror", lambda e: page.errors.append(str(e)))
-            page.on("console", lambda m: page.errors.append(m.text)
-                    if m.type == "error" else None)
+
+            def note(text):
+                # Stripe.js is a third-party script on a network this suite
+                # does not have, so its load failure is a fact about the
+                # sandbox rather than a fault on the page — and the redirect
+                # fallback it triggers is itself asserted below. Everything
+                # else counts.
+                if "Failed to load resource" in text:
+                    return
+                page.errors.append(text)
+
+            page.on("pageerror", lambda e: note(str(e)))
+            page.on("console",
+                    lambda m: note(m.text) if m.type == "error" else None)
             run(page)
             kitchen(page)
             browser.close()

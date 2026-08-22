@@ -1511,6 +1511,12 @@ ZODIAC_PROFILE = {
     # fifty-two rows a funnel for nothing the reader could tell apart.
     "personal": ("dna", "materials", "shopping"),
     "banned": ZODIAC_BANNED,
+    "pdf_css": None,        # filled below, once ZODIAC_PDF_CSS is defined
+    # The wordmark is dark ink, which on a dark page is a rectangle of
+    # nothing. The light cut already exists and is what this document wants.
+    "pdf_logo": "brand/logo-dark.svg",
+    "pdf_note": ("Keep this — your profile also stays available at the link "
+                 "you were sent back to after checkout."),
     # These shapes state a budget for every capped field, so a refusal can be
     # quoted back against a number the model was already given.
     "retry_detail": True,
@@ -2575,7 +2581,7 @@ def _is_schema2(version):
 
 
 def _assemble(cfg, funnel_slug, result_style, name, built, paths, complete,
-              elements=None, visuals=None):
+              elements=None, visuals=None, sign=None):
     """The stored content for whatever has resolved so far.
 
     A section that has not resolved is simply absent — the client renders what
@@ -2624,6 +2630,13 @@ def _assemble(cfg, funnel_slug, result_style, name, built, paths, complete,
         content["elements"] = list(elements)
     if visuals:
         content["visuals"] = dict(visuals)
+    # The sign they tapped, for the funnels that have one. Stored for the same
+    # reason the elements and the visuals are: the mail and the PDF are built
+    # server-side from this row and never had the run, and by the time either
+    # is written the choices are long gone. A funnel with no sign stores no
+    # key and every reader of this content sees exactly what it saw before.
+    if sign:
+        content["sign"] = sign
     return content
 
 
@@ -2670,7 +2683,7 @@ def _publish(job, complete=False):
     """Write what has resolved so far over the row that already exists."""
     content = _assemble(job["cfg"], job["funnel"], job["style_id"], job["name"],
                         job["built"], job["paths"], complete, job["elements"],
-                        job["visuals"])
+                        job["visuals"], job.get("sign"))
     job["content"] = content
     try:
         database.execute(
@@ -2828,12 +2841,16 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     elements = [item["id"] for item in _pick_elements(cfg, choices, tag_scores)
                 if item.get("id")]
     visuals = _visuals(cfg, result_style, choices)
+    # Resolved here, while the run still exists, and carried on every write.
+    # None on a funnel with no sign step, which is every funnel but one.
+    read = _sign(cfg, choices) if choices else None
+    sign = read.get("label") if read else None
 
     job = {
         "purchase_id": purchase_id, "cfg": cfg, "funnel": funnel_slug,
         "style_id": result_style, "name": name, "built": built, "paths": paths,
         "on_final": on_final, "content": None, "elements": elements,
-        "visuals": visuals,
+        "visuals": visuals, "sign": sign,
     }
 
     tasks = []
@@ -2881,7 +2898,7 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                                               profile["stubs"])
                 paths[section_id] = "stub"
         content = _assemble(cfg, funnel_slug, result_style, name, built, paths,
-                            True, elements, visuals)
+                            True, elements, visuals, sign)
         database.execute(
             INSERT_SQL, (purchase_id, json.dumps(content, separators=(",", ":")))
         )
@@ -2891,7 +2908,7 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
         return content
 
     opening = _assemble(cfg, funnel_slug, result_style, name, built, paths,
-                        False, elements, visuals)
+                        False, elements, visuals, sign)
     database.execute(
         INSERT_SQL, (purchase_id, json.dumps(opening, separators=(",", ":")))
     )
@@ -3221,6 +3238,76 @@ figure figcaption {
 # The webfonts ship with the site; if WeasyPrint cannot use the variable woff2
 # on this host it falls through to the system serif and sans, which is a
 # duller PDF but never a failed one.
+
+# The zodiac PDF. An override sheet rather than a second copy of the one
+# above: the layout, the page furniture, the figure boxes and every break rule
+# are shared and correct, and what differs between the two documents is the
+# colour of the paper. Restating a hundred and sixty lines to change a dozen
+# of them is how two stylesheets start disagreeing about margins.
+#
+# WeasyPrint honours `background` on `@page`, so the ground is real ink on
+# every page rather than a box that stops where the content does.
+ZODIAC_PDF_CSS = """
+@page { background: #0E1430; }
+@page :first { background: #0E1430; }
+
+/* Every selector the sheet above paints in one of its four inks, restated in
+   this document's. The list is not written from memory — the first pass
+   guessed at class names, and `.swatch-name` and `.saves` do not exist, so
+   four colour names and a whole Save block rendered near-black on near-black
+   and were simply gone from the page. These are the selectors the base sheet
+   actually uses, taken from it.
+   #16181d -> #EDEFF6, #3d424c -> #C3C9E4, #6b7280 -> #868FB6,
+   #9aa0a6 -> #6E77A0, and #C05621 -> the gold. */
+body { color: #C3C9E4; }
+
+.cover-name,
+.section-title,
+.callout,
+.swatch-text b,
+.numbered b,
+.verdict b,
+.skip b,
+.saves b,
+.implication { color: #EDEFF6; }
+
+.cover-lead,
+.cover-note,
+figure figcaption { color: #868FB6; }
+
+.hex { color: #A8AECC; }
+.struck { color: #6E77A0 !important; }
+
+/* The accent, everywhere the base sheet reaches for rust. */
+.rule,
+.section-title .bar { background: #E8C878; }
+.meta,
+.fix,
+.num,
+.splurge b { color: #E8C878; }
+.cover-cross { color: #E8C878; font-size: 0.6em; }
+.where { color: #C3C9E4; }
+
+/* Panels and rules: the same boxes, drawn on dark. */
+.callout,
+.splurge { background: #141B3C; border-color: #2C355F; }
+.callout { border-left-color: #E8C878; }
+.splurge { border-color: #E8C878; }
+.skip,
+.verdict,
+.numbered { border-color: #2C355F; }
+.dot { border-color: rgba(255, 255, 255, 0.28); }
+figure figcaption { background: #141B3C; }
+.badge.works { background: #22321F; color: #A8D8B0; }
+.badge.avoid { background: #32222A; color: #E8A8A8; }
+"""
+
+
+# The profile is declared long before the PDF section, so its stylesheet is
+# attached here, where the constant exists.
+ZODIAC_PROFILE["pdf_css"] = ZODIAC_PDF_CSS
+
+
 PDF_FACES = """
 @font-face { font-family: "Mazzin Sans"; src: url("fonts/inter-latin-var.woff2"); }
 @font-face { font-family: "Mazzin Serif"; src: url("fonts/fraunces-latin-var.woff2"); }
@@ -3392,6 +3479,10 @@ def _pdf_section_body(section, structured):
 def _pdf_html(content):
     name = _e(content.get("style_name") or "Your style")
     structured = _is_schema2(content.get("version"))
+    profile = _profile(content.get("funnel"))
+    # Same sheet, then the funnel's own ink over it. A funnel with no override
+    # renders the document it always did, character for character.
+    sheet = PDF_CSS % PDF_FONTS + (profile.get("pdf_css") or "")
 
     # The two photographs the document carries, resolved once against the
     # funnel this report was written for. A config that cannot be loaded costs
@@ -3413,13 +3504,19 @@ def _pdf_html(content):
         '<section class="cover">',
         # Resolved against config.STATIC_DIR, which is the base_url build_pdf
         # renders with. A missing file loses the logo and nothing else.
-        '<img class="cover-logo" src="brand/logo.svg" alt="Mazzin">',
+        '<img class="cover-logo" src="%s" alt="Mazzin">'
+        % _e(profile.get("pdf_logo") or "brand/logo.svg"),
         '<p class="cover-lead">%s</p>'
-        % _e(_profile(content.get("funnel"))["pdf_lead"]),
-        '<h1 class="cover-name">%s</h1>' % name,
+        % _e(profile["pdf_lead"]),
+        '<h1 class="cover-name">%s</h1>'
+        % (("%s <span class=\"cover-cross\">&#215; %s</span>"
+            % (_e(content.get("sign")), name)) if content.get("sign")
+           else name),
         '<div class="rule"></div>',
-        '<p class="cover-note">Keep this — your report also stays available '
-        "at the link you were sent back to after checkout.</p>",
+        '<p class="cover-note">%s</p>' % _e(
+            profile.get("pdf_note")
+            or ("Keep this — your report also stays available at the link "
+                "you were sent back to after checkout.")),
         "</section>",
     ]
     for section in content.get("sections") or []:
@@ -3431,7 +3528,7 @@ def _pdf_html(content):
     return (
         '<!doctype html><html lang="en"><head><meta charset="utf-8">'
         "<title>%s — Mazzin</title><style>%s%s</style></head><body>%s</body></html>"
-        % (name, PDF_FACES, PDF_CSS % PDF_FONTS, "".join(blocks))
+        % (name, PDF_FACES, sheet, "".join(blocks))
     )
 
 
@@ -3486,6 +3583,132 @@ EMAIL_HTML = """<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe 
 EMAIL_LINK_BLOCK = (
     '<p style="margin:0 0 22px"><a href="%(link)s"'
     ' style="color:#C05621;font-weight:600">Open your report online</a></p>\n')
+
+
+# The zodiac mail. A different document from kitchen's, not a reskin of it,
+# because the two are selling different things and the reader has just spent
+# four minutes on a dark celestial page — a white letter arriving afterwards
+# reads as somebody else's.
+#
+# Everything here is written for mail clients rather than for browsers, which
+# is a narrower medium than it looks:
+#
+# - Tables, not divs. Outlook on Windows renders through Word and does not do
+#   flex, grid, or margins that can be relied on.
+# - Every style inline. Gmail strips <style> blocks in several of its clients.
+# - `bgcolor` on every cell that carries the dark ground, as well as the CSS.
+#   A client that drops the inline background — or a light-mode client that
+#   decides to help — still gets the attribute, which is what stops this
+#   turning into dark text on a dark field.
+# - No web fonts and no font-family that has to be downloaded. Georgia for the
+#   display line, the system stack under it, both with real fallbacks.
+# - No background images, no border-radius load-bearing, no @media required.
+ZODIAC_EMAIL_HTML = """\
+<table role="presentation" width="100%%" cellpadding="0" cellspacing="0" \
+border="0" bgcolor="#0E1430" \
+style="background-color:#0E1430;margin:0;padding:0;width:100%%">
+<tr><td align="center" bgcolor="#0E1430" \
+style="background-color:#0E1430;padding:28px 16px">
+<table role="presentation" width="100%%" cellpadding="0" cellspacing="0" \
+border="0" bgcolor="#0E1430" \
+style="background-color:#0E1430;max-width:520px;width:100%%">
+
+<tr><td align="center" bgcolor="#0E1430" \
+style="background-color:#0E1430;padding:0 0 22px">
+<img src="%(logo)s" width="114" height="26" alt="Mazzin" \
+style="display:block;border:0;font-family:Georgia,'Times New Roman',serif;\
+font-size:18px;font-weight:600;color:#E8C878;text-decoration:none">
+</td></tr>
+
+<tr><td align="center" bgcolor="#141B3C" \
+style="background-color:#141B3C;border:1px solid #2C355F;border-radius:18px;\
+padding:26px 20px">
+<p style="margin:0 0 10px;font-family:Helvetica,Arial,sans-serif;font-size:11px;\
+font-weight:bold;letter-spacing:2px;color:#E8C878">%(kicker)s</p>
+<p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:30px;\
+font-weight:600;line-height:1.15;color:#EDEFF6">%(sign)s</p>
+<p style="margin:6px 0 0;font-family:Georgia,'Times New Roman',serif;\
+font-size:17px;font-weight:600;color:#E8C878">%(cross)s</p>
+</td></tr>
+
+<tr><td bgcolor="#0E1430" style="background-color:#0E1430;padding:24px 2px 0;\
+font-family:Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;\
+color:#C3C9E4">
+<p style="margin:0 0 14px;color:#C3C9E4">%(opening)s</p>
+<p style="margin:0 0 20px;color:#C3C9E4">%(body)s</p>
+</td></tr>
+
+%(link_block)s
+<tr><td bgcolor="#0E1430" style="background-color:#0E1430;padding:6px 2px 0">
+<table role="presentation" width="100%%" cellpadding="0" cellspacing="0" \
+border="0">%(sections)s</table>
+</td></tr>
+
+<tr><td bgcolor="#0E1430" style="background-color:#0E1430;padding:22px 2px 0;\
+border-top:1px solid #2C355F;font-family:Helvetica,Arial,sans-serif;\
+font-size:13px;line-height:1.55;color:#868FB6">
+<p style="margin:18px 0 6px;color:#868FB6">%(keep)s</p>
+<p style="margin:0;color:#868FB6"><a href="%(home)s" \
+style="color:#868FB6;text-decoration:none">mazzin.com</a></p>
+</td></tr>
+
+</table></td></tr></table>"""
+
+# One row per section, the constellation path flattened into something a mail
+# client can draw: a gold rule where the page had a node, the title, and
+# nothing else. Tables all the way down, because a bordered div with a margin
+# is the first thing Outlook loses.
+ZODIAC_EMAIL_SECTION = """\
+<tr><td bgcolor="#0E1430" style="background-color:#0E1430;padding:0 0 10px">\
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" \
+width="100%%"><tr>\
+<td width="18" valign="top" bgcolor="#0E1430" \
+style="background-color:#0E1430;padding:5px 10px 0 0;\
+font-family:Helvetica,Arial,sans-serif;font-size:13px;color:#E8C878">&#10022;\
+</td>\
+<td valign="top" bgcolor="#0E1430" style="background-color:#0E1430;\
+font-family:Helvetica,Arial,sans-serif;font-size:15px;font-weight:bold;\
+line-height:1.4;color:#EDEFF6">%(title)s</td>\
+</tr></table></td></tr>"""
+
+ZODIAC_EMAIL_LINK = """\
+<tr><td align="center" bgcolor="#0E1430" \
+style="background-color:#0E1430;padding:4px 2px 20px">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0">
+<tr><td align="center" bgcolor="#E8C878" \
+style="background-color:#E8C878;border-radius:999px">
+<a href="%(link)s" style="display:block;padding:14px 30px;\
+font-family:Helvetica,Arial,sans-serif;font-size:16px;font-weight:bold;\
+color:#221A05;text-decoration:none">Open your profile online</a>
+</td></tr></table>
+</td></tr>"""
+
+
+def _zodiac_email_html(content, fields):
+    """The dark mail, filled from one report row."""
+    sign = content.get("sign")
+    name = fields["name"]
+    rows = "".join(
+        ZODIAC_EMAIL_SECTION % {"title": _e(section.get("title"))}
+        for section in (content.get("sections") or [])
+        if section.get("title"))
+    return ZODIAC_EMAIL_HTML % {
+        "kicker": "YOUR COSMIC PROFILE",
+        # The header the result page ends on, so the mail opens where the page
+        # left off. Without a sign — an older row, or a run that never reached
+        # the step — the archetype carries the line on its own rather than
+        # printing a cross with nothing on one side of it.
+        "sign": _e(sign or name),
+        "cross": _e(("× " + name) if sign else "Your complete profile"),
+        "opening": fields["opening"],
+        "body": fields["body"],
+        "link_block": fields["link_block"],
+        "sections": rows,
+        "keep": fields["keep"],
+        "logo": fields["logo"],
+        "home": fields["home"],
+    }
+
 
 KEEP_NO_LINK = "The PDF is yours to keep."
 
@@ -3625,6 +3848,21 @@ def _result_token(purchase_id, checkout_session=None):
     return row.get("checkout_session") or row.get("payment_intent") or None
 
 
+def _email_html(dark, content, fields):
+    """The mail body. Kitchen's is assembled exactly as it always was."""
+    if dark:
+        return _zodiac_email_html(content, fields)
+    return EMAIL_HTML % {
+        "headline": fields["headline"],
+        "body": fields["body"],
+        "link_block": fields["link_block"],
+        "keep": fields["keep"],
+        "logo": fields["logo"],
+        "home": fields["home"],
+        "opening": fields["opening"],
+    }
+
+
 def send_report_email(purchase_id, email, content, checkout_session=None):
     """Email the report as a PDF attachment. Returns True when Resend took it.
 
@@ -3658,9 +3896,15 @@ def send_report_email(purchase_id, email, content, checkout_session=None):
     # had already finished. Sending nothing is the honest failure: the report
     # is attached either way, and the reader is not invited to click on their
     # own paywall.
+    # Which mail this funnel sends. The link block is part of the template
+    # rather than a string appended to it — a table row cannot be dropped into
+    # a div — so it is chosen here alongside it.
+    dark = _profile(funnel) is ZODIAC_PROFILE
+    link_template = ZODIAC_EMAIL_LINK if dark else EMAIL_LINK_BLOCK
+
     if token and funnel:
         link = "%s/%s?cs=%s" % (config.BASE_URL, funnel, token)
-        link_block = EMAIL_LINK_BLOCK % {"link": html.escape(link)}
+        link_block = link_template % {"link": html.escape(link)}
         keep = copy["keep"]
     else:
         log.warning("purchase %s has no result token — email sent with the "
@@ -3672,7 +3916,8 @@ def send_report_email(purchase_id, email, content, checkout_session=None):
         "from": config.EMAIL_FROM,
         "to": [email],
         "subject": copy["subject"] % name,
-        "html": EMAIL_HTML % {
+        "html": _email_html(dark, content, {
+            "name": name,
             "headline": html.escape(copy["headline"]),
             "body": copy["body"] % html.escape(name),
             "link_block": link_block,
@@ -3680,7 +3925,7 @@ def send_report_email(purchase_id, email, content, checkout_session=None):
             "logo": html.escape(config.BASE_URL + "/static/brand/logo.svg"),
             "home": html.escape(config.BASE_URL),
             "opening": _email_opening(content),
-        },
+        }),
         "attachments": [
             {
                 "filename": "mazzin-%s-report.pdf" % _slug(name),

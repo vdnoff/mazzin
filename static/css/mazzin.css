@@ -605,12 +605,19 @@ body {
    characters and an ellipsis. */
 .cards.is-grid6 .card-name { font-size: 14px; padding: 5px 12px; }
 
+/* Twelve cells are narrow and one of the names is "Sagittarius". At 380px a
+   cell is about 110px across, and the pill has to hold the longest of the
+   twelve whole — an ellipsis on a card whose entire job is to be findable by
+   name is the one outcome worth ruling out. So the type steps down and the
+   padding comes in until the widest name fits with room to spare, and the
+   ellipsis below stays as the last resort it was always meant to be rather
+   than the normal case. */
 .cards.is-grid12 .card-name {
-  font-size: 12px;
-  padding: 4px 9px;
+  font-size: 11px;
+  padding: 4px 6px;
   bottom: 6px;
-  max-width: 94%;
-  letter-spacing: 0;
+  max-width: 96%;
+  letter-spacing: -0.01em;
 }
 
 /* Under the selection wash the label goes with the rest of the card — the

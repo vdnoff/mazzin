@@ -16,8 +16,13 @@
   --zr-line: rgba(232, 200, 120, 0.22);
   --zr-gold: #E8C878;
   --zr-text: #EDEFF6;
-  --zr-muted: #9AA2C4;
-  --zr-faint: #6E77A0;
+  --zr-muted: #A8AECC;
+  /* Was #6E77A0, which measures 4.14:1 on this background and is under the
+     4.5 a body size needs — and it was the colour of every teaser line, the
+     tap names and the trust row. #868FB6 is 5.70:1 and still sits a step
+     below --zr-muted, so the hierarchy survives the fix rather than
+     flattening into one grey. */
+  --zr-faint: #868FB6;
 
   /* Full bleed, exactly. body carries `padding: 0 18px`, so the pull has to
      be that number and not a rounded one — at -20px the page scrolled two
@@ -96,7 +101,7 @@
 
 .zr-sub {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: 0.02em;
   color: var(--zr-muted);
 }
@@ -108,6 +113,7 @@
 .zr-taps-caption {
   margin: 0 0 10px;
   font-size: 12px;
+  line-height: 1.45;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -140,9 +146,9 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   margin-top: 5px;
-  min-height: 24px;
-  font-size: 10px;
-  line-height: 1.2;
+  min-height: 26px;
+  font-size: 11px;
+  line-height: 1.25;
   text-align: center;
   color: var(--zr-faint);
   overflow: hidden;
@@ -224,8 +230,13 @@
 }
 
 .zr-node.is-locked .zr-node-title {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
+  line-height: 1.3;
+  /* Room for the LOCKED badge in the corner. At the old 15px the longest
+     title stopped short of it by luck; at 17px "5 Hidden Strengths & Blind
+     Spots" ran straight under it. The gap is reserved rather than hoped for. */
+  padding-right: 58px;
   color: var(--zr-muted);
 }
 
@@ -241,9 +252,9 @@
 }
 
 .zr-teaser {
-  margin: 5px 0 0;
-  font-size: 13px;
-  line-height: 1.45;
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--zr-faint);
 }
 
@@ -281,13 +292,13 @@
 
 .zr-bal-name {
   margin-top: 6px;
-  font-size: 11px;
+  font-size: 12px;
   text-align: center;
   color: var(--zr-muted);
 }
 
 .zr-bal-pct {
-  font-size: 10px;
+  font-size: 11px;
   text-align: center;
   color: var(--zr-faint);
 }
@@ -295,23 +306,24 @@
 /* the free strength */
 .zr-lead {
   margin: 8px 0 0;
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.45;
   font-style: italic;
   color: var(--zr-gold);
 }
 
 .zr-strength-title {
   margin: 10px 0 0;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--zr-text);
 }
 
 .zr-strength-body,
 .zr-strength-fix {
-  margin: 6px 0 0;
-  font-size: 14px;
-  line-height: 1.55;
+  margin: 7px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
   color: var(--zr-muted);
 }
 
@@ -339,7 +351,7 @@
 
 .zr-offer-sub {
   margin: 6px 0 18px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--zr-muted);
 }
 
@@ -383,6 +395,36 @@
   cursor: default;
 }
 
+/* The wallet, when a funnel offers one. engine.js builds every part of this
+   and it arrives styled for kitchen's white page — a light shimmer and a
+   white summary card would be two bright rectangles on a dark one. Colour
+   only: the geometry is what stops the block shifting when the element
+   answers, and none of it is touched here. */
+.zr-offer .xp { margin: 0 0 12px; }
+
+.zr-offer .xp__ghost {
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.11) 42%,
+    rgba(255, 255, 255, 0.11) 58%, rgba(255, 255, 255, 0.05) 100%);
+  background-size: 220% 100%;
+  border-radius: 999px;
+}
+
+.zr-offer .xp-summary {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--zr-line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  text-align: left;
+}
+
+.zr-offer .xp-summary__name { color: var(--zr-text); }
+.zr-offer .xp-summary__amount { color: var(--zr-gold); }
+.zr-offer .xp-summary__price,
+.zr-offer .xp-summary__terms,
+.zr-offer .xp-summary__trust { color: var(--zr-faint); }
+
 .zr-offer .pay-error {
   margin: 10px 0 0;
   font-size: 13px;
@@ -391,7 +433,8 @@
 
 .zr-trust {
   margin: 14px 0 0;
-  font-size: 11px;
+  font-size: 12px;
+  line-height: 1.5;
   letter-spacing: 0.04em;
   color: var(--zr-faint);
 }
