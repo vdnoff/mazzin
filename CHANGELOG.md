@@ -300,3 +300,6 @@ bottom.
 
 ## 2026-08-22 — claude/zodiac-dr11a-regen
 - zodiac: dr11a regen
+
+## 2026-08-22 — claude/zodiac-delivered-experience
+- zodiac: delivered report redesign, real power colors, badge fix, transition bridges
