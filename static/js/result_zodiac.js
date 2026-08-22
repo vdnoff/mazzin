@@ -488,9 +488,35 @@
     shopping: months
   };
 
-  function deliveredNode(section) {
+  // A photograph out of this reader's own run, or nothing. Never a stock
+  // frame: the page above this one says the reading was read off their taps,
+  // and an image nobody chose is that sentence being untrue. The file is one
+  // the browser already fetched during the quiz, so it costs a cache hit.
+  function tapped(ctx, image_id) {
+    var pick = image_id && ctx.images[image_id];
+    if (!pick || !pick.img) return null;
+    var frame = elm("figure", "zr-shot");
+    var img = document.createElement("img");
+    img.src = pick.img;
+    img.alt = "";
+    img.loading = "lazy";
+    img.decoding = "async";
+    frame.appendChild(img);
+    if (pick.label) frame.appendChild(elm("figcaption", "zr-shot-cap",
+                                          pick.label));
+    return frame;
+  }
+
+  function sectionImage(ctx, section_id) {
+    var map = (ctx.visuals && ctx.visuals.sections) || {};
+    return tapped(ctx, map[section_id]);
+  }
+
+  function deliveredNode(ctx, section) {
     var item = node("open", section.title || "");
     var body = item.querySelector(".zr-node-body");
+    var shot = sectionImage(ctx, section.id);
+    if (shot) body.appendChild(shot);
     var build = section.data && DELIVERED_BODY[section.id];
     if (build) {
       try {
@@ -507,7 +533,8 @@
   // identity and drops the arithmetic rather than inventing it.
   function deliveredHero(ctx, copy) {
     var card = elm("section", "zr-hero");
-    var pick = ctx.images[signImageId(ctx)];
+    var hero = (ctx.visuals && ctx.visuals.hero) || {};
+    var pick = ctx.images[hero.glyph || signImageId(ctx)];
     card.appendChild(glyph(pick));
     card.appendChild(elm("h1", "zr-sign", ctx.sign || ctx.style.name));
     if (ctx.sign) card.appendChild(elm("p", "zr-cross", "× " + ctx.style.name));
@@ -515,6 +542,11 @@
       card.appendChild(elm("p", "zr-sub", ctx.style.blurb));
     }
     card.appendChild(deliveredElements(ctx));
+    var band = tapped(ctx, hero.band);
+    if (band) {
+      band.classList.add("zr-band");
+      card.appendChild(band);
+    }
     return card;
   }
 
@@ -559,7 +591,7 @@
 
     var list = elm("ol", "zr-path");
     ctx.sections.forEach(function (section) {
-      list.appendChild(deliveredNode(section));
+      list.appendChild(deliveredNode(ctx, section));
     });
     root.appendChild(list);
 

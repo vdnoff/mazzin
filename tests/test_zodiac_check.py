@@ -399,15 +399,31 @@ check("the also-rows never collapse the hero section",
       cfg["checkout"]["manifest_hero"]
       not in [r.get("section") for r in also_rows])
 visuals = cfg["report"]["visuals"]
-check("visuals name real steps",
-      visuals["moodboard_step"] in by_step
-      and all(s in by_step for s in visuals["material_steps"]),
-      str(visuals["material_steps"]))
-check("every style has a visual default",
-      sorted(visuals["defaults"]) == sorted(s["id"] for s in cfg["styles"]))
-check("every visual default names a real image",
-      all(d["moodboard"] in by_id and all(m in by_id for m in d["materials"])
-          for d in visuals["defaults"].values()))
+# One photograph per report section and two for the header, each named as the
+# step it is read off. A step that does not exist is a section that silently
+# never gets a picture, which looks like a styling bug and is a typo.
+section_steps = visuals["section_steps"]
+check("every illustrated section names a real step",
+      all(s in by_step for s in section_steps.values()),
+      str([s for s in section_steps.values() if s not in by_step]))
+check("  and a real section of this report",
+      all(sid in {s["id"] for s in sections} for sid in section_steps),
+      str([sid for sid in section_steps
+           if sid not in {s["id"] for s in sections}]))
+check("  no two sections share a photograph",
+      len(set(section_steps.values())) == len(section_steps),
+      str(sorted(section_steps.values())))
+check("the header names two steps of its own",
+      all(step in by_step for step in visuals["hero"].values()),
+      str(visuals["hero"]))
+check("  the sign's own frame among them",
+      visuals["hero"]["glyph_step"] == "sign")
+# The whole point of the set: every frame in it is one this reader tapped.
+# A per-style default would put a photograph nobody chose under a page whose
+# claim is that it was read off their choices.
+check("nothing falls back to a stock image",
+      "defaults" not in visuals and "moodboard_step" not in visuals
+      and "material_steps" not in visuals, str(sorted(visuals)))
 check("the free strength is numbered 1 of 5",
       "#1" in cfg["report"]["mistake_one"]["title"]
       and cfg["report"]["mistake_one"].get("locked_note"))
@@ -988,9 +1004,8 @@ check("kitchen's prompts are untouched by any of this",
 print("\n--- print copies for the PDF ---")
 vis = cfg["report"]["visuals"]
 need = set()
-for defaults in vis["defaults"].values():
-    need.update([defaults["moodboard"]] + defaults["materials"])
-for step_id in [vis["moodboard_step"]] + list(vis["material_steps"]):
+for step_id in (list(vis["section_steps"].values())
+                + list(vis["hero"].values())):
     need.update(i["id"] for p in by_step[step_id]["pairs"]
                 for i in p["images"])
 missing = [i for i in sorted(need)
@@ -1005,9 +1020,16 @@ def print_size(image_id):
         os.path.join(ROOT, "static/img/print", image_id + ".jpg"))
 
 
+# Tighter than kitchen's 60 KB ceiling, because this report draws eight of
+# them rather than three: at 60 KB apiece the mail would be half a megabyte.
 heavy = [(i, print_size(i) // 1024) for i in sorted(need)
-         if print_size(i) > 60 * 1024]
+         if print_size(i) > 34 * 1024]
 check("  and none is heavy enough to bloat a mailbox", not heavy, str(heavy))
+check("  eight of them together still fit in a mailbox",
+      sum(sorted((print_size(i) for i in need), reverse=True)[:8])
+      < 250 * 1024,
+      "%d KB" % (sum(sorted((print_size(i) for i in need),
+                            reverse=True)[:8]) // 1024))
 check("  the PDF points at them rather than the gallery originals",
       reports._print_src("pl6a", {"img": "/static/galleries/zodiac/pl6a.webp"})
       == "img/print/pl6a.jpg")
@@ -1042,9 +1064,22 @@ check("every section arrives with data the renderer can draw",
 check("the style name is the archetype", content["style_name"] == "Deep Water")
 check("the free result's elements are carried into the paid view",
       len(content.get("elements") or []) == 6, str(content.get("elements")))
+stored_visuals = content.get("visuals") or {}
 check("and the photographs it is illustrated with",
-      set(content.get("visuals") or {}) == {"moodboard", "materials"},
-      str(content.get("visuals")))
+      set(stored_visuals) == {"sections", "hero"}, str(stored_visuals))
+check("  one for every section of the report",
+      sorted(stored_visuals.get("sections") or {})
+      == sorted(i for i, _ in SHAPE_OF),
+      str(sorted(stored_visuals.get("sections") or {})))
+check("  every one of them a frame this run actually tapped",
+      all(image_id in leo
+          for image_id in (stored_visuals.get("sections") or {}).values()),
+      str([i for i in (stored_visuals.get("sections") or {}).values()
+           if i not in leo]))
+check("  and the header's two as well",
+      all(image_id in leo
+          for image_id in (stored_visuals.get("hero") or {}).values()),
+      str(stored_visuals.get("hero")))
 
 by_section = {s["id"]: s["data"] for s in content["sections"]}
 check("the year map is twelve months, in calendar order",

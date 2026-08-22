@@ -2073,6 +2073,30 @@ def _visuals(cfg, result_style, choices):
             mats.append(one)
     if mats:
         out["materials"] = mats
+
+    # A funnel may instead name one photograph per report section, and two for
+    # the page's own header. Resolved from taps alone, with no per-style
+    # fallback: this set is the report keeping the promise the free page makes
+    # when it says it read them off their own choices, and a stock image under
+    # that claim is the claim being false. A step they somehow never reached
+    # simply leaves its section without a picture.
+    sections = {}
+    for section_id, step_id in (block.get("section_steps") or {}).items():
+        one = pick(_chosen_on_step(cfg, choices, step_id))
+        if one:
+            sections[section_id] = one
+    if sections:
+        out["sections"] = sections
+
+    hero = {}
+    for slot, step_id in (block.get("hero") or {}).items():
+        if not slot.endswith("_step"):
+            continue
+        one = pick(_chosen_on_step(cfg, choices, step_id))
+        if one:
+            hero[slot[:-len("_step")]] = one
+    if hero:
+        out["hero"] = hero
     return out or None
 
 
@@ -3546,6 +3570,56 @@ figure figcaption { background: #141B3C; }
   padding-left: 11mm;
   border-left: 0.3mm solid #2C355F;
 }
+/* --- the photographs, which are the reader's own ------------------------- */
+
+/* One per section, framed the way the page frames them: rounded, on a
+   hairline of the node gold. `break-inside: avoid` is inherited from the
+   base sheet's `figure`, so a picture is never split across two pages. */
+.tap {
+  margin: 0 0 5mm;
+  border: 0.25mm solid rgba(232, 200, 120, 0.30);
+  border-radius: 2.5mm;
+  overflow: hidden;
+}
+.tap img { height: 34mm; }
+.tap figcaption {
+  padding: 1.4mm 2.5mm;
+  font-size: 7.5pt;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: #141B3C;
+  border-top: 0.2mm solid #2C355F;
+}
+
+/* The sign's own frame, on the cover, masked to a disc the way the card on
+   the page masks it. */
+.cover-glyph {
+  width: 30mm;
+  height: 30mm;
+  margin: 0 auto 7mm;
+  border: 0.4mm solid rgba(232, 200, 120, 0.55);
+  border-radius: 50%;
+  overflow: hidden;
+}
+.cover-glyph img { height: 30mm; }
+
+/* And the horizon they chose, under the element bar. */
+.cover-band {
+  margin: 9mm 0 0;
+  border: 0.25mm solid rgba(232, 200, 120, 0.30);
+  border-radius: 2.5mm;
+  overflow: hidden;
+}
+.cover-band img { height: 26mm; }
+.cover-band figcaption {
+  padding: 1.4mm 2.5mm;
+  font-size: 7.5pt;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: #0E1430;
+  border-top: 0.2mm solid #2C355F;
+}
+
 .section-title .node {
   display: inline-block;
   width: 7mm;
@@ -3725,16 +3799,23 @@ PDF_BODY = {
 
 def _pdf_section_body(section, structured):
     """The inner HTML for one section, whichever schema it came in on."""
+    # The photograph this section was given, if the funnel names one. Here
+    # rather than in the six builders: which picture belongs to a section is
+    # the config's business, and threading it through every builder would put
+    # kitchen's board and this in the same place for no reason.
+    shot = _pdf_image(
+        (_pdf_visuals().get("sections") or {}).get(section.get("id")),
+        "tap", True)
     if structured:
         data = section.get("data")
         builder = PDF_BODY.get(section.get("id"))
         if builder and isinstance(data, dict):
             try:
-                return builder(data)
+                return shot + builder(data)
             except Exception:
                 log.exception("pdf section %s failed", section.get("id"))
     # Schema 1, or a section that arrived without usable data.
-    return "<p>%s</p>" % _e(section.get("body"))
+    return shot + "<p>%s</p>" % _e(section.get("body"))
 
 
 # The gallery's four families, in the order the result page draws them and in
@@ -3757,6 +3838,7 @@ def _zodiac_cover(content, profile, cfg):
     cover still names the sign, the archetype and the four elements.
     """
     style = _style(cfg, content.get("style_id")) if cfg else None
+    hero = _pdf_visuals().get("hero") or {}
     tags = (style or {}).get("tags") or []
     own = next((tag for tag, _n, _h in PDF_ELEMENTS if tag in tags), "")
     cells = "".join(
@@ -3776,11 +3858,13 @@ def _zodiac_cover(content, profile, cfg):
         % _e(((cfg or {}).get("result_copy") or {}).get("kicker")
              or profile["pdf_lead"]),
         '<div class="cover-card">',
+        _pdf_image(hero.get("glyph"), "cover-glyph"),
         '<h1 class="cover-name">%s</h1>' % (sign or name),
         ('<p class="cover-x">&#215; %s</p>' % name) if sign else "",
         '<div class="rule"></div>',
         ('<p class="cover-blurb">%s</p>' % blurb) if blurb else "",
         '<div class="cover-elements">%s</div>' % cells,
+        _pdf_image(hero.get("band"), "cover-band", True),
         "</div>",
         '<p class="cover-note">%s</p>' % _e(profile.get("pdf_note") or ""),
         "</section>",
@@ -3815,6 +3899,8 @@ def _pdf_html(content):
         state["images"] = _images_by_id(cfg)
         state["moodboard"] = visuals.get("moodboard")
         state["materials"] = list(visuals.get("materials") or [])
+        state["sections"] = dict(visuals.get("sections") or {})
+        state["hero"] = dict(visuals.get("hero") or {})
 
     if cover:
         blocks = [block for block in cover(content, profile, cfg) if block]

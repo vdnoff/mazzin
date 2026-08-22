@@ -2241,40 +2241,17 @@
       ]
     },
     "visuals": {
-      "moodboard_step": "palette",
-      "material_steps": [
-        "symbol",
-        "landscape"
-      ],
-      "defaults": {
-        "radiant_fire": {
-          "moodboard": "pl6a",
-          "materials": [
-            "sy8a",
-            "ls5a"
-          ]
-        },
-        "deep_water": {
-          "moodboard": "pl6d",
-          "materials": [
-            "sy8d",
-            "ls5d"
-          ]
-        },
-        "grounded_earth": {
-          "moodboard": "pl6b",
-          "materials": [
-            "sy8b",
-            "ls5b"
-          ]
-        },
-        "celestial_air": {
-          "moodboard": "pl6c",
-          "materials": [
-            "sy8c",
-            "ls5f"
-          ]
-        }
+      "hero": {
+        "glyph_step": "sign",
+        "band_step": "landscape"
+      },
+      "section_steps": {
+        "palette": "palette",
+        "mistakes": "moonphase",
+        "dna": "essence",
+        "materials": "sanctuary",
+        "splurge": "flow",
+        "shopping": "moment"
       }
     },
     "hook_slots": {
