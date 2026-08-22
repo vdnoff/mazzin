@@ -1325,6 +1325,103 @@ check("the shuffle opt-out is per step and defaults to shuffling",
       "st.shuffle === false" in engine)
 
 
+print("\n--- this funnel brings its own result page ---")
+# engine.js loads whatever these name and falls back to its own result if the
+# load fails, so a path that points at nothing is a funnel that silently
+# reverts to a page this design replaced.
+for key in ("result_module", "result_css"):
+    path = cfg.get(key) or ""
+    check("%s is declared" % key, path.startswith("/static/"), repr(path))
+    check("  and the file is on disk",
+          os.path.isfile(os.path.join(ROOT, path.lstrip("/"))), path)
+module = open(os.path.join(ROOT, cfg["result_module"].lstrip("/")),
+              encoding="utf-8").read()
+module_css = open(os.path.join(ROOT, cfg["result_css"].lstrip("/")),
+                  encoding="utf-8").read()
+check("the module exports the entry engine.js calls",
+      "window.MazzinResult" in module and "render:" in module)
+check("engine.js calls exactly that",
+      "window.MazzinResult" in engine and "mod.render(" in engine)
+# The module must not grow its own payment. engine.js hands it the live
+# consent box and pay button; a module that fetched a checkout itself would
+# be a second, untested way to take money.
+check("the module makes no payment of its own",
+      "/api/checkout" not in module and "payment-intent" not in module
+      and "fetch(" not in module)
+check("  it places the nodes engine.js wired instead",
+      "nodes.consent" in module and "nodes.payButton" in module)
+# Every rule scoped, so kitchen's result cannot pick any of it up.
+stray = [line for line in module_css.split("\n")
+         if line and not line[0].isspace()
+         and not line.startswith(("/*", "*", "}", "@", ".result-module",
+                                  ".zr-"))]
+check("every rule in the stylesheet is scoped to this module",
+      not stray, str(stray[:3]))
+check("  and mazzin.css was not touched for it",
+      ".zr-" not in css and "result-module" not in css)
+
+print("\n--- the copy the module reads ---")
+copy = cfg.get("result_copy") or {}
+for key in ("kicker", "blend_note", "taps_caption", "balance_title",
+            "strength_lead", "offer_sub"):
+    check("  result_copy.%-14s is set" % key,
+          isinstance(copy.get(key), str) and copy[key].strip(),
+          repr(copy.get(key)))
+# The lead line above the free strength is filled through the engine's hook
+# slots, so every token in it has to be one of them or it reaches the reader
+# with braces in it.
+tokens = set(re.findall(r"\{(\w+)\}", copy.get("strength_lead", "")))
+check("strength_lead names only real hook slots",
+      tokens and tokens <= set(cfg["report"]["hook_slots"]),
+      str(sorted(tokens)))
+check("locked sections each carry a teaser line",
+      all(s.get("teaser_line", "").strip() for s in sections
+          if s["id"] in locked),
+      str([s["id"] for s in sections
+           if s["id"] in locked and not s.get("teaser_line", "").strip()]))
+check("  and the visible one does not",
+      not [s for s in sections
+           if s["id"] not in locked and s.get("teaser_line")])
+for section in sections:
+    line = section.get("teaser_line") or ""
+    if not line:
+        continue
+    seen = set(re.findall(r"\{(\w+)\}", line))
+    check("  %-9s teaser fills from real hook slots" % section["id"],
+          seen <= set(cfg["report"]["hook_slots"]), str(sorted(seen)))
+    check("    and is one short line", len(line) <= 90 and "\n" not in line,
+          "%d chars" % len(line))
+# The Terms line covers everything the reader is shown, and these two blocks
+# are new places to break it.
+for label, text in ([("blend_note", copy.get("blend_note", "")),
+                     ("strength_lead", copy.get("strength_lead", "")),
+                     ("kicker", copy.get("kicker", "")),
+                     ("offer_sub", copy.get("offer_sub", ""))]
+                    + [("teaser %s" % s["id"], s.get("teaser_line", ""))
+                       for s in sections]):
+    hit = reports._banned_hit(text, reports.ZODIAC_BANNED)
+    check("  %-20s says nothing banned" % label, hit is None, hit)
+
+print("\n--- and kitchen brings none ---")
+for slug in ("kitchen", "kitchen-visualizer"):
+    other = json.load(open(os.path.join(ROOT, "funnels/%s.json" % slug)))
+    check("%-18s names no result module" % slug,
+          "result_module" not in other and "result_css" not in other)
+    check("  and no section of it carries a teaser line",
+          not [s for s in other["report"]["sections"] if s.get("teaser_line")])
+check("engine.js only delegates when a funnel asks",
+      "cfg.result_module" in engine
+      and 'if (resultModule())' in engine)
+check("  and the paid report is never delegated",
+      "SECTION_BODY[sec.id]" in engine
+      and "SECTION_BODY" not in module)
+# renderModuleResult hides #report so the module's page can stand in front of
+# it, and the paid view fills that same container. Unreachable while both
+# ways of paying navigate; asserted so it stays fixed if one stops.
+check("  and it takes its container back before drawing",
+      "el.report.hidden = false;\n      if (el.moduleRoot)" in engine)
+
+
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for f in fails:
     print("  FAIL " + f)
