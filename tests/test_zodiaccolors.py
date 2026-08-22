@@ -23,6 +23,7 @@ the render check is skipped if it is not.
 import copy
 import json
 import os
+import re
 import subprocess
 import sys
 import types
@@ -51,8 +52,25 @@ def offline(module):
     module._api = lambda: None
 
 
+def choices_for(slug, sign=None):
+    """One tap on every step, which is what a finished run is."""
+    cfg = config.load_funnel(slug)
+    out = []
+    for step in cfg["swipe"]["steps"]:
+        if sign and step["id"] == "sign":
+            out.append(sign)
+        else:
+            out.append(step["pairs"][0]["images"][0]["id"])
+    return out
+
+
 def stub_report(module, slug, style_id, sign=None):
-    """A finished report row with every section stubbed, and no model."""
+    """A finished report row with every section stubbed, and no model.
+
+    `sign` is the image id they tapped, not the label: the label is what the
+    row stores and the run is what everything else is resolved from, so
+    handing this the stored form would build a run nobody could have had.
+    """
     cfg = config.load_funnel(slug)
     style = module._style(cfg, style_id)
     name = module._style_name(cfg, style_id)
@@ -63,9 +81,12 @@ def stub_report(module, slug, style_id, sign=None):
             continue
         built[section["id"]] = module._stub_for(section["id"], name, style,
                                                 profile["stubs"])
+    choices = choices_for(slug, sign)
+    read = module._sign(cfg, choices)
     return module._assemble(cfg, slug, style_id, name, built,
                             {k: "stub" for k in built}, True,
-                            None, None, sign)
+                            None, module._visuals(cfg, style_id, choices),
+                            read.get("label") if read else None)
 
 
 def palette_of(style):
@@ -223,7 +244,7 @@ def main():
           "%r, %d stale" % (have, dropped))
 
     print("\n--- the PDF is the delivered page, on A4 ---")
-    zodiac = stub_report(reports, "zodiac", "deep_water", "Pisces")
+    zodiac = stub_report(reports, "zodiac", "deep_water", "sign_pisces")
     html = reports._pdf_html(zodiac)
     cover = html.split('<section class="cover">')[1].split("</section>")[0]
     check("the cover leads with the page's own kicker",
@@ -264,6 +285,42 @@ def main():
                       + json.dumps(s["data"].get("colors") or "")
                       for s in zodiac["sections"] if s["id"] == "palette")))
 
+    print("\n--- and it is illustrated with their own frames ---")
+    tapped = choices_for("zodiac", "sign_pisces")
+    shots = zodiac.get("visuals") or {}
+    check("the row carries one photograph per section",
+          sorted(shots.get("sections") or {})
+          == sorted(s["id"] for s in zodiac["sections"]),
+          str(sorted(shots.get("sections") or {})))
+    check("  and two for the cover", sorted(shots.get("hero") or {})
+          == ["band", "glyph"], str(shots.get("hero")))
+    every = list((shots.get("sections") or {}).values()) \
+        + list((shots.get("hero") or {}).values())
+    check("  every one of them tapped in this run",
+          all(image_id in tapped for image_id in every),
+          str([i for i in every if i not in tapped]))
+    check("each section prints the one it was given",
+          all('src="img/print/%s.jpg"' % shots["sections"][s["id"]] in html
+              for s in zodiac["sections"]),
+          str([s["id"] for s in zodiac["sections"]
+               if 'src="img/print/%s.jpg"' % shots["sections"][s["id"]]
+               not in html]))
+    check("  the cover prints its two",
+          'class="cover-glyph"' in cover and 'class="cover-band"' in cover,
+          cover[:200])
+    check("  all of them as print copies, never the gallery original",
+          "galleries/zodiac" not in html,
+          str(re.findall(r'<img src="([^"]+)"', html)))
+    check("nothing is drawn that they did not tap",
+          all(found.split("/")[-1][:-4] in tapped
+              for found in re.findall(r'src="img/print/([^"]+)"', html)),
+          str(re.findall(r'src="img/print/([^"]+)"', html)))
+    # A step nobody reached leaves its section without a picture rather than
+    # borrowing one: the page above this claims these are their own choices.
+    bare = reports._visuals(config.load_funnel("zodiac"), "deep_water", [])
+    check("a run with no taps at all is illustrated with nothing", not bare,
+          str(bare))
+
     print("\n--- the whole document renders ---")
     try:
         import weasyprint                                  # noqa: F401
@@ -280,6 +337,11 @@ def main():
         check("  and it is more than the cover",
               pdf is not None and thin is not None and len(pdf) > len(thin),
               "%d vs %d bytes" % (len(pdf or b""), len(thin or b"")))
+        # Eight photographs and six sections of prose, in something a mail
+        # server will still deliver.
+        check("  and still small enough to email",
+              pdf is not None and len(pdf) < 300 * 1024,
+              "%d KB" % (len(pdf or b"") // 1024))
 
     print("\n--- and kitchen's document is the one it always built ---")
     kitchen = stub_report(reports, "kitchen", "modern_rustic")
