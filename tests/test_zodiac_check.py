@@ -1447,7 +1447,8 @@ check("  and only ever a name it can vouch for",
       "/^[a-z0-9-]{1,24}$/.test(theme)" in engine)
 check("  mazzin.css paints the quiz furniture under it",
       all(("body.theme-zodiac %s" % sel) in css
-          for sel in (".pip.is-done {", ".card.is-chosen .card-name {",
+          for sel in (".pip.is-done {",
+                      ".cards.is-grid12 .card.is-chosen .card-name {",
                       "#screen-interstitial.is-active {")),
       "")
 check("the analysing screen is told where to land",
