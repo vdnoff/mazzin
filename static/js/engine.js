@@ -2372,6 +2372,7 @@
     el.analyzingText.textContent = cfg.analyzing.text;
     el.analyzing.hidden = false;
     el.resultBody.hidden = true;
+    startFade();
     startAnalyzing();
 
     setTimeout(function () {
@@ -2428,6 +2429,38 @@
   // their own choices, then the comparison, then the verdict — makes the same
   // wait read as work being done on their behalf. The messages divide the
   // configured duration between them, so the screen never cuts away mid-line.
+  // A funnel may name a theme, which is one class on the body and nothing
+  // else — the stylesheet decides what it means. A config without one leaves
+  // the page exactly as it was.
+  function applyTheme() {
+    var theme = (cfg && cfg.theme) || "";
+    if (/^[a-z0-9-]{1,24}$/.test(theme)) {
+      document.body.classList.add("theme-" + theme);
+    }
+  }
+
+  // The quiz is a light page and the reading is a dark one. Without this the
+  // change lands in a single frame with the result, which reads as a
+  // different site rather than as an arrival — so the page darkens across the
+  // wait it already has, and the result is where it was going.
+  //
+  // Config, not inference: absent, nothing here runs and the body keeps the
+  // background it always had.
+  function startFade() {
+    var to = (cfg && cfg.swipe && cfg.swipe.analyzing_fade_to) || "";
+    if (!/^#[0-9a-fA-F]{3,8}$/.test(to)) return;
+    var ms = Math.max(400, (cfg.analyzing && cfg.analyzing.duration_ms) || 2500);
+    var body = document.body;
+    body.style.setProperty("--fade-to", to);
+    body.style.setProperty("--fade-ms", ms + "ms");
+    // The copy switches once the ground behind it is already dark rather than
+    // easing alongside it, which would spend the middle of the wait as grey
+    // type on a grey field.
+    body.style.setProperty("--fade-swap", Math.round(ms * 0.45) + "ms");
+    // Next frame, so the starting colour is painted before the transition.
+    requestAnimationFrame(function () { body.classList.add("is-fading"); });
+  }
+
   function startAnalyzing() {
     var lines = (cfg.analyzing && cfg.analyzing.messages) || [];
     var bar = el.analyzingBar;
@@ -5914,6 +5947,7 @@
       .then(function (data) {
         cfg = data;
         document.title = (cfg.meta && cfg.meta.title) || document.title;
+        applyTheme();
         wire();
         if (unlocked) { applyStyleCopy(); reflowUnlocked(); }
         else startQuiz();
