@@ -84,13 +84,18 @@ check("accent is a fragment of the subtext",
 check("subtext accent names the time",
       cfg["swipe"]["subtext_accent"] == "60 seconds",
       cfg["swipe"].get("subtext_accent"))
-# On the sandbox key set while this is being walked end to end, so 4242
-# takes a real trip through checkout, the webhook and report generation
-# without money moving. payments._stripe_mode reads exactly "test" and calls
-# everything else live, so a typo here is a live charge rather than an error
-# — which is why the value is pinned rather than merely checked for presence.
-check("stripe_mode is the literal test", cfg.get("stripe_mode") == "test",
+# Live, as of go-live. It was on the sandbox key set while the funnel was
+# being walked end to end with a 4242 card; it now takes money on the same
+# account kitchen-visualizer does. The value is pinned rather than merely
+# checked for presence because payments._stripe_mode reads exactly "test" and
+# calls everything else live — so a typo in the other direction is a funnel
+# that silently stops charging anybody.
+check("stripe_mode is the literal live", cfg.get("stripe_mode") == "live",
       repr(cfg.get("stripe_mode")))
+check("  the same value kitchen-visualizer carries",
+      cfg.get("stripe_mode") == json.load(
+          open(os.path.join(ROOT, "funnels/kitchen-visualizer.json")))
+      .get("stripe_mode"))
 
 print("\n--- steps ---")
 WANT = [
@@ -690,13 +695,13 @@ MONTHS = ["January", "February", "March", "April", "May", "June", "July",
 
 check("the slug is routable", config.funnel_exists("zodiac"))
 # The mode is pinned as a string above; this is the half that matters — that
-# payments.py agrees the string means test, and reaches for the test key set
-# rather than falling back to the live one.
-check("payments reads this funnel as a test-mode funnel",
-      payments._stripe_mode(cfg) == payments.TEST,
+# payments.py agrees the string means live, and so reaches for the live key
+# set rather than the sandbox one.
+check("payments reads this funnel as a live-mode funnel",
+      payments._stripe_mode(cfg) == payments.LIVE,
       payments._stripe_mode(cfg))
-check("  and kitchen is still live", payments._stripe_mode(
-    config.load_funnel("kitchen")) == payments.LIVE)
+check("  which is the key set kitchen has always been on",
+      payments._stripe_mode(config.load_funnel("kitchen")) == payments.LIVE)
 check("  a mode payments does not know would be live, not an error",
       payments._stripe_mode({"stripe_mode": "sandbox"}) == payments.LIVE)
 check("load_funnel returns this config", config.load_funnel("zodiac") == cfg)
