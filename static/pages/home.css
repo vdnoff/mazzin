@@ -125,55 +125,28 @@ body {
 
 /* --- the hero preview ------------------------------------------------------ */
 
-/* Hidden by default and switched on at 900px, rather than shown and then
-   hidden: below that width it must not exist at all, and `display: none` from
-   the start means the two gallery photographs are never fetched on a phone.
-   `loading="lazy"` would not have saved them on its own — a lazy image inside
-   a displayed container still loads once it nears the viewport. */
-.hero-preview { display: none; }
+/* The teaser is on every width now, and the bezel around it is not. Below
+   900px this is the first question of the funnel being advertised, drawn at
+   the size of the screen it is being read on and one tap from the real
+   thing; a phone frame around it there would be a picture of the device in
+   the reader's hand. The frame, the tilt and the float are all in the 900px
+   block at the bottom of this file, where the mock belongs. */
+.hero-preview { display: block; margin: 22px 0 0; }
 
-.phone-tilt {
-  transform: rotate(-3deg);
-  transform-origin: center;
-}
-
-/* The float is on the inner element so the tilt above stays out of the
-   keyframes; a rotation restated inside an animation is a rotation that
-   drifts the moment either value changes. */
-.phone {
-  width: 300px;
-  height: 620px;
-  padding: 9px;
-  border-radius: 42px;
-  /* Bezel: a dark ground with a lighter inner lip, which is what reads as an
-     edge rather than as a border. */
-  background: linear-gradient(160deg, #2b2d33 0%, #16181d 55%, #23252b 100%);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset,
-              0 30px 60px -20px rgba(22, 24, 29, 0.45),
-              0 8px 24px -12px rgba(22, 24, 29, 0.3);
-  animation: phone-float 6s ease-in-out infinite;
-}
+.phone-tilt { transform-origin: center; }
 
 @keyframes phone-float {
   0%, 100% { transform: translateY(-6px); }
   50% { transform: translateY(6px); }
 }
 
-/* Inside the glass the layout is the funnel's own: a flex column with the
-   card row as the one elastic child and the slack collecting above the
-   question. Scaled down, not redesigned — the point is that it looks like
-   the thing they are about to use. */
+/* The layout is the funnel's own: a flex column with the card row as the one
+   elastic child and the slack collecting above the question. Scaled, not
+   redesigned — the point is that it looks like the thing they are about to
+   use, because it is. */
 .phone-screen {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  /* The deep bottom padding was propping up the old layout, in which the
-     hint floated 111px clear of the screen edge. It does not any more — the
-     hint sits 16px off the bottom now, and 12 is that share of this frame. */
-  padding: 15px 13px 12px;
-  border-radius: 34px;
-  background: var(--bg);
-  overflow: hidden;
 }
 
 .mini-progress {
@@ -256,11 +229,21 @@ body {
   flex: 1 1 auto;
   gap: 7px;
   min-height: 0;
+  /* Whatever the viewport has left once the copy above it has been read.
+     A fixed share of the height does not work here the way it does in the
+     funnel: the funnel's question is the only thing on its screen, and this
+     one sits under a headline, a paragraph and a fact strip that measure the
+     same 418px on every phone. So the row takes the remainder, floored so it
+     cannot become a letterbox on a short screen and capped so it does not
+     outgrow the frame it sits in on a tall one. */
+  height: calc(100dvh - 462px);
+  min-height: 190px;
   max-height: 430px;
 }
 
 .mini-card {
   position: relative;
+  display: block;
   flex: 1 1 0;
   min-width: 0;
   border-radius: 15px;
@@ -563,10 +546,48 @@ body {
     padding: 40px 0 34px;
   }
 
+  /* Back inside a phone, for a visitor who is not holding one. */
   .hero-preview {
     display: flex;
     justify-content: center;
+    margin: 0;
   }
+
+  .phone-tilt { transform: rotate(-3deg); }
+
+  /* The float is on the inner element so the tilt above stays out of the
+     keyframes; a rotation restated inside an animation is a rotation that
+     drifts the moment either value changes. */
+  .phone {
+    width: 300px;
+    height: 620px;
+    padding: 9px;
+    border-radius: 42px;
+    /* Bezel: a dark ground with a lighter inner lip, which is what reads as
+       an edge rather than as a border. */
+    background: linear-gradient(160deg, #2b2d33 0%, #16181d 55%, #23252b 100%);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset,
+                0 30px 60px -20px rgba(22, 24, 29, 0.45),
+                0 8px 24px -12px rgba(22, 24, 29, 0.3);
+    animation: phone-float 6s ease-in-out infinite;
+  }
+
+  .phone-screen {
+    height: 100%;
+    /* The deep bottom padding was propping up the old layout, in which the
+       hint floated 111px clear of the screen edge. It does not any more —
+       the hint sits 16px off the bottom now, and 12 is that share of this
+       frame. */
+    padding: 15px 13px 12px;
+    border-radius: 34px;
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  /* Back to filling the frame: inside the bezel the screen has a height of
+     its own, so the row flexes into it the way it always did and the
+     viewport arithmetic above has nothing to do. */
+  .mini-cards { height: auto; max-height: none; }
 }
 
 @media (min-width: 1000px) {

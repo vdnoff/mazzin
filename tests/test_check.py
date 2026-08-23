@@ -226,7 +226,11 @@ check("kicker node is gone from the shell",
       "swipe-headline" not in funnel_html)
 home_html = open(os.path.join(ROOT, "static/pages/home.html")).read()
 check("home preview drops the kicker", "mini-kicker" not in home_html)
-check("home preview accents the saving", "mini-money" in home_html)
+# The saving is a claim about a renovation. It left the hero when the hero
+# stopped being the renovation, and it is on the card that sells one.
+check("the saving is on the kitchen card, not over the hero question",
+      "mini-money" not in home_html
+      and "$4,000+</strong> saved on your\n          renovation" in home_html)
 
 print("\n--- phase 6: floor grid6 ---")
 floor = by_step["floor"]
