@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mazzin — analyses that save you money</title>
-<meta name="description" content="Mazzin turns two minutes of tapping into a precise, personalized analysis — the palette, the materials, and the expensive mistakes to avoid. No sign-up.">
+<meta name="description" content="Mazzin turns a minute of tapping into a precise, personalized analysis. Live now: Your Cosmic Profile — your sign, your element, your energy. For entertainment and self-discovery. No sign-up.">
 <link rel="icon" href="/static/brand/favicon.ico" sizes="32x32">
 <link rel="icon" type="image/svg+xml" href="/static/brand/mark.svg">
 <link rel="icon" type="image/png" sizes="192x192" href="/static/brand/icon-192.png">
@@ -13,13 +13,13 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Mazzin">
 <meta property="og:url" content="https://mazzin.com/">
-<meta property="og:title" content="Mazzin — analyses that save you money">
-<meta property="og:description" content="Two minutes of tapping — a precise, personalized analysis that protects you from expensive mistakes.">
-<meta property="og:image" content="https://mazzin.com/static/galleries/kitchen/g1a.webp">
+<meta property="og:title" content="Mazzin — Your Cosmic Profile in 60 seconds of taps">
+<meta property="og:description" content="Your sign, your element, your energy — read from sixty seconds of taps. Entertainment and self-discovery, from $3. No sign-up.">
+<meta property="og:image" content="https://mazzin.com/static/galleries/zodiac/og.webp">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Mazzin — analyses that save you money">
-<meta name="twitter:description" content="Two minutes of tapping — a precise, personalized analysis that protects you from expensive mistakes.">
-<meta name="twitter:image" content="https://mazzin.com/static/galleries/kitchen/g1a.webp">
+<meta name="twitter:title" content="Mazzin — Your Cosmic Profile in 60 seconds of taps">
+<meta name="twitter:description" content="Your sign, your element, your energy — read from sixty seconds of taps. Entertainment and self-discovery, from $3. No sign-up.">
+<meta name="twitter:image" content="https://mazzin.com/static/galleries/zodiac/og.webp">
 <link rel="stylesheet" href="/static/pages/home.css">
 </head>
 <body>
@@ -36,46 +36,47 @@
     <div class="hero-copy">
       <h1>Analyses that save you money.</h1>
       <p class="hero-sub">Mazzin is a display-tap AI tool trained on thousands of
-      real choices. Two minutes of tapping — a precise, personalized analysis
-      that protects you from expensive mistakes.</p>
+      real choices. Live now: <strong>Your Cosmic Profile</strong> in 60 seconds
+      of taps — your sign, your element, your energy.</p>
       <p class="hero-trust">
-        <span>No sign-up</span><span>~2 minutes</span><span>From $3</span>
+        <span>No sign-up</span><span>~60 seconds</span><span>From $3</span>
       </p>
     </div>
 
-    <!-- A picture of the product, not the product. No engine, no handlers,
-         nothing to tap: it exists so a desktop visitor can see what two
-         minutes of tapping actually looks like before they commit to it.
-         Hidden outright below 900px — on a phone the real thing is one tap
-         away, and a mock of a screen you are holding is worse than nothing.
-         aria-hidden because a screen reader announcing a worktop question
-         out of context would be describing a control that is not there. -->
-    <div class="hero-preview" aria-hidden="true">
+    <!-- The first question of the funnel that is being advertised, and a way
+         into it. On a desktop it sits inside a phone, because that is the
+         device it runs on and a visitor there is looking at a picture of
+         something they will use elsewhere. On a phone the bezel goes and the
+         pair is simply the pair — a mock of a screen you are holding is worse
+         than nothing, but the question itself is the product, and it is one
+         tap from the real thing.
+
+         Both frames go to the same place: this is the question, not the
+         answer — the funnel asks it again properly and scores whichever they
+         actually choose. -->
+    <div class="hero-preview">
       <div class="phone-tilt">
         <div class="phone">
           <div class="phone-screen">
 
-            <div class="mini-progress">
+            <div class="mini-progress" aria-hidden="true">
               <span class="mini-pips">
-                <i class="is-current"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                <i class="is-current"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
               </span>
             </div>
 
-            <p class="mini-sub"><span class="mini-money">$4,000+</span> saved on
-            your renovation</p>
-
-            <p class="mini-question">Which kitchen would you walk into?</p>
+            <p class="mini-question">Which sky calls to you?</p>
 
             <div class="mini-cards">
-              <span class="mini-card is-tapped">
-                <img src="/static/galleries/kitchen/hk1a.webp" alt="" width="640" height="982" loading="lazy" decoding="async">
-              </span>
-              <span class="mini-card">
-                <img src="/static/galleries/kitchen/hk1b.webp" alt="" width="640" height="982" loading="lazy" decoding="async">
-              </span>
+              <a class="mini-card is-tapped" href="/zodiac">
+                <img src="/static/galleries/zodiac/zk1a.webp" alt="A fiery sunset sky" width="640" height="982" decoding="async">
+              </a>
+              <a class="mini-card" href="/zodiac">
+                <img src="/static/galleries/zodiac/zk1b.webp" alt="A starry night sky" width="640" height="982" decoding="async">
+              </a>
             </div>
 
-            <p class="mini-hint"><i class="mini-dot"></i>Tap your choice</p>
+            <p class="mini-hint"><i class="mini-dot" aria-hidden="true"></i>Tap your choice</p>
 
           </div>
         </div>
@@ -91,13 +92,27 @@
     <ul class="grid">
       <li class="card is-live">
         <div class="card-media">
-          <img src="/static/galleries/kitchen/g1a.webp" alt="A kitchen in warm wood and stone" width="640" height="982" fetchpriority="high">
+          <img src="/static/galleries/zodiac/og.webp" alt="A night sky in indigo and gold" width="1200" height="630" fetchpriority="high">
+        </div>
+        <div class="card-body">
+          <span class="badge is-now">Live</span>
+          <h3>Cosmic Profile</h3>
+          <p>Your sign, your element, your energy — read from sixty seconds of
+          taps.</p>
+          <a class="card-cta" href="/zodiac">Start the quiz</a>
+        </div>
+      </li>
+
+      <li class="card is-live">
+        <div class="card-media">
+          <img src="/static/galleries/kitchen/g1a.webp" alt="A kitchen in warm wood and stone" width="640" height="982" loading="lazy" decoding="async">
         </div>
         <div class="card-body">
           <span class="badge is-now">Live</span>
           <h3>Kitchen Renovation</h3>
           <p>Find your kitchen style — the exact palette, materials and the
-          mistakes to avoid.</p>
+          mistakes to avoid. <strong>$4,000+</strong> saved on your
+          renovation.</p>
           <a class="card-cta" href="/kitchen">Start the quiz</a>
         </div>
       </li>
@@ -160,7 +175,8 @@
   <div class="note">
     <p>Mazzin analyses are made for entertainment and self-discovery purposes
     only. They are not professional interior-design, architectural,
-    construction, automotive, or health advice.</p>
+    construction, automotive, health, psychological, financial, or legal
+    advice, and they are not relationship or career counselling.</p>
   </div>
 
 </main>

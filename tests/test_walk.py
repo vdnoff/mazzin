@@ -302,24 +302,31 @@ def run(side="alt"):
                                     device_scale_factor=2)
             home.goto("http://127.0.0.1:%d/" % PORT)
             home.wait_for_selector(".hero-preview")
+            # The hero teaser is the funnel being advertised, which is the
+            # zodiac one now. The saving line went with the kitchen — it is a
+            # claim about a renovation and it belongs on the card that sells
+            # one, not over a question about the sky.
             check("home preview asks the hook question",
                   home.inner_text(".mini-question")
-                  == "Which kitchen would you walk into?",
+                  == "Which sky calls to you?",
                   home.inner_text(".mini-question"))
             check("home preview hides the step count, like the quiz",
                   home.query_selector(".mini-count") is None)
-            check("home preview leads with the saving",
-                  home.inner_text(".mini-sub")
-                  == "$4,000+ saved on your renovation",
-                  home.inner_text(".mini-sub"))
-            check("home preview accents the figure",
-                  home.inner_text(".mini-money") == "$4,000+")
-            check("home preview draws 13 pips",
-                  home.eval_on_selector_all(".mini-pips i", "n => n.length") == 13)
+            check("home preview makes no claim over the question",
+                  home.query_selector(".mini-sub") is None)
+            check("the saving moved to the card that sells a renovation",
+                  "$4,000+" in home.inner_text(".card.is-live:nth-child(2)"),
+                  home.inner_text(".card.is-live:nth-child(2)"))
+            check("home preview draws 12 pips",
+                  home.eval_on_selector_all(".mini-pips i", "n => n.length") == 12)
             check("home preview shows the hook images",
                   sorted(os.path.basename(s) for s in home.eval_on_selector_all(
                       ".mini-card img", "ns => ns.map(n => n.getAttribute('src'))"))
-                  == ["hk1a.webp", "hk1b.webp"])
+                  == ["zk1a.webp", "zk1b.webp"])
+            check("  and both of them lead into that funnel",
+                  home.eval_on_selector_all(
+                      ".mini-card", "ns => ns.map(n => n.getAttribute('href'))")
+                  == ["/zodiac", "/zodiac"])
             home.screenshot(path=os.path.join(SHOTS, "shot-home.png"))
             browser.close()
     finally:
