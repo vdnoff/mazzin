@@ -303,3 +303,6 @@ bottom.
 
 ## 2026-08-22 — claude/zodiac-delivered-experience
 - zodiac: delivered report redesign, real power colors, badge fix, transition bridges
+
+## 2026-08-23 — claude/zodiac-scope-fixes
+- zodiac: badge scope rollback, report images, themed transit screens
