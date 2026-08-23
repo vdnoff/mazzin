@@ -31,6 +31,7 @@ import threading
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, REPO)
 
+from PIL import Image                                     # noqa: E402
 from playwright.sync_api import sync_playwright           # noqa: E402
 
 import config                                             # noqa: E402
@@ -66,6 +67,11 @@ database.query_all = lambda *a, **kw: []
 reports._api = lambda: None
 
 REPORTS = {}
+CHOICES = {}
+
+# Flipped by the screens check: the same route, answering the way it answers
+# while the report is still being written and mailed.
+PENDING = [False]
 
 
 def build(slug, style_id, sign=None):
@@ -76,6 +82,7 @@ def build(slug, style_id, sign=None):
             choices.append(sign)
         else:
             choices.append(step["pairs"][0]["images"][0]["id"])
+    CHOICES[slug] = choices
     content = reports.start_report(1, slug, style_id, {"water": 9, "moon": 6},
                                    choices=choices)
     # The stored row says "stub-2" with no model; the client only reads the
@@ -100,6 +107,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if path == "/api/report":
             slug = "zodiac" if "zodiac" in (self.headers.get("referer") or "") \
                 else "kitchen"
+            if PENDING[0]:
+                return self._json({"complete": False,
+                                   "email_masked": "s***@x.com",
+                                   "report": {"version": "llm-2-partial",
+                                              "sections": []}})
             return self._json({"complete": True, "email_masked": "s***@x.com",
                                "report": REPORTS[slug]})
         if path in ("/zodiac", "/kitchen"):
@@ -225,6 +237,88 @@ def badge(page):
               "\u2713" in (after["after"] or ""), after["after"])
         if want != "Sagittarius":
             names = sign_step(page)
+
+    # And the other ten, without walking the step twelve times: the tick is
+    # drawn by a class, so setting the class is the same measurement.
+    names = sign_step(page)
+    page.evaluate("""() => document.querySelectorAll('#cards .card')
+        .forEach(c => c.classList.add('is-chosen'))""")
+    page.wait_for_timeout(300)
+    cut = page.evaluate(
+        """() => [...document.querySelectorAll('#cards .card-name')]
+            .filter(n => n.scrollWidth > n.clientWidth + 1)
+            .map(n => n.innerText.trim())""")
+    check("all twelve fit whole with the tick beside them", not cut, str(cut))
+    gold = page.eval_on_selector_all(
+        "#cards .card.is-chosen .card-name",
+        "ns => [...new Set(ns.map(n => getComputedStyle(n).backgroundColor))]")
+    check("  and every one of them takes the gold", gold == [GOLD], str(gold))
+
+
+# What the pill was before the gold treatment was written, taken off the
+# revision it was written against. The chosen card on every step but one has
+# to still be exactly this.
+PILL_INK = "rgb(255, 255, 255)"
+PILL_GROUND = "rgba(16, 20, 40, 0.75)"
+
+
+def other_steps(page):
+    """Every non-grid12 step, chosen, measured against the pre-branch pill."""
+    print("\n--- and every other step keeps the pill it had ---")
+    page.goto(url("/zodiac"))
+    page.wait_for_selector("#cards .card", timeout=20000)
+    page.wait_for_timeout(400)
+    seen = 0
+    clipped = []
+    wrong = []
+    for _ in range(14):
+        # The set that is leaving is still in the DOM and is not clickable, so
+        # every step waits for a settled one rather than for any one at all.
+        try:
+            page.wait_for_selector("#cards .card:not(.is-chosen)",
+                                   state="visible", timeout=8000)
+        except Exception:
+            break
+        page.wait_for_timeout(300)
+        if "is-grid12" in (page.get_attribute("#cards", "class") or ""):
+            advance(page)
+            continue
+        page.locator("#cards .card").first.click()
+        page.wait_for_timeout(340)
+        got = page.evaluate(
+            """() => {
+                const card = document.querySelector('#cards .card.is-chosen');
+                const name = card.querySelector('.card-name');
+                const s = getComputedStyle(name);
+                const seen = (el) => {
+                    if (!el) return false;
+                    const c = getComputedStyle(el);
+                    return c.display !== 'none' && c.visibility !== 'hidden'
+                        && parseFloat(c.opacity) > 0.01;
+                };
+                return {text: name.innerText.trim(),
+                        colour: s.color, ground: s.backgroundColor,
+                        shown: parseFloat(s.opacity) > 0.01,
+                        after: getComputedStyle(name, '::after').content,
+                        clipped: name.scrollWidth > name.clientWidth + 1,
+                        check: seen(card.querySelector('.check')),
+                        pill: seen(card.querySelector('.reaction'))};
+            }""")
+        seen += 1
+        if got["clipped"]:
+            clipped.append(got["text"])
+        if (got["colour"] != PILL_INK or got["ground"] != PILL_GROUND
+                or got["after"] not in ("none", "normal") or not got["shown"]
+                or not got["check"] or got["pill"]):
+            wrong.append((got["text"], got["ground"], got["colour"],
+                          got["after"], got["check"], got["pill"]))
+        page.wait_for_timeout(HOLD_MS)
+        clear_interstitial(page)
+        page.wait_for_timeout(400)
+    check("every step but the sign step was walked", seen >= 9, seen)
+    check("  the chosen badge is the ink and ground it always was",
+          not wrong, str(wrong[:3]))
+    check("  no name is cut off, chosen or not", not clipped, str(clipped))
 
 
 def kitchen_badge(page):
@@ -384,11 +478,118 @@ def delivered(page):
     check("  and nothing asks for money",
           page.locator("#pay-button").count() == 0
           or not page.locator("#pay-button").is_visible())
+    shots = page.eval_on_selector_all(
+        ".zr-shot img", "ns => ns.map(n => n.getAttribute('src'))")
+    check("the page is illustrated", len(shots) >= 4, len(shots))
+    ids = [src.split("/").pop().split(".")[0] for src in shots]
+    check("  every photograph on it is one they tapped",
+          all(image_id in CHOICES["zodiac"] for image_id in ids), str(ids))
+    want = REPORTS["zodiac"].get("visuals") or {}
+    check("  one under every node that was given one",
+          [i for i in ids if i in (want.get("sections") or {}).values()]
+          == list((want.get("sections") or {}).values()),
+          str(ids))
+    check("  and the horizon they chose under the hero card",
+          page.locator(".zr-band img").count() == 1
+          and page.get_attribute(".zr-band img", "src").endswith(
+              (want.get("hero") or {}).get("band", "?") + ".webp"),
+          page.locator(".zr-band img").count()
+          and page.get_attribute(".zr-band img", "src"))
+    check("  nothing is drawn from the gallery at large",
+          all("/galleries/zodiac/" in src for src in shots), str(shots))
     check("the footnote says where else the profile is",
           page.locator(".zr-footnote").count() == 1
           and "PDF" in page.inner_text(".zr-footnote"),
           page.locator(".zr-footnote").count()
           and page.inner_text(".zr-footnote"))
+
+
+# --- d) the two screens between the taps and the reading -------------------
+
+SHOTS = os.path.dirname(os.path.abspath(__file__))
+
+
+def white_share(page, name):
+    """How much of the viewport is still the page's original white.
+
+    A computed background is not the question here — the bug this guards was
+    two elements disagreeing, `body` dark inside an `html` that stayed white,
+    which every assertion about `body` would have called a pass. So the screen
+    is photographed and the pixels are counted.
+    """
+    path = os.path.join(SHOTS, "transit_%s.png" % name)
+    page.screenshot(path=path)
+    with Image.open(path) as shot:
+        raw = shot.convert("RGB").tobytes()
+    os.remove(path)
+    pale = sum(1 for i in range(0, len(raw), 3)
+               if raw[i] > 235 and raw[i + 1] > 235 and raw[i + 2] > 235)
+    return 300.0 * pale / len(raw)
+
+
+def screens(page, slug, dark):
+    """The wait after the money, and the arrival after the analysing."""
+    print("\n--- %s: the screens nobody looks at until they are the only one ---"
+          % slug)
+    PENDING[0] = True
+    try:
+        page.goto(url("/%s?cs=cs_test_1" % slug))
+        page.wait_for_selector("#analyzing", state="visible", timeout=20000)
+        page.wait_for_timeout(1200)
+        ground = page.evaluate(
+            """() => ({html: getComputedStyle(
+                          document.documentElement).backgroundColor,
+                       body: getComputedStyle(document.body).backgroundColor})""")
+        check("the compiling screen is on the report's ground" if dark
+              else "the compiling screen is unchanged",
+              (ground["body"] == INDIGO) == dark, str(ground))
+        check("  the canvas behind it too, not only the column",
+              (ground["html"] == INDIGO) == dark, str(ground))
+        pale = white_share(page, slug + "-wait")
+        check("  and no part of the viewport is left white" if dark
+              else "  and it is as pale as it always was",
+              (pale < 2.0) == dark, "%.1f%% white" % pale)
+        check("  it still says what it is doing",
+              "report" in page.inner_text("#analyzing-text").lower(),
+              page.inner_text("#analyzing-text"))
+    finally:
+        PENDING[0] = False
+
+    # And the other one: analysing, then the gap while the result page loads.
+    page.goto(url("/" + slug))
+    page.wait_for_selector("#cards .card", timeout=20000)
+    page.wait_for_timeout(400)
+    for _ in range(16):
+        if page.locator("#analyzing").count() and \
+                page.locator("#analyzing").is_visible():
+            break
+        if not page.locator("#cards .card").count():
+            break
+        page.locator("#cards .card").first.click()
+        page.wait_for_timeout(HOLD_MS + 350)
+        clear_interstitial(page)
+    page.wait_for_selector("#analyzing", state="visible", timeout=15000)
+    duration = (config.load_funnel(slug).get("analyzing") or {}).get(
+        "duration_ms") or 2500
+    page.wait_for_timeout(int(duration * 1.05))
+    pale = white_share(page, slug + "-load")
+    check("the page waiting for the result is the report's ground" if dark
+          else "the page waiting for the result is unchanged",
+          (pale < 2.0) == dark, "%.1f%% white" % pale)
+    for _ in range(40):
+        page.wait_for_timeout(100)
+        shown = page.evaluate(
+            """() => {
+                const m = document.getElementById('result-module');
+                const b = document.getElementById('result-body');
+                return !!((m && !m.hidden) || (b && !b.hidden));
+            }""")
+        if shown:
+            break
+    pale = white_share(page, slug + "-result")
+    check("  and so is the result that lands on it" if dark
+          else "  and so is the result",
+          (pale < 2.0) == dark, "%.1f%% white" % pale)
 
 
 def kitchen_delivered(page):
@@ -420,11 +621,14 @@ def main():
             page = browser.new_page(viewport={"width": 380, "height": 844},
                                     device_scale_factor=2)
             badge(page)
+            other_steps(page)
             kitchen_badge(page)
             bridges(page, "zodiac", True)
             bridges(page, "kitchen", False)
             delivered(page)
             kitchen_delivered(page)
+            screens(page, "zodiac", True)
+            screens(page, "kitchen", False)
             browser.close()
     finally:
         httpd.shutdown()

@@ -14,10 +14,17 @@ originals are tall screen images: two of them took a report from 28 KB to
 is pre-cropped to the box the stylesheet actually draws it in and saved as a
 JPEG, and `reports._print_src` prefers it over the original.
 
-Two boxes, both out of PDF_CSS:
+The boxes, all out of PDF_CSS:
 
-    .board   the moodboard, full column width x 42mm
-    .shots   the two surface shots, half width x 32mm
+    .board        the moodboard, full column width x 42mm
+    .shots        the two surface shots, half width x 32mm
+    .tap          a section's own photograph, full width x 34mm
+    .cover-band   the horizon on the cover, full width x 26mm
+    .cover-glyph  the sign's frame, a 30mm disc
+
+A funnel that names a photograph per section draws one on every page, so
+those boxes carry a tighter ceiling than the single board a kitchen report
+has: eight frames at the board's 60 KB would be half a megabyte of mail.
 
 Which images a funnel can draw is its own config's business — the moodboard
 step, the material steps, and every per-style default — so the set is read
@@ -38,9 +45,16 @@ import config          # noqa: E402
 
 OUT = os.path.join(config.STATIC_DIR, "img", "print")
 
-# (width, height) in pixels, at roughly 150dpi for the mm the CSS asks for.
+# (width, height) in pixels, at roughly 150dpi for the mm the CSS asks for,
+# and the ceiling each is written under.
 BOARD = (1000, 241)
 SHOT = (620, 232)
+TAP = (760, 200)
+BAND = (900, 154)
+GLYPH = (280, 280)
+
+# A report that draws one picture per section carries eight of them.
+CEILING = {TAP: 30 * 1024, BAND: 34 * 1024, GLYPH: 22 * 1024}
 
 # The ceiling tests/test_check.py holds these to. Quality steps down until a
 # frame fits rather than being fixed and hoped for: a busy photograph and a
@@ -71,6 +85,17 @@ def wanted(cfg):
             out.setdefault(default["moodboard"], BOARD)
         for image_id in default.get("materials") or []:
             out.setdefault(image_id, SHOT)
+    # A funnel that illustrates each section from the reader's own taps: every
+    # frame on those steps can end up in a PDF, so every one of them needs a
+    # print copy.
+    for step_id in (visuals.get("section_steps") or {}).values():
+        for image_id in ids_on(step_id):
+            out[image_id] = TAP
+    hero = visuals.get("hero") or {}
+    for image_id in ids_on(hero.get("band_step")):
+        out[image_id] = BAND
+    for image_id in ids_on(hero.get("glyph_step")):
+        out[image_id] = GLYPH
     return out
 
 
@@ -107,12 +132,12 @@ def crop_to(image, box):
     return image.resize(box, Image.LANCZOS)
 
 
-def write(path, image):
+def write(path, image, ceiling=MAX_BYTES):
     """Save at the best quality that stays under the ceiling."""
     for quality in QUALITY:
         image.save(path, "JPEG", quality=quality, optimize=True,
                    progressive=True)
-        if os.path.getsize(path) <= MAX_BYTES:
+        if os.path.getsize(path) <= ceiling:
             return quality, os.path.getsize(path)
     return QUALITY[-1], os.path.getsize(path)
 
@@ -145,7 +170,7 @@ def main(argv=None):
         with Image.open(src) as image:
             out = crop_to(image.convert("RGB"), box)
         path = os.path.join(OUT, image_id + ".jpg")
-        quality, size = write(path, out)
+        quality, size = write(path, out, CEILING.get(box, MAX_BYTES))
         print("  %-14s %-9s q%-3d %5.1f KB"
               % (image_id, "%dx%d" % box, quality, size / 1024.0))
 

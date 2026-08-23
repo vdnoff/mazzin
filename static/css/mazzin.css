@@ -76,8 +76,10 @@ body.theme-zodiac .pip.is-done { background: #E8C878; }
 
 /* The selected badge takes the funnel's own accent too — the default is the
    rust every other funnel confirms in, and on a gold-and-indigo card that is
-   the one colour on screen belonging to somebody else. */
-body.theme-zodiac .card.is-chosen .card-name {
+   the one colour on screen belonging to somebody else. The sign step only:
+   see the note beside the grid12 rules for why the other steps keep the pill
+   they always had. */
+body.theme-zodiac .cards.is-grid12 .card.is-chosen .card-name {
   color: #221A05;
   background: #E8C878;
 }
@@ -128,6 +130,43 @@ body.is-fading {
   background-color: var(--fade-to, #ffffff);
   transition: background-color var(--fade-ms, 2500ms) ease-out;
 }
+
+/* The html element is painted too. `html, body { background: var(--bg) }` at
+   the top of this sheet means darkening the body alone darkens a 560px column
+   centred in a white page — which is the half-white arrival, and is worse the
+   wider the screen. The canvas has to go with it. */
+html:has(body.is-fading) {
+  background-color: var(--fade-to, #ffffff);
+  transition: background-color var(--fade-ms, 2500ms) ease-out;
+}
+
+/* Arrived rather than faded to: somebody opening the link in their mail has
+   no light screen behind them, so there is nothing to animate away from and
+   an animation would be a white flash with a name. */
+body.is-arrived,
+html:has(body.is-arrived),
+body.is-arrived .analyzing-text,
+body.is-arrived .analyzing-note,
+body.is-arrived .analyzing-status { transition: none; }
+
+/* The wait after the money, which is this funnel's screen too: the profile is
+   being written and mailed, and until this it was being written on white. */
+body.is-fading .analyzing-bar { background: rgba(232, 200, 120, 0.20); }
+body.is-fading .analyzing-bar-fill {
+  background: linear-gradient(90deg,
+    rgba(232, 200, 120, 0.20) 0%, #E8C878 45%, #E8C878 55%,
+    rgba(232, 200, 120, 0.20) 100%);
+  background-size: 220% 100%;
+}
+body.is-fading .result-kicker { color: #E8C878; }
+body.is-fading .result-name { color: #EDEFF6; }
+body.is-fading .result-match,
+body.is-fading .result-blurb { color: #A8AECC; }
+
+/* The one accent this screen gets. There is no kicker on it and nothing to
+   press — three dots and a rotating line — so the gold goes where the eye
+   already is while it waits. */
+body.is-arrived .dots span { background: rgba(232, 200, 120, 0.55); }
 
 /* Switched rather than crossfaded, at a point where the ground behind it has
    already gone dark. A colour eased across the whole wait would spend the
@@ -658,11 +697,18 @@ body.is-fading .dots span { background: #868FB6; }
   left: 50%;
   bottom: 8px;
   transform: translateX(-50%);
-  max-width: 90%;
-  padding: 6px 14px;
+  /* Sized to the widest name a two-column step carries. At 380px those cells
+     are 169px across, and "Rooftop under stars" wanted 174 of them at 15px
+     with 14px of padding either side — so it came back as "Rooftop under
+     sta…", and so did "Fluorescent office" and "Still mountain lake". A name
+     the reader cannot finish reading is the failure this whole mode exists to
+     prevent, on the three cards it happened to rather than only on the grid
+     that was measured. */
+  max-width: 96%;
+  padding: 5px 10px;
   border-radius: 999px;
   font-family: var(--font-display, inherit);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: 0.01em;
@@ -691,7 +737,7 @@ body.is-fading .dots span { background: #868FB6; }
 /* Subordinate to the art, and sized to the cell it sits in. Twelve cells are
    narrow enough that the pair size would leave "Sagittarius" as three
    characters and an ellipsis. */
-.cards.is-grid6 .card-name { font-size: 14px; padding: 5px 12px; }
+.cards.is-grid6 .card-name { padding: 5px 12px; }
 
 /* Twelve cells are narrow and one of the names is "Sagittarius". At 380px a
    cell is about 110px across, and the pill has to hold the longest of the
@@ -718,31 +764,66 @@ body.is-fading .dots span { background: #868FB6; }
    a browser without `:has()` falls back to the chip it has always drawn. */
 .cards:has(.card-name) .reaction { display: none !important; }
 
-/* The big corner badge goes too. At twelve-up it is 34px over a 111px cell
-   and lands on the pill; the check below is the compact version of the same
-   confirmation, inside the label rather than beside it. */
-.cards:has(.card-name) .check { display: none; }
+/* The corner check moves to the top of the card for the same reason. It has
+   always sat in the bottom corner, which was free while the badge vanished on
+   selection; now that the badge stays, the two land on each other and the
+   disc takes a bite out of the name. The top corner is art, and the ring
+   around the card is what carries the selection anyway. */
+.cards:has(.card-name) .check {
+  top: 11px;
+  bottom: auto;
+}
 
 .cards.is-picking .card:not(.is-chosen) .card-name { opacity: 0.5; }
+
+/* The badge no longer disappears when its card is chosen. It used to, because
+   the chip that replaced it said the same word; with the chip gone that rule
+   would leave the one card they tapped as the only unnamed thing on screen.
+   So it simply stays — the ring, the lift and the corner check are what say
+   it was chosen, exactly as they did on every step before badge mode. */
+.card.is-chosen .card-name { opacity: 1; }
+
+/* --- and the twelve-up, which is a different problem ---------------------- */
+
+/* Everything below is the sign step alone. The other steps are two, four or
+   six photographs with room for the ring and the corner check to be read on
+   their own; twelve cells at 111px are not, and the treatment that fixes them
+   is wrong everywhere else — it repainted a pill on the drain step that had
+   nothing wrong with it.
+
+   At twelve-up the corner check is 34px over a 111px cell and lands on the
+   pill, so it goes, and the confirmation moves inside the label. */
+.cards.is-grid12 .check { display: none; }
 
 /* The badge stays exactly where it was and gains a tick. Nothing moves, so
    the eye does not have to find the name again to check it got the right
    one — which is the whole reason this funnel names its cards. */
-.card.is-chosen .card-name {
-  opacity: 1;
+.cards.is-grid12 .card.is-chosen .card-name {
   color: #16181d;
   background: var(--accent, #C05621);
   transition: background-color 160ms ease-out, color 160ms ease-out;
 }
 
-.card.is-chosen .card-name::after {
+.cards.is-grid12 .card.is-chosen .card-name::after {
   content: "\2713";
-  margin-left: 6px;
+  margin-left: 5px;
   font-weight: 700;
 }
 
+/* The tick has to fit beside the longest of the twelve. It is drawn inside
+   the pill, so the pill grows by its width — and at the size the unchosen
+   badge is tuned to, "Sagittarius" plus a tick is wider than the cell and
+   comes back as "Sagittariu…", which is the one outcome this whole mode
+   exists to prevent. The chosen pill gets the last of the cell's margin and
+   trades a little of its own padding for the tick. */
+.cards.is-grid12 .card.is-chosen .card-name {
+  max-width: 100%;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
 @supports ((backdrop-filter: blur(4px)) or (-webkit-backdrop-filter: blur(4px))) {
-  .card.is-chosen .card-name {
+  .cards.is-grid12 .card.is-chosen .card-name {
     background: var(--accent, #C05621);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;

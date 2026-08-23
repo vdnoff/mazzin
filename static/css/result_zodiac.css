@@ -508,6 +508,46 @@ body:has(.result-module) {
 
 .zr-el.is-own .zr-el-dot { opacity: 1; }
 
+/* --- the photographs they chose ------------------------------------------ */
+
+/* Every image on this page came out of their own run, so each one is framed
+   the way the cards were: rounded, on a hairline of the same gold the nodes
+   are marked in. Modest on purpose — the frame is evidence beside the
+   sentence, not an illustration the sentence hangs off. */
+.zr-shot {
+  margin: 12px 0 0;
+  border: 1px solid rgba(232, 200, 120, 0.28);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--zr-panel);
+}
+
+.zr-shot img {
+  display: block;
+  width: 100%;
+  height: 132px;
+  object-fit: cover;
+}
+
+.zr-shot-cap {
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--zr-faint);
+  border-top: 1px solid var(--zr-line);
+}
+
+/* The one under the hero card is wider and shallower — a horizon rather than
+   a portrait, which is what a landscape pick is. */
+.zr-band {
+  margin-top: 18px;
+  border-radius: 16px;
+}
+
+.zr-band img { height: 108px; }
+
 .zr-body {
   margin: 10px 0 0;
   font-size: 15px;

@@ -2534,19 +2534,48 @@
   //
   // Config, not inference: absent, nothing here runs and the body keeps the
   // background it always had.
-  function startFade() {
+  // The colour this funnel's report is on, if it names one. A funnel that
+  // does not is untouched by everything below and stays the page it was.
+  function fadeTo() {
     var to = (cfg && cfg.swipe && cfg.swipe.analyzing_fade_to) || "";
-    if (!/^#[0-9a-fA-F]{3,8}$/.test(to)) return;
-    var ms = Math.max(400, (cfg.analyzing && cfg.analyzing.duration_ms) || 2500);
-    var body = document.body;
-    body.style.setProperty("--fade-to", to);
-    body.style.setProperty("--fade-ms", ms + "ms");
+    return /^#[0-9a-fA-F]{3,8}$/.test(to) ? to : "";
+  }
+
+  // The variables go on the root element rather than on the body, because the
+  // html element is painted too. `html, body { background: var(--bg) }` is
+  // what left the arrival half white: the body is a 560px column centred in a
+  // page, so darkening it alone paints the column and leaves the canvas
+  // around and below it the white it always was.
+  function fadeVars(to, ms) {
+    var root = document.documentElement;
+    root.style.setProperty("--fade-to", to);
+    root.style.setProperty("--fade-ms", ms + "ms");
     // The copy switches once the ground behind it is already dark rather than
     // easing alongside it, which would spend the middle of the wait as grey
     // type on a grey field.
-    body.style.setProperty("--fade-swap", Math.round(ms * 0.45) + "ms");
+    root.style.setProperty("--fade-swap", Math.round(ms * 0.45) + "ms");
+  }
+
+  function startFade() {
+    var to = fadeTo();
+    if (!to) return;
+    var ms = Math.max(400, (cfg.analyzing && cfg.analyzing.duration_ms) || 2500);
+    fadeVars(to, ms);
     // Next frame, so the starting colour is painted before the transition.
-    requestAnimationFrame(function () { body.classList.add("is-fading"); });
+    requestAnimationFrame(function () {
+      document.body.classList.add("is-fading");
+    });
+  }
+
+  // The same ground, arrived at rather than faded to. Somebody coming back
+  // from Stripe has no light screen behind them to fade from — they open a
+  // link and the page is simply the report's, from the first frame, including
+  // the wait while it is written and mailed.
+  function darkNow() {
+    var to = fadeTo();
+    if (!to) return;
+    fadeVars(to, 0);
+    document.body.classList.add("is-fading", "is-arrived");
   }
 
   function startAnalyzing() {
@@ -4040,6 +4069,7 @@
     el.analyzing.hidden = false;
     el.analyzingDots.hidden = false;
     el.analyzingText.textContent = "Preparing your personalized report…";
+    darkNow();
     setEmailNote(null);
     startStatusRotation();
     pollReport(cs, 0);
@@ -6050,6 +6080,13 @@
         document.title = (cfg.meta && cfg.meta.title) || document.title;
         applyTheme();
         wire();
+        // The arrival ground, for the path that could not ask for it. The
+        // unlocked screen is put up at script execution — before this fetch is
+        // even issued, on purpose, so somebody back from Stripe sees their
+        // report loading rather than the quiz they finished — and the colour
+        // it lands on is this funnel's to name, so it can only be applied
+        // once the config is here. `darkNow` is idempotent.
+        if (unlockedStarted) darkNow();
         if (unlocked) { applyStyleCopy(); reflowUnlocked(); }
         else startQuiz();
       })
