@@ -3,11 +3,12 @@
 
 Three things that can only be checked by rendering the page.
 
-The badge. In badge mode the label under a card IS the answer, so the old
+The badge. On the sign step the label under a card IS the answer, so the
 tap-reveal pill must not arrive on top of it when the card is chosen — which
 it did, over the name, on a phone. Checked on Capricorn and Sagittarius,
 because those are the two longest words in the twelve and the ones a pill
-covers most.
+covers most. Every other step keeps the pill: the badge on the chosen card
+fades out and the pill says the word, one label on screen at a time.
 
 The bridges. The quiz is light and the report is a night sky, and the two are
 now joined rather than cut between: the analysing screen fades to the report's
@@ -255,22 +256,28 @@ def badge(page):
     check("  and every one of them takes the gold", gold == [GOLD], str(gold))
 
 
-# What the pill was before the gold treatment was written, taken off the
-# revision it was written against. The chosen card on every step but one has
-# to still be exactly this.
+# What the badge is before anything is tapped, taken off the revision the
+# treatment was written against. Every step but the sign step has to still be
+# exactly this.
 PILL_INK = "rgb(255, 255, 255)"
 PILL_GROUND = "rgba(16, 20, 40, 0.75)"
 
+# And what lands on the card that was tapped: the same white chip kitchen has
+# drawn since before this funnel existed.
+CHIP_INK = "rgb(192, 86, 33)"
+CHIP_GROUND = "rgb(255, 255, 255)"
+
 
 def other_steps(page):
-    """Every non-grid12 step, chosen, measured against the pre-branch pill."""
-    print("\n--- and every other step keeps the pill it had ---")
+    """Every non-grid12 step, chosen: badge out, centre chip in."""
+    print("\n--- and every other step reveals in the middle, as it did ---")
     page.goto(url("/zodiac"))
     page.wait_for_selector("#cards .card", timeout=20000)
     page.wait_for_timeout(400)
     seen = 0
     clipped = []
     wrong = []
+    reveal = []
     for _ in range(14):
         # The set that is leaving is still in the DOM and is not clickable, so
         # every step waits for a settled one rather than for any one at all.
@@ -290,6 +297,9 @@ def other_steps(page):
                 const card = document.querySelector('#cards .card.is-chosen');
                 const name = card.querySelector('.card-name');
                 const s = getComputedStyle(name);
+                const chip = card.querySelector('.reaction');
+                const pill = chip && chip.querySelector('.reaction-pill');
+                const ps = pill && getComputedStyle(pill);
                 const seen = (el) => {
                     if (!el) return false;
                     const c = getComputedStyle(el);
@@ -298,27 +308,43 @@ def other_steps(page):
                 };
                 return {text: name.innerText.trim(),
                         colour: s.color, ground: s.backgroundColor,
-                        shown: parseFloat(s.opacity) > 0.01,
+                        faded: parseFloat(s.opacity) < 0.01,
                         after: getComputedStyle(name, '::after').content,
                         clipped: name.scrollWidth > name.clientWidth + 1,
                         check: seen(card.querySelector('.check')),
-                        pill: seen(card.querySelector('.reaction'))};
+                        chip: seen(chip),
+                        said: pill ? pill.innerText.replace(/\u2713/g, '').trim()
+                                   : null,
+                        pillInk: ps && ps.color,
+                        pillGround: ps && ps.backgroundColor,
+                        pillCut: pill
+                            ? pill.scrollWidth > pill.clientWidth + 1 : null};
             }""")
         seen += 1
         if got["clipped"]:
             clipped.append(got["text"])
+        if got["pillCut"]:
+            clipped.append(got["said"])
         if (got["colour"] != PILL_INK or got["ground"] != PILL_GROUND
-                or got["after"] not in ("none", "normal") or not got["shown"]
-                or not got["check"] or got["pill"]):
+                or got["after"] not in ("none", "normal")
+                or not got["check"]):
             wrong.append((got["text"], got["ground"], got["colour"],
-                          got["after"], got["check"], got["pill"]))
+                          got["after"], got["check"]))
+        if (not got["chip"] or not got["faded"] or got["said"] != got["text"]
+                or got["pillInk"] != CHIP_INK
+                or got["pillGround"] != CHIP_GROUND):
+            reveal.append((got["text"], got["chip"], got["faded"],
+                           got["said"], got["pillInk"], got["pillGround"]))
         page.wait_for_timeout(HOLD_MS)
         clear_interstitial(page)
         page.wait_for_timeout(400)
     check("every step but the sign step was walked", seen >= 9, seen)
-    check("  the chosen badge is the ink and ground it always was",
+    check("  the badge is the ink and ground it always was",
           not wrong, str(wrong[:3]))
-    check("  no name is cut off, chosen or not", not clipped, str(clipped))
+    check("  the tap lands a centre pill and takes the badge away",
+          not reveal, str(reveal[:3]))
+    check("  nothing is cut off, on the badge or in the pill",
+          not clipped, str(clipped))
 
 
 def kitchen_badge(page):

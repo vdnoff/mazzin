@@ -754,51 +754,28 @@ body.is-fading .dots span { background: #868FB6; }
   letter-spacing: -0.01em;
 }
 
-/* On a funnel whose cards name themselves, the tap-reveal chip is not a
-   second opinion — it is the same word again, in a white pill, on top of the
-   badge that was already saying it. So in badge mode it does not render at
-   all, and the badge itself becomes the selected state.
-
-   Scoped by `:has(.card-name)`, which is exactly what badge mode is: no
-   funnel-name in a selector, no class for engine.js to remember to set, and
-   a browser without `:has()` falls back to the chip it has always drawn. */
-.cards:has(.card-name) .reaction { display: none !important; }
-
-/* The corner check moves to the top of the card for the same reason. It has
-   always sat in the bottom corner, which was free while the badge vanished on
-   selection; now that the badge stays, the two land on each other and the
-   disc takes a bite out of the name. The top corner is art, and the ring
-   around the card is what carries the selection anyway. */
-.cards:has(.card-name) .check {
-  top: 11px;
-  bottom: auto;
-}
-
+/* Under the selection wash the label goes with the rest of the card — the
+   chip that lands on top is the one carrying the name at that point, and two
+   copies of the same word stacked on each other reads as a rendering fault. */
 .cards.is-picking .card:not(.is-chosen) .card-name { opacity: 0.5; }
-
-/* The badge no longer disappears when its card is chosen. It used to, because
-   the chip that replaced it said the same word; with the chip gone that rule
-   would leave the one card they tapped as the only unnamed thing on screen.
-   So it simply stays — the ring, the lift and the corner check are what say
-   it was chosen, exactly as they did on every step before badge mode. */
-.card.is-chosen .card-name { opacity: 1; }
+.card.is-chosen .card-name { opacity: 0; transition: opacity 120ms ease-out; }
 
 /* --- and the twelve-up, which is a different problem ---------------------- */
 
-/* Everything below is the sign step alone. The other steps are two, four or
-   six photographs with room for the ring and the corner check to be read on
-   their own; twelve cells at 111px are not, and the treatment that fixes them
-   is wrong everywhere else — it repainted a pill on the drain step that had
-   nothing wrong with it.
-
-   At twelve-up the corner check is 34px over a 111px cell and lands on the
-   pill, so it goes, and the confirmation moves inside the label. */
+/* Everything below is the sign step alone, and it is the only step where the
+   badge answers instead of the chip. Two, four or six photographs leave room
+   for a pill in the middle of the one that was tapped; twelve cells at 111px
+   do not — the chip covers the cell it is confirming, and the corner check is
+   34px over a 111px cell and lands on the badge. So here the badge stays, the
+   chip does not come, and the confirmation moves inside the label. */
+.cards.is-grid12 .reaction { display: none !important; }
 .cards.is-grid12 .check { display: none; }
 
 /* The badge stays exactly where it was and gains a tick. Nothing moves, so
    the eye does not have to find the name again to check it got the right
    one — which is the whole reason this funnel names its cards. */
 .cards.is-grid12 .card.is-chosen .card-name {
+  opacity: 1;
   color: #16181d;
   background: var(--accent, #C05621);
   transition: background-color 160ms ease-out, color 160ms ease-out;
