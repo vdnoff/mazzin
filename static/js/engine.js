@@ -2368,7 +2368,7 @@
     return out;
   }
 
-  function renderModuleDelivered(content, complete) {
+  function renderModuleDelivered(content, complete, mod) {
     var root = el.moduleRoot;
     if (!root) {
       root = elm("div", "result-module");
@@ -2384,34 +2384,50 @@
     });
     root.hidden = false;
 
+    if (!mod || typeof mod.delivered !== "function") {
+      // No module, or one that predates this: the report is the thing
+      // that was paid for, so it is drawn the way it always was rather
+      // than not at all.
+      root.hidden = true;
+      el.report.hidden = false;
+      [el.resultKicker, el.resultName, el.resultBlurb]
+        .forEach(function (node) { if (node) node.hidden = false; });
+      renderUnlockedReport(content);
+      return;
+    }
+    try {
+      mod.delivered(root, deliveredContext(content, complete));
+    } catch (e) {
+      root.hidden = true;
+      el.report.hidden = false;
+      renderUnlockedReport(content);
+    }
+  }
+
+  // The module's stylesheet and script, in that order, and then whatever it
+  // exported — or null if either failed to arrive. Nothing on screen changes
+  // in here: what is showing while this runs, and what replaces it, is the
+  // caller's decision, and that is the whole point. A funnel that delegates
+  // its result must not paint this file's version of the page first; the
+  // wait belongs to the loading state, which is already on screen and already
+  // this funnel's own colour.
+  // Held across the polls the delivered path makes: the module is fetched
+  // once, and every poll after the first finds it already here.
+  var deliveredModule = { loading: false, ready: false, mod: null };
+
+  function loadModule(done) {
     var css = (cfg && cfg.result_css) || "";
     loadAsset(css, function () {
       loadAsset(cfg.result_module, function () {
-        var mod = window.MazzinResult;
-        if (!mod || typeof mod.delivered !== "function") {
-          // No module, or one that predates this: the report is the thing
-          // that was paid for, so it is drawn the way it always was rather
-          // than not at all.
-          root.hidden = true;
-          el.report.hidden = false;
-          [el.resultKicker, el.resultName, el.resultBlurb]
-            .forEach(function (node) { if (node) node.hidden = false; });
-          renderUnlockedReport(content);
-          return;
-        }
-        try {
-          mod.delivered(root, deliveredContext(content, complete));
-        } catch (e) {
-          root.hidden = true;
-          el.report.hidden = false;
-          renderUnlockedReport(content);
-        }
+        // Whatever it exported, unchecked: the free page needs `render` and
+        // the delivered one needs `delivered`, and a module can be a version
+        // apart from this file in either direction.
+        done(window.MazzinResult || null);
       });
     });
   }
 
-  function renderModuleResult(win) {
-    var css = (cfg && cfg.result_css) || "";
+  function renderModuleResult(win, mod) {
     var root = el.moduleRoot;
     if (!root) {
       root = elm("div", "result-module");
@@ -2430,29 +2446,24 @@
     // to be legal and to work exists before the module has drawn anything.
     renderCommerce();
 
-    loadAsset(css, function () {
-      loadAsset(cfg.result_module, function () {
-        var mod = window.MazzinResult;
-        if (!mod || typeof mod.render !== "function") {
-          // The module did not arrive. Put this file's own page back rather
-          // than leaving a finished quiz on an empty screen.
-          root.hidden = true;
-          el.report.hidden = false;
-          el.cta.hidden = true;
-          [el.resultKicker, el.resultName, el.resultBlurb]
-            .forEach(function (node) { if (node) node.hidden = false; });
-          renderLockedReport(win);
-          return;
-        }
-        try {
-          mod.render(root, resultContext(win));
-        } catch (e) {
-          root.hidden = true;
-          el.report.hidden = false;
-          renderLockedReport(win);
-        }
-      });
-    });
+    if (!mod || typeof mod.render !== "function") {
+      // The module did not arrive. Put this file's own page back rather
+      // than leaving a finished quiz on an empty screen.
+      root.hidden = true;
+      el.report.hidden = false;
+      el.cta.hidden = true;
+      [el.resultKicker, el.resultName, el.resultBlurb]
+        .forEach(function (node) { if (node) node.hidden = false; });
+      renderLockedReport(win);
+      return;
+    }
+    try {
+      mod.render(root, resultContext(win));
+    } catch (e) {
+      root.hidden = true;
+      el.report.hidden = false;
+      renderLockedReport(win);
+    }
   }
 
   function startResult() {
@@ -2466,19 +2477,24 @@
     setTimeout(function () {
       var win = computeWinner();
       winnerStyleId = win.id;
-      stopAnalyzing();
-      el.analyzing.hidden = true;
-      el.resultBody.hidden = false;
-      el.resultName.textContent = win.name;
-      el.resultBlurb.textContent = win.blurb || "";
       singlePage = wantsSinglePage();
 
       if (resultModule()) {
         // The delegation. A funnel that names a module draws its own
-        // pre-purchase page; everything after it here — the tracking, the
-        // pixel, the scroll watchers — is the same for both.
-        renderModuleResult(win);
-      } else if (singlePage) {
+        // pre-purchase page, and it draws the first frame of it: the
+        // analysing screen stays up while the module travels, because the
+        // alternative is this file's own offer card painting on the dark
+        // ground for as long as the network takes — which is what it did.
+        loadModule(function (mod) {
+          revealResult(win);
+          renderModuleResult(win, mod);
+          finishResult();
+        });
+        return;
+      }
+
+      revealResult(win);
+      if (singlePage) {
         // No result CTA and no value banner: the button is the one at the
         // bottom of the page now, and the anchor card carries what the banner
         // used to say — once, where the decision is actually made.
@@ -2497,19 +2513,35 @@
         renderLockedReport(win);
       }
 
-      track("result_view");
-      // A finished quiz with a result on screen is the qualified visitor Meta
-      // should be optimising towards, so Lead sits exactly here and nowhere
-      // earlier.
-      pixelTrack("Lead");
-      if (singlePage) {
-        watchCommerce();
-        watchScroll();
-      } else {
-        watchCta();
-      }
-      celebrate();
+      finishResult();
     }, cfg.analyzing.duration_ms);
+  }
+
+  // The analysing screen comes down and the result screen goes up. Its own
+  // function because the two paths reach it at different moments: a funnel
+  // drawing its own page reaches it once that page is here to draw.
+  function revealResult(win) {
+    stopAnalyzing();
+    el.analyzing.hidden = true;
+    el.resultBody.hidden = false;
+    el.resultName.textContent = win.name;
+    el.resultBlurb.textContent = win.blurb || "";
+  }
+
+  // Everything that happens once a result is on screen, whoever drew it.
+  function finishResult() {
+    track("result_view");
+    // A finished quiz with a result on screen is the qualified visitor Meta
+    // should be optimising towards, so Lead sits exactly here and nowhere
+    // earlier.
+    pixelTrack("Lead");
+    if (singlePage) {
+      watchCommerce();
+      watchScroll();
+    } else {
+      watchCta();
+    }
+    celebrate();
   }
 
   // The wait before the result is the one moment the reader has nothing to do,
@@ -3850,6 +3882,24 @@
     // wait itself. The status card stays until the opening is real.
     if (!unlockedShown && !hasOpening(content)) return;
 
+    // Same rule as the free page, for the same reason: a funnel with its own
+    // result page draws the first frame of it. Until the module is here the
+    // loading state holds — which on this path is the "preparing your report"
+    // screen, already on this funnel's ground — rather than this file's
+    // layout going up and being replaced a moment later. Every later poll
+    // finds the module loaded and falls straight through.
+    if (!unlockedShown && resultModule() && !deliveredModule.ready) {
+      if (!deliveredModule.loading) {
+        deliveredModule.loading = true;
+        loadModule(function (mod) {
+          deliveredModule.ready = true;
+          deliveredModule.mod = mod;
+          renderUnlocked(unlockedContent, unlockedComplete);
+        });
+      }
+      return;
+    }
+
     if (!unlockedShown) {
       unlockedShown = true;
       stopStatusRotation();
@@ -3879,7 +3929,7 @@
     // same payload `renderUnlockedReport` would have drawn, and what changes
     // is the layout around it.
     if (resultModule()) {
-      renderModuleDelivered(content, complete);
+      renderModuleDelivered(content, complete, deliveredModule.mod);
       return;
     }
 

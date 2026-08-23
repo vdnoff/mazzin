@@ -3,7 +3,7 @@
   "funnel_id": "zodiac_v1",
   "locale": "en",
   "theme": "zodiac",
-  "stripe_mode": "test",
+  "stripe_mode": "live",
   "result_module": "/static/js/result_zodiac.js",
   "result_css": "/static/css/result_zodiac.css",
   "meta": {
@@ -2281,7 +2281,7 @@
   "checkout": {
     "kicker": "Your profile is ready",
     "product_name": "Your Cosmic Profile Report",
-    "product_image": "/static/creative_src/stripe_tile.png",
+    "product_image": "/static/brand/icon-512.png",
     "single_page": true,
     "express": true,
     "withdrawal_consent": false,

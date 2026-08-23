@@ -209,6 +209,45 @@ def main():
           product(kw)["name"].endswith("Full Style Report"),
           product(kw)["name"])
 
+    print("\n--- and the zodiac session, which is not a kitchen ---")
+    # Stripe's own page is the one screen of this purchase we do not draw, and
+    # until now every funnel handed it the same photograph of a kitchen. On a
+    # funnel whose product is a birth-chart reading that is somebody else's
+    # product on the page where the card is entered.
+    zcfg = config.load_funnel("zodiac")
+    zsteps = zcfg["swipe"]["steps"]
+    zbody = {
+        "funnel": "zodiac",
+        "session_id": "11111111-2222-4333-8444-555555555555",
+        "result_style": zcfg["styles"][0]["id"],
+        "tag_scores": {"fire": 8, "sun": 6},
+        "choices": [("sign_leo" if st["id"] == "sign"
+                     else st["pairs"][0]["images"][0]["id"]) for st in zsteps],
+    }
+    res, kw = post(body=zbody)
+    check("the route answers 200 for zodiac", res.status_code == 200,
+          res.status_code)
+    zpd = product(kw)
+    print("    product_data: %s" % json.dumps(zpd, ensure_ascii=False))
+    check("it is named as the profile, not a style report",
+          "osmic" in zpd["name"] and "itchen" not in zpd["name"], zpd["name"])
+    check("it carries the mazzin mark rather than a kitchen",
+          zpd.get("images") == ["https://mazzin.com/static/brand/icon-512.png"],
+          zpd.get("images"))
+    check("  absolute, and a png Stripe will render",
+          zpd["images"][0].startswith("https://")
+          and zpd["images"][0].endswith(".png"), zpd["images"])
+    zdisk = REPO + zpd["images"][0].split("mazzin.com", 1)[1]
+    check("  and the file is on disk for the deploy to publish",
+          os.path.isfile(zdisk), zdisk)
+    with Image.open(zdisk) as mark:
+        check("  square, and big enough for Stripe's tile",
+              mark.size == (512, 512), str(mark.size))
+    check("kitchen's image is untouched by any of it",
+          product(post()[1]).get("images")
+          == ["https://mazzin.com/static/creative_src/stripe_tile.png"],
+          product(post()[1]).get("images"))
+
     print("\n--- the config copies agree ---")
     live = json.load(open(os.path.join(REPO, "funnels/kitchen.json")))
     served = json.load(open(os.path.join(REPO, "static/funnels/kitchen.json")))
