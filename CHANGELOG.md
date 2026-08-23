@@ -309,3 +309,6 @@ bottom.
 
 ## 2026-08-23 — claude/zodiac-label-restore
 - zodiac: restore center tap pill everywhere except sign step
+
+## 2026-08-23 — claude/zodiac-golive-polish
+- zodiac: no-flash results, live payments, mazzin checkout branding
