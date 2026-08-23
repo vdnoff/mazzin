@@ -306,3 +306,6 @@ bottom.
 
 ## 2026-08-23 — claude/zodiac-scope-fixes
 - zodiac: badge scope rollback, report images, themed transit screens
+
+## 2026-08-23 — claude/zodiac-label-restore
+- zodiac: restore center tap pill everywhere except sign step
