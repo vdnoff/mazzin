@@ -677,13 +677,34 @@ check("every rule of the mode is scoped to it",
 check("the three beats are staggered, kicker then line then sub",
       re.search(r"\.is-auto\.is-enter \.mid-line \{\s*animation:[^;]*?"
                 r"(\d+)ms both", css).group(1) == "250")
+FRAMES = r"@keyframes mid-(?:rise|spark|appear|breathe)\s*\{(.*?)\n\}"
 check("only transform and opacity are animated",
       all(prop in ("opacity", "transform")
-          for block in re.findall(r"@keyframes mid-(?:rise|spark|appear)"
-                                  r"\s*\{(.*?)\n\}", css, re.S)
+          for block in re.findall(FRAMES, css, re.S)
           for prop in re.findall(r"(\w[\w-]*)\s*:", block)),
-      str(re.findall(r"@keyframes mid-(?:rise|spark|appear)\s*\{(.*?)\n\}",
-                     css, re.S))[:200])
+      str(re.findall(FRAMES, css, re.S))[:200])
+check("  and every keyframe block the mode uses is one of those four",
+      sorted(re.findall(r"@keyframes (mid-[\w-]+)", css))
+      == ["mid-appear", "mid-breathe", "mid-rise", "mid-spark", "mid-spin"],
+      str(sorted(re.findall(r"@keyframes (mid-[\w-]+)", css))))
+# The spark loops and the rule does not, declared in the sheet as well as
+# asserted on the page: a progress line that breathed would be claiming to
+# still be measuring something.
+check("the spark breathes on a loop once its pulse has finished",
+      "mid-breathe 1800ms ease-in-out 1240ms infinite alternate" in css)
+check("  starting exactly where the pulse ends, so the seam does not jump",
+      "mid-spark 820ms cubic-bezier(0.22, 0.61, 0.36, 1) 420ms both," in css
+      and "100% { opacity: 1; transform: scale(1.08) rotate(0deg); }" in css
+      and "from { opacity: 1; transform: scale(1.08); }" in css)
+check("the rule holds instead, and glows rather than moving",
+      "box-shadow: 0 0 7px 1px var(--mid-accent-glow);" in css
+      and "mid-breathe" not in css.split(".mid-accent.is-bar")[1][:400])
+check("  in this funnel's gold",
+      "body.theme-zodiac .mid-accent { --mid-accent-glow: "
+      "rgba(232, 200, 120, 0.38); }" in css)
+check("the auto block is centred, and only the auto block",
+      "#screen-interstitial.is-auto .mid-body { text-align: center; }" in css
+      and "text-align: center" not in css.split(".mid-body {")[1][:200])
 check("  the bar included — it scales, it does not resize",
       "transition: transform 740ms" in css
       and "transform-origin: left center;" in css)
