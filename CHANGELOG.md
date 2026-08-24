@@ -333,3 +333,6 @@ bottom.
 
 ## 2026-08-24 — claude/zodiac30-interstitial-polish
 - zodiac30: centered interstitial block + breathing spark
+
+## 2026-08-24 — claude/zodiac30-purpose-paywall
+- zodiac30: purpose-personalized paywall and report
