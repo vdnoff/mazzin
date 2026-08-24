@@ -321,3 +321,6 @@ bottom.
 
 ## 2026-08-24 — claude/zodiac30-funnel-b32eaz
 - zodiac30: 30-screen dramaturgy variant (A/B)
+
+## 2026-08-24 — claude/zodiac30-gallery-art
+- zodiac30: real gallery art
