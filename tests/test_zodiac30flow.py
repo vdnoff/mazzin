@@ -128,6 +128,43 @@ def gone(page, ms):
     return not mid_visible(page)
 
 
+# Where the copy sits and how it is set. Both are facts about a layout
+# engine rather than about a stylesheet, which is why they are read here: the
+# block was measured at 50.5% of the viewport before this mode was centred
+# horizontally, so a rule that claimed to fix the vertical would have been
+# fixing something that was not broken.
+BLOCK = """() => {
+  const parts = [...document.querySelectorAll(
+      '#mid-kicker, #mid-line, #mid-sub, #mid-accent')]
+    .filter(n => !n.hidden && n.getBoundingClientRect().height > 0)
+    .map(n => n.getBoundingClientRect());
+  if (!parts.length) return null;
+  const top = Math.min(...parts.map(r => r.top));
+  const bottom = Math.max(...parts.map(r => r.bottom));
+  const line = document.querySelector('#mid-line');
+  return {centre: ((top + bottom) / 2) / window.innerHeight * 100,
+          align: getComputedStyle(line).textAlign,
+          box: [Math.round(top), Math.round(bottom)]};
+}"""
+
+# The spark's animations as the browser holds them, not as the sheet declares
+# them. `iterations: Infinity` is the whole claim — a loop that was written as
+# one long run would read the same in the CSS and stop on screen.
+ACCENT = """() => {
+  const f = document.querySelector('#mid-accent .mid-accent-fill');
+  if (!f) return null;
+  const cs = getComputedStyle(f);
+  return {names: cs.animationName, glow: cs.boxShadow,
+          animations: [...f.getAnimations()].map(a => {
+            const t = a.effect.getTiming();
+            return {name: a.animationName,
+                    iterations: t.iterations === Infinity ? "infinite"
+                                                          : t.iterations,
+                    direction: t.direction, duration: t.duration};
+          })};
+}"""
+
+
 def klass(page, selector):
     """The class list of a node, or "" when the node is not there.
 
@@ -186,6 +223,36 @@ def run(page):
     check("  a spark on a confirm beat, not a rule",
           "is-spark" in klass(page, "#mid-accent"),
           klass(page, "#mid-accent"))
+
+    print("\n--- the block is placed, not parked in a corner ---")
+    block = page.evaluate(BLOCK)
+    check("the copy is centred across the column",
+          block["align"] == "center", block["align"])
+    check("  and sits on the middle of the viewport",
+          abs(block["centre"] - 50) <= 2, "%.1f%%" % block["centre"])
+    check("  the accent centred with it",
+          abs(page.evaluate("""() => {
+              const a = document.getElementById('mid-accent')
+                  .getBoundingClientRect();
+              return (a.left + a.right) / 2 - window.innerWidth / 2;
+          }""")) < 1)
+
+    print("\n--- and the spark keeps breathing after its pulse ---")
+    accent = page.evaluate(ACCENT)
+    names = [a["name"] for a in accent["animations"]]
+    check("two animations on it, the pulse and the breath",
+          names == ["mid-spark", "mid-breathe"], str(names))
+    breath = [a for a in accent["animations"]
+              if a["name"] == "mid-breathe"]
+    check("  the breath never ends",
+          breath and breath[0]["iterations"] == "infinite", str(breath))
+    check("  and turns round rather than restarting",
+          breath and breath[0]["direction"] == "alternate", str(breath))
+    check("  on a slow cycle, not a flicker",
+          breath and 1500 <= breath[0]["duration"] <= 2200, str(breath))
+    check("  and the pulse hands over where it ends, not by restarting",
+          [a["duration"] for a in accent["animations"]] == [820, 1800],
+          str([a["duration"] for a in accent["animations"]]))
     check("  and the working spinner stays out of the way",
           page.locator("#mid-working").count() == 0
           or not page.locator("#mid-working").is_visible())
@@ -199,6 +266,25 @@ def run(page):
     check("gone by its own beat, with no tap and no button", gone(page, 1400))
     check("  and the quiz is what came back",
           page.locator("#cards .card").count() >= 2)
+
+    print("\n--- the breath is visible, not merely declared ---")
+    # On its own interstitial: the beat is two seconds and sampling spends a
+    # third of one, which is time the checks above need for their own claims.
+    # The breath starts at 1240ms, so the window it can be watched in runs
+    # from there to the end of the beat.
+    check("another interstitial is reached", to_interstitial(page))
+    page.wait_for_timeout(1300)
+    lit = []
+    for _ in range(3):
+        lit.append(page.evaluate(
+            "() => +getComputedStyle(document.querySelector("
+            "'#mid-accent .mid-accent-fill')).opacity"))
+        page.wait_for_timeout(150)
+    check("  the spark is still moving after its pulse has finished",
+          len(set(round(v, 2) for v in lit)) > 1,
+          str([round(v, 3) for v in lit]))
+    check("  and stays lit while it moves, rather than blinking out",
+          all(v > 0.4 for v in lit), str([round(v, 3) for v in lit]))
 
     print("\n--- and a tap gets there first ---")
     check("the next interstitial is reached", to_interstitial(page))
@@ -282,6 +368,22 @@ def run(page):
         shown = page.text_content("#mid-line") or ""
         check("  and the sentence above it says the same number",
               "%d%%" % round(want * 100) in shown, shown)
+        # Progress, not decoration: the rule is a reading of how far along
+        # they are, so it draws once and holds. What stops the held state
+        # reading as a dead screen is a glow that is painted rather than
+        # animated.
+        accent = page.evaluate(ACCENT)
+        check("  the rule runs no animation of its own",
+              accent["names"] == "none" and not accent["animations"],
+              str(accent["names"]))
+        check("  it does not breathe — that is the spark's job",
+              "mid-breathe" not in accent["names"], accent["names"])
+        check("  and it carries a glow instead",
+              accent["glow"] and accent["glow"] != "none", accent["glow"])
+        bar = page.evaluate(BLOCK)
+        check("  the almost block is centred too",
+              bar["align"] == "center" and abs(bar["centre"] - 50) <= 2,
+              "%s / %.1f%%" % (bar["align"], bar["centre"]))
 
     print("\n--- zodiac keeps its button, and keeps waiting ---")
     start(page, "zodiac")
@@ -298,6 +400,16 @@ def run(page):
           or not page.locator("#mid-accent").is_visible())
     check("  its working row is the one it always had",
           page.locator("#mid-working").is_visible())
+    # The centring is the auto mode's, and only the auto mode's. This screen
+    # has a control under its copy, which is where ranged-left type belongs,
+    # and its block was measured at 45.5% of the viewport before any of this.
+    v1 = page.evaluate(BLOCK)
+    check("  its copy is still ranged left", v1["align"] == "start",
+          v1["align"])
+    check("  and sits where it always sat, not on the middle",
+          abs(v1["centre"] - 45.5) <= 1.5, "%.1f%%" % v1["centre"])
+    check("  with no accent of any kind to glow or breathe",
+          page.locator("#mid-accent").count() == 0)
     # The default dismiss is four seconds. Two and a half in it must still be
     # standing, and a tap on the background must not have moved it.
     page.mouse.click(190, 300)
