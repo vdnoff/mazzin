@@ -195,6 +195,51 @@ check("only the sign step opts out of the shuffle",
       [s["id"] for s in steps if s.get("shuffle") is False] == ["sign"],
       str([s["id"] for s in steps if "shuffle" in s]))
 
+print("\n--- the seeking step opens on Love ---")
+# The order the cards are authored in was decorative until the step pinned
+# its first slot: engine.js shuffled all four, so whichever id came first in
+# the config reached the reader's top-left about one run in four. It is the
+# product now, so it is pinned here in the order the reader sees.
+SEEKING = [("sk3a", "Love"), ("sk3b", "Career & money"),
+           ("sk3c", "Inner peace"), ("sk3d", "The road ahead")]
+seeking = by_step["seeking"]["pairs"][0]["images"]
+check("four cards, in the authored order",
+      [(i["id"], i["label"]) for i in seeking] == SEEKING,
+      str([(i["id"], i["label"]) for i in seeking]))
+check("  Love is the first of them",
+      seeking[0]["id"] == "sk3a" and seeking[0]["label"] == "Love",
+      "%s / %s" % (seeking[0]["id"], seeking[0]["label"]))
+check("the step asks for its first slot to be kept",
+      by_step["seeking"].get("pin_first") is True,
+      str(by_step["seeking"].get("pin_first")))
+check("  and it is the only step on this funnel that does",
+      [s["id"] for s in steps if s.get("pin_first")] == ["seeking"],
+      str([s["id"] for s in steps if "pin_first" in s]))
+check("  it does not also opt out of the shuffle, which would pin all four",
+      "shuffle" not in by_step["seeking"],
+      str(by_step["seeking"].get("shuffle")))
+check("  so the other three still carry no order of their own",
+      len(seeking) == 4)
+# The tags did not move with the slot. A reorder that also retagged would be
+# a scoring change wearing a layout change's clothes.
+check("Love is still the water card it always was",
+      seeking[0]["tags"] == ["water", "mystic", "purpose_love"],
+      str(seeking[0]["tags"]))
+check("  and every card keeps the tags it was authored with",
+      [i["tags"] for i in seeking] == [
+          ["water", "mystic", "purpose_love"],
+          ["fire", "bold", "purpose_career"],
+          ["earth", "calm", "purpose_peace"],
+          ["air", "sun", "purpose_path"]],
+      str([i["tags"] for i in seeking]))
+for slug in ("zodiac", "kitchen", "kitchen-visualizer"):
+    other = json.load(open(os.path.join(ROOT, "funnels/%s.json" % slug)))
+    check("  %-18s pins nothing, so it deals as it always did" % slug,
+          not [st["id"] for st in other["swipe"]["steps"]
+               if "pin_first" in st],
+          str([st["id"] for st in other["swipe"]["steps"]
+               if "pin_first" in st]))
+
 print("\n--- the steps it shares with zodiac are that funnel's, unchanged ---")
 REUSED = ["hook", "sign", "energy", "landscape", "palette", "moment",
           "symbol", "moonphase", "flow", "drain", "sanctuary", "essence"]
@@ -654,6 +699,27 @@ check("kitchen's interstitial styling is untouched",
       ".mid-cta {" in css and ".mid-cta:active { background: #f6f7f8; }" in css
       and ".mid-working {" in css and ".mid-next {" in css)
 
+print("\n--- how engine.js deals a step it was told to pin ---")
+deal = re.search(r"function pickPair\([^)]*\)\s*\{(.*?)\n  \}",
+                 engine, re.S).group(1)
+check("the flag is read off the step, not off the funnel",
+      "st.pin_first" in deal and "slug" not in deal, deal[-400:])
+check("  the first card keeps its slot and the rest are shuffled",
+      "images: [images[0]].concat(shuffled(images.slice(1)))" in deal)
+check("  a step that asks for neither still shuffles all of them",
+      deal.rstrip().endswith("images: shuffled(images) };"), deal[-120:])
+# `find` rather than `index`: a flag that is simply gone is a failing check
+# here, not a traceback in place of the twenty that follow it.
+check("  and shuffle:false still wins outright, because it pins every slot",
+      -1 < deal.find("st.shuffle === false") < deal.find("st.pin_first"),
+      "%d vs %d" % (deal.find("st.shuffle === false"),
+                    deal.find("st.pin_first")))
+check("the shuffle itself is untouched",
+      "function shuffled(list)" in engine
+      and "Math.floor(Math.random() * (i + 1))" in engine)
+check("  and nothing else in the engine reads the flag",
+      engine.count("pin_first") == 2, str(engine.count("pin_first")))
+
 print("\n--- placeholders ---")
 KNOWN = (set(cfg["report"]["hook_slots"])
          | {"style", "price", "n", "pct", "total"})
@@ -767,12 +833,34 @@ def winner(scores):
     return best
 
 
-def play(pick):
+def dealt(step, rng=None):
+    """The order engine.js would put a step's cards on screen in.
+
+    Three cases, and pickPair reads them in this order: `shuffle: false`
+    keeps every slot, `pin_first` keeps the first and shuffles the rest, and
+    anything else shuffles all of them. With no rng the config order is
+    returned as-is, which is what the persona walks want — they rank the
+    cards rather than reading them off a screen.
+    """
+    images = [i for p in step["pairs"] for i in p["images"]]
+    if rng is None or step.get("shuffle") is False:
+        return images
+    if step.get("pin_first"):
+        rest = images[1:]
+        rng.shuffle(rest)
+        return images[:1] + rest
+    order = list(images)
+    rng.shuffle(order)
+    return order
+
+
+def play(pick, rng=None):
     """One run, as engine.js scores it: -0.5 a tag on the inverse step, 1 on
-    every other. Nothing here is adaptive, so every step draws its one pair."""
+    every other. Nothing here is adaptive, so every step draws its one pair,
+    dealt in the order the reader would have seen it."""
     scores = {}
     for step in steps:
-        options = [i for p in step["pairs"] for i in p["images"]]
+        options = dealt(step, rng)
         weight = -0.5 if step.get("scoring") == "inverse" else 1
         for tag in pick(step, options)["tags"]:
             scores[tag] = scores.get(tag, 0) + weight
@@ -809,16 +897,61 @@ check("a score made only of service tags moves no archetype",
           for s in cfg["styles"]), str(service_only))
 
 FLOOR, CEILING = 15.0, 35.0
-rng = random.Random(20260821)
-seen = collections.Counter(
-    winner(play(lambda s, o: rng.choice(o))) for _ in range(20000))
-for style in cfg["styles"]:
-    share = 100.0 * seen[style["id"]] / 20000
-    check("  %-15s takes %4.1f%% of random walks (%.0f-%.0f)"
-          % (style["id"], share, FLOOR, CEILING),
-          FLOOR <= share <= CEILING)
-check("the four shares account for every walk",
-      sum(seen.values()) == 20000, str(sum(seen.values())))
+WALKS = 20000
+
+
+def shares(excess):
+    """What each archetype takes over WALKS runs, from a reader who over-taps
+    the first slot by `excess` on top of the 1/n an indifferent one would.
+
+    A shuffled step's first slot is a different card every run, so the excess
+    lands nowhere in particular. On the two steps whose first slot is fixed it
+    lands on the same card every time, which is the whole reason this is
+    modelled rather than assumed: `sign` has always pinned Aries, and now
+    `seeking` pins Love.
+    """
+    rng = random.Random(20260821)
+
+    def reader(step, options):
+        if excess and len(options) > 1 and rng.random() < excess:
+            return options[0]
+        return rng.choice(options)
+
+    seen = collections.Counter(
+        winner(play(reader, rng)) for _ in range(WALKS))
+    return seen, {s["id"]: 100.0 * seen[s["id"]] / WALKS
+                  for s in cfg["styles"]}
+
+
+# Three readers: one indifferent to position, one who favours the first slot
+# the way people do, and one who favours it harder than anybody plausibly
+# does. Pinning Love moves deep_water and pinning Aries moves radiant_fire,
+# in opposite directions, and the band has to hold under all three.
+for excess, who in ((0.0, "an indifferent reader"),
+                    (0.10, "a first-slot reader"),
+                    (0.20, "a hard first-slot reader")):
+    seen, got = shares(excess)
+    for style in cfg["styles"]:
+        share = got[style["id"]]
+        check("  %-15s takes %4.1f%% from %-24s (%.0f-%.0f)"
+              % (style["id"], share, who, FLOOR, CEILING),
+              FLOOR <= share <= CEILING)
+    check("  the four shares account for every walk",
+          sum(seen.values()) == WALKS, str(sum(seen.values())))
+# The claim the model rests on: pinning the seeking step is what puts the
+# first-slot reader's thumb on a water card every run, so it has to be
+# visible in the numbers rather than merely argued for.
+pinned = shares(0.20)[1]
+del by_step["seeking"]["pin_first"]
+loose = shares(0.20)[1]
+by_step["seeking"]["pin_first"] = True
+check("pinning Love is what a first-slot reader feels, and it is deep water",
+      pinned["deep_water"] > loose["deep_water"],
+      "%.1f pinned vs %.1f loose" % (pinned["deep_water"],
+                                     loose["deep_water"]))
+check("  and it stays inside the band anyway, so nothing needed retagging",
+      FLOOR <= pinned["deep_water"] <= CEILING,
+      "%.1f%%" % pinned["deep_water"])
 check("the inverse step can push a total negative — the floor is -Infinity",
       any(s.get("scoring") == "inverse" for s in steps))
 
