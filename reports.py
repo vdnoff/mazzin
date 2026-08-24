@@ -26,6 +26,7 @@ import concurrent.futures
 import html
 import json
 import logging
+import math
 import os
 import re
 import threading
@@ -2308,6 +2309,316 @@ def _sign_block(cfg, choices):
         "birth date." % (where, span_text))
 
 
+# --- the reader's own subtype ----------------------------------------------
+#
+# The other half of static/js/result_zodiac.js's `profileOf`, in Python.
+#
+# It exists twice because it is needed in two places that cannot reach each
+# other: the free page computes it in the browser out of a live run, and the
+# delivered page, the PDF and the mail are all built from a stored report by
+# something that never had one. So the block is computed once here, while the
+# run still exists, and carried on the report — and every tiebreak below is
+# the module's, stated rather than left to array order, because a name
+# resolved one way and a rarity counted another is a number about nothing.
+#
+# The tables themselves are in the funnel config, written into both funnels
+# from one source by scripts/gen_profile_rarity.py.
+
+ELEMENT_TAGS = ("fire", "earth", "air", "water")
+ENERGY_TAGS = ("sun", "moon")
+TONE_TAGS = ("bold", "calm", "mystic")
+
+ELEMENT_LABEL = {"fire": "Fire", "earth": "Earth", "air": "Air",
+                 "water": "Water"}
+ENERGY_LABEL = {"sun": "Sun", "moon": "Moon"}
+ELEMENT_INK = dict((tag, ink) for tag, _label, ink in [
+    ("fire", "Fire", "#E08A3C"), ("earth", "Earth", "#7E9B5E"),
+    ("air", "Air", "#9CC3DF"), ("water", "Water", "#4E8FA0")])
+
+
+def _profile_table(cfg):
+    """`result_copy.profile`, or None on a funnel that carries no tables."""
+    table = ((cfg or {}).get("result_copy") or {}).get("profile")
+    return table if isinstance(table, dict) else None
+
+
+def _scored(tag_scores, tags):
+    """Those tags as a dict, with anything below zero read as zero.
+
+    A negative score is a tap the reader told us to keep away from on the
+    inverse step. It is not a negative share of who they are.
+    """
+    scores = tag_scores or {}
+    return dict((tag, max(0, scores.get(tag, 0) or 0)) for tag in tags)
+
+
+def _between(left, right):
+    """A dot's place between two poles: 0 hard left, 100 hard right.
+
+    Nothing measured on either side is dead centre rather than zero — a run
+    that scored neither has not leant left, it has not leant.
+    """
+    total = left + right
+    if not total:
+        return 50
+    return int(round(100.0 * right / total))
+
+
+def _split(tag_scores):
+    """The four elements as whole percents that add to a hundred.
+
+    Rounding each share on its own gives 33/33/17/16 as readily as not, and a
+    caption whose numbers sum to 99 is the one thing on that card a reader can
+    check for themselves. Largest remainder, ties to the declared order.
+    """
+    scores = _scored(tag_scores, ELEMENT_TAGS)
+    raw = [scores[tag] for tag in ELEMENT_TAGS]
+    total = sum(raw)
+    if not total:
+        pcts = [int(round(100.0 / len(raw)))] * len(raw)
+    else:
+        exact = [100.0 * value / total for value in raw]
+        pcts = [int(math.floor(value)) for value in exact]
+        owed = 100 - sum(pcts)
+        order = sorted(range(len(exact)),
+                       key=lambda i: (-(exact[i] % 1), i))
+        for i in order[:max(0, owed)]:
+            pcts[i] += 1
+    return [{"tag": tag, "name": ELEMENT_LABEL[tag], "pct": pcts[i],
+             "color": ELEMENT_INK[tag]}
+            for i, tag in enumerate(ELEMENT_TAGS)]
+
+
+_TOKEN_RE = re.compile(r"\{(\w+)\}")
+
+
+def _fill_tokens(text, words):
+    if not text:
+        return ""
+    return _TOKEN_RE.sub(
+        lambda m: words[m.group(1)] if m.group(1) in words else m.group(0),
+        str(text))
+
+
+def _reader_profile(cfg, style, tag_scores, sign, cusp=False):
+    """The whole hero card for one run, or None when it cannot be resolved.
+
+    None on a funnel with no tables, on a run with no tallies, and on any
+    combination the tables do not name — all of which leave the report exactly
+    as it was, which is the page every reader before today was sent to.
+    """
+    table = _profile_table(cfg)
+    if not table or not table.get("subtypes") or not tag_scores:
+        return None
+    tags = (style or {}).get("tags") or []
+    style_id = (style or {}).get("id") or ""
+    primary = next((tag for tag in tags if tag in ELEMENT_TAGS), None)
+    if not primary:
+        return None
+
+    elements = _scored(tag_scores, ELEMENT_TAGS)
+    rest = [tag for tag in ELEMENT_TAGS if tag != primary]
+    second = max(rest, key=lambda tag: (elements[tag], -rest.index(tag)))
+
+    energies = _scored(tag_scores, ENERGY_TAGS)
+    if energies["sun"] > energies["moon"]:
+        energy = "sun"
+    elif energies["moon"] > energies["sun"]:
+        energy = "moon"
+    else:
+        # Dead level: the archetype's own energy carries it, because the name
+        # beside it says both and a tie broken by list order can print an
+        # energy the archetype does not hold.
+        energy = next((tag for tag in tags if tag in ENERGY_TAGS),
+                      ENERGY_TAGS[0])
+
+    name = (((table["subtypes"].get(style_id) or {}).get(second) or {})
+            .get(energy))
+    if not name:
+        return None
+
+    bare = re.sub(r"^The\s+", "", name)
+    rarity = (((table.get("rarity") or {}).get(style_id) or {}).get(second)
+              or {}).get(energy) or 0
+    split = _split(tag_scores)
+    tone = _scored(tag_scores, TONE_TAGS)
+    at = {
+        "energy": _between(energies["sun"], energies["moon"]),
+        "tone": _between(tone["bold"], tone["calm"]),
+        # There is no `grounded` tag and there never was one: `mystic` is the
+        # single tag this vocabulary spends on the otherworldly, and bold and
+        # calm are what it spends on everything else.
+        "depth": _between(tone["mystic"], tone["bold"] + tone["calm"]),
+    }
+
+    words = {
+        "sign": sign or "",
+        "subtype": name,
+        "subtype_bare": bare,
+        "subtype_article": "an" if bare[:1].upper() in "AEIOU" else "a",
+        "element": ELEMENT_LABEL[primary],
+        "second": ELEMENT_LABEL[second],
+        "energy": ENERGY_LABEL[energy],
+        "n": str(rarity),
+    }
+    for cell in split:
+        words[cell["tag"]] = str(cell["pct"])
+
+    cross_key = sign if sign else ("cusp" if cusp else "")
+    return {
+        "archetype": style_id,
+        "primary": primary,
+        "second": second,
+        "energy": energy,
+        "sign": sign or "",
+        "subtype": name,
+        "subtype_bare": bare,
+        "rarity": rarity,
+        "words": words,
+        # The formula loses its leading separator rather than printing one
+        # when a run never reached the sign step.
+        "formula": re.sub(r"^\s*·\s*", "",
+                          _fill_tokens(table.get("formula"), words)),
+        "rarity_line": (_fill_tokens(table.get("rarity_line"), words)
+                        if rarity else ""),
+        "cross_line": ((table.get("sign_cross") or {}).get(cross_key)
+                       or {}).get(primary, ""),
+        "split": split,
+        "split_caption": _fill_tokens(table.get("split_caption"), words),
+        "scales": [{"id": row.get("id"), "left": row.get("left"),
+                    "right": row.get("right"),
+                    "at": at.get(row.get("id"), 50)}
+                   for row in (table.get("scales") or [])],
+    }
+
+
+def _profile_for(cfg, funnel_slug, style, tag_scores, choices):
+    """The stored block for a purchase, or None. Zodiac funnels only."""
+    if _profile(funnel_slug) is not ZODIAC_PROFILE:
+        return None
+    read = _sign(cfg, choices) if choices else None
+    return _reader_profile(cfg, style, tag_scores,
+                           (read or {}).get("label") or "",
+                           bool((read or {}).get("cusp")))
+
+
+# --- what the reader is told about love ------------------------------------
+#
+# Classical compatibility, stated rather than left to the model. The Love card
+# on the paywall promises two magnetic signs and one that drains, by name, so
+# the section has to name three signs — and a model asked for three signs
+# without being told which three will happily supply three.
+#
+# The rule is the ordinary one: the two other signs of the reader's own
+# element are the trine, and one of the squares is the friction. Nothing here
+# is a prediction about a person; it is the classical relationship between two
+# signs, which is what the reader bought a reading of.
+COMPATIBILITY = {
+    "Aries": (("Leo", "Sagittarius"), "Cancer"),
+    "Taurus": (("Virgo", "Capricorn"), "Leo"),
+    "Gemini": (("Libra", "Aquarius"), "Pisces"),
+    "Cancer": (("Scorpio", "Pisces"), "Aries"),
+    "Leo": (("Aries", "Sagittarius"), "Taurus"),
+    "Virgo": (("Taurus", "Capricorn"), "Sagittarius"),
+    "Libra": (("Gemini", "Aquarius"), "Cancer"),
+    "Scorpio": (("Cancer", "Pisces"), "Leo"),
+    "Sagittarius": (("Aries", "Leo"), "Virgo"),
+    "Capricorn": (("Taurus", "Virgo"), "Libra"),
+    "Aquarius": (("Gemini", "Libra"), "Scorpio"),
+    "Pisces": (("Cancer", "Scorpio"), "Gemini"),
+}
+
+
+def _compat_block(cfg, choices):
+    """The three signs the love section has to name, or None.
+
+    A cusp reader gets the sets for both energies their season sits between
+    and an instruction not to settle on one of them, because that is what they
+    told us and no more.
+    """
+    read = _sign(cfg, choices) if choices else None
+    if not read:
+        return None
+    label = read.get("label")
+    if label and label in COMPATIBILITY:
+        magnetic, drains = COMPATIBILITY[label]
+        return (
+            "REQUIRED — the free page promised this reader, in these words, "
+            "the two signs that are magnetic for them and the one that drains "
+            "their relationships. Classically, for a %s those are: magnetic — "
+            "%s and %s; draining — %s. Name all three, in those words, and say "
+            "for each one what it is actually like: what the pull is built on "
+            "for the two, and what the cost is with the third. Use no other "
+            "signs as the answer to that promise, and never write that a "
+            "relationship will or will not work — describe the energy between "
+            "them and what it takes from each side."
+            % (label, magnetic[0], magnetic[1], drains))
+
+    neighbours = [name for name in (read.get("neighbours") or [])
+                  if name in COMPATIBILITY]
+    if not neighbours:
+        return None
+    lines = []
+    for name in neighbours:
+        magnetic, drains = COMPATIBILITY[name]
+        lines.append("- for a %s: magnetic %s and %s, draining %s"
+                     % (name, magnetic[0], magnetic[1], drains))
+    return (
+        "REQUIRED — the free page promised this reader the two signs that are "
+        "magnetic for them and the one that drains their relationships. They "
+        "were born on a cusp and gave no single sign, so the honest answer is "
+        "the blend. The classical sets for the signs their season covers "
+        "are:\n" + "\n".join(lines)
+        + "\nName the signs these sets have in common as the magnetic ones "
+          "and the friction they share as the draining one, say plainly that "
+          "sitting between two signs is why this reads as a blend, and never "
+          "settle on one sign for them.")
+
+
+def _subtype_block(profile):
+    """How the reader's own subtype is handed to a model, or None.
+
+    Personal sections only. The cached trio is one answer per archetype shared
+    by every buyer of it — see the note above `_cached_prompt` — and a subtype
+    in that prompt would be twenty-four cache rows where there are four, each
+    written for whoever happened to warm it first.
+    """
+    if not profile:
+        return None
+    scales = ", ".join(
+        "%s to %s at %d out of 100"
+        % (row.get("left"), row.get("right"), row.get("at", 50))
+        for row in (profile.get("scales") or [])
+        if row.get("left") and row.get("right"))
+    split = ", ".join("%s %d%%" % (cell["name"], cell["pct"])
+                      for cell in (profile.get("split") or []))
+    lines = [
+        "This reader has been given a name for what they are, on the page "
+        "they paid from, and it is the name this report is written to: %s."
+        % profile["subtype"],
+        "What it is made of: %s-led with a %s undercurrent, %s energy."
+        % (profile["words"]["element"], profile["words"]["second"],
+           profile["words"]["energy"]),
+    ]
+    if split:
+        lines.append("Their four elements measured: %s." % split)
+    if scales:
+        lines.append("Where they sit on the three scales the page showed "
+                     "them: %s." % scales)
+    lines.append(
+        "Use the name. Address them as %s where it lands naturally — once or "
+        "twice in a section, at a point where the sentence is about what that "
+        "name means — and never as a label stapled to every paragraph. Let "
+        "the undercurrent do real work: %s leading with %s underneath is a "
+        "different person from %s leading alone, and the advice should show "
+        "it. Never mention scales, percentages, positions or a quiz."
+        % (profile["words"]["subtype_article"] + " " +
+           profile["subtype_bare"],
+           profile["words"]["element"], profile["words"]["second"],
+           profile["words"]["element"]))
+    return "\n".join(lines)
+
+
 def _zodiac_choice_block(cfg, choices, tag_scores=None):
     """The taps this section has to be visibly written from.
 
@@ -2388,6 +2699,21 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
             purpose = _purpose_block(cfg, choices, section_id)
             if purpose:
                 parts.append(purpose)
+            # The name the reader was sold under, for the sections written for
+            # them. Same gate as the purpose above, and for the same reason:
+            # the cached trio is one answer per archetype, and a subtype in
+            # that prompt would be twenty-four cache rows where there are four.
+            subtype = _subtype_block(
+                _profile_for(cfg, funnel_slug, style, tag_scores, choices))
+            if subtype:
+                parts.append(subtype)
+
+    # The love section names three signs because the paywall promised three
+    # signs. Which three is classical rather than the model's to invent.
+    if zodiac and section_id == "materials" and cfg is not None and choices:
+        compat = _compat_block(cfg, choices)
+        if compat:
+            parts.append(compat)
 
     # The first mistake was given away in full, numbered, with the promise
     # that the other four are in here. So it has to BE the first item rather
@@ -3131,6 +3457,20 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     # None on a funnel with no sign step, which is every funnel but one.
     read = _sign(cfg, choices) if choices else None
     sign = read.get("label") if read else None
+    # The hero card, measured while the run still exists. It travels beside
+    # the photographs rather than among them — `visuals.hero` is a map of slot
+    # to image id and nothing else belongs in it — and it travels at all
+    # because the browser is handed this dict whole: the delivered page is
+    # opened from a link in a mail, in a tab that never ran the quiz, and the
+    # PDF and the mail are built on a server that never had one either.
+    #
+    # A funnel with no tables, a run with no tallies and a combination the
+    # tables do not name all store nothing and render exactly what they always
+    # rendered.
+    card = _profile_for(cfg, funnel_slug, style, tag_scores, choices)
+    if card:
+        visuals = dict(visuals or {})
+        visuals["profile"] = card
     # Same story: resolved once, while the run still exists. None on every
     # funnel that declares no purpose map.
     purpose = _purpose(cfg, choices)
@@ -3652,6 +3992,117 @@ figure figcaption { background: #141B3C; }
 .cover-el.own .cover-el-dot { opacity: 1; }
 .cover-note { text-align: center; }
 
+/* --- the rich cover ------------------------------------------------------
+
+   The hero card as the reader was shown it: left-aligned, because it is a
+   document about them rather than a title page. Nothing in here is a flex
+   container — this page is paginated, and inline-blocks and one two-cell
+   table go where they are told. */
+.cover-card.rich { padding: 10mm 9mm 9mm; text-align: left; }
+.cover-top { width: 100%; border-collapse: collapse; }
+.cover-top-glyph { width: 24mm; vertical-align: middle; }
+.cover-top-id { vertical-align: middle; padding-left: 5mm; }
+.cover-card.rich .cover-glyph {
+  width: 20mm;
+  height: 20mm;
+  margin: 0;
+}
+.cover-card.rich .cover-glyph img { height: 20mm; }
+.cover-subtype {
+  margin: 0;
+  font-family: "Mazzin Serif", Georgia, "Times New Roman", serif;
+  font-size: 22pt;
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: #EDEFF6;
+}
+.cover-formula {
+  margin: 2mm 0 0;
+  font-size: 9pt;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #E8C878;
+}
+.cover-ribbon {
+  display: inline-block;
+  margin: 7mm 0 0;
+  padding: 1.8mm 4mm;
+  border: 0.25mm solid rgba(232, 200, 120, 0.45);
+  border-radius: 8mm;
+  font-size: 8.5pt;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #221A05;
+  background: #E8C878;
+}
+.cover-scales { margin: 7mm 0 0; }
+/* Zero on the row and back up on its children: the gap between two
+   inline-blocks is a space character, and three of them would push the right
+   pole off the card. */
+.cover-scale { margin: 0 0 3.5mm; font-size: 0; }
+.cover-pole {
+  display: inline-block;
+  width: 22%;
+  font-size: 7.5pt;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #868FB6;
+}
+.cover-pole.right { text-align: right; }
+/* The track is as tall as the dot, and the rule is painted through the middle
+   of it as a background band rather than drawn as a child. A child would be
+   either a block in an inline row or a third inline-block to keep aligned;
+   the band is neither and cannot be knocked out of place. */
+.cover-track {
+  display: inline-block;
+  width: 56%;
+  height: 3.4mm;
+  vertical-align: middle;
+  white-space: nowrap;
+  background: linear-gradient(to bottom,
+    transparent 0, transparent 1.3mm,
+    rgba(255, 255, 255, 0.14) 1.3mm, rgba(255, 255, 255, 0.14) 2.1mm,
+    transparent 2.1mm, transparent 3.4mm);
+}
+.cover-run { display: inline-block; height: 3.4mm; vertical-align: top; }
+.cover-dot {
+  display: inline-block;
+  width: 3.4mm;
+  height: 3.4mm;
+  margin-left: -1.7mm;
+  vertical-align: top;
+  border-radius: 50%;
+  background: #E8C878;
+}
+.cover-split { margin: 8mm 0 0; }
+.cover-splitbar {
+  height: 2.4mm;
+  font-size: 0;
+  border-radius: 2mm;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.10);
+}
+.cover-seg { display: inline-block; height: 2.4mm; vertical-align: top; }
+.cover-splitcap {
+  margin: 2.5mm 0 0;
+  font-size: 8pt;
+  letter-spacing: 0.04em;
+  color: #A8AECC;
+}
+.cover-hair {
+  height: 0;
+  margin: 6mm 0 0;
+  border-top: 0.25mm solid #2C355F;
+}
+.cover-crossline {
+  margin: 4.5mm 0 0;
+  font-size: 10pt;
+  line-height: 1.5;
+  color: #A8AECC;
+}
+
 /* The path. A hairline down the left of every section and a gold node on each
    title, which is the constellation on the web page redrawn in the one way
    print can hold it. The node hangs in the gutter on a negative margin: it is
@@ -3919,6 +4370,90 @@ PDF_ELEMENTS = [
 ]
 
 
+def _cover_scales(card):
+    """The three spectrum rows, as inline blocks rather than a flex row.
+
+    Same reason the element cells below are: this document is paginated by
+    WeasyPrint, and inline-blocks with percentage widths break where they are
+    told to. The whitespace between them is killed by `font-size: 0` on the
+    row, which is why the markup can stay readable.
+
+    The dot is pushed along by an empty run rather than positioned absolutely.
+    An absolute `left: 82%` puts the dot's left edge at 82 and hangs its whole
+    width off the end of the track at 100; a run of 82% followed by a dot with
+    half its width pulled back puts the dot's centre there, which is what a
+    dot on a scale means.
+    """
+    rows = []
+    for row in (card.get("scales") or []):
+        if not row.get("left") or not row.get("right"):
+            continue
+        rows.append(
+            '<div class="cover-scale">'
+            '<span class="cover-pole">%s</span>'
+            '<span class="cover-track">'
+            '<span class="cover-run" style="width: %d%%"></span>'
+            '<i class="cover-dot"></i></span>'
+            '<span class="cover-pole right">%s</span></div>'
+            % (_e(row["left"]), max(0, min(100, int(row.get("at") or 0))),
+               _e(row["right"])))
+    return "".join(rows)
+
+
+def _cover_split(card):
+    """The four elements as one bar, and the caption that adds to a hundred."""
+    cells = (card.get("split") or [])
+    if not cells:
+        return ""
+    segments = "".join(
+        '<span class="cover-seg" style="width: %d%%; background: %s"></span>'
+        % (max(0, int(cell.get("pct") or 0)), cell.get("color") or "#E8C878")
+        for cell in cells)
+    return ('<div class="cover-splitbar">%s</div>'
+            '<p class="cover-splitcap">%s</p>'
+            % (segments, _e(card.get("split_caption"))))
+
+
+def _zodiac_rich_cover(content, profile, cfg, card):
+    """The cover, when the report carries the hero the reader was shown.
+
+    Every part of the card on the page, in the order the page has them: the
+    glyph and the subtype on one row, the formula under it, the rarity, the
+    three scales, the four-element split, and the sign line under a hairline.
+    Somebody who paid on that page and then opens this file should recognise
+    it as the same document.
+    """
+    hero = _pdf_visuals().get("hero") or {}
+    glyph = _pdf_image(hero.get("glyph"), "cover-glyph")
+    return [
+        '<section class="cover">',
+        '<img class="cover-logo" src="%s" alt="Mazzin">'
+        % _e(profile.get("pdf_logo") or "brand/logo.svg"),
+        '<p class="cover-kicker">%s</p>'
+        % _e(((cfg or {}).get("result_copy") or {}).get("kicker")
+             or profile["pdf_lead"]),
+        '<div class="cover-card rich">',
+        '<table class="cover-top"><tr>',
+        ('<td class="cover-top-glyph">%s</td>' % glyph) if glyph else "",
+        '<td class="cover-top-id">',
+        '<h1 class="cover-subtype">%s</h1>' % _e(card.get("subtype")),
+        ('<p class="cover-formula">%s</p>' % _e(card["formula"]))
+        if card.get("formula") else "",
+        "</td></tr></table>",
+        ('<p class="cover-ribbon">%s</p>' % _e(card["rarity_line"]))
+        if card.get("rarity_line") else "",
+        '<div class="cover-scales">%s</div>' % _cover_scales(card),
+        '<div class="cover-split">%s</div>' % _cover_split(card),
+        ('<div class="cover-hair"></div>'
+         '<p class="cover-crossline">%s</p>' % _e(card["cross_line"]))
+        if card.get("cross_line") else "",
+        _pdf_image(hero.get("band"), "cover-band", True),
+        "</div>",
+        '<p class="cover-note">%s</p>' % _e(profile.get("pdf_note") or ""),
+        "</section>",
+    ]
+
+
 def _zodiac_cover(content, profile, cfg):
     """The zodiac cover: the result page's hero card, on paper.
 
@@ -3928,6 +4463,12 @@ def _zodiac_cover(content, profile, cfg):
     none. A config that would not load costs the blurb and the lit cell; the
     cover still names the sign, the archetype and the four elements.
     """
+    # The rich card, when the report was written after it existed. Everything
+    # below this is the cover every report before it got, and still gets.
+    card = _pdf_visuals().get("profile") or {}
+    if card.get("subtype"):
+        return _zodiac_rich_cover(content, profile, cfg, card)
+
     style = _style(cfg, content.get("style_id")) if cfg else None
     hero = _pdf_visuals().get("hero") or {}
     tags = (style or {}).get("tags") or []
@@ -3992,6 +4533,7 @@ def _pdf_html(content):
         state["materials"] = list(visuals.get("materials") or [])
         state["sections"] = dict(visuals.get("sections") or {})
         state["hero"] = dict(visuals.get("hero") or {})
+        state["profile"] = dict(visuals.get("profile") or {})
 
     if cover:
         blocks = [block for block in cover(content, profile, cfg) if block]
@@ -4188,6 +4730,7 @@ def _zodiac_email_html(content, fields):
     """The dark mail, filled from one report row."""
     sign = content.get("sign")
     name = fields["name"]
+    card = (content.get("visuals") or {}).get("profile") or {}
     rows = "".join(
         ZODIAC_EMAIL_SECTION % {"title": _e(section.get("title"))}
         for section in (content.get("sections") or [])
@@ -4195,11 +4738,14 @@ def _zodiac_email_html(content, fields):
     return ZODIAC_EMAIL_HTML % {
         "kicker": "YOUR COSMIC PROFILE",
         # The header the result page ends on, so the mail opens where the page
-        # left off. Without a sign — an older row, or a run that never reached
-        # the step — the archetype carries the line on its own rather than
-        # printing a cross with nothing on one side of it.
-        "sign": _e(sign or name),
-        "cross": _e(("× " + name) if sign else "Your complete profile"),
+        # left off: the subtype they were named, over the formula that made
+        # it. A report written before that block existed falls back to the two
+        # lines this mail carried then — and without even a sign, the
+        # archetype carries the line on its own rather than printing a cross
+        # with nothing on one side of it.
+        "sign": _e(card.get("subtype") or sign or name),
+        "cross": _e(card.get("formula")
+                    or (("× " + name) if sign else "Your complete profile")),
         "opening": fields["opening"],
         "body": fields["body"],
         "link_block": fields["link_block"],
