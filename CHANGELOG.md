@@ -324,3 +324,6 @@ bottom.
 
 ## 2026-08-24 — claude/zodiac30-gallery-art
 - zodiac30: real gallery art
+
+## 2026-08-24 — claude/zodiac30-flow-interstitials
+- zodiac30: auto-advance cinematic interstitials
