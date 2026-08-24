@@ -547,8 +547,19 @@ SAID = re.compile(r"\b(one|two|three|four|five|six|seven|eight|nine|ten|"
                   r"\d+)\s+(?:personal\s+)?signals?\b", re.I)
 WORD = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6,
         "seven": 7, "eight": 8, "nine": 9, "ten": 10}
+def sentences(entry):
+    """Every sentence this entry can put on screen — its own, and the ones a
+    run can substitute for them. A count in a line nobody thought of as a
+    count is exactly the one that goes stale, and a personalised line is a
+    line that is only read on some runs."""
+    out = [entry["line"], entry.get("sub") or ""]
+    for row in ((entry.get("personal") or {}).get("lines") or {}).values():
+        out += [row.get("line") or "", row.get("sub") or ""]
+    return out
+
+
 for entry in mids:
-    for text in (entry["line"], entry.get("sub") or ""):
+    for text in sentences(entry):
         hit = SAID.search(text)
         if not hit:
             continue
@@ -649,6 +660,133 @@ check("no dropped sub took a claim the copy still makes",
       str([e["after_step"] for e in mids
            if "signals left" in e.get("sub", "")]))
 
+print("\n--- the echo: which frames each beat hands back ---")
+# Each interstitial shows the images the reader tapped on the steps it
+# closes. The lists are checked against the walk rather than against
+# themselves: a beat that echoed a step from the wrong act would be handing
+# somebody a frame they had not reached yet.
+seen_steps = 0
+for entry in mids:
+    after = entry["after_step"]
+    want = [s["id"] for s in steps][seen_steps:after]
+    check("  after %-2d echoes the steps it closes" % after,
+          entry.get("echo_steps") == want,
+          "%s vs %s" % (entry.get("echo_steps"), want))
+    seen_steps = after
+echoed = [t for e in mids for t in e["echo_steps"]]
+check("every step is handed back exactly once",
+      sorted(echoed) == sorted(s["id"] for s in steps),
+      str(sorted(set(echoed) ^ {s["id"] for s in steps})))
+check("  and in the order they were walked",
+      echoed == [s["id"] for s in steps], str(echoed))
+check("the six early beats hand back two, the last two hand back three",
+      [len(e["echo_steps"]) for e in mids] == [2, 2, 2, 2, 2, 2, 3, 3],
+      str([len(e["echo_steps"]) for e in mids]))
+check("the funnel asks for the analysing grid too",
+      cfg.get("analyzing_echo") is True, str(cfg.get("analyzing_echo")))
+# The dismiss has to outlast the row. Recomputed here off the engine's own
+# numbers rather than trusting the config's base to be enough.
+STAGGER = int(re.search(r"var ECHO_STAGGER_MS = (\d+)", engine).group(1))
+CEILING = int(re.search(r"var ECHO_HOLD_MS = (\d+)", engine).group(1))
+for entry in mids:
+    want = entry["auto_advance_ms"] + len(entry["echo_steps"]) * STAGGER
+    check("  after %-2d holds %dms, and its last frame lands at %dms"
+          % (entry["after_step"], min(want, CEILING),
+             (len(entry["echo_steps"]) - 1) * STAGGER),
+          want <= CEILING
+          and want > (len(entry["echo_steps"]) - 1) * STAGGER,
+          "%d vs ceiling %d" % (want, CEILING))
+check("no beat is cut off mid-row",
+      all(e["auto_advance_ms"] + len(e["echo_steps"]) * STAGGER <= CEILING
+          for e in mids))
+for slug in ("zodiac", "kitchen", "kitchen-visualizer"):
+    other = json.load(open(os.path.join(ROOT, "funnels/%s.json" % slug)))
+    check("  %-18s echoes nothing" % slug,
+          not [e for e in (other.get("interstitials") or [])
+               if "echo_steps" in e]
+          and "analyzing_echo" not in other,
+          str([e.get("after_step") for e in (other.get("interstitials") or [])
+               if "echo_steps" in e]))
+
+print("\n--- the lines that say what the run said ---")
+PERSONAL = {
+    4: ("purpose", {
+        "purpose_love": ("Your love signal is strong.",
+                         "It's shaping what we ask next."),
+        "purpose_career": ("Your ambition signal is strong.",
+                           "It's shaping what we ask next."),
+        "purpose_peace": ("Your calm signal is strong.",
+                          "It's shaping what we ask next."),
+        "purpose_path": ("Your forward signal is strong.",
+                         "It's shaping what we ask next.")}),
+    6: ("element", {
+        "fire": ("Fire keeps pulling ahead.", None),
+        "earth": ("Earth keeps pulling ahead.", None),
+        "air": ("Air keeps pulling ahead.", None),
+        "water": ("Water keeps pulling ahead.", None)}),
+    8: ("energy", {
+        "sun": ("You lean Sun. Profile {pct}% calibrated.", None),
+        "moon": ("You lean Moon. Profile {pct}% calibrated.", None)}),
+    15: ("element", {
+        "fire": ("Your fire runs deep. Three signals left.", None),
+        "earth": ("Your earth runs deep. Three signals left.", None),
+        "air": ("Your air runs deep. Three signals left.", None),
+        "water": ("Your water runs deep. Three signals left.", None)}),
+}
+by_after = {e["after_step"]: e for e in mids}
+check("four of the eight carry a personal block",
+      sorted(e["after_step"] for e in mids if "personal" in e)
+      == sorted(PERSONAL), str(sorted(e["after_step"] for e in mids
+                                      if "personal" in e)))
+check("  and the other four keep the static lines they were written with",
+      [by_after[a]["line"] for a in (2, 10, 12, 18)] == [
+          "Sign locked.", "Moon signal recorded.", "Inverse signal locked.",
+          "All 18 signals in."],
+      str([by_after[a]["line"] for a in (2, 10, 12, 18)]))
+for after, (axis, rows) in sorted(PERSONAL.items()):
+    rule = by_after[after]["personal"]
+    check("  after %-2d turns on %s" % (after, axis),
+          rule.get("axis") == axis, str(rule.get("axis")))
+    check("    with a line for every tag on it",
+          sorted(rule.get("lines") or {}) == sorted(rows),
+          str(sorted(rule.get("lines") or {})))
+    for tag, (line, sub) in sorted(rows.items()):
+        got = (rule.get("lines") or {}).get(tag) or {}
+        check("    %-14s says %s" % (tag, '"%s"' % line[:38]),
+              got.get("line") == line, repr(got.get("line")))
+        check("      %s" % ("with its sub" if sub else "and no sub"),
+              got.get("sub") == sub if sub else "sub" not in got,
+              repr(got.get("sub")))
+# The two kinds of axis the engine knows, named against what it actually
+# declares — a config naming an axis this file has never heard of would
+# resolve to nothing, silently, on every run.
+declared = set(re.findall(r"(\w+):\s*\w+_AXIS",
+                          re.search(r"var AXES = \{([^}]*)\}",
+                                    engine, re.S).group(1)))
+for after, (axis, _) in sorted(PERSONAL.items()):
+    scoring = axis in declared
+    check("  %-8s is %s" % (axis, "a scoring axis" if scoring
+                            else "a service prefix"),
+          scoring or axis in {"purpose", "bond"}, axis)
+check("engine.js declares the two this funnel scores on",
+      {"element", "energy"} <= declared, str(sorted(declared)))
+check("  and still declares the three it always did",
+      {"tone", "material", "season"} <= declared, str(sorted(declared)))
+check("  element is the element vocabulary, in order",
+      re.search(r"var ELEMENT_AXIS = \[([^\]]*)\]", engine).group(1)
+      .replace('"', "").replace(" ", "").split(",")
+      == ["fire", "earth", "air", "water"])
+check("  energy is sun and moon",
+      re.search(r"var ENERGY_AXIS = \[([^\]]*)\]", engine).group(1)
+      .replace('"', "").replace(" ", "").split(",") == ["sun", "moon"])
+# Every service prefix an axis names has to be a tag the quiz can produce.
+for after, (axis, rows) in sorted(PERSONAL.items()):
+    if axis in declared:
+        continue
+    check("  every %s tag is one a card carries" % axis,
+          set(rows) <= {t for i in images for t in i["tags"]},
+          str(sorted(set(rows) - {t for i in images for t in i["tags"]})))
+
 print("\n--- engine.js walks the list rather than the first three ---")
 # Eight is a config change and nothing else, but only because the lookup is
 # a scan. A cap anywhere in here would make the last five screens dead copy.
@@ -680,10 +818,15 @@ check("the mode is read off the entry, not off the funnel",
 check("  a missing or unusable value is no timing at all",
       'typeof ms !== "number"' in auto and "return 0;" in auto)
 check("  and a usable one is clamped at both ends",
-      "Math.max(AUTO_MIN_MS, Math.min(ms, INTERSTITIAL_MS))" in auto)
-check("  the floor and the ceiling are the ones the config sits inside",
+      "Math.max(AUTO_MIN_MS, Math.min(want, ceiling))" in auto)
+check("  the base beat is pushed back once per thumbnail",
+      "var want = ms + (echoes || 0) * ECHO_STAGGER_MS;" in auto)
+check("  a screen with a row on it gets the higher ceiling",
+      "var ceiling = echoes ? ECHO_HOLD_MS : INTERSTITIAL_MS;" in auto)
+check("  the floor and both ceilings are the ones the config sits inside",
       "var AUTO_MIN_MS = 600;" in engine
-      and "var INTERSTITIAL_MS = 4000;" in engine)
+      and "var INTERSTITIAL_MS = 4000;" in engine
+      and "var ECHO_HOLD_MS = 4500;" in engine)
 opened = re.search(r"function openInterstitial\([^)]*\)\s*\{(.*?)\n  \}",
                    engine, re.S).group(1)
 check("the button is hidden only when the entry asked for timing",
@@ -723,6 +866,79 @@ check("the entrance is replayed rather than played once",
       and 'screen.classList.add("is-enter")' in engine)
 check("  and the mode's class comes off for a funnel that does not ask",
       'screen.classList.toggle("is-auto", !!auto)' in engine)
+
+print("\n--- the echo and the personal line, read out of the engine ---")
+echo_fn = re.search(r"function setEcho\([^)]*\)\s*\{(.*?)\n  \}",
+                    engine, re.S).group(1)
+check("the row is drawn from the images this run actually tapped",
+      "function echoPicks(" in engine
+      and "imageById(chosenOnStep(want[i]))" in engine)
+check("  a step with no answer is dropped, never drawn as a gap",
+      "if (item && item.img) out.push(item);" in engine)
+check("  and the row is only built for a screen that advances itself",
+      "var picks = auto ? echoPicks(entry) : [];" in echo_fn)
+check("the stagger is an animation delay, not eight live timers",
+      "cell.style.animationDelay" in echo_fn
+      and "setTimeout" not in echo_fn and "setInterval" not in echo_fn)
+check("  and opting out of motion zeroes every one of them",
+      "var slow = prefersReducedMotion();" in echo_fn
+      and "(slow ? 0 : i * ECHO_STAGGER_MS)" in echo_fn)
+accent_fn = re.search(r"function setAccent\([^)]*\)\s*\{(.*?)\n  \}",
+                      engine, re.S).group(1)
+check("the spark yields to the row, and the rule does not",
+      "if (!auto || (echoes && !bar))" in accent_fn, accent_fn[:200])
+grid_fn = re.search(r"function startGrid\([^)]*\)\s*\{(.*?)\n  \}",
+                    engine, re.S).group(1)
+check("the analysing grid is the whole run, in tap order",
+      "function gridPicks(" in engine
+      and "for (var i = 0; i < chosen.length; i++)" in engine)
+check("  gated on the funnel asking for it",
+      "if (!(cfg && cfg.analyzing_echo)) return [];" in engine)
+check("  drawn above the copy, so the line has the signals over it",
+      "el.analyzing.insertBefore(grid, el.analyzing.firstChild)" in grid_fn)
+check("  and it starts once the ground behind it is dark",
+      "* 0.45)" in grid_fn)
+wait_fn = re.search(r"function analyzingMs\([^)]*\)\s*\{(.*?)\n  \}",
+                    engine, re.S).group(1)
+check("a funnel with no grid waits exactly what its config says",
+      "if (!cells) return base;" in wait_fn)
+check("  and one with a grid waits for the sequence plus a beat",
+      "GRID_STAGGER_MS" in wait_fn and "GRID_HOLD_MS" in wait_fn
+      and "Math.min(GRID_MAX_MS" in wait_fn)
+check("  the message rotation spreads over the wait it was given",
+      "(total || cfg.analyzing.duration_ms || 2500)" in engine)
+check("  and the grid is cleared when the screen comes down",
+      "el.analyzingGrid.innerHTML = \"\";" in re.search(
+          r"function stopAnalyzing\([^)]*\)\s*\{(.*?)\n  \}",
+          engine, re.S).group(1))
+personal_fn = re.search(r"function personalised\([^)]*\)\s*\{(.*?)\n  \}",
+                        engine, re.S).group(1)
+check("a personalised entry replaces both halves or neither",
+      "out.line = pick.line;" in personal_fn
+      and 'out.sub = pick.sub || "";' in personal_fn)
+check("  and a missing line leaves the entry exactly as written",
+      "if (!pick || !pick.line) return entry;" in personal_fn)
+check("  the kicker is never replaced",
+      "out.kicker" not in personal_fn)
+tag_fn = re.search(r"function personalTag\([^)]*\)\s*\{(.*?)\n  \}",
+                   engine, re.S).group(1)
+check("a scoring axis answers only when one tag leads outright",
+      "soleLeaderOf(AXES[axis])" in tag_fn)
+check("  and a service prefix is read off the run's own cards",
+      'return prefixTag(axis + "_");' in tag_fn)
+sole = re.search(r"function soleLeaderOf\([^)]*\)\s*\{(.*?)\n  \}",
+                 engine, re.S).group(1)
+check("a tie is not a leader",
+      "level === 1" in sole and "bestScore > 0" in sole, sole[-120:])
+check("  which is what separates it from the draw's own leaderOf",
+      "function leaderOf(" in engine
+      and "level" not in re.search(r"function leaderOf\([^)]*\)\s*\{"
+                                   r"(.*?)\n  \}", engine, re.S).group(1))
+check("the token check runs against the sentence that will be shown",
+      "var shown = personalised(entry);" in engine
+      and "return canFill(shown) ? shown : null;" in engine)
+check("  which is the same check it always was",
+      "function canFill(entry)" in engine)
 
 print("\n--- and the stylesheet only paints it under that class ---")
 css = open(os.path.join(ROOT, "static/css/mazzin.css"), encoding="utf-8").read()
@@ -781,6 +997,19 @@ check("reduced motion gets the same beats as fades",
 check("the accent is gold on this funnel's ground",
       "body.theme-zodiac .mid-accent .mid-accent-fill "
       "{ background: #E8C878; }" in css)
+check("the echo row and the grid are painted, and only where they exist",
+      ".mid-echo {" in css and ".mid-echo-cell {" in css
+      and ".analyzing-grid {" in css and ".analyzing-cell {" in css)
+check("  by transform and opacity, like everything else on this screen",
+      all(prop in ("opacity", "transform")
+          for block in re.findall(r"@keyframes echo-in\s*\{(.*?)\n\}",
+                                  css, re.S)
+          for prop in re.findall(r"(\w[\w-]*)\s*:", block)),
+      str(re.findall(r"@keyframes echo-in\s*\{(.*?)\n\}", css, re.S)))
+check("  and they fall back to a plain fade for anyone opted out",
+      re.search(r"@media \(prefers-reduced-motion: reduce\) \{[^@]*?"
+                r"\.mid-echo-cell,\s*\n\s*\.analyzing-cell \{\s*\n"
+                r"\s*animation: mid-appear", css) is not None)
 check("kitchen's interstitial styling is untouched",
       ".mid-cta {" in css and ".mid-cta:active { background: #f6f7f8; }" in css
       and ".mid-working {" in css and ".mid-next {" in css)
@@ -879,7 +1108,11 @@ NEW_COPY = ([e["kicker"] for e in mids] + [e["line"] for e in mids]
                for i in by_step[sid]["pairs"][0]["images"]
                for c in i["colors"]]
             + [t for _, t in COUNTED]
-            + [r["offer_sub"] for r in pmap.values()])
+            + [r["offer_sub"] for r in pmap.values()]
+            + [v for e in mids
+               for r in (e.get("personal") or {}).get("lines", {}).values()
+               for v in (r["line"], r.get("sub"))
+               if v])
 for text in NEW_COPY:
     hit = reports._banned_hit(text, reports.ZODIAC_BANNED)
     check("  %-44s passes the Terms check" % ('"%s"' % text[:42]),

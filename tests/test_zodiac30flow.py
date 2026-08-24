@@ -24,6 +24,7 @@ engine's default path, asserted here rather than assumed from the diff.
 import http.server
 import json
 import os
+import re
 import socketserver
 import sys
 import threading
@@ -66,6 +67,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     """
 
     strip_purpose = False
+    # Served without the `personal` blocks, which is how a run reaches the
+    # base lines without having to engineer a tie on every axis at once.
+    strip_personal = False
+    # Served without `echo_steps`, which is the only way left to see an auto
+    # interstitial that has no row on it — every one of this funnel's does
+    # now, and the spark yields wherever a row does. The engine still draws
+    # it for an auto beat without one, so that is where it is tested.
+    strip_echo = False
 
     def __init__(self, *a, **kw):
         super().__init__(*a, directory=ROOT, **kw)
@@ -77,11 +86,21 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         path = self.path.split("?")[0]
         if path == "/api/pixel-config":
             return self._json({})
-        if path == "/static/funnels/zodiac30.json" and Handler.strip_purpose:
+        if path == "/static/funnels/zodiac30.json" and (
+                Handler.strip_purpose or Handler.strip_personal
+                or Handler.strip_echo):
             with open(os.path.join(ROOT, "static/funnels/zodiac30.json"),
                       encoding="utf-8") as fh:
                 cfg = json.load(fh)
-            cfg["result_copy"].pop("purpose_map", None)
+            if Handler.strip_purpose:
+                cfg["result_copy"].pop("purpose_map", None)
+            if Handler.strip_personal:
+                for entry in cfg.get("interstitials") or []:
+                    entry.pop("personal", None)
+            if Handler.strip_echo:
+                cfg.pop("analyzing_echo", None)
+                for entry in cfg.get("interstitials") or []:
+                    entry.pop("echo_steps", None)
             return self._json(cfg)
         if path in ("/zodiac", "/zodiac30", "/kitchen"):
             self.path = "/static/funnel.html"
@@ -167,6 +186,91 @@ def to_result(page, slug, seeking=None):
     return page.evaluate(RESULT)
 
 
+BEAT = """() => {
+  const s = document.getElementById('screen-interstitial');
+  if (!s || !s.classList.contains('is-active')) return null;
+  const a = document.getElementById('mid-accent');
+  const sub = document.getElementById('mid-sub');
+  return {
+    line: (document.getElementById('mid-line') || {}).textContent || "",
+    sub: sub && !sub.hidden ? sub.textContent : "",
+    echo: [...document.querySelectorAll('#mid-echo .mid-echo-cell img')]
+      .map(n => n.getAttribute('src').split('/').pop().replace('.webp', '')),
+    delays: [...document.querySelectorAll('#mid-echo .mid-echo-cell')]
+      .map(n => n.style.animationDelay),
+    accent: a && !a.hidden ? a.className : ""};
+}"""
+
+
+def plan(slug, prefer=(), overrides=None):
+    """One image id per step: the card carrying most of `prefer`, or the first.
+
+    Computed here rather than chosen in the browser because the tags are the
+    config's and the page does not carry them. `overrides` pins named steps.
+    """
+    cfg = json.load(open(os.path.join(ROOT, "funnels/%s.json" % slug),
+                        encoding="utf-8"))
+    want = set(prefer)
+    out = []
+    for step in cfg["swipe"]["steps"]:
+        images = [i for p in step["pairs"] for i in p["images"]]
+        pick = (overrides or {}).get(step["id"])
+        if not pick:
+            best = max(images, key=lambda i: len(set(i["tags"]) & want))
+            pick = best["id"] if set(best["tags"]) & want else images[0]["id"]
+        out.append(pick)
+    return out
+
+
+def walk_beats(page, slug, ids, stop_after=None):
+    """Walk a funnel tapping named cards, reading every interstitial on the way.
+
+    Returns (beats, tapped). `stop_after` leaves the walk once that step's
+    beat has been read, for the runs that only care about an early one.
+    """
+    page.goto("http://127.0.0.1:%d/%s" % (PORT, slug))
+    page.wait_for_selector("#cards .card", timeout=20000)
+    page.wait_for_timeout(300)
+    beats, tapped = [], []
+    for index in range(len(ids)):
+        cards = page.locator("#cards .card")
+        if not cards.count():
+            break
+        target = page.locator("#cards .card img[src$='%s.webp']" % ids[index])
+        node = target.first.locator("xpath=..") if target.count() \
+            else cards.first
+        try:
+            node.click(timeout=4000)
+        except PageError:
+            page.wait_for_timeout(400)
+            continue
+        tapped.append(ids[index] if target.count() else None)
+        page.wait_for_timeout(HOLD_MS + SETTLE_MS)
+        if mid_visible(page):
+            # Late enough that every thumbnail has had its delay, early
+            # enough that the shortest beat is still up.
+            page.wait_for_timeout(1300)
+            got = page.evaluate(BEAT)
+            if got:
+                got["after"] = index + 1
+                beats.append(got)
+            for _ in range(300):
+                if not mid_visible(page):
+                    break
+                page.wait_for_timeout(20)
+        page.wait_for_timeout(140)
+        if stop_after and index + 1 >= stop_after:
+            break
+    return beats, tapped
+
+
+def beat(beats, after):
+    for row in beats:
+        if row["after"] == after:
+            return row
+    return None
+
+
 def start(page, slug):
     page.goto("http://127.0.0.1:%d/%s" % (PORT, slug))
     page.wait_for_selector("#cards .card", timeout=20000)
@@ -216,7 +320,7 @@ def gone(page, ms):
 # fixing something that was not broken.
 BLOCK = """() => {
   const parts = [...document.querySelectorAll(
-      '#mid-kicker, #mid-line, #mid-sub, #mid-accent')]
+      '#mid-kicker, #mid-line, #mid-sub, #mid-accent, #mid-echo')]
     .filter(n => !n.hidden && n.getBoundingClientRect().height > 0)
     .map(n => n.getBoundingClientRect());
   if (!parts.length) return null;
@@ -298,11 +402,12 @@ def run(page):
     check("  and this one drops its sub, as the config says",
           page.evaluate("() => document.getElementById('mid-sub').hidden")
           is True)
-    check("the accent is on screen",
-          page.locator("#mid-accent").count() == 1
-          and page.locator("#mid-accent").is_visible())
-    check("  a spark on a confirm beat, not a rule",
-          "is-spark" in klass(page, "#mid-accent"),
+    check("the frames it closed on are what is on screen",
+          page.locator("#mid-echo .mid-echo-cell").count() == 2,
+          str(page.locator("#mid-echo .mid-echo-cell").count()))
+    check("  and the spark yields to them, rather than pulsing beside them",
+          page.locator("#mid-accent").count() == 0
+          or not page.locator("#mid-accent").is_visible(),
           klass(page, "#mid-accent"))
 
     print("\n--- the block is placed, not parked in a corner ---")
@@ -311,14 +416,40 @@ def run(page):
           block["align"] == "center", block["align"])
     check("  and sits on the middle of the viewport",
           abs(block["centre"] - 50) <= 2, "%.1f%%" % block["centre"])
-    check("  the accent centred with it",
+    check("  the row centred with it",
           abs(page.evaluate("""() => {
-              const a = document.getElementById('mid-accent')
+              const a = document.getElementById('mid-echo')
                   .getBoundingClientRect();
               return (a.left + a.right) / 2 - window.innerWidth / 2;
           }""")) < 1)
 
-    print("\n--- and the spark keeps breathing after its pulse ---")
+    print("\n--- and the spark keeps breathing, where a beat has no row ---")
+    # Every beat on this funnel hands frames back now, and the spark yields
+    # wherever a row does. It is still what an auto interstitial without one
+    # draws, so it is tested against a config served without `echo_steps` —
+    # the same engine path, the same CSS, one key fewer.
+    Handler.strip_echo = True
+    try:
+        start(page, "zodiac30")
+        check("a beat with no row is reached", to_interstitial(page))
+        check("  and it draws the spark instead",
+              "is-spark" in klass(page, "#mid-accent"),
+              klass(page, "#mid-accent"))
+        check("  with no row beside it",
+              page.locator("#mid-echo .mid-echo-cell").count() == 0)
+        check("  centred like the copy above it",
+              abs(page.evaluate("""() => {
+                  const a = document.getElementById('mid-accent')
+                      .getBoundingClientRect();
+                  return (a.left + a.right) / 2 - window.innerWidth / 2;
+              }""")) < 1)
+        spark_probe(page)
+    finally:
+        Handler.strip_echo = False
+    rest_of_run(page)
+
+
+def spark_probe(page):
     accent = page.evaluate(ACCENT)
     names = [a["name"] for a in accent["animations"]]
     check("two animations on it, the pulse and the breath",
@@ -337,23 +468,11 @@ def run(page):
     check("  and the working spinner stays out of the way",
           page.locator("#mid-working").count() == 0
           or not page.locator("#mid-working").is_visible())
-
-    print("\n--- it leaves on its own ---")
-    # Its own beat is 2000ms and the default this replaces is 4000ms, so the
-    # window between them is what says the entry's own timing is the one
-    # running: still there at 1.2s, gone by 2.6s.
-    page.wait_for_timeout(1200)
-    check("still on screen a second in", mid_visible(page))
-    check("gone by its own beat, with no tap and no button", gone(page, 1400))
-    check("  and the quiz is what came back",
-          page.locator("#cards .card").count() >= 2)
-
-    print("\n--- the breath is visible, not merely declared ---")
-    # On its own interstitial: the beat is two seconds and sampling spends a
-    # third of one, which is time the checks above need for their own claims.
-    # The breath starts at 1240ms, so the window it can be watched in runs
-    # from there to the end of the beat.
-    check("another interstitial is reached", to_interstitial(page))
+    # The breath, watched rather than read off the sheet. On its own beat,
+    # entered deliberately: the pulse hands over at 1240ms and the beat ends
+    # at 2000ms, so there is exactly one window to sample and the checks
+    # above have already spent an unknown amount of this one.
+    check("another beat with no row is reached", to_interstitial(page))
     page.wait_for_timeout(1300)
     lit = []
     for _ in range(3):
@@ -361,11 +480,26 @@ def run(page):
             "() => +getComputedStyle(document.querySelector("
             "'#mid-accent .mid-accent-fill')).opacity"))
         page.wait_for_timeout(150)
-    check("  the spark is still moving after its pulse has finished",
+    check("  it is still moving after its pulse has finished",
           len(set(round(v, 2) for v in lit)) > 1,
           str([round(v, 3) for v in lit]))
     check("  and stays lit while it moves, rather than blinking out",
           all(v > 0.4 for v in lit), str([round(v, 3) for v in lit]))
+
+
+def rest_of_run(page):
+    print("\n--- it leaves on its own ---")
+    # Back on the real config, so the beat under test is the one that ships.
+    start(page, "zodiac30")
+    check("a beat is reached", to_interstitial(page))
+    # 2000ms base plus one stagger per thumbnail is 2840ms, against the
+    # 4000ms a button screen takes. The window between the two is what says
+    # the entry's own timing is the one running: there at 1.2s, gone by 3.2s.
+    page.wait_for_timeout(1200)
+    check("still on screen a second in", mid_visible(page))
+    check("gone by its own beat, with no tap and no button", gone(page, 2000))
+    check("  and the quiz is what came back",
+          page.locator("#cards .card").count() >= 2)
 
     print("\n--- and a tap gets there first ---")
     check("the next interstitial is reached", to_interstitial(page))
@@ -481,6 +615,20 @@ def run(page):
           or not page.locator("#mid-accent").is_visible())
     check("  its working row is the one it always had",
           page.locator("#mid-working").is_visible())
+    # Verbatim against its own config, not merely "not zodiac30's". This is
+    # the funnel that is live, and it shares every line of this file.
+    v1cfg = json.load(open(os.path.join(ROOT, "funnels/zodiac.json"),
+                           encoding="utf-8"))
+    v1first = v1cfg["interstitials"][0]
+    check("  its line is the one its config carries, word for word",
+          (page.text_content("#mid-line") or "") == v1first["line"],
+          "%r vs %r" % (page.text_content("#mid-line"), v1first["line"]))
+    check("    and its sub",
+          (page.text_content("#mid-sub") or "") == v1first["sub"],
+          "%r vs %r" % (page.text_content("#mid-sub"), v1first["sub"]))
+    check("  it hands back no frames",
+          page.locator("#mid-echo").count() == 0
+          or not page.locator("#mid-echo").is_visible())
     # The centring is the auto mode's, and only the auto mode's. This screen
     # has a control under its copy, which is where ranged-left type belongs,
     # and its block was measured at 45.5% of the viewport before any of this.
@@ -637,6 +785,140 @@ def run(page):
               str([(n["title"], n["colour"], n["size"])
                    for n in v1["locked"]]))
 
+    print("\n--- the echo: their own frames, handed back ---")
+    # A fire-leaning walk, which also carries the whole run to the analysing
+    # screen. The taps are named here rather than chosen in the browser, so
+    # every thumbnail can be checked against a card this session actually
+    # tapped rather than against the config's idea of one.
+    fire = plan("zodiac30", ("fire",))
+    beats, tapped = walk_beats(page, "zodiac30", fire)
+    check("every beat was reached", len(beats) == 8, str(len(beats)))
+    check("  and every tap landed on the card it was aimed at",
+          None not in tapped and len(tapped) == 18, str(tapped))
+    ECHOED = {2: 2, 4: 2, 6: 2, 8: 2, 10: 2, 12: 2, 15: 3, 18: 3}
+    for row in beats:
+        after = row["after"]
+        want = tapped[after - ECHOED[after]:after]
+        check("  after %-2d hands back the frames it closed on" % after,
+              row["echo"] == want, "%s vs %s" % (row["echo"], want))
+        check("    one at a time, %d of them" % ECHOED[after],
+              row["delays"] == ["%dms" % (i * 420)
+                                for i in range(ECHOED[after])],
+              str(row["delays"]))
+    check("no beat shows a frame from an act it did not close",
+          not [r for r in beats
+               if set(r["echo"]) - set(tapped[:r["after"]])])
+    # The spark is decoration and yields; the rule is progress and does not.
+    check("the almost beats keep their rule",
+          all(beat(beats, a) and "is-bar" in beat(beats, a)["accent"]
+              for a in (8, 15, 18)),
+          str([(a, beat(beats, a)["accent"]) for a in (8, 15, 18)]))
+    check("  and the confirm beats show no spark beside the row",
+          not [a for a in (2, 4, 6, 10, 12)
+               if beat(beats, a) and beat(beats, a)["accent"]],
+          str([(a, beat(beats, a)["accent"]) for a in (2, 4, 6, 10, 12)]))
+
+    print("\n--- and the beat outlasts its own last frame ---")
+    # After 15 there are three, so the last starts at 840ms. The screen has
+    # to still be there then, and gone by the 3260ms it asked for.
+    page.goto("http://127.0.0.1:%d/zodiac30" % PORT)
+    page.wait_for_selector("#cards .card", timeout=20000)
+    page.wait_for_timeout(300)
+    for _ in range(2):
+        page.locator("#cards .card").first.click()
+        page.wait_for_timeout(HOLD_MS + SETTLE_MS)
+    check("the first beat is up", mid_visible(page))
+    cells = page.locator("#mid-echo .mid-echo-cell").count()
+    check("  with its row on it", cells == 2, str(cells))
+    page.wait_for_timeout(1000)
+    check("  still up once the last thumbnail has arrived",
+          mid_visible(page))
+    check("  and gone by the beat it asked for", gone(page, 2200))
+    # A tap still gets there first, row or no row.
+    page.locator("#cards .card").first.click()
+    page.wait_for_timeout(HOLD_MS + SETTLE_MS)
+    page.locator("#cards .card").first.click()
+    page.wait_for_timeout(HOLD_MS + SETTLE_MS)
+    check("the next beat is up", mid_visible(page))
+    page.evaluate("() => document.getElementById('screen-interstitial')"
+                  ".click()")
+    check("  and a tap skips it, thumbnails and all", gone(page, 900))
+
+    print("\n--- the analysing screen shows the whole run ---")
+    grid = walk_beats(page, "zodiac30", fire)[1]
+    seen = 0
+    for _ in range(60):
+        seen = max(seen, page.locator("#analyzing-grid .analyzing-cell")
+                   .count())
+        if page.locator("#result-module").count() \
+                and not page.locator("#result-module").is_hidden():
+            break
+        page.wait_for_timeout(100)
+    check("it draws every choice of the run", seen == 18, str(seen))
+    check("  which is one cell per tap", seen == len(grid), str(len(grid)))
+    check("  and the result waited for it",
+          page.locator("#result-module").count() == 1)
+
+    print("\n--- the line says what the run said ---")
+    love = plan("zodiac30", ("fire",), {"seeking": "sk3a"})
+    said = beat(walk_beats(page, "zodiac30", love, stop_after=4)[0], 4)
+    check("a Love run is told so after four",
+          said and said["line"] == "Your love signal is strong.",
+          said and said["line"])
+    check("  with the sub written for it",
+          said and said["sub"] == "It's shaping what we ask next.",
+          said and said["sub"])
+    six = beat(beats, 6)
+    fifteen = beat(beats, 15)
+    check("a fire run is told fire is ahead after six",
+          six and six["line"] == "Fire keeps pulling ahead.",
+          six and six["line"])
+    check("  and that it runs deep after fifteen",
+          fifteen and fifteen["line"]
+          == "Your fire runs deep. Three signals left.",
+          fifteen and fifteen["line"])
+    check("  which counts what is actually left", 18 - 15 == 3)
+    moon = plan("zodiac30", ("moon",))
+    lean = beat(walk_beats(page, "zodiac30", moon, stop_after=8)[0], 8)
+    check("a moon-leaning run is told so after eight",
+          lean and lean["line"] == "You lean Moon. Profile 44% calibrated.",
+          lean and lean["line"])
+    check("  with the rule still drawing to the same number",
+          lean and "is-bar" in lean["accent"], lean and lean["accent"])
+
+    print("\n--- and says nothing it cannot stand behind ---")
+    # A run whose sun and moon are level by step eight. `leaderOf` would break
+    # that tie by array order and tell them they lean Sun; `soleLeaderOf` does
+    # not, and the base line is what a run that has not said it yet gets.
+    TIE = ["zk1a", "sign_aries", "sk3a", "bd4a", "en4b", "ls5a", "pl6e",
+           "mo7b"]
+    tie = plan("zodiac30", (), dict(zip(
+        [s for s in ["hook", "sign", "seeking", "bond", "energy", "landscape",
+                     "palette", "moment"]], TIE)))
+    tied = beat(walk_beats(page, "zodiac30", tie, stop_after=8)[0], 8)
+    check("a tied run gets the line the entry was written with",
+          tied and tied["line"] == "Profile 44% calibrated.",
+          tied and tied["line"])
+    check("  and its row and rule are unaffected by that",
+          tied and len(tied["echo"]) == 2 and "is-bar" in tied["accent"],
+          str(tied and (tied["echo"], tied["accent"])))
+    # The other way a run reaches the base line: a config that never offered
+    # an alternative, which is every funnel but this one.
+    Handler.strip_personal = True
+    try:
+        bare = walk_beats(page, "zodiac30", fire, stop_after=8)[0]
+    finally:
+        Handler.strip_personal = False
+    check("a config with no personal block renders its own lines",
+          [b["line"] for b in bare] == ["Sign locked.",
+                                        "Two personal signals in.",
+                                        "One element keeps pulling ahead.",
+                                        "Profile 44% calibrated."],
+          str([b["line"] for b in bare]))
+    check("  and still hands the frames back",
+          all(len(b["echo"]) == 2 for b in bare),
+          str([b["echo"] for b in bare]))
+
     print("\n--- kitchen is untouched ---")
     start(page, "kitchen")
     check("an interstitial is reached", to_interstitial(page, limit=8))
@@ -645,8 +927,29 @@ def run(page):
     check("  with no mode class and no accent",
           "is-auto" not in klass(page, "#screen-interstitial")
           and page.locator("#mid-accent").count() == 0)
+    kcfg = json.load(open(os.path.join(ROOT, "funnels/kitchen.json"),
+                          encoding="utf-8"))
+    # Matched as a shape, not as a string: kitchen's lines are templates and
+    # what reaches the screen has had its tokens filled by the same machinery
+    # it always used. The claim is that the sentence is still one of its own,
+    # word for word around the numbers.
+    shown = page.text_content("#mid-line") or ""
+    shapes = [re.escape(e["line"]).replace(r"\{", "{").replace(r"\}", "}")
+              for e in kcfg["interstitials"]]
+    shapes = [re.sub(r"\{\w+\}", ".+", shape) for shape in shapes]
+    check("  its line is one of its own, filled the way it always was",
+          any(re.fullmatch(shape, shown) for shape in shapes),
+          "%r matches none of %s" % (shown, [e["line"]
+                                             for e in kcfg["interstitials"]]))
+    check("  and it hands back no frames either",
+          page.locator("#mid-echo").count() == 0
+          or not page.locator("#mid-echo").is_visible())
     page.wait_for_timeout(2500)
     check("  and it is still there without a press", mid_visible(page))
+    # The analysing grid is this funnel's too. Neither of the others asks for
+    # one, and the node is built only where a config does.
+    check("  and its analysing screen draws no grid",
+          page.locator("#analyzing-grid").count() == 0)
 
 
 def main():
