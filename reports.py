@@ -2045,6 +2045,58 @@ def _chosen_on_step(cfg, choices, step_id):
     return None
 
 
+# The service tags a funnel declares a purpose rule for. Empty for every
+# funnel that declares none, which is how kitchen and zodiac v1 opt out of all
+# of this without knowing it exists.
+def _purpose_tags(cfg):
+    block = ((cfg or {}).get("result_copy") or {}).get("purpose_map") or {}
+    return block if isinstance(block, dict) else {}
+
+
+def _purpose(cfg, choices):
+    """What the reader said pulled them here, as a tag, or None.
+
+    Read off the tags of the cards they tapped rather than off a named step:
+    which question asks this belongs to the funnel, and the map is the list of
+    answers this one knows what to do with.
+    """
+    known = _purpose_tags(cfg)
+    if not known or not choices:
+        return None
+    images = _images_by_id(cfg)
+    for image_id in choices:
+        for tag in (images.get(image_id) or {}).get("tags") or ():
+            if tag in known:
+                return tag
+    return None
+
+
+# How the tag is said to a model. One line, in the reader's own terms, with
+# the honesty clause attached: the quiz asked them to tap a picture, and a
+# section that treated that as a diagnosis would be claiming a measurement
+# nobody took.
+PURPOSE_SAID = {
+    "purpose_love": "love and relationships",
+    "purpose_career": "career and money",
+    "purpose_peace": "inner peace",
+    "purpose_path": "the road ahead",
+}
+
+
+def _purpose_block(cfg, choices, section_id):
+    """The purpose context line for one section, or None."""
+    tag = _purpose(cfg, choices)
+    said = PURPOSE_SAID.get(tag or "")
+    if not said:
+        return None
+    return ("The reader said what pulled them here: %s — let the %s section "
+            "lean into that where it is honest to, without pretending the "
+            "quiz measured more than it did. They tapped a picture; they did "
+            "not answer a questionnaire about it. Do not name the question or "
+            "quote their answer back at them, and do not let this crowd out "
+            "what the section is for." % (said, section_id))
+
+
 def _visuals(cfg, result_style, choices):
     """The photographs this report is illustrated with, as image ids.
 
@@ -2327,6 +2379,15 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
         sign = _sign_block(cfg, choices)
         if sign:
             parts.append(sign)
+        # Personal sections only, checked here rather than left to the call
+        # site. The cached trio is one answer per archetype shared by every
+        # buyer of it, so a purpose in that prompt would be a row written for
+        # whoever happened to warm it first — see the note above
+        # `_cached_prompt`.
+        if section_id in (profile.get("personal") or ()):
+            purpose = _purpose_block(cfg, choices, section_id)
+            if purpose:
+                parts.append(purpose)
 
     # The first mistake was given away in full, numbered, with the promise
     # that the other four are in here. So it has to BE the first item rather
@@ -2368,6 +2429,15 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
     return "\n\n".join(parts)
 
 
+# The cache key is (funnel, style) and stays that way.
+#
+# Nothing below this line ever sees a purpose. The cached trio is the same
+# three sections for everybody who lands on an archetype — that is what makes
+# them worth caching at all — and adding the purpose to this prompt would
+# quadruple the rows while making each one a reading written for whichever
+# buyer happened to warm it. The personalisation this funnel sells is the
+# reader's own sign and their own taps, and all of that is in the personal
+# trio, which is written fresh per purchase and cached nowhere.
 def _cached_prompt(style, name, ids=None, funnel_slug=None):
     """The per-style sections. `ids` narrows it to a subset for the warmer."""
     profile = _profile(funnel_slug)
@@ -2788,7 +2858,7 @@ def _is_schema2(version):
 
 
 def _assemble(cfg, funnel_slug, result_style, name, built, paths, complete,
-              elements=None, visuals=None, sign=None):
+              elements=None, visuals=None, sign=None, purpose=None):
     """The stored content for whatever has resolved so far.
 
     A section that has not resolved is simply absent — the client renders what
@@ -2844,6 +2914,15 @@ def _assemble(cfg, funnel_slug, result_style, name, built, paths, complete,
     # key and every reader of this content sees exactly what it saw before.
     if sign:
         content["sign"] = sign
+    # And what they said pulled them here, for the same reason again: the paid
+    # page is opened from a link in an email, in a tab that never ran the quiz,
+    # and the order it puts the sections in is read off this. A funnel with no
+    # purpose map stores no key, and every reader of this content sees exactly
+    # what it saw before. The section list itself stays in the report's own
+    # order — the PDF is built from it, and a printed archive that reshuffled
+    # itself per reader would be a different document each time.
+    if purpose:
+        content["purpose"] = purpose
     return content
 
 
@@ -2890,7 +2969,7 @@ def _publish(job, complete=False):
     """Write what has resolved so far over the row that already exists."""
     content = _assemble(job["cfg"], job["funnel"], job["style_id"], job["name"],
                         job["built"], job["paths"], complete, job["elements"],
-                        job["visuals"], job.get("sign"))
+                        job["visuals"], job.get("sign"), job.get("purpose"))
     job["content"] = content
     try:
         database.execute(
@@ -3052,12 +3131,15 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     # None on a funnel with no sign step, which is every funnel but one.
     read = _sign(cfg, choices) if choices else None
     sign = read.get("label") if read else None
+    # Same story: resolved once, while the run still exists. None on every
+    # funnel that declares no purpose map.
+    purpose = _purpose(cfg, choices)
 
     job = {
         "purchase_id": purchase_id, "cfg": cfg, "funnel": funnel_slug,
         "style_id": result_style, "name": name, "built": built, "paths": paths,
         "on_final": on_final, "content": None, "elements": elements,
-        "visuals": visuals, "sign": sign,
+        "visuals": visuals, "sign": sign, "purpose": purpose,
     }
 
     tasks = []
@@ -3106,7 +3188,7 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                                               profile["stubs"])
                 paths[section_id] = "stub"
         content = _assemble(cfg, funnel_slug, result_style, name, built, paths,
-                            True, elements, visuals, sign)
+                            True, elements, visuals, sign, purpose)
         database.execute(
             INSERT_SQL, (purchase_id, json.dumps(content, separators=(",", ":")))
         )
@@ -3116,7 +3198,7 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
         return content
 
     opening = _assemble(cfg, funnel_slug, result_style, name, built, paths,
-                        False, elements, visuals, sign)
+                        False, elements, visuals, sign, purpose)
     database.execute(
         INSERT_SQL, (purchase_id, json.dumps(opening, separators=(",", ":")))
     )
