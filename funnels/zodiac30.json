@@ -2103,7 +2103,11 @@
       "kicker": "Signal recorded",
       "line": "Sign locked.",
       "cta": "Continue analysis",
-      "auto_advance_ms": 2000
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "hook",
+        "sign"
+      ]
     },
     {
       "after_step": 4,
@@ -2112,7 +2116,32 @@
       "line": "Two personal signals in.",
       "sub": "Your profile is already narrowing.",
       "cta": "Continue analysis",
-      "auto_advance_ms": 2000
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "seeking",
+        "bond"
+      ],
+      "personal": {
+        "axis": "purpose",
+        "lines": {
+          "purpose_love": {
+            "line": "Your love signal is strong.",
+            "sub": "It's shaping what we ask next."
+          },
+          "purpose_career": {
+            "line": "Your ambition signal is strong.",
+            "sub": "It's shaping what we ask next."
+          },
+          "purpose_peace": {
+            "line": "Your calm signal is strong.",
+            "sub": "It's shaping what we ask next."
+          },
+          "purpose_path": {
+            "line": "Your forward signal is strong.",
+            "sub": "It's shaping what we ask next."
+          }
+        }
+      }
     },
     {
       "after_step": 6,
@@ -2120,7 +2149,28 @@
       "kicker": "Signal recorded",
       "line": "One element keeps pulling ahead.",
       "cta": "Continue analysis",
-      "auto_advance_ms": 2000
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "energy",
+        "landscape"
+      ],
+      "personal": {
+        "axis": "element",
+        "lines": {
+          "fire": {
+            "line": "Fire keeps pulling ahead."
+          },
+          "earth": {
+            "line": "Earth keeps pulling ahead."
+          },
+          "air": {
+            "line": "Air keeps pulling ahead."
+          },
+          "water": {
+            "line": "Water keeps pulling ahead."
+          }
+        }
+      }
     },
     {
       "after_step": 8,
@@ -2128,7 +2178,22 @@
       "kicker": "Calibrating",
       "line": "Profile {pct}% calibrated.",
       "cta": "Continue analysis",
-      "auto_advance_ms": 2000
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "palette",
+        "moment"
+      ],
+      "personal": {
+        "axis": "energy",
+        "lines": {
+          "sun": {
+            "line": "You lean Sun. Profile {pct}% calibrated."
+          },
+          "moon": {
+            "line": "You lean Moon. Profile {pct}% calibrated."
+          }
+        }
+      }
     },
     {
       "after_step": 10,
@@ -2137,7 +2202,11 @@
       "line": "Moon signal recorded.",
       "sub": "It changes what we ask next.",
       "cta": "Continue analysis",
-      "auto_advance_ms": 2000
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "symbol",
+        "moonphase"
+      ]
     },
     {
       "after_step": 12,
@@ -2145,7 +2214,11 @@
       "kicker": "Signal recorded",
       "line": "Inverse signal locked.",
       "cta": "Continue analysis",
-      "auto_advance_ms": 2000
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "flow",
+        "drain"
+      ]
     },
     {
       "after_step": 15,
@@ -2153,7 +2226,29 @@
       "kicker": "Calibrating",
       "line": "Deep layer mapped. {pct}% calibrated.",
       "cta": "Continue analysis",
-      "auto_advance_ms": 2000
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "sanctuary",
+        "decision",
+        "tide"
+      ],
+      "personal": {
+        "axis": "element",
+        "lines": {
+          "fire": {
+            "line": "Your fire runs deep. Three signals left."
+          },
+          "earth": {
+            "line": "Your earth runs deep. Three signals left."
+          },
+          "air": {
+            "line": "Your air runs deep. Three signals left."
+          },
+          "water": {
+            "line": "Your water runs deep. Three signals left."
+          }
+        }
+      }
     },
     {
       "after_step": 18,
@@ -2162,7 +2257,12 @@
       "line": "All 18 signals in.",
       "sub": "Compiling your Cosmic Profile…",
       "cta": "Continue analysis",
-      "auto_advance_ms": 2400
+      "auto_advance_ms": 2400,
+      "echo_steps": [
+        "door",
+        "essence",
+        "seal"
+      ]
     }
   ],
   "interstitial_working": [
@@ -2774,6 +2874,7 @@
       "Isolating your dominant energy…"
     ]
   },
+  "analyzing_echo": true,
   "report": {
     "generating_messages": [
       "Our AI is weighing your 18 signals against the four elements…",

@@ -1061,6 +1061,8 @@
       node.id = "mid-accent";
       node.setAttribute("aria-hidden", "true");
       node.appendChild(elm("i", "mid-accent-fill"));
+      // Under the echo row when there is one — the rule is the baseline of
+      // the block, not a divider through the middle of it.
       el.midSub.parentNode.appendChild(node);
       el.midAccent = node;
     }
@@ -1107,7 +1109,10 @@
       row = elm("ul", "mid-echo");
       row.id = "mid-echo";
       row.setAttribute("aria-hidden", "true");
-      el.midSub.parentNode.appendChild(row);
+      // Above the accent, always. Both are built on first use and either can
+      // be built first depending on which screen a run meets first, so the
+      // order is stated here rather than left to that.
+      el.midSub.parentNode.insertBefore(row, el.midAccent || null);
       el.midEcho = row;
     }
     row.hidden = false;
