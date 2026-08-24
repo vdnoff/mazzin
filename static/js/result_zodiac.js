@@ -143,6 +143,68 @@
     return block;
   }
 
+  // --- the reader's own reason for being here --------------------------------
+  //
+  // One step on this funnel asks what pulled them here, and the card they tap
+  // carries a service tag — purpose_love and its three siblings — that no
+  // archetype scores against. This is the whole of what reads it.
+  //
+  // Everything below is gated on `result_copy.purpose_map` being in the
+  // config. zodiac v1 carries no such block, so `rule` is null for it on
+  // every path and it renders exactly the page it always did.
+
+  function purposeMap(ctx) {
+    var map = ((ctx.cfg && ctx.cfg.result_copy) || {}).purpose_map;
+    return (map && typeof map === "object") ? map : null;
+  }
+
+  // Found by tag rather than by step id: which question asks this is the
+  // funnel's business, and a module that hardcoded "seeking" would quietly
+  // stop working the day the step was renamed.
+  function purposeTag(ctx, map) {
+    var picks = (ctx && ctx.picks) || {};
+    var ids = Object.keys(picks);
+    for (var i = 0; i < ids.length; i++) {
+      var tags = (picks[ids[i]] && picks[ids[i]].tags) || [];
+      for (var j = 0; j < tags.length; j++) {
+        if (Object.prototype.hasOwnProperty.call(map, tags[j])) return tags[j];
+      }
+    }
+    return "";
+  }
+
+  // The rule for this run, or null for no personalisation at all — which is
+  // what an unknown tag, a missing step and a funnel with no map all get.
+  function purposeRule(ctx) {
+    var map = purposeMap(ctx);
+    if (!map) return null;
+    // After the money there is no run left to read: the tag is stored on the
+    // report and handed back, which is why this looks in two places.
+    var tag = (ctx && ctx.purpose) || purposeTag(ctx, map);
+    var rule = tag && Object.prototype.hasOwnProperty.call(map, tag)
+      ? map[tag] : null;
+    return (rule && typeof rule === "object") ? rule : null;
+  }
+
+  function emphasised(rule) {
+    return (rule && rule.emphasized_section) || "";
+  }
+
+  // The section they came for, first; everything else in the order the report
+  // declares. Only the first match moves — a list that reshuffled twice would
+  // stop reading as a document with an order at all — and a name that matches
+  // nothing leaves the list exactly as it was.
+  function firstly(sections, want) {
+    if (!want) return sections;
+    var hit = null;
+    var rest = [];
+    sections.forEach(function (section) {
+      if (!hit && section.id === want) hit = section;
+      else rest.push(section);
+    });
+    return hit ? [hit].concat(rest) : sections;
+  }
+
   // --- d) the constellation path ---------------------------------------------
 
   var LOCK_PATH = "M5 8V5.5a3 3 0 0 1 6 0V8M4 8h8v6H4z";
@@ -218,11 +280,25 @@
     return item;
   }
 
-  function locked(ctx, section, copy) {
+  function locked(ctx, section, copy, lead) {
     var item = node("locked", section.title);
+    if (lead) item.classList.add("is-lead");
     var body = item.querySelector(".zr-node-body");
     var line = ctx.fillHook(section.teaser_line || "");
-    if (line) body.appendChild(elm("p", "zr-teaser", line));
+    if (line) {
+      var teaser = elm("p", "zr-teaser", line);
+      // One step up the tier the readability pass set, and no further: the
+      // muted grey the rest of this page already uses for a line that is not
+      // body copy and not a whisper. Set from the tokens rather than from a
+      // new rule, because a new rule would be a new visual language for one
+      // line on one funnel.
+      if (lead) {
+        teaser.classList.add("is-lead");
+        teaser.style.color = "var(--zr-muted)";
+        teaser.style.fontSize = "15px";
+      }
+      body.appendChild(teaser);
+    }
     var lock = elm("span", "zr-lock", copy.locked_note || "Locked");
     lock.setAttribute("aria-hidden", "true");
     item.insertBefore(lock, null);
@@ -234,9 +310,13 @@
     list.appendChild(balance(ctx, copy, elements));
     var free = strength(ctx, copy);
     if (free) list.appendChild(free);
-    ctx.sections.forEach(function (section) {
-      if (!section.locked) return;
-      list.appendChild(locked(ctx, section, copy));
+    // The two open nodes above are the free half and keep their places. The
+    // reorder is inside what is still shut, so the section they came for is
+    // the first locked thing they meet rather than the fourth.
+    var want = emphasised(purposeRule(ctx));
+    var shut = ctx.sections.filter(function (s) { return s.locked; });
+    firstly(shut, want).forEach(function (section) {
+      list.appendChild(locked(ctx, section, copy, section.id === want));
     });
     return list;
   }
@@ -264,7 +344,12 @@
       anchor.textContent = anchorText;
     }
     card.appendChild(anchor);
-    card.appendChild(elm("p", "zr-offer-sub", copy.offer_sub || ""));
+    // The one line under the anchor, in the reader's own terms when the run
+    // said what they came for. Everything else on this card — the price, the
+    // button, the trust row, the consent — is untouched by any of this.
+    var rule = purposeRule(ctx);
+    card.appendChild(elm("p", "zr-offer-sub",
+                         (rule && rule.offer_sub) || copy.offer_sub || ""));
 
     // Live nodes, not copies of them. The consent box is placed only where a
     // funnel asks for one: `withdrawal_consent: false` takes it off the page
@@ -601,10 +686,15 @@
     root.appendChild(kicker(copy));
     root.appendChild(deliveredHero(ctx, copy));
 
+    // Same reorder after the money as before it: the section they came for is
+    // the first one they meet. `ctx.purpose` is the tag off the stored report
+    // — this tab may never have run the quiz — and a report without one, which
+    // is every zodiac v1 and kitchen report, renders in report order.
     var list = elm("ol", "zr-path");
-    ctx.sections.forEach(function (section) {
-      list.appendChild(deliveredNode(ctx, section));
-    });
+    firstly(ctx.sections, emphasised(purposeRule(ctx)))
+      .forEach(function (section) {
+        list.appendChild(deliveredNode(ctx, section));
+      });
     root.appendChild(list);
 
     // No offer here, obviously. What replaces it is the one line the reader
