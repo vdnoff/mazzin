@@ -315,3 +315,6 @@ bottom.
 
 ## 2026-08-23 — claude/legal-home-zodiac
 - legal pages: zodiac coverage + homepage zodiac hero.
+
+## 2026-08-24 — claude/zodiac-paywall-tracking-fix
+- zodiac: fire paywall_view + pixel events from the result module
