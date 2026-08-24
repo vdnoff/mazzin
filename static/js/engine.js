@@ -34,6 +34,21 @@
   // is no button to hold it with. The ceiling is INTERSTITIAL_MS — a screen
   // nobody can dismiss must never outstay one they can.
   var AUTO_MIN_MS = 600;
+  // The echo: the frames they actually tapped, handed back on the screen that
+  // closes the act they tapped them in. Every one of these files is already
+  // in the browser's cache — it was on screen a few seconds ago — so the row
+  // costs a decode and nothing on the wire.
+  var ECHO_STAGGER_MS = 420;    // between one thumbnail arriving and the next
+  var ECHO_IN_MS = 400;         // how long one of them takes to arrive
+  // The ceiling once a row is counted in. Higher than INTERSTITIAL_MS because
+  // the screen now has to outlast its own last thumbnail, and a frame that
+  // leaves before it has finished appearing is worse than no frame.
+  var ECHO_HOLD_MS = 4500;
+  // The analysing screen's own grid: every choice at once, faster, because
+  // there are eighteen of them rather than three.
+  var GRID_STAGGER_MS = 95;
+  var GRID_HOLD_MS = 600;       // after the last cell, before the result
+  var GRID_MAX_MS = 4500;
   var WORKING_MS = 2000;        // the interstitial's micro-copy rotation
   // The blur curve is anchored to the trigger phrase's own line boxes: one
   // line of softening leads into it, the trigger itself lands in the
@@ -370,8 +385,15 @@
   };
   var MATERIAL_AXIS = ["wood", "stone", "metal"];
   var SEASON_AXIS = ["spring", "summer", "autumn", "winter"];
+  // The celestial funnels' own two. Declared here for the same reason the
+  // three above are: an axis this file has never heard of resolves to no
+  // leader at all, silently, and a funnel that never names one is unaffected
+  // by their being here — kitchen scores against neither word.
+  var ELEMENT_AXIS = ["fire", "earth", "air", "water"];
+  var ENERGY_AXIS = ["sun", "moon"];
   var AXES = {
-    tone: TONE_AXIS, material: MATERIAL_AXIS, season: SEASON_AXIS
+    tone: TONE_AXIS, material: MATERIAL_AXIS, season: SEASON_AXIS,
+    element: ELEMENT_AXIS, energy: ENERGY_AXIS
   };
 
   // The tag they have chosen most on one axis, or null when the axis has not
@@ -385,6 +407,39 @@
       if (n > bestScore) { bestScore = n; best = tag; }
     });
     return best;
+  }
+
+  // The same question, asked where a wrong answer is a sentence rather than a
+  // photograph. `leaderOf` breaks a tie by array order, which is right for
+  // picking which pair to draw next — some pair has to be drawn — and wrong
+  // for telling somebody what their run has said about them. Two elements
+  // level is a run that has not said it yet, and the honest screen is the one
+  // that does not claim otherwise.
+  function soleLeaderOf(axis) {
+    var best = null;
+    var bestScore = 0;
+    var level = 0;
+    (axis || []).forEach(function (tag) {
+      var n = scores[tag] || 0;
+      if (n > bestScore) { bestScore = n; best = tag; level = 1; }
+      else if (n === bestScore && n > 0) { level += 1; }
+    });
+    return (bestScore > 0 && level === 1) ? best : null;
+  }
+
+  // A service tag off the run itself. `purpose` and `bond` are not scored by
+  // anybody and never accumulate: one tap carries one of them, so the axis
+  // names the prefix rather than a list of tags, and the answer is whichever
+  // one this run is carrying.
+  function prefixTag(prefix) {
+    for (var i = 0; i < chosen.length; i++) {
+      var item = imageById(chosen[i]);
+      var tags = (item && item.tags) || [];
+      for (var j = 0; j < tags.length; j++) {
+        if (tags[j].indexOf(prefix) === 0) return tags[j];
+      }
+    }
+    return "";
   }
 
   // Which pair an adaptive step wants, given what they have chosen so far.
@@ -857,12 +912,54 @@
     return true;
   }
 
+  // Which tag an entry's `personal` axis resolves to for this run, or "".
+  //
+  // Two kinds. A scoring axis — element, energy — is accumulated over several
+  // taps and answers with whichever tag leads outright; a tie or a silent
+  // axis answers with nothing. A service prefix — purpose, bond — is scored
+  // by nobody and answered by one tap, so the axis names the prefix.
+  function personalTag(rule) {
+    var axis = (rule && rule.axis) || "";
+    if (!axis) return "";
+    if (AXES[axis]) return soleLeaderOf(AXES[axis]) || "";
+    return prefixTag(axis + "_");
+  }
+
+  // The entry as this run should see it: its own line and sub replaced by the
+  // pair written for what the run actually said, or the entry untouched.
+  //
+  // Both or neither, never half. A personalised line under the entry's own
+  // sub would be two sentences about two different runs, and the sub is the
+  // one that would look right while being wrong.
+  function personalised(entry) {
+    var rule = entry && entry.personal;
+    var lines = rule && rule.lines;
+    if (!lines || typeof lines !== "object") return entry;
+    var tag = personalTag(rule);
+    var pick = tag && Object.prototype.hasOwnProperty.call(lines, tag)
+      ? lines[tag] : null;
+    if (!pick || !pick.line) return entry;
+    var out = {};
+    for (var key in entry) {
+      if (Object.prototype.hasOwnProperty.call(entry, key)) {
+        out[key] = entry[key];
+      }
+    }
+    out.line = pick.line;
+    out.sub = pick.sub || "";
+    return out;
+  }
+
   function interstitialAfter(completed) {
     var list = (cfg && cfg.interstitials) || [];
     for (var i = 0; i < list.length; i++) {
       var entry = list[i];
       if (entry && entry.after_step === completed && !midSeen[completed]) {
-        return canFill(entry) ? entry : null;
+        // Personalised first, so the token check below is run against the
+        // sentence that will actually be shown rather than the one it
+        // replaced.
+        var shown = personalised(entry);
+        return canFill(shown) ? shown : null;
       }
     }
     return null;
@@ -872,17 +969,21 @@
   // waits for a button. A funnel that names no timing is the funnel that has
   // always been here: the button renders, the four-second dismiss runs, and
   // nothing below this line applies to it.
-  function autoAdvanceMs(entry) {
+  function autoAdvanceMs(entry, echoes) {
     var ms = entry && entry.auto_advance_ms;
     if (typeof ms !== "number" || !isFinite(ms) || ms <= 0) return 0;
-    return Math.max(AUTO_MIN_MS, Math.min(ms, INTERSTITIAL_MS));
+    // A screen with a row on it has to outlast the row: the base beat is what
+    // the words need, and every thumbnail after the first pushes the dismiss
+    // back by its own stagger so the last one gets the moment the first got.
+    var want = ms + (echoes || 0) * ECHO_STAGGER_MS;
+    var ceiling = echoes ? ECHO_HOLD_MS : INTERSTITIAL_MS;
+    return Math.max(AUTO_MIN_MS, Math.min(want, ceiling));
   }
 
   function openInterstitial(entry) {
-    var auto = autoAdvanceMs(entry);
     midSeen[entry.after_step] = true;
     midOpen = true;
-    midAuto = !!auto;
+    midAuto = !!autoAdvanceMs(entry);
     // Defensive: an open landing on top of an open would otherwise leave the
     // first screen's dismiss running against the second one's copy.
     clearTimeout(midTimer);
@@ -904,12 +1005,16 @@
     if (el.midWorking) el.midWorking.hidden = midAuto;
     setHandoff(entry.next || "");
     renderProgress();
+    // Counted before the screen is shown, because the dismiss is measured
+    // from how many frames it has to get through.
+    var echoes = setEcho(entry, midAuto);
+    var auto = autoAdvanceMs(entry, echoes);
     // The accent and the entrance are both set after the screen is on, not
     // before it. A transition primed on a `display: none` subtree has no
     // layout to start from and arrives at its end value in one frame, which
     // is a bar that is simply already drawn.
     show("screen-interstitial");
-    setAccent(entry, midAuto);
+    setAccent(entry, midAuto, echoes);
     playEntrance(midAuto);
     track("interstitial", step);
     // Its own beat, or four seconds and a button — whichever this entry asked
@@ -940,9 +1045,14 @@
   // through the walk they are on an `almost` beat, and a spark that fires once
   // on the others. Built on first use, like the working row, so the shell
   // markup stays the shell markup.
-  function setAccent(entry, auto) {
+  function setAccent(entry, auto, echoes) {
     var node = el.midAccent;
-    if (!auto) {
+    // The rule is progress and stays whatever else is on the screen. The
+    // spark is decoration, and on a screen handing back the reader's own
+    // frames the frames are the accent — two things pulsing at once is one
+    // too many.
+    var bar = entry.template === "almost";
+    if (!auto || (echoes && !bar)) {
       if (node) node.hidden = true;
       return;
     }
@@ -955,7 +1065,6 @@
       el.midAccent = node;
     }
     node.hidden = false;
-    var bar = entry.template === "almost";
     node.classList.toggle("is-bar", bar);
     node.classList.toggle("is-spark", !bar);
     if (!bar) return;
@@ -969,6 +1078,55 @@
     void fill.offsetWidth;
     fill.style.transition = "";
     fill.style.transform = "scaleX(" + progressRatio() + ")";
+  }
+
+  // The frames this entry is handing back: the image they tapped on each of
+  // the steps it names, in the order it names them. A step they somehow did
+  // not answer is dropped rather than drawn as a gap — a broken slot on a
+  // screen whose whole claim is "these are yours" is worse than a shorter row.
+  function echoPicks(entry) {
+    var want = (entry && entry.echo_steps) || [];
+    var out = [];
+    for (var i = 0; i < want.length; i++) {
+      var item = imageById(chosenOnStep(want[i]));
+      if (item && item.img) out.push(item);
+    }
+    return out;
+  }
+
+  // One row of them, built on first use and refilled on every open, like the
+  // working row and the accent above it.
+  function setEcho(entry, auto) {
+    var picks = auto ? echoPicks(entry) : [];
+    var row = el.midEcho;
+    if (!picks.length) {
+      if (row) { row.hidden = true; row.innerHTML = ""; }
+      return 0;
+    }
+    if (!row) {
+      row = elm("ul", "mid-echo");
+      row.id = "mid-echo";
+      row.setAttribute("aria-hidden", "true");
+      el.midSub.parentNode.appendChild(row);
+      el.midEcho = row;
+    }
+    row.hidden = false;
+    row.innerHTML = "";
+    var slow = prefersReducedMotion();
+    picks.forEach(function (item, i) {
+      var cell = elm("li", "mid-echo-cell");
+      // One at a time, in the order they were tapped. Opted out of motion,
+      // they arrive together in one fade — the row is the same row, and the
+      // stagger is the part that was decoration.
+      cell.style.animationDelay = (slow ? 0 : i * ECHO_STAGGER_MS) + "ms";
+      var img = document.createElement("img");
+      img.src = item.img;
+      img.alt = "";
+      img.decoding = "async";
+      cell.appendChild(img);
+      row.appendChild(cell);
+    });
+    return picks.length;
   }
 
   // Restart the entrance. The screen is one set of nodes reused eight times,
@@ -2598,8 +2756,14 @@
     el.analyzingText.textContent = cfg.analyzing.text;
     el.analyzing.hidden = false;
     el.resultBody.hidden = true;
+    var picks = gridPicks();
+    // The fade keeps its own duration: the ground darkens at the rate it
+    // always did, and the extra time a grid asks for is spent on the dark it
+    // has already arrived at.
     startFade();
-    startAnalyzing();
+    var wait = analyzingMs(picks.length);
+    startGrid(picks);
+    startAnalyzing(wait);
 
     setTimeout(function () {
       var win = computeWinner();
@@ -2641,7 +2805,7 @@
       }
 
       finishResult();
-    }, cfg.analyzing.duration_ms);
+    }, wait);
   }
 
   // The analysing screen comes down and the result screen goes up. Its own
@@ -2737,7 +2901,69 @@
     document.body.classList.add("is-fading", "is-arrived");
   }
 
-  function startAnalyzing() {
+  // Every frame they tapped, on the screen that says it is reading them. Same
+  // deal as the interstitial row: the files are all in cache, so this is a
+  // grid of decodes and nothing on the wire.
+  //
+  // Built off `chosen` rather than off the steps, so the order on screen is
+  // the order they were tapped in.
+  function gridPicks() {
+    if (!(cfg && cfg.analyzing_echo)) return [];
+    var out = [];
+    for (var i = 0; i < chosen.length; i++) {
+      var item = imageById(chosen[i]);
+      if (item && item.img) out.push(item);
+    }
+    return out;
+  }
+
+  // How long the analysing screen stays up. Without a grid it is exactly the
+  // number the config has always given. With one it is the fade's own
+  // half-way point — where the copy already swaps, and where the ground is
+  // dark enough to put frames on — plus the sequence, plus a beat to look at
+  // the finished thing before the result takes the page.
+  function analyzingMs(cells) {
+    var base = (cfg.analyzing && cfg.analyzing.duration_ms) || 2500;
+    if (!cells) return base;
+    var run = Math.round(base * 0.45)
+      + cells * GRID_STAGGER_MS + ECHO_IN_MS + GRID_HOLD_MS;
+    return Math.min(GRID_MAX_MS, Math.max(base, run));
+  }
+
+  function startGrid(picks) {
+    var grid = el.analyzingGrid;
+    if (!picks.length) {
+      if (grid) { grid.hidden = true; grid.innerHTML = ""; }
+      return;
+    }
+    if (!grid) {
+      grid = elm("ul", "analyzing-grid");
+      grid.id = "analyzing-grid";
+      grid.setAttribute("aria-hidden", "true");
+      // Above the copy, which is the line describing what is being done to
+      // them. The dots and the bar stay where they are, below both.
+      el.analyzing.insertBefore(grid, el.analyzing.firstChild);
+      el.analyzingGrid = grid;
+    }
+    grid.hidden = false;
+    grid.innerHTML = "";
+    var slow = prefersReducedMotion();
+    var lead = Math.round(
+      ((cfg.analyzing && cfg.analyzing.duration_ms) || 2500) * 0.45);
+    picks.forEach(function (item, i) {
+      var cell = elm("li", "analyzing-cell");
+      cell.style.animationDelay =
+        (slow ? 0 : lead + i * GRID_STAGGER_MS) + "ms";
+      var img = document.createElement("img");
+      img.src = item.img;
+      img.alt = "";
+      img.decoding = "async";
+      cell.appendChild(img);
+      grid.appendChild(cell);
+    });
+  }
+
+  function startAnalyzing(total) {
     var lines = (cfg.analyzing && cfg.analyzing.messages) || [];
     var bar = el.analyzingBar;
     if (!bar) {
@@ -2753,7 +2979,10 @@
     el.analyzingText.textContent = lines[0];
     if (lines.length < 2 || prefersReducedMotion()) return;
 
-    var hold = Math.max(600, (cfg.analyzing.duration_ms || 2500) / lines.length);
+    // Over the wait this screen was given rather than over the config's
+    // number. They are the same number on every funnel that draws no grid.
+    var hold = Math.max(600, (total || cfg.analyzing.duration_ms || 2500)
+                        / lines.length);
     var i = 0;
     analyzingTimer = setInterval(function () {
       i += 1;
@@ -2766,6 +2995,10 @@
     if (analyzingTimer) clearInterval(analyzingTimer);
     analyzingTimer = null;
     if (el.analyzingBar) el.analyzingBar.hidden = true;
+    if (el.analyzingGrid) {
+      el.analyzingGrid.hidden = true;
+      el.analyzingGrid.innerHTML = "";
+    }
   }
 
   // A single small burst when the result lands. Purely decorative, never
