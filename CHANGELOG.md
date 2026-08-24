@@ -330,3 +330,6 @@ bottom.
 
 ## 2026-08-24 — claude/zodiac30-seeking-order
 - zodiac30: Love first on seeking
+
+## 2026-08-24 — claude/zodiac30-interstitial-polish
+- zodiac30: centered interstitial block + breathing spark
