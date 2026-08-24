@@ -418,6 +418,16 @@
   // Pisces is where they expect to find it. Dealing that shuffled does not
   // remove a bias, it just makes them read all twelve. Absent, every step
   // shuffles exactly as it always has.
+  //
+  // `"pin_first": true` is the half-measure between the two. One card is
+  // wanted in the first slot — the answer the funnel opens the conversation
+  // on — and the rest are still alternatives with no order of their own, so
+  // they still shuffle. It buys the first slot and gives up nothing else: a
+  // habitual first-tapper can only skew the one card the funnel chose to put
+  // there, rather than whichever card the config happened to list first.
+  //
+  // The two are not combined anywhere and do not need to be: `shuffle: false`
+  // already pins every slot, so it wins outright when both are set.
   function pickPair(index) {
     var st = stepAt(index);
     var pairs = pairsOf(st);
@@ -435,6 +445,10 @@
     if (images.length < size) return null;
     if (st && st.shuffle === false) {
       return { id: pick.id || "p1", images: images };
+    }
+    if (st && st.pin_first) {
+      return { id: pick.id || "p1",
+               images: [images[0]].concat(shuffled(images.slice(1))) };
     }
     return { id: pick.id || "p1", images: shuffled(images) };
   }

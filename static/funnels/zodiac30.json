@@ -426,6 +426,7 @@
         "id": "seeking",
         "question": "What pulled you here tonight?",
         "format": "grid4",
+        "pin_first": true,
         "pairs": [
           {
             "id": "p1",

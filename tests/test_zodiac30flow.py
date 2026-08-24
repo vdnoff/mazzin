@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
-"""The self-advancing interstitial, in a browser.
+"""How zodiac30's screens behave in a browser: the beats, and the deal.
 
-The config suite can say the funnel asks for the mode. Only a page can say
-what the mode is: that the button is gone, that the screen leaves on its own
-inside the beat it named, that a tap gets there first, and that nothing
-advances twice when both happen.
+The config suite can say the funnel asks for a thing. Only a page can say
+what the thing is.
 
-The other half is what did not change. zodiac and kitchen carry no timing on
-any interstitial, so both must still draw the button and still sit there
-until it is pressed — which is a claim about the engine's default path and is
-asserted here explicitly rather than assumed from the diff.
+The self-advancing interstitial: that the button is gone, that the screen
+leaves on its own inside the beat it named, that a tap gets there first, and
+that nothing advances twice when both happen.
+
+The pinned first slot: that Love actually arrives top-left on the seeking
+step, run after run, while the other three cards keep moving. Config order
+decided nothing before this — every card on the step was shuffled, so
+whichever id was authored first reached that slot about one run in four, and
+the only way to tell the difference is to load the page repeatedly.
+
+The other half of both is what did not change. zodiac and kitchen carry
+neither flag, so their interstitials still draw the button and still wait to
+be pressed, and every step of theirs still deals shuffled — claims about the
+engine's default path, asserted here rather than assumed from the diff.
 
     python3 tests/test_zodiac30flow.py
 """
@@ -297,6 +305,60 @@ def run(page):
     check("a tap beside the button does nothing, as before", mid_visible(page))
     page.click("#mid-cta")
     check("  and the button is what dismisses it", gone(page, 2000))
+
+    print("\n--- the seeking step opens on Love, every run ---")
+    # Nothing here can be read off one page. The claim is about what a
+    # shuffle does across runs, so the funnel is walked to the seeking step
+    # from a fresh load each time and the deal is recorded.
+    RUNS = 8
+    IDS = """() => [...document.querySelectorAll('#cards .card img')]
+        .map(n => n.getAttribute('src').split('/').pop())
+        .map(n => n.replace('.webp', ''))"""
+    seeking, signs = [], []
+    for _ in range(RUNS):
+        start(page, "zodiac30")
+        tap_card(page)                       # 1 hook -> 2 sign
+        signs.append(page.evaluate(IDS))
+        tap_card(page)                       # 2 sign -> the beat after it
+        gone(page, 2600)                     # which leaves on its own
+        page.wait_for_timeout(SETTLE_MS)
+        seeking.append(page.evaluate(IDS))
+    check("every run reached the seeking step",
+          all(len(d) == 4 and all(i.startswith("sk3") for i in d)
+              for d in seeking), str(seeking[:2]))
+    check("  Love is top-left on all %d of them" % RUNS,
+          all(d and d[0] == "sk3a" for d in seeking),
+          str([d[0] for d in seeking if d]))
+    # The other side of the flag, and the reason it is not `shuffle: false`:
+    # the three cards that carry no order of their own still have none.
+    tails = {tuple(d[1:]) for d in seeking if len(d) == 4}
+    check("  and the other three are still dealt in no fixed order",
+          len(tails) > 1, str(sorted(tails)))
+    check("  none of them ever taking the first slot",
+          not [d for d in seeking if d and d[0] != "sk3a"],
+          str([d for d in seeking if d and d[0] != "sk3a"]))
+    check("  the same four cards every time, only reordered",
+          len({tuple(sorted(d)) for d in seeking}) == 1,
+          str(sorted({tuple(sorted(d)) for d in seeking})))
+    # The step that already pinned every slot is untouched by the new flag.
+    ZODIAC = ["aries", "taurus", "gemini", "cancer", "leo", "virgo", "libra",
+              "scorpio", "sagittarius", "capricorn", "aquarius", "pisces"]
+    want = ["sign_" + name for name in ZODIAC]
+    check("the sign step still deals Aries to Pisces, unshuffled",
+          all(d == want for d in signs),
+          str([d for d in signs if d != want][:1]))
+
+    print("\n--- and every other step still shuffles ---")
+    # One step pinned is one step. The proof that the rest were left alone is
+    # that a step with neither flag still moves its first card around, which
+    # is what the hook step is read for here: it is the same two cards on
+    # every load and the only thing that can differ is the order.
+    hooks = set()
+    for _ in range(RUNS):
+        start(page, "zodiac30")
+        hooks.add(tuple(page.evaluate(IDS)))
+    check("the hook step deals its pair both ways round", len(hooks) == 2,
+          str(sorted(hooks)))
 
     print("\n--- kitchen is untouched ---")
     start(page, "kitchen")
