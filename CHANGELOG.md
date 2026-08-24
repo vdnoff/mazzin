@@ -336,3 +336,6 @@ bottom.
 
 ## 2026-08-24 — claude/zodiac30-purpose-paywall
 - zodiac30: purpose-personalized paywall and report
+
+## 2026-08-24 — claude/zodiac30-tap-echo
+- zodiac30: tap echo — choices as images and personalized lines
