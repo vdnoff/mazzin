@@ -407,7 +407,7 @@ check("  so the walk hands off to the analysing screen",
       "All 18 signals in." == mids[-1]["line"], mids[-1]["line"])
 for entry in mids:
     check("  after %-2d has a kicker, a line and a cta" % entry["after_step"],
-          all(entry.get(k) for k in ("kicker", "line", "sub", "cta")),
+          all(entry.get(k) for k in ("kicker", "line", "cta")),
           json.dumps(entry))
 check("every cta is the one this funnel uses",
       {e["cta"] for e in mids} == {"Continue analysis"},
@@ -424,14 +424,6 @@ check("  and are the twin's own three words, not new ones",
 check("templates are the three the twin ships",
       {e["template"] for e in mids} == {"pattern", "confirm", "almost"},
       str(sorted({e["template"] for e in mids})))
-# The one line that counts what is left has to count what is actually left.
-COUNTED_WORDS = {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five"}
-left = len(steps) - 15
-check("the deep-layer beat says how many signals are left",
-      "Three signals left." == mids[6]["sub"], mids[6]["sub"])
-check("  and three is what is actually left after fifteen",
-      "%s signals left." % COUNTED_WORDS[left] == mids[6]["sub"],
-      "%d left" % left)
 check("the personal beat counts the two personal steps behind it",
       mids[1]["line"] == "Two personal signals in."
       and [s["id"] for s in steps][2:4] == ["seeking", "bond"])
@@ -446,7 +438,7 @@ SAID = re.compile(r"\b(one|two|three|four|five|six|seven|eight|nine|ten|"
 WORD = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6,
         "seven": 7, "eight": 8, "nine": 9, "ten": 10}
 for entry in mids:
-    for text in (entry["line"], entry["sub"]):
+    for text in (entry["line"], entry.get("sub") or ""):
         hit = SAID.search(text)
         if not hit:
             continue
@@ -483,6 +475,70 @@ check("  and the percentages they will show are honest",
 check("working copy is the twin's",
       cfg["interstitial_working"] == twin["interstitial_working"])
 
+print("\n--- and every one of them advances itself ---")
+# The phone verdict on eight of these with a button each was that they read
+# as barriers: a static screen and a mandatory tap, eight times. The mode is
+# per entry rather than per funnel because that is what engine.js reads, and
+# the twin must keep its button.
+AUTO = {2: 2000, 4: 2000, 6: 2000, 8: 2000, 10: 2000, 12: 2000, 15: 2000,
+        18: 2400}
+check("all eight carry auto_advance_ms",
+      all(isinstance(e.get("auto_advance_ms"), int) for e in mids),
+      str([e["after_step"] for e in mids
+           if not isinstance(e.get("auto_advance_ms"), int)]))
+check("  two seconds each, and a beat longer on the last",
+      {e["after_step"]: e["auto_advance_ms"] for e in mids} == AUTO,
+      str({e["after_step"]: e["auto_advance_ms"] for e in mids}))
+check("  the closing one is the longest of them",
+      mids[-1]["auto_advance_ms"] == max(e["auto_advance_ms"] for e in mids)
+      and mids[-1]["auto_advance_ms"] > mids[0]["auto_advance_ms"])
+# Both ends of what engine.js will accept. Under the floor is a flash the
+# entrance cannot finish inside; over the ceiling is a screen with no way out
+# that outstays one that has a button.
+check("  every timing is inside the bounds the engine clamps to",
+      all(600 <= e["auto_advance_ms"] <= 4000 for e in mids),
+      str(sorted(e["auto_advance_ms"] for e in mids)))
+check("  and none of them is long enough to read as a wait",
+      max(e["auto_advance_ms"] for e in mids) <= 2400)
+check("the twin sets no timing on any of its three",
+      not [e for e in twin["interstitials"] if "auto_advance_ms" in e],
+      str([e["after_step"] for e in twin["interstitials"]
+           if "auto_advance_ms" in e]))
+for slug in ("kitchen", "kitchen-visualizer"):
+    other = json.load(open(os.path.join(ROOT, "funnels/%s.json" % slug)))
+    check("  nor does %-18s" % slug,
+          not [e for e in (other.get("interstitials") or [])
+               if "auto_advance_ms" in e])
+# Trimmed for the format. Two seconds is a kicker and a line; a third line
+# under them is one nobody finishes before the screen goes.
+WITH_SUB = [4, 10, 18]
+check("only three of them keep a sub",
+      [e["after_step"] for e in mids if e.get("sub")] == WITH_SUB,
+      str([e["after_step"] for e in mids if e.get("sub")]))
+check("  and the other five carry no sub key at all",
+      not [e["after_step"] for e in mids
+           if "sub" in e and e["after_step"] not in WITH_SUB],
+      str([e["after_step"] for e in mids
+           if "sub" in e and e["after_step"] not in WITH_SUB]))
+check("  the subs that stayed are one short line each",
+      all(len(e["sub"]) <= 40 and "\n" not in e["sub"]
+          for e in mids if e.get("sub")),
+      str([(e["after_step"], len(e["sub"])) for e in mids if e.get("sub")]))
+check("every line survived the trim",
+      [e["line"] for e in mids] == [
+          "Sign locked.", "Two personal signals in.",
+          "One element keeps pulling ahead.", "Profile {pct}% calibrated.",
+          "Moon signal recorded.", "Inverse signal locked.",
+          "Deep layer mapped. {pct}% calibrated.", "All 18 signals in."],
+      str([e["line"] for e in mids]))
+# The count that went with the trim: "Three signals left." was the sub of the
+# after-15 beat, and dropping it takes the claim with it. What is left has to
+# still be true, which the scan above is what tests.
+check("no dropped sub took a claim the copy still makes",
+      not [e for e in mids if "signals left" in e.get("sub", "")],
+      str([e["after_step"] for e in mids
+           if "signals left" in e.get("sub", "")]))
+
 print("\n--- engine.js walks the list rather than the first three ---")
 # Eight is a config change and nothing else, but only because the lookup is
 # a scan. A cap anywhere in here would make the last five screens dead copy.
@@ -501,7 +557,102 @@ check("  and an interstitial on the last step still reaches the result",
       and "step >= cfg.swipe.pairs_count ? null" in engine)
 check("{pct} is filled from the step count and pairs_count",
       "cfg.swipe.pairs_count || 1" in engine
-      and "Math.round(step / total * 100)" in engine)
+      and "Math.round(progressRatio() * 100)" in engine)
+
+print("\n--- the auto-advance mode, read out of the engine ---")
+# Everything about this mode is gated on the entry carrying a number, so the
+# proof that the twin and kitchen are untouched is that the gate is the
+# config key and nothing else.
+auto = re.search(r"function autoAdvanceMs\([^)]*\)\s*\{(.*?)\n  \}",
+                 engine, re.S).group(1)
+check("the mode is read off the entry, not off the funnel",
+      "entry.auto_advance_ms" in auto and "slug" not in auto, auto[:160])
+check("  a missing or unusable value is no timing at all",
+      'typeof ms !== "number"' in auto and "return 0;" in auto)
+check("  and a usable one is clamped at both ends",
+      "Math.max(AUTO_MIN_MS, Math.min(ms, INTERSTITIAL_MS))" in auto)
+check("  the floor and the ceiling are the ones the config sits inside",
+      "var AUTO_MIN_MS = 600;" in engine
+      and "var INTERSTITIAL_MS = 4000;" in engine)
+opened = re.search(r"function openInterstitial\([^)]*\)\s*\{(.*?)\n  \}",
+                   engine, re.S).group(1)
+check("the button is hidden only when the entry asked for timing",
+      "el.midCta.hidden = midAuto;" in opened)
+check("  and the dismiss is the entry's beat or the old four seconds",
+      "setTimeout(closeInterstitial, auto || INTERSTITIAL_MS)" in opened,
+      opened[-200:])
+check("  an open clears any timer left running before it sets its own",
+      opened.index("clearTimeout(midTimer)")
+      < opened.index("setTimeout(closeInterstitial"))
+closed = re.search(r"function closeInterstitial\([^)]*\)\s*\{(.*?)\n  \}",
+                   engine, re.S).group(1)
+check("closing is idempotent, so a tap and the timer cannot both advance",
+      "if (!midOpen) return;" in closed and "clearTimeout(midTimer)" in closed
+      and "midAuto = false;" in closed)
+check("a tap skips only in the mode that has nothing to tap",
+      "function tapInterstitial()" in engine
+      and "if (midAuto) closeInterstitial();" in engine)
+check("  bound to the whole screen, because there is no control on it",
+      'el.interstitial.addEventListener("click", tapInterstitial)' in engine)
+check("  and the button keeps its own listener for the funnels that draw one",
+      'el.midCta.addEventListener("click", closeInterstitial)' in engine)
+check("the accent draws to the same ratio the sentence prints",
+      'fill.style.transform = "scaleX(" + progressRatio() + \")\";' in engine)
+check("  by transform, never by width",
+      "function setAccent(" in engine
+      and re.search(r"function setAccent\(.*?\n  \}", engine, re.S)
+      .group(0).count("style.width") == 0)
+check("  a bar on the almost beats, a spark on the rest",
+      'var bar = entry.template === "almost";' in engine
+      and 'classList.toggle("is-bar", bar)' in engine
+      and 'classList.toggle("is-spark", !bar)' in engine)
+check("the entrance is replayed rather than played once",
+      "function playEntrance(" in engine
+      and 'screen.classList.remove("is-enter")' in engine
+      and "void screen.offsetWidth;" in engine
+      and 'screen.classList.add("is-enter")' in engine)
+check("  and the mode's class comes off for a funnel that does not ask",
+      'screen.classList.toggle("is-auto", !!auto)' in engine)
+
+print("\n--- and the stylesheet only paints it under that class ---")
+css = open(os.path.join(ROOT, "static/css/mazzin.css"), encoding="utf-8").read()
+check("the button is hidden by the mode's class",
+      "#screen-interstitial.is-auto .mid-cta { display: none; }" in css)
+check("every rule of the mode is scoped to it",
+      all(rule.strip().startswith("#screen-interstitial.is-auto")
+          or rule.strip().startswith(".mid-accent")
+          or rule.strip().startswith("body.theme-zodiac .mid-accent")
+          for rule in re.findall(r"^[^\s@}/][^{}]*(?=\{)", css, re.M)
+          if "is-auto" in rule or "mid-accent" in rule),
+      str([r.strip() for r in re.findall(r"^[^\s@}/][^{}]*(?=\{)", css, re.M)
+           if ("is-auto" in r or "mid-accent" in r)
+           and not r.strip().startswith(("#screen-interstitial.is-auto",
+                                         ".mid-accent",
+                                         "body.theme-zodiac .mid-accent"))]))
+check("the three beats are staggered, kicker then line then sub",
+      re.search(r"\.is-auto\.is-enter \.mid-line \{\s*animation:[^;]*?"
+                r"(\d+)ms both", css).group(1) == "250")
+check("only transform and opacity are animated",
+      all(prop in ("opacity", "transform")
+          for block in re.findall(r"@keyframes mid-(?:rise|spark|appear)"
+                                  r"\s*\{(.*?)\n\}", css, re.S)
+          for prop in re.findall(r"(\w[\w-]*)\s*:", block)),
+      str(re.findall(r"@keyframes mid-(?:rise|spark|appear)\s*\{(.*?)\n\}",
+                     css, re.S))[:200])
+check("  the bar included — it scales, it does not resize",
+      "transition: transform 740ms" in css
+      and "transform-origin: left center;" in css)
+check("reduced motion gets the same beats as fades",
+      "@media (prefers-reduced-motion: reduce)" in css
+      and "animation: mid-appear" in css
+      and "#screen-interstitial.is-auto .mid-accent.is-bar .mid-accent-fill "
+          "{\n    transition: none;\n  }" in css)
+check("the accent is gold on this funnel's ground",
+      "body.theme-zodiac .mid-accent .mid-accent-fill "
+      "{ background: #E8C878; }" in css)
+check("kitchen's interstitial styling is untouched",
+      ".mid-cta {" in css and ".mid-cta:active { background: #f6f7f8; }" in css
+      and ".mid-working {" in css and ".mid-next {" in css)
 
 print("\n--- placeholders ---")
 KNOWN = (set(cfg["report"]["hook_slots"])
@@ -566,7 +717,8 @@ for word in BANNED:
           low[max(0, low.find(word) - 40):low.find(word) + 40])
 import reports  # noqa: E402
 NEW_COPY = ([e["kicker"] for e in mids] + [e["line"] for e in mids]
-            + [e["sub"] for e in mids] + [e["cta"] for e in mids]
+            + [e["sub"] for e in mids if e.get("sub")]
+            + [e["cta"] for e in mids]
             + [by_step[s]["question"] for s in NEW]
             + [by_step["essence"]["question"]]
             + [i["label"] for sid in NEW
