@@ -327,3 +327,6 @@ bottom.
 
 ## 2026-08-24 — claude/zodiac30-flow-interstitials
 - zodiac30: auto-advance cinematic interstitials
+
+## 2026-08-24 — claude/zodiac30-seeking-order
+- zodiac30: Love first on seeking
