@@ -301,6 +301,18 @@
     // the same elements the paid view and the two-screen flow still want.
     [nodes.manifest, nodes.anchor, nodes.price, nodes.trust]
       .forEach(function (n) { if (n) n.hidden = true; });
+
+    // This card is the offer now. engine.js fires `paywall_view` and Meta's
+    // InitiateCheckout when the offer reaches the reader, and it was watching
+    // the container above — which this page hides the moment the rows are out
+    // of it, so the event never fired for anybody. Naming the card is the
+    // whole fix: what the event means, when it fires and what it carries all
+    // stay engine.js's business.
+    //
+    // Guarded because this file and engine.js sit behind a CDN and can be a
+    // version apart: an engine without the hook draws the same page and only
+    // loses the event it was already losing.
+    if (typeof ctx.watchOffer === "function") ctx.watchOffer(card);
     return card;
   }
 
