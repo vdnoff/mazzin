@@ -29,6 +29,11 @@
   var HOLD_REDUCED_MS = 500;    // same beats, no animation, for reduced motion
   var REACTION_DELAY_MS = 200;  // lands just after the check badge
   var INTERSTITIAL_MS = 4000;   // a beat between steps, or a tap
+  // The floor on a self-advancing interstitial. Below this the screen is a
+  // flash rather than a beat: the entrance has not finished playing and there
+  // is no button to hold it with. The ceiling is INTERSTITIAL_MS — a screen
+  // nobody can dismiss must never outstay one they can.
+  var AUTO_MIN_MS = 600;
   var WORKING_MS = 2000;        // the interstitial's micro-copy rotation
   // The blur curve is anchored to the trigger phrase's own line boxes: one
   // line of softening leads into it, the trigger itself lands in the
@@ -119,6 +124,7 @@
   var payIntent = "scroll";
   var midOpen = false;          // an interstitial is on screen
   var midTimer = null;          // its auto-dismiss
+  var midAuto = false;          // that one carries its own timing, so no button
   var midSeen = {};             // after_step -> already shown this run
   var workingTimer = null;      // the interstitial's rotating micro-copy
   // Which of the three steps the reader is standing in: 0 while they are
@@ -802,18 +808,25 @@
   // number on it comes out of `scores`, which is the same object the result is
   // computed from — there is nothing here the run did not produce.
 
+  // How far through the walk they are, 0..1. The accent bar draws to this and
+  // {pct} is printed from it, so the sentence and the line under it can never
+  // disagree about how far along the reader is.
+  function progressRatio() {
+    var total = cfg.swipe.pairs_count || 1;
+    return Math.max(0, Math.min(1, step / total));
+  }
+
   function fillTokens(text) {
     if (!text) return "";
     var tone = leaderOf(TONE_AXIS);
     var material = leaderOf(MATERIAL_AXIS);
-    var total = cfg.swipe.pairs_count || 1;
     return String(text)
       .replace(/\{leading_trait\}/g, tone || "")
       .replace(/\{opposite\}/g, (tone && TONE_OPPOSITE[tone]) || "")
       .replace(/\{leading_material\}/g, material || "")
       .replace(/\{n\}/g, String(tone ? (scores[tone] || 0) : 0))
       .replace(/\{total\}/g, String(step))
-      .replace(/\{pct\}/g, String(Math.round(step / total * 100)));
+      .replace(/\{pct\}/g, String(Math.round(progressRatio() * 100)));
   }
 
   // A template whose numbers cannot be derived yet is not shown at all. The
@@ -841,31 +854,120 @@
     return null;
   }
 
+  // How long this entry holds the screen on its own, or 0 for the screen that
+  // waits for a button. A funnel that names no timing is the funnel that has
+  // always been here: the button renders, the four-second dismiss runs, and
+  // nothing below this line applies to it.
+  function autoAdvanceMs(entry) {
+    var ms = entry && entry.auto_advance_ms;
+    if (typeof ms !== "number" || !isFinite(ms) || ms <= 0) return 0;
+    return Math.max(AUTO_MIN_MS, Math.min(ms, INTERSTITIAL_MS));
+  }
+
   function openInterstitial(entry) {
+    var auto = autoAdvanceMs(entry);
     midSeen[entry.after_step] = true;
     midOpen = true;
+    midAuto = !!auto;
+    // Defensive: an open landing on top of an open would otherwise leave the
+    // first screen's dismiss running against the second one's copy.
+    clearTimeout(midTimer);
+    midTimer = null;
     el.midKicker.textContent = entry.kicker || "";
     el.midLine.textContent = fillTokens(entry.line || "");
     el.midSub.textContent = fillTokens(entry.sub || "");
     el.midSub.hidden = !entry.sub;
     el.midCta.textContent = entry.cta || "Continue analysis";
-    startWorking();
+    el.midCta.hidden = midAuto;
+    // The working row is the four-second screen's answer to looking idle. On
+    // a two-second cut it is a second thing moving beside the accent and its
+    // copy never reaches its second line, so the accent is the whole of it.
+    if (midAuto) {
+      stopWorking();
+    } else {
+      startWorking();
+    }
+    if (el.midWorking) el.midWorking.hidden = midAuto;
     setHandoff(entry.next || "");
     renderProgress();
+    // The accent and the entrance are both set after the screen is on, not
+    // before it. A transition primed on a `display: none` subtree has no
+    // layout to start from and arrives at its end value in one frame, which
+    // is a bar that is simply already drawn.
     show("screen-interstitial");
+    setAccent(entry, midAuto);
+    playEntrance(midAuto);
     track("interstitial", step);
-    // Four seconds, or a tap — whichever comes first. A screen that only ever
-    // waits is a screen somebody sits through.
-    midTimer = setTimeout(closeInterstitial, INTERSTITIAL_MS);
+    // Its own beat, or four seconds and a button — whichever this entry asked
+    // for. Either way a tap gets there first: a screen that only ever waits is
+    // a screen somebody sits through.
+    midTimer = setTimeout(closeInterstitial, auto || INTERSTITIAL_MS);
   }
 
   function closeInterstitial() {
     if (!midOpen) return;               // the tap and the timer both land here
     midOpen = false;
+    midAuto = false;
     clearTimeout(midTimer);
     midTimer = null;
     stopWorking();
     advance();
+  }
+
+  // The tap that skips a self-advancing screen. Bound to the whole section
+  // rather than to a control, because there is no control — and gated on the
+  // mode, so on a funnel that renders the button a tap beside it still does
+  // exactly nothing.
+  function tapInterstitial() {
+    if (midAuto) closeInterstitial();
+  }
+
+  // The one thing that moves on an auto screen: a rule that draws to how far
+  // through the walk they are on an `almost` beat, and a spark that fires once
+  // on the others. Built on first use, like the working row, so the shell
+  // markup stays the shell markup.
+  function setAccent(entry, auto) {
+    var node = el.midAccent;
+    if (!auto) {
+      if (node) node.hidden = true;
+      return;
+    }
+    if (!node) {
+      node = elm("div", "mid-accent");
+      node.id = "mid-accent";
+      node.setAttribute("aria-hidden", "true");
+      node.appendChild(elm("i", "mid-accent-fill"));
+      el.midSub.parentNode.appendChild(node);
+      el.midAccent = node;
+    }
+    node.hidden = false;
+    var bar = entry.template === "almost";
+    node.classList.toggle("is-bar", bar);
+    node.classList.toggle("is-spark", !bar);
+    if (!bar) return;
+    // Width by transform, never by width: this runs while the next pair is
+    // still decoding, and a layout animation here is a dropped frame in the
+    // middle of the beat. The reflow between the two writes is what makes the
+    // eighth interstitial draw the same as the first.
+    var fill = node.firstChild;
+    fill.style.transition = "none";
+    fill.style.transform = "scaleX(0)";
+    void fill.offsetWidth;
+    fill.style.transition = "";
+    fill.style.transform = "scaleX(" + progressRatio() + ")";
+  }
+
+  // Restart the entrance. The screen is one set of nodes reused eight times,
+  // so a CSS animation on it plays once and never again unless the class goes
+  // away and comes back with a reflow in between.
+  function playEntrance(auto) {
+    var screen = el.interstitial;
+    if (!screen) return;
+    screen.classList.remove("is-enter");
+    screen.classList.toggle("is-auto", !!auto);
+    if (!auto) return;
+    void screen.offsetWidth;
+    screen.classList.add("is-enter");
   }
 
   // A spinner and a line that changes under the read-back. The screen was
@@ -5901,6 +6003,7 @@
     el.cards = $("cards");
     el.pips = $("pips");
     el.tapHint = $("tap-hint");
+    el.interstitial = $("screen-interstitial");
     el.midPips = $("mid-pips");
     el.midProgressLabel = $("mid-progress-label");
     el.midKicker = $("mid-kicker");
@@ -5964,6 +6067,9 @@
     el.payButton.addEventListener("click", startCheckout);
     el.paywallBack.addEventListener("click", function () { show("screen-result"); });
     el.midCta.addEventListener("click", closeInterstitial);
+    if (el.interstitial) {
+      el.interstitial.addEventListener("click", tapInterstitial);
+    }
 
     // Rewrapped text moves the seam; re-measure when the box changes.
     var resizeTimer = null;

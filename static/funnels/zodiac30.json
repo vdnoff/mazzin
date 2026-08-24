@@ -2101,8 +2101,8 @@
       "template": "confirm",
       "kicker": "Signal recorded",
       "line": "Sign locked.",
-      "sub": "Now we read what your sign alone can't tell.",
-      "cta": "Continue analysis"
+      "cta": "Continue analysis",
+      "auto_advance_ms": 2000
     },
     {
       "after_step": 4,
@@ -2110,23 +2110,24 @@
       "kicker": "Pattern detected",
       "line": "Two personal signals in.",
       "sub": "Your profile is already narrowing.",
-      "cta": "Continue analysis"
+      "cta": "Continue analysis",
+      "auto_advance_ms": 2000
     },
     {
       "after_step": 6,
       "template": "confirm",
       "kicker": "Signal recorded",
       "line": "One element keeps pulling ahead.",
-      "sub": "We're testing it now.",
-      "cta": "Continue analysis"
+      "cta": "Continue analysis",
+      "auto_advance_ms": 2000
     },
     {
       "after_step": 8,
       "template": "almost",
       "kicker": "Calibrating",
       "line": "Profile {pct}% calibrated.",
-      "sub": "The personal layer is next.",
-      "cta": "Continue analysis"
+      "cta": "Continue analysis",
+      "auto_advance_ms": 2000
     },
     {
       "after_step": 10,
@@ -2134,23 +2135,24 @@
       "kicker": "Signal recorded",
       "line": "Moon signal recorded.",
       "sub": "It changes what we ask next.",
-      "cta": "Continue analysis"
+      "cta": "Continue analysis",
+      "auto_advance_ms": 2000
     },
     {
       "after_step": 12,
       "template": "confirm",
       "kicker": "Signal recorded",
       "line": "Inverse signal locked.",
-      "sub": "What drains you sharpens the read.",
-      "cta": "Continue analysis"
+      "cta": "Continue analysis",
+      "auto_advance_ms": 2000
     },
     {
       "after_step": 15,
       "template": "almost",
       "kicker": "Calibrating",
       "line": "Deep layer mapped. {pct}% calibrated.",
-      "sub": "Three signals left.",
-      "cta": "Continue analysis"
+      "cta": "Continue analysis",
+      "auto_advance_ms": 2000
     },
     {
       "after_step": 18,
@@ -2158,7 +2160,8 @@
       "kicker": "Calibrating",
       "line": "All 18 signals in.",
       "sub": "Compiling your Cosmic Profile…",
-      "cta": "Continue analysis"
+      "cta": "Continue analysis",
+      "auto_advance_ms": 2400
     }
   ],
   "interstitial_working": [
