@@ -77,10 +77,19 @@ print("\n--- it is the same funnel as zodiac, up to the walk ---")
 # path is pinned against the twin, so a copy change on one funnel that was
 # meant for both cannot land on only one of them unnoticed.
 SAME = ["locale", "theme", "stripe_mode", "result_module", "result_css",
-        "pricing", "result_copy", "meta"]
+        "pricing", "meta"]
 for key in SAME:
     check("  %-14s is the twin's" % key, cfg[key] == twin[key],
           json.dumps(cfg[key])[:90])
+# result_copy is the twin's line for line, plus one block the twin has no
+# question to fill: what pulled the reader here.
+mine_copy = {k: v for k, v in cfg["result_copy"].items() if k != "purpose_map"}
+check("  result_copy    is the twin's, but for the purpose block",
+      mine_copy == twin["result_copy"],
+      str(sorted(set(mine_copy) ^ set(twin["result_copy"]))))
+check("  and the twin carries no purpose block at all",
+      "purpose_map" not in twin["result_copy"],
+      str(sorted(twin["result_copy"])))
 check("  the same four archetypes, byte for byte",
       cfg["styles"] == twin["styles"])
 check("  the same report sections", cfg["report"]["sections"]
@@ -429,6 +438,62 @@ check("the scoring vocabulary is exactly the twin's",
       == {t for s in twin["swipe"]["steps"]
           for p in s["pairs"] for i in p["images"] for t in i["tags"]},
       str(sorted({t for i in images for t in i["tags"]} - SERVICE)))
+
+print("\n--- what pulled them here ---")
+# The seeking step has recorded this since the funnel shipped. This is the
+# block that finally reads it: a rule per service tag, naming the section to
+# lead with and the line under the anchor.
+PURPOSE = {
+    "purpose_love": ("materials", "Your compatibility read is inside."),
+    "purpose_career": ("splurge", "Your money months are inside."),
+    "purpose_peace": ("mistakes", "Your calm has a pattern. It's inside."),
+    "purpose_path": ("shopping",
+                     "Your year, mapped window by window — inside."),
+}
+pmap = cfg["result_copy"].get("purpose_map") or {}
+check("a rule for every purpose tag the quiz can produce",
+      sorted(pmap) == sorted(PURPOSE), str(sorted(pmap)))
+check("  which is exactly the set the seeking step carries",
+      sorted(pmap) == sorted(PURPOSE_SET := {
+          t for i in by_step["seeking"]["pairs"][0]["images"]
+          for t in i["tags"] if t in SERVICE}),
+      str(sorted(PURPOSE_SET)))
+check("  and none of the bond tags, which steer nothing",
+      not set(pmap) & BOND, str(sorted(set(pmap) & BOND)))
+for tag, (section_id, sub) in sorted(PURPOSE.items()):
+    rule = pmap.get(tag) or {}
+    check("  %-16s leads with %-10s" % (tag, section_id),
+          rule.get("emphasized_section") == section_id,
+          str(rule.get("emphasized_section")))
+    check("    and says %s" % ('"%s"' % sub),
+          rule.get("offer_sub") == sub, repr(rule.get("offer_sub")))
+sections_by_id = {s["id"]: s for s in cfg["report"]["sections"]}
+for tag, rule in sorted(pmap.items()):
+    want = rule.get("emphasized_section")
+    check("  %-16s names a real section of this report" % tag,
+          want in sections_by_id, str(want))
+    # Only a locked one can be led with: the free section is already open
+    # above the reorder, and leading with it would be promising them
+    # something they have already been given.
+    check("    and one that is still behind the paywall",
+          (sections_by_id.get(want, {}).get("reveal") or {}).get("mode")
+          != "visible", str(want))
+check("no two purposes lead with the same section",
+      len({r.get("emphasized_section") for r in pmap.values()}) == len(pmap),
+      str(sorted(r.get("emphasized_section") for r in pmap.values())))
+check("every rule carries both halves and nothing else",
+      all(sorted(r) == ["emphasized_section", "offer_sub"]
+          for r in pmap.values()),
+      str([sorted(r) for r in pmap.values()]))
+check("the subs are one short line each",
+      all(len(r["offer_sub"]) <= 60 and "\n" not in r["offer_sub"]
+          for r in pmap.values()),
+      str([len(r["offer_sub"]) for r in pmap.values()]))
+check("  and none of them states the price or leans on a token",
+      not [r for r in pmap.values()
+           if "$" in r["offer_sub"] or "{" in r["offer_sub"]],
+      str([r["offer_sub"] for r in pmap.values()
+           if "$" in r["offer_sub"] or "{" in r["offer_sub"]]))
 
 print("\n--- interstitials ---")
 mids = cfg["interstitials"]
@@ -813,7 +878,8 @@ NEW_COPY = ([e["kicker"] for e in mids] + [e["line"] for e in mids]
             + [c["name"] for sid in NEW
                for i in by_step[sid]["pairs"][0]["images"]
                for c in i["colors"]]
-            + [t for _, t in COUNTED])
+            + [t for _, t in COUNTED]
+            + [r["offer_sub"] for r in pmap.values()])
 for text in NEW_COPY:
     hit = reports._banned_hit(text, reports.ZODIAC_BANNED)
     check("  %-44s passes the Terms check" % ('"%s"' % text[:42]),
@@ -1012,6 +1078,31 @@ for step in steps:
     check("tracking accepts the %-10s step" % step["id"],
           got["chosen"] == shown[0], str(got))
 check("tracking allows step 18", tracking._clean_step(18) == 18)
+# Why paywall_view does not carry the purpose. The payload is rebuilt from a
+# closed key set rather than passed through, so an extra key is not ignored —
+# it raises, /api/track answers a bare 400, and the event is lost entirely.
+# Reading conversion per purpose would cost every paywall_view on the funnel,
+# which is a worse trade than not having the breakdown. Asserted rather than
+# argued, so the day the schema grows a slot this check is what says so.
+check("paywall_view takes one key and rebuilds it",
+      tracking._clean_paywall_view({"src": "scroll"}) == {"src": "scroll"})
+try:
+    tracking._clean_paywall_view({"src": "scroll", "purpose": "purpose_love"})
+    check("  and refuses an extra one rather than dropping it", False)
+except ValueError:
+    check("  and refuses an extra one rather than dropping it", True)
+# The prefix rather than the word: "purpose" appears twice in that file's
+# prose, describing what `src` is for, and has since before any of this.
+check("  so no purpose tag reaches tracking.py at all",
+      "purpose_" not in open(os.path.join(ROOT, "tracking.py"),
+                             encoding="utf-8").read())
+check("  the key set it is checked against is the one key",
+      sorted(tracking.PAYWALL_VIEW_KEYS) == ["src"],
+      str(sorted(tracking.PAYWALL_VIEW_KEYS)))
+check("  and pay_tap is unchanged in name and shape as well",
+      tracking._clean_pay_tap({"method": "wallet"}) == {"method": "wallet"}
+      and sorted(tracking.PAY_TAP_METHOD) == ["redirect", "wallet"],
+      str(sorted(tracking.PAY_TAP_METHOD)))
 try:
     tracking._clean_extra("zodiac30", "swipe",
                           {"pair": "seeking:p1",
@@ -1028,6 +1119,51 @@ try:
     check("  and a card the step does not offer", False)
 except ValueError:
     check("  and a card the step does not offer", True)
+
+print("\n--- the module reads it, and only when a funnel offers one ---")
+module = open(os.path.join(ROOT, cfg["result_module"].lstrip("/")),
+              encoding="utf-8").read()
+check("the map is the gate, not the slug",
+      "result_copy) || {}).purpose_map" in module
+      and "zodiac30" not in module, "")
+check("  a funnel without one gets null and no personalisation",
+      "function purposeRule(" in module
+      and "if (!map) return null;" in module)
+# Read off the code rather than the file: the step is named in a comment
+# above the function, saying why it is not named in the code.
+module_code = re.sub(r"//[^\n]*", "", re.sub(r"/\*.*?\*/", "", module,
+                                             flags=re.S))
+check("the tag is found by tag, not by naming the seeking step",
+      "function purposeTag(" in module_code
+      and "seeking" not in module_code
+      and "Object.keys(picks)" in module_code,
+      str([ln for ln in module_code.split("\n") if "seeking" in ln]))
+check("only the first match moves, and a name matching nothing moves nothing",
+      "function firstly(" in module
+      and "return hit ? [hit].concat(rest) : sections;" in module)
+check("  the reorder is inside what is still locked",
+      "var shut = ctx.sections.filter(" in module
+      and "firstly(shut, want)" in module)
+check("  and the free nodes above it keep their places",
+      module.index("list.appendChild(balance(") < module.index("firstly(shut"))
+check("the led teaser steps one tier, from the tokens the page already has",
+      'teaser.style.color = "var(--zr-muted)"' in module
+      and "--zr-muted" in open(
+          os.path.join(ROOT, cfg["result_css"].lstrip("/")),
+          encoding="utf-8").read())
+check("  and no new rule was added to the module's stylesheet for it",
+      ".zr-teaser.is-lead" not in open(
+          os.path.join(ROOT, cfg["result_css"].lstrip("/")),
+          encoding="utf-8").read())
+check("the offer's sub-line is the only copy the rule replaces",
+      "(rule && rule.offer_sub) || copy.offer_sub" in module)
+check("  the price, the button and the trust row are untouched by it",
+      not re.search(r"rule && rule\.(price|cta|trust|anchor)", module))
+check("the delivered page reorders too, off the stored tag",
+      "firstly(ctx.sections, emphasised(purposeRule(ctx)))" in module
+      and "ctx.purpose" in module)
+check("engine.js hands that tag over, empty when a report has none",
+      'purpose: content.purpose || ""' in engine)
 
 print("\n--- the report this funnel is sold on ---")
 check("zodiac30 resolves to the zodiac profile, by identity",
@@ -1058,6 +1194,84 @@ check("the two funnels are two rows in the section cache, not one",
 check("  which is why warm_cache.py takes a funnel name",
       "reports.cached_sections(" in open(
           os.path.join(ROOT, "scripts/warm_cache.py")).read())
+
+print("\n--- and it hears why they came ---")
+seek_ids = [i["id"] for i in by_step["seeking"]["pairs"][0]["images"]]
+
+
+def with_purpose(image_id):
+    """A full run that tapped one of the seeking cards."""
+    return [image_id if s["id"] == "seeking"
+            else ("sign_leo" if s["id"] == "sign"
+                  else s["pairs"][0]["images"][0]["id"])
+            for s in steps]
+
+
+for image_id in seek_ids:
+    want = [t for t in by_id[image_id]["tags"] if t in PURPOSE][0]
+    check("  %-5s reads back as %s" % (image_id, want),
+          reports._purpose(cfg, with_purpose(image_id)) == want,
+          str(reports._purpose(cfg, with_purpose(image_id))))
+check("a run that never reached the step reads back as no purpose",
+      reports._purpose(cfg, [c for c in with_purpose("sk3a")
+                             if c not in seek_ids]) is None)
+check("and a funnel that declares no map never has one",
+      reports._purpose(twin, [s["pairs"][0]["images"][0]["id"]
+                              for s in twin["swipe"]["steps"]]) is None)
+love = with_purpose("sk3a")
+style = cfg["styles"][0]
+SAID = "The reader said what pulled them here"
+for section_id in reports.personal_sections("zodiac30"):
+    prompt = reports._section_prompt(style, "Radiant Fire", {"fire": 8},
+                                     section_id, cfg, love, "zodiac30")
+    check("  %-9s is told, in the reader's own terms" % section_id,
+          SAID in prompt and "love and relationships" in prompt, section_id)
+    check("    with the clause that keeps it honest",
+          "without pretending the quiz measured more than it did" in prompt
+          and "They tapped a picture" in prompt)
+# The cache key is (funnel, style) and does not need the purpose. The cached
+# trio is one answer per archetype shared by everybody who lands on it, and a
+# purpose in that prompt would quadruple the rows while making each one a
+# reading written for whoever warmed it first.
+for section_id in reports.cached_sections("zodiac30"):
+    prompt = reports._section_prompt(style, "Radiant Fire", {"fire": 8},
+                                     section_id, cfg, love, "zodiac30")
+    check("  %-9s is a cached id and is told nothing" % section_id,
+          SAID not in prompt, section_id)
+cached_prompt = reports._cached_prompt(style, "Radiant Fire",
+                                       reports.cached_sections("zodiac30"),
+                                       "zodiac30")
+check("the cached prompt carries no purpose",
+      SAID not in cached_prompt and "love and relationships"
+      not in cached_prompt)
+check("  and the cache key is still the funnel and the style, nothing more",
+      "%s" % reports.SELECT_SECTIONS_SQL.lower().count("purpose") == "0",
+      reports.SELECT_SECTIONS_SQL)
+check("  which is what makes the same row serve all four purposes",
+      reports._cached_prompt(style, "Radiant Fire",
+                             reports.cached_sections("zodiac30"), "zodiac30")
+      == cached_prompt)
+check("  and the cache revision is unmoved by any of this",
+      reports._cache_tag("zodiac30", "palette")
+      == reports._cache_tag("zodiac", "palette"),
+      "%s vs %s" % (reports._cache_tag("zodiac30", "palette"),
+                    reports._cache_tag("zodiac", "palette")))
+twin_run = [s["pairs"][0]["images"][0]["id"] for s in twin["swipe"]["steps"]]
+for section_id in reports.personal_sections("zodiac"):
+    prompt = reports._section_prompt(twin["styles"][0], "Radiant Fire",
+                                     {"fire": 8}, section_id, twin,
+                                     twin_run, "zodiac")
+    check("  zodiac v1 %-9s is told nothing about a purpose" % section_id,
+          SAID not in prompt, section_id)
+check("the line itself says nothing this vertical may not say",
+      not [t for t in seek_ids
+           if reports._banned_hit(
+               reports._purpose_block(cfg, with_purpose(t), "materials"),
+               reports.ZODIAC_BANNED)],
+      str([t for t in seek_ids
+           if reports._banned_hit(
+               reports._purpose_block(cfg, with_purpose(t), "materials"),
+               reports.ZODIAC_BANNED)]))
 
 print("\n--- the sign still reads back off an 18-choice run ---")
 sign_images = by_step["sign"]["pairs"][0]["images"]
@@ -1132,6 +1346,42 @@ check("with the zodiac titles rather than kitchen's",
       [s["title"] for s in content["sections"]] == [t for _, t in SHAPE_OF])
 check("it names this funnel, not the twin", content["funnel"] == "zodiac30",
       content["funnel"])
+# The tag travels on the report, because the page that reads it is opened
+# from a link in an email in a tab that never ran the quiz.
+check("it carries the purpose this run tapped",
+      content.get("purpose") == "purpose_love", str(content.get("purpose")))
+_saved = (database.execute, database.query_all, reports._api)
+database.execute = lambda *a, **k: None
+database.query_all = lambda *a, **k: []
+reports._api = lambda: None
+try:
+    other = reports.start_report(1, "zodiac30", "deep_water", {"water": 8},
+                                 choices=with_purpose("sk3d"))
+    twin_content = reports.start_report(
+        2, "zodiac", "deep_water", {"water": 8},
+        choices=[st["pairs"][0]["images"][0]["id"]
+                 for st in twin["swipe"]["steps"]])
+    kitchen_content = reports.start_report(3, "kitchen", "modern_rustic",
+                                           {"warm": 4})
+finally:
+    database.execute, database.query_all, reports._api = _saved
+check("  a different tap stores a different purpose",
+      other.get("purpose") == "purpose_path", str(other.get("purpose")))
+check("  the twin stores no purpose key at all",
+      "purpose" not in twin_content, str(twin_content.get("purpose")))
+check("  and neither does kitchen",
+      "purpose" not in kitchen_content, str(kitchen_content.get("purpose")))
+# The reorder is the screen's. Print is a linear archive: a document that
+# reshuffled itself per reader would not be the same document twice, and the
+# PDF is built from this list.
+check("the stored section list stays in the report's own order",
+      [s["id"] for s in other["sections"]] == [i for i, _ in SHAPE_OF],
+      str([s["id"] for s in other["sections"]]))
+titles = reports._pdf_html(other)
+order = [t for _, t in SHAPE_OF
+         if t.replace("&", "&amp;") in titles]
+check("  so the PDF prints them in that order whichever way they came in",
+      order == [t for _, t in SHAPE_OF], str(order))
 check("every photograph on it is a frame this run tapped",
       all(i in leo for i in content["visuals"]["sections"].values())
       and all(i in leo for i in content["visuals"]["hero"].values()),

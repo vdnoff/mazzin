@@ -2981,6 +2981,24 @@
     "strength_lead": "Your {symbol} and your {moonphase} put this one first.",
     "offer_sub": "Your complete profile — once, forever.",
     "locked_note": "Locked",
-    "delivered_note": "A PDF of this profile is in your inbox. This page stays at the link you were sent back to."
+    "delivered_note": "A PDF of this profile is in your inbox. This page stays at the link you were sent back to.",
+    "purpose_map": {
+      "purpose_love": {
+        "emphasized_section": "materials",
+        "offer_sub": "Your compatibility read is inside."
+      },
+      "purpose_career": {
+        "emphasized_section": "splurge",
+        "offer_sub": "Your money months are inside."
+      },
+      "purpose_peace": {
+        "emphasized_section": "mistakes",
+        "offer_sub": "Your calm has a pattern. It's inside."
+      },
+      "purpose_path": {
+        "emphasized_section": "shopping",
+        "offer_sub": "Your year, mapped window by window — inside."
+      }
+    }
   }
 }

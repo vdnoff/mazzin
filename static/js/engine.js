@@ -2467,6 +2467,13 @@
         reveals: style.reveals || {}
       },
       sign: content.sign || "",
+      // What the reader said pulled them here, as the report stored it. The
+      // run is long gone by the time this page is opened — it is reached
+      // through a link in an email — so the tag travels on the report the
+      // same way the sign and the visuals do. A report without one, which is
+      // every kitchen and zodiac v1 report, hands the module an empty string
+      // and the module does nothing with it.
+      purpose: content.purpose || "",
       elements: (content.elements || []).slice(),
       visuals: content.visuals || {},
       images: _imagesById(),

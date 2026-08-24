@@ -57,7 +57,15 @@ def check(label, ok, detail=""):
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
-    """static/ off disk, the slugs are the shell, the APIs are stubbed."""
+    """static/ off disk, the slugs are the shell, the APIs are stubbed.
+
+    `strip_purpose` serves zodiac30's config with its purpose block taken out,
+    which is the only way to see what a funnel that never declared one does
+    without editing a file in the repo to find out. It is the same code path
+    zodiac v1 and both kitchens take every time.
+    """
+
+    strip_purpose = False
 
     def __init__(self, *a, **kw):
         super().__init__(*a, directory=ROOT, **kw)
@@ -69,6 +77,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         path = self.path.split("?")[0]
         if path == "/api/pixel-config":
             return self._json({})
+        if path == "/static/funnels/zodiac30.json" and Handler.strip_purpose:
+            with open(os.path.join(ROOT, "static/funnels/zodiac30.json"),
+                      encoding="utf-8") as fh:
+                cfg = json.load(fh)
+            cfg["result_copy"].pop("purpose_map", None)
+            return self._json(cfg)
         if path in ("/zodiac", "/zodiac30", "/kitchen"):
             self.path = "/static/funnel.html"
         return super().do_GET()
@@ -84,6 +98,73 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Content-Length", str(len(raw)))
         self.end_headers()
         self.wfile.write(raw)
+
+
+RESULT = """() => {
+  const off = document.querySelector('.zr-offer');
+  if (!off) return null;
+  return {
+    sub: (off.querySelector('.zr-offer-sub') || {}).textContent || "",
+    open: [...document.querySelectorAll('.zr-node.is-open')].map(
+      n => (n.querySelector('.zr-node-title') || {}).textContent),
+    locked: [...document.querySelectorAll('.zr-node.is-locked')].map(n => {
+      const t = n.querySelector('.zr-teaser');
+      return {title: (n.querySelector('.zr-node-title') || {}).textContent,
+              lead: n.classList.contains('is-lead'),
+              colour: t ? getComputedStyle(t).color : null,
+              size: t ? getComputedStyle(t).fontSize : null};
+    })};
+}"""
+
+# The five locked sections, in the order the report declares them. Anything
+# else on screen is a reorder, which is the whole subject below.
+CANON = ["5 Hidden Strengths & Blind Spots", "Your Cosmic Blueprint",
+         "Love & Compatibility", "Career & Money Path",
+         "Your 12-Month Energy Map"]
+DEFAULT_SUB = "Your complete profile — once, forever."
+# The two tiers the readability pass set. The led teaser steps up exactly one.
+FAINT = "rgb(134, 143, 182)"
+MUTED = "rgb(168, 174, 204)"
+
+
+def to_result(page, slug, seeking=None):
+    """Walk a whole funnel to its result page, or None if it never arrives.
+
+    `seeking` names a card to tap when the step offering it comes up; every
+    other step takes whatever is in the first slot.
+    """
+    page.goto("http://127.0.0.1:%d/%s" % (PORT, slug))
+    page.wait_for_selector("#cards .card", timeout=20000)
+    page.wait_for_timeout(300)
+    for _ in range(40):
+        module = page.locator("#result-module")
+        if module.count() and not module.is_hidden():
+            break
+        cards = page.locator("#cards .card")
+        if not cards.count():
+            page.wait_for_timeout(300)
+            continue
+        target = cards.first
+        if seeking:
+            named = page.locator("#cards .card", has_text=seeking)
+            if named.count():
+                target = named.first
+        try:
+            target.click(timeout=4000)
+        except PageError:
+            # A card that would not take a tap is usually one caught mid-exit,
+            # not a dead run. Give the step a beat and look again; the loop
+            # bound is what stops a genuinely stuck funnel here.
+            page.wait_for_timeout(400)
+            continue
+        page.wait_for_timeout(HOLD_MS + SETTLE_MS)
+        for _ in range(200):
+            if not mid_visible(page):
+                break
+            page.wait_for_timeout(20)
+        page.wait_for_timeout(180)
+    page.wait_for_timeout(3200)
+    return page.evaluate(RESULT)
 
 
 def start(page, slug):
@@ -471,6 +552,90 @@ def run(page):
         hooks.add(tuple(page.evaluate(IDS)))
     check("the hook step deals its pair both ways round", len(hooks) == 2,
           str(sorted(hooks)))
+
+    print("\n--- the paywall answers what they said they came for ---")
+    # Four runs, one per answer to the seeking step. Each has to promote its
+    # own section to the head of what is still locked, keep the rest in report
+    # order, and say its own line under the anchor.
+    WANT = [("Love", "Love & Compatibility",
+             "Your compatibility read is inside."),
+            ("Career & money", "Career & Money Path",
+             "Your money months are inside."),
+            ("Inner peace", "5 Hidden Strengths & Blind Spots",
+             "Your calm has a pattern. It's inside."),
+            ("The road ahead", "Your 12-Month Energy Map",
+             "Your year, mapped window by window — inside.")]
+    for tapped, lead, sub in WANT:
+        got = to_result(page, "zodiac30", tapped)
+        check("tapping %-14s reaches the result" % tapped, got is not None)
+        if not got:
+            continue
+        titles = [n["title"] for n in got["locked"]]
+        check("  %-22s is first among the locked" % lead,
+              titles and titles[0] == lead, str(titles))
+        check("    and the other four keep report order",
+              titles[1:] == [t for t in CANON if t != lead], str(titles[1:]))
+        check("    the offer says their line, not the default one",
+              got["sub"] == sub, got["sub"])
+        check("    its node is the one marked as led",
+              [n["title"] for n in got["locked"] if n["lead"]] == [lead],
+              str([n["title"] for n in got["locked"] if n["lead"]]))
+        check("    and its teaser steps one tier, no further",
+              got["locked"][0]["colour"] == MUTED
+              and got["locked"][0]["size"] == "15px",
+              "%s / %s" % (got["locked"][0]["colour"],
+                           got["locked"][0]["size"]))
+        check("    while every other teaser stays where it was",
+              all(n["colour"] == FAINT and n["size"] == "14px"
+                  for n in got["locked"][1:]),
+              str([(n["title"], n["colour"]) for n in got["locked"][1:]]))
+        check("    and the free half above is untouched",
+              got["open"] == ["Your element balance",
+                              "Hidden Strength #1 of 5"], str(got["open"]))
+
+    print("\n--- a funnel with no purpose block does none of it ---")
+    # Served without the block rather than with an unknown tag: this is the
+    # path zodiac v1 and both kitchens take, exercised against the funnel that
+    # otherwise would personalise, so nothing but the block is different.
+    Handler.strip_purpose = True
+    try:
+        bare = to_result(page, "zodiac30", "Love")
+    finally:
+        Handler.strip_purpose = False
+    check("it still reaches the result", bare is not None)
+    if bare:
+        check("  the locked sections are in report order",
+              [n["title"] for n in bare["locked"]] == CANON,
+              str([n["title"] for n in bare["locked"]]))
+        check("  the offer says the default line",
+              bare["sub"] == DEFAULT_SUB, bare["sub"])
+        check("  and nothing is marked as led",
+              not [n for n in bare["locked"] if n["lead"]],
+              str([n["title"] for n in bare["locked"] if n["lead"]]))
+        check("  every teaser at the tier it always had",
+              all(n["colour"] == FAINT and n["size"] == "14px"
+                  for n in bare["locked"]),
+              str([n["colour"] for n in bare["locked"]]))
+
+    print("\n--- and zodiac v1 renders the page it always did ---")
+    # Asserted here rather than inferred from the block being absent: this is
+    # the funnel that is live, and the module it loads is the same file.
+    v1 = to_result(page, "zodiac")
+    check("it reaches its result", v1 is not None)
+    if v1:
+        check("  its locked sections are in report order",
+              [n["title"] for n in v1["locked"]] == CANON,
+              str([n["title"] for n in v1["locked"]]))
+        check("  its offer says the default line", v1["sub"] == DEFAULT_SUB,
+              v1["sub"])
+        check("  nothing on it is marked as led",
+              not [n for n in v1["locked"] if n["lead"]],
+              str([n["title"] for n in v1["locked"] if n["lead"]]))
+        check("  and every teaser is faint, at fourteen",
+              all(n["colour"] == FAINT and n["size"] == "14px"
+                  for n in v1["locked"]),
+              str([(n["title"], n["colour"], n["size"])
+                   for n in v1["locked"]]))
 
     print("\n--- kitchen is untouched ---")
     start(page, "kitchen")
