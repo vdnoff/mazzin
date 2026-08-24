@@ -559,8 +559,15 @@ print("\n--- placeholders ---")
 # says so in as many words — so a brace in this config that no substitution
 # knows about ships to the reader as a brace. The set: the hook slots, the
 # style name, the price, the manifest count, and the progress percentage.
+# `n` is the rarity; the four element names are the split caption's; the rest
+# name the subtype and what it is made of. All of them are answered by
+# result_zodiac.js's own `fill`, off the block it derives from the run's
+# tallies, rather than by engine.js's hook machinery.
+PROFILE_TOKENS = {"element", "second", "energy", "subtype", "subtype_bare",
+                  "subtype_article", "fire", "earth", "air", "water"}
 KNOWN = (set(cfg["report"]["hook_slots"])
-         | {"style", "price", "n", "pct", "total"})
+         | {"style", "price", "n", "pct", "total"}
+         | PROFILE_TOKENS)
 
 
 def tokens(node):
@@ -1071,7 +1078,15 @@ check("the free result's elements are carried into the paid view",
       len(content.get("elements") or []) == 6, str(content.get("elements")))
 stored_visuals = content.get("visuals") or {}
 check("and the photographs it is illustrated with",
-      set(stored_visuals) == {"sections", "hero"}, str(stored_visuals))
+      set(stored_visuals) == {"sections", "hero", "profile"},
+      str(sorted(stored_visuals)))
+# The hero card, measured while the run still existed, beside the pictures
+# rather than among them: the delivered page, the PDF and the mail are all
+# built by something that never had the run to compute it from.
+check("  and the card the reader was named on, stored with them",
+      (stored_visuals.get("profile") or {}).get("subtype")
+      == "The Underglow",
+      str((stored_visuals.get("profile") or {}).get("subtype")))
 check("  one for every section of the report",
       sorted(stored_visuals.get("sections") or {})
       == sorted(i for i, _ in SHAPE_OF),
@@ -1118,9 +1133,20 @@ cover_out = html_out.split('<section class="cover">')[1].split("</section>")[0]
 check("the cover names this product",
       cfg["result_copy"]["kicker"] in cover_out
       and "Your kitchen style report" not in html_out, cover_out[:160])
-check("  as the hero card off the result page",
-      '<div class="cover-card">' in cover_out
-      and 'class="cover-el' in cover_out)
+card = content["visuals"]["profile"]
+check("  as the rich hero card off the result page",
+      '<div class="cover-card rich">' in cover_out
+      and reports._e(card["subtype"]) in cover_out
+      and reports._e(card["formula"]) in cover_out
+      and reports._e(card["rarity_line"]) in cover_out
+      and reports._e(card["cross_line"]) in cover_out,
+      cover_out[:200])
+check("    with the three scales and the four-element split on it",
+      cover_out.count('class="cover-scale"') == 3
+      and cover_out.count('class="cover-seg"') == 4
+      and reports._e(card["split_caption"]) in cover_out,
+      "%d scales, %d segments" % (cover_out.count('class="cover-scale"'),
+                                  cover_out.count('class="cover-seg"')))
 for _, title in SHAPE_OF:
     check("  carries %-34s" % title,
           title.replace("&", "&amp;") in html_out)

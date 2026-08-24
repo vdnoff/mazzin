@@ -97,8 +97,15 @@ def main():
     check("  and no font anybody has to download",
           "@font-face" not in html and "fonts.googleapis" not in html
           and "Georgia" in html and "Helvetica" in html)
+    card = zodiac["visuals"]["profile"]
     check("the header is the one the page ended on",
-          ">Scorpio<" in html and "× Deep Water" in html)
+          (">%s<" % card["subtype"]) in html and card["formula"] in html,
+          "%s / %s" % (card["subtype"], card["formula"]))
+    check("  which is the name and the formula, not the archetype cross",
+          card["subtype"] == "The Underglow"
+          and card["formula"] == "Scorpio · Water-led, Fire undercurrent "
+                                 "· Moon",
+          "%s / %s" % (card["subtype"], card["formula"]))
     # Escaped, because the titles carry ampersands and the template escapes
     # them — comparing the raw string here would be asking the mail to be
     # wrong.
@@ -109,12 +116,20 @@ def main():
     check("the subject names the product, not a kitchen",
           "cosmic profile" in reports._email_copy(zodiac)["subject"]
           and "kitchen" not in reports._email_copy(zodiac)["subject"])
-    # An older row, or a run that somehow missed the step. The header must
-    # degrade to the archetype rather than print a cross with a hole in it.
-    no_sign = dict(zodiac)
+    # A row written before any of this existed: no profile block, and — an
+    # older row still, or a run that somehow missed the step — no sign either.
+    # The header degrades a step at a time rather than printing a cross with a
+    # hole in it.
+    old_row = dict(zodiac)
+    old_row["visuals"] = {k: v for k, v in zodiac["visuals"].items()
+                          if k != "profile"}
+    older, _ = mail_of(reports, old_row, True)
+    check("a row with no profile falls back to the sign over the archetype",
+          ">Scorpio<" in older and "× Deep Water" in older)
+    no_sign = dict(old_row)
     no_sign.pop("sign", None)
     bare, _ = mail_of(reports, no_sign, True)
-    check("without a sign it falls back to the archetype alone",
+    check("  and without a sign, to the archetype alone",
           ">Deep Water<" in bare and "×" not in bare.split("</table>")[1],
           "")
 
@@ -126,8 +141,17 @@ def main():
     # in the embedded stylesheet too, so `"cover-x" in pdf_html` is true of a
     # cover that never drew one.
     cover = pdf_html.split('<section class="cover">')[1].split("</section>")[0]
-    check("  the cover carries the sign beside the archetype",
-          ">Scorpio<" in cover and 'class="cover-x"' in cover, cover[:120])
+    check("  the cover is the rich hero card, named and measured",
+          (">%s<" % card["subtype"]) in cover
+          and card["formula"] in cover
+          and cover.count('class="cover-scale"') == 3
+          and cover.count('class="cover-seg"') == 4,
+          cover[:160])
+    old_cover = (reports._pdf_html(old_row).split('<section class="cover">')[1]
+                 .split("</section>")[0])
+    check("  and a row with no profile still gets the cover it was written for",
+          ">Scorpio<" in old_cover and 'class="cover-x"' in old_cover,
+          old_cover[:160])
     check("  it says profile where the other says report",
           "your profile also stays available" in pdf_html)
     check("  and takes the light cut of the wordmark",

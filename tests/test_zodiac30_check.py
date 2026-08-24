@@ -83,10 +83,27 @@ for key in SAME:
           json.dumps(cfg[key])[:90])
 # result_copy is the twin's line for line, plus one block the twin has no
 # question to fill: what pulled the reader here.
+#
+# The one exception inside `profile` is the rarity, which is measured per
+# funnel — an eighteen-step walk lands on a different distribution than a
+# twelve-step one, and a shared number would be a lie printed in gold on
+# whichever funnel it did not belong to. Everything else in that block, all
+# twenty-four names and forty-eight lines and six cards of it, is pinned.
+def _no_rarity(copy):
+    out = {k: v for k, v in copy.items() if k != "profile"}
+    if "profile" in copy:
+        out["profile"] = {k: v for k, v in copy["profile"].items()
+                          if k != "rarity"}
+    return out
+
+
 mine_copy = {k: v for k, v in cfg["result_copy"].items() if k != "purpose_map"}
 check("  result_copy    is the twin's, but for the purpose block",
-      mine_copy == twin["result_copy"],
+      _no_rarity(mine_copy) == _no_rarity(twin["result_copy"]),
       str(sorted(set(mine_copy) ^ set(twin["result_copy"]))))
+check("    and the rarity is measured on this funnel's own walk",
+      cfg["result_copy"]["profile"]["rarity"]
+      != twin["result_copy"]["profile"]["rarity"])
 check("  and the twin carries no purpose block at all",
       "purpose_map" not in twin["result_copy"],
       str(sorted(twin["result_copy"])))
@@ -1036,8 +1053,15 @@ check("  and nothing else in the engine reads the flag",
       engine.count("pin_first") == 2, str(engine.count("pin_first")))
 
 print("\n--- placeholders ---")
+# `n` is the rarity; the four element names are the split caption's; the rest
+# name the subtype and what it is made of. All of them are answered by
+# result_zodiac.js's own `fill`, off the block it derives from the run's
+# tallies, rather than by engine.js's hook machinery.
+PROFILE_TOKENS = {"element", "second", "energy", "subtype", "subtype_bare",
+                  "subtype_article", "fire", "earth", "air", "water"}
 KNOWN = (set(cfg["report"]["hook_slots"])
-         | {"style", "price", "n", "pct", "total"})
+         | {"style", "price", "n", "pct", "total"}
+         | PROFILE_TOKENS)
 
 
 def tokens(node):
