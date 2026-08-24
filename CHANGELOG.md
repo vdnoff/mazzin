@@ -318,3 +318,6 @@ bottom.
 
 ## 2026-08-24 — claude/zodiac-paywall-tracking-fix
 - zodiac: fire paywall_view + pixel events from the result module
+
+## 2026-08-24 — claude/zodiac30-funnel-b32eaz
+- zodiac30: 30-screen dramaturgy variant (A/B)
