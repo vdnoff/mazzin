@@ -1,0 +1,2982 @@
+{
+  "slug": "zodiac30",
+  "funnel_id": "zodiac30_v1",
+  "locale": "en",
+  "theme": "zodiac",
+  "stripe_mode": "live",
+  "result_module": "/static/js/result_zodiac.js",
+  "result_css": "/static/css/result_zodiac.css",
+  "meta": {
+    "title": "What's Your Cosmic Profile?",
+    "og_image": "/static/galleries/zodiac/og.webp"
+  },
+  "swipe": {
+    "pairs_count": 18,
+    "headline": "Your cosmic profile analysis",
+    "subtext": "Your Cosmic Profile in 60 seconds of taps",
+    "subtext_accent": "60 seconds",
+    "hint": "Tap your choice",
+    "label_mode": "badge",
+    "analyzing_fade_to": "#0E1430",
+    "steps": [
+      {
+        "id": "hook",
+        "question": "Which sky calls to you?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "zk1a",
+                "img": "/static/galleries/zodiac/zk1a.webp",
+                "label": "Fiery sunset",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F2A33C",
+                    "element": "upper sky"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#D8642A",
+                    "element": "horizon"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#3A1E14",
+                    "element": "ridge line"
+                  }
+                ]
+              },
+              {
+                "id": "zk1b",
+                "img": "/static/galleries/zodiac/zk1b.webp",
+                "label": "Starry night",
+                "tags": [
+                  "air",
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#C9D2E0",
+                    "element": "high stars"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#3E2E6E",
+                    "element": "mid sky"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#101A38",
+                    "element": "low sky"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sign",
+        "question": "Tap your zodiac sign:",
+        "format": "grid12",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sign_aries",
+                "img": "/static/galleries/zodiac/sign_aries.webp",
+                "label": "Aries",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Ram Scarlet",
+                    "hex": "#D8452C",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#D9822A",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#3A241C",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_taurus",
+                "img": "/static/galleries/zodiac/sign_taurus.webp",
+                "label": "Taurus",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "moon"
+                ],
+                "colors": [
+                  {
+                    "name": "Moss Green",
+                    "hex": "#7E9B5E",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#A79E8C",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#4A3826",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_gemini",
+                "img": "/static/galleries/zodiac/sign_gemini.webp",
+                "label": "Gemini",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#BBD3E6",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Solar Brass",
+                    "hex": "#D4A94E",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#5A6A7A",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_cancer",
+                "img": "/static/galleries/zodiac/sign_cancer.webp",
+                "label": "Cancer",
+                "tags": [
+                  "water",
+                  "moon",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#CBD6E2",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#5E8FA0",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#22335C",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_leo",
+                "img": "/static/galleries/zodiac/sign_leo.webp",
+                "label": "Leo",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F5B942",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#D9762A",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#40241A",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_virgo",
+                "img": "/static/galleries/zodiac/sign_virgo.webp",
+                "label": "Virgo",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "sun"
+                ],
+                "colors": [
+                  {
+                    "name": "Wheat Gold",
+                    "hex": "#C8B87A",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#74905A",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#443422",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_libra",
+                "img": "/static/galleries/zodiac/sign_libra.webp",
+                "label": "Libra",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#DCE6EE",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#AEC8DE",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Dusk Lilac",
+                    "hex": "#8E8CB0",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_scorpio",
+                "img": "/static/galleries/zodiac/sign_scorpio.webp",
+                "label": "Scorpio",
+                "tags": [
+                  "water",
+                  "mystic",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Surface Teal",
+                    "hex": "#4E8290",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4A2E58",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Abyss Indigo",
+                    "hex": "#141E36",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_sagittarius",
+                "img": "/static/galleries/zodiac/sign_sagittarius.webp",
+                "label": "Sagittarius",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Arrow Gold",
+                    "hex": "#E8A83A",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Ember Rust",
+                    "hex": "#B85A24",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#38221A",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_capricorn",
+                "img": "/static/galleries/zodiac/sign_capricorn.webp",
+                "label": "Capricorn",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Summit Grey",
+                    "hex": "#9EA093",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#8C8778",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Granite Dark",
+                    "hex": "#3A3A30",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_aquarius",
+                "img": "/static/galleries/zodiac/sign_aquarius.webp",
+                "label": "Aquarius",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Frost Sky",
+                    "hex": "#AEC6DE",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4E4080",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#3A4656",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_pisces",
+                "img": "/static/galleries/zodiac/sign_pisces.webp",
+                "label": "Pisces",
+                "tags": [
+                  "water",
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Sea Mist",
+                    "hex": "#A9C4D6",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4A3A78",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#1A2446",
+                    "element": "lower field"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "seeking",
+        "question": "What pulled you here tonight?",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sk3a",
+                "img": "/static/galleries/zodiac30/sk3a.webp",
+                "label": "Love",
+                "tags": [
+                  "water",
+                  "mystic",
+                  "purpose_love"
+                ],
+                "colors": [
+                  {
+                    "name": "Nebula Rose",
+                    "hex": "#D48CB4",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4A3078",
+                    "element": "cloud"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#141C3E",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "sk3b",
+                "img": "/static/galleries/zodiac30/sk3b.webp",
+                "label": "Career & money",
+                "tags": [
+                  "fire",
+                  "bold",
+                  "purpose_career"
+                ],
+                "colors": [
+                  {
+                    "name": "Comet Gold",
+                    "hex": "#F0C05A",
+                    "element": "head"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#D8762A",
+                    "element": "tail"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#3A2216",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "sk3c",
+                "img": "/static/galleries/zodiac30/sk3c.webp",
+                "label": "Inner peace",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "purpose_peace"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#C2CFD2",
+                    "element": "sky"
+                  },
+                  {
+                    "name": "Slate Green",
+                    "hex": "#6E8478",
+                    "element": "far shore"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#2E3A2C",
+                    "element": "water"
+                  }
+                ]
+              },
+              {
+                "id": "sk3d",
+                "img": "/static/galleries/zodiac30/sk3d.webp",
+                "label": "The road ahead",
+                "tags": [
+                  "air",
+                  "sun",
+                  "purpose_path"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#C6D9EA",
+                    "element": "high sky"
+                  },
+                  {
+                    "name": "Solar Brass",
+                    "hex": "#CFA24E",
+                    "element": "horizon"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#39465A",
+                    "element": "ground"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bond",
+        "question": "Your heart, right now:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "bd4a",
+                "img": "/static/galleries/zodiac30/bd4a.webp",
+                "label": "Single & searching",
+                "tags": [
+                  "sun",
+                  "bold",
+                  "bond_single"
+                ],
+                "colors": [
+                  {
+                    "name": "Star White",
+                    "hex": "#F6EBC8",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Solar Brass",
+                    "hex": "#D8A648",
+                    "element": "halo"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#141E3C",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "bd4b",
+                "img": "/static/galleries/zodiac30/bd4b.webp",
+                "label": "In love",
+                "tags": [
+                  "water",
+                  "calm",
+                  "bond_love"
+                ],
+                "colors": [
+                  {
+                    "name": "Sea Mist",
+                    "hex": "#B4CFDC",
+                    "element": "halos"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#3E7A90",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#16244A",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "bd4c",
+                "img": "/static/galleries/zodiac30/bd4c.webp",
+                "label": "It's complicated",
+                "tags": [
+                  "moon",
+                  "mystic",
+                  "bond_complicated"
+                ],
+                "colors": [
+                  {
+                    "name": "Corona Gold",
+                    "hex": "#DCB05C",
+                    "element": "corona"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#462C60",
+                    "element": "rim"
+                  },
+                  {
+                    "name": "Eclipse Black",
+                    "hex": "#120E1C",
+                    "element": "disc"
+                  }
+                ]
+              },
+              {
+                "id": "bd4d",
+                "img": "/static/galleries/zodiac30/bd4d.webp",
+                "label": "Healing",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "bond_healing"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud Grey",
+                    "hex": "#C4C6BC",
+                    "element": "cloud"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#7A8C64",
+                    "element": "far ridge"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#3A3426",
+                    "element": "ground"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "energy",
+        "question": "Choose your source of power",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "en4a",
+                "img": "/static/galleries/zodiac/en4a.webp",
+                "label": "Radiant sun",
+                "tags": [
+                  "fire",
+                  "sun"
+                ],
+                "colors": [
+                  {
+                    "name": "Sun White",
+                    "hex": "#FBE2A0",
+                    "element": "corona"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F2A83C",
+                    "element": "disc"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#C96A22",
+                    "element": "outer sky"
+                  }
+                ]
+              },
+              {
+                "id": "en4b",
+                "img": "/static/galleries/zodiac/en4b.webp",
+                "label": "Luminous moon",
+                "tags": [
+                  "water",
+                  "moon"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#D5DDE8",
+                    "element": "disc"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#4E7E92",
+                    "element": "halo"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#16204A",
+                    "element": "outer sky"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "landscape",
+        "question": "Which world feels like home?",
+        "format": "grid6",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "ls5a",
+                "img": "/static/galleries/zodiac/ls5a.webp",
+                "label": "Volcano",
+                "tags": [
+                  "fire",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Smoke Ochre",
+                    "hex": "#C97B3A",
+                    "element": "smoke"
+                  },
+                  {
+                    "name": "Lava Red",
+                    "hex": "#A8321F",
+                    "element": "crater"
+                  },
+                  {
+                    "name": "Basalt Black",
+                    "hex": "#2A1A16",
+                    "element": "slope"
+                  }
+                ]
+              },
+              {
+                "id": "ls5b",
+                "img": "/static/galleries/zodiac/ls5b.webp",
+                "label": "Forest",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Canopy Light",
+                    "hex": "#A6C078",
+                    "element": "canopy"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#5F8046",
+                    "element": "trunks"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#33452A",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "ls5c",
+                "img": "/static/galleries/zodiac/ls5c.webp",
+                "label": "Mountain",
+                "tags": [
+                  "earth",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Snow Grey",
+                    "hex": "#CBD2D6",
+                    "element": "summit"
+                  },
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#8C8B82",
+                    "element": "face"
+                  },
+                  {
+                    "name": "Granite Dark",
+                    "hex": "#3E4038",
+                    "element": "base"
+                  }
+                ]
+              },
+              {
+                "id": "ls5d",
+                "img": "/static/galleries/zodiac/ls5d.webp",
+                "label": "Ocean",
+                "tags": [
+                  "water",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Surface Teal",
+                    "hex": "#5D9BA8",
+                    "element": "surface"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#2E6E82",
+                    "element": "mid water"
+                  },
+                  {
+                    "name": "Abyss Indigo",
+                    "hex": "#132A46",
+                    "element": "deep water"
+                  }
+                ]
+              },
+              {
+                "id": "ls5e",
+                "img": "/static/galleries/zodiac/ls5e.webp",
+                "label": "Desert",
+                "tags": [
+                  "fire",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Heat Haze",
+                    "hex": "#EBC98C",
+                    "element": "haze"
+                  },
+                  {
+                    "name": "Warm Sand",
+                    "hex": "#D09A55",
+                    "element": "dunes"
+                  },
+                  {
+                    "name": "Dune Shadow",
+                    "hex": "#8A5A2E",
+                    "element": "shadow"
+                  }
+                ]
+              },
+              {
+                "id": "ls5f",
+                "img": "/static/galleries/zodiac/ls5f.webp",
+                "label": "Above the clouds",
+                "tags": [
+                  "air",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#CFE2F0",
+                    "element": "high sky"
+                  },
+                  {
+                    "name": "Sky Blue",
+                    "hex": "#9CC3DF",
+                    "element": "mid sky"
+                  },
+                  {
+                    "name": "Cloud White",
+                    "hex": "#E6EDF2",
+                    "element": "cloud floor"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "palette",
+        "question": "Which palette holds your energy?",
+        "format": "grid6",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "pl6a",
+                "img": "/static/galleries/zodiac/pl6a.webp",
+                "label": "Ember reds",
+                "tags": [
+                  "fire",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F0A03C",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#CE5F26",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Signal Red",
+                    "hex": "#8E2A20",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "ember-red"
+              },
+              {
+                "id": "pl6b",
+                "img": "/static/galleries/zodiac/pl6b.webp",
+                "label": "Forest greens",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Canopy Light",
+                    "hex": "#AFC98A",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#6E8C50",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#3A4A2C",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "forest-green"
+              },
+              {
+                "id": "pl6c",
+                "img": "/static/galleries/zodiac/pl6c.webp",
+                "label": "Pastel skies",
+                "tags": [
+                  "air",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#EDF2F6",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#C3D9EA",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Dusk Lilac",
+                    "hex": "#B7B2D6",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "pastel-sky"
+              },
+              {
+                "id": "pl6d",
+                "img": "/static/galleries/zodiac/pl6d.webp",
+                "label": "Deep ocean",
+                "tags": [
+                  "water",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Surface Teal",
+                    "hex": "#4E8FA0",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#255E76",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Abyss Indigo",
+                    "hex": "#0E1E3C",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "deep-ocean"
+              },
+              {
+                "id": "pl6e",
+                "img": "/static/galleries/zodiac/pl6e.webp",
+                "label": "Cosmic violet",
+                "tags": [
+                  "water",
+                  "mystic",
+                  "moon"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#C6C2DC",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#5A3E8E",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#1C1740",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "cosmic-violet"
+              },
+              {
+                "id": "pl6f",
+                "img": "/static/galleries/zodiac/pl6f.webp",
+                "label": "Celestial gold",
+                "tags": [
+                  "fire",
+                  "sun"
+                ],
+                "colors": [
+                  {
+                    "name": "Sun White",
+                    "hex": "#FBE7B4",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Solar Brass",
+                    "hex": "#D2A245",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#9E6A1E",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "celestial-gold"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "moment",
+        "question": "Your hour of power:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "mo7a",
+                "img": "/static/galleries/zodiac/mo7a.webp",
+                "label": "First light",
+                "tags": [
+                  "sun",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Dawn Cream",
+                    "hex": "#F6DFC0",
+                    "element": "upper sky"
+                  },
+                  {
+                    "name": "Rose Gold",
+                    "hex": "#E2A579",
+                    "element": "horizon"
+                  },
+                  {
+                    "name": "Low Cloud",
+                    "hex": "#8E93A2",
+                    "element": "land"
+                  }
+                ]
+              },
+              {
+                "id": "mo7b",
+                "img": "/static/galleries/zodiac/mo7b.webp",
+                "label": "Midnight sky",
+                "tags": [
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#B9C4D6",
+                    "element": "moonlight"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#3A2E60",
+                    "element": "mid sky"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#0E1430",
+                    "element": "low sky"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "symbol",
+        "question": "Pick your talisman:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sy8a",
+                "img": "/static/galleries/zodiac/sy8a.webp",
+                "label": "Flame",
+                "tags": [
+                  "fire",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Flame White",
+                    "hex": "#FBE0A2",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#EE9A32",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Signal Red",
+                    "hex": "#A32E1E",
+                    "element": "base"
+                  }
+                ]
+              },
+              {
+                "id": "sy8b",
+                "img": "/static/galleries/zodiac/sy8b.webp",
+                "label": "Crystal",
+                "tags": [
+                  "earth",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#BFB6A4",
+                    "element": "face"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#7B8C62",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#42382A",
+                    "element": "base"
+                  }
+                ]
+              },
+              {
+                "id": "sy8c",
+                "img": "/static/galleries/zodiac/sy8c.webp",
+                "label": "Feather",
+                "tags": [
+                  "air",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#EAF0F5",
+                    "element": "tip"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#BED4E6",
+                    "element": "vane"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#6E7E8E",
+                    "element": "quill"
+                  }
+                ]
+              },
+              {
+                "id": "sy8d",
+                "img": "/static/galleries/zodiac/sy8d.webp",
+                "label": "Wave",
+                "tags": [
+                  "water",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Sea Mist",
+                    "hex": "#B6D2DE",
+                    "element": "crest"
+                  },
+                  {
+                    "name": "Surface Teal",
+                    "hex": "#579CAE",
+                    "element": "face"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#215C72",
+                    "element": "trough"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "moonphase",
+        "question": "Which moon speaks to you?",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "mn9a",
+                "img": "/static/galleries/zodiac/mn9a.webp",
+                "label": "New moon",
+                "tags": [
+                  "mystic",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Faint Grey",
+                    "hex": "#6E6E82",
+                    "element": "rim"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#3A3050",
+                    "element": "shadow"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#12121F",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "mn9b",
+                "img": "/static/galleries/zodiac/mn9b.webp",
+                "label": "Crescent",
+                "tags": [
+                  "air",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#C6D6E6",
+                    "element": "lit edge"
+                  },
+                  {
+                    "name": "Dusk Blue",
+                    "hex": "#7E92AE",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#3E4A5E",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "mn9c",
+                "img": "/static/galleries/zodiac/mn9c.webp",
+                "label": "Full moon",
+                "tags": [
+                  "moon",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon White",
+                    "hex": "#F0F2F6",
+                    "element": "disc"
+                  },
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#B6C0D0",
+                    "element": "halo"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#20284A",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "mn9d",
+                "img": "/static/galleries/zodiac/mn9d.webp",
+                "label": "Eclipse",
+                "tags": [
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Corona Gold",
+                    "hex": "#E0B458",
+                    "element": "corona"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4A2E64",
+                    "element": "rim"
+                  },
+                  {
+                    "name": "Eclipse Black",
+                    "hex": "#100C1A",
+                    "element": "disc"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "flow",
+        "question": "Your natural rhythm:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "fl10a",
+                "img": "/static/galleries/zodiac/fl10a.webp",
+                "label": "Lightning storm",
+                "tags": [
+                  "air",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Strike White",
+                    "hex": "#F2F0E4",
+                    "element": "strike"
+                  },
+                  {
+                    "name": "Storm Silver",
+                    "hex": "#9AA6B4",
+                    "element": "cloud edge"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#2A3040",
+                    "element": "cloud body"
+                  }
+                ]
+              },
+              {
+                "id": "fl10b",
+                "img": "/static/galleries/zodiac/fl10b.webp",
+                "label": "Still mountain lake",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#BFCBD6",
+                    "element": "sky"
+                  },
+                  {
+                    "name": "Slate Green",
+                    "hex": "#6E8478",
+                    "element": "far shore"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#33402F",
+                    "element": "water"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "drain",
+        "question": "Which energy drains you most?",
+        "format": "grid4",
+        "scoring": "inverse",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "dr11a",
+                "img": "/static/galleries/zodiac/dr11a.webp",
+                "label": "Chaotic crowd",
+                "tags": [
+                  "air",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Noise White",
+                    "hex": "#DCDAD2",
+                    "element": "upper"
+                  },
+                  {
+                    "name": "Grey Blue",
+                    "hex": "#8E96A2",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Crowd Slate",
+                    "hex": "#4A4E58",
+                    "element": "lower"
+                  }
+                ]
+              },
+              {
+                "id": "dr11b",
+                "img": "/static/galleries/zodiac/dr11b.webp",
+                "label": "Fluorescent office",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Strip White",
+                    "hex": "#E8ECE6",
+                    "element": "ceiling"
+                  },
+                  {
+                    "name": "Grey Green",
+                    "hex": "#A8B0A2",
+                    "element": "wall"
+                  },
+                  {
+                    "name": "Carpet Grey",
+                    "hex": "#5E645E",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "dr11c",
+                "img": "/static/galleries/zodiac/dr11c.webp",
+                "label": "Stagnant fog",
+                "tags": [
+                  "water",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Fog White",
+                    "hex": "#D8DEE2",
+                    "element": "upper"
+                  },
+                  {
+                    "name": "Damp Grey",
+                    "hex": "#9AA4AA",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Still Slate",
+                    "hex": "#5A646A",
+                    "element": "lower"
+                  }
+                ]
+              },
+              {
+                "id": "dr11d",
+                "img": "/static/galleries/zodiac/dr11d.webp",
+                "label": "Harsh glare",
+                "tags": [
+                  "fire",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Glare White",
+                    "hex": "#FBF4E0",
+                    "element": "source"
+                  },
+                  {
+                    "name": "Hard Amber",
+                    "hex": "#DCA83C",
+                    "element": "spill"
+                  },
+                  {
+                    "name": "Burnt Edge",
+                    "hex": "#6E4A1E",
+                    "element": "edge"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sanctuary",
+        "question": "Where your soul recharges:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sa12a",
+                "img": "/static/galleries/zodiac/sa12a.webp",
+                "label": "Candlelit room",
+                "tags": [
+                  "earth",
+                  "moon",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Candle Amber",
+                    "hex": "#E8B45E",
+                    "element": "flame"
+                  },
+                  {
+                    "name": "Warm Clay",
+                    "hex": "#9E6444",
+                    "element": "wall"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#3A2A1E",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "sa12b",
+                "img": "/static/galleries/zodiac/sa12b.webp",
+                "label": "Rooftop under stars",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Star Silver",
+                    "hex": "#C8D4E4",
+                    "element": "sky"
+                  },
+                  {
+                    "name": "City Brass",
+                    "hex": "#C4933E",
+                    "element": "skyline"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#28303E",
+                    "element": "rooftop"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "decision",
+        "question": "When life forks, you follow:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "dc14a",
+                "img": "/static/galleries/zodiac30/dc14a.webp",
+                "label": "Heart first",
+                "tags": [
+                  "water",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Sea Mist",
+                    "hex": "#AEC8D8",
+                    "element": "outer stars"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#3A7288",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#121E42",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "dc14b",
+                "img": "/static/galleries/zodiac30/dc14b.webp",
+                "label": "Head first",
+                "tags": [
+                  "air",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#E4EDF4",
+                    "element": "nodes"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#B4CEE4",
+                    "element": "lattice"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#3E4A5C",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "dc14c",
+                "img": "/static/galleries/zodiac30/dc14c.webp",
+                "label": "Gut first",
+                "tags": [
+                  "fire",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Flame White",
+                    "hex": "#FBE2A6",
+                    "element": "flame core"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#EE9A32",
+                    "element": "flame body"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#341E16",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "dc14d",
+                "img": "/static/galleries/zodiac30/dc14d.webp",
+                "label": "Time first",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#B6AE9C",
+                    "element": "glass"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#6E8654",
+                    "element": "falling sand"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#382E20",
+                    "element": "field"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tide",
+        "question": "Which truth feels more like you?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "td15a",
+                "img": "/static/galleries/zodiac30/td15a.webp",
+                "label": "I feel everything",
+                "tags": [
+                  "water",
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#C4CFDE",
+                    "element": "moonlight"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#2E6A82",
+                    "element": "crest"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#101A3A",
+                    "element": "trough"
+                  }
+                ]
+              },
+              {
+                "id": "td15b",
+                "img": "/static/galleries/zodiac30/td15b.webp",
+                "label": "I hold everything",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#A8A292",
+                    "element": "stone face"
+                  },
+                  {
+                    "name": "Slate Green",
+                    "hex": "#68806E",
+                    "element": "still water"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#33402F",
+                    "element": "shadow"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "door",
+        "question": "Pick the door you'd walk through blind:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "dr16a",
+                "img": "/static/galleries/zodiac30/dr16a.webp",
+                "label": "Golden door",
+                "tags": [
+                  "fire",
+                  "sun"
+                ],
+                "colors": [
+                  {
+                    "name": "Sun White",
+                    "hex": "#FBE6B0",
+                    "element": "threshold"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#EDA43A",
+                    "element": "frame"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#9E6A1E",
+                    "element": "surround"
+                  }
+                ]
+              },
+              {
+                "id": "dr16b",
+                "img": "/static/galleries/zodiac30/dr16b.webp",
+                "label": "Indigo door",
+                "tags": [
+                  "water",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#BEC6DC",
+                    "element": "threshold"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4A3282",
+                    "element": "frame"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#121A3E",
+                    "element": "surround"
+                  }
+                ]
+              },
+              {
+                "id": "dr16c",
+                "img": "/static/galleries/zodiac30/dr16c.webp",
+                "label": "Green-stone door",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Canopy Light",
+                    "hex": "#A8C084",
+                    "element": "threshold"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#5F8046",
+                    "element": "frame"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#33402A",
+                    "element": "surround"
+                  }
+                ]
+              },
+              {
+                "id": "dr16d",
+                "img": "/static/galleries/zodiac30/dr16d.webp",
+                "label": "Pale-sky door",
+                "tags": [
+                  "air",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#E8EFF4",
+                    "element": "threshold"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#B8D2E6",
+                    "element": "frame"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#5A6A7A",
+                    "element": "surround"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "essence",
+        "question": "Your cosmic essence:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "es13a",
+                "img": "/static/galleries/zodiac/es13a.webp",
+                "label": "Radiant flame",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Sun White",
+                    "hex": "#FCE8B4",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F0A234",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Signal Red",
+                    "hex": "#9E2E1E",
+                    "element": "edge"
+                  }
+                ]
+              },
+              {
+                "id": "es13b",
+                "img": "/static/galleries/zodiac/es13b.webp",
+                "label": "Still depths",
+                "tags": [
+                  "water",
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#BCC8DC",
+                    "element": "surface"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#463A78",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#101A3A",
+                    "element": "deep"
+                  }
+                ]
+              },
+              {
+                "id": "es13c",
+                "img": "/static/galleries/zodiac/es13c.webp",
+                "label": "Rooted stone",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "moon"
+                ],
+                "colors": [
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#B4AC98",
+                    "element": "face"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#6E8654",
+                    "element": "moss"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#3A2E20",
+                    "element": "base"
+                  }
+                ]
+              },
+              {
+                "id": "es13d",
+                "img": "/static/galleries/zodiac/es13d.webp",
+                "label": "Open sky",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#EEF3F7",
+                    "element": "high"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#AECBE2",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Solar Brass",
+                    "hex": "#C89A46",
+                    "element": "horizon"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "seal",
+        "question": "Seal your reading:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sl18a",
+                "img": "/static/galleries/zodiac30/sl18a.webp",
+                "label": "Rising sun",
+                "tags": [
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Sun White",
+                    "hex": "#FBE4AC",
+                    "element": "disc"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F0A63C",
+                    "element": "corona"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#3A2618",
+                    "element": "horizon"
+                  }
+                ]
+              },
+              {
+                "id": "sl18b",
+                "img": "/static/galleries/zodiac30/sl18b.webp",
+                "label": "Crowning moon",
+                "tags": [
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon White",
+                    "hex": "#EFF2F6",
+                    "element": "disc"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#3E3068",
+                    "element": "high sky"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#0E1430",
+                    "element": "low sky"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "interstitials": [
+    {
+      "after_step": 2,
+      "template": "confirm",
+      "kicker": "Signal recorded",
+      "line": "Sign locked.",
+      "sub": "Now we read what your sign alone can't tell.",
+      "cta": "Continue analysis"
+    },
+    {
+      "after_step": 4,
+      "template": "pattern",
+      "kicker": "Pattern detected",
+      "line": "Two personal signals in.",
+      "sub": "Your profile is already narrowing.",
+      "cta": "Continue analysis"
+    },
+    {
+      "after_step": 6,
+      "template": "confirm",
+      "kicker": "Signal recorded",
+      "line": "One element keeps pulling ahead.",
+      "sub": "We're testing it now.",
+      "cta": "Continue analysis"
+    },
+    {
+      "after_step": 8,
+      "template": "almost",
+      "kicker": "Calibrating",
+      "line": "Profile {pct}% calibrated.",
+      "sub": "The personal layer is next.",
+      "cta": "Continue analysis"
+    },
+    {
+      "after_step": 10,
+      "template": "confirm",
+      "kicker": "Signal recorded",
+      "line": "Moon signal recorded.",
+      "sub": "It changes what we ask next.",
+      "cta": "Continue analysis"
+    },
+    {
+      "after_step": 12,
+      "template": "confirm",
+      "kicker": "Signal recorded",
+      "line": "Inverse signal locked.",
+      "sub": "What drains you sharpens the read.",
+      "cta": "Continue analysis"
+    },
+    {
+      "after_step": 15,
+      "template": "almost",
+      "kicker": "Calibrating",
+      "line": "Deep layer mapped. {pct}% calibrated.",
+      "sub": "Three signals left.",
+      "cta": "Continue analysis"
+    },
+    {
+      "after_step": 18,
+      "template": "almost",
+      "kicker": "Calibrating",
+      "line": "All 18 signals in.",
+      "sub": "Compiling your Cosmic Profile…",
+      "cta": "Continue analysis"
+    }
+  ],
+  "interstitial_working": [
+    "Reading your choices…",
+    "Weighing them against the four elements…",
+    "Preparing what's next…"
+  ],
+  "preview_gallery": [
+    {
+      "id": "ls5a",
+      "img": "/static/galleries/zodiac/ls5a.webp",
+      "tags": [
+        "fire",
+        "bold"
+      ]
+    },
+    {
+      "id": "ls5b",
+      "img": "/static/galleries/zodiac/ls5b.webp",
+      "tags": [
+        "earth",
+        "calm"
+      ]
+    },
+    {
+      "id": "ls5c",
+      "img": "/static/galleries/zodiac/ls5c.webp",
+      "tags": [
+        "earth",
+        "bold"
+      ]
+    },
+    {
+      "id": "ls5d",
+      "img": "/static/galleries/zodiac/ls5d.webp",
+      "tags": [
+        "water",
+        "mystic"
+      ]
+    },
+    {
+      "id": "ls5e",
+      "img": "/static/galleries/zodiac/ls5e.webp",
+      "tags": [
+        "fire",
+        "calm"
+      ]
+    },
+    {
+      "id": "ls5f",
+      "img": "/static/galleries/zodiac/ls5f.webp",
+      "tags": [
+        "air",
+        "calm"
+      ]
+    },
+    {
+      "id": "pl6a",
+      "img": "/static/galleries/zodiac/pl6a.webp",
+      "tags": [
+        "fire",
+        "bold"
+      ]
+    },
+    {
+      "id": "pl6b",
+      "img": "/static/galleries/zodiac/pl6b.webp",
+      "tags": [
+        "earth",
+        "calm"
+      ]
+    },
+    {
+      "id": "pl6c",
+      "img": "/static/galleries/zodiac/pl6c.webp",
+      "tags": [
+        "air",
+        "calm"
+      ]
+    },
+    {
+      "id": "pl6d",
+      "img": "/static/galleries/zodiac/pl6d.webp",
+      "tags": [
+        "water",
+        "mystic"
+      ]
+    },
+    {
+      "id": "pl6e",
+      "img": "/static/galleries/zodiac/pl6e.webp",
+      "tags": [
+        "water",
+        "mystic",
+        "moon"
+      ]
+    },
+    {
+      "id": "pl6f",
+      "img": "/static/galleries/zodiac/pl6f.webp",
+      "tags": [
+        "fire",
+        "sun"
+      ]
+    },
+    {
+      "id": "es13a",
+      "img": "/static/galleries/zodiac/es13a.webp",
+      "tags": [
+        "fire",
+        "sun",
+        "bold"
+      ]
+    },
+    {
+      "id": "es13b",
+      "img": "/static/galleries/zodiac/es13b.webp",
+      "tags": [
+        "water",
+        "moon",
+        "mystic"
+      ]
+    },
+    {
+      "id": "es13c",
+      "img": "/static/galleries/zodiac/es13c.webp",
+      "tags": [
+        "earth",
+        "calm",
+        "moon"
+      ]
+    },
+    {
+      "id": "es13d",
+      "img": "/static/galleries/zodiac/es13d.webp",
+      "tags": [
+        "air",
+        "sun",
+        "bold"
+      ]
+    }
+  ],
+  "style_elements": {
+    "title": "Your Cosmic Signals",
+    "subline": "Recognized from your choices — read in full in your profile.",
+    "items": [
+      {
+        "id": "flame",
+        "label": "Flame",
+        "spec": "Fire element — cardinal, fast to ignite",
+        "image": "sy8a",
+        "img": "/static/galleries/zodiac/sy8a.webp",
+        "tags": [
+          "fire",
+          "bold"
+        ]
+      },
+      {
+        "id": "crystal",
+        "label": "Crystal",
+        "spec": "Earth element — holding, slow to change",
+        "image": "sy8b",
+        "img": "/static/galleries/zodiac/sy8b.webp",
+        "tags": [
+          "earth",
+          "mystic"
+        ]
+      },
+      {
+        "id": "feather",
+        "label": "Feather",
+        "spec": "Air element — mutable, carried on movement",
+        "image": "sy8c",
+        "img": "/static/galleries/zodiac/sy8c.webp",
+        "tags": [
+          "air",
+          "calm"
+        ]
+      },
+      {
+        "id": "wave",
+        "label": "Wave",
+        "spec": "Water element — tidal, returns on its own",
+        "image": "sy8d",
+        "img": "/static/galleries/zodiac/sy8d.webp",
+        "tags": [
+          "water",
+          "mystic"
+        ]
+      },
+      {
+        "id": "full-moon",
+        "label": "Full moon",
+        "spec": "Peak phase — visible, expressive, loud",
+        "image": "mn9c",
+        "img": "/static/galleries/zodiac/mn9c.webp",
+        "tags": [
+          "moon",
+          "bold"
+        ]
+      },
+      {
+        "id": "new-moon",
+        "label": "New moon",
+        "spec": "Dark phase — private, seeding, unhurried",
+        "image": "mn9a",
+        "img": "/static/galleries/zodiac/mn9a.webp",
+        "tags": [
+          "mystic",
+          "calm"
+        ]
+      },
+      {
+        "id": "eclipse",
+        "label": "Eclipse",
+        "spec": "Shadow phase — turning points, forced change",
+        "image": "mn9d",
+        "img": "/static/galleries/zodiac/mn9d.webp",
+        "tags": [
+          "moon",
+          "mystic"
+        ]
+      },
+      {
+        "id": "ember-reds",
+        "label": "Ember reds",
+        "spec": "Warm spectrum — high saturation, low light",
+        "image": "pl6a",
+        "img": "/static/galleries/zodiac/pl6a.webp",
+        "tags": [
+          "fire",
+          "bold"
+        ]
+      },
+      {
+        "id": "deep-ocean",
+        "label": "Deep ocean",
+        "spec": "Cool spectrum — deep value, single hue",
+        "image": "pl6d",
+        "img": "/static/galleries/zodiac/pl6d.webp",
+        "tags": [
+          "water",
+          "mystic"
+        ]
+      },
+      {
+        "id": "volcano",
+        "label": "Volcano",
+        "spec": "Fire terrain — pressure held under a surface",
+        "image": "ls5a",
+        "img": "/static/galleries/zodiac/ls5a.webp",
+        "tags": [
+          "fire",
+          "bold"
+        ]
+      },
+      {
+        "id": "forest",
+        "label": "Forest",
+        "spec": "Earth terrain — rooted, slow-growing, quiet",
+        "image": "ls5b",
+        "img": "/static/galleries/zodiac/ls5b.webp",
+        "tags": [
+          "earth",
+          "calm"
+        ]
+      },
+      {
+        "id": "open-sky",
+        "label": "Above the clouds",
+        "spec": "Air terrain — unbounded, weatherless",
+        "image": "ls5f",
+        "img": "/static/galleries/zodiac/ls5f.webp",
+        "tags": [
+          "air",
+          "calm"
+        ]
+      }
+    ]
+  },
+  "styles": [
+    {
+      "id": "radiant_fire",
+      "name": "Radiant Fire",
+      "tags": [
+        "fire",
+        "sun",
+        "bold"
+      ],
+      "blurb": "Heat that arrives before you do — you decide fast, commit out loud, and the room either warms to you or gets out of the way.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Solar Amber",
+              "rgb": [
+                242,
+                163,
+                60
+              ]
+            },
+            {
+              "name": "Ember Gold",
+              "rgb": [
+                216,
+                100,
+                42
+              ]
+            },
+            {
+              "name": "Signal Red",
+              "rgb": [
+                173,
+                51,
+                38
+              ]
+            },
+            {
+              "name": "Ash Basalt",
+              "rgb": [
+                58,
+                30,
+                20
+              ]
+            }
+          ],
+          "line": "Solar amber is your everyday register, signal red is what you reach for when you need the room to turn, and ash basalt is the weight that stops the whole thing burning out by Thursday.",
+          "talismans": [
+            "Carnelian — carried in a pocket, not worn on show",
+            "Sunstone — on a chain short enough to sit at the collarbone",
+            "A brass key kept in the coat you wear most"
+          ],
+          "lucky_days": "Tuesday and Sunday — the first for starting things, the second for finishing them."
+        },
+        "mistakes": {
+          "setup": "That one is the easiest of the five to live with. The other four cut deeper, and the one costing you most right now is",
+          "trigger": "the speed you decide at, not the decision,"
+        },
+        "dna": {
+          "setup": "Fire and sun read as the same thing from outside and pull opposite ways inside, and the split shows",
+          "trigger": "in the choices you made fastest,"
+        },
+        "materials": {
+          "setup": "You are read as certain long before you feel it, and the person who lasts is the one who",
+          "trigger": "waits out the first week,"
+        },
+        "splurge": {
+          "setup": "Your earning pattern is not flat and was never meant to be, and the month it turns is",
+          "trigger": "the one straight after you get bored,"
+        },
+        "shopping": {
+          "setup": "Two windows in the next twelve months carry most of your momentum, and the first opens",
+          "trigger": "earlier than you would plan for,"
+        },
+        "mistake_one": {
+          "title": "You mistake speed for certainty",
+          "body": "The thing you are strongest at — moving before the room has finished thinking — is also the thing that costs you most. A fire-and-sun profile reads its own momentum as evidence: because the decision came quickly, it feels like it came from somewhere deep. Often it did. Sometimes it came from nothing more than the discomfort of sitting still, and the two feel identical from the inside.",
+          "fix": "Give any decision you can explain in under ten seconds one night before you act on it. Not a week — a night. If it is still obvious in the morning it was conviction; if it has gone quiet it was restlessness wearing conviction's coat."
+        }
+      }
+    },
+    {
+      "id": "deep_water",
+      "name": "Deep Water",
+      "tags": [
+        "water",
+        "moon",
+        "mystic"
+      ],
+      "blurb": "Everything registers and almost nothing shows — you read a room in seconds and give it back slowly, on your own terms.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Moon Silver",
+              "rgb": [
+                196,
+                205,
+                214
+              ]
+            },
+            {
+              "name": "Tidal Teal",
+              "rgb": [
+                42,
+                104,
+                122
+              ]
+            },
+            {
+              "name": "Deep Violet",
+              "rgb": [
+                70,
+                46,
+                104
+              ]
+            },
+            {
+              "name": "Midnight Indigo",
+              "rgb": [
+                24,
+                32,
+                66
+              ]
+            }
+          ],
+          "line": "Midnight indigo is where you are most yourself, moon silver is what lets other people find you in it, and deep violet is the accent to use once in a room and never twice.",
+          "talismans": [
+            "Moonstone — worn where you can reach it without looking",
+            "Labradorite — kept on the desk rather than on the body",
+            "A small dish of sea salt by the door you use"
+          ],
+          "lucky_days": "Monday and Thursday — Monday for reading a situation, Thursday for saying it out loud."
+        },
+        "mistakes": {
+          "setup": "That one you already half knew. The other four are the ones people close to you have noticed and not mentioned, and the loudest is",
+          "trigger": "what you do with a silence,"
+        },
+        "dna": {
+          "setup": "Water and moon agree on nearly everything, which is why the mystic third of you gets missed — it surfaces",
+          "trigger": "in what you refuse without explaining,"
+        },
+        "materials": {
+          "setup": "You give depth early and access late, and that mismatch is what gets misread as",
+          "trigger": "distance, when it is timing,"
+        },
+        "splurge": {
+          "setup": "Money follows your attention rather than your effort, and the pattern breaks",
+          "trigger": "whenever you take a role that needs performing,"
+        },
+        "shopping": {
+          "setup": "Your strongest stretch this year is not the busy one, and it starts",
+          "trigger": "the month you stop chasing it,"
+        },
+        "mistake_one": {
+          "title": "You wait for the perfect moment to say it",
+          "body": "You take in more than anyone around you and hold it longer, which is why your read on a situation is almost always right. It is also why it arrives late. A water-and-moon profile trusts timing the way other people trust logic, and it will hold a true and useful thing for weeks waiting for a moment clean enough to deserve it. The moment rarely comes, the thing goes unsaid, and the situation resolves without you in it.",
+          "fix": "Set a ceiling instead of a moment. Three days from noticing something to naming it, clumsy wording included. The awkward version said on Tuesday does more work than the perfect version you never quite reach."
+        }
+      }
+    },
+    {
+      "id": "grounded_earth",
+      "name": "Grounded Earth",
+      "tags": [
+        "earth",
+        "calm",
+        "moon"
+      ],
+      "blurb": "Weight and patience — you build things that stay built, and the value of that stays invisible until the day it isn't.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Quarry Stone",
+              "rgb": [
+                166,
+                158,
+                142
+              ]
+            },
+            {
+              "name": "Moss Green",
+              "rgb": [
+                92,
+                112,
+                74
+              ]
+            },
+            {
+              "name": "Warm Clay",
+              "rgb": [
+                158,
+                100,
+                68
+              ]
+            },
+            {
+              "name": "Bark Umber",
+              "rgb": [
+                64,
+                48,
+                36
+              ]
+            }
+          ],
+          "line": "Moss green and quarry stone are the two you can put anything against, warm clay is what stops the pair going austere, and bark umber belongs on the edges rather than the field.",
+          "talismans": [
+            "Smoky quartz — in the pocket you actually use",
+            "Jasper — kept where you work, not where you rest",
+            "An unglazed clay bead on a plain cord"
+          ],
+          "lucky_days": "Friday and Saturday — Friday to settle things, Saturday to begin them."
+        },
+        "mistakes": {
+          "setup": "That one is the cheapest of the five to correct. The other four have been running for years, and at the top of that list is",
+          "trigger": "what you agree to out of steadiness,"
+        },
+        "dna": {
+          "setup": "Earth reads as calm and calm gets read as agreement, and the difference shows",
+          "trigger": "in the things you never mention twice,"
+        },
+        "materials": {
+          "setup": "You are the person other people steady themselves against, and what nobody checks is",
+          "trigger": "who you lean on,"
+        },
+        "splurge": {
+          "setup": "You are underpaid in a specific and fixable way, and the fix is",
+          "trigger": "a number said once, with no reason after it,"
+        },
+        "shopping": {
+          "setup": "The twelve months ahead have one real hinge in them, and it is",
+          "trigger": "a decision you have already been circling,"
+        },
+        "mistake_one": {
+          "title": "You absorb the cost instead of naming it",
+          "body": "Steadiness is the thing everyone around you relies on, and you deliver it so reliably that the delivery stops being visible. An earth-and-calm profile takes the extra hour, the awkward conversation, the thing nobody else picked up — and takes it quietly enough that no one ever learns it was extra. Over a few years the baseline moves. What you once took on as a favour is now simply what you do.",
+          "fix": "Say the cost out loud once, at the moment it happens, without asking for anything in return. Not a complaint and not a negotiation — one sentence naming what it took. People adjust to information far more readily than they adjust to resentment."
+        }
+      }
+    },
+    {
+      "id": "celestial_air",
+      "name": "Celestial Air",
+      "tags": [
+        "air",
+        "sun",
+        "bold"
+      ],
+      "blurb": "Ideas move through you faster than you can spend them — you put things next to each other nobody else would, and make it look like nothing.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Cloud White",
+              "rgb": [
+                232,
+                232,
+                226
+              ]
+            },
+            {
+              "name": "Pale Sky",
+              "rgb": [
+                176,
+                200,
+                218
+              ]
+            },
+            {
+              "name": "Solar Brass",
+              "rgb": [
+                204,
+                164,
+                84
+              ]
+            },
+            {
+              "name": "Storm Slate",
+              "rgb": [
+                72,
+                84,
+                96
+              ]
+            }
+          ],
+          "line": "Pale sky and cloud white are the base, and it should stay almost boring; solar brass is the single warm note that makes them read as chosen, and storm slate gives the whole thing an edge to hold.",
+          "talismans": [
+            "Clear quartz — small, on you rather than displayed",
+            "Aquamarine — worn for the conversations that matter",
+            "A folded paper crane kept in a bag pocket"
+          ],
+          "lucky_days": "Wednesday and Sunday — Wednesday for talking, Sunday for deciding what it meant."
+        },
+        "mistakes": {
+          "setup": "That one is the visible half. The other four sit under it, and the one shaping most of your weeks is",
+          "trigger": "how you handle the third day,"
+        },
+        "dna": {
+          "setup": "Air and sun make you legible and bold makes you memorable, and the tension between them lands",
+          "trigger": "in what you start and hand over,"
+        },
+        "materials": {
+          "setup": "You are easy to meet and hard to reach, and the person who gets through is the one who",
+          "trigger": "asks the second question,"
+        },
+        "splurge": {
+          "setup": "Your best money comes from the part of the work you find least interesting, and it is",
+          "trigger": "the follow-through, not the idea,"
+        },
+        "shopping": {
+          "setup": "One window this year is worth more than the other eleven months together, and it opens",
+          "trigger": "the week you almost cancel,"
+        },
+        "mistake_one": {
+          "title": "You leave at the exact moment it gets valuable",
+          "body": "You see the shape of a thing before anyone else does, and the seeing is genuinely the hard part — an air-and-sun profile turns out more usable ideas in a month than most people have in a year. But the interest is front-loaded. Once the shape is clear the rest reads as admin, so you move on, the idea belongs to whoever stayed, and you are left with the accurate and useless memory of having thought of it first.",
+          "fix": "Pick one thing a quarter and stay past the point where it stops being interesting. Not everything — one. The boredom is not a signal that the work is finished; it is the toll on the stretch where the value actually gets collected."
+        }
+      }
+    }
+  ],
+  "analyzing": {
+    "duration_ms": 2500,
+    "text": "Reading your signals",
+    "messages": [
+      "Reading your 18 signals…",
+      "Weighing your 18 signals against the four elements…",
+      "Isolating your dominant energy…"
+    ]
+  },
+  "report": {
+    "generating_messages": [
+      "Our AI is weighing your 18 signals against the four elements…",
+      "Searching for the combinations that fit YOU…",
+      "Cross-referencing your element and energy picks…",
+      "Almost there — writing your profile…"
+    ],
+    "sections": [
+      {
+        "id": "palette",
+        "title": "Your Power Palette & Talismans",
+        "enabled": true,
+        "preview": [
+          "Each one is given with its exact code and the two shades it should never sit beside, because the same colour reads differently under warm light than it does under cold.",
+          "The profile names the three stones that hold your energy, where to carry each of them, and the two days your decisions land best."
+        ],
+        "reveal": {
+          "mode": "visible"
+        }
+      },
+      {
+        "id": "mistakes",
+        "title": "5 Hidden Strengths & Blind Spots",
+        "teaser_line": "Four more, and the costliest one is last.",
+        "enabled": true,
+        "preview": [
+          "It reads as obvious written down, and it still shapes more of your week than anything else on this list.",
+          "The remaining four are ranked by how much of your energy each one is quietly costing you."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "dna",
+        "title": "Your Cosmic Blueprint",
+        "teaser_line": "How your {palette} splits between your two strongest elements.",
+        "enabled": true,
+        "preview": [
+          "Three axes, scored from your own taps, and one place where they pull hard against each other.",
+          "It names your element, your energy and your tone, and says which of the three you lead with when you are under pressure."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "materials",
+        "title": "Love & Compatibility",
+        "teaser_line": "Why one sign keeps finding you.",
+        "enabled": true,
+        "preview": [
+          "It is the pattern underneath the people you keep choosing, rather than a list of signs to avoid.",
+          "The profile names the three energies you work with easily, the one that costs you, and what to say in the first month."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "splurge",
+        "title": "Career & Money Path",
+        "teaser_line": "Where your {symbol} energy earns — and what to stop taking.",
+        "enabled": true,
+        "preview": [
+          "Your earning rhythm is not flat and never was, and the shape of it is far more useful than an average.",
+          "The profile marks the months your energy pays best and names the one kind of work to stop accepting."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "shopping",
+        "title": "Your 12-Month Energy Map",
+        "teaser_line": "Two strong months. One quiet one.",
+        "enabled": true,
+        "preview": [
+          "Twelve months, marked for the stretches where your energy is behind you and the two where it plainly is not.",
+          "Every window comes with what it is good for, so the quiet months stop reading as failure."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      }
+    ],
+    "mistake_one": {
+      "title": "Hidden Strength #1 of 5",
+      "locked_note": "Strengths 2–5 — inside your full profile"
+    },
+    "also": {
+      "title": "Also in your profile",
+      "rows": [
+        {
+          "section": "dna",
+          "hook": "How your {palette} choices split between your two strongest elements."
+        },
+        {
+          "section": "splurge",
+          "hook": "Where your {symbol} energy earns — and the one kind of work to stop taking."
+        },
+        {
+          "section": "shopping",
+          "hook": "The two months your {sign} energy runs with you, and the one to stay quiet through."
+        },
+        {
+          "title": "Your Exact Power Hex Codes",
+          "hook": "The code for every colour above, where to use it, and the one shade to keep away from it."
+        }
+      ]
+    },
+    "visuals": {
+      "hero": {
+        "glyph_step": "sign",
+        "band_step": "landscape"
+      },
+      "section_steps": {
+        "palette": "palette",
+        "mistakes": "moonphase",
+        "dna": "essence",
+        "materials": "sanctuary",
+        "splurge": "flow",
+        "shopping": "moment"
+      }
+    },
+    "hook_slots": {
+      "sign": {
+        "step": "sign",
+        "fallback": "sign"
+      },
+      "palette": {
+        "step": "palette",
+        "fallback": "palette"
+      },
+      "moonphase": {
+        "step": "moonphase",
+        "fallback": "moon"
+      },
+      "symbol": {
+        "step": "symbol",
+        "fallback": "talisman"
+      }
+    }
+  },
+  "pricing": {
+    "amount_cents": 300,
+    "currency": "usd",
+    "cta": "Unlock my full profile"
+  },
+  "checkout": {
+    "kicker": "Your profile is ready",
+    "product_name": "Your Cosmic Profile Report",
+    "product_image": "/static/brand/icon-512.png",
+    "single_page": true,
+    "express": true,
+    "withdrawal_consent": false,
+    "commerce": {
+      "anchor_head": "A {price} profile instead of a $75 session",
+      "anchor_head_accent": "$75",
+      "price_suffix": "one-time · no subscription",
+      "trust": [
+        "Secure via Stripe",
+        "One-time — no recurring charges",
+        "PDF to your email"
+      ],
+      "mid_line": "Your complete energy map, for less than two coffees.",
+      "mid_line_accent": "two coffees",
+      "mid_button": "See what's inside ↓",
+      "sticky_label": "Unlock full profile — {price}"
+    },
+    "title": "Your {style} Profile",
+    "proof_line": "Built from your 18 choices",
+    "manifest": [
+      "Your power palette with exact codes, plus your three talismans",
+      "5 hidden strengths and blind spots — with what to do about each",
+      "Your cosmic blueprint: element, energy and tone, scored",
+      "Love & compatibility: the pattern under who you choose",
+      "Career & money: the months your energy pays best",
+      "Your 12-month energy map, marked window by window"
+    ],
+    "manifest_hero": "strengths",
+    "manifest_head": "What's inside — {n} sections, yours forever",
+    "anchor_head": "A {price} read on the energy you spend every day",
+    "anchor": "A private session with an astrologer costs $75+. Your complete profile — {price}, once.",
+    "reframe": "Less than two coffees. Yours forever.",
+    "price_suffix": "one-time",
+    "cta_label": "Open my full profile — {price}",
+    "consent_prechecked": true,
+    "trust": [
+      "Secure payment via Stripe",
+      "Instant delivery",
+      "PDF copy to your email"
+    ],
+    "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right."
+  },
+  "result": {
+    "mistakes_teaser": "You've seen strength #1. The other four run deeper — one explains your {moonphase} choice.",
+    "value_banner": "Five strengths, a compatibility read and a twelve-month energy map — all of it built from your own 18 signals, yours to keep."
+  },
+  "result_copy": {
+    "kicker": "YOUR COSMIC PROFILE",
+    "blend_note": "rare blend",
+    "taps_caption": "Read from your taps:",
+    "balance_title": "Your element balance",
+    "strength_lead": "Your {symbol} and your {moonphase} put this one first.",
+    "offer_sub": "Your complete profile — once, forever.",
+    "locked_note": "Locked",
+    "delivered_note": "A PDF of this profile is in your inbox. This page stays at the link you were sent back to."
+  }
+}

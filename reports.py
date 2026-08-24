@@ -1555,7 +1555,16 @@ ZODIAC_PROFILE = {
     "pdf_node": True,
 }
 
-PROFILES = {"zodiac": ZODIAC_PROFILE}
+# zodiac30 is the same product down a longer walk, so it is the same
+# report: one voice, one set of shapes, one banned list, one PDF and
+# one mail. The object is shared rather than copied because the checks
+# that branch on this profile test it by identity.
+#
+# The section cache is keyed on the funnel as well as the style, so the
+# two funnels warm their own rows off the same archetypes:
+#
+#     python3 scripts/warm_cache.py zodiac30 --copy-from zodiac
+PROFILES = {"zodiac": ZODIAC_PROFILE, "zodiac30": ZODIAC_PROFILE}
 
 
 def _profile(funnel_slug):
