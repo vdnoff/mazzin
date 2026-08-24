@@ -2318,7 +2318,11 @@
         wallet: xpBlock, walletSummary: el.xpSummary
       },
       checkout: startCheckout,
-      track: function (name, extra) { track(name, null, extra); }
+      track: function (name, extra) { track(name, null, extra); },
+      // The card a module drew its offer into, so `paywall_view` and
+      // InitiateCheckout fire when that card reaches the reader rather than
+      // when a hidden container does.
+      watchOffer: watchOffer
     };
   }
 
@@ -5739,9 +5743,10 @@
   }
 
   function scrollToCommerce() {
-    if (!el.commerce || el.commerce.hidden) return;
-    if (el.commerce.scrollIntoView) {
-      el.commerce.scrollIntoView({ behavior: "smooth", block: "start" });
+    var block = offerNode();
+    if (!block || block.hidden) return;
+    if (block.scrollIntoView) {
+      block.scrollIntoView({ behavior: "smooth", block: "start" });
     }
     nudgePay();
   }
@@ -5805,6 +5810,28 @@
 
   // --- reaching the offer ---------------------------------------------------
 
+  // Where the offer actually is on this page.
+  //
+  // The container this file builds is the right answer on every funnel that
+  // uses this file's result page, and the wrong one on a funnel that draws its
+  // own: the zodiac module moves the price, the consent box and the pay button
+  // into a card of its own and hides the container it took them from. So the
+  // observer below was watching a hidden div — which never intersects anything
+  // — and neither `paywall_view` nor Meta's InitiateCheckout ever fired. Two
+  // days of real traffic: 42 result_view, 2 pay_tap, 0 paywall_view.
+  //
+  // A module names its own card through `ctx.watchOffer` and nothing else
+  // changes: same observer, same one-shot flag, same `src` attribution, same
+  // pixel event at the same moment. A funnel that names nothing keeps the
+  // container, which is what kitchen does.
+  var offerBlock = null;
+
+  function watchOffer(node) {
+    if (node) offerBlock = node;
+  }
+
+  function offerNode() { return offerBlock || el.commerce; }
+
   // `paywall_view` means the commerce block reached the reader, once per
   // session, and it carries how they got there — whichever deliberate act most
   // recently preceded it, or plain scrolling when there was none. The pixel's
@@ -5828,7 +5855,7 @@
       threshold: 0,
       rootMargin: "0px 0px -80px 0px"
     });
-    io.observe(el.commerce);
+    io.observe(offerNode());
   }
 
   function firePaywallView() {
