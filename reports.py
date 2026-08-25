@@ -1111,6 +1111,24 @@ def _walk_caps(section_id):
     return out
 
 
+# Where the prompt should ask for less than the validator will accept.
+#
+# The default below derives what the model is told from the ceiling that
+# would throw a section away, and the gap between them is deliberate: it is
+# what absorbs a sentence and a half. That is the right number when the risk
+# is a section being lost, and the wrong one when the problem is that the
+# section is simply too long. The five hidden strengths ran a hundred and ten
+# words each — an essay where the product is a hit — and these are the
+# numbers that make them about forty-five.
+#
+# Only ever tighter. A number here that is looser than the derived one is
+# ignored, so this table cannot quietly raise a ceiling; the ceilings live in
+# SHAPE and are unchanged.
+PROMPT_CAP = {
+    "mistakes": {"body": 240, "fix": 140},
+}
+
+
 def _budgets(section_id):
     """{field name: the number to put in the prompt} for one section.
 
@@ -1122,6 +1140,9 @@ def _budgets(section_id):
     for _, field, cap in _walk_caps(section_id):
         value = _budget(cap)
         out[field] = min(value, out.get(field, value))
+    for field, cap in (PROMPT_CAP.get(section_id) or {}).items():
+        if field in out:
+            out[field] = min(out[field], cap)
     return out
 
 
@@ -1184,19 +1205,25 @@ is worth reaching for and the days it is not.''',
     "mistakes": '''"mistakes": {
   "items": [
     {"title": "the hidden strength, as a short phrase (max %(title)d chars)",
-     "body": "what the strength is, how it shows up in an ordinary week, and the blind spot on its other side (max %(body)d chars — roughly three sentences, not five)",
-     "fix": "how to use it deliberately rather than accidentally, starting with a verb (max %(fix)d chars — two sentences)"},
-    {"title": "the second one", "body": "...", "fix": "..."},
-    {"title": "the third one", "body": "...", "fix": "..."},
-    {"title": "the fourth one", "body": "...", "fix": "..."},
-    {"title": "the fifth one", "body": "...", "fix": "..."}
+     "body": "EXACTLY TWO SENTENCES and no more. The first says what the strength is and how it shows up in an ordinary week. The second says what it costs — the blind spot on its other side. No third sentence, and do not join two of them with a semicolon to get around that (max %(body)d chars)",
+     "fix": "ONE imperative sentence starting with a verb — the thing to do differently this week. A second is allowed only if it is short (max %(fix)d chars)"},
+    {"title": "the second one", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the third one", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the fourth one", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the fifth one", "body": "two sentences", "fix": "one sentence"}
   ]
 }
 
 Exactly five, under the single key `items`, each an object with `title`,
 `body` and `fix` spelled exactly so. Every strength carries its own blind
 spot inside the same body — a strength with no cost is flattery. `fix` is how
-to spend the strength on purpose, never a warning.''',
+to spend the strength on purpose, never a warning.
+
+All five are the same shape and the same length: two sentences and one. This
+is read on a phone by somebody scrolling, and five paragraphs is an essay
+where the product is five hits. Cut every clause that is scene-setting, every
+"which is why", and every restatement of the title. If a sentence could be
+deleted without losing a fact about this reader, delete it.''',
 
     "materials": '''"materials": {
   "intro": "1-2 sentences on the pattern underneath who this person is drawn to (max %(intro)d chars)",
@@ -1330,17 +1357,18 @@ ZODIAC_STUBS = {
         "closing_rule": "Carry one stone rather than three, and give it a day "
                         "of the week rather than a habit.",
     },
+    # Two sentences and one, the same as the prompt asks for. A stub is what
+    # a reader gets when there is no key, and it is not allowed to be a
+    # different product from the one that arrives when there is.
     "mistakes": {
         "items": [
             {"title": "You read your own certainty as evidence",
-             "body": "A {name} profile decides quickly and trusts the "
-                     "speed of it. Most of the time the speed is earned. "
-                     "The cost is that a decision made out of restlessness "
-                     "feels identical, from the inside, to one made out of "
+             "body": "A {name} profile decides quickly and trusts the speed "
+                     "of it. A decision made out of restlessness feels "
+                     "identical, from the inside, to one made out of "
                      "conviction.",
-             "fix": "Give any decision you can explain in ten seconds one "
-                    "night before acting on it. What survives the morning was "
-                    "conviction."},
+             "fix": "Sleep one night on any decision you could explain in "
+                    "ten seconds."},
             {"title": "You hold the useful thing until the moment is clean",
              "body": "You notice more than the people around you and you say "
                      "less of it. The read is usually right and it usually "
@@ -1359,8 +1387,7 @@ ZODIAC_STUBS = {
              "body": "You see the shape of a thing early, which is the hard "
                      "part. Once the shape is clear the rest reads as admin, "
                      "and the value gets collected by whoever stayed.",
-             "fix": "Pick one thing a quarter and stay past the boredom. Not "
-                    "everything — one."},
+             "fix": "Pick one thing a quarter and stay past the boredom."},
             {"title": "You mistake being steady for being fine",
              "body": "Steadiness is what people rely on you for, and it makes "
                      "a poor instrument for measuring yourself. The weeks "
@@ -1538,7 +1565,11 @@ ZODIAC_PROFILE = {
     # the old one is the wrong answer. The tag travels with the row, so only
     # the sections named here go stale — kitchen declares no revisions and
     # every one of its rows stays valid.
-    "cache_rev": {"palette": "colors2"},
+    # `mistakes` is here because the prompt now asks for two sentences and one
+    # where it asked for three and two. A row warmed under the old prompt is
+    # not stale in the sense of being wrong — it is the old product, at the
+    # old length, and the whole point of the change is the length.
+    "cache_rev": {"palette": "colors2", "mistakes": "short1"},
     "pdf_css": None,        # filled below, once ZODIAC_PDF_CSS is defined
     # The wordmark is dark ink, which on a dark page is a rectangle of
     # nothing. The light cut already exists and is what this document wants.
