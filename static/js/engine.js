@@ -885,6 +885,22 @@
     return Math.max(0, Math.min(1, step / total));
   }
 
+  // The reader's own sign, for a line that opens on it.
+  //
+  // Which step asks for the sign is the funnel's business and is not named
+  // here: the funnel has already declared, in `report.hook_slots`, which step
+  // answers {sign} on the result page, and this reads that same declaration.
+  // The label goes in as written rather than lowercased — it is opening a
+  // sentence here, not landing in the middle of one — and the slot's own
+  // fallback word is deliberately not used: "A sign looking for love" is a
+  // hole with a word in it. A line that cannot be filled falls back to the
+  // one it was written to personalise, which is `personalised`'s job below.
+  function signWord() {
+    var slot = ((cfg && cfg.report && cfg.report.hook_slots) || {}).sign;
+    var item = slot && slot.step && imageById(chosenOnStep(slot.step));
+    return (item && item.label) || "";
+  }
+
   function fillTokens(text) {
     if (!text) return "";
     var tone = leaderOf(TONE_AXIS);
@@ -893,6 +909,7 @@
       .replace(/\{leading_trait\}/g, tone || "")
       .replace(/\{opposite\}/g, (tone && TONE_OPPOSITE[tone]) || "")
       .replace(/\{leading_material\}/g, material || "")
+      .replace(/\{sign\}/g, signWord())
       .replace(/\{n\}/g, String(tone ? (scores[tone] || 0) : 0))
       .replace(/\{total\}/g, String(step))
       .replace(/\{pct\}/g, String(Math.round(progressRatio() * 100)));
@@ -909,6 +926,7 @@
     if (/\{leading_material\}/.test(text) && !leaderOf(MATERIAL_AXIS)) {
       return false;
     }
+    if (/\{sign\}/.test(text) && !signWord()) return false;
     return true;
   }
 
@@ -925,6 +943,18 @@
     return prefixTag(axis + "_");
   }
 
+  // What a `personal` block is keyed on for this run, or "".
+  //
+  // Two kinds again. `axis` is the accumulated or service reading above.
+  // `step` is the narrower one: the id of the card they tapped on a named
+  // step, which is how a screen can answer a single question back rather than
+  // a running total. A step they never reached answers with nothing, which is
+  // the base line.
+  function personalKey(rule) {
+    if (rule && rule.step) return chosenOnStep(rule.step) || "";
+    return personalTag(rule);
+  }
+
   // The entry as this run should see it: its own line and sub replaced by the
   // pair written for what the run actually said, or the entry untouched.
   //
@@ -935,10 +965,16 @@
     var rule = entry && entry.personal;
     var lines = rule && rule.lines;
     if (!lines || typeof lines !== "object") return entry;
-    var tag = personalTag(rule);
+    var tag = personalKey(rule);
     var pick = tag && Object.prototype.hasOwnProperty.call(lines, tag)
       ? lines[tag] : null;
     if (!pick || !pick.line) return entry;
+    // A personalised line whose own token cannot be answered is not shown
+    // half-filled and does not take the screen down with it: the entry it was
+    // written to replace is the fallback, and it is already written.
+    if (/\{sign\}/.test(pick.line + " " + (pick.sub || "")) && !signWord()) {
+      return entry;
+    }
     var out = {};
     for (var key in entry) {
       if (Object.prototype.hasOwnProperty.call(entry, key)) {

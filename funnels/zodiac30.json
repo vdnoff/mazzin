@@ -2098,26 +2098,16 @@
   },
   "interstitials": [
     {
-      "after_step": 2,
+      "after_step": 4,
       "template": "confirm",
       "kicker": "Signal recorded",
-      "line": "Sign locked.",
+      "line": "Two personal signals in.",
+      "sub": "Your profile is narrowing.",
       "cta": "Continue analysis",
       "auto_advance_ms": 2000,
       "echo_steps": [
         "hook",
-        "sign"
-      ]
-    },
-    {
-      "after_step": 4,
-      "template": "pattern",
-      "kicker": "Pattern detected",
-      "line": "Two personal signals in.",
-      "sub": "Your profile is already narrowing.",
-      "cta": "Continue analysis",
-      "auto_advance_ms": 2000,
-      "echo_steps": [
+        "sign",
         "seeking",
         "bond"
       ],
@@ -2125,127 +2115,93 @@
         "axis": "purpose",
         "lines": {
           "purpose_love": {
-            "line": "Your love signal is strong.",
-            "sub": "It's shaping what we ask next."
+            "line": "A {sign} looking for love.",
+            "sub": "That narrows it fast."
           },
           "purpose_career": {
-            "line": "Your ambition signal is strong.",
-            "sub": "It's shaping what we ask next."
+            "line": "A {sign} chasing momentum.",
+            "sub": "That narrows it fast."
           },
           "purpose_peace": {
-            "line": "Your calm signal is strong.",
-            "sub": "It's shaping what we ask next."
+            "line": "A {sign} guarding their peace.",
+            "sub": "That narrows it fast."
           },
           "purpose_path": {
-            "line": "Your forward signal is strong.",
-            "sub": "It's shaping what we ask next."
+            "line": "A {sign} mapping the road ahead.",
+            "sub": "That narrows it fast."
           }
         }
       }
     },
     {
-      "after_step": 6,
-      "template": "confirm",
-      "kicker": "Signal recorded",
-      "line": "One element keeps pulling ahead.",
-      "cta": "Continue analysis",
-      "auto_advance_ms": 2000,
-      "echo_steps": [
-        "energy",
-        "landscape"
-      ],
-      "personal": {
-        "axis": "element",
-        "lines": {
-          "fire": {
-            "line": "Fire keeps pulling ahead."
-          },
-          "earth": {
-            "line": "Earth keeps pulling ahead."
-          },
-          "air": {
-            "line": "Air keeps pulling ahead."
-          },
-          "water": {
-            "line": "Water keeps pulling ahead."
-          }
-        }
-      }
-    },
-    {
-      "after_step": 8,
+      "after_step": 9,
       "template": "almost",
-      "kicker": "Calibrating",
+      "kicker": "Pattern detected",
       "line": "Profile {pct}% calibrated.",
       "cta": "Continue analysis",
       "auto_advance_ms": 2000,
       "echo_steps": [
+        "energy",
+        "landscape",
         "palette",
-        "moment"
-      ],
-      "personal": {
-        "axis": "energy",
-        "lines": {
-          "sun": {
-            "line": "You lean Sun. Profile {pct}% calibrated."
-          },
-          "moon": {
-            "line": "You lean Moon. Profile {pct}% calibrated."
-          }
-        }
-      }
-    },
-    {
-      "after_step": 10,
-      "template": "confirm",
-      "kicker": "Signal recorded",
-      "line": "Moon signal recorded.",
-      "sub": "It changes what we ask next.",
-      "cta": "Continue analysis",
-      "auto_advance_ms": 2000,
-      "echo_steps": [
-        "symbol",
-        "moonphase"
-      ]
-    },
-    {
-      "after_step": 12,
-      "template": "confirm",
-      "kicker": "Signal recorded",
-      "line": "Inverse signal locked.",
-      "cta": "Continue analysis",
-      "auto_advance_ms": 2000,
-      "echo_steps": [
-        "flow",
-        "drain"
-      ]
-    },
-    {
-      "after_step": 15,
-      "template": "almost",
-      "kicker": "Calibrating",
-      "line": "Deep layer mapped. {pct}% calibrated.",
-      "cta": "Continue analysis",
-      "auto_advance_ms": 2000,
-      "echo_steps": [
-        "sanctuary",
-        "decision",
-        "tide"
+        "moment",
+        "symbol"
       ],
       "personal": {
         "axis": "element",
         "lines": {
           "fire": {
-            "line": "Your fire runs deep. Three signals left."
+            "line": "Fire keeps winning.",
+            "sub": "If it holds, your reading changes."
           },
           "earth": {
-            "line": "Your earth runs deep. Three signals left."
+            "line": "Earth keeps winning.",
+            "sub": "If it holds, your reading changes."
           },
           "air": {
-            "line": "Your air runs deep. Three signals left."
+            "line": "Air keeps winning.",
+            "sub": "If it holds, your reading changes."
           },
           "water": {
-            "line": "Your water runs deep. Three signals left."
+            "line": "Water keeps winning.",
+            "sub": "If it holds, your reading changes."
+          }
+        }
+      }
+    },
+    {
+      "after_step": 14,
+      "template": "confirm",
+      "kicker": "Deep layer",
+      "line": "Deep layer mapped.",
+      "sub": "Four signals left.",
+      "cta": "Continue analysis",
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "moonphase",
+        "flow",
+        "drain",
+        "sanctuary",
+        "decision"
+      ],
+      "personal": {
+        "step": "decision",
+        "lines": {
+          "dc14a": {
+            "line": "You choose with your heart first.",
+            "sub": "Few admit that."
+          },
+          "dc14b": {
+            "line": "You choose with your head first.",
+            "sub": "The heart still votes."
+          },
+          "dc14c": {
+            "line": "Gut first.",
+            "sub": "Your fastest signal is usually your truest."
+          },
+          "dc14d": {
+            "line": "You let time decide.",
+            "sub": "Patience is a strategy, not a delay."
           }
         }
       }
@@ -2255,10 +2211,11 @@
       "template": "almost",
       "kicker": "Calibrating",
       "line": "All 18 signals in.",
-      "sub": "Compiling your Cosmic Profile…",
+      "sub": "Most blends are common — let's see yours.",
       "cta": "Continue analysis",
       "auto_advance_ms": 2400,
       "echo_steps": [
+        "tide",
         "door",
         "essence",
         "seal"
