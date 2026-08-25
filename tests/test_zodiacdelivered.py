@@ -92,6 +92,22 @@ def build(slug, style_id, sign=None):
     return content
 
 
+# The address the stubbed purchase bought with. It reaches the page the one
+# way the real one does — inside the authenticated report payload, through
+# reports.delivered_content — so this suite exercises the assembly rather
+# than a hand-built dict that only looks like it.
+BUYER = "sarah.okonkwo@example.com"
+
+# Flipped by the check that a payload with no address still draws a sentence
+# rather than a hole.
+NAMELESS = [False]
+
+# Every call the page makes while it is open. `/api/track` is the one that
+# matters — the address must never reach it — and recording all of them makes
+# that a claim about the traffic rather than about the code's intentions.
+POSTED = []
+
+
 class Handler(http.server.SimpleHTTPRequestHandler):
     """static/ off disk, the two shells, and one stubbed report each."""
 
@@ -113,14 +129,21 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                                    "email_masked": "s***@x.com",
                                    "report": {"version": "llm-2-partial",
                                               "sections": []}})
-            return self._json({"complete": True, "email_masked": "s***@x.com",
-                               "report": REPORTS[slug]})
+            return self._json({
+                "complete": True, "email_masked": "s***@x.com",
+                "report": reports.delivered_content(
+                    REPORTS[slug], None if NAMELESS[0] else BUYER)})
         if path in ("/zodiac", "/kitchen"):
             self.path = "/static/funnel.html"
         return super().do_GET()
 
     def do_POST(self):
-        self.rfile.read(int(self.headers.get("content-length") or 0))
+        raw = self.rfile.read(int(self.headers.get("content-length") or 0))
+        try:
+            POSTED.append((self.path.split("?")[0], json.loads(raw or b"{}")))
+        except ValueError:
+            POSTED.append((self.path.split("?")[0], {"raw": raw.decode(
+                "utf-8", "replace")}))
         self._json({"ok": True})
 
     def _json(self, body):
@@ -451,6 +474,60 @@ def delivered(page):
     body = page.inner_text("body").upper()
     check('it never says "PERFECT STYLE"', "PERFECT STYLE" not in body)
     check("  nor anything about a kitchen", "KITCHEN" not in body)
+    print("\n--- the first thing the buyer sees ---")
+    # Above everything, on both ways in: seconds after paying and a week
+    # later from the link in the mail. It is the same view either way, which
+    # is why the line is in the past tense on both.
+    check("the delivery note is on the page",
+          page.locator(".zr-sent").count() == 1)
+    check("  above the kicker, and above the hero under it",
+          page.evaluate("""() => {
+              const sent = document.querySelector('.zr-sent');
+              const kick = document.querySelector('.zr-kicker');
+              const hero = document.querySelector('.zr-hero');
+              return sent.compareDocumentPosition(kick)
+                     === Node.DOCUMENT_POSITION_FOLLOWING
+                  && sent.getBoundingClientRect().bottom
+                     <= hero.getBoundingClientRect().top;
+          }"""))
+    check("  it names the address the PDF went to",
+          page.inner_text(".zr-sent") == "Your PDF was sent to %s" % BUYER,
+          page.inner_text(".zr-sent"))
+    check("    with the address set apart, so it can be scanned",
+          page.inner_text(".zr-sent-mail") == BUYER,
+          page.inner_text(".zr-sent-mail"))
+    check("    in the past tense, which is true on both ways in",
+          "was sent" in page.inner_text(".zr-sent"))
+    check("  a check beside it, drawn rather than typed",
+          page.locator(".zr-sent-check svg path").count() == 1)
+    tones = page.eval_on_selector(".zr-sent", """n => ({
+        bar: getComputedStyle(n).backgroundColor,
+        text: getComputedStyle(n).color,
+        mail: getComputedStyle(n.querySelector('.zr-sent-mail')).color,
+        tick: getComputedStyle(n.querySelector('.zr-sent-check svg path'))
+              .stroke})""")
+    check("  the bar is the card tone, not a banner",
+          tones["bar"] == "rgb(20, 27, 60)", tones["bar"])
+    check("  the tick is the green, and the only lit thing on it",
+          tones["tick"] == "rgb(123, 196, 168)", tones["tick"])
+    check("  the address is ink, the words around it muted",
+          tones["mail"] == "rgb(242, 239, 230)"
+          and tones["text"] != tones["mail"], str(tones))
+    check("  and it runs the full width of the page",
+          page.evaluate("""() => {
+              const r = document.querySelector('.zr-sent')
+                                .getBoundingClientRect();
+              return r.left <= 0.5 && r.right >= window.innerWidth - 0.5;
+          }"""))
+    # Nothing about the address is ever sent anywhere. It arrives on one
+    # authenticated response and stops there.
+    posted = [json.dumps(body) for path_, body in POSTED]
+    check("  and the address is in none of the calls the page makes",
+          not [b for b in posted if BUYER in b or "sarah" in b.lower()],
+          str([b[:80] for b in posted if BUYER in b]))
+    check("    of which there were some, so that is not a vacuous pass",
+          len(POSTED) > 0, len(POSTED))
+
     check("the kicker is the one the page had",
           page.inner_text(".zr-kicker") == "YOUR COSMIC PROFILE",
           page.inner_text(".zr-kicker"))
@@ -572,6 +649,29 @@ def delivered(page):
           page.locator(".zr-footnote").count()
           and page.inner_text(".zr-footnote"))
 
+    print("\n--- and a payload with no address still reads as a sentence ---")
+    # An old row, a purchase that arrived without one, a route that could not
+    # read it: the line degrades to something true rather than to a bar with
+    # a hole in it.
+    NAMELESS[0] = True
+    try:
+        page.goto(url("/zodiac?cs=cs_test_2"))
+        page.wait_for_selector("#result-module.is-delivered", timeout=25000)
+        page.wait_for_timeout(700)
+    finally:
+        NAMELESS[0] = False
+    check("the bar is still there", page.locator(".zr-sent").count() == 1)
+    check("  saying where it went in general terms",
+          page.inner_text(".zr-sent") == "Your PDF was sent to your email",
+          page.inner_text(".zr-sent"))
+    check("  with no empty slot where an address would be",
+          page.locator(".zr-sent-mail").count() == 0)
+    check("  and the check still beside it",
+          page.locator(".zr-sent-check svg path").count() == 1)
+    check("  the page under it is the page it always was",
+          page.locator(".zr-hero").count() == 1
+          and page.locator(".zr-node").count() > 0)
+
 
 # --- d) the two screens between the taps and the reading -------------------
 
@@ -668,6 +768,8 @@ def kitchen_delivered(page):
     page.wait_for_timeout(700)
     check("it draws the built-in report, not a module",
           page.locator("#result-module").count() == 0)
+    check("  with no delivery bar on it, because that is the module's",
+          page.locator(".zr-sent").count() == 0)
     check("  on the light ground it always had", bg(page) != INDIGO, bg(page))
     text = page.inner_text("body").upper()
     check("  and still says what it always said",
@@ -675,9 +777,105 @@ def kitchen_delivered(page):
     check("  with nothing cosmic in it", "COSMIC" not in text)
 
 
+# --- e) the payload the page is built from ---------------------------------
+#
+# The browser half above proves the bar draws. This proves the address only
+# ever reaches it one way: through a request that has already shown it holds
+# this purchase's token, on the response and never on the row.
+
+def payload():
+    print("\n--- the address travels on the response, not on the row ---")
+    import payments                                       # noqa: E402
+    from app import app                                   # noqa: E402
+
+    row = {"content": json.dumps(REPORTS["zodiac"])}
+    kitchen_row = {"content": json.dumps(REPORTS["kitchen"])}
+    state = {"purchase": {"id": 7, "email": BUYER}, "row": row}
+    real_find, real_one = payments.find_purchase, payments.database.query_one
+    payments.find_purchase = lambda token: state["purchase"]
+    payments.database.query_one = lambda *a, **kw: state["row"]
+    token = "cs_test_" + "a" * 20
+
+    def fetch():
+        with app.test_client() as client:
+            answer = client.get("/api/report?cs=" + token)
+            return answer.status_code, answer.get_json()
+
+    try:
+        code, body = fetch()
+        check("a finished report answers 200", code == 200, code)
+        got = ((body.get("report") or {}).get("visuals")
+               or {}).get("delivery") or {}
+        check("  and carries the address the PDF went to",
+              got.get("email") == BUYER, str(got))
+        check("  beside the masked form the waiting screen already used",
+              body.get("email_masked") == "s***@example.com",
+              body.get("email_masked"))
+        check("  and nothing else about the buyer",
+              sorted(got) == ["email"], str(sorted(got)))
+
+        # The half that matters. The row is what build_pdf and
+        # send_report_email are handed and what a later read returns; if the
+        # address were on it, it would be in the database and in every
+        # document built from it.
+        stored = json.loads(row["content"])
+        check("the stored row does not carry it",
+              "delivery" not in (stored.get("visuals") or {}),
+              str(sorted(stored.get("visuals") or {})))
+        check("  and the response did not mutate the object it was given",
+              "delivery" not in (REPORTS["zodiac"].get("visuals") or {}),
+              str(sorted(REPORTS["zodiac"].get("visuals") or {})))
+
+        # Before there is a report there is nothing to confirm, so the poll
+        # that runs while it generates keeps showing what it always showed.
+        state["row"] = None
+        code, body = fetch()
+        check("the pending poll is 202 with the masked form only",
+              code == 202 and body.get("email_masked") == "s***@example.com"
+              and BUYER not in json.dumps(body),
+              "%s %s" % (code, json.dumps(body)[:80]))
+        state["row"] = row
+
+        # A purchase with no address on it, which is what an older row and a
+        # failed capture both look like.
+        state["purchase"] = {"id": 7, "email": None}
+        code, body = fetch()
+        check("a purchase with no address hands the page none",
+              code == 200
+              and "delivery" not in ((body.get("report") or {})
+                                     .get("visuals") or {}),
+              json.dumps((body.get("report") or {}).get("visuals") or {})[:80])
+        state["purchase"] = {"id": 7, "email": BUYER}
+
+        # The twin renders its delivered page with the same module, so it
+        # asks for the same line and is handed the same address.
+        state["row"] = {"content": json.dumps(
+            dict(REPORTS["zodiac"], funnel="zodiac30"))}
+        code, body = fetch()
+        check("the twin is handed it too, because it draws the same page",
+              code == 200
+              and (((body.get("report") or {}).get("visuals") or {})
+                   .get("delivery") or {}).get("email") == BUYER)
+
+        # Kitchen asks for no such line, so kitchen's response is the one it
+        # always was — the address is never handed to a page that would not
+        # draw it.
+        state["row"] = kitchen_row
+        code, body = fetch()
+        check("kitchen's response is byte for byte the one it always was",
+              code == 200
+              and body.get("report") == REPORTS["kitchen"]
+              and BUYER not in json.dumps(body),
+              json.dumps((body.get("report") or {}).get("visuals") or {})[:80])
+    finally:
+        payments.find_purchase = real_find
+        payments.database.query_one = real_one
+
+
 def main():
     REPORTS["zodiac"] = build("zodiac", "deep_water", "sign_scorpio")
     REPORTS["kitchen"] = build("kitchen", "modern_rustic")
+    payload()
 
     socketserver.TCPServer.allow_reuse_address = True
     httpd = socketserver.TCPServer(("127.0.0.1", PORT), Handler)

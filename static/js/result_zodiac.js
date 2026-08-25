@@ -1211,10 +1211,59 @@
     return "";
   }
 
+  // --- the delivery note -----------------------------------------------------
+  //
+  // The first thing a buyer sees on this page, above everything, on both ways
+  // in: seconds after paying, and a week later from the link in the mail. The
+  // past tense is what makes one line true on both — "was sent" is a fact
+  // about something that has already happened, where "is on its way" is a
+  // promise that expires.
+  //
+  // The address comes off the authenticated report payload and is never
+  // touched again: it is not tracked, not stored by this page, and not put
+  // anywhere a second request could read it. Without one the line still reads
+  // as a sentence — a bar with a hole in it would be worse than no bar.
+
+  var CHECK_PATH = "M3.5 8.6l3.1 3.1 5.9-6.4";
+
+  function deliveryNote(ctx, copy) {
+    if (!ctx.delivered) return null;
+    var email = (((ctx.visuals || {}).delivery || {}).email || "").trim();
+    var line = copy.delivery_line || "Your PDF was sent to {email}";
+    var bare = copy.delivery_line_bare || "Your PDF was sent to your email";
+
+    var bar = elm("p", "zr-sent");
+    var mark = elm("span", "zr-sent-check");
+    mark.setAttribute("aria-hidden", "true");
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 16 16");
+    var tick = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    tick.setAttribute("d", CHECK_PATH);
+    tick.setAttribute("stroke-linecap", "round");
+    tick.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(tick);
+    mark.appendChild(svg);
+    bar.appendChild(mark);
+
+    var text = elm("span", "zr-sent-text");
+    if (!email || line.indexOf("{email}") === -1) {
+      text.textContent = bare;
+    } else {
+      var cut = line.split("{email}");
+      text.appendChild(document.createTextNode(cut[0]));
+      text.appendChild(elm("span", "zr-sent-mail", email));
+      text.appendChild(document.createTextNode(cut.slice(1).join("{email}")));
+    }
+    bar.appendChild(text);
+    return bar;
+  }
+
   function delivered(root, ctx) {
     var copy = (ctx.cfg && ctx.cfg.result_copy) || {};
     root.innerHTML = "";
     root.classList.add("is-delivered");
+    var note = deliveryNote(ctx, copy);
+    if (note) root.appendChild(note);
     root.appendChild(kicker(copy));
     root.appendChild(deliveredHero(ctx, copy));
     var strip = deliveredTaps(ctx, copy);

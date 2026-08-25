@@ -299,6 +299,13 @@ def run(page):
           len(body.split()) + len(fix.split()))
     check("the element balance chart is gone — the hero says it now",
           page.locator(".zr-bal").count() == 0)
+    # The delivery bar belongs to the page after the money. Nothing has been
+    # bought here, so there is nothing to confirm and no address to confirm
+    # it to — a "your PDF was sent" line on a paywall would be a lie in the
+    # first line the reader reads.
+    check("and no delivery bar, because nothing has been delivered",
+          page.locator(".zr-sent").count() == 0
+          and page.locator(".zr-sent-mail").count() == 0)
 
     print("\n--- the six questions the reading answers ---")
     bridge = page.inner_text(".zr-bridge")

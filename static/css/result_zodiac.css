@@ -752,6 +752,55 @@ body:has(.result-module) {
    them is the document rather than a teaser and is sized as such — this is
    read on a phone, at length, by somebody who paid for it. */
 
+/* --- the delivery note ---------------------------------------------------
+
+   A slim bar across the top of the paid page, above the kicker: the first
+   thing a buyer sees, on both ways in. Quiet on purpose — a confirmation,
+   not a banner — so it is the panel tone the cards are already drawn in
+   rather than anything that announces itself, and the only lit thing on it
+   is the tick.
+
+   Pulled out to the module's own edges and up over its top padding, so it
+   sits flush against the top of the page the way a status bar does. The
+   numbers are the module's own: -18px is the shell's horizontal padding,
+   -26px its top. */
+.result-module.is-delivered .zr-sent {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: -26px -18px 20px;
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--zr-line);
+  background: var(--zr-panel);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--zr-muted);
+}
+
+.zr-sent-check { flex: none; width: 16px; height: 16px; }
+
+.zr-sent-check svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  /* The one green on this page, and the same one the free markers use. */
+  stroke: #7BC4A8;
+  stroke-width: 1.9;
+}
+
+.zr-sent-text { min-width: 0; }
+
+/* The address is what the reader is actually checking, so it is the one part
+   of the line set in ink rather than in the muted grey around it. `anywhere`
+   because an address is one unbroken token and a long one would otherwise
+   push the bar sideways on a narrow phone. */
+.zr-sent-mail {
+  color: #F2EFE6;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
 .result-module.is-delivered .zr-hero { margin-bottom: 4px; }
 
 /* The element bar on the delivered card. Four cells, one lit: the reader's

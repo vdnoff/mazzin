@@ -1141,8 +1141,15 @@ def stripe_webhook():
 def _mask_email(address):
     """`j***@gmail.com`, or None when there is nothing safe to show.
 
-    Enough for someone to recognise which inbox to check and not enough to be
-    worth harvesting. The full address never leaves the database.
+    Enough for someone to recognise which inbox to check while they are still
+    waiting, and not enough to be worth harvesting. This is what every state
+    of this route except one shows.
+
+    The exception is the finished report, which carries the full address so
+    the page can confirm where the PDF went. That is a deliberate widening and
+    it is bounded: the request has already proved it holds this purchase's
+    token, the address is the requester's own, and it is attached to the
+    response rather than to anything stored or logged.
     """
     if not isinstance(address, str) or address.count("@") != 1:
         return None
@@ -1184,5 +1191,9 @@ def report():
     body["status"] = "ready"
     body["complete"] = not str((content or {}).get("version") or "").endswith(
         reports.PARTIAL_SUFFIX)
-    body["report"] = content
+    # The finished report, and the address its PDF went to. Attached to this
+    # response only — never to the stored row, which is what the PDF and the
+    # mail are built from — and only once there is a report to deliver, so the
+    # pending poll keeps showing the masked form it always did.
+    body["report"] = reports.delivered_content(content, purchase.get("email"))
     return jsonify(body), 200
