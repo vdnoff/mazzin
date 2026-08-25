@@ -23,6 +23,7 @@ written to a log line.
 
 import base64
 import concurrent.futures
+import datetime
 import html
 import json
 import logging
@@ -1287,31 +1288,36 @@ about this reader and nobody else.''',
 
     "shopping": '''"shopping": {
   "items": [
-    {"name": "January (max %(name)d chars)", "priority_note": "what this month's energy is good for (max %(priority_note)d chars — one or two sentences)"},
-    {"name": "February", "priority_note": "..."},
-    {"name": "March", "priority_note": "..."},
-    {"name": "April", "priority_note": "..."},
-    {"name": "May", "priority_note": "..."},
-    {"name": "June", "priority_note": "..."},
-    {"name": "July", "priority_note": "..."},
-    {"name": "August", "priority_note": "..."},
-    {"name": "September", "priority_note": "..."},
-    {"name": "October", "priority_note": "..."},
-    {"name": "November", "priority_note": "..."},
-    {"name": "December", "priority_note": "..."}
+    {"name": "COPY THE 1st LABEL FROM THE LIST ABOVE, EXACTLY (max %(name)d chars)", "priority_note": "what this month's energy is good for (max %(priority_note)d chars — one or two sentences)"},
+    {"name": "COPY THE 2nd, EXACTLY", "priority_note": "..."},
+    {"name": "COPY THE 3rd, EXACTLY", "priority_note": "..."},
+    {"name": "the 4th", "priority_note": "..."},
+    {"name": "the 5th", "priority_note": "..."},
+    {"name": "the 6th", "priority_note": "..."},
+    {"name": "the 7th", "priority_note": "..."},
+    {"name": "the 8th", "priority_note": "..."},
+    {"name": "the 9th", "priority_note": "..."},
+    {"name": "the 10th", "priority_note": "..."},
+    {"name": "the 11th", "priority_note": "..."},
+    {"name": "the 12th", "priority_note": "..."}
   ],
   "skip": []
 }
 
-Two keys, `items` and `skip`, spelled exactly so. All twelve months in
-calendar order, every one of them an object under `items` with `name` and
+Two keys, `items` and `skip`, spelled exactly so. Twelve items under `items`,
+in the order the list above gives them, every one an object with `name` and
 `priority_note`. `skip` is an empty list — send it, and put nothing in it.
 
-`name` is the month and nothing else. Mark exactly two months by opening
-their note with "Strongest month:" and exactly one by opening its note with
-"Quiet month:". The quiet one is for recovery rather than for starting
-things, and its note says what it is good for instead. Themes only — what a
-month is good for, never what is going to happen in it.''',
+`name` is the label from the list and nothing else — the month and the year,
+exactly as written there. This map starts from the month they are in, not
+from January, so the first item is the month they are living through right
+now and four of the twelve are in next year.
+
+Mark exactly three months by opening their note with "Strongest month:" and
+exactly one by opening its note with "Quiet month:". The quiet one is for
+recovery rather than for starting things, and its note says what it is good
+for instead. Themes only — what a month is good for, never what is going to
+happen in it.''',
 }
 
 ZODIAC_SPEC = dict((section_id, _zodiac_spec(text, section_id))
@@ -1463,35 +1469,37 @@ ZODIAC_STUBS = {
             "say lightly is the thing they carry away.",
         ],
     },
+    # Twelve months with no month names in the prose. The labels are stamped
+    # on at build time from the reader's own year — this stub can be a March
+    # or a September map depending on when generation failed — so a note that
+    # said "since the autumn" would be a stub that contradicts its own
+    # heading. Position in their year is the only thing these can be about.
     "shopping": {
         "items": [
-            {"name": "January", "priority_note": "Good for deciding what the "
-             "year is actually for, before anyone asks you to commit to it."},
-            {"name": "February", "priority_note": "Strongest month: the quiet "
-             "one where what you start goes unnoticed long enough to get "
-             "properly built."},
-            {"name": "March", "priority_note": "Good for saying the thing you "
-             "have been holding since the autumn."},
-            {"name": "April", "priority_note": "Good for beginnings that need "
+            {"name": "1", "priority_note": "Good for deciding what this year "
+             "is actually for, before anyone asks you to commit to it."},
+            {"name": "2", "priority_note": "Good for clearing what the last "
+             "one left open — the small unfinished things, not the big ones."},
+            {"name": "3", "priority_note": "Strongest month: what you start "
+             "here goes unnoticed long enough to get properly built."},
+            {"name": "4", "priority_note": "Good for saying the thing you "
+             "have been holding since before this map began."},
+            {"name": "5", "priority_note": "Good for beginnings that need "
              "other people in them."},
-            {"name": "May", "priority_note": "Good for consolidating rather "
+            {"name": "6", "priority_note": "Strongest month: your judgement "
+             "is at its sharpest — spend it on one thing rather than four."},
+            {"name": "7", "priority_note": "Good for consolidating rather "
              "than adding — a month to finish, not to open."},
-            {"name": "June", "priority_note": "Good for being visible on "
-             "purpose rather than by accident."},
-            {"name": "July", "priority_note": "Good for the conversations you "
+            {"name": "8", "priority_note": "Quiet month: low on output and "
+             "high on recovery. Good for reading, repair and saying no."},
+            {"name": "9", "priority_note": "Strongest month: momentum "
+             "returns, and what you push now carries further than it should."},
+            {"name": "10", "priority_note": "Good for repair work, in what "
+             "you have built and in who you built it with."},
+            {"name": "11", "priority_note": "Good for the conversations you "
              "have been scheduling around."},
-            {"name": "August", "priority_note": "Good for rest with a "
-             "shape to it, and poor for decisions."},
-            {"name": "September", "priority_note": "Strongest month: momentum "
-             "returns and your judgement is at its sharpest — spend it on one "
-             "thing rather than four."},
-            {"name": "October", "priority_note": "Good for repair work, in "
-             "what you have built and in who you built it with."},
-            {"name": "November", "priority_note": "Good for narrowing: what "
-             "survives this month is what mattered."},
-            {"name": "December", "priority_note": "Quiet month: your energy "
-             "turns inward whether or not the calendar agrees, and anything "
-             "started here gets rebuilt in January. Good for looking back."},
+            {"name": "12", "priority_note": "Good for looking back honestly "
+             "at the eleven behind it, and deciding what repeats."},
         ],
         "skip": [],
     },
@@ -1688,17 +1696,27 @@ ZODIAC_VERIFY = {
 ZODIAC_PROFILE["verify"] = ZODIAC_VERIFY
 
 
-def _verify_for(profile, style):
-    """A check to run over a parsed section, or None. Bound to the style,
-    because that is where the truth about the colours lives."""
+def _verify_for(profile, style, months=None):
+    """A check to run over a parsed section, or None.
+
+    Bound to the style, because that is where the truth about the colours
+    lives, and to the year, because that is where the truth about the months
+    does. Both are facts this purchase already fixed; the section is checked
+    against them rather than against itself.
+    """
     rules = profile.get("verify")
-    if not rules:
+    if not rules and not months:
         return None
 
     def verify(want, parsed):
         for section_id in want:
-            for rule in rules.get(section_id) or ():
+            for rule in (rules or {}).get(section_id) or ():
                 problem = rule((parsed or {}).get(section_id) or {}, style)
+                if problem:
+                    return problem
+            if section_id == "shopping" and months:
+                problem = _verify_months(
+                    (parsed or {}).get(section_id) or {}, months)
                 if problem:
                     return problem
         return None
@@ -1781,7 +1799,7 @@ def _config_hex(colour):
     return raw if isinstance(raw, str) and HEX_RE.match(raw) else None
 
 
-def _stub_for(section_id, name, style=None, stubs=None):
+def _stub_for(section_id, name, style=None, stubs=None, months=None):
     """The placeholder for one section, or None if it has no placeholder.
 
     The mistakes stub is the one that cannot be purely generic any more. The
@@ -1803,6 +1821,16 @@ def _stub_for(section_id, name, style=None, stubs=None):
             stub = dict(stub)
             # Four behind it: five items, inside the 4-6 the schema allows.
             stub["items"] = [first] + list(stub["items"])[:4]
+    if section_id == "shopping" and (months or stubs is ZODIAC_STUBS):
+        # The year stub carries positions rather than month names; the labels
+        # go on here, from the same twelve the generated one is held to. A
+        # stub that opened on January under a heading that says otherwise is
+        # the failure being visible twice — and a stub that shipped the bare
+        # positions would be the same failure with worse manners, so the clock
+        # is read here rather than left unstamped when no year was passed in.
+        stub = dict(stub)
+        stub["items"] = [dict(row, name=label) for row, label
+                         in zip(stub["items"], months or _year_labels())]
     return _fill(stub, name)
 
 
@@ -2249,6 +2277,75 @@ def _palette_block(cfg, choices):
         "- If their choices genuinely conflict, say so in the closing rule and "
         "resolve it — do not average them into mud."
     )
+
+
+# --- the twelve months, counted from this one ------------------------------
+#
+# The year map used to run January to December, which is a calendar rather
+# than a reading: somebody who buys in September is handed eight months that
+# have already been and four that have not. It runs from the month they
+# bought in now, twelve of them, and the year is on every label because four
+# of them are in the next one.
+#
+# Server date, UTC. A reader a timezone either side of the boundary can be a
+# few hours out of step with their own phone on the last night of a month;
+# what they must never see is a map that opens on a month that is over.
+
+MONTH_ABBR = ("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+YEAR_MONTHS = 12
+
+
+def _year_labels(today=None):
+    """["Aug 2026", "Sep 2026", ... "Jul 2027"], starting from this month."""
+    day = today or datetime.datetime.now(datetime.timezone.utc).date()
+    year, month = day.year, day.month
+    out = []
+    for _ in range(YEAR_MONTHS):
+        out.append("%s %d" % (MONTH_ABBR[month - 1], year))
+        month += 1
+        if month > 12:
+            month, year = 1, year + 1
+    return out
+
+
+def _year_block(months):
+    """The twelve labels, as the only twelve the year section may use."""
+    if not months:
+        return None
+    return (
+        "REQUIRED — this reader's year starts now, not in January. These are "
+        "the twelve months, in this order, and they are the twelve `name` "
+        "values you must send, copied exactly, including the year:\n"
+        + "\n".join("  %2d. %s" % (n, label)
+                     for n, label in enumerate(months, 1))
+        + "\nTwelve items, in that order, no others and none missing. Write "
+          "the year as it is written above. Never write a month that is not "
+          "on this list, and never reorder them.")
+
+
+def _verify_months(data, months):
+    """The year section's labels against the twelve it was handed, or None.
+
+    A shape-valid year map that opens in January is the document contradicting
+    the page that sold it, and the shape validators cannot see it — they
+    police the form, and every month name is a well-formed string.
+    """
+    if not months:
+        return None
+    got = [str((row or {}).get("name") or "").strip()
+           for row in (data.get("items") or [])]
+    if got == list(months):
+        return None
+    if len(got) != len(months):
+        return ("the year needs exactly %d months and %d arrived — they are "
+                "%s, in that order" % (len(months), len(got),
+                                       ", ".join(months)))
+    wrong = next(n for n, (a, b) in enumerate(zip(got, months), 1) if a != b)
+    return ("month %d is %r and must be %r — the twelve `name` values are "
+            "%s, in that order, copied exactly"
+            % (wrong, got[wrong - 1], months[wrong - 1], ", ".join(months)))
 
 
 # --- the reader's own sign -------------------------------------------------
@@ -2698,7 +2795,7 @@ def _zodiac_choice_block(cfg, choices, tag_scores=None):
 
 
 def _section_prompt(style, name, tag_scores, section_id, cfg=None,
-                    choices=None, funnel_slug=None):
+                    choices=None, funnel_slug=None, months=None):
     """One personalised section on its own.
 
     Each section is its own call now, so each carries the whole style and
@@ -2727,6 +2824,15 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
                      else _choice_block(cfg, choices, tag_scores))
     if extra:
         parts.append(extra)
+
+    # The year map is counted from the month this purchase happened in, so
+    # the twelve labels are built here and handed over as the only twelve the
+    # section may use. `months` is passed in rather than computed here so the
+    # prompt and the check that polices it cannot read different clocks.
+    if zodiac and section_id == "shopping":
+        year = _year_block(months)
+        if year:
+            parts.append(year)
 
     if zodiac and cfg is not None and choices:
         sign = _sign_block(cfg, choices)
@@ -3365,7 +3471,7 @@ def _absorb(job, task, result):
             continue                      # already have it (a cache hit)
         job["built"][section_id] = _stub_for(
             section_id, job["name"], _style(job["cfg"], job["style_id"]),
-            _profile(job["funnel"])["stubs"])
+            _profile(job["funnel"])["stubs"], job.get("months"))
         job["paths"][section_id] = "stub"
     return False
 
@@ -3513,6 +3619,15 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     if card:
         visuals = dict(visuals or {})
         visuals["profile"] = card
+    # The twelve months this purchase's year map runs over, read off the clock
+    # once and then treated as a fact about the purchase. The prompt is built
+    # from it, the check that polices the answer is bound to it, and it is
+    # stored — so a report generated in July still opens on July when it is
+    # re-opened in September.
+    months = _year_labels() if profile is ZODIAC_PROFILE else None
+    if months:
+        visuals = dict(visuals or {})
+        visuals["year"] = list(months)
     # Same story: resolved once, while the run still exists. None on every
     # funnel that declares no purpose map.
     purpose = _purpose(cfg, choices)
@@ -3522,6 +3637,7 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
         "style_id": result_style, "name": name, "built": built, "paths": paths,
         "on_final": on_final, "content": None, "elements": elements,
         "visuals": visuals, "sign": sign, "purpose": purpose,
+        "months": months,
     }
 
     tasks = []
@@ -3541,10 +3657,11 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                 "future": pool.submit(
                     _generate, client,
                     _section_prompt(style, name, tag_scores, section_id,
-                                    cfg, choices, funnel_slug),
+                                    cfg, choices, funnel_slug, months),
                     (section_id,), _section_tokens(section_id),
                     profile["system"], profile["banned"],
-                    profile["retry_detail"], _verify_for(profile, style)),
+                    profile["retry_detail"],
+                    _verify_for(profile, style, months)),
             })
         if cached is None:
             group = profile["cached"]
@@ -3567,7 +3684,7 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
         for section_id in [s.get("id") for s in cfg.get("report", {}).get("sections", [])]:
             if section_id not in built:
                 built[section_id] = _stub_for(section_id, name, style,
-                                              profile["stubs"])
+                                              profile["stubs"], months)
                 paths[section_id] = "stub"
         content = _assemble(cfg, funnel_slug, result_style, name, built, paths,
                             True, elements, visuals, sign, purpose)

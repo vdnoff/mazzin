@@ -324,7 +324,11 @@ CARDS = [
         "id": "shopping",
         "key": "Your year",
         "icon": "calendar",
-        "promise": "the 3 strongest months — and the 1 to lay low in",
+        # {first} and {last} are the ends of the reader's own twelve months,
+        # counted from the one they are in. The map used to run January to
+        # December, which handed a September buyer eight months already gone.
+        "promise": "{first} → {last} — the 3 strongest months, and the 1 to "
+                   "lay low in",
     },
     {
         "id": "splurge",
@@ -357,6 +361,8 @@ SCALES = [
 # The lines the hero and the offer are built out of. Two tokens for the
 # subtype rather than one, and the reason is grammar: the names all begin with
 # "The", so "specifically for a {subtype}" would read "for a The Solar Spark".
+# {first} and {last} are the two ends of the reader's own year, filled by the
+# result module from the same twelve reports.py builds server-side.
 # {subtype} is the name as it is printed in the hero; {subtype_bare} is the
 # same name with the article off, for the sentences that supply their own —
 # and {subtype_article} is that article, because half these names begin with a

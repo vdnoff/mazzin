@@ -2907,7 +2907,7 @@
       {
         "id": "shopping",
         "title": "Your 12-Month Energy Map",
-        "teaser_line": "Two strong months. One quiet one.",
+        "teaser_line": "Three strong months. One quiet one.",
         "enabled": true,
         "preview": [
           "Twelve months, marked for the stretches where your energy is behind you and the two where it plainly is not.",
@@ -3224,7 +3224,7 @@
           "id": "shopping",
           "key": "Your year",
           "icon": "calendar",
-          "promise": "the 3 strongest months — and the 1 to lay low in"
+          "promise": "{first} → {last} — the 3 strongest months, and the 1 to lay low in"
         },
         {
           "id": "splurge",
