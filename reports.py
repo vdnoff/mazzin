@@ -1656,6 +1656,11 @@ ZODIAC_PROFILE = {
     # brought to paper; a funnel that sets neither prints what it always did.
     "pdf_cover": None,      # filled below, once _zodiac_cover is defined
     "pdf_node": True,
+    # The delivered page opens on a line confirming where the PDF went, so
+    # this product's report response carries the address it went to. Declared
+    # here rather than inferred, and only here: a funnel that does not ask for
+    # the line is never handed the address at all.
+    "delivery_note": True,
 }
 
 # zodiac30 is the same product down a longer walk, so it is the same
@@ -3465,6 +3470,39 @@ def _assemble(cfg, funnel_slug, result_style, name, built, paths, complete,
     if purpose:
         content["purpose"] = purpose
     return content
+
+
+def delivered_content(content, email):
+    """The stored report, plus what the delivered page says about delivery.
+
+    One line on that page — "Your PDF was sent to ..." — needs the address the
+    PDF actually went to, and the report row does not carry it: the address
+    lives on the purchase and is deliberately not copied into the report JSON.
+    So it is attached here, to the object being serialised for one
+    authenticated response, and never to the row.
+
+    That distinction is the whole safety of this. The stored row is what
+    `build_pdf` and `send_report_email` are handed and what a later read of the
+    reports table returns; nothing written here reaches any of them. The only
+    place the address exists is the response to a request that already proved
+    it holds this purchase's token.
+
+    It rides inside `visuals` because that is the one key engine.js passes to
+    a result module whole — the same channel the hero card, the tap order and
+    the year already travel on. A funnel whose profile does not ask for the
+    line, and a request with no address, both get the content exactly as it
+    was stored — kitchen's response is the response it always was, to the
+    byte.
+    """
+    if not content or not isinstance(content, dict) or not email:
+        return content
+    if not _profile(content.get("funnel")).get("delivery_note"):
+        return content
+    out = dict(content)
+    visuals = dict(out.get("visuals") or {})
+    visuals["delivery"] = {"email": email}
+    out["visuals"] = visuals
+    return out
 
 
 def report_content(purchase_id):
