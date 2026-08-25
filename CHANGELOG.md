@@ -351,3 +351,6 @@ bottom.
 
 ## 2026-08-25 — claude/zodiac-delivery-note
 - zodiac: PDF delivery confirmation bar on the delivered report
+
+## 2026-08-25 — claude/zodiac-go-live
+- zodiac: live payments on
