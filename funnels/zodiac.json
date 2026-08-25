@@ -2336,6 +2336,267 @@
     "strength_lead": "Your {symbol} and your {moonphase} put this one first.",
     "offer_sub": "Your complete profile — once, forever.",
     "locked_note": "Locked",
-    "delivered_note": "A PDF of this profile is in your inbox. This page stays at the link you were sent back to."
+    "delivered_note": "A PDF of this profile is in your inbox. This page stays at the link you were sent back to.",
+    "profile": {
+      "subtypes": {
+        "radiant_fire": {
+          "earth": {
+            "sun": "The Bright Forge",
+            "moon": "The Banked Ember"
+          },
+          "air": {
+            "sun": "The Wildlight",
+            "moon": "The Night Flare"
+          },
+          "water": {
+            "sun": "The Warm Current",
+            "moon": "The Slow Burn"
+          }
+        },
+        "deep_water": {
+          "fire": {
+            "sun": "The Sunlit Depth",
+            "moon": "The Underglow"
+          },
+          "earth": {
+            "sun": "The Stone Pool",
+            "moon": "The Still Well"
+          },
+          "air": {
+            "sun": "The Clear Tide",
+            "moon": "The Drifting Deep"
+          }
+        },
+        "grounded_earth": {
+          "fire": {
+            "sun": "The Sunstone Ridge",
+            "moon": "The Low Hearth"
+          },
+          "air": {
+            "sun": "The Open Field",
+            "moon": "The Quiet Orchard"
+          },
+          "water": {
+            "sun": "The River Stone",
+            "moon": "The Deep Root"
+          }
+        },
+        "celestial_air": {
+          "fire": {
+            "sun": "The Solar Spark",
+            "moon": "The Lantern Wind"
+          },
+          "earth": {
+            "sun": "The High Meadow",
+            "moon": "The Standing Mist"
+          },
+          "water": {
+            "sun": "The Sea Breath",
+            "moon": "The Rain Weaver"
+          }
+        }
+      },
+      "sign_cross": {
+        "Aries": {
+          "fire": "An Aries that leads with Fire runs true — the start is the whole of it, and you are already moving while the room is still deciding.",
+          "earth": "An Aries that leads with Earth is a genuine cross — the impulse arrives on time, but you build the thing before you announce it.",
+          "air": "An Aries that leads with Air is uncommon — your speed goes into the argument rather than the action, and you win rooms you never meant to enter.",
+          "water": "An Aries that leads with Water is rare — the charge is all still there, and it moves through what you feel rather than what you start."
+        },
+        "Taurus": {
+          "fire": "A Taurus that leads with Fire is uncommon — the patience is real and it sits on top of a heat that only shows when something is being taken from you.",
+          "earth": "A Taurus that leads with Earth runs true — you hold ground by standing on it, and what you keep is the measure of you.",
+          "air": "A Taurus that leads with Air is a genuine cross — you settle slowly and think fast, so the decision is made long before you admit to it.",
+          "water": "A Taurus that leads with Water is uncommon — the steadiness is emotional rather than material, and comfort for you means being felt, not being furnished."
+        },
+        "Gemini": {
+          "fire": "A Gemini that leads with Fire is uncommon — the two minds stop arguing the moment something is worth doing, and then you are all one direction.",
+          "earth": "A Gemini that leads with Earth is a genuine cross — you talk in possibilities and commit in specifics, and the specifics are what people remember.",
+          "air": "A Gemini that leads with Air runs true — you think out loud, in company, and the thought is finished only once somebody has answered it.",
+          "water": "A Gemini that leads with Water is rare — the quickness reads a room's mood before its words, and that is the half of you people call uncanny."
+        },
+        "Cancer": {
+          "fire": "A Cancer that leads with Fire is uncommon — the shell is still there and there is something behind it that comes out first rather than last.",
+          "earth": "A Cancer that leads with Earth is a genuine cross — you look after people with logistics rather than sentiment, and it lands harder.",
+          "air": "A Cancer that leads with Air is rare — you feel it all and file it, and the distance you keep is a working distance rather than a cold one.",
+          "water": "A Cancer that leads with Water runs true — you take the temperature of a room before you take your coat off, and you are almost never wrong about it."
+        },
+        "Leo": {
+          "fire": "A Leo that leads with Fire runs true — you warm a room by being in it, and the performance and the person are the same thing.",
+          "earth": "A Leo that leads with Earth is a genuine cross — the shine is real and it is built, and you would rather be relied on than looked at.",
+          "air": "A Leo that leads with Air is uncommon — your fire shows in how you decide, not how you burn.",
+          "water": "A Leo that leads with Water is rare — the warmth turns inward first, and what the room sees is the second draft of it."
+        },
+        "Virgo": {
+          "fire": "A Virgo that leads with Fire is uncommon — the standard comes with heat behind it, and you will burn a week to get one detail right.",
+          "earth": "A Virgo that leads with Earth runs true — you improve what is in front of you, and the improvement is specific enough to point at.",
+          "air": "A Virgo that leads with Air is a genuine cross — the precision goes into language, and you can take a muddled idea apart in one sentence.",
+          "water": "A Virgo that leads with Water is uncommon — you notice what is wrong with a person the way other people notice weather, and you say almost none of it."
+        },
+        "Libra": {
+          "fire": "A Libra that leads with Fire is uncommon — the balance is a decision you keep making, and you make it fast and out loud.",
+          "earth": "A Libra that leads with Earth is a genuine cross — you weigh things by what they cost to keep, and your taste is a working budget.",
+          "air": "A Libra that leads with Air runs true — you hold both sides long enough to see the shape of the whole, and only then take one.",
+          "water": "A Libra that leads with Water is rare — fairness for you is a felt thing, and you will carry an imbalance for months rather than name it."
+        },
+        "Scorpio": {
+          "fire": "A Scorpio that leads with Fire is uncommon — the depth is loud rather than quiet, and people know exactly where they stand with you.",
+          "earth": "A Scorpio that leads with Earth is a genuine cross — the intensity goes into what you build, and you are patient in a way that unsettles people.",
+          "air": "A Scorpio that leads with Air is rare — you take a thing apart to understand it, and the understanding is where the intensity lands.",
+          "water": "A Scorpio that leads with Water runs true — you go to the bottom of a thing on the first pass, and shallow company tires you within the hour."
+        },
+        "Sagittarius": {
+          "fire": "A Sagittarius that leads with Fire runs true — the arrow leaves the bow, and the aiming happens on the way.",
+          "earth": "A Sagittarius that leads with Earth is a genuine cross — the horizon is still the point and you now carry provisions, which is why you actually arrive.",
+          "air": "A Sagittarius that leads with Air is uncommon — you travel through ideas as readily as places, and the argument is the journey.",
+          "water": "A Sagittarius that leads with Water is rare — the search is inward as often as outward, and you go furthest when nobody is watching."
+        },
+        "Capricorn": {
+          "fire": "A Capricorn that leads with Fire is uncommon — the climb is driven rather than dutiful, and you are competing with a version of yourself.",
+          "earth": "A Capricorn that leads with Earth runs true — you build in stone, on purpose, and you would rather be early than impressive.",
+          "air": "A Capricorn that leads with Air is a genuine cross — the structure is in the thinking first, and you can see the whole ladder before you touch it.",
+          "water": "A Capricorn that leads with Water is rare — the discipline is protecting something soft, and the people who get past it stay for good."
+        },
+        "Aquarius": {
+          "fire": "An Aquarius that leads with Fire is uncommon — the distance you keep is a position, and you will defend it warmly and at length.",
+          "earth": "An Aquarius that leads with Earth is a genuine cross — the odd idea comes with a plan attached, which is what makes people follow it.",
+          "air": "An Aquarius that leads with Air runs true — you think from outside the room on purpose, and the view from there is the contribution.",
+          "water": "An Aquarius that leads with Water is rare — the detachment is a way of caring at scale, and the individual case still gets to you."
+        },
+        "Pisces": {
+          "fire": "A Pisces that leads with Fire is uncommon — the dreaming has an engine under it, and what you begin tends to get finished.",
+          "earth": "A Pisces that leads with Earth is a genuine cross — you make the imagined thing real, which is the rarest half of imagination.",
+          "air": "A Pisces that leads with Air is rare — the feeling arrives already translated, and you can explain a mood to the person having it.",
+          "water": "A Pisces that leads with Water runs true — you take on the room's weather without meaning to, and solitude is maintenance rather than sulking."
+        },
+        "cusp": {
+          "fire": "Born on a cusp and leading with Fire — you carry two seasons' energies and one of them moves first, every time.",
+          "earth": "Born on a cusp and leading with Earth — two energies sit in you, and the steadier one is the one people meet.",
+          "air": "Born on a cusp and leading with Air — you hold two natures at once, which is why you can argue both sides and mean both.",
+          "water": "Born on a cusp and leading with Water — the two energies you sit between meet in what you feel rather than in what you do."
+        }
+      },
+      "cards": [
+        {
+          "id": "materials",
+          "key": "Love",
+          "icon": "heart",
+          "promise": "which two signs are magnetic for you — and the one that drains your relationships",
+          "upgrade": {
+            "purpose_love": "the reading you came for — your two magnetic signs, and the one that drains you"
+          }
+        },
+        {
+          "id": "mistakes",
+          "key": "Blind spots",
+          "icon": "eye",
+          "promise": "what your {moonphase} pick revealed — strengths #2–5, the costliest last"
+        },
+        {
+          "id": "shopping",
+          "key": "Your year",
+          "icon": "calendar",
+          "promise": "the 3 strongest months — and the 1 to lay low in"
+        },
+        {
+          "id": "splurge",
+          "key": "Money",
+          "icon": "coin",
+          "promise": "where your energy earns — and where it quietly leaks"
+        },
+        {
+          "id": "palette",
+          "key": "Power colors",
+          "icon": "palette",
+          "promise": "your 4, with exact codes + talismans"
+        },
+        {
+          "id": "dna",
+          "key": "Blueprint",
+          "icon": "map",
+          "promise": "how {element} leads you and {second} fuels it"
+        }
+      ],
+      "scales": [
+        {
+          "id": "energy",
+          "left": "Sun",
+          "right": "Moon"
+        },
+        {
+          "id": "tone",
+          "left": "Bold",
+          "right": "Calm"
+        },
+        {
+          "id": "depth",
+          "left": "Mystic",
+          "right": "Grounded"
+        }
+      ],
+      "rarity": {
+        "radiant_fire": {
+          "earth": {
+            "sun": 10,
+            "moon": 40
+          },
+          "air": {
+            "sun": 10,
+            "moon": 40
+          },
+          "water": {
+            "sun": 40,
+            "moon": 40
+          }
+        },
+        "deep_water": {
+          "fire": {
+            "sun": 40,
+            "moon": 20
+          },
+          "earth": {
+            "sun": 40,
+            "moon": 15
+          },
+          "air": {
+            "sun": 40,
+            "moon": 10
+          }
+        },
+        "grounded_earth": {
+          "fire": {
+            "sun": 40,
+            "moon": 12
+          },
+          "air": {
+            "sun": 40,
+            "moon": 10
+          },
+          "water": {
+            "sun": 40,
+            "moon": 40
+          }
+        },
+        "celestial_air": {
+          "fire": {
+            "sun": 8,
+            "moon": 40
+          },
+          "earth": {
+            "sun": 20,
+            "moon": 40
+          },
+          "water": {
+            "sun": 30,
+            "moon": 40
+          }
+        }
+      },
+      "formula": "{sign} · {element}-led, {second} undercurrent · {energy}",
+      "rarity_line": "About 1 in {n} readings land this blend",
+      "bridge": "Your reading answers, specifically for {subtype_article} {subtype_bare}:",
+      "offer_head": "The full {subtype_bare} reading — 6 chapters",
+      "split_caption": "{fire}% Fire · {earth}% Earth · {air}% Air · {water}% Water"
+    }
   }
 }

@@ -7,9 +7,21 @@
  * — the withdrawal-right consent and the button that charges — are engine.js's
  * own live nodes, moved into this layout rather than rebuilt in it.
  *
- * The page, top to bottom: a kicker, the cosmic ID card, the strip of frames
- * they actually tapped, a constellation path of what is open and what is not,
- * and the offer.
+ * The page, top to bottom: a kicker, the rich profile card, the strip of
+ * frames they actually tapped, the one strength they get for nothing, and the
+ * six questions the reading answers — each behind a lock — over the offer.
+ *
+ * The card is a named subtype rather than a crossing of two words: the run's
+ * tallies resolve to an archetype, a runner-up element and an energy lean,
+ * and `result_copy.profile` in the config turns those three into a name, a
+ * measured rarity and a line about the reader's own sign. That table is
+ * written into both zodiac configs by scripts/gen_profile_rarity.py, from one
+ * source, so the two funnels cannot drift apart.
+ *
+ * A config with no `profile` block still renders: the old cosmic ID card and
+ * the constellation path are kept below and drawn instead. This file and the
+ * config it reads sit behind a CDN and can be a version apart, and a reader
+ * who arrives in that window should get last week's page rather than none.
  */
 (function () {
   "use strict";
@@ -28,6 +40,14 @@
     fire: "Fire", earth: "Earth", air: "Air", water: "Water"
   };
   var ENERGY_NAME = { sun: "Sun", moon: "Moon" };
+
+  // The tone axis, as this funnel actually tags it. There is no `grounded`
+  // tag and there never was one: `mystic` is the single tag the vocabulary
+  // spends on the otherworldly, and `bold` and `calm` are what it spends on
+  // everything else. So the mystic-to-grounded scale reads mystic against the
+  // sum of the other two — a real measurement of the run rather than an
+  // invented one, which is why most dots on it sit right of centre.
+  var TONE = ["bold", "calm", "mystic"];
 
   // The steps whose frames are worth showing back, in the order they read.
   // Only ones they tapped are drawn — a strip that shows a card somebody did
@@ -64,6 +84,168 @@
     }, 0);
     if (!total || !row) return 0;
     return Math.round(100 * Math.max(0, row.score) / total);
+  }
+
+  // --- the derived profile ---------------------------------------------------
+  //
+  // Everything the hero card says, computed from the tallies the run already
+  // produced. Nothing here asks engine.js for anything new: the archetype,
+  // the runner-up element and the energy lean are all in `ctx.tally`, and the
+  // names, the rarity and the sign line are all in the config.
+  //
+  // reports.py computes the same block server-side and stores it on the
+  // report, because the delivered page is opened from a link in an email in a
+  // tab that never ran the quiz. The two must agree, so every tiebreak below
+  // is stated rather than left to whichever order an array happened to be in.
+
+  function profileBlock(ctx) {
+    var table = ((ctx.cfg && ctx.cfg.result_copy) || {}).profile;
+    return (table && typeof table === "object") ? table : null;
+  }
+
+  // A tally as a plain object, with anything the inverse step pushed below
+  // zero read as zero. A negative score is a tap they told us to keep away
+  // from; it is not a negative share of who they are.
+  function positive(rows) {
+    var out = {};
+    rows.forEach(function (row) { out[row.tag] = Math.max(0, row.score); });
+    return out;
+  }
+
+  // Where a dot sits between two poles, 0 hard left and 100 hard right.
+  // Nothing measured on either side is dead centre rather than zero: a run
+  // that scored neither has not leant left, it has not leant.
+  function between(left, right) {
+    var total = left + right;
+    if (!total) return 50;
+    return Math.round(100 * right / total);
+  }
+
+  // Four whole percents that add to a hundred. Rounding each share on its own
+  // gives 33/33/17/16 as readily as not, and a caption whose numbers sum to
+  // 99 is the one thing on this card a reader can check for themselves.
+  function splitOf(elements) {
+    var raw = elements.map(function (row) { return Math.max(0, row.score); });
+    var total = raw.reduce(function (a, b) { return a + b; }, 0);
+    var pcts;
+    if (!total) {
+      pcts = raw.map(function () { return Math.round(100 / raw.length); });
+    } else {
+      var exact = raw.map(function (value) { return 100 * value / total; });
+      pcts = exact.map(function (value) { return Math.floor(value); });
+      var owed = 100 - pcts.reduce(function (a, b) { return a + b; }, 0);
+      exact
+        .map(function (value, i) { return { i: i, frac: value % 1 }; })
+        .sort(function (a, b) { return (b.frac - a.frac) || (a.i - b.i); })
+        .slice(0, Math.max(0, owed))
+        .forEach(function (row) { pcts[row.i] += 1; });
+    }
+    return elements.map(function (row, i) {
+      return {
+        tag: row.tag,
+        name: ELEMENT_NAME[row.tag] || row.tag,
+        pct: pcts[i],
+        color: ELEMENT_COLOR[row.tag] || "#E8C878"
+      };
+    });
+  }
+
+  function fill(text, words) {
+    if (!text) return "";
+    return String(text).replace(/\{(\w+)\}/g, function (whole, key) {
+      return Object.prototype.hasOwnProperty.call(words, key)
+        ? words[key] : whole;
+    });
+  }
+
+  // The whole card, or null when the config carries no table for it — which
+  // is what sends `render` back to the page it drew before this existed.
+  function profileOf(ctx, elements, top) {
+    var table = profileBlock(ctx);
+    if (!table || !table.subtypes) return null;
+
+    var scores = positive(elements);
+    var primary = top.tag;
+    // The runner-up, never the archetype's own element. A tie falls to the
+    // declared element order — the same rule the generator counts the rarity
+    // by, because a name resolved on one rule and counted on another is a
+    // number about nothing.
+    var second = ELEMENTS
+      .filter(function (tag) { return tag !== primary; })
+      .reduce(function (best, tag) {
+        return (best === null || scores[tag] > scores[best]) ? tag : best;
+      }, null);
+
+    var energyScores = positive(ctx.tally(ENERGY));
+    var own = ctx.style.tags || [];
+    var energy;
+    if (energyScores.sun > energyScores.moon) {
+      energy = "sun";
+    } else if (energyScores.moon > energyScores.sun) {
+      energy = "moon";
+    } else {
+      // Dead level. The archetype's own energy carries it, because the name
+      // beside the number says both, and a tie broken by list order can print
+      // an energy the archetype does not hold.
+      energy = ENERGY.filter(function (tag) {
+        return own.indexOf(tag) !== -1;
+      })[0] || ENERGY[0];
+    }
+
+    var name = ((table.subtypes[ctx.style.id] || {})[second] || {})[energy];
+    if (!name) return null;
+
+    var pick = ctx.picks && ctx.picks.sign;
+    var sign = (pick && pick.id !== "sign_cusp" && pick.label) || "";
+    var crossKey = sign || ((pick && pick.id === "sign_cusp") ? "cusp" : "");
+
+    var tone = positive(ctx.tally(TONE));
+    var at = {
+      energy: between(energyScores.sun, energyScores.moon),
+      tone: between(tone.bold, tone.calm),
+      depth: between(tone.mystic, tone.bold + tone.calm)
+    };
+    var split = splitOf(elements);
+    var rarity = (((table.rarity || {})[ctx.style.id] || {})[second]
+                  || {})[energy] || 0;
+
+    var bare = name.replace(/^The\s+/, "");
+    var words = {
+      sign: sign,
+      subtype: name,
+      subtype_bare: bare,
+      subtype_article: /^[AEIOU]/.test(bare) ? "an" : "a",
+      element: ELEMENT_NAME[primary] || primary,
+      second: ELEMENT_NAME[second] || second,
+      energy: ENERGY_NAME[energy] || energy,
+      n: String(rarity)
+    };
+    split.forEach(function (cell) { words[cell.tag] = String(cell.pct); });
+
+    return {
+      archetype: ctx.style.id,
+      primary: primary,
+      second: second,
+      energy: energy,
+      sign: sign,
+      subtype: name,
+      subtype_bare: bare,
+      rarity: rarity,
+      words: words,
+      // The formula loses its leading separator rather than printing one when
+      // a run never reached the sign step.
+      formula: fill(table.formula || "", words).replace(/^\s*·\s*/, ""),
+      rarity_line: rarity ? fill(table.rarity_line || "", words) : "",
+      cross_line: ((table.sign_cross || {})[crossKey] || {})[primary] || "",
+      split: split,
+      split_caption: fill(table.split_caption || "", words),
+      scales: (table.scales || []).map(function (row) {
+        return {
+          id: row.id, left: row.left, right: row.right,
+          at: (typeof at[row.id] === "number") ? at[row.id] : 50
+        };
+      })
+    };
   }
 
   // --- a) the kicker ---------------------------------------------------------
@@ -113,6 +295,79 @@
     }
     if (copy.blend_note) parts.push(copy.blend_note);
     card.appendChild(elm("p", "zr-sub", parts.join(" · ")));
+    return card;
+  }
+
+  // --- b2) the rich profile card ---------------------------------------------
+  //
+  // The card the mockup asked for, and the one both halves of the funnel now
+  // draw: glyph and name on one row, the gold rarity ribbon under it, three
+  // spectrum scales, the four-element split, and the reader's own sign read
+  // against the element they actually led with.
+  //
+  // It takes a finished block rather than a run, because the delivered page
+  // has no run to give it — reports.py stores the same shape on the report
+  // and `deliveredHero` hands it straight in.
+
+  function scaleRow(row) {
+    var wrap = elm("div", "zr-scale");
+    wrap.appendChild(elm("span", "zr-scale-pole", row.left));
+    var track = elm("span", "zr-scale-track");
+    track.setAttribute("role", "img");
+    track.setAttribute("aria-label",
+                       row.left + " to " + row.right + " — " + row.at
+                       + " out of 100 toward " + row.right);
+    var dot = elm("i", "zr-scale-dot");
+    dot.style.left = row.at + "%";
+    track.appendChild(dot);
+    wrap.appendChild(track);
+    wrap.appendChild(elm("span", "zr-scale-pole is-right", row.right));
+    return wrap;
+  }
+
+  function splitBar(data) {
+    var wrap = elm("div", "zr-split");
+    var bar = elm("div", "zr-split-bar");
+    bar.setAttribute("role", "img");
+    bar.setAttribute("aria-label", data.split_caption || "");
+    (data.split || []).forEach(function (cell) {
+      var seg = elm("span", "zr-split-seg");
+      seg.style.width = cell.pct + "%";
+      seg.style.background = cell.color || "#E8C878";
+      bar.appendChild(seg);
+    });
+    wrap.appendChild(bar);
+    if (data.split_caption) {
+      wrap.appendChild(elm("p", "zr-split-caption", data.split_caption));
+    }
+    return wrap;
+  }
+
+  function richHero(badge, data) {
+    var card = elm("section", "zr-hero is-rich");
+    var head = elm("div", "zr-hero-top");
+    head.appendChild(badge);
+    var id = elm("div", "zr-hero-id");
+    id.appendChild(elm("h1", "zr-subtype", data.subtype));
+    if (data.formula) id.appendChild(elm("p", "zr-formula", data.formula));
+    head.appendChild(id);
+    card.appendChild(head);
+
+    if (data.rarity_line) {
+      card.appendChild(elm("p", "zr-ribbon", data.rarity_line));
+    }
+    if ((data.scales || []).length) {
+      var scales = elm("div", "zr-scales");
+      data.scales.forEach(function (row) {
+        scales.appendChild(scaleRow(row));
+      });
+      card.appendChild(scales);
+    }
+    if ((data.split || []).length) card.appendChild(splitBar(data));
+    if (data.cross_line) {
+      card.appendChild(elm("hr", "zr-hairline"));
+      card.appendChild(elm("p", "zr-crossline", data.cross_line));
+    }
     return card;
   }
 
@@ -173,16 +428,22 @@
     return "";
   }
 
+  // The tag this run carries, or "". After the money there is no run left to
+  // read: the tag is stored on the report and handed back, which is why this
+  // looks in two places.
+  function purposeTagOf(ctx) {
+    var map = purposeMap(ctx);
+    if (!map) return "";
+    var tag = (ctx && ctx.purpose) || purposeTag(ctx, map);
+    return (tag && Object.prototype.hasOwnProperty.call(map, tag)) ? tag : "";
+  }
+
   // The rule for this run, or null for no personalisation at all — which is
   // what an unknown tag, a missing step and a funnel with no map all get.
   function purposeRule(ctx) {
     var map = purposeMap(ctx);
     if (!map) return null;
-    // After the money there is no run left to read: the tag is stored on the
-    // report and handed back, which is why this looks in two places.
-    var tag = (ctx && ctx.purpose) || purposeTag(ctx, map);
-    var rule = tag && Object.prototype.hasOwnProperty.call(map, tag)
-      ? map[tag] : null;
+    var rule = map[purposeTagOf(ctx)];
     return (rule && typeof rule === "object") ? rule : null;
   }
 
@@ -321,15 +582,151 @@
     return list;
   }
 
+  // --- d2) the free strength, standing on its own ----------------------------
+  //
+  // The same node the constellation drew, out of the list. It is the only
+  // open thing on this page now — the element balance moved into the hero —
+  // so a one-item ordered list with a gold thread running down the side of it
+  // would be a path drawn between one point and itself.
+
+  function freeStrength(ctx, copy) {
+    var one = strength(ctx, copy);
+    if (!one) return null;
+    // A list of one rather than a section, because `node` builds an `li` and
+    // a stray list item outside a list is still `display: list-item` — which
+    // draws a second, smaller bullet beside the gold star.
+    var block = elm("ul", "zr-free");
+    block.appendChild(one);
+    return block;
+  }
+
+  // --- d3) the six questions -------------------------------------------------
+  //
+  // What replaced the locked constellation nodes. A node said "Love &
+  // Compatibility" and left the reader to work out what that was worth; a
+  // card names the question the chapter answers, keyword first, and the
+  // delivered page puts the same keyword back over the same section so what
+  // they open is recognisably what they bought.
+
+  var ICONS = {
+    heart: ["M8 13.4C8 13.4 2.4 10 2.4 6.2A2.9 2.9 0 0 1 8 4.9"
+            + "a2.9 2.9 0 0 1 5.6 1.3c0 3.8-5.6 7.2-5.6 7.2z"],
+    eye: ["M1.4 8S4 3.6 8 3.6 14.6 8 14.6 8 12 12.4 8 12.4 1.4 8 1.4 8z",
+          "M8 6.1A1.9 1.9 0 1 0 8 9.9a1.9 1.9 0 0 0 0-3.8z"],
+    calendar: ["M2.6 4.4h10.8v9.1H2.6z", "M2.6 7.1h10.8",
+               "M5.5 2.5v3.2", "M10.5 2.5v3.2"],
+    coin: ["M8 2.4a5.6 5.6 0 1 0 0 11.2A5.6 5.6 0 0 0 8 2.4z",
+           "M9.9 6.1C9.4 5.4 8.8 5.1 8 5.1c-1 0-1.8.5-1.8 1.3 0 1.9 3.6.9"
+           + " 3.6 2.9 0 .9-.8 1.5-1.8 1.5-.9 0-1.6-.4-2-1.1",
+           "M8 4v8"],
+    palette: ["M8 2.4a5.6 5.6 0 0 0 0 11.2c.9 0 1.4-.6 1.4-1.2 0-.9-.7-1.2"
+              + "-.7-1.8 0-.5.4-.9 1-.9h1.2a2.9 2.9 0 0 0 2.7-3.1C13.6 4.5"
+              + " 11.1 2.4 8 2.4z",
+              "M5.4 7.2h.01", "M7.4 5.1h.01", "M10.2 5.6h.01"],
+    map: ["M2.5 4.2 6 2.7l4 1.6 3.5-1.5v9.5L10 13.8l-4-1.6-3.5 1.5z",
+          "M6 2.7v9.5", "M10 4.3v9.5"]
+  };
+
+  function drawn(paths, cls) {
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 16 16");
+    if (cls) svg.setAttribute("class", cls);
+    (paths || []).forEach(function (d) {
+      var shape = document.createElementNS("http://www.w3.org/2000/svg",
+                                           "path");
+      shape.setAttribute("d", d);
+      shape.setAttribute("stroke-linejoin", "round");
+      shape.setAttribute("stroke-linecap", "round");
+      svg.appendChild(shape);
+    });
+    return svg;
+  }
+
+  // The promise, with every token answered. Three sources in order: the
+  // profile's own words for {element} and {second}, engine.js's hook
+  // machinery for {moonphase} — which already declares "moon" as its fallback
+  // — and then a last sweep, because a brace is never a thing to show a
+  // reader on the page that asks them for money.
+  function promise(ctx, card, data, tag) {
+    var text = (tag && card.upgrade && card.upgrade[tag]) || card.promise || "";
+    text = fill(text, data.words || {});
+    if (typeof ctx.fillHook === "function") text = ctx.fillHook(text);
+    return text
+      .replace(/\{moonphase\}/g, "moon")
+      .replace(/\{\w+\}/g, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+  }
+
+  function questionCard(ctx, card, data, tag, first) {
+    var item = elm("li", "zr-card" + (first ? " is-lead" : ""));
+    var icon = elm("span", "zr-card-icon");
+    icon.setAttribute("aria-hidden", "true");
+    icon.appendChild(drawn(ICONS[card.icon] || ICONS.map));
+    item.appendChild(icon);
+
+    var line = elm("p", "zr-card-line");
+    line.appendChild(elm("strong", "zr-card-key", (card.key || "") + ":"));
+    line.appendChild(document.createTextNode(
+      " " + promise(ctx, card, data, tag)));
+    item.appendChild(line);
+
+    var lock = elm("span", "zr-card-lock");
+    lock.setAttribute("aria-hidden", "true");
+    lock.appendChild(drawn([LOCK_PATH]));
+    item.appendChild(lock);
+    return item;
+  }
+
+  function questions(ctx, data) {
+    var table = profileBlock(ctx) || {};
+    var want = emphasised(purposeRule(ctx));
+    var tag = purposeTagOf(ctx);
+    var list = elm("ul", "zr-cards");
+    // Same reorder as the constellation had: the chapter they said they came
+    // for is the first thing they meet, and it is the one card wearing the
+    // stronger border. Only the first match moves.
+    firstly((table.cards || []).slice(), want).forEach(function (card) {
+      list.appendChild(questionCard(ctx, card, data, tag,
+                                    !!want && card.id === want));
+    });
+    return list;
+  }
+
+  function bridge(ctx, data) {
+    var table = profileBlock(ctx) || {};
+    var line = fill(table.bridge || "", data.words || {});
+    return line ? elm("p", "zr-bridge", line) : null;
+  }
+
+  // Which keyword stands over a section, for the delivered page.
+  function keywordOf(ctx, section_id) {
+    var cards = (profileBlock(ctx) || {}).cards || [];
+    for (var i = 0; i < cards.length; i++) {
+      if (cards[i].id === section_id) return cards[i].key || "";
+    }
+    return "";
+  }
+
   // --- e) the offer ----------------------------------------------------------
 
   // engine.js has already built and wired all of this. What happens here is
   // placement: the consent box, the button, its error line and the legal
   // links are moved into this card, which is why the withdrawal waiver still
   // gates the same button it always did and no payment code lives in here.
-  function offer(ctx, copy) {
+  function offer(ctx, copy, data) {
     var card = elm("section", "zr-offer");
     var nodes = ctx.nodes;
+
+    // The one new line on this card: what the six chapters add up to, named
+    // as the thing the reader has just been told they are. Everything under
+    // it — the anchor, the sub, the wallet, the button, the trust row, the
+    // consent — is the stack it always was.
+    if (data) {
+      var head = ctx.withPrice(
+        fill((profileBlock(ctx) || {}).offer_head || "", data.words || {}));
+      if (head) card.appendChild(elm("p", "zr-offer-head", head));
+    }
 
     var anchorText = ctx.withPrice(ctx.commerce.anchor_head
                                    || ctx.cfg.checkout.anchor_head || "");
@@ -419,13 +816,28 @@
     var top = own[0] || lead(elements, ctx.style.tags)
       || { tag: ELEMENTS[0], score: 0 };
 
+    var data = profileOf(ctx, elements, top);
+
     root.innerHTML = "";
     root.appendChild(kicker(copy));
-    root.appendChild(hero(ctx, copy, elements, top));
+    // The rich card, or the one this page drew before there was a table to
+    // draw it from. Below the hero the two pages differ entirely, which is
+    // why the branch is the whole body rather than one node.
+    root.appendChild(data
+      ? richHero(glyph(ctx.picks.sign), data)
+      : hero(ctx, copy, elements, top));
     var strip = taps(ctx, copy);
     if (strip) root.appendChild(strip);
-    root.appendChild(path(ctx, copy, elements));
-    root.appendChild(offer(ctx, copy));
+    if (data) {
+      var free = freeStrength(ctx, copy);
+      if (free) root.appendChild(free);
+      var line = bridge(ctx, data);
+      if (line) root.appendChild(line);
+      root.appendChild(questions(ctx, data));
+    } else {
+      root.appendChild(path(ctx, copy, elements));
+    }
+    root.appendChild(offer(ctx, copy, data));
 
     // The container engine.js moved the offer rows into is empty now and its
     // own border would draw a line under nothing.
@@ -612,6 +1024,13 @@
   function deliveredNode(ctx, section) {
     var item = node("open", section.title || "");
     var body = item.querySelector(".zr-node-body");
+    // The keyword off the card that sold this chapter, over the title it was
+    // sold under. "Love:" above "Love & Compatibility" is the promise and the
+    // thing delivered, in that order, on one screen.
+    var key = keywordOf(ctx, section.id);
+    if (key) {
+      body.insertBefore(elm("p", "zr-node-key", key + ":"), body.firstChild);
+    }
     var shot = sectionImage(ctx, section.id);
     if (shot) body.appendChild(shot);
     var build = section.data && DELIVERED_BODY[section.id];
@@ -632,6 +1051,24 @@
     var card = elm("section", "zr-hero");
     var hero = (ctx.visuals && ctx.visuals.hero) || {};
     var pick = ctx.images[hero.glyph || signImageId(ctx)];
+    // The same card as before the money, off the block reports.py measured
+    // while the run still existed and stored on the report. Without one —
+    // every report written before this shipped — the old delivered card is
+    // drawn instead, which is the page those readers were sent to and still
+    // have bookmarked.
+    var data = (ctx.visuals && ctx.visuals.profile) || null;
+    if (data && data.subtype) {
+      var rich = richHero(glyph(pick), data);
+      // The horizon they chose, which the paid card has always carried and
+      // the free one never did. Appended here rather than inside `richHero`
+      // for exactly that reason: there is no band before the money.
+      var horizon = tapped(ctx, hero.band);
+      if (horizon) {
+        horizon.classList.add("zr-band");
+        rich.appendChild(horizon);
+      }
+      return rich;
+    }
     card.appendChild(glyph(pick));
     card.appendChild(elm("h1", "zr-sign", ctx.sign || ctx.style.name));
     if (ctx.sign) card.appendChild(elm("p", "zr-cross", "× " + ctx.style.name));

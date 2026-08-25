@@ -458,19 +458,38 @@ def delivered(page):
           page.get_attribute("#report", "hidden") is not None)
     check("the ground is the night sky", bg(page) == INDIGO, bg(page))
 
-    check("the hero names the sign", page.inner_text(".zr-sign") == "Scorpio",
-          page.inner_text(".zr-sign"))
-    check("  crossed with the archetype",
-          page.inner_text(".zr-cross") == "× Deep Water",
-          page.inner_text(".zr-cross"))
-    cells = page.eval_on_selector_all(
-        ".zr-el", "ns => ns.map(n => [n.innerText.trim(), n.className])")
-    check("  over an element bar of four",
-          [c[0] for c in cells] == ["FIRE", "EARTH", "AIR", "WATER"],
-          str(cells))
-    lit = [c for c in cells if "is-own" in c[1]]
-    check("  with this archetype's own lit, and one only",
-          len(lit) == 1 and lit[0][0] == "WATER", str(cells))
+    # The same rich card the reader paid from, off the block reports.py
+    # measured while their run still existed. Nothing on this page could
+    # recompute it: this tab never ran the quiz.
+    card = REPORTS["zodiac"]["visuals"]["profile"]
+    check("the hero is the subtype they were named",
+          page.inner_text(".zr-subtype") == card["subtype"],
+          page.inner_text(".zr-subtype"))
+    check("  under the formula that produced it",
+          page.inner_text(".zr-formula") == card["formula"],
+          page.inner_text(".zr-formula"))
+    check("  and the rarity it was measured at",
+          page.inner_text(".zr-ribbon") == card["rarity_line"],
+          page.inner_text(".zr-ribbon"))
+    # textContent, not innerText: the stylesheet uppercases both poles and
+    # the section keywords, and what is being checked here is the content.
+    scales = page.eval_on_selector_all(".zr-scale", """ns => ns.map(n => [
+        n.querySelector('.zr-scale-pole').textContent,
+        n.querySelector('.zr-scale-pole.is-right').textContent,
+        n.querySelector('.zr-scale-dot').style.left])""")
+    check("  with the three scales at the positions it stored",
+          scales == [[row["left"], row["right"], "%d%%" % row["at"]]
+                     for row in card["scales"]],
+          str(scales))
+    widths = page.eval_on_selector_all(
+        ".zr-split-seg", "ns => ns.map(n => n.style.width)")
+    check("  the four-element split beneath them",
+          widths == ["%d%%" % cell["pct"] for cell in card["split"]]
+          and page.inner_text(".zr-split-caption") == card["split_caption"],
+          str(widths))
+    check("  and their own sign read against the element they led with",
+          page.inner_text(".zr-crossline") == card["cross_line"],
+          page.inner_text(".zr-crossline"))
 
     nodes = page.eval_on_selector_all(
         ".zr-node", "ns => ns.map(n => [n.className,"
@@ -478,6 +497,17 @@ def delivered(page):
     want = [s["title"] for s in REPORTS["zodiac"]["sections"]]
     check("every section is a node on the path",
           [n[1] for n in nodes] == want, str([n[1] for n in nodes]))
+    # The keyword off the question card that sold each chapter, over the
+    # chapter. What was promised and what arrived, in that order, on one
+    # screen.
+    keys = {c["id"]: c["key"] for c
+            in config.load_funnel("zodiac")["result_copy"]["profile"]["cards"]}
+    got_keys = page.eval_on_selector_all(
+        ".zr-node-key", "ns => ns.map(n => n.textContent)")
+    check("  each headed by the keyword its card promised",
+          got_keys == ["%s:" % keys[s["id"]]
+                       for s in REPORTS["zodiac"]["sections"]],
+          str(got_keys))
     check("  and every one of them is open",
           all("is-open" in n[0] for n in nodes) and nodes,
           str([n[0] for n in nodes]))

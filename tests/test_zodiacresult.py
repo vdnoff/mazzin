@@ -16,6 +16,7 @@ through engine.js's own handler without reaching Stripe.
 import http.server
 import json
 import os
+import re
 import socketserver
 import sys
 import threading
@@ -32,6 +33,11 @@ CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
 HOLD_MS = 1650
 
 SIGN = sys.argv[1] if len(sys.argv) > 1 else "Scorpio"
+
+# Which archetype owns which element, so the rarity printed on the ribbon can
+# be looked up against the table the config carries rather than trusted.
+ARCHETYPE = {"Fire": "radiant_fire", "Earth": "grounded_earth",
+             "Air": "celestial_air", "Water": "deep_water"}
 
 fails = []
 checks = [0]
@@ -150,48 +156,80 @@ def run(page):
           and page.get_attribute("#cta", "hidden") is not None)
     check("  with no error on the console", not page.errors, str(page.errors))
 
-    print("\n--- the hero is this session's sign ---")
+    print("\n--- the hero is this session's own profile ---")
+    cfg = json.load(open(os.path.join(ROOT, "funnels/zodiac.json")))
+    table = cfg["result_copy"]["profile"]
+    names = set()
+    for by_second in table["subtypes"].values():
+        for by_energy in by_second.values():
+            names.update(by_energy.values())
     check("the glyph is the sign that was tapped",
           page.get_attribute(".zr-glyph img", "src", timeout=5000)
           .endswith("sign_%s.webp" % SIGN.lower()),
           page.get_attribute(".zr-glyph img", "src"))
-    check("  named beside it", page.inner_text(".zr-sign") == SIGN,
-          page.inner_text(".zr-sign"))
-    check("  crossed with the archetype the run scored",
-          page.inner_text(".zr-cross").startswith("× "),
-          page.inner_text(".zr-cross"))
+    subtype = page.inner_text(".zr-subtype")
+    check("  and beside it is a name off the twenty-four", subtype in names,
+          subtype)
+    formula = page.inner_text(".zr-formula")
+    check("  under the formula that produced it",
+          formula.startswith(SIGN + " · ")
+          and "-led, " in formula and " undercurrent · " in formula
+          and formula.rsplit(" · ", 1)[-1] in ("Sun", "Moon"),
+          formula)
+    lead_el = formula.split(" · ")[1].split("-led")[0]
+    second_el = formula.split("-led, ")[1].split(" undercurrent")[0]
+    check("  the lead and the undercurrent are two different elements",
+          lead_el != second_el
+          and {lead_el, second_el} <= {"Fire", "Earth", "Air", "Water"},
+          "%s / %s" % (lead_el, second_el))
+    ribbon = page.inner_text(".zr-ribbon")
+    rarity = int(re.search(r"1 in (\d+)", ribbon).group(1))
+    check("the rarity ribbon quotes a number the config measured",
+          rarity in {n for a in table["rarity"].values()
+                     for s in a.values() for n in s.values()},
+          ribbon)
+    check("  and it is the one for this exact blend",
+          rarity == table["rarity"][ARCHETYPE[lead_el]][second_el.lower()][
+              formula.rsplit(" · ", 1)[-1].lower()],
+          "%s says %d" % (formula, rarity))
 
     print("\n--- the numbers are this session's tallies ---")
-    bars = page.eval_on_selector_all(".zr-bal", """ns => ns.map(n => ({
-        name: n.querySelector('.zr-bal-name').innerText,
-        pct: parseInt(n.querySelector('.zr-bal-pct').innerText, 10),
-        height: parseFloat(n.querySelector('.zr-bal-fill').style.height)
-    }))""")
-    check("the balance chart has all four elements",
-          [b["name"] for b in bars] == ["Fire", "Earth", "Air", "Water"],
-          str([b["name"] for b in bars]))
-    check("  its shares add up to a whole profile",
-          97 <= sum(b["pct"] for b in bars) <= 103,
-          sum(b["pct"] for b in bars))
-    check("  the tallest bar is the highest share",
-          max(bars, key=lambda b: b["height"])["pct"]
-          == max(b["pct"] for b in bars))
-    sub = page.inner_text(".zr-sub")
-    hero_pct = int(sub.split("%")[0])
-    hero_element = sub.split("%")[1].split("·")[0].strip()
-    match = [b for b in bars if b["name"] == hero_element]
-    check("the hero's element is one of the four", len(match) == 1,
-          hero_element)
-    check("  and its percentage is that element's own",
-          match and match[0]["pct"] == hero_pct,
-          "%s hero %d, chart %s" % (hero_element, hero_pct,
-                                    match[0]["pct"] if match else "-"))
-    check("  the bar is filled to it",
-          page.eval_on_selector(".zr-bar-fill", "n => n.style.width")
-          == "%d%%" % hero_pct)
-    check("  and the sub-line carries the blend note",
-          "rare blend" in page.inner_text(".zr-sub"),
-          page.inner_text(".zr-sub"))
+    scales = page.eval_on_selector_all(".zr-scale", """ns => ns.map(n => [
+        n.querySelector('.zr-scale-pole').innerText,
+        n.querySelector('.zr-scale-pole.is-right').innerText,
+        parseFloat(n.querySelector('.zr-scale-dot').style.left)])""")
+    check("three scales, poled as the config declares them",
+          [[a, b] for a, b, _ in scales]
+          == [[r["left"].upper(), r["right"].upper()] for r in table["scales"]],
+          str(scales))
+    check("  every dot is somewhere on its own track",
+          all(0 <= at <= 100 for _, _, at in scales), str(scales))
+    split = page.eval_on_selector_all(".zr-split-seg", """ns => ns.map(
+        n => parseFloat(n.style.width))""")
+    caption = page.inner_text(".zr-split-caption")
+    check("the split bar has all four elements",
+          [w for w in re.findall(r"% (\w+)", caption)]
+          == ["Fire", "Earth", "Air", "Water"], caption)
+    check("  its shares add up to a whole profile, exactly",
+          len(split) == 4 and sum(split) == 100, str(split))
+    check("  and the caption is the bar in words",
+          [int(n) for n in re.findall(r"(\d+)%", caption)]
+          == [int(w) for w in split],
+          "%s vs %s" % (caption, split))
+    # Not "the widest segment is the lead": an archetype is won on three tags,
+    # so a Deep Water reader can out-score air and still be Deep Water, and
+    # the hero names the archetype's element rather than the tallest bar. What
+    # must hold is the undercurrent — that is measured, and it is the highest
+    # of the three the lead is not.
+    order = ["Fire", "Earth", "Air", "Water"]
+    others = [(pct, -i) for i, pct in enumerate(split)
+              if order[i] != lead_el]
+    check("the undercurrent is the strongest element the lead is not",
+          second_el == order[-max(others)[1]],
+          "%s undercurrent, split %s" % (second_el, split))
+    cross = page.inner_text(".zr-crossline")
+    check("the sign line is this sign against this lead",
+          cross == table["sign_cross"][SIGN][lead_el.lower()], cross)
 
     print("\n--- the taps strip is what they actually tapped ---")
     tapped = {src for _, src in taken.values()}
@@ -206,28 +244,18 @@ def run(page):
     check("  each named", all(labels) and len(labels) == len(strip),
           str(labels))
 
-    print("\n--- the constellation path ---")
+    print("\n--- the one strength they get for nothing ---")
     nodes = page.eval_on_selector_all(".zr-node", """ns => ns.map(n => ({
         open: n.classList.contains('is-open'),
-        title: n.querySelector('.zr-node-title').innerText.trim(),
-        teaser: (n.querySelector('.zr-teaser') || {}).innerText || '',
-        lock: !!n.querySelector('.zr-node-mark svg')
+        title: n.querySelector('.zr-node-title').innerText.trim()
     }))""")
-    cfg = json.load(open(os.path.join(ROOT, "funnels/zodiac.json")))
-    sections = [s for s in cfg["report"]["sections"]
-                if s.get("enabled") is not False]
-    lockable = [s for s in sections
-                if (s.get("reveal") or {}).get("mode") != "visible"]
-    check("two open nodes, then one per locked section",
-          [n["open"] for n in nodes]
-          == [True, True] + [False] * len(lockable),
-          str([n["open"] for n in nodes]))
-    check("  the first is the element balance",
-          nodes[0]["title"] == cfg["result_copy"]["balance_title"],
-          nodes[0]["title"])
-    check("  the second is the free strength",
-          nodes[1]["title"] == cfg["report"]["mistake_one"]["title"],
-          nodes[1]["title"])
+    check("exactly one open node, and it is the free strength",
+          len(nodes) == 1 and nodes[0]["open"]
+          and nodes[0]["title"] == cfg["report"]["mistake_one"]["title"],
+          str(nodes))
+    check("  it is in a list of its own, not on a path to nowhere",
+          page.locator(".zr-free .zr-node").count() == 1
+          and page.locator(".zr-path").count() == 0)
     check("  which opens on a card from this run",
           page.locator(".zr-lead").count() == 1
           and "{" not in page.inner_text(".zr-lead"),
@@ -241,13 +269,66 @@ def run(page):
     check("  and the strength itself is there in full",
           page.locator(".zr-strength-title").count() == 1
           and len(page.inner_text(".zr-strength-body")) > 200)
-    for got, want in zip(nodes[2:], lockable):
-        check("  locked %-9s titled and teased" % want["id"],
-              got["title"] == want["title"]
-              and got["teaser"].strip() != ""
-              and "{" not in got["teaser"],
-              "%r / %r" % (got["title"], got["teaser"]))
-        check("    with a lock on its node", got["lock"], got["lock"])
+    check("the element balance chart is gone — the hero says it now",
+          page.locator(".zr-bal").count() == 0)
+
+    print("\n--- the six questions the reading answers ---")
+    bridge = page.inner_text(".zr-bridge")
+    check("a bridge line in their own subtype",
+          bridge.endswith(":") and subtype.replace("The ", "") in bridge,
+          bridge)
+    cards = page.eval_on_selector_all(".zr-card", """ns => ns.map(n => ({
+        key: n.querySelector('.zr-card-key').innerText,
+        line: n.querySelector('.zr-card-line').innerText.trim(),
+        icon: !!n.querySelector('.zr-card-icon svg path'),
+        lock: !!n.querySelector('.zr-card-lock svg path')
+    }))""")
+    # Every chapter, not only the ones the old path drew. `palette` carries
+    # `reveal: visible` and the constellation therefore never showed it at
+    # all, which meant a page selling six chapters listed five of them.
+    chapters = [s for s in cfg["report"]["sections"]
+                if s.get("enabled") is not False]
+    check("one card per chapter, none left over",
+          len(cards) == len(chapters) == len(table["cards"]), str(len(cards)))
+    check("  in the order the config lists them",
+          [c["key"] for c in cards]
+          == ["%s:" % row["key"] for row in table["cards"]],
+          str([c["key"] for c in cards]))
+    for got, want in zip(cards, table["cards"]):
+        check("  %-13s leads with its keyword" % want["id"],
+              got["line"].startswith("%s: " % want["key"])
+              and len(got["line"]) > len(want["key"]) + 12,
+              got["line"])
+        check("    an icon and a lock beside it",
+              got["icon"] and got["lock"],
+              "icon %s lock %s" % (got["icon"], got["lock"]))
+    check("no token is left showing on any of them",
+          not any("{" in c["line"] for c in cards),
+          str([c["line"] for c in cards if "{" in c["line"]]))
+    # The blind-spots card names the moon they chose, through engine.js's own
+    # hook machinery — so the word in it is a card out of this run, or the
+    # declared fallback if the step was somehow never reached.
+    blind = [c for c in cards if c["key"] == "Blind spots:"][0]["line"]
+    word = re.search(r"your (.+?) pick", blind)
+    tapped_labels = {(label or "").lower() for label, _ in taken.values()}
+    check("  the moon token answered out of this run",
+          bool(word) and (word.group(1) in tapped_labels
+                          or word.group(1) == "moon"),
+          blind)
+    check("  and the blueprint names the lead and the undercurrent",
+          lead_el in [c for c in cards
+                      if c["key"] == "Blueprint:"][0]["line"]
+          and second_el in [c for c in cards
+                            if c["key"] == "Blueprint:"][0]["line"],
+          str([c["line"] for c in cards if c["key"] == "Blueprint:"]))
+    check("no locked constellation node is left on the page",
+          page.locator(".zr-node.is-locked").count() == 0)
+
+    print("\n--- and the offer is named for what it is ---")
+    check("the offer headline carries the subtype",
+          subtype.replace("The ", "") in page.inner_text(".zr-offer-head")
+          and "6 chapters" in page.inner_text(".zr-offer-head"),
+          page.inner_text(".zr-offer-head"))
 
     print("\n--- no consent box, anywhere on the page ---")
     # Off for everyone rather than off outside a country list. The element
@@ -278,11 +359,14 @@ def run(page):
     print("\n--- the offer is engine.js's, placed here ---")
     check("the pay button is inside it too",
           page.locator(".zr-offer #pay-button").count() == 1)
+    # textContent, not innerText: the label is engine.js's own string with the
+    # price folded into it, and reading it as rendered text made this check
+    # race the frame the button is written on.
+    label = page.eval_on_selector(".zr-offer #pay-button", "n => n.textContent")
     check("  labelled from the config",
-          page.inner_text(".zr-offer #pay-button")
-          == cfg["checkout"]["cta_label"].replace(
+          label == cfg["checkout"]["cta_label"].replace(
               "{price}", "$%d" % (cfg["pricing"]["amount_cents"] // 100)),
-          page.inner_text(".zr-offer #pay-button"))
+          repr(label))
     check("  and enabled, because consent is satisfied",
           page.get_attribute(".zr-offer #pay-button", "disabled") is None)
     check("the anchor names what it undercuts",
@@ -296,9 +380,9 @@ def run(page):
     print("\n--- and it can be read on a phone ---")
     # The token these carry measured 4.14:1 on this background, under the 4.5
     # a body size needs, and it was the colour of every teaser line.
-    MINIMUM = {".zr-node.is-locked .zr-node-title": 17,
-               ".zr-teaser": 14, ".zr-lead": 14, ".zr-strength-body": 15,
-               ".zr-sub": 14, ".zr-trust": 12}
+    MINIMUM = {".zr-card-line": 14, ".zr-lead": 14, ".zr-strength-body": 15,
+               ".zr-crossline": 14, ".zr-bridge": 14, ".zr-formula": 12,
+               ".zr-split-caption": 11, ".zr-trust": 12}
     for selector, floor in sorted(MINIMUM.items()):
         got = page.eval_on_selector(selector, """n => {
             const c = getComputedStyle(n);
@@ -307,30 +391,45 @@ def run(page):
         }""")
         check("  %-34s at %gpx" % (selector, got[0]), got[0] >= floor,
               "below %dpx" % floor)
-    for selector in (".zr-teaser", ".zr-strength-body"):
+    for selector in (".zr-card-line", ".zr-strength-body"):
         got = page.eval_on_selector(selector, """n => {
             const c = getComputedStyle(n);
             return parseFloat(c.lineHeight) / parseFloat(c.fontSize);
         }""")
         check("  %-34s breathes at %.2f" % (selector, got), got >= 1.45,
               "under 1.45")
-    # 17px headings ran under the LOCKED badge; the text rect is what says so,
-    # because the element's box is full width whatever its padding.
+    # A promise line that runs under its own padlock. The text rect is what
+    # says so, because the element's box is full width whatever its padding.
     collisions = page.evaluate("""() => {
         const out = [];
-        document.querySelectorAll('.zr-node.is-locked').forEach(node => {
-            const el = node.querySelector('.zr-node-title');
+        document.querySelectorAll('.zr-card').forEach(card => {
+            const el = card.querySelector('.zr-card-line');
             const r = document.createRange();
             r.selectNodeContents(el);
             const t = r.getBoundingClientRect();
-            const badge = node.querySelector('.zr-lock');
-            const lock = badge.getBoundingClientRect();
+            const lock = card.querySelector('.zr-card-lock')
+                             .getBoundingClientRect();
             if (t.right > lock.left) out.push(el.innerText.trim());
         });
         return out;
     }""")
-    check("  no heading runs under the LOCKED badge", not collisions,
+    check("  no promise line runs under its padlock", not collisions,
           str(collisions))
+    # The hero is a stack of measured rows; two of them overlapping is the
+    # failure mode a screenshot catches and an assertion about text does not.
+    overlap = page.evaluate("""() => {
+        const rows = [...document.querySelectorAll(
+            '.zr-hero-top, .zr-ribbon, .zr-scales, .zr-split, .zr-crossline')];
+        const out = [];
+        for (let i = 1; i < rows.length; i++) {
+            const a = rows[i - 1].getBoundingClientRect();
+            const b = rows[i].getBoundingClientRect();
+            if (b.top < a.bottom) out.push(rows[i].className);
+        }
+        return out;
+    }""")
+    check("  and no two rows of the hero card overlap", not overlap,
+          str(overlap))
 
     print("\n--- and it takes a payment ---")
     before = len([p for p in posted if p[0] == "/api/checkout"])

@@ -124,26 +124,26 @@ RESULT = """() => {
   if (!off) return null;
   return {
     sub: (off.querySelector('.zr-offer-sub') || {}).textContent || "",
+    head: (off.querySelector('.zr-offer-head') || {}).textContent || "",
+    subtype: (document.querySelector('.zr-subtype') || {}).textContent || "",
     open: [...document.querySelectorAll('.zr-node.is-open')].map(
       n => (n.querySelector('.zr-node-title') || {}).textContent),
-    locked: [...document.querySelectorAll('.zr-node.is-locked')].map(n => {
-      const t = n.querySelector('.zr-teaser');
-      return {title: (n.querySelector('.zr-node-title') || {}).textContent,
-              lead: n.classList.contains('is-lead'),
-              colour: t ? getComputedStyle(t).color : null,
-              size: t ? getComputedStyle(t).fontSize : null};
-    })};
+    cards: [...document.querySelectorAll('.zr-card')].map(n => ({
+      key: (n.querySelector('.zr-card-key') || {}).textContent,
+      line: (n.querySelector('.zr-card-line') || {}).textContent.trim(),
+      lead: n.classList.contains('is-lead'),
+      edge: getComputedStyle(n).borderTopColor}))};
 }"""
 
-# The five locked sections, in the order the report declares them. Anything
-# else on screen is a reorder, which is the whole subject below.
-CANON = ["5 Hidden Strengths & Blind Spots", "Your Cosmic Blueprint",
-         "Love & Compatibility", "Career & Money Path",
-         "Your 12-Month Energy Map"]
+# The six question cards, in the order the config lists them. Anything else on
+# screen is a reorder, which is the whole subject below.
+CANON = ["Love:", "Blind spots:", "Your year:", "Money:", "Power colors:",
+         "Blueprint:"]
 DEFAULT_SUB = "Your complete profile — once, forever."
-# The two tiers the readability pass set. The led teaser steps up exactly one.
-FAINT = "rgb(134, 143, 182)"
-MUTED = "rgb(168, 174, 204)"
+# The two edges a card can wear. The chapter they came for steps up exactly
+# one, on the card that is already first.
+LINE = "rgba(232, 200, 120, 0.22)"
+LEAD_LINE = "rgba(232, 200, 120, 0.55)"
 
 
 def to_result(page, slug, seeking=None):
@@ -705,41 +705,43 @@ def rest_of_run(page):
     # Four runs, one per answer to the seeking step. Each has to promote its
     # own section to the head of what is still locked, keep the rest in report
     # order, and say its own line under the anchor.
-    WANT = [("Love", "Love & Compatibility",
-             "Your compatibility read is inside."),
-            ("Career & money", "Career & Money Path",
-             "Your money months are inside."),
-            ("Inner peace", "5 Hidden Strengths & Blind Spots",
+    WANT = [("Love", "Love:", "Your compatibility read is inside."),
+            ("Career & money", "Money:", "Your money months are inside."),
+            ("Inner peace", "Blind spots:",
              "Your calm has a pattern. It's inside."),
-            ("The road ahead", "Your 12-Month Energy Map",
+            ("The road ahead", "Your year:",
              "Your year, mapped window by window — inside.")]
     for tapped, lead, sub in WANT:
         got = to_result(page, "zodiac30", tapped)
         check("tapping %-14s reaches the result" % tapped, got is not None)
         if not got:
             continue
-        titles = [n["title"] for n in got["locked"]]
-        check("  %-22s is first among the locked" % lead,
-              titles and titles[0] == lead, str(titles))
-        check("    and the other four keep report order",
-              titles[1:] == [t for t in CANON if t != lead], str(titles[1:]))
+        keys = [n["key"] for n in got["cards"]]
+        check("  %-14s is the first card they meet" % lead,
+              keys and keys[0] == lead, str(keys))
+        check("    and the other five keep config order",
+              keys[1:] == [k for k in CANON if k != lead], str(keys[1:]))
         check("    the offer says their line, not the default one",
               got["sub"] == sub, got["sub"])
-        check("    its node is the one marked as led",
-              [n["title"] for n in got["locked"] if n["lead"]] == [lead],
-              str([n["title"] for n in got["locked"] if n["lead"]]))
-        check("    and its teaser steps one tier, no further",
-              got["locked"][0]["colour"] == MUTED
-              and got["locked"][0]["size"] == "15px",
-              "%s / %s" % (got["locked"][0]["colour"],
-                           got["locked"][0]["size"]))
-        check("    while every other teaser stays where it was",
-              all(n["colour"] == FAINT and n["size"] == "14px"
-                  for n in got["locked"][1:]),
-              str([(n["title"], n["colour"]) for n in got["locked"][1:]]))
-        check("    and the free half above is untouched",
-              got["open"] == ["Your element balance",
-                              "Hidden Strength #1 of 5"], str(got["open"]))
+        check("    its card is the one marked as led",
+              [n["key"] for n in got["cards"] if n["lead"]] == [lead],
+              str([n["key"] for n in got["cards"] if n["lead"]]))
+        check("    and it is the only one wearing the brighter edge",
+              got["cards"][0]["edge"] == LEAD_LINE
+              and all(n["edge"] == LINE for n in got["cards"][1:]),
+              str([n["edge"] for n in got["cards"]]))
+        check("    the free strength above it is untouched",
+              got["open"] == ["Hidden Strength #1 of 5"], str(got["open"]))
+        check("    and the offer is headed with their subtype",
+              got["subtype"].replace("The ", "") in got["head"]
+              and "6 chapters" in got["head"],
+              "%s / %s" % (got["subtype"], got["head"]))
+    # The one card whose copy changes as well as its place: the reader who
+    # said love is why they came is told so in as many words.
+    love = to_result(page, "zodiac30", "Love")
+    check("the Love card says the reading they came for",
+          love and "came for" in love["cards"][0]["line"],
+          love and love["cards"][0]["line"])
 
     print("\n--- a funnel with no purpose block does none of it ---")
     # Served without the block rather than with an unknown tag: this is the
@@ -752,18 +754,20 @@ def rest_of_run(page):
         Handler.strip_purpose = False
     check("it still reaches the result", bare is not None)
     if bare:
-        check("  the locked sections are in report order",
-              [n["title"] for n in bare["locked"]] == CANON,
-              str([n["title"] for n in bare["locked"]]))
+        check("  the cards are in config order",
+              [n["key"] for n in bare["cards"]] == CANON,
+              str([n["key"] for n in bare["cards"]]))
         check("  the offer says the default line",
               bare["sub"] == DEFAULT_SUB, bare["sub"])
         check("  and nothing is marked as led",
-              not [n for n in bare["locked"] if n["lead"]],
-              str([n["title"] for n in bare["locked"] if n["lead"]]))
-        check("  every teaser at the tier it always had",
-              all(n["colour"] == FAINT and n["size"] == "14px"
-                  for n in bare["locked"]),
-              str([n["colour"] for n in bare["locked"]]))
+              not [n for n in bare["cards"] if n["lead"]],
+              str([n["key"] for n in bare["cards"] if n["lead"]]))
+        check("  every card at the edge it always had",
+              all(n["edge"] == LINE for n in bare["cards"]),
+              str([n["edge"] for n in bare["cards"]]))
+        check("  and the Love card promises what it promises everyone",
+              "came for" not in bare["cards"][0]["line"],
+              bare["cards"][0]["line"])
 
     print("\n--- and zodiac v1 renders the page it always did ---")
     # Asserted here rather than inferred from the block being absent: this is
@@ -771,19 +775,21 @@ def rest_of_run(page):
     v1 = to_result(page, "zodiac")
     check("it reaches its result", v1 is not None)
     if v1:
-        check("  its locked sections are in report order",
-              [n["title"] for n in v1["locked"]] == CANON,
-              str([n["title"] for n in v1["locked"]]))
+        check("  its cards are in config order",
+              [n["key"] for n in v1["cards"]] == CANON,
+              str([n["key"] for n in v1["cards"]]))
         check("  its offer says the default line", v1["sub"] == DEFAULT_SUB,
               v1["sub"])
         check("  nothing on it is marked as led",
-              not [n for n in v1["locked"] if n["lead"]],
-              str([n["title"] for n in v1["locked"] if n["lead"]]))
-        check("  and every teaser is faint, at fourteen",
-              all(n["colour"] == FAINT and n["size"] == "14px"
-                  for n in v1["locked"]),
-              str([(n["title"], n["colour"], n["size"])
-                   for n in v1["locked"]]))
+              not [n for n in v1["cards"] if n["lead"]],
+              str([n["key"] for n in v1["cards"] if n["lead"]]))
+        check("  and every card wears the ordinary edge",
+              all(n["edge"] == LINE for n in v1["cards"]),
+              str([(n["key"], n["edge"]) for n in v1["cards"]]))
+        check("  yet it is named and measured like its twin",
+              v1["subtype"].startswith("The ")
+              and v1["subtype"].replace("The ", "") in v1["head"],
+              "%s / %s" % (v1["subtype"], v1["head"]))
 
     print("\n--- the echo: their own frames, handed back ---")
     # A fire-leaning walk, which also carries the whole run to the analysing
