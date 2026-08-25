@@ -339,3 +339,6 @@ bottom.
 
 ## 2026-08-24 — claude/zodiac30-tap-echo
 - zodiac30: tap echo — choices as images and personalized lines
+
+## 2026-08-25 — claude/zodiac-rich-profile-paywall-r89u09
+- zodiac: rich subtype profile + question paywall, both funnels
