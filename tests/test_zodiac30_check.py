@@ -515,19 +515,19 @@ check("  and none of them states the price or leans on a token",
 print("\n--- interstitials ---")
 mids = cfg["interstitials"]
 anchors = [i["after_step"] for i in mids]
-check("eight of them, up from three", len(mids) == 8, str(len(mids)))
-check("anchors are 2/4/6/8/10/12/15/18",
-      anchors == [2, 4, 6, 8, 10, 12, 15, 18], str(anchors))
+# Down from eight. A beat every two steps is a rhythm the reader stops
+# reading; four of them close acts instead of punctuating pairs.
+check("four of them, down from eight", len(mids) == 4, str(len(mids)))
+check("anchors are 4/9/14/18", anchors == [4, 9, 14, 18], str(anchors))
 check("  in order, and none repeated",
       anchors == sorted(set(anchors)), str(anchors))
 check("  every one of them lands after a step that exists",
       all(1 <= a <= len(steps) for a in anchors), str(anchors))
 names = [steps[a - 1]["id"] for a in anchors]
-check("they land after sign/bond/landscape/moment/moonphase/drain/tide/seal",
-      names == ["sign", "bond", "landscape", "moment", "moonphase", "drain",
-                "tide", "seal"], str(names))
-check("  the first after the sign, the second after the personal pair",
-      names[:2] == ["sign", "bond"])
+check("they land after bond/symbol/decision/seal",
+      names == ["bond", "symbol", "decision", "seal"], str(names))
+check("  the first after the two steps that ask about the reader",
+      [s["id"] for s in steps][2:4] == ["seeking", "bond"])
 check("the last one closes the run rather than sitting inside it",
       anchors[-1] == len(steps))
 check("  so the walk hands off to the analysing screen",
@@ -541,18 +541,21 @@ check("every cta is the one this funnel uses",
       str(sorted({e["cta"] for e in mids})))
 check("kickers stay in the diagnostic voice",
       {e["kicker"] for e in mids}
-      <= {"Pattern detected", "Signal recorded", "Calibrating"},
+      <= {"Pattern detected", "Signal recorded", "Calibrating", "Deep layer"},
       str(sorted({e["kicker"] for e in mids})))
-check("  and are the twin's own three words, not new ones",
-      {e["kicker"] for e in mids}
-      <= {e["kicker"] for e in twin["interstitials"]},
-      str(sorted({e["kicker"] for e in mids}
-                 - {e["kicker"] for e in twin["interstitials"]})))
-check("templates are the three the twin ships",
-      {e["template"] for e in mids} == {"pattern", "confirm", "almost"},
+check("  four beats, four different ones",
+      len({e["kicker"] for e in mids}) == 4,
+      str(sorted({e["kicker"] for e in mids})))
+check("templates are ones the engine knows how to draw",
+      {e["template"] for e in mids} <= {"pattern", "confirm", "almost"},
       str(sorted({e["template"] for e in mids})))
-check("the personal beat counts the two personal steps behind it",
-      mids[1]["line"] == "Two personal signals in."
+# `almost` is the only one that draws the accent as a progress bar, so it
+# belongs on the two beats whose copy is about how far along the reader is.
+check("  the two progress beats are the ones drawn as a bar",
+      [e["after_step"] for e in mids if e["template"] == "almost"] == [9, 18],
+      str([(e["after_step"], e["template"]) for e in mids]))
+check("the opening beat counts the two personal steps behind it",
+      mids[0]["line"] == "Two personal signals in."
       and [s["id"] for s in steps][2:4] == ["seeking", "bond"])
 check("the closing beat counts every step",
       str(len(steps)) in mids[-1]["line"], mids[-1]["line"])
@@ -606,9 +609,9 @@ check("no interstitial leans on a token this vocabulary cannot fill",
       str([e["kicker"] for e in mids
            if DEAD.search((e.get("line") or "") + (e.get("sub") or ""))]))
 pct = [e for e in mids if "{pct}" in e["line"]]
-check("two of them are templated on progress", len(pct) == 2, str(len(pct)))
-check("  and the percentages they will show are honest",
-      [round(e["after_step"] / len(steps) * 100) for e in pct] == [44, 83],
+check("one of them is templated on progress", len(pct) == 1, str(len(pct)))
+check("  and the percentage it will show is honest",
+      [round(e["after_step"] / len(steps) * 100) for e in pct] == [50],
       str([round(e["after_step"] / len(steps) * 100) for e in pct]))
 check("working copy is the twin's",
       cfg["interstitial_working"] == twin["interstitial_working"])
@@ -618,9 +621,8 @@ print("\n--- and every one of them advances itself ---")
 # as barriers: a static screen and a mandatory tap, eight times. The mode is
 # per entry rather than per funnel because that is what engine.js reads, and
 # the twin must keep its button.
-AUTO = {2: 2000, 4: 2000, 6: 2000, 8: 2000, 10: 2000, 12: 2000, 15: 2000,
-        18: 2400}
-check("all eight carry auto_advance_ms",
+AUTO = {4: 2000, 9: 2000, 14: 2000, 18: 2400}
+check("all four carry auto_advance_ms",
       all(isinstance(e.get("auto_advance_ms"), int) for e in mids),
       str([e["after_step"] for e in mids
            if not isinstance(e.get("auto_advance_ms"), int)]))
@@ -649,33 +651,36 @@ for slug in ("kitchen", "kitchen-visualizer"):
                if "auto_advance_ms" in e])
 # Trimmed for the format. Two seconds is a kicker and a line; a third line
 # under them is one nobody finishes before the screen goes.
-WITH_SUB = [4, 10, 18]
-check("only three of them keep a sub",
+WITH_SUB = [4, 14, 18]
+check("three of them keep a sub",
       [e["after_step"] for e in mids if e.get("sub")] == WITH_SUB,
       str([e["after_step"] for e in mids if e.get("sub")]))
-check("  and the other five carry no sub key at all",
+check("  and the fourth carries no sub key at all",
       not [e["after_step"] for e in mids
            if "sub" in e and e["after_step"] not in WITH_SUB],
       str([e["after_step"] for e in mids
            if "sub" in e and e["after_step"] not in WITH_SUB]))
-check("  the subs that stayed are one short line each",
-      all(len(e["sub"]) <= 40 and "\n" not in e["sub"]
+check("  the subs are one short line each",
+      all(len(e["sub"]) <= 45 and "\n" not in e["sub"]
           for e in mids if e.get("sub")),
       str([(e["after_step"], len(e["sub"])) for e in mids if e.get("sub")]))
-check("every line survived the trim",
+check("the four base lines are the ones written for them",
       [e["line"] for e in mids] == [
-          "Sign locked.", "Two personal signals in.",
-          "One element keeps pulling ahead.", "Profile {pct}% calibrated.",
-          "Moon signal recorded.", "Inverse signal locked.",
-          "Deep layer mapped. {pct}% calibrated.", "All 18 signals in."],
+          "Two personal signals in.", "Profile {pct}% calibrated.",
+          "Deep layer mapped.", "All 18 signals in."],
       str([e["line"] for e in mids]))
-# The count that went with the trim: "Three signals left." was the sub of the
-# after-15 beat, and dropping it takes the claim with it. What is left has to
-# still be true, which the scan above is what tests.
-check("no dropped sub took a claim the copy still makes",
-      not [e for e in mids if "signals left" in e.get("sub", "")],
-      str([e["after_step"] for e in mids
-           if "signals left" in e.get("sub", "")]))
+check("  and the closing one sets up the rarity the result page prints",
+      mids[-1]["sub"] == "Most blends are common — let's see yours.",
+      mids[-1].get("sub"))
+
+# And nothing on a beat is a figure nobody measured. {pct} is arithmetic off
+# the walk and is checked above; anything else numeric would not be.
+STAT = re.compile(r"\b\d+\s*%")
+check("no beat prints a percentage that is not {pct}",
+      not [t for e in mids for t in sentences(e)
+           if STAT.search(t.replace("{pct}%", ""))],
+      str([t for e in mids for t in sentences(e)
+           if STAT.search(t.replace("{pct}%", ""))]))
 
 print("\n--- the echo: which frames each beat hands back ---")
 # Each interstitial shows the images the reader tapped on the steps it
@@ -696,8 +701,9 @@ check("every step is handed back exactly once",
       str(sorted(set(echoed) ^ {s["id"] for s in steps})))
 check("  and in the order they were walked",
       echoed == [s["id"] for s in steps], str(echoed))
-check("the six early beats hand back two, the last two hand back three",
-      [len(e["echo_steps"]) for e in mids] == [2, 2, 2, 2, 2, 2, 3, 3],
+check("the four beats hand back 4/5/5/4, which is every step once",
+      [len(e["echo_steps"]) for e in mids] == [4, 5, 5, 4]
+      and sum(len(e["echo_steps"]) for e in mids) == len(steps),
       str([len(e["echo_steps"]) for e in mids]))
 check("the funnel asks for the analysing grid too",
       cfg.get("analyzing_echo") is True, str(cfg.get("analyzing_echo")))
@@ -726,65 +732,94 @@ for slug in ("zodiac", "kitchen", "kitchen-visualizer"):
                if "echo_steps" in e]))
 
 print("\n--- the lines that say what the run said ---")
+# Keyed by `axis` for the two accumulated readings and by `step` for the one
+# that answers a single question back. The full sentence is written out here
+# as the reader hears it — line then sub — because that is the thing being
+# reviewed, not the two halves it is stored in.
 PERSONAL = {
-    4: ("purpose", {
-        "purpose_love": ("Your love signal is strong.",
-                         "It's shaping what we ask next."),
-        "purpose_career": ("Your ambition signal is strong.",
-                           "It's shaping what we ask next."),
-        "purpose_peace": ("Your calm signal is strong.",
-                          "It's shaping what we ask next."),
-        "purpose_path": ("Your forward signal is strong.",
-                         "It's shaping what we ask next.")}),
-    6: ("element", {
-        "fire": ("Fire keeps pulling ahead.", None),
-        "earth": ("Earth keeps pulling ahead.", None),
-        "air": ("Air keeps pulling ahead.", None),
-        "water": ("Water keeps pulling ahead.", None)}),
-    8: ("energy", {
-        "sun": ("You lean Sun. Profile {pct}% calibrated.", None),
-        "moon": ("You lean Moon. Profile {pct}% calibrated.", None)}),
-    15: ("element", {
-        "fire": ("Your fire runs deep. Three signals left.", None),
-        "earth": ("Your earth runs deep. Three signals left.", None),
-        "air": ("Your air runs deep. Three signals left.", None),
-        "water": ("Your water runs deep. Three signals left.", None)}),
+    4: ("axis", "purpose", {
+        "purpose_love": "A {sign} looking for love. That narrows it fast.",
+        "purpose_career":
+            "A {sign} chasing momentum. That narrows it fast.",
+        "purpose_peace":
+            "A {sign} guarding their peace. That narrows it fast.",
+        "purpose_path":
+            "A {sign} mapping the road ahead. That narrows it fast."}),
+    9: ("axis", "element", {
+        "fire": "Fire keeps winning. If it holds, your reading changes.",
+        "earth": "Earth keeps winning. If it holds, your reading changes.",
+        "air": "Air keeps winning. If it holds, your reading changes.",
+        "water": "Water keeps winning. If it holds, your reading changes."}),
+    14: ("step", "decision", {
+        "dc14a": "You choose with your heart first. Few admit that.",
+        "dc14b": "You choose with your head first. The heart still votes.",
+        "dc14c": "Gut first. Your fastest signal is usually your truest.",
+        "dc14d":
+            "You let time decide. Patience is a strategy, not a delay."}),
 }
 by_after = {e["after_step"]: e for e in mids}
-check("four of the eight carry a personal block",
+check("three of the four carry a personal block",
       sorted(e["after_step"] for e in mids if "personal" in e)
       == sorted(PERSONAL), str(sorted(e["after_step"] for e in mids
                                       if "personal" in e)))
-check("  and the other four keep the static lines they were written with",
-      [by_after[a]["line"] for a in (2, 10, 12, 18)] == [
-          "Sign locked.", "Moon signal recorded.", "Inverse signal locked.",
-          "All 18 signals in."],
-      str([by_after[a]["line"] for a in (2, 10, 12, 18)]))
-for after, (axis, rows) in sorted(PERSONAL.items()):
+check("  and the closing one is static, because there is nothing left to read",
+      by_after[18]["line"] == "All 18 signals in."
+      and "personal" not in by_after[18])
+for after, (kind, key, rows) in sorted(PERSONAL.items()):
     rule = by_after[after]["personal"]
-    check("  after %-2d turns on %s" % (after, axis),
-          rule.get("axis") == axis, str(rule.get("axis")))
-    check("    with a line for every tag on it",
+    check("  after %-2d turns on %s %s" % (after, kind, key),
+          rule.get(kind) == key, str(rule))
+    check("    and on nothing else",
+          sorted(rule) == sorted([kind, "lines"]), str(sorted(rule)))
+    check("    with a line for every %s it can resolve to" % kind,
           sorted(rule.get("lines") or {}) == sorted(rows),
           str(sorted(rule.get("lines") or {})))
-    for tag, (line, sub) in sorted(rows.items()):
+    for tag, said in sorted(rows.items()):
         got = (rule.get("lines") or {}).get(tag) or {}
-        check("    %-14s says %s" % (tag, '"%s"' % line[:38]),
-              got.get("line") == line, repr(got.get("line")))
-        check("      %s" % ("with its sub" if sub else "and no sub"),
-              got.get("sub") == sub if sub else "sub" not in got,
-              repr(got.get("sub")))
+        whole = " ".join(x for x in (got.get("line"), got.get("sub")) if x)
+        check("    %-14s says %s" % (tag, '"%s"' % said[:40]),
+              whole == said, repr(whole))
+        check("      in two halves, so the block keeps its shape",
+              bool(got.get("line")) and bool(got.get("sub")), repr(got))
+# The step-keyed block names cards rather than tags, so every key has to be
+# an image on that step — a key that is not is a line nobody can ever reach.
+step_rules = [(a, r["personal"]) for a, r in by_after.items()
+              if "step" in (r.get("personal") or {})]
+for after, rule in step_rules:
+    on = [i["id"] for st in steps if st["id"] == rule["step"]
+          for p in st["pairs"] for i in p["images"]]
+    check("  after %-2d names every card on the %s step and no others"
+          % (after, rule["step"]),
+          sorted(rule["lines"]) == sorted(on), str(sorted(on)))
+# {sign} is the other new one. It resolves off the slot the funnel already
+# declares for the result page, so a line that writes it and a config that
+# does not declare it is a screen that silently falls back forever.
+signed = [t for a, (_k, _v, rows) in PERSONAL.items() for t in rows.values()
+          if "{sign}" in t]
+check("the opening beat is the one that names their sign",
+      len(signed) == 4 and all("{sign}" in t
+                               for t in PERSONAL[4][2].values()),
+      str(len(signed)))
+check("  and the funnel declares where {sign} comes from",
+      (cfg["report"]["hook_slots"].get("sign") or {}).get("step") == "sign",
+      str(cfg["report"]["hook_slots"].get("sign")))
+check("  which is a step this walk actually has",
+      "sign" in [s["id"] for s in steps])
 # The two kinds of axis the engine knows, named against what it actually
 # declares — a config naming an axis this file has never heard of would
 # resolve to nothing, silently, on every run.
 declared = set(re.findall(r"(\w+):\s*\w+_AXIS",
                           re.search(r"var AXES = \{([^}]*)\}",
                                     engine, re.S).group(1)))
-for after, (axis, _) in sorted(PERSONAL.items()):
-    scoring = axis in declared
-    check("  %-8s is %s" % (axis, "a scoring axis" if scoring
+for after, (kind, key, _rows) in sorted(PERSONAL.items()):
+    if kind == "step":
+        check("  %-8s is a step, resolved to the card they tapped" % key,
+              key in [s["id"] for s in steps], key)
+        continue
+    scoring = key in declared
+    check("  %-8s is %s" % (key, "a scoring axis" if scoring
                             else "a service prefix"),
-          scoring or axis in {"purpose", "bond"}, axis)
+          scoring or key in {"purpose", "bond"}, key)
 check("engine.js declares the two this funnel scores on",
       {"element", "energy"} <= declared, str(sorted(declared)))
 check("  and still declares the three it always did",
@@ -797,10 +832,10 @@ check("  energy is sun and moon",
       re.search(r"var ENERGY_AXIS = \[([^\]]*)\]", engine).group(1)
       .replace('"', "").replace(" ", "").split(",") == ["sun", "moon"])
 # Every service prefix an axis names has to be a tag the quiz can produce.
-for after, (axis, rows) in sorted(PERSONAL.items()):
-    if axis in declared:
+for after, (kind, key, rows) in sorted(PERSONAL.items()):
+    if kind != "axis" or key in declared:
         continue
-    check("  every %s tag is one a card carries" % axis,
+    check("  every %s tag is one a card carries" % key,
           set(rows) <= {t for i in images for t in i["tags"]},
           str(sorted(set(rows) - {t for i in images for t in i["tags"]})))
 
@@ -1308,8 +1343,17 @@ check("the slug is routable", config.funnel_exists("zodiac30"))
 check("  and is a legal slug for the /<slug> route",
       config.valid_slug("zodiac30"))
 check("load_funnel returns this config", config.load_funnel("zodiac30") == cfg)
-check("payments reads it as a live-mode funnel",
-      payments._stripe_mode(cfg) == payments.LIVE, payments._stripe_mode(cfg))
+# The sandbox, deliberately. Both funnels are on the STRIPE_TEST_* key set
+# while the rebuilt report is walked end to end with a 4242 card, and they
+# take no real money until this goes back to "live". The value is pinned
+# rather than merely checked for presence because payments._stripe_mode reads
+# exactly "test" and calls everything else live, so a typo in either
+# direction is silent — one way the funnel stops charging, the other way it
+# charges a card nobody meant to charge.
+check("stripe_mode is the literal test", cfg.get("stripe_mode") == "test",
+      repr(cfg.get("stripe_mode")))
+check("payments reads it as a test-mode funnel",
+      payments._stripe_mode(cfg) == payments.TEST, payments._stripe_mode(cfg))
 choices = [s["pairs"][0]["images"][0]["id"] for s in steps]
 check("checkout accepts an 18-long choice list",
       payments._clean_choices(cfg, choices) == choices)
@@ -1643,6 +1687,14 @@ check("every photograph on it is a frame this run tapped",
       all(i in leo for i in content["visuals"]["sections"].values())
       and all(i in leo for i in content["visuals"]["hero"].values()),
       str(content["visuals"]))
+# The same rules over every sentence a beat can put on screen, personalised
+# ones included — those are the lines only some runs ever read, which is
+# exactly where a word slips through unnoticed.
+mid_dirty = [(t[:48], reports._banned_hit(t, reports.ZODIAC_BANNED))
+             for e in mids for t in sentences(e)
+             if t and reports._banned_hit(t, reports.ZODIAC_BANNED)]
+check("no interstitial says a banned word, on any run", not mid_dirty,
+      str(mid_dirty))
 check("nothing delivered says a banned word",
       reports._banned_hit(content["sections"], reports.ZODIAC_BANNED) is None,
       str(reports._banned_hit(content["sections"], reports.ZODIAC_BANNED)))

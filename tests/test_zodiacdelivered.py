@@ -491,6 +491,19 @@ def delivered(page):
           page.inner_text(".zr-crossline") == card["cross_line"],
           page.inner_text(".zr-crossline"))
 
+    # The contact sheet, off the tap order the report stored. This tab never
+    # ran the quiz, so there is nothing here to recompute it from.
+    want_taps = REPORTS["zodiac"]["visuals"]["taps"]
+    grid = [src.split("/")[-1].split(".")[0] for src in
+            page.eval_on_selector_all(".zr-taps-grid .zr-tap img",
+                                      "ns => ns.map(n => n.getAttribute('src'))")]
+    check("the whole run is handed back as a grid",
+          grid == want_taps, str(grid))
+    check("  every square one they tapped",
+          all(image_id in CHOICES["zodiac"] for image_id in grid), str(grid))
+    check("  and none of them labelled",
+          page.locator(".zr-tap-name").count() == 0)
+
     nodes = page.eval_on_selector_all(
         ".zr-node", "ns => ns.map(n => [n.className,"
                     " n.querySelector('.zr-node-title').innerText])")

@@ -81,21 +81,29 @@ check("accent is a fragment of the subtext",
       cfg["swipe"]["subtext_accent"] in cfg["swipe"]["subtext"],
       "%r not in %r" % (cfg["swipe"]["subtext_accent"],
                         cfg["swipe"]["subtext"]))
-check("subtext accent names the time",
-      cfg["swipe"]["subtext_accent"] == "60 seconds",
+# The subtext stopped promising a duration and started teasing the rarity the
+# result page ends on, so the accent moved onto the count — the number is the
+# thing that should light up, and it is checked against the walk rather than
+# read twice.
+check("subtext accent names the count",
+      cfg["swipe"]["subtext_accent"] == "%d taps" % cfg["swipe"]["pairs_count"],
       cfg["swipe"].get("subtext_accent"))
-# Live, as of go-live. It was on the sandbox key set while the funnel was
-# being walked end to end with a 4242 card; it now takes money on the same
-# account kitchen-visualizer does. The value is pinned rather than merely
-# checked for presence because payments._stripe_mode reads exactly "test" and
-# calls everything else live — so a typo in the other direction is a funnel
-# that silently stops charging anybody.
-check("stripe_mode is the literal live", cfg.get("stripe_mode") == "live",
+# The sandbox, deliberately. Both funnels are on the STRIPE_TEST_* key set
+# while the rebuilt report is walked end to end with a 4242 card, and they
+# take no real money until this goes back to "live". The value is pinned
+# rather than merely checked for presence because payments._stripe_mode reads
+# exactly "test" and calls everything else live, so a typo in either
+# direction is silent — one way the funnel stops charging, the other way it
+# charges a card nobody meant to charge.
+check("stripe_mode is the literal test", cfg.get("stripe_mode") == "test",
       repr(cfg.get("stripe_mode")))
-check("  the same value kitchen-visualizer carries",
-      cfg.get("stripe_mode") == json.load(
-          open(os.path.join(ROOT, "funnels/kitchen-visualizer.json")))
-      .get("stripe_mode"))
+# The other three funnels are unaffected: kitchen-visualizer stays live and
+# kitchen declares no mode at all, which payments reads as live.
+check("  while the kitchens stay where they were",
+      json.load(open(os.path.join(ROOT, "funnels/kitchen-visualizer.json")))
+      .get("stripe_mode") == "live"
+      and "stripe_mode" not in json.load(
+          open(os.path.join(ROOT, "funnels/kitchen.json"))))
 
 print("\n--- steps ---")
 WANT = [
@@ -704,10 +712,10 @@ check("the slug is routable", config.funnel_exists("zodiac"))
 # The mode is pinned as a string above; this is the half that matters — that
 # payments.py agrees the string means live, and so reaches for the live key
 # set rather than the sandbox one.
-check("payments reads this funnel as a live-mode funnel",
-      payments._stripe_mode(cfg) == payments.LIVE,
+check("payments reads this funnel as a test-mode funnel",
+      payments._stripe_mode(cfg) == payments.TEST,
       payments._stripe_mode(cfg))
-check("  which is the key set kitchen has always been on",
+check("  while kitchen stays on the live key set it has always been on",
       payments._stripe_mode(config.load_funnel("kitchen")) == payments.LIVE)
 check("  a mode payments does not know would be live, not an error",
       payments._stripe_mode({"stripe_mode": "sandbox"}) == payments.LIVE)
@@ -1058,6 +1066,11 @@ try:
     content = reports.start_report(1, "zodiac", "deep_water",
                                    {"water": 8, "moon": 6, "mystic": 5},
                                    choices=leo)
+    # The same call for the other product, so "kitchen prints no contact
+    # sheet" is asserted against a kitchen report rather than inferred.
+    kitchen_content = reports.start_report(2, "kitchen", "modern_rustic",
+                                           {"warm": 4},
+                                           choices=kitchen_choices)
 finally:
     database.execute, database.query_all, reports._api = _saved
 
@@ -1078,8 +1091,14 @@ check("the free result's elements are carried into the paid view",
       len(content.get("elements") or []) == 6, str(content.get("elements")))
 stored_visuals = content.get("visuals") or {}
 check("and the photographs it is illustrated with",
-      set(stored_visuals) == {"sections", "hero", "profile"},
+      set(stored_visuals) == {"sections", "hero", "profile", "taps"},
       str(sorted(stored_visuals)))
+# The whole run, in the order they tapped it, because the delivered page and
+# the PDF both draw the contact sheet the free page draws and neither has a
+# run to read it off.
+check("  and the whole run, in the order it was tapped",
+      stored_visuals.get("taps") == leo,
+      str(stored_visuals.get("taps")))
 # The hero card, measured while the run still existed, beside the pictures
 # rather than among them: the delivered page, the PDF and the mail are all
 # built by something that never had the run to compute it from.
@@ -1127,6 +1146,41 @@ check("nothing delivered says a banned word",
       reports._banned_hit(content["sections"], reports.ZODIAC_BANNED) is None,
       str(reports._banned_hit(content["sections"], reports.ZODIAC_BANNED)))
 
+# Every string this funnel puts on a screen that the report's own voice rules
+# apply to: the paywall copy, the quiz subtext, the interstitial sentences and
+# the free strength. The config-wide word list above is a blunter instrument;
+# this is the same regex set the model's output is held to.
+SAID = [cfg["swipe"]["subtext"], cfg["swipe"]["headline"]]
+SAID += [v for v in cfg["checkout"]["commerce"].values()
+         if isinstance(v, str)]
+SAID += [t for v in cfg["checkout"]["commerce"].values()
+         if isinstance(v, list) for t in v]
+for entry in cfg.get("interstitials") or []:
+    SAID += [entry.get("line") or "", entry.get("sub") or ""]
+    for row in ((entry.get("personal") or {}).get("lines") or {}).values():
+        SAID += [row.get("line") or "", row.get("sub") or ""]
+for style in cfg["styles"]:
+    one = style["reveals"]["mistake_one"]
+    SAID += [one["title"], one["body"], one["fix"]]
+said_dirty = [(t[:48], reports._banned_hit(t, reports.ZODIAC_BANNED))
+              for t in SAID if reports._banned_hit(t, reports.ZODIAC_BANNED)]
+check("nothing this funnel says on screen says a banned word",
+      not said_dirty, str(said_dirty))
+# The free strength is the block the reader meets first, so its shape is
+# pinned rather than left to the prompt that writes the other four.
+SENT = re.compile(r"[.!?](?:\s|$)")
+for style in cfg["styles"]:
+    one = style["reveals"]["mistake_one"]
+    check("  %-15s says it in two sentences and one" % style["id"],
+          len(SENT.findall(one["body"])) == 2
+          and 1 <= len(SENT.findall(one["fix"])) <= 2,
+          "%d / %d" % (len(SENT.findall(one["body"])),
+                       len(SENT.findall(one["fix"]))))
+    check("    and inside the budget the other four are asked for",
+          len(one["body"]) <= reports._budgets("mistakes")["body"]
+          and len(one["fix"]) <= reports._budgets("mistakes")["fix"],
+          "%d / %d" % (len(one["body"]), len(one["fix"])))
+
 print("\n--- and the PDF a buyer is emailed ---")
 html_out = reports._pdf_html(content)
 cover_out = html_out.split('<section class="cover">')[1].split("</section>")[0]
@@ -1154,6 +1208,31 @@ check("it draws the print copies of this run's own images",
       'src="img/print/' in html_out
       and "galleries/zodiac" not in html_out,
       str(re.findall(r'<img src="([^"]+)"', html_out)))
+# The contact sheet, on paper. Its own block over the first chapter rather
+# than another row on a cover that is already a full page.
+sheet = html_out.split('<section class="taps">')[1].split("</section>")[0]
+check("the contact sheet is the whole run, on paper",
+      html_out.count('<section class="taps">') == 1
+      and sheet.count('class="tapcell"') == len(steps),
+      "%d cells, %d steps" % (sheet.count('class="tapcell"'), len(steps)))
+check("  every square a print copy rather than a gallery original",
+      len(re.findall(r'<span class="tapcell"><img src="img/print/', sheet))
+      == len(steps),
+      str(re.findall(r'<img src="([^"]+)"', sheet)[:3]))
+check("  and every one of those files is on disk, under its ceiling",
+      all(os.path.isfile(os.path.join(ROOT, "static", src))
+          and os.path.getsize(os.path.join(ROOT, "static", src)) <= 60 * 1024
+          for src in re.findall(r'<img src="([^"]+)"', sheet)),
+      str([src for src in re.findall(r'<img src="([^"]+)"', sheet)
+           if not os.path.isfile(os.path.join(ROOT, "static", src))]))
+check("  it stands over the first chapter, not on the cover",
+      html_out.index('<section class="taps">')
+      > html_out.index('<section class="cover">')
+      and html_out.index('<section class="taps">')
+      < html_out.index('<div class="section">'))
+check("kitchen's report draws no sheet at all",
+      "tapcell" not in reports._pdf_html(kitchen_content),
+      "tapcell" in reports._pdf_html(kitchen_content))
 check("the year map has no empty Skip block in print",
       "<b>Skip</b>" not in reports._pdf_section_body(
           {"id": "shopping", "data": by_section["shopping"]}, True))
@@ -1346,13 +1425,40 @@ check("shopping still 4-12 items, 0-3 skips",
 check("no text ceiling anywhere is above 600",
       max(c for sid in reports.SHAPE for _, c in declared_caps(sid).values())
       == 600)
-check("every zodiac budget is derived from SHAPE, not written out again",
-      all(reports._budget(cap) == asked
-          for sid, _ in SHAPE_OF
-          for path, (floor, cap) in declared_caps(sid).items()
-          for asked in [dict((p, int(n)) for p, n in
-                             BUDGET_RE.findall(reports.ZODIAC_SPEC[sid]))
-                        [path]]))
+# Derived from SHAPE, except where a section has deliberately been asked for
+# less than the validator would take. PROMPT_CAP is the only thing allowed to
+# move a number and it may only move it down — a prompt that asked for MORE
+# than the ceiling would be a section written to be thrown away.
+def _asked(sid):
+    return dict((p, int(n))
+                for p, n in BUDGET_RE.findall(reports.ZODIAC_SPEC[sid]))
+
+
+loosened = [(sid, path, asked, reports._budget(cap))
+            for sid, _ in SHAPE_OF
+            for path, (_floor, cap) in declared_caps(sid).items()
+            for asked in [_asked(sid)[path]]
+            if asked > reports._budget(cap)]
+check("no zodiac budget asks for more than SHAPE derives", not loosened,
+      str(loosened))
+tightened = [(sid, path, asked, reports._budget(cap))
+             for sid, _ in SHAPE_OF
+             for path, (_floor, cap) in declared_caps(sid).items()
+             for asked in [_asked(sid)[path]]
+             if asked < reports._budget(cap)]
+check("  and the only ones asking for less are the ones PROMPT_CAP names",
+      {(sid, path.split(".")[-1]) for sid, path, _a, _d in tightened}
+      == {(sid, field) for sid, fields in reports.PROMPT_CAP.items()
+          for field in fields},
+      str(sorted((sid, path) for sid, path, _a, _d in tightened)))
+check("  which is the five hidden strengths, cut to two sentences and one",
+      sorted(reports.PROMPT_CAP) == ["mistakes"]
+      and reports.PROMPT_CAP["mistakes"] == {"body": 240, "fix": 140},
+      str(reports.PROMPT_CAP))
+check("  and nothing in SHAPE moved to do it — the ceilings are still 600",
+      reports.SHAPE["mistakes"]["items"][3]["body"][2] == 600
+      and reports.SHAPE["mistakes"]["items"][3]["fix"][2] == 600,
+      str(reports.SHAPE["mistakes"]["items"][3]))
 
 print("\n--- what the kitchen funnels must not have picked up ---")
 # engine.js, mazzin.css and tracking.py all moved for this funnel. Every one
@@ -1600,11 +1706,12 @@ for slug in ("kitchen", "kitchen-visualizer"):
     check("  and its consent line", "consent" in other["checkout"]["commerce"])
 
 print("\n--- the header names the product ---")
-check("subtext names it",
-      cfg["swipe"]["subtext"] == "Your Cosmic Profile in 60 seconds of taps",
+check("subtext teases the rarity rather than the clock",
+      cfg["swipe"]["subtext"]
+      == "Most cosmic blends are common. Yours takes 12 taps.",
       cfg["swipe"]["subtext"])
-check("  with the accent still on the time",
-      cfg["swipe"]["subtext_accent"] == "60 seconds"
+check("  with the accent on the count it is teasing",
+      cfg["swipe"]["subtext_accent"] == "12 taps"
       and cfg["swipe"]["subtext_accent"] in cfg["swipe"]["subtext"])
 check("  and the headline still pairs with it",
       cfg["swipe"]["headline"].lower().startswith("your cosmic profile"),

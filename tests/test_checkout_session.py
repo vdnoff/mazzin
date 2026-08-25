@@ -70,9 +70,16 @@ def post(cfg_override=None, body=None):
     # mode it transacts in and the route looks the matching secret up per call,
     # so module state is no longer what decides whether checkout is possible.
     real_key = config.STRIPE_SECRET_KEY
+    real_test_key = config.STRIPE_TEST_SECRET_KEY
     real_load = config.load_funnel
     stripe.checkout.Session.create = rec
     config.STRIPE_SECRET_KEY = "sk_test_notreal"
+    # Both key sets, because both funnels asked for here transact: kitchen on
+    # the live set and zodiac on the sandbox one while it is being walked with
+    # a 4242 card. Which set a mode reaches for is test_modes.py's subject;
+    # this suite is about the session that gets built either way, and a funnel
+    # refusing checkout for want of a key would test nothing it means to.
+    config.STRIPE_TEST_SECRET_KEY = "sk_test_notreal_sandbox"
     if cfg_override is not None:
         config.load_funnel = lambda slug: cfg_override
         payments.config.load_funnel = config.load_funnel
@@ -82,6 +89,7 @@ def post(cfg_override=None, body=None):
     finally:
         stripe.checkout.Session.create = real_create
         config.STRIPE_SECRET_KEY = real_key
+        config.STRIPE_TEST_SECRET_KEY = real_test_key
         config.load_funnel = real_load
         payments.config.load_funnel = real_load
     return res, rec.kwargs

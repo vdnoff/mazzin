@@ -231,18 +231,34 @@ def run(page):
     check("the sign line is this sign against this lead",
           cross == table["sign_cross"][SIGN][lead_el.lower()], cross)
 
-    print("\n--- the taps strip is what they actually tapped ---")
+    print("\n--- the contact sheet is the whole run ---")
     tapped = {src for _, src in taken.values()}
     strip = [s.split("/")[-1] for s in page.eval_on_selector_all(
-        ".zr-tap img", "ns => ns.map(n => n.getAttribute('src'))")]
-    check("at least four frames are shown", len(strip) >= 4, str(strip))
+        ".zr-taps-grid .zr-tap img", "ns => ns.map(n => n.getAttribute('src'))")]
+    check("every step of the walk is a square on it",
+          len(strip) == len(cfg["swipe"]["steps"]),
+          "%d squares, %d steps" % (len(strip), len(cfg["swipe"]["steps"])))
     check("  and every one of them was tapped in this run",
           all(src in tapped for src in strip),
           str([s for s in strip if s not in tapped]))
-    labels = page.eval_on_selector_all(
-        ".zr-tap-name", "ns => ns.map(n => n.innerText.trim())")
-    check("  each named", all(labels) and len(labels) == len(strip),
-          str(labels))
+    check("  none of them repeated",
+          len(set(strip)) == len(strip), str(strip))
+    check("nothing is labelled — at a sixth of the width a caption is two "
+          "clipped words",
+          page.locator(".zr-tap-name").count() == 0
+          and not any(page.eval_on_selector_all(
+              ".zr-taps-grid .zr-tap", "ns => ns.map(n => n.innerText.trim())")))
+    check("  six to a row",
+          len(page.eval_on_selector(
+              ".zr-taps-grid",
+              "n => getComputedStyle(n).gridTemplateColumns").split()) == 6,
+          page.eval_on_selector(".zr-taps-grid",
+                                "n => getComputedStyle(n).gridTemplateColumns"))
+    check("  and they are square",
+          page.eval_on_selector(".zr-taps-grid .zr-tap img", """n => {
+              const r = n.getBoundingClientRect();
+              return Math.abs(r.width - r.height) < 1.5;
+          }"""))
 
     print("\n--- the one strength they get for nothing ---")
     nodes = page.eval_on_selector_all(".zr-node", """ns => ns.map(n => ({
@@ -268,7 +284,19 @@ def run(page):
           page.inner_text(".zr-lead"))
     check("  and the strength itself is there in full",
           page.locator(".zr-strength-title").count() == 1
-          and len(page.inner_text(".zr-strength-body")) > 200)
+          and len(page.inner_text(".zr-strength-body")) > 120)
+    # Two sentences and one. It ran to a hundred and ten words, which on a
+    # phone is a paragraph the reader scrolls past to find the price.
+    body = page.inner_text(".zr-strength-body")
+    fix = page.inner_text(".zr-strength-fix")
+    sentences = lambda text: len(re.findall(r"[.!?](?:\s|$)", text))
+    check("  the body is exactly two sentences", sentences(body) == 2,
+          "%d: %r" % (sentences(body), body))
+    check("  the fix is one, two at the most",
+          1 <= sentences(fix) <= 2, "%d: %r" % (sentences(fix), fix))
+    check("  and the pair of them is a hit rather than an essay",
+          len(body.split()) + len(fix.split()) <= 60,
+          len(body.split()) + len(fix.split()))
     check("the element balance chart is gone — the hero says it now",
           page.locator(".zr-bal").count() == 0)
 
@@ -369,20 +397,69 @@ def run(page):
           repr(label))
     check("  and enabled, because consent is satisfied",
           page.get_attribute(".zr-offer #pay-button", "disabled") is None)
+    commerce = cfg["checkout"]["commerce"]
     check("the anchor names what it undercuts",
-          cfg["checkout"]["commerce"]["anchor_head_accent"]
-          in page.inner_text(".zr-anchor"), page.inner_text(".zr-anchor"))
+          commerce["price_anchor_accent"] in page.inner_text(".zr-anchor"),
+          page.inner_text(".zr-anchor"))
+    check("  and no longer states the price itself",
+          "$3" not in page.inner_text(".zr-anchor"),
+          page.inner_text(".zr-anchor"))
     check("the trust line is built from the commerce strings",
           all(part in page.inner_text(".zr-trust")
-              for part in cfg["checkout"]["commerce"]["trust"]),
+              for part in commerce["trust"]),
           page.inner_text(".zr-trust"))
+    check("  and no longer repeats what the badges say",
+          "recurring" not in page.inner_text(".zr-trust").lower()
+          and "one-time" not in page.inner_text(".zr-trust").lower(),
+          page.inner_text(".zr-trust"))
+
+    print("\n--- and the price is the loudest thing on the card ---")
+    # The card used to open on the comparison, which made the $75 the first
+    # number the eye stopped at. What the reader is deciding about is their
+    # own price, so it has to win by a distance rather than by a point.
+    sized = page.eval_on_selector_all(".zr-offer *", """ns => ns
+        .filter(n => (n.innerText || '').trim()
+                     && !n.querySelector('*'))
+        .map(n => [n.className || n.id,
+                   parseFloat(getComputedStyle(n).fontSize),
+                   n.innerText.trim()])""")
+    price = [r for r in sized if "zr-price-now" in str(r[0])]
+    anchor = [r for r in sized if "zr-anchor" in str(r[0])
+              or "zr-gold" in str(r[0])]
+    check("the price is on the card, as this funnel formats it",
+          len(price) == 1
+          and price[0][2] == "$%d" % (cfg["pricing"]["amount_cents"] // 100),
+          str(price))
+    check("  set larger than the anchor line it replaced at the top",
+          anchor and price[0][1] > max(r[1] for r in anchor),
+          "%s vs %s" % (price[0][1] if price else None,
+                        [r[1] for r in anchor]))
+    check("  and larger than anything else on the card",
+          price[0][1] > max(r[1] for r in sized if r is not price[0]),
+          str(sorted(((r[1], r[2][:20]) for r in sized), reverse=True)[:3]))
+    check("  with what kind of charge it is beside it",
+          page.inner_text(".zr-price-note") == commerce["price_note"],
+          page.inner_text(".zr-price-note"))
+    badges = page.eval_on_selector_all(
+        ".zr-badge", "ns => ns.map(n => n.innerText.trim())")
+    check("the two badges a card form is actually asked about are on it",
+          badges == [b.upper() for b in commerce["badges"]], str(badges))
+    check("  above the button rather than in the footer under it",
+          page.evaluate("""() => {
+              const b = document.querySelector('.zr-badge')
+                                .getBoundingClientRect();
+              const pay = document.querySelector('.zr-offer #pay-button')
+                                  .getBoundingClientRect();
+              return b.bottom <= pay.top;
+          }"""))
 
     print("\n--- and it can be read on a phone ---")
     # The token these carry measured 4.14:1 on this background, under the 4.5
     # a body size needs, and it was the colour of every teaser line.
     MINIMUM = {".zr-card-line": 14, ".zr-lead": 14, ".zr-strength-body": 15,
                ".zr-crossline": 14, ".zr-bridge": 14, ".zr-formula": 12,
-               ".zr-split-caption": 11, ".zr-trust": 12}
+               ".zr-split-caption": 11, ".zr-trust": 12,
+               ".zr-anchor": 12, ".zr-price-note": 14, ".zr-badge": 10}
     for selector, floor in sorted(MINIMUM.items()):
         got = page.eval_on_selector(selector, """n => {
             const c = getComputedStyle(n);
