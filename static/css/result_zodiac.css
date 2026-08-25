@@ -583,17 +583,70 @@ body:has(.result-module) {
   color: var(--zr-text);
 }
 
+/* The comparison, demoted. It was the first number on the card and the
+   biggest sentence on it; it is a footnote to the price now. */
 .zr-anchor {
-  margin: 0;
-  font-size: 15px;
+  margin: 0 0 4px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--zr-text);
+  letter-spacing: 0.02em;
+  color: var(--zr-faint);
 }
 
 .zr-gold { color: var(--zr-gold); }
 
+/* What the reader is actually deciding about. Nothing else on this card comes
+   near it, which is the whole point: at 15px beside a $75 in gold, the $3 was
+   the second number the eye found. */
+.zr-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.zr-price-now {
+  font-family: var(--font-display, inherit);
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--zr-gold);
+}
+
+.zr-price-note {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--zr-muted);
+}
+
+/* The two things a reader worries about at a card form, said where they
+   worry about them. */
+.zr-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.zr-badge {
+  padding: 5px 11px;
+  border: 1px solid rgba(232, 200, 120, 0.45);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--zr-gold);
+}
+
 .zr-offer-sub {
-  margin: 6px 0 18px;
+  margin: 14px 0 18px;
   font-size: 14px;
   color: var(--zr-muted);
 }

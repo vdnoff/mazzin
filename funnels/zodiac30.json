@@ -3,7 +3,7 @@
   "funnel_id": "zodiac30_v1",
   "locale": "en",
   "theme": "zodiac",
-  "stripe_mode": "live",
+  "stripe_mode": "test",
   "result_module": "/static/js/result_zodiac.js",
   "result_css": "/static/css/result_zodiac.css",
   "meta": {
@@ -13,8 +13,8 @@
   "swipe": {
     "pairs_count": 18,
     "headline": "Your cosmic profile analysis",
-    "subtext": "Your Cosmic Profile in 60 seconds of taps",
-    "subtext_accent": "60 seconds",
+    "subtext": "Most cosmic blends are common. Yours takes 18 taps.",
+    "subtext_accent": "18 taps",
     "hint": "Tap your choice",
     "label_mode": "badge",
     "analyzing_fade_to": "#0E1430",
@@ -2992,10 +2992,16 @@
     "commerce": {
       "anchor_head": "A {price} profile instead of a $75 session",
       "anchor_head_accent": "$75",
+      "price_anchor": "instead of a $75 private session",
+      "price_anchor_accent": "$75",
+      "price_note": "one-time",
+      "badges": [
+        "One-time",
+        "No subscription, ever"
+      ],
       "price_suffix": "one-time · no subscription",
       "trust": [
         "Secure via Stripe",
-        "One-time — no recurring charges",
         "PDF to your email"
       ],
       "mid_line": "Your complete energy map, for less than two coffees.",
