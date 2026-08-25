@@ -212,14 +212,22 @@ def main():
           tag("zodiac", "mistakes") != reports.CACHE_SCHEMA
           and tag("zodiac", "mistakes") != tag("zodiac", "palette"),
           tag("zodiac", "mistakes"))
-    check("  while the third cached section never moved",
-          tag("zodiac", "splurge") == reports.CACHE_SCHEMA,
+    # All three cached sections have been rewritten now, each for its own
+    # reason and each on its own revision — so a row warmed under any of the
+    # old prompts is dropped rather than served as the old product.
+    check("  and so is the money section, which grew a second half",
+          tag("zodiac", "splurge") != reports.CACHE_SCHEMA,
           tag("zodiac", "splurge"))
+    check("  three cached sections, three different revisions",
+          len({tag("zodiac", sid)
+               for sid in reports.cached_sections("zodiac")}) == 3,
+          str({sid: tag("zodiac", sid)
+               for sid in reports.cached_sections("zodiac")}))
     check("  and the twin's rows moved with the twin's",
-          tag("zodiac30", "mistakes") == tag("zodiac", "mistakes")
-          and tag("zodiac30", "palette") == tag("zodiac", "palette"),
-          "%s / %s" % (tag("zodiac30", "mistakes"),
-                       tag("zodiac30", "palette")))
+          all(tag("zodiac30", sid) == tag("zodiac", sid)
+              for sid in reports.cached_sections("zodiac")),
+          str({sid: (tag("zodiac", sid), tag("zodiac30", sid))
+               for sid in reports.cached_sections("zodiac")}))
     check("  and no kitchen row moved",
           all(tag("kitchen", sid) == reports.CACHE_SCHEMA
               for sid in ("palette", "mistakes", "shopping")))
@@ -250,12 +258,11 @@ def main():
     check("  and a mistakes row on the old revision is dropped with it",
           not have and dropped == 1, "%r, %d stale" % (have, dropped))
     have, dropped = warmed("zodiac", "deep_water", "splurge")
-    check("  while the cached section with no revision is kept",
-          "splurge" in (have or {}) and dropped == 0,
-          "%r, %d stale" % (have, dropped))
-    check("  which is the only one of the three left unrevised",
+    check("  and a money row on the old revision goes with them",
+          not have and dropped == 1, "%r, %d stale" % (have, dropped))
+    check("  which is every cached section this funnel has",
           sorted(reports._profile("zodiac")["cache_rev"])
-          == ["mistakes", "palette"],
+          == sorted(reports.cached_sections("zodiac")),
           str(sorted(reports._profile("zodiac")["cache_rev"])))
     have, dropped = warmed("kitchen", "modern_rustic", "palette")
     check("  and kitchen's palette row is kept",
