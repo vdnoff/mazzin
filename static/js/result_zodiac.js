@@ -49,6 +49,38 @@
   // invented one, which is why most dots on it sit right of centre.
   var TONE = ["bold", "calm", "mystic"];
 
+  // The reader's year runs from the month they are in, not from January, and
+  // the Year card names both ends of it. reports.py builds the same twelve
+  // server-side, stores them on the report and holds the generated section to
+  // them; this is the free page's copy of the arithmetic, which is all it can
+  // be — nothing has been bought yet, so there is no report to read them off.
+  // A reader on the last night of a month can be a few hours out of step with
+  // the server on the label; what neither of them ever shows is a year that
+  // opens on a month already over.
+  var MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  function yearLabels(from) {
+    var day = from || new Date();
+    var year = day.getFullYear();
+    var month = day.getMonth();
+    var out = [];
+    for (var i = 0; i < 12; i++) {
+      out.push(MONTH_ABBR[month] + " " + year);
+      month += 1;
+      if (month > 11) { month = 0; year += 1; }
+    }
+    return out;
+  }
+
+  // The stored twelve where there are any — a page reached after the money
+  // shows the year the report was written for, not the year it is being read
+  // in — and this month's otherwise.
+  function yearOf(ctx) {
+    var stored = (ctx.visuals && ctx.visuals.year) || null;
+    return (stored && stored.length === 12) ? stored : yearLabels();
+  }
+
   // The fewest frames worth calling a grid. Below this the run did not
   // happen, and a row of two squares under "read from your taps" reads as a
   // page that failed rather than as evidence.
@@ -209,7 +241,10 @@
                   || {})[energy] || 0;
 
     var bare = name.replace(/^The\s+/, "");
+    var year = yearOf(ctx);
     var words = {
+      first: year[0],
+      last: year[year.length - 1],
       sign: sign,
       subtype: name,
       subtype_bare: bare,

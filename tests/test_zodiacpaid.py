@@ -134,8 +134,11 @@ MARKERS = [
     ("Your 12-Month Energy Map", ".buy-list", 12, ".buy-name"),
 ]
 
-MONTHS = ["January", "February", "March", "April", "May", "June", "July",
-          "August", "September", "October", "November", "December"]
+# The reader's own twelve, counted from the month the report was generated
+# in rather than from January — read off reports.py so this suite cannot
+# disagree with the thing it is testing, and so it does not start failing on
+# the first of a month.
+YEAR = reports._year_labels()
 
 
 def main():
@@ -190,12 +193,13 @@ def run(page):
     print("\n--- the year map ---")
     months = page.eval_on_selector_all(
         "#report .buy-name", "ns => ns.map(n => n.innerText.trim())")
-    check("all twelve months, in calendar order", months == MONTHS,
-          str(months))
+    check("all twelve months, counted from the one it was written in",
+          months == YEAR, str(months))
     notes = page.eval_on_selector_all(
         "#report .buy-note", "ns => ns.map(n => n.innerText.trim())")
-    check("  two are marked strongest",
-          sum(n.startswith("Strongest month:") for n in notes) == 2)
+    check("  three are marked strongest, as the paywall promises",
+          sum(n.startswith("Strongest month:") for n in notes) == 3,
+          sum(n.startswith("Strongest month:") for n in notes))
     check("  one is marked quiet",
           sum(n.startswith("Quiet month:") for n in notes) == 1)
     # engine.js labels the skip block "Skip" and strikes the name through.

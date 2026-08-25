@@ -571,8 +571,12 @@ print("\n--- placeholders ---")
 # name the subtype and what it is made of. All of them are answered by
 # result_zodiac.js's own `fill`, off the block it derives from the run's
 # tallies, rather than by engine.js's hook machinery.
+# `first` and `last` are the two ends of the reader's own twelve months, the
+# same twelve reports.py builds server-side; the module fills them from the
+# client date because nothing has been bought yet when the card is drawn.
 PROFILE_TOKENS = {"element", "second", "energy", "subtype", "subtype_bare",
-                  "subtype_article", "fire", "earth", "air", "water"}
+                  "subtype_article", "fire", "earth", "air", "water",
+                  "first", "last"}
 KNOWN = (set(cfg["report"]["hook_slots"])
          | {"style", "price", "n", "pct", "total"}
          | PROFILE_TOKENS)
@@ -1091,8 +1095,14 @@ check("the free result's elements are carried into the paid view",
       len(content.get("elements") or []) == 6, str(content.get("elements")))
 stored_visuals = content.get("visuals") or {}
 check("and the photographs it is illustrated with",
-      set(stored_visuals) == {"sections", "hero", "profile", "taps"},
+      set(stored_visuals) == {"sections", "hero", "profile", "taps", "year"},
       str(sorted(stored_visuals)))
+# The twelve months this purchase's map runs over, read off the clock once
+# and stored — so a report written in July still opens on July when it is
+# reopened in September.
+check("  and the twelve months its year map runs over",
+      stored_visuals.get("year") == reports._year_labels(),
+      str(stored_visuals.get("year")))
 # The whole run, in the order they tapped it, because the delivered page and
 # the PDF both draw the contact sheet the free page draws and neither has a
 # run to read it off.
@@ -1121,15 +1131,33 @@ check("  and the header's two as well",
       str(stored_visuals.get("hero")))
 
 by_section = {s["id"]: s["data"] for s in content["sections"]}
-check("the year map is twelve months, in calendar order",
-      [i["name"] for i in by_section["shopping"]["items"]] == MONTHS,
+# Not January to December: the map runs from the month the purchase happened
+# in. Held against the labels the report stored rather than against a fresh
+# read of the clock, which is the same thing except at midnight on the last
+# of a month.
+check("the year map is the twelve months from this one",
+      [i["name"] for i in by_section["shopping"]["items"]]
+      == stored_visuals["year"],
       str([i["name"] for i in by_section["shopping"]["items"]]))
+check("  which starts in the month it was generated in",
+      stored_visuals["year"][0]
+      == reports._year_labels()[0],
+      stored_visuals["year"][0])
+check("  and carries the year on every label, because four are in the next",
+      all(re.match(r"^[A-Z][a-z]{2} \d{4}$", label)
+          for label in stored_visuals["year"])
+      and len({label.split()[1] for label in stored_visuals["year"]}) == 2,
+      str(stored_visuals["year"]))
 check("  nothing is struck out under a Skip heading",
       by_section["shopping"]["skip"] == [],
       str(by_section["shopping"]["skip"]))
 notes = [i["priority_note"] for i in by_section["shopping"]["items"]]
-check("  two months are marked strongest",
-      sum(n.startswith("Strongest month:") for n in notes) == 2)
+# Three, because the Year card on the paywall promises "the 3 strongest
+# months" and promising three and marking two is the product arguing with
+# its own price tag.
+check("  three months are marked strongest",
+      sum(n.startswith("Strongest month:") for n in notes) == 3,
+      sum(n.startswith("Strongest month:") for n in notes))
 check("  one is marked quiet",
       sum(n.startswith("Quiet month:") for n in notes) == 1)
 check("the strengths section is five of them",
@@ -1216,9 +1244,18 @@ check("the contact sheet is the whole run, on paper",
       and sheet.count('class="tapcell"') == len(steps),
       "%d cells, %d steps" % (sheet.count('class="tapcell"'), len(steps)))
 check("  every square a print copy rather than a gallery original",
-      len(re.findall(r'<span class="tapcell"><img src="img/print/', sheet))
+      len(re.findall(r'<td class="tapcell"><img src="img/print/', sheet))
       == len(steps),
       str(re.findall(r'<img src="([^"]+)"', sheet)[:3]))
+# Six to a row, every row the same row. It came out 5/5/5/3 as inline-blocks:
+# six sixths plus six gutters rounds past a hundred percent on paper.
+check("  laid out six to a row, with no ragged last one",
+      sheet.count("<tr>") == -(-len(steps) // reports.TAP_COLUMNS)
+      and all(row.count('class="tapcell"') == reports.TAP_COLUMNS
+              for row in sheet.split("<tr>")[1:]),
+      "%d rows, %s per row" % (sheet.count("<tr>"),
+                               [row.count('class="tapcell"')
+                                for row in sheet.split("<tr>")[1:]]))
 check("  and every one of those files is on disk, under its ceiling",
       all(os.path.isfile(os.path.join(ROOT, "static", src))
           and os.path.getsize(os.path.join(ROOT, "static", src)) <= 60 * 1024
@@ -1434,31 +1471,49 @@ def _asked(sid):
                 for p, n in BUDGET_RE.findall(reports.ZODIAC_SPEC[sid]))
 
 
-loosened = [(sid, path, asked, reports._budget(cap))
-            for sid, _ in SHAPE_OF
-            for path, (_floor, cap) in declared_caps(sid).items()
-            for asked in [_asked(sid)[path]]
-            if asked > reports._budget(cap)]
-check("no zodiac budget asks for more than SHAPE derives", not loosened,
-      str(loosened))
-tightened = [(sid, path, asked, reports._budget(cap))
-             for sid, _ in SHAPE_OF
-             for path, (_floor, cap) in declared_caps(sid).items()
-             for asked in [_asked(sid)[path]]
-             if asked < reports._budget(cap)]
-check("  and the only ones asking for less are the ones PROMPT_CAP names",
-      {(sid, path.split(".")[-1]) for sid, path, _a, _d in tightened}
-      == {(sid, field) for sid, fields in reports.PROMPT_CAP.items()
+over = [(sid, path, asked, cap)
+        for sid, _ in SHAPE_OF
+        for path, (_floor, cap) in declared_caps(sid).items()
+        for asked in [_asked(sid)[path]]
+        if asked > cap]
+check("no zodiac budget asks for more than its validator will take", not over,
+      str(over))
+moved = [(sid, path, asked, reports._budget(cap))
+         for sid, _ in SHAPE_OF
+         for path, (_floor, cap) in declared_caps(sid).items()
+         for asked in [_asked(sid)[path]]
+         if asked != reports._budget(cap)]
+check("  and every number off the derived default is one PROMPT_LENGTH names",
+      {(sid, path.split(".")[-1]) for sid, path, _a, _d in moved}
+      == {(sid, field) for sid, fields in reports.PROMPT_LENGTH.items()
           for field in fields},
-      str(sorted((sid, path) for sid, path, _a, _d in tightened)))
-check("  which is the five hidden strengths, cut to two sentences and one",
-      sorted(reports.PROMPT_CAP) == ["mistakes"]
-      and reports.PROMPT_CAP["mistakes"] == {"body": 240, "fix": 140},
-      str(reports.PROMPT_CAP))
-check("  and nothing in SHAPE moved to do it — the ceilings are still 600",
+      str(sorted((sid, path) for sid, path, _a, _d in moved)))
+check("  the five hidden strengths ask for less: two sentences and one",
+      reports.PROMPT_LENGTH["mistakes"] == {"body": 240, "fix": 140},
+      str(reports.PROMPT_LENGTH.get("mistakes")))
+check("  love and money ask for more, because each field grew a second half",
+      reports.PROMPT_LENGTH["materials"] == {"intro": 440, "why": 440}
+      and reports.PROMPT_LENGTH["splurge"] == {"why": 440,
+                                               "split_note": 440},
+      str({k: v for k, v in reports.PROMPT_LENGTH.items()
+           if k != "mistakes"}))
+check("  and nothing in SHAPE moved to do either — the ceilings are 600",
       reports.SHAPE["mistakes"]["items"][3]["body"][2] == 600
-      and reports.SHAPE["mistakes"]["items"][3]["fix"][2] == 600,
-      str(reports.SHAPE["mistakes"]["items"][3]))
+      and reports.SHAPE["materials"]["pairs"][3]["why"][2] == 600
+      and reports.SHAPE["splurge"]["split_note"][2] == 600)
+# The table is refused at import rather than at generation, so a number over
+# a ceiling can never reach a prompt at all.
+saved_lengths = dict(reports.PROMPT_LENGTH)
+reports.PROMPT_LENGTH["materials"] = {"intro": 900}
+try:
+    reports._check_prompt_lengths()
+    refused = False
+except ValueError:
+    refused = True
+finally:
+    reports.PROMPT_LENGTH.clear()
+    reports.PROMPT_LENGTH.update(saved_lengths)
+check("  a budget over its ceiling is refused where it is declared", refused)
 
 print("\n--- what the kitchen funnels must not have picked up ---")
 # engine.js, mazzin.css and tracking.py all moved for this funnel. Every one
@@ -1706,9 +1761,9 @@ for slug in ("kitchen", "kitchen-visualizer"):
     check("  and its consent line", "consent" in other["checkout"]["commerce"])
 
 print("\n--- the header names the product ---")
-check("subtext teases the rarity rather than the clock",
+check("subtext leads with the count and the thing nobody wants to do",
       cfg["swipe"]["subtext"]
-      == "Most cosmic blends are common. Yours takes 12 taps.",
+      == "12 taps. No typing. A cosmic profile that's actually yours.",
       cfg["swipe"]["subtext"])
 check("  with the accent on the count it is teasing",
       cfg["swipe"]["subtext_accent"] == "12 taps"

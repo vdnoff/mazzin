@@ -1092,8 +1092,12 @@ print("\n--- placeholders ---")
 # name the subtype and what it is made of. All of them are answered by
 # result_zodiac.js's own `fill`, off the block it derives from the run's
 # tallies, rather than by engine.js's hook machinery.
+# `first` and `last` are the two ends of the reader's own twelve months, the
+# same twelve reports.py builds server-side; the module fills them from the
+# client date because nothing has been bought yet when the card is drawn.
 PROFILE_TOKENS = {"element", "second", "energy", "subtype", "subtype_bare",
-                  "subtype_article", "fire", "earth", "air", "water"}
+                  "subtype_article", "fire", "earth", "air", "water",
+                  "first", "last"}
 KNOWN = (set(cfg["report"]["hook_slots"])
          | {"style", "price", "n", "pct", "total"}
          | PROFILE_TOKENS)

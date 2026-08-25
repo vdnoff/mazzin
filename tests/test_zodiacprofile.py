@@ -187,8 +187,11 @@ check("  every one of them keyword-first",
 check("  with an icon named for it",
       all(c.get("icon") for c in CARDS),
       str([c["id"] for c in CARDS if not c.get("icon")]))
+# `first` and `last` are the two ends of the reader's own twelve months —
+# the same twelve reports.py builds server-side and stores on the report.
 KNOWN_TOKENS = {"element", "second", "energy", "subtype", "subtype_bare",
-                "subtype_article", "n", "fire", "earth", "air", "water"} \
+                "subtype_article", "n", "fire", "earth", "air", "water",
+                "first", "last"} \
     | set(CFG["zodiac"]["report"]["hook_slots"])
 tokens = set()
 for card in CARDS:

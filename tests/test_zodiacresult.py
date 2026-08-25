@@ -333,6 +333,27 @@ def run(page):
     check("no token is left showing on any of them",
           not any("{" in c["line"] for c in cards),
           str([c["line"] for c in cards if "{" in c["line"]]))
+    # The Year card names the two ends of the reader's own twelve months,
+    # counted from the one they are in. Computed here from the same clock the
+    # browser is reading rather than pinned, because a pinned month is a suite
+    # that fails on the first of every month.
+    import datetime
+    today = datetime.date.today()
+    ABBR = [datetime.date(2000, m, 1).strftime("%b") for m in range(1, 13)]
+    first = "%s %d" % (ABBR[today.month - 1], today.year)
+    ahead = today.month - 1 + 11
+    last = "%s %d" % (ABBR[ahead % 12], today.year + ahead // 12)
+    year_line = [c for c in cards if c["key"] == "Your year:"][0]["line"]
+    check("the year card names the span it is selling",
+          first in year_line and last in year_line,
+          "%s -> %s in %r" % (first, last, year_line))
+    check("  which starts in the month they are in, not in January",
+          year_line.index(first) < year_line.index(last)
+          and "January" not in year_line, year_line)
+    check("  and still promises three strongest and one quiet",
+          "3 strongest" in year_line and "1 to lay low" in year_line,
+          year_line)
+
     # The blind-spots card names the moon they chose, through engine.js's own
     # hook machinery — so the word in it is a card out of this run, or the
     # declared fallback if the step was somehow never reached.

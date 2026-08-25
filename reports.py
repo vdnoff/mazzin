@@ -23,6 +23,7 @@ written to a log line.
 
 import base64
 import concurrent.futures
+import datetime
 import html
 import json
 import logging
@@ -1111,21 +1112,25 @@ def _walk_caps(section_id):
     return out
 
 
-# Where the prompt should ask for less than the validator will accept.
+# What a field is asked for, where the derived default is the wrong number.
 #
-# The default below derives what the model is told from the ceiling that
-# would throw a section away, and the gap between them is deliberate: it is
-# what absorbs a sentence and a half. That is the right number when the risk
-# is a section being lost, and the wrong one when the problem is that the
-# section is simply too long. The five hidden strengths ran a hundred and ten
-# words each — an essay where the product is a hit — and these are the
-# numbers that make them about forty-five.
+# The default below takes what the model is told from the ceiling that would
+# throw a section away, and leaves a deliberate gap: room for a sentence and
+# a half. That is the right rule when the risk is losing a section, and the
+# wrong one at both ends. The five hidden strengths ran a hundred and ten
+# words each — an essay where the product is a hit — so they ask for less.
+# Love and Money carry a second half each now, a how-to-play-it beside every
+# sign and three concrete moves beside the work, so they ask for more.
 #
-# Only ever tighter. A number here that is looser than the derived one is
-# ignored, so this table cannot quietly raise a ceiling; the ceilings live in
-# SHAPE and are unchanged.
-PROMPT_CAP = {
+# A number here can go either way and neither direction may pass the
+# validator's own ceiling: _check_prompt_lengths below refuses at import
+# rather than at generation, because a field asked for more than it is
+# allowed is a section written to be thrown away. The ceilings themselves
+# live in SHAPE and are not touched by any of this.
+PROMPT_LENGTH = {
     "mistakes": {"body": 240, "fix": 140},
+    "materials": {"intro": 440, "why": 440},
+    "splurge": {"why": 440, "split_note": 440},
 }
 
 
@@ -1140,10 +1145,29 @@ def _budgets(section_id):
     for _, field, cap in _walk_caps(section_id):
         value = _budget(cap)
         out[field] = min(value, out.get(field, value))
-    for field, cap in (PROMPT_CAP.get(section_id) or {}).items():
+    for field, asked in (PROMPT_LENGTH.get(section_id) or {}).items():
         if field in out:
-            out[field] = min(out[field], cap)
+            out[field] = asked
     return out
+
+
+def _check_prompt_lengths():
+    """Every stated budget is inside the ceiling that polices it."""
+    for section_id, fields in PROMPT_LENGTH.items():
+        ceilings = {}
+        for _, field, cap in _walk_caps(section_id):
+            ceilings[field] = min(cap, ceilings.get(field, cap))
+        for field, asked in fields.items():
+            cap = ceilings.get(field)
+            if cap is None:
+                raise ValueError("PROMPT_LENGTH names %s.%s, which is not a "
+                                 "capped field" % (section_id, field))
+            if asked > cap:
+                raise ValueError("PROMPT_LENGTH asks %d for %s.%s, over its "
+                                 "%d ceiling" % (asked, section_id, field, cap))
+
+
+_check_prompt_lengths()
 
 
 def _budget_lines(section_id):
@@ -1226,14 +1250,14 @@ where the product is five hits. Cut every clause that is scene-setting, every
 deleted without losing a fact about this reader, delete it.''',
 
     "materials": '''"materials": {
-  "intro": "1-2 sentences on the pattern underneath who this person is drawn to (max %(intro)d chars)",
+  "intro": "THEIR PATTERN IN RELATIONSHIPS: 2-3 sentences on what this reader is repeatedly drawn to, what it costs them, and how it follows from the name they were given on the page they paid from. Use that name once, in the middle of a sentence rather than as a label (max %(intro)d chars)",
   "pairs": [
     {"combo": "their sign + another sign, e.g. \\"Leo + Aries\\" (max %(combo)d chars)",
      "verdict": "works",
-     "why": "what that pairing is like to be inside, and what it asks of them (max %(why)d chars — three sentences at most)"},
-    {"combo": "their sign + another sign", "verdict": "works", "why": "..."},
-    {"combo": "their sign + another sign", "verdict": "avoid", "why": "..."},
-    {"combo": "their sign + another sign", "verdict": "avoid", "why": "..."}
+     "why": "TWO PARTS IN ONE PARAGRAPH. First: what that pairing is like to be inside, and what it asks of them. Then, in the same paragraph: HOW TO PLAY IT — the one thing that actually works with this sign, written as something to do rather than something to know (max %(why)d chars)"},
+    {"combo": "their sign + another sign", "verdict": "works", "why": "same two parts"},
+    {"combo": "their sign + another sign", "verdict": "avoid", "why": "same shape, but the second part is HOW TO PROTECT THEIR ENERGY: the specific boundary that makes this one survivable, written as something to do"},
+    {"combo": "their sign + another sign", "verdict": "avoid", "why": "same two parts"}
   ],
   "rule": "one sentence on what to say, or ask for, in the first month with somebody (max %(rule)d chars)"
 }
@@ -1242,18 +1266,23 @@ Four pairings under `pairs`, two that work and two that cost, each an object
 with `combo`, `verdict` and `why` spelled exactly so. `verdict` is the word
 "works" or the word "avoid" and nothing else. `combo` always leads with this
 reader's own sign. "avoid" means the pairing is expensive to be in, never
-that a person is bad.''',
+that a person is bad.
+
+Every `why` carries both halves. The first half is what it is like; the
+second is what to do about it, and it is the half the reader came for — a
+pairing described and not answered is half a chapter. Name the thing to do
+specifically enough to do it this month.''',
 
     "splurge": '''"splurge": {
   "splurge": {"item": "the kind of work or working environment this energy pays best in, as a short phrase (max %(item)d chars)",
-              "why": "why their energy earns here, and what it looks like day to day (max %(why)d chars — three sentences, not five)"},
+              "why": "TWO PARTS IN ONE PARAGRAPH. First: why their energy earns here and what it looks like day to day. Then THREE CONCRETE MOVES, in the same paragraph — three things to actually do, each one naming a place to work, a time of day or week, or an action, in the language of their own element (max %(why)d chars)"},
   "saves": [
     {"item": "a kind of work to stop accepting, as a short phrase (max %(item)d chars)",
-     "why": "what it costs them specifically (max %(why)d chars — two sentences)"},
-    {"item": "a second one", "why": "..."},
-    {"item": "a third one", "why": "..."}
+     "why": "what it costs them specifically, then one line on how to decline it — the sentence to say, or the condition to put on it (max %(why)d chars)"},
+    {"item": "a second one", "why": "same two parts"},
+    {"item": "a third one", "why": "same two parts"}
   ],
-  "split_note": "one sentence on how to divide a working week between the two (max %(split_note)d chars)"
+  "split_note": "THE LEAK, AND HOW TO PLUG IT: the single biggest drain on this reader's working energy, named outright, and then the one change that stops it. 2-3 sentences (max %(split_note)d chars)"
 }
 
 The three top-level keys are `splurge`, `saves` and `split_note`, spelled
@@ -1265,7 +1294,13 @@ do not rename `split_note`.
 `item` is a short phrase — a job shape, not a sentence. One place their
 energy earns and three to stop spending it on. This is the shape of the work,
 never money to put anywhere: no markets, no figures, and no advice about
-where to place anything.''',
+where to place anything. The three moves are behaviour and energy — where to
+be, when to work, what to say yes to — and never a thing to buy, hold or put
+money into.
+
+The second half of every field is the half the reader came for. A place named
+and not acted on, a cost named and not declined, a leak named and not
+plugged: each of those is a chapter that stops one sentence early.''',
 
     "dna": '''"dna": {
   "narrative": [
@@ -1287,31 +1322,36 @@ about this reader and nobody else.''',
 
     "shopping": '''"shopping": {
   "items": [
-    {"name": "January (max %(name)d chars)", "priority_note": "what this month's energy is good for (max %(priority_note)d chars — one or two sentences)"},
-    {"name": "February", "priority_note": "..."},
-    {"name": "March", "priority_note": "..."},
-    {"name": "April", "priority_note": "..."},
-    {"name": "May", "priority_note": "..."},
-    {"name": "June", "priority_note": "..."},
-    {"name": "July", "priority_note": "..."},
-    {"name": "August", "priority_note": "..."},
-    {"name": "September", "priority_note": "..."},
-    {"name": "October", "priority_note": "..."},
-    {"name": "November", "priority_note": "..."},
-    {"name": "December", "priority_note": "..."}
+    {"name": "COPY THE 1st LABEL FROM THE LIST ABOVE, EXACTLY (max %(name)d chars)", "priority_note": "what this month's energy is good for (max %(priority_note)d chars — one or two sentences)"},
+    {"name": "COPY THE 2nd, EXACTLY", "priority_note": "..."},
+    {"name": "COPY THE 3rd, EXACTLY", "priority_note": "..."},
+    {"name": "the 4th", "priority_note": "..."},
+    {"name": "the 5th", "priority_note": "..."},
+    {"name": "the 6th", "priority_note": "..."},
+    {"name": "the 7th", "priority_note": "..."},
+    {"name": "the 8th", "priority_note": "..."},
+    {"name": "the 9th", "priority_note": "..."},
+    {"name": "the 10th", "priority_note": "..."},
+    {"name": "the 11th", "priority_note": "..."},
+    {"name": "the 12th", "priority_note": "..."}
   ],
   "skip": []
 }
 
-Two keys, `items` and `skip`, spelled exactly so. All twelve months in
-calendar order, every one of them an object under `items` with `name` and
+Two keys, `items` and `skip`, spelled exactly so. Twelve items under `items`,
+in the order the list above gives them, every one an object with `name` and
 `priority_note`. `skip` is an empty list — send it, and put nothing in it.
 
-`name` is the month and nothing else. Mark exactly two months by opening
-their note with "Strongest month:" and exactly one by opening its note with
-"Quiet month:". The quiet one is for recovery rather than for starting
-things, and its note says what it is good for instead. Themes only — what a
-month is good for, never what is going to happen in it.''',
+`name` is the label from the list and nothing else — the month and the year,
+exactly as written there. This map starts from the month they are in, not
+from January, so the first item is the month they are living through right
+now and four of the twelve are in next year.
+
+Mark exactly three months by opening their note with "Strongest month:" and
+exactly one by opening its note with "Quiet month:". The quiet one is for
+recovery rather than for starting things, and its note says what it is good
+for instead. Themes only — what a month is good for, never what is going to
+happen in it.''',
 }
 
 ZODIAC_SPEC = dict((section_id, _zodiac_spec(text, section_id))
@@ -1397,25 +1437,38 @@ ZODIAC_STUBS = {
                     "of it you got through."},
         ],
     },
+    # Every `why` carries both halves, the same as the prompt asks for: what
+    # it is like, then what to do about it. A stub is what a reader gets when
+    # there is no key, and it must not be a different product from the one
+    # that arrives when there is.
     "materials": {
         "intro": "The pattern underneath who you are drawn to is steadier "
-                 "than the people themselves, and it is worth knowing "
-                 "before the next one.",
+                 "than the people themselves. You go towards the ones who "
+                 "move at your speed and stay with the ones who slow you "
+                 "down, which is a costly way round — and it is worth "
+                 "knowing before the next one.",
         "pairs": [
             {"combo": "Your sign + a fire sign", "verdict": "works",
              "why": "Pace matches, and neither of you waits for the other "
-                    "to finish deciding. It asks you to say the quiet part "
-                    "early."},
+                    "to finish deciding. How to play it: say the quiet part "
+                    "in the first week rather than the fourth — this one "
+                    "rewards being told, and reads a pause as a verdict."},
             {"combo": "Your sign + an earth sign", "verdict": "works",
-             "why": "They hold the ground you move across. It asks you to "
-                    "notice the holding rather than to assume it."},
+             "why": "They hold the ground you move across, and the holding "
+                    "is easy to stop seeing. How to play it: name one "
+                    "specific thing they carried, out loud, every week — "
+                    "steady people leave when the steadiness goes unread."},
             {"combo": "Your sign + a mirror of yourself", "verdict": "avoid",
              "why": "Two of the same energy make a fast start and a short "
-                    "middle. Nothing in the pairing slows anything down."},
+                    "middle, and nothing in the pairing slows anything down. "
+                    "How to protect your energy: keep one thing in your week "
+                    "that is yours alone and do not move it for them."},
             {"combo": "Your sign + somebody who needs managing",
              "verdict": "avoid",
              "why": "You are good at carrying, which is exactly why this one "
-                    "costs you more than it costs them."},
+                    "costs you more than it costs them. How to protect your "
+                    "energy: stop offering before you are asked, once, and "
+                    "watch what they do with the gap."},
         ],
         "rule": "In the first month ask the second question rather than the "
                 "first — the answer to that one tells you something.",
@@ -1424,23 +1477,34 @@ ZODIAC_STUBS = {
         "splurge": {
             "item": "Work with a visible edge and a short feedback loop",
             "why": "A {name} energy earns where the result comes back quickly "
-                   "enough to steer by. Long horizons with no signal are "
-                   "where it drifts, and no amount of discipline "
-                   "substitutes for a loop that closes.",
+                   "enough to steer by, and drifts on long horizons with no "
+                   "signal. Three moves: put the hardest thing in the first "
+                   "two hours of your day, before the room fills; ask for a "
+                   "check-in at the halfway point of anything longer than a "
+                   "month; and work the two days either side of a deadline "
+                   "rather than the week before it.",
         },
         "saves": [
             {"item": "Work that needs performing",
              "why": "The energy it takes to be a version of yourself all day "
-                    "is energy not spent on the work itself."},
+                    "is energy not spent on the work itself. Decline it by "
+                    "asking what the output is — if the answer is a "
+                    "presence, it is not work."},
             {"item": "Roles built entirely on maintaining",
              "why": "You will do it well, and it will cost you more than it "
-                    "costs somebody suited to it."},
+                    "costs somebody suited to it. Decline it by naming the "
+                    "part you will hold and the part you will hand back."},
             {"item": "Anything measured only in hours",
              "why": "It rewards presence over judgement, and judgement is the "
-                    "thing you actually have."},
+                    "thing you actually have. Put a deliverable on it before "
+                    "you agree, or let it go to somebody who is paid to sit "
+                    "there."},
         ],
-        "split_note": "Give the deep half of the week to the work with an "
-                      "edge, and let the maintaining fill the shallow half.",
+        "split_note": "The leak is the second half of your afternoon, given "
+                      "away in pieces to things that arrived rather than "
+                      "things you chose. Plug it by booking the last ninety "
+                      "minutes of the day to yourself before anyone else "
+                      "books them, and treating that block as unmovable.",
     },
     "dna": {
         "narrative": [
@@ -1463,35 +1527,37 @@ ZODIAC_STUBS = {
             "say lightly is the thing they carry away.",
         ],
     },
+    # Twelve months with no month names in the prose. The labels are stamped
+    # on at build time from the reader's own year — this stub can be a March
+    # or a September map depending on when generation failed — so a note that
+    # said "since the autumn" would be a stub that contradicts its own
+    # heading. Position in their year is the only thing these can be about.
     "shopping": {
         "items": [
-            {"name": "January", "priority_note": "Good for deciding what the "
-             "year is actually for, before anyone asks you to commit to it."},
-            {"name": "February", "priority_note": "Strongest month: the quiet "
-             "one where what you start goes unnoticed long enough to get "
-             "properly built."},
-            {"name": "March", "priority_note": "Good for saying the thing you "
-             "have been holding since the autumn."},
-            {"name": "April", "priority_note": "Good for beginnings that need "
+            {"name": "1", "priority_note": "Good for deciding what this year "
+             "is actually for, before anyone asks you to commit to it."},
+            {"name": "2", "priority_note": "Good for clearing what the last "
+             "one left open — the small unfinished things, not the big ones."},
+            {"name": "3", "priority_note": "Strongest month: what you start "
+             "here goes unnoticed long enough to get properly built."},
+            {"name": "4", "priority_note": "Good for saying the thing you "
+             "have been holding since before this map began."},
+            {"name": "5", "priority_note": "Good for beginnings that need "
              "other people in them."},
-            {"name": "May", "priority_note": "Good for consolidating rather "
+            {"name": "6", "priority_note": "Strongest month: your judgement "
+             "is at its sharpest — spend it on one thing rather than four."},
+            {"name": "7", "priority_note": "Good for consolidating rather "
              "than adding — a month to finish, not to open."},
-            {"name": "June", "priority_note": "Good for being visible on "
-             "purpose rather than by accident."},
-            {"name": "July", "priority_note": "Good for the conversations you "
+            {"name": "8", "priority_note": "Quiet month: low on output and "
+             "high on recovery. Good for reading, repair and saying no."},
+            {"name": "9", "priority_note": "Strongest month: momentum "
+             "returns, and what you push now carries further than it should."},
+            {"name": "10", "priority_note": "Good for repair work, in what "
+             "you have built and in who you built it with."},
+            {"name": "11", "priority_note": "Good for the conversations you "
              "have been scheduling around."},
-            {"name": "August", "priority_note": "Good for rest with a "
-             "shape to it, and poor for decisions."},
-            {"name": "September", "priority_note": "Strongest month: momentum "
-             "returns and your judgement is at its sharpest — spend it on one "
-             "thing rather than four."},
-            {"name": "October", "priority_note": "Good for repair work, in "
-             "what you have built and in who you built it with."},
-            {"name": "November", "priority_note": "Good for narrowing: what "
-             "survives this month is what mattered."},
-            {"name": "December", "priority_note": "Quiet month: your energy "
-             "turns inward whether or not the calendar agrees, and anything "
-             "started here gets rebuilt in January. Good for looking back."},
+            {"name": "12", "priority_note": "Good for looking back honestly "
+             "at the eleven behind it, and deciding what repeats."},
         ],
         "skip": [],
     },
@@ -1569,7 +1635,12 @@ ZODIAC_PROFILE = {
     # where it asked for three and two. A row warmed under the old prompt is
     # not stale in the sense of being wrong — it is the old product, at the
     # old length, and the whole point of the change is the length.
-    "cache_rev": {"palette": "colors2", "mistakes": "short1"},
+    "cache_rev": {"palette": "colors2", "mistakes": "short1",
+                  # The money section grew a second half — three concrete
+                  # moves beside the work and a leak with a way to plug it —
+                  # and it is cached per archetype, so every warmed row is
+                  # the shorter product.
+                  "splurge": "moves1"},
     "pdf_css": None,        # filled below, once ZODIAC_PDF_CSS is defined
     # The wordmark is dark ink, which on a dark page is a rectangle of
     # nothing. The light cut already exists and is what this document wants.
@@ -1688,17 +1759,27 @@ ZODIAC_VERIFY = {
 ZODIAC_PROFILE["verify"] = ZODIAC_VERIFY
 
 
-def _verify_for(profile, style):
-    """A check to run over a parsed section, or None. Bound to the style,
-    because that is where the truth about the colours lives."""
+def _verify_for(profile, style, months=None):
+    """A check to run over a parsed section, or None.
+
+    Bound to the style, because that is where the truth about the colours
+    lives, and to the year, because that is where the truth about the months
+    does. Both are facts this purchase already fixed; the section is checked
+    against them rather than against itself.
+    """
     rules = profile.get("verify")
-    if not rules:
+    if not rules and not months:
         return None
 
     def verify(want, parsed):
         for section_id in want:
-            for rule in rules.get(section_id) or ():
+            for rule in (rules or {}).get(section_id) or ():
                 problem = rule((parsed or {}).get(section_id) or {}, style)
+                if problem:
+                    return problem
+            if section_id == "shopping" and months:
+                problem = _verify_months(
+                    (parsed or {}).get(section_id) or {}, months)
                 if problem:
                     return problem
         return None
@@ -1781,7 +1862,7 @@ def _config_hex(colour):
     return raw if isinstance(raw, str) and HEX_RE.match(raw) else None
 
 
-def _stub_for(section_id, name, style=None, stubs=None):
+def _stub_for(section_id, name, style=None, stubs=None, months=None):
     """The placeholder for one section, or None if it has no placeholder.
 
     The mistakes stub is the one that cannot be purely generic any more. The
@@ -1803,6 +1884,16 @@ def _stub_for(section_id, name, style=None, stubs=None):
             stub = dict(stub)
             # Four behind it: five items, inside the 4-6 the schema allows.
             stub["items"] = [first] + list(stub["items"])[:4]
+    if section_id == "shopping" and (months or stubs is ZODIAC_STUBS):
+        # The year stub carries positions rather than month names; the labels
+        # go on here, from the same twelve the generated one is held to. A
+        # stub that opened on January under a heading that says otherwise is
+        # the failure being visible twice — and a stub that shipped the bare
+        # positions would be the same failure with worse manners, so the clock
+        # is read here rather than left unstamped when no year was passed in.
+        stub = dict(stub)
+        stub["items"] = [dict(row, name=label) for row, label
+                         in zip(stub["items"], months or _year_labels())]
     return _fill(stub, name)
 
 
@@ -2251,6 +2342,75 @@ def _palette_block(cfg, choices):
     )
 
 
+# --- the twelve months, counted from this one ------------------------------
+#
+# The year map used to run January to December, which is a calendar rather
+# than a reading: somebody who buys in September is handed eight months that
+# have already been and four that have not. It runs from the month they
+# bought in now, twelve of them, and the year is on every label because four
+# of them are in the next one.
+#
+# Server date, UTC. A reader a timezone either side of the boundary can be a
+# few hours out of step with their own phone on the last night of a month;
+# what they must never see is a map that opens on a month that is over.
+
+MONTH_ABBR = ("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+YEAR_MONTHS = 12
+
+
+def _year_labels(today=None):
+    """["Aug 2026", "Sep 2026", ... "Jul 2027"], starting from this month."""
+    day = today or datetime.datetime.now(datetime.timezone.utc).date()
+    year, month = day.year, day.month
+    out = []
+    for _ in range(YEAR_MONTHS):
+        out.append("%s %d" % (MONTH_ABBR[month - 1], year))
+        month += 1
+        if month > 12:
+            month, year = 1, year + 1
+    return out
+
+
+def _year_block(months):
+    """The twelve labels, as the only twelve the year section may use."""
+    if not months:
+        return None
+    return (
+        "REQUIRED — this reader's year starts now, not in January. These are "
+        "the twelve months, in this order, and they are the twelve `name` "
+        "values you must send, copied exactly, including the year:\n"
+        + "\n".join("  %2d. %s" % (n, label)
+                     for n, label in enumerate(months, 1))
+        + "\nTwelve items, in that order, no others and none missing. Write "
+          "the year as it is written above. Never write a month that is not "
+          "on this list, and never reorder them.")
+
+
+def _verify_months(data, months):
+    """The year section's labels against the twelve it was handed, or None.
+
+    A shape-valid year map that opens in January is the document contradicting
+    the page that sold it, and the shape validators cannot see it — they
+    police the form, and every month name is a well-formed string.
+    """
+    if not months:
+        return None
+    got = [str((row or {}).get("name") or "").strip()
+           for row in (data.get("items") or [])]
+    if got == list(months):
+        return None
+    if len(got) != len(months):
+        return ("the year needs exactly %d months and %d arrived — they are "
+                "%s, in that order" % (len(months), len(got),
+                                       ", ".join(months)))
+    wrong = next(n for n, (a, b) in enumerate(zip(got, months), 1) if a != b)
+    return ("month %d is %r and must be %r — the twelve `name` values are "
+            "%s, in that order, copied exactly"
+            % (wrong, got[wrong - 1], months[wrong - 1], ", ".join(months)))
+
+
 # --- the reader's own sign -------------------------------------------------
 #
 # Recoverable from the run without storing anything new: the sign step's
@@ -2588,12 +2748,16 @@ def _compat_block(cfg, choices):
             "REQUIRED — the free page promised this reader, in these words, "
             "the two signs that are magnetic for them and the one that drains "
             "their relationships. Classically, for a %s those are: magnetic — "
-            "%s and %s; draining — %s. Name all three, in those words, and say "
-            "for each one what it is actually like: what the pull is built on "
-            "for the two, and what the cost is with the third. Use no other "
-            "signs as the answer to that promise, and never write that a "
-            "relationship will or will not work — describe the energy between "
-            "them and what it takes from each side."
+            "%s and %s; draining — %s. Name all three, in those words, and for "
+            "each one say two things: what it is actually like — what the "
+            "pull is built on for the two, what the cost is with the third — "
+            "and then what to DO about it, which is the half they came for. "
+            "For the two magnetic ones that is the thing that actually works "
+            "with them; for the draining one it is the boundary that makes it "
+            "survivable. Use no other signs as the answer to that promise, "
+            "and never write that a relationship will or will not work — "
+            "describe the energy between them and what it takes from each "
+            "side."
             % (label, magnetic[0], magnetic[1], drains))
 
     neighbours = [name for name in (read.get("neighbours") or [])
@@ -2698,7 +2862,7 @@ def _zodiac_choice_block(cfg, choices, tag_scores=None):
 
 
 def _section_prompt(style, name, tag_scores, section_id, cfg=None,
-                    choices=None, funnel_slug=None):
+                    choices=None, funnel_slug=None, months=None):
     """One personalised section on its own.
 
     Each section is its own call now, so each carries the whole style and
@@ -2727,6 +2891,15 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
                      else _choice_block(cfg, choices, tag_scores))
     if extra:
         parts.append(extra)
+
+    # The year map is counted from the month this purchase happened in, so
+    # the twelve labels are built here and handed over as the only twelve the
+    # section may use. `months` is passed in rather than computed here so the
+    # prompt and the check that polices it cannot read different clocks.
+    if zodiac and section_id == "shopping":
+        year = _year_block(months)
+        if year:
+            parts.append(year)
 
     if zodiac and cfg is not None and choices:
         sign = _sign_block(cfg, choices)
@@ -3365,7 +3538,7 @@ def _absorb(job, task, result):
             continue                      # already have it (a cache hit)
         job["built"][section_id] = _stub_for(
             section_id, job["name"], _style(job["cfg"], job["style_id"]),
-            _profile(job["funnel"])["stubs"])
+            _profile(job["funnel"])["stubs"], job.get("months"))
         job["paths"][section_id] = "stub"
     return False
 
@@ -3513,6 +3686,15 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     if card:
         visuals = dict(visuals or {})
         visuals["profile"] = card
+    # The twelve months this purchase's year map runs over, read off the clock
+    # once and then treated as a fact about the purchase. The prompt is built
+    # from it, the check that polices the answer is bound to it, and it is
+    # stored — so a report generated in July still opens on July when it is
+    # re-opened in September.
+    months = _year_labels() if profile is ZODIAC_PROFILE else None
+    if months:
+        visuals = dict(visuals or {})
+        visuals["year"] = list(months)
     # Same story: resolved once, while the run still exists. None on every
     # funnel that declares no purpose map.
     purpose = _purpose(cfg, choices)
@@ -3522,6 +3704,7 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
         "style_id": result_style, "name": name, "built": built, "paths": paths,
         "on_final": on_final, "content": None, "elements": elements,
         "visuals": visuals, "sign": sign, "purpose": purpose,
+        "months": months,
     }
 
     tasks = []
@@ -3541,10 +3724,11 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                 "future": pool.submit(
                     _generate, client,
                     _section_prompt(style, name, tag_scores, section_id,
-                                    cfg, choices, funnel_slug),
+                                    cfg, choices, funnel_slug, months),
                     (section_id,), _section_tokens(section_id),
                     profile["system"], profile["banned"],
-                    profile["retry_detail"], _verify_for(profile, style)),
+                    profile["retry_detail"],
+                    _verify_for(profile, style, months)),
             })
         if cached is None:
             group = profile["cached"]
@@ -3567,7 +3751,7 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
         for section_id in [s.get("id") for s in cfg.get("report", {}).get("sections", [])]:
             if section_id not in built:
                 built[section_id] = _stub_for(section_id, name, style,
-                                              profile["stubs"])
+                                              profile["stubs"], months)
                 paths[section_id] = "stub"
         content = _assemble(cfg, funnel_slug, result_style, name, built, paths,
                             True, elements, visuals, sign, purpose)
@@ -4218,18 +4402,36 @@ figure figcaption { background: #141B3C; }
   text-transform: uppercase;
   color: #868FB6;
 }
-.tapgrid { font-size: 0; }
-.tapcell {
-  display: inline-block;
-  width: 15.5%;
-  margin: 0 1.4% 1.4% 0;
+/* A fixed table, sized by its cells rather than by a percentage.
+   Percentages were the whole problem: six sixths plus six gutters rounds past
+   a hundred and wraps to five. A square stated in millimetres cannot round
+   into a different number of columns, and 6 x 26.8 + 7 x 1.4 is 170.6mm
+   inside a 174mm column.
+
+   The square is stated on both axes for the same reason. `aspect-ratio` is
+   honoured here but loses to a replaced element's own ratio, and the sheet
+   draws frames from three different print boxes — a 900x154 horizon among
+   the 200x200 squares came out a fifth of the height of its neighbours. Two
+   explicit lengths and `object-fit: cover` is the only version of this that
+   does not depend on what the source happens to be. */
+.tapgrid {
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 1.4mm;
+  margin: 0 -1.4mm;
+}
+.tapcell { padding: 0; vertical-align: top; }
+/* The frame is on the image rather than on the cell: an empty cell — the
+   padding at the end of a run whose count is not a multiple of six — should
+   draw nothing at all. */
+.tapcell img {
+  display: block;
+  width: 26.8mm;
+  height: 26.8mm;
+  object-fit: cover;
   border: 0.2mm solid rgba(232, 200, 120, 0.30);
   border-radius: 1.5mm;
-  overflow: hidden;
-  vertical-align: top;
 }
-.tapcell:nth-child(6n) { margin-right: 0; }
-.tapcell img { display: block; width: 100%; height: 24mm; object-fit: cover; }
 
 .section-title .node {
   display: inline-block;
@@ -4429,6 +4631,11 @@ def _pdf_section_body(section, structured):
     return shot + "<p>%s</p>" % _e(section.get("body"))
 
 
+# Six to a row, the same as the result page's grid. Stated once, because the
+# markup and the column width in the stylesheet have to agree and a second
+# copy of the number is how they stop agreeing.
+TAP_COLUMNS = 6
+
 # The gallery's four families, in the order the result page draws them and in
 # the same four inks. One document, one vocabulary.
 PDF_ELEMENTS = [
@@ -4585,6 +4792,14 @@ def _pdf_taps(cfg):
 
     Its own block rather than another row on the cover — the cover is already
     a full page — so it opens the second one, over the first chapter.
+
+    A table, and a fixed one. Inline-blocks at a sixth of the width each did
+    not survive contact with a paginator: six of them plus their gutters
+    rounded past a hundred percent and wrapped to five, so eighteen frames
+    came out 5/5/5/3 in four rows instead of 3 x 6. A fixed-layout table
+    takes its column widths from the row rather than from the sum of its
+    children, which is the one thing that cannot round wrong. The last row is
+    padded out to six so every row is the same row.
     """
     ids = _pdf_visuals().get("taps") or []
     caption = ((cfg or {}).get("result_copy") or {}).get("taps_caption") \
@@ -4594,13 +4809,17 @@ def _pdf_taps(cfg):
         item = (_pdf_visuals().get("images") or {}).get(image_id)
         src = _print_src(image_id, item) if item else ""
         if src:
-            cells.append('<span class="tapcell"><img src="%s" alt=""></span>'
+            cells.append('<td class="tapcell"><img src="%s" alt=""></td>'
                          % _e(src))
     if len(cells) < 4:
         return ""
+    while len(cells) % TAP_COLUMNS:
+        cells.append('<td class="tapcell"></td>')
+    rows = ["<tr>%s</tr>" % "".join(cells[n:n + TAP_COLUMNS])
+            for n in range(0, len(cells), TAP_COLUMNS)]
     return ('<section class="taps"><p class="taps-cap">%s</p>'
-            '<div class="tapgrid">%s</div></section>'
-            % (_e(caption), "".join(cells)))
+            '<table class="tapgrid">%s</table></section>'
+            % (_e(caption), "".join(rows)))
 
 
 def _pdf_html(content):
