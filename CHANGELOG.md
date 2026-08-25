@@ -345,3 +345,6 @@ bottom.
 
 ## 2026-08-25 — claude/zodiac-result-polish2
 - zodiac: taps grid, tighter strengths, price hierarchy, 4 hook interstitials, sandbox
+
+## 2026-08-25 — claude/zodiac-final-touches
+- zodiac: year-from-now map, pdf grid, deeper love/money, new subtext
