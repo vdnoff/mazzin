@@ -208,9 +208,18 @@ def main():
     check("the zodiac palette cache is on a new revision",
           tag("zodiac", "palette") != reports.CACHE_SCHEMA,
           tag("zodiac", "palette"))
-    check("  its other cached section is not",
-          tag("zodiac", "mistakes") == reports.CACHE_SCHEMA,
+    check("  and the mistakes cache is on one of its own",
+          tag("zodiac", "mistakes") != reports.CACHE_SCHEMA
+          and tag("zodiac", "mistakes") != tag("zodiac", "palette"),
           tag("zodiac", "mistakes"))
+    check("  while the third cached section never moved",
+          tag("zodiac", "splurge") == reports.CACHE_SCHEMA,
+          tag("zodiac", "splurge"))
+    check("  and the twin's rows moved with the twin's",
+          tag("zodiac30", "mistakes") == tag("zodiac", "mistakes")
+          and tag("zodiac30", "palette") == tag("zodiac", "palette"),
+          "%s / %s" % (tag("zodiac30", "mistakes"),
+                       tag("zodiac30", "palette")))
     check("  and no kitchen row moved",
           all(tag("kitchen", sid) == reports.CACHE_SCHEMA
               for sid in ("palette", "mistakes", "shopping")))
@@ -234,10 +243,20 @@ def main():
     have, dropped = warmed("zodiac", "deep_water", "palette")
     check("a zodiac palette row on the old revision is dropped",
           not have and dropped == 1, "%r, %d stale" % (have, dropped))
+    # `mistakes` earned a revision of its own when the five strengths were
+    # cut to two sentences and one: a row warmed under the old prompt is not
+    # wrong, it is the old length, and the length is the product.
     have, dropped = warmed("zodiac", "deep_water", "mistakes")
-    check("  its other cached section is kept",
-          "mistakes" in (have or {}) and dropped == 0,
+    check("  and a mistakes row on the old revision is dropped with it",
+          not have and dropped == 1, "%r, %d stale" % (have, dropped))
+    have, dropped = warmed("zodiac", "deep_water", "splurge")
+    check("  while the cached section with no revision is kept",
+          "splurge" in (have or {}) and dropped == 0,
           "%r, %d stale" % (have, dropped))
+    check("  which is the only one of the three left unrevised",
+          sorted(reports._profile("zodiac")["cache_rev"])
+          == ["mistakes", "palette"],
+          str(sorted(reports._profile("zodiac")["cache_rev"])))
     have, dropped = warmed("kitchen", "modern_rustic", "palette")
     check("  and kitchen's palette row is kept",
           "palette" in (have or {}) and dropped == 0,

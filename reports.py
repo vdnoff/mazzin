@@ -1111,6 +1111,24 @@ def _walk_caps(section_id):
     return out
 
 
+# Where the prompt should ask for less than the validator will accept.
+#
+# The default below derives what the model is told from the ceiling that
+# would throw a section away, and the gap between them is deliberate: it is
+# what absorbs a sentence and a half. That is the right number when the risk
+# is a section being lost, and the wrong one when the problem is that the
+# section is simply too long. The five hidden strengths ran a hundred and ten
+# words each — an essay where the product is a hit — and these are the
+# numbers that make them about forty-five.
+#
+# Only ever tighter. A number here that is looser than the derived one is
+# ignored, so this table cannot quietly raise a ceiling; the ceilings live in
+# SHAPE and are unchanged.
+PROMPT_CAP = {
+    "mistakes": {"body": 240, "fix": 140},
+}
+
+
 def _budgets(section_id):
     """{field name: the number to put in the prompt} for one section.
 
@@ -1122,6 +1140,9 @@ def _budgets(section_id):
     for _, field, cap in _walk_caps(section_id):
         value = _budget(cap)
         out[field] = min(value, out.get(field, value))
+    for field, cap in (PROMPT_CAP.get(section_id) or {}).items():
+        if field in out:
+            out[field] = min(out[field], cap)
     return out
 
 
@@ -1184,19 +1205,25 @@ is worth reaching for and the days it is not.''',
     "mistakes": '''"mistakes": {
   "items": [
     {"title": "the hidden strength, as a short phrase (max %(title)d chars)",
-     "body": "what the strength is, how it shows up in an ordinary week, and the blind spot on its other side (max %(body)d chars — roughly three sentences, not five)",
-     "fix": "how to use it deliberately rather than accidentally, starting with a verb (max %(fix)d chars — two sentences)"},
-    {"title": "the second one", "body": "...", "fix": "..."},
-    {"title": "the third one", "body": "...", "fix": "..."},
-    {"title": "the fourth one", "body": "...", "fix": "..."},
-    {"title": "the fifth one", "body": "...", "fix": "..."}
+     "body": "EXACTLY TWO SENTENCES and no more. The first says what the strength is and how it shows up in an ordinary week. The second says what it costs — the blind spot on its other side. No third sentence, and do not join two of them with a semicolon to get around that (max %(body)d chars)",
+     "fix": "ONE imperative sentence starting with a verb — the thing to do differently this week. A second is allowed only if it is short (max %(fix)d chars)"},
+    {"title": "the second one", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the third one", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the fourth one", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the fifth one", "body": "two sentences", "fix": "one sentence"}
   ]
 }
 
 Exactly five, under the single key `items`, each an object with `title`,
 `body` and `fix` spelled exactly so. Every strength carries its own blind
 spot inside the same body — a strength with no cost is flattery. `fix` is how
-to spend the strength on purpose, never a warning.''',
+to spend the strength on purpose, never a warning.
+
+All five are the same shape and the same length: two sentences and one. This
+is read on a phone by somebody scrolling, and five paragraphs is an essay
+where the product is five hits. Cut every clause that is scene-setting, every
+"which is why", and every restatement of the title. If a sentence could be
+deleted without losing a fact about this reader, delete it.''',
 
     "materials": '''"materials": {
   "intro": "1-2 sentences on the pattern underneath who this person is drawn to (max %(intro)d chars)",
@@ -1330,17 +1357,18 @@ ZODIAC_STUBS = {
         "closing_rule": "Carry one stone rather than three, and give it a day "
                         "of the week rather than a habit.",
     },
+    # Two sentences and one, the same as the prompt asks for. A stub is what
+    # a reader gets when there is no key, and it is not allowed to be a
+    # different product from the one that arrives when there is.
     "mistakes": {
         "items": [
             {"title": "You read your own certainty as evidence",
-             "body": "A {name} profile decides quickly and trusts the "
-                     "speed of it. Most of the time the speed is earned. "
-                     "The cost is that a decision made out of restlessness "
-                     "feels identical, from the inside, to one made out of "
+             "body": "A {name} profile decides quickly and trusts the speed "
+                     "of it. A decision made out of restlessness feels "
+                     "identical, from the inside, to one made out of "
                      "conviction.",
-             "fix": "Give any decision you can explain in ten seconds one "
-                    "night before acting on it. What survives the morning was "
-                    "conviction."},
+             "fix": "Sleep one night on any decision you could explain in "
+                    "ten seconds."},
             {"title": "You hold the useful thing until the moment is clean",
              "body": "You notice more than the people around you and you say "
                      "less of it. The read is usually right and it usually "
@@ -1359,8 +1387,7 @@ ZODIAC_STUBS = {
              "body": "You see the shape of a thing early, which is the hard "
                      "part. Once the shape is clear the rest reads as admin, "
                      "and the value gets collected by whoever stayed.",
-             "fix": "Pick one thing a quarter and stay past the boredom. Not "
-                    "everything — one."},
+             "fix": "Pick one thing a quarter and stay past the boredom."},
             {"title": "You mistake being steady for being fine",
              "body": "Steadiness is what people rely on you for, and it makes "
                      "a poor instrument for measuring yourself. The weeks "
@@ -1538,7 +1565,11 @@ ZODIAC_PROFILE = {
     # the old one is the wrong answer. The tag travels with the row, so only
     # the sections named here go stale — kitchen declares no revisions and
     # every one of its rows stays valid.
-    "cache_rev": {"palette": "colors2"},
+    # `mistakes` is here because the prompt now asks for two sentences and one
+    # where it asked for three and two. A row warmed under the old prompt is
+    # not stale in the sense of being wrong — it is the old product, at the
+    # old length, and the whole point of the change is the length.
+    "cache_rev": {"palette": "colors2", "mistakes": "short1"},
     "pdf_css": None,        # filled below, once ZODIAC_PDF_CSS is defined
     # The wordmark is dark ink, which on a dark page is a rectangle of
     # nothing. The light cut already exists and is what this document wants.
@@ -2159,6 +2190,17 @@ def _visuals(cfg, result_style, choices):
             hero[slot[:-len("_step")]] = one
     if hero:
         out["hero"] = hero
+
+    # And the whole run, in the order they tapped it, on a funnel that asks
+    # for the contact sheet. The free page shows the reader every frame they
+    # chose under "read from your taps"; the page they paid for and the PDF
+    # have to show the same grid, and neither has a run to read it off — one
+    # is opened from a link in a mail and the other is built on a server. Ids
+    # only, and only ids this config knows.
+    if block.get("taps"):
+        taps = [image_id for image_id in (choices or []) if image_id in known]
+        if taps:
+            out["taps"] = taps
     return out or None
 
 
@@ -4162,6 +4204,33 @@ figure figcaption { background: #141B3C; }
   border-top: 0.2mm solid #2C355F;
 }
 
+/* --- the contact sheet ---------------------------------------------------
+
+   Every frame of the run, six to a row, the way the result page draws it.
+   Inline-blocks on a zeroed line rather than a grid: this page is paginated,
+   and the whole sheet has to stay together. */
+.taps { margin: 0 0 9mm; break-inside: avoid-page; }
+.taps-cap {
+  margin: 0 0 3mm;
+  font-size: 8pt;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #868FB6;
+}
+.tapgrid { font-size: 0; }
+.tapcell {
+  display: inline-block;
+  width: 15.5%;
+  margin: 0 1.4% 1.4% 0;
+  border: 0.2mm solid rgba(232, 200, 120, 0.30);
+  border-radius: 1.5mm;
+  overflow: hidden;
+  vertical-align: top;
+}
+.tapcell:nth-child(6n) { margin-right: 0; }
+.tapcell img { display: block; width: 100%; height: 24mm; object-fit: cover; }
+
 .section-title .node {
   display: inline-block;
   width: 7mm;
@@ -4506,6 +4575,34 @@ def _zodiac_cover(content, profile, cfg):
 ZODIAC_PROFILE["pdf_cover"] = _zodiac_cover
 
 
+def _pdf_taps(cfg):
+    """The reader's whole run as a contact sheet, or "".
+
+    The same grid the result page draws and for the same reason: the claim
+    above it is that this reading was read off these frames, and five of
+    eighteen is a sample rather than a record. Six to a row, unlabelled, in
+    the order they were tapped.
+
+    Its own block rather than another row on the cover — the cover is already
+    a full page — so it opens the second one, over the first chapter.
+    """
+    ids = _pdf_visuals().get("taps") or []
+    caption = ((cfg or {}).get("result_copy") or {}).get("taps_caption") \
+        or "Read from your taps:"
+    cells = []
+    for image_id in ids:
+        item = (_pdf_visuals().get("images") or {}).get(image_id)
+        src = _print_src(image_id, item) if item else ""
+        if src:
+            cells.append('<span class="tapcell"><img src="%s" alt=""></span>'
+                         % _e(src))
+    if len(cells) < 4:
+        return ""
+    return ('<section class="taps"><p class="taps-cap">%s</p>'
+            '<div class="tapgrid">%s</div></section>'
+            % (_e(caption), "".join(cells)))
+
+
 def _pdf_html(content):
     name = _e(content.get("style_name") or "Your style")
     structured = _is_schema2(content.get("version"))
@@ -4534,6 +4631,7 @@ def _pdf_html(content):
         state["sections"] = dict(visuals.get("sections") or {})
         state["hero"] = dict(visuals.get("hero") or {})
         state["profile"] = dict(visuals.get("profile") or {})
+        state["taps"] = list(visuals.get("taps") or [])
 
     if cover:
         blocks = [block for block in cover(content, profile, cfg) if block]
@@ -4558,6 +4656,11 @@ def _pdf_html(content):
                     "you were sent back to after checkout.")),
             "</section>",
         ]
+    # Only where the run stored one, which is only where the funnel asked for
+    # it. Kitchen stores no tap order and prints the document it always did.
+    grid = _pdf_taps(cfg)
+    if grid:
+        blocks.append(grid)
     node = profile.get("pdf_node")
     for index, section in enumerate(content.get("sections") or [], 1):
         mark = ('<span class="node">%d</span>' % index) if node else ""

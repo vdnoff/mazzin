@@ -3,7 +3,7 @@
   "funnel_id": "zodiac30_v1",
   "locale": "en",
   "theme": "zodiac",
-  "stripe_mode": "live",
+  "stripe_mode": "test",
   "result_module": "/static/js/result_zodiac.js",
   "result_css": "/static/css/result_zodiac.css",
   "meta": {
@@ -13,8 +13,8 @@
   "swipe": {
     "pairs_count": 18,
     "headline": "Your cosmic profile analysis",
-    "subtext": "Your Cosmic Profile in 60 seconds of taps",
-    "subtext_accent": "60 seconds",
+    "subtext": "Most cosmic blends are common. Yours takes 18 taps.",
+    "subtext_accent": "18 taps",
     "hint": "Tap your choice",
     "label_mode": "badge",
     "analyzing_fade_to": "#0E1430",
@@ -2098,26 +2098,16 @@
   },
   "interstitials": [
     {
-      "after_step": 2,
+      "after_step": 4,
       "template": "confirm",
       "kicker": "Signal recorded",
-      "line": "Sign locked.",
+      "line": "Two personal signals in.",
+      "sub": "Your profile is narrowing.",
       "cta": "Continue analysis",
       "auto_advance_ms": 2000,
       "echo_steps": [
         "hook",
-        "sign"
-      ]
-    },
-    {
-      "after_step": 4,
-      "template": "pattern",
-      "kicker": "Pattern detected",
-      "line": "Two personal signals in.",
-      "sub": "Your profile is already narrowing.",
-      "cta": "Continue analysis",
-      "auto_advance_ms": 2000,
-      "echo_steps": [
+        "sign",
         "seeking",
         "bond"
       ],
@@ -2125,127 +2115,93 @@
         "axis": "purpose",
         "lines": {
           "purpose_love": {
-            "line": "Your love signal is strong.",
-            "sub": "It's shaping what we ask next."
+            "line": "A {sign} looking for love.",
+            "sub": "That narrows it fast."
           },
           "purpose_career": {
-            "line": "Your ambition signal is strong.",
-            "sub": "It's shaping what we ask next."
+            "line": "A {sign} chasing momentum.",
+            "sub": "That narrows it fast."
           },
           "purpose_peace": {
-            "line": "Your calm signal is strong.",
-            "sub": "It's shaping what we ask next."
+            "line": "A {sign} guarding their peace.",
+            "sub": "That narrows it fast."
           },
           "purpose_path": {
-            "line": "Your forward signal is strong.",
-            "sub": "It's shaping what we ask next."
+            "line": "A {sign} mapping the road ahead.",
+            "sub": "That narrows it fast."
           }
         }
       }
     },
     {
-      "after_step": 6,
-      "template": "confirm",
-      "kicker": "Signal recorded",
-      "line": "One element keeps pulling ahead.",
-      "cta": "Continue analysis",
-      "auto_advance_ms": 2000,
-      "echo_steps": [
-        "energy",
-        "landscape"
-      ],
-      "personal": {
-        "axis": "element",
-        "lines": {
-          "fire": {
-            "line": "Fire keeps pulling ahead."
-          },
-          "earth": {
-            "line": "Earth keeps pulling ahead."
-          },
-          "air": {
-            "line": "Air keeps pulling ahead."
-          },
-          "water": {
-            "line": "Water keeps pulling ahead."
-          }
-        }
-      }
-    },
-    {
-      "after_step": 8,
+      "after_step": 9,
       "template": "almost",
-      "kicker": "Calibrating",
+      "kicker": "Pattern detected",
       "line": "Profile {pct}% calibrated.",
       "cta": "Continue analysis",
       "auto_advance_ms": 2000,
       "echo_steps": [
+        "energy",
+        "landscape",
         "palette",
-        "moment"
-      ],
-      "personal": {
-        "axis": "energy",
-        "lines": {
-          "sun": {
-            "line": "You lean Sun. Profile {pct}% calibrated."
-          },
-          "moon": {
-            "line": "You lean Moon. Profile {pct}% calibrated."
-          }
-        }
-      }
-    },
-    {
-      "after_step": 10,
-      "template": "confirm",
-      "kicker": "Signal recorded",
-      "line": "Moon signal recorded.",
-      "sub": "It changes what we ask next.",
-      "cta": "Continue analysis",
-      "auto_advance_ms": 2000,
-      "echo_steps": [
-        "symbol",
-        "moonphase"
-      ]
-    },
-    {
-      "after_step": 12,
-      "template": "confirm",
-      "kicker": "Signal recorded",
-      "line": "Inverse signal locked.",
-      "cta": "Continue analysis",
-      "auto_advance_ms": 2000,
-      "echo_steps": [
-        "flow",
-        "drain"
-      ]
-    },
-    {
-      "after_step": 15,
-      "template": "almost",
-      "kicker": "Calibrating",
-      "line": "Deep layer mapped. {pct}% calibrated.",
-      "cta": "Continue analysis",
-      "auto_advance_ms": 2000,
-      "echo_steps": [
-        "sanctuary",
-        "decision",
-        "tide"
+        "moment",
+        "symbol"
       ],
       "personal": {
         "axis": "element",
         "lines": {
           "fire": {
-            "line": "Your fire runs deep. Three signals left."
+            "line": "Fire keeps winning.",
+            "sub": "If it holds, your reading changes."
           },
           "earth": {
-            "line": "Your earth runs deep. Three signals left."
+            "line": "Earth keeps winning.",
+            "sub": "If it holds, your reading changes."
           },
           "air": {
-            "line": "Your air runs deep. Three signals left."
+            "line": "Air keeps winning.",
+            "sub": "If it holds, your reading changes."
           },
           "water": {
-            "line": "Your water runs deep. Three signals left."
+            "line": "Water keeps winning.",
+            "sub": "If it holds, your reading changes."
+          }
+        }
+      }
+    },
+    {
+      "after_step": 14,
+      "template": "confirm",
+      "kicker": "Deep layer",
+      "line": "Deep layer mapped.",
+      "sub": "Four signals left.",
+      "cta": "Continue analysis",
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "moonphase",
+        "flow",
+        "drain",
+        "sanctuary",
+        "decision"
+      ],
+      "personal": {
+        "step": "decision",
+        "lines": {
+          "dc14a": {
+            "line": "You choose with your heart first.",
+            "sub": "Few admit that."
+          },
+          "dc14b": {
+            "line": "You choose with your head first.",
+            "sub": "The heart still votes."
+          },
+          "dc14c": {
+            "line": "Gut first.",
+            "sub": "Your fastest signal is usually your truest."
+          },
+          "dc14d": {
+            "line": "You let time decide.",
+            "sub": "Patience is a strategy, not a delay."
           }
         }
       }
@@ -2255,10 +2211,11 @@
       "template": "almost",
       "kicker": "Calibrating",
       "line": "All 18 signals in.",
-      "sub": "Compiling your Cosmic Profile…",
+      "sub": "Most blends are common — let's see yours.",
       "cta": "Continue analysis",
       "auto_advance_ms": 2400,
       "echo_steps": [
+        "tide",
         "door",
         "essence",
         "seal"
@@ -2619,8 +2576,8 @@
         },
         "mistake_one": {
           "title": "You mistake speed for certainty",
-          "body": "The thing you are strongest at — moving before the room has finished thinking — is also the thing that costs you most. A fire-and-sun profile reads its own momentum as evidence: because the decision came quickly, it feels like it came from somewhere deep. Often it did. Sometimes it came from nothing more than the discomfort of sitting still, and the two feel identical from the inside.",
-          "fix": "Give any decision you can explain in under ten seconds one night before you act on it. Not a week — a night. If it is still obvious in the morning it was conviction; if it has gone quiet it was restlessness wearing conviction's coat."
+          "body": "Your momentum reads to you as evidence — the decision came fast, so it feels like it came from somewhere deep. Sometimes it came from nothing but the discomfort of sitting still, and the two are identical from the inside.",
+          "fix": "Sleep one night on any decision you could explain in under ten seconds."
         }
       }
     },
@@ -2699,8 +2656,8 @@
         },
         "mistake_one": {
           "title": "You wait for the perfect moment to say it",
-          "body": "You take in more than anyone around you and hold it longer, which is why your read on a situation is almost always right. It is also why it arrives late. A water-and-moon profile trusts timing the way other people trust logic, and it will hold a true and useful thing for weeks waiting for a moment clean enough to deserve it. The moment rarely comes, the thing goes unsaid, and the situation resolves without you in it.",
-          "fix": "Set a ceiling instead of a moment. Three days from noticing something to naming it, clumsy wording included. The awkward version said on Tuesday does more work than the perfect version you never quite reach."
+          "body": "You take in more than anyone in the room and hold it longer, which is why your read is almost always right. It is also why it arrives after the situation has resolved without you in it.",
+          "fix": "Set a three-day ceiling between noticing something and naming it, clumsy wording included."
         }
       }
     },
@@ -2779,8 +2736,8 @@
         },
         "mistake_one": {
           "title": "You absorb the cost instead of naming it",
-          "body": "Steadiness is the thing everyone around you relies on, and you deliver it so reliably that the delivery stops being visible. An earth-and-calm profile takes the extra hour, the awkward conversation, the thing nobody else picked up — and takes it quietly enough that no one ever learns it was extra. Over a few years the baseline moves. What you once took on as a favour is now simply what you do.",
-          "fix": "Say the cost out loud once, at the moment it happens, without asking for anything in return. Not a complaint and not a negotiation — one sentence naming what it took. People adjust to information far more readily than they adjust to resentment."
+          "body": "You take the extra hour and the awkward conversation, and you take them quietly enough that nobody learns they were extra. Over a few years the baseline moves, and the favour becomes simply what you do.",
+          "fix": "Say what it took, once, at the moment it happens, without asking for anything back."
         }
       }
     },
@@ -2859,8 +2816,8 @@
         },
         "mistake_one": {
           "title": "You leave at the exact moment it gets valuable",
-          "body": "You see the shape of a thing before anyone else does, and the seeing is genuinely the hard part — an air-and-sun profile turns out more usable ideas in a month than most people have in a year. But the interest is front-loaded. Once the shape is clear the rest reads as admin, so you move on, the idea belongs to whoever stayed, and you are left with the accurate and useless memory of having thought of it first.",
-          "fix": "Pick one thing a quarter and stay past the point where it stops being interesting. Not everything — one. The boredom is not a signal that the work is finished; it is the toll on the stretch where the value actually gets collected."
+          "body": "You see the shape of a thing before anyone else does, which is the hard part, and then the interest runs out. The idea belongs to whoever stayed, and you keep the accurate, useless memory of having thought of it first.",
+          "fix": "Pick one thing a quarter and stay past the point where it stops being interesting."
         }
       }
     }
@@ -2987,6 +2944,7 @@
       ]
     },
     "visuals": {
+      "taps": true,
       "hero": {
         "glyph_step": "sign",
         "band_step": "landscape"
@@ -3034,10 +2992,16 @@
     "commerce": {
       "anchor_head": "A {price} profile instead of a $75 session",
       "anchor_head_accent": "$75",
+      "price_anchor": "instead of a $75 private session",
+      "price_anchor_accent": "$75",
+      "price_note": "one-time",
+      "badges": [
+        "One-time",
+        "No subscription, ever"
+      ],
       "price_suffix": "one-time · no subscription",
       "trust": [
         "Secure via Stripe",
-        "One-time — no recurring charges",
         "PDF to your email"
       ],
       "mid_line": "Your complete energy map, for less than two coffees.",

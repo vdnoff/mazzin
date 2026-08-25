@@ -49,10 +49,9 @@
   // invented one, which is why most dots on it sit right of centre.
   var TONE = ["bold", "calm", "mystic"];
 
-  // The steps whose frames are worth showing back, in the order they read.
-  // Only ones they tapped are drawn — a strip that shows a card somebody did
-  // not choose is the opposite of proof.
-  var TAP_STEPS = ["landscape", "palette", "moonphase", "symbol", "sanctuary"];
+  // The fewest frames worth calling a grid. Below this the run did not
+  // happen, and a row of two squares under "read from your taps" reads as a
+  // page that failed rather than as evidence.
   var TAPS_MIN = 4;
 
   function elm(tag, cls, text) {
@@ -373,17 +372,22 @@
 
   // --- c) read from your taps ------------------------------------------------
 
-  function taps(ctx, copy) {
-    var picks = TAP_STEPS
-      .map(function (id) { return ctx.picks[id]; })
-      .filter(Boolean);
-    if (picks.length < TAPS_MIN) return null;
+  // Every frame of the run, six to a row, in the order they were tapped.
+  //
+  // It was five of them with their names under, chosen from a list of the
+  // interesting steps. The whole claim of this block is "this reading was
+  // read off these", and five out of eighteen is a sample rather than a
+  // record — so it is all of them now, small and unlabelled, because the
+  // point is the count and the fact that the reader recognises every square.
+  // The names are gone with the size: at a sixth of the width a caption is
+  // two clipped words.
+  //
+  // No new bytes on the wire. Every one of these files was decoded during the
+  // quiz and is in the browser's cache; the grid is the same images again.
 
-    var block = elm("section", "zr-taps");
-    block.appendChild(elm("p", "zr-taps-caption",
-                          copy.taps_caption || "Read from your taps:"));
-    var row = elm("ul", "zr-taps-row");
-    picks.slice(0, 5).forEach(function (pick) {
+  function tapsGrid(picks) {
+    var row = elm("ul", "zr-taps-grid");
+    picks.forEach(function (pick) {
       var cell = elm("li", "zr-tap");
       var img = document.createElement("img");
       img.src = pick.img;
@@ -391,11 +395,41 @@
       img.loading = "lazy";
       img.decoding = "async";
       cell.appendChild(img);
-      cell.appendChild(elm("span", "zr-tap-name", pick.label || ""));
       row.appendChild(cell);
     });
-    block.appendChild(row);
+    return row;
+  }
+
+  function tapsBlock(copy, picks) {
+    if (picks.length < TAPS_MIN) return null;
+    var block = elm("section", "zr-taps");
+    block.appendChild(elm("p", "zr-taps-caption",
+                          copy.taps_caption || "Read from your taps:"));
+    block.appendChild(tapsGrid(picks));
     return block;
+  }
+
+  // Choice order is step order: the quiz walks its steps front to back, so
+  // reading `picks` off the config's own step list puts the squares in the
+  // order the reader put them there. A step they somehow did not answer is
+  // absent rather than a gap.
+  function taps(ctx, copy) {
+    var steps = (ctx.cfg && ctx.cfg.swipe && ctx.cfg.swipe.steps) || [];
+    var picks = steps
+      .map(function (step) { return ctx.picks[step.id]; })
+      .filter(function (pick) { return pick && pick.img; });
+    return tapsBlock(copy, picks);
+  }
+
+  // The same grid after the money. The run is gone by now — this page is
+  // opened from a link in a mail — so the ids travel on the report the way
+  // the hero card and the section photographs do.
+  function deliveredTaps(ctx, copy) {
+    var want = (ctx.visuals && ctx.visuals.taps) || [];
+    var picks = want
+      .map(function (id) { return ctx.images[id]; })
+      .filter(function (pick) { return pick && pick.img; });
+    return tapsBlock(copy, picks);
   }
 
   // --- the reader's own reason for being here --------------------------------
@@ -728,9 +762,18 @@
       if (head) card.appendChild(elm("p", "zr-offer-head", head));
     }
 
-    var anchorText = ctx.withPrice(ctx.commerce.anchor_head
+    // The price, and the order of the argument around it.
+    //
+    // It used to open on the comparison — "A $3 profile instead of a $75
+    // session" — which makes the $75 the first number on the card and the
+    // one the eye stops at. The reader's own price is the thing they are
+    // deciding about, so it is the loudest text here by a distance; the
+    // anchor is one muted line above it, doing the work of a footnote.
+    var anchorText = ctx.withPrice(ctx.commerce.price_anchor
+                                   || ctx.commerce.anchor_head
                                    || ctx.cfg.checkout.anchor_head || "");
-    var accent = ctx.commerce.anchor_head_accent || "";
+    var accent = ctx.commerce.price_anchor_accent
+      || ctx.commerce.anchor_head_accent || "";
     var anchor = elm("p", "zr-anchor");
     if (accent && anchorText.indexOf(accent) !== -1) {
       var cut = anchorText.split(accent);
@@ -741,6 +784,23 @@
       anchor.textContent = anchorText;
     }
     card.appendChild(anchor);
+
+    var price = elm("p", "zr-price");
+    price.appendChild(elm("span", "zr-price-now", ctx.price));
+    var note = ctx.commerce.price_note || "";
+    if (note) price.appendChild(elm("span", "zr-price-note", note));
+    card.appendChild(price);
+
+    // The two questions a reader asks a $3 button, answered where they are
+    // asked rather than in a run-on line at the bottom of the card.
+    var badges = ctx.commerce.badges || [];
+    if (badges.length) {
+      var row = elm("ul", "zr-badges");
+      badges.forEach(function (text) {
+        row.appendChild(elm("li", "zr-badge", text));
+      });
+      card.appendChild(row);
+    }
     // The one line under the anchor, in the reader's own terms when the run
     // said what they came for. Everything else on this card — the price, the
     // button, the trust row, the consent — is untouched by any of this.
@@ -1122,6 +1182,8 @@
     root.classList.add("is-delivered");
     root.appendChild(kicker(copy));
     root.appendChild(deliveredHero(ctx, copy));
+    var strip = deliveredTaps(ctx, copy);
+    if (strip) root.appendChild(strip);
 
     // Same reorder after the money as before it: the section they came for is
     // the first one they meet. `ctx.purpose` is the tag off the stored report
