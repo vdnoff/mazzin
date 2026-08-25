@@ -3,7 +3,7 @@
   "funnel_id": "zodiac30_v1",
   "locale": "en",
   "theme": "zodiac",
-  "stripe_mode": "test",
+  "stripe_mode": "live",
   "result_module": "/static/js/result_zodiac.js",
   "result_css": "/static/css/result_zodiac.css",
   "meta": {

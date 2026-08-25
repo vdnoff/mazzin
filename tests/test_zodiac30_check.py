@@ -1347,17 +1347,42 @@ check("the slug is routable", config.funnel_exists("zodiac30"))
 check("  and is a legal slug for the /<slug> route",
       config.valid_slug("zodiac30"))
 check("load_funnel returns this config", config.load_funnel("zodiac30") == cfg)
-# The sandbox, deliberately. Both funnels are on the STRIPE_TEST_* key set
-# while the rebuilt report is walked end to end with a 4242 card, and they
-# take no real money until this goes back to "live". The value is pinned
-# rather than merely checked for presence because payments._stripe_mode reads
-# exactly "test" and calls everything else live, so a typo in either
-# direction is silent — one way the funnel stops charging, the other way it
-# charges a card nobody meant to charge.
-check("stripe_mode is the literal test", cfg.get("stripe_mode") == "test",
+# Live. It was on the STRIPE_TEST_* key set while the rebuilt report was
+# walked end to end with a 4242 card; it takes real money now, on the same key
+# set kitchen-visualizer has always been on. The value is pinned rather than
+# merely checked for presence because payments._stripe_mode reads exactly
+# "test" and calls everything else live, so a typo in either direction is
+# silent — one way the funnel charges a card nobody meant to charge, the other
+# way it quietly stops charging anybody.
+check("stripe_mode is the literal live", cfg.get("stripe_mode") == "live",
       repr(cfg.get("stripe_mode")))
-check("payments reads it as a test-mode funnel",
-      payments._stripe_mode(cfg) == payments.TEST, payments._stripe_mode(cfg))
+check("payments reads it as a live-mode funnel",
+      payments._stripe_mode(cfg) == payments.LIVE, payments._stripe_mode(cfg))
+# Against stand-ins rather than against whatever this shell's .env holds, so
+# the claim is about the wiring and not about one machine — and so it cannot
+# pass vacuously with every key unset and equal to every other. No live key is
+# read, printed or sent anywhere by any of it.
+_env = (config.STRIPE_SECRET_KEY, config.STRIPE_PUBLISHABLE_KEY,
+        config.STRIPE_TEST_SECRET_KEY, config.STRIPE_TEST_PUBLISHABLE_KEY)
+try:
+    config.STRIPE_SECRET_KEY = "sk_live_standin"
+    config.STRIPE_PUBLISHABLE_KEY = "pk_live_standin"
+    config.STRIPE_TEST_SECRET_KEY = "sk_test_standin"
+    config.STRIPE_TEST_PUBLISHABLE_KEY = "pk_test_standin"
+    _mode = payments._stripe_mode(cfg)
+    check("  and resolves to STRIPE_SECRET_KEY / STRIPE_PUBLISHABLE_KEY",
+          payments._stripe_secret(_mode) == "sk_live_standin"
+          and payments._stripe_publishable(_mode) == "pk_live_standin",
+          "%s / %s" % (payments._stripe_secret(_mode),
+                       payments._stripe_publishable(_mode)))
+    check("    which is the same pair the twin and kitchen resolve to",
+          payments._stripe_secret(_mode)
+          == payments._stripe_secret(payments._stripe_mode(twin))
+          == payments._stripe_secret(
+              payments._stripe_mode(config.load_funnel("kitchen"))))
+finally:
+    (config.STRIPE_SECRET_KEY, config.STRIPE_PUBLISHABLE_KEY,
+     config.STRIPE_TEST_SECRET_KEY, config.STRIPE_TEST_PUBLISHABLE_KEY) = _env
 choices = [s["pairs"][0]["images"][0]["id"] for s in steps]
 check("checkout accepts an 18-long choice list",
       payments._clean_choices(cfg, choices) == choices)

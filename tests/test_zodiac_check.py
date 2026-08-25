@@ -88,21 +88,21 @@ check("accent is a fragment of the subtext",
 check("subtext accent names the count",
       cfg["swipe"]["subtext_accent"] == "%d taps" % cfg["swipe"]["pairs_count"],
       cfg["swipe"].get("subtext_accent"))
-# The sandbox, deliberately. Both funnels are on the STRIPE_TEST_* key set
-# while the rebuilt report is walked end to end with a 4242 card, and they
-# take no real money until this goes back to "live". The value is pinned
-# rather than merely checked for presence because payments._stripe_mode reads
-# exactly "test" and calls everything else live, so a typo in either
-# direction is silent — one way the funnel stops charging, the other way it
-# charges a card nobody meant to charge.
-check("stripe_mode is the literal test", cfg.get("stripe_mode") == "test",
+# Live. It was on the STRIPE_TEST_* key set while the rebuilt report was
+# walked end to end with a 4242 card; it takes real money now, on the same key
+# set kitchen-visualizer has always been on. The value is pinned rather than
+# merely checked for presence because payments._stripe_mode reads exactly
+# "test" and calls everything else live, so a typo in either direction is
+# silent — one way the funnel charges a card nobody meant to charge, the other
+# way it quietly stops charging anybody.
+check("stripe_mode is the literal live", cfg.get("stripe_mode") == "live",
       repr(cfg.get("stripe_mode")))
-# The other three funnels are unaffected: kitchen-visualizer stays live and
-# kitchen declares no mode at all, which payments reads as live.
-check("  while the kitchens stay where they were",
-      json.load(open(os.path.join(ROOT, "funnels/kitchen-visualizer.json")))
-      .get("stripe_mode") == "live"
-      and "stripe_mode" not in json.load(
+check("  which is the value kitchen-visualizer already carries",
+      cfg.get("stripe_mode") == json.load(
+          open(os.path.join(ROOT, "funnels/kitchen-visualizer.json")))
+      .get("stripe_mode"))
+check("  and kitchen still declares no mode at all, which reads as live",
+      "stripe_mode" not in json.load(
           open(os.path.join(ROOT, "funnels/kitchen.json"))))
 
 print("\n--- steps ---")
@@ -716,13 +716,53 @@ check("the slug is routable", config.funnel_exists("zodiac"))
 # The mode is pinned as a string above; this is the half that matters — that
 # payments.py agrees the string means live, and so reaches for the live key
 # set rather than the sandbox one.
-check("payments reads this funnel as a test-mode funnel",
-      payments._stripe_mode(cfg) == payments.TEST,
+check("payments reads this funnel as a live-mode funnel",
+      payments._stripe_mode(cfg) == payments.LIVE,
       payments._stripe_mode(cfg))
-check("  while kitchen stays on the live key set it has always been on",
+check("  the same key set kitchen has always been on",
       payments._stripe_mode(config.load_funnel("kitchen")) == payments.LIVE)
 check("  a mode payments does not know would be live, not an error",
       payments._stripe_mode({"stripe_mode": "sandbox"}) == payments.LIVE)
+
+# Which env names live mode actually resolves to. Asserted against stand-in
+# values rather than against whatever is in this shell's environment, so the
+# claim is about the wiring and not about one machine's .env — and no live
+# key is read, printed or sent anywhere by any of it.
+_env = (config.STRIPE_SECRET_KEY, config.STRIPE_PUBLISHABLE_KEY,
+        config.STRIPE_TEST_SECRET_KEY, config.STRIPE_TEST_PUBLISHABLE_KEY)
+try:
+    config.STRIPE_SECRET_KEY = "sk_live_standin"
+    config.STRIPE_PUBLISHABLE_KEY = "pk_live_standin"
+    config.STRIPE_TEST_SECRET_KEY = "sk_test_standin"
+    config.STRIPE_TEST_PUBLISHABLE_KEY = "pk_test_standin"
+    mode = payments._stripe_mode(cfg)
+    check("  it transacts on STRIPE_SECRET_KEY",
+          payments._stripe_secret(mode) == "sk_live_standin",
+          payments._stripe_secret(mode))
+    check("  and hands the browser STRIPE_PUBLISHABLE_KEY",
+          payments._stripe_publishable(mode) == "pk_live_standin",
+          payments._stripe_publishable(mode))
+    check("  never the sandbox pair, whichever way round they are set",
+          payments._stripe_secret(mode) != config.STRIPE_TEST_SECRET_KEY
+          and payments._stripe_publishable(mode)
+          != config.STRIPE_TEST_PUBLISHABLE_KEY)
+    check("  which is the trio kitchen resolves to as well",
+          payments._stripe_secret(
+              payments._stripe_mode(config.load_funnel("kitchen")))
+          == payments._stripe_secret(mode))
+finally:
+    (config.STRIPE_SECRET_KEY, config.STRIPE_PUBLISHABLE_KEY,
+     config.STRIPE_TEST_SECRET_KEY, config.STRIPE_TEST_PUBLISHABLE_KEY) = _env
+# The third of the trio is not chosen per funnel: the webhook tries the live
+# secret first and the test one only where it is configured, so a live funnel
+# is verified by STRIPE_WEBHOOK_SECRET.
+_hook = open(os.path.join(ROOT, "payments.py"), encoding="utf-8").read()
+check("  and its events verify against STRIPE_WEBHOOK_SECRET",
+      "secrets = [(LIVE, config.STRIPE_WEBHOOK_SECRET)," in _hook
+      and "(TEST, config.STRIPE_TEST_WEBHOOK_SECRET)]" in _hook)
+check("    with the live secret tried first",
+      _hook.index("(LIVE, config.STRIPE_WEBHOOK_SECRET)")
+      < _hook.index("(TEST, config.STRIPE_TEST_WEBHOOK_SECRET)"))
 check("load_funnel returns this config", config.load_funnel("zodiac") == cfg)
 
 
