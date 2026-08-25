@@ -4335,18 +4335,36 @@ figure figcaption { background: #141B3C; }
   text-transform: uppercase;
   color: #868FB6;
 }
-.tapgrid { font-size: 0; }
-.tapcell {
-  display: inline-block;
-  width: 15.5%;
-  margin: 0 1.4% 1.4% 0;
+/* A fixed table, sized by its cells rather than by a percentage.
+   Percentages were the whole problem: six sixths plus six gutters rounds past
+   a hundred and wraps to five. A square stated in millimetres cannot round
+   into a different number of columns, and 6 x 26.8 + 7 x 1.4 is 170.6mm
+   inside a 174mm column.
+
+   The square is stated on both axes for the same reason. `aspect-ratio` is
+   honoured here but loses to a replaced element's own ratio, and the sheet
+   draws frames from three different print boxes — a 900x154 horizon among
+   the 200x200 squares came out a fifth of the height of its neighbours. Two
+   explicit lengths and `object-fit: cover` is the only version of this that
+   does not depend on what the source happens to be. */
+.tapgrid {
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 1.4mm;
+  margin: 0 -1.4mm;
+}
+.tapcell { padding: 0; vertical-align: top; }
+/* The frame is on the image rather than on the cell: an empty cell — the
+   padding at the end of a run whose count is not a multiple of six — should
+   draw nothing at all. */
+.tapcell img {
+  display: block;
+  width: 26.8mm;
+  height: 26.8mm;
+  object-fit: cover;
   border: 0.2mm solid rgba(232, 200, 120, 0.30);
   border-radius: 1.5mm;
-  overflow: hidden;
-  vertical-align: top;
 }
-.tapcell:nth-child(6n) { margin-right: 0; }
-.tapcell img { display: block; width: 100%; height: 24mm; object-fit: cover; }
 
 .section-title .node {
   display: inline-block;
@@ -4546,6 +4564,11 @@ def _pdf_section_body(section, structured):
     return shot + "<p>%s</p>" % _e(section.get("body"))
 
 
+# Six to a row, the same as the result page's grid. Stated once, because the
+# markup and the column width in the stylesheet have to agree and a second
+# copy of the number is how they stop agreeing.
+TAP_COLUMNS = 6
+
 # The gallery's four families, in the order the result page draws them and in
 # the same four inks. One document, one vocabulary.
 PDF_ELEMENTS = [
@@ -4702,6 +4725,14 @@ def _pdf_taps(cfg):
 
     Its own block rather than another row on the cover — the cover is already
     a full page — so it opens the second one, over the first chapter.
+
+    A table, and a fixed one. Inline-blocks at a sixth of the width each did
+    not survive contact with a paginator: six of them plus their gutters
+    rounded past a hundred percent and wrapped to five, so eighteen frames
+    came out 5/5/5/3 in four rows instead of 3 x 6. A fixed-layout table
+    takes its column widths from the row rather than from the sum of its
+    children, which is the one thing that cannot round wrong. The last row is
+    padded out to six so every row is the same row.
     """
     ids = _pdf_visuals().get("taps") or []
     caption = ((cfg or {}).get("result_copy") or {}).get("taps_caption") \
@@ -4711,13 +4742,17 @@ def _pdf_taps(cfg):
         item = (_pdf_visuals().get("images") or {}).get(image_id)
         src = _print_src(image_id, item) if item else ""
         if src:
-            cells.append('<span class="tapcell"><img src="%s" alt=""></span>'
+            cells.append('<td class="tapcell"><img src="%s" alt=""></td>'
                          % _e(src))
     if len(cells) < 4:
         return ""
+    while len(cells) % TAP_COLUMNS:
+        cells.append('<td class="tapcell"></td>')
+    rows = ["<tr>%s</tr>" % "".join(cells[n:n + TAP_COLUMNS])
+            for n in range(0, len(cells), TAP_COLUMNS)]
     return ('<section class="taps"><p class="taps-cap">%s</p>'
-            '<div class="tapgrid">%s</div></section>'
-            % (_e(caption), "".join(cells)))
+            '<table class="tapgrid">%s</table></section>'
+            % (_e(caption), "".join(rows)))
 
 
 def _pdf_html(content):
