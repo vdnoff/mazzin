@@ -2944,6 +2944,7 @@
       ]
     },
     "visuals": {
+      "taps": true,
       "hero": {
         "glyph_step": "sign",
         "band_step": "landscape"

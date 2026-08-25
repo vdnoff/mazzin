@@ -277,38 +277,28 @@ body:has(.result-module) {
   color: var(--zr-faint);
 }
 
-.zr-taps-row {
-  display: flex;
-  gap: 8px;
+/* Every frame of the run, six to a row. Grid rather than flex, because the
+   last row is rarely full and flex would stretch three squares across the
+   width of six. The gap is small on purpose: this reads as a contact sheet —
+   one object with a count — rather than as six separate pictures. */
+.zr-taps-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.zr-tap { flex: 1 1 0; min-width: 0; }
+.zr-tap { min-width: 0; }
 
 .zr-tap img {
   display: block;
   width: 100%;
   aspect-ratio: 1 / 1;
-  border-radius: 10px;
+  border-radius: 6px;
   object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-/* Two lines rather than one truncated word: at five to a row a cell is about
-   sixty pixels, and "Candlelit room" on one line is "Candlelit ro…". */
-.zr-tap-name {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  margin-top: 5px;
-  min-height: 26px;
-  font-size: 11px;
-  line-height: 1.25;
-  text-align: center;
-  color: var(--zr-faint);
-  overflow: hidden;
+  border: 1px solid rgba(232, 200, 120, 0.18);
 }
 
 /* --- d) the constellation path ----------------------------------------------- */

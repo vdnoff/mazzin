@@ -21,6 +21,7 @@ The boxes, all out of PDF_CSS:
     .tap          a section's own photograph, full width x 34mm
     .cover-band   the horizon on the cover, full width x 26mm
     .cover-glyph  the sign's frame, a 30mm disc
+    .tapcell      one square of the contact sheet, a sixth of the width
 
 A funnel that names a photograph per section draws one on every page, so
 those boxes carry a tighter ceiling than the single board a kitchen report
@@ -52,9 +53,15 @@ SHOT = (620, 232)
 TAP = (760, 200)
 BAND = (900, 154)
 GLYPH = (280, 280)
+# The contact sheet is every frame of the run — eighteen of them on zodiac30
+# — so its square is the smallest box here and carries the tightest ceiling
+# by a distance. Eighteen at the tap's 30 KB would be half a megabyte of mail
+# for a block the reader reads as one object.
+GRID = (200, 200)
 
 # A report that draws one picture per section carries eight of them.
-CEILING = {TAP: 30 * 1024, BAND: 34 * 1024, GLYPH: 22 * 1024}
+CEILING = {TAP: 30 * 1024, BAND: 34 * 1024, GLYPH: 22 * 1024,
+           GRID: 12 * 1024}
 
 # The ceiling tests/test_check.py holds these to. Quality steps down until a
 # frame fits rather than being fixed and hoped for: a busy photograph and a
@@ -96,6 +103,15 @@ def wanted(cfg):
         out[image_id] = BAND
     for image_id in ids_on(hero.get("glyph_step")):
         out[image_id] = GLYPH
+    # The contact sheet is the reader's whole run, so on a funnel that draws
+    # one every frame on every step can end up in a PDF and every one of them
+    # needs a print copy. `setdefault`, never over: a frame the document also
+    # draws full width somewhere else must not be shrunk to a thumbnail for
+    # this. A funnel that declares no sheet is untouched.
+    if visuals.get("taps"):
+        for step in (cfg.get("swipe") or {}).get("steps") or []:
+            for image_id in ids_on(step.get("id")):
+                out.setdefault(image_id, GRID)
     return out
 
 

@@ -2159,6 +2159,17 @@ def _visuals(cfg, result_style, choices):
             hero[slot[:-len("_step")]] = one
     if hero:
         out["hero"] = hero
+
+    # And the whole run, in the order they tapped it, on a funnel that asks
+    # for the contact sheet. The free page shows the reader every frame they
+    # chose under "read from your taps"; the page they paid for and the PDF
+    # have to show the same grid, and neither has a run to read it off — one
+    # is opened from a link in a mail and the other is built on a server. Ids
+    # only, and only ids this config knows.
+    if block.get("taps"):
+        taps = [image_id for image_id in (choices or []) if image_id in known]
+        if taps:
+            out["taps"] = taps
     return out or None
 
 
@@ -4162,6 +4173,33 @@ figure figcaption { background: #141B3C; }
   border-top: 0.2mm solid #2C355F;
 }
 
+/* --- the contact sheet ---------------------------------------------------
+
+   Every frame of the run, six to a row, the way the result page draws it.
+   Inline-blocks on a zeroed line rather than a grid: this page is paginated,
+   and the whole sheet has to stay together. */
+.taps { margin: 0 0 9mm; break-inside: avoid-page; }
+.taps-cap {
+  margin: 0 0 3mm;
+  font-size: 8pt;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #868FB6;
+}
+.tapgrid { font-size: 0; }
+.tapcell {
+  display: inline-block;
+  width: 15.5%;
+  margin: 0 1.4% 1.4% 0;
+  border: 0.2mm solid rgba(232, 200, 120, 0.30);
+  border-radius: 1.5mm;
+  overflow: hidden;
+  vertical-align: top;
+}
+.tapcell:nth-child(6n) { margin-right: 0; }
+.tapcell img { display: block; width: 100%; height: 24mm; object-fit: cover; }
+
 .section-title .node {
   display: inline-block;
   width: 7mm;
@@ -4506,6 +4544,34 @@ def _zodiac_cover(content, profile, cfg):
 ZODIAC_PROFILE["pdf_cover"] = _zodiac_cover
 
 
+def _pdf_taps(cfg):
+    """The reader's whole run as a contact sheet, or "".
+
+    The same grid the result page draws and for the same reason: the claim
+    above it is that this reading was read off these frames, and five of
+    eighteen is a sample rather than a record. Six to a row, unlabelled, in
+    the order they were tapped.
+
+    Its own block rather than another row on the cover — the cover is already
+    a full page — so it opens the second one, over the first chapter.
+    """
+    ids = _pdf_visuals().get("taps") or []
+    caption = ((cfg or {}).get("result_copy") or {}).get("taps_caption") \
+        or "Read from your taps:"
+    cells = []
+    for image_id in ids:
+        item = (_pdf_visuals().get("images") or {}).get(image_id)
+        src = _print_src(image_id, item) if item else ""
+        if src:
+            cells.append('<span class="tapcell"><img src="%s" alt=""></span>'
+                         % _e(src))
+    if len(cells) < 4:
+        return ""
+    return ('<section class="taps"><p class="taps-cap">%s</p>'
+            '<div class="tapgrid">%s</div></section>'
+            % (_e(caption), "".join(cells)))
+
+
 def _pdf_html(content):
     name = _e(content.get("style_name") or "Your style")
     structured = _is_schema2(content.get("version"))
@@ -4534,6 +4600,7 @@ def _pdf_html(content):
         state["sections"] = dict(visuals.get("sections") or {})
         state["hero"] = dict(visuals.get("hero") or {})
         state["profile"] = dict(visuals.get("profile") or {})
+        state["taps"] = list(visuals.get("taps") or [])
 
     if cover:
         blocks = [block for block in cover(content, profile, cfg) if block]
@@ -4558,6 +4625,11 @@ def _pdf_html(content):
                     "you were sent back to after checkout.")),
             "</section>",
         ]
+    # Only where the run stored one, which is only where the funnel asked for
+    # it. Kitchen stores no tap order and prints the document it always did.
+    grid = _pdf_taps(cfg)
+    if grid:
+        blocks.append(grid)
     node = profile.get("pdf_node")
     for index, section in enumerate(content.get("sections") or [], 1):
         mark = ('<span class="node">%d</span>' % index) if node else ""
