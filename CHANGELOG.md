@@ -342,3 +342,6 @@ bottom.
 
 ## 2026-08-25 — claude/zodiac-rich-profile-paywall-r89u09
 - zodiac: rich subtype profile + question paywall, both funnels
+
+## 2026-08-25 — claude/zodiac-result-polish2
+- zodiac: taps grid, tighter strengths, price hierarchy, 4 hook interstitials, sandbox
