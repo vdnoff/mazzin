@@ -1112,21 +1112,25 @@ def _walk_caps(section_id):
     return out
 
 
-# Where the prompt should ask for less than the validator will accept.
+# What a field is asked for, where the derived default is the wrong number.
 #
-# The default below derives what the model is told from the ceiling that
-# would throw a section away, and the gap between them is deliberate: it is
-# what absorbs a sentence and a half. That is the right number when the risk
-# is a section being lost, and the wrong one when the problem is that the
-# section is simply too long. The five hidden strengths ran a hundred and ten
-# words each — an essay where the product is a hit — and these are the
-# numbers that make them about forty-five.
+# The default below takes what the model is told from the ceiling that would
+# throw a section away, and leaves a deliberate gap: room for a sentence and
+# a half. That is the right rule when the risk is losing a section, and the
+# wrong one at both ends. The five hidden strengths ran a hundred and ten
+# words each — an essay where the product is a hit — so they ask for less.
+# Love and Money carry a second half each now, a how-to-play-it beside every
+# sign and three concrete moves beside the work, so they ask for more.
 #
-# Only ever tighter. A number here that is looser than the derived one is
-# ignored, so this table cannot quietly raise a ceiling; the ceilings live in
-# SHAPE and are unchanged.
-PROMPT_CAP = {
+# A number here can go either way and neither direction may pass the
+# validator's own ceiling: _check_prompt_lengths below refuses at import
+# rather than at generation, because a field asked for more than it is
+# allowed is a section written to be thrown away. The ceilings themselves
+# live in SHAPE and are not touched by any of this.
+PROMPT_LENGTH = {
     "mistakes": {"body": 240, "fix": 140},
+    "materials": {"intro": 440, "why": 440},
+    "splurge": {"why": 440, "split_note": 440},
 }
 
 
@@ -1141,10 +1145,29 @@ def _budgets(section_id):
     for _, field, cap in _walk_caps(section_id):
         value = _budget(cap)
         out[field] = min(value, out.get(field, value))
-    for field, cap in (PROMPT_CAP.get(section_id) or {}).items():
+    for field, asked in (PROMPT_LENGTH.get(section_id) or {}).items():
         if field in out:
-            out[field] = min(out[field], cap)
+            out[field] = asked
     return out
+
+
+def _check_prompt_lengths():
+    """Every stated budget is inside the ceiling that polices it."""
+    for section_id, fields in PROMPT_LENGTH.items():
+        ceilings = {}
+        for _, field, cap in _walk_caps(section_id):
+            ceilings[field] = min(cap, ceilings.get(field, cap))
+        for field, asked in fields.items():
+            cap = ceilings.get(field)
+            if cap is None:
+                raise ValueError("PROMPT_LENGTH names %s.%s, which is not a "
+                                 "capped field" % (section_id, field))
+            if asked > cap:
+                raise ValueError("PROMPT_LENGTH asks %d for %s.%s, over its "
+                                 "%d ceiling" % (asked, section_id, field, cap))
+
+
+_check_prompt_lengths()
 
 
 def _budget_lines(section_id):
@@ -1227,14 +1250,14 @@ where the product is five hits. Cut every clause that is scene-setting, every
 deleted without losing a fact about this reader, delete it.''',
 
     "materials": '''"materials": {
-  "intro": "1-2 sentences on the pattern underneath who this person is drawn to (max %(intro)d chars)",
+  "intro": "THEIR PATTERN IN RELATIONSHIPS: 2-3 sentences on what this reader is repeatedly drawn to, what it costs them, and how it follows from the name they were given on the page they paid from. Use that name once, in the middle of a sentence rather than as a label (max %(intro)d chars)",
   "pairs": [
     {"combo": "their sign + another sign, e.g. \\"Leo + Aries\\" (max %(combo)d chars)",
      "verdict": "works",
-     "why": "what that pairing is like to be inside, and what it asks of them (max %(why)d chars — three sentences at most)"},
-    {"combo": "their sign + another sign", "verdict": "works", "why": "..."},
-    {"combo": "their sign + another sign", "verdict": "avoid", "why": "..."},
-    {"combo": "their sign + another sign", "verdict": "avoid", "why": "..."}
+     "why": "TWO PARTS IN ONE PARAGRAPH. First: what that pairing is like to be inside, and what it asks of them. Then, in the same paragraph: HOW TO PLAY IT — the one thing that actually works with this sign, written as something to do rather than something to know (max %(why)d chars)"},
+    {"combo": "their sign + another sign", "verdict": "works", "why": "same two parts"},
+    {"combo": "their sign + another sign", "verdict": "avoid", "why": "same shape, but the second part is HOW TO PROTECT THEIR ENERGY: the specific boundary that makes this one survivable, written as something to do"},
+    {"combo": "their sign + another sign", "verdict": "avoid", "why": "same two parts"}
   ],
   "rule": "one sentence on what to say, or ask for, in the first month with somebody (max %(rule)d chars)"
 }
@@ -1243,18 +1266,23 @@ Four pairings under `pairs`, two that work and two that cost, each an object
 with `combo`, `verdict` and `why` spelled exactly so. `verdict` is the word
 "works" or the word "avoid" and nothing else. `combo` always leads with this
 reader's own sign. "avoid" means the pairing is expensive to be in, never
-that a person is bad.''',
+that a person is bad.
+
+Every `why` carries both halves. The first half is what it is like; the
+second is what to do about it, and it is the half the reader came for — a
+pairing described and not answered is half a chapter. Name the thing to do
+specifically enough to do it this month.''',
 
     "splurge": '''"splurge": {
   "splurge": {"item": "the kind of work or working environment this energy pays best in, as a short phrase (max %(item)d chars)",
-              "why": "why their energy earns here, and what it looks like day to day (max %(why)d chars — three sentences, not five)"},
+              "why": "TWO PARTS IN ONE PARAGRAPH. First: why their energy earns here and what it looks like day to day. Then THREE CONCRETE MOVES, in the same paragraph — three things to actually do, each one naming a place to work, a time of day or week, or an action, in the language of their own element (max %(why)d chars)"},
   "saves": [
     {"item": "a kind of work to stop accepting, as a short phrase (max %(item)d chars)",
-     "why": "what it costs them specifically (max %(why)d chars — two sentences)"},
-    {"item": "a second one", "why": "..."},
-    {"item": "a third one", "why": "..."}
+     "why": "what it costs them specifically, then one line on how to decline it — the sentence to say, or the condition to put on it (max %(why)d chars)"},
+    {"item": "a second one", "why": "same two parts"},
+    {"item": "a third one", "why": "same two parts"}
   ],
-  "split_note": "one sentence on how to divide a working week between the two (max %(split_note)d chars)"
+  "split_note": "THE LEAK, AND HOW TO PLUG IT: the single biggest drain on this reader's working energy, named outright, and then the one change that stops it. 2-3 sentences (max %(split_note)d chars)"
 }
 
 The three top-level keys are `splurge`, `saves` and `split_note`, spelled
@@ -1266,7 +1294,13 @@ do not rename `split_note`.
 `item` is a short phrase — a job shape, not a sentence. One place their
 energy earns and three to stop spending it on. This is the shape of the work,
 never money to put anywhere: no markets, no figures, and no advice about
-where to place anything.''',
+where to place anything. The three moves are behaviour and energy — where to
+be, when to work, what to say yes to — and never a thing to buy, hold or put
+money into.
+
+The second half of every field is the half the reader came for. A place named
+and not acted on, a cost named and not declined, a leak named and not
+plugged: each of those is a chapter that stops one sentence early.''',
 
     "dna": '''"dna": {
   "narrative": [
@@ -1403,25 +1437,38 @@ ZODIAC_STUBS = {
                     "of it you got through."},
         ],
     },
+    # Every `why` carries both halves, the same as the prompt asks for: what
+    # it is like, then what to do about it. A stub is what a reader gets when
+    # there is no key, and it must not be a different product from the one
+    # that arrives when there is.
     "materials": {
         "intro": "The pattern underneath who you are drawn to is steadier "
-                 "than the people themselves, and it is worth knowing "
-                 "before the next one.",
+                 "than the people themselves. You go towards the ones who "
+                 "move at your speed and stay with the ones who slow you "
+                 "down, which is a costly way round — and it is worth "
+                 "knowing before the next one.",
         "pairs": [
             {"combo": "Your sign + a fire sign", "verdict": "works",
              "why": "Pace matches, and neither of you waits for the other "
-                    "to finish deciding. It asks you to say the quiet part "
-                    "early."},
+                    "to finish deciding. How to play it: say the quiet part "
+                    "in the first week rather than the fourth — this one "
+                    "rewards being told, and reads a pause as a verdict."},
             {"combo": "Your sign + an earth sign", "verdict": "works",
-             "why": "They hold the ground you move across. It asks you to "
-                    "notice the holding rather than to assume it."},
+             "why": "They hold the ground you move across, and the holding "
+                    "is easy to stop seeing. How to play it: name one "
+                    "specific thing they carried, out loud, every week — "
+                    "steady people leave when the steadiness goes unread."},
             {"combo": "Your sign + a mirror of yourself", "verdict": "avoid",
              "why": "Two of the same energy make a fast start and a short "
-                    "middle. Nothing in the pairing slows anything down."},
+                    "middle, and nothing in the pairing slows anything down. "
+                    "How to protect your energy: keep one thing in your week "
+                    "that is yours alone and do not move it for them."},
             {"combo": "Your sign + somebody who needs managing",
              "verdict": "avoid",
              "why": "You are good at carrying, which is exactly why this one "
-                    "costs you more than it costs them."},
+                    "costs you more than it costs them. How to protect your "
+                    "energy: stop offering before you are asked, once, and "
+                    "watch what they do with the gap."},
         ],
         "rule": "In the first month ask the second question rather than the "
                 "first — the answer to that one tells you something.",
@@ -1430,23 +1477,34 @@ ZODIAC_STUBS = {
         "splurge": {
             "item": "Work with a visible edge and a short feedback loop",
             "why": "A {name} energy earns where the result comes back quickly "
-                   "enough to steer by. Long horizons with no signal are "
-                   "where it drifts, and no amount of discipline "
-                   "substitutes for a loop that closes.",
+                   "enough to steer by, and drifts on long horizons with no "
+                   "signal. Three moves: put the hardest thing in the first "
+                   "two hours of your day, before the room fills; ask for a "
+                   "check-in at the halfway point of anything longer than a "
+                   "month; and work the two days either side of a deadline "
+                   "rather than the week before it.",
         },
         "saves": [
             {"item": "Work that needs performing",
              "why": "The energy it takes to be a version of yourself all day "
-                    "is energy not spent on the work itself."},
+                    "is energy not spent on the work itself. Decline it by "
+                    "asking what the output is — if the answer is a "
+                    "presence, it is not work."},
             {"item": "Roles built entirely on maintaining",
              "why": "You will do it well, and it will cost you more than it "
-                    "costs somebody suited to it."},
+                    "costs somebody suited to it. Decline it by naming the "
+                    "part you will hold and the part you will hand back."},
             {"item": "Anything measured only in hours",
              "why": "It rewards presence over judgement, and judgement is the "
-                    "thing you actually have."},
+                    "thing you actually have. Put a deliverable on it before "
+                    "you agree, or let it go to somebody who is paid to sit "
+                    "there."},
         ],
-        "split_note": "Give the deep half of the week to the work with an "
-                      "edge, and let the maintaining fill the shallow half.",
+        "split_note": "The leak is the second half of your afternoon, given "
+                      "away in pieces to things that arrived rather than "
+                      "things you chose. Plug it by booking the last ninety "
+                      "minutes of the day to yourself before anyone else "
+                      "books them, and treating that block as unmovable.",
     },
     "dna": {
         "narrative": [
@@ -1577,7 +1635,12 @@ ZODIAC_PROFILE = {
     # where it asked for three and two. A row warmed under the old prompt is
     # not stale in the sense of being wrong — it is the old product, at the
     # old length, and the whole point of the change is the length.
-    "cache_rev": {"palette": "colors2", "mistakes": "short1"},
+    "cache_rev": {"palette": "colors2", "mistakes": "short1",
+                  # The money section grew a second half — three concrete
+                  # moves beside the work and a leak with a way to plug it —
+                  # and it is cached per archetype, so every warmed row is
+                  # the shorter product.
+                  "splurge": "moves1"},
     "pdf_css": None,        # filled below, once ZODIAC_PDF_CSS is defined
     # The wordmark is dark ink, which on a dark page is a rectangle of
     # nothing. The light cut already exists and is what this document wants.
@@ -2685,12 +2748,16 @@ def _compat_block(cfg, choices):
             "REQUIRED — the free page promised this reader, in these words, "
             "the two signs that are magnetic for them and the one that drains "
             "their relationships. Classically, for a %s those are: magnetic — "
-            "%s and %s; draining — %s. Name all three, in those words, and say "
-            "for each one what it is actually like: what the pull is built on "
-            "for the two, and what the cost is with the third. Use no other "
-            "signs as the answer to that promise, and never write that a "
-            "relationship will or will not work — describe the energy between "
-            "them and what it takes from each side."
+            "%s and %s; draining — %s. Name all three, in those words, and for "
+            "each one say two things: what it is actually like — what the "
+            "pull is built on for the two, what the cost is with the third — "
+            "and then what to DO about it, which is the half they came for. "
+            "For the two magnetic ones that is the thing that actually works "
+            "with them; for the draining one it is the boundary that makes it "
+            "survivable. Use no other signs as the answer to that promise, "
+            "and never write that a relationship will or will not work — "
+            "describe the energy between them and what it takes from each "
+            "side."
             % (label, magnetic[0], magnetic[1], drains))
 
     neighbours = [name for name in (read.get("neighbours") or [])
