@@ -366,3 +366,6 @@ bottom.
 
 ## 2026-08-26 — claude/ro-splurge-json
 - RO report generation: per-profile prompt budget + JSON-safe Romanian output
+
+## 2026-08-26 — claude/ro-splurge-json
+- RO splurge root cause: punctuation contract + give-up diagnostic
