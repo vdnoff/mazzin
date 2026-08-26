@@ -360,3 +360,6 @@ bottom.
 
 ## 2026-08-26 — claude/zodiac-ro
 - Romanian localization: zodiac-ro funnel + RO report profile
+
+## 2026-08-26 — claude/zodiac-ro-test
+- Gated sandbox twin: zodiac-ro-test + TEST_FUNNELS switch
