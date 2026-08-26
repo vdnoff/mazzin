@@ -2094,7 +2094,8 @@
           }
         ]
       }
-    ]
+    ],
+    "card_aria": "Alege {label}"
   },
   "interstitials": [
     {
@@ -2975,7 +2976,9 @@
         "step": "symbol",
         "fallback": "talisman"
       }
-    }
+    },
+    "preparing": "Îți pregătim profilul personalizat…",
+    "locked_aria": "Blocat"
   },
   "pricing": {
     "amount_cents": 300,
@@ -3032,7 +3035,25 @@
       "Livrare instantanee",
       "Copie PDF pe e-mailul tău"
     ],
-    "eu_withdrawal_text": "Livrare instantanee — renunț la dreptul meu de retragere în 14 zile."
+    "eu_withdrawal_text": "Livrare instantanee — renunț la dreptul meu de retragere în 14 zile.",
+    "unlock_note": "Deblochează toate cele {n} secțiuni · {price}",
+    "number_words": [
+      "zero",
+      "una",
+      "două",
+      "trei",
+      "patru",
+      "cinci",
+      "șase",
+      "șapte",
+      "opt",
+      "nouă",
+      "zece"
+    ],
+    "redirecting": "Te redirecționăm…",
+    "error_checkout": "Nu am putut deschide plata. Mai încearcă o dată.",
+    "error_payment": "Plata nu a trecut. Mai încearcă o dată.",
+    "error_consent": "Bifează căsuța de mai sus ca să continui."
   },
   "result": {
     "mistakes_teaser": "Ai văzut puterea #1. Celelalte patru merg mai adânc — una explică alegerea ta, {moonphase}.",
@@ -3327,6 +3348,39 @@
       "split_caption": "{fire}% Foc · {earth}% Pământ · {air}% Aer · {water}% Apă"
     },
     "delivery_line": "PDF-ul a fost trimis la {email}",
-    "delivery_line_bare": "PDF-ul a fost trimis pe e-mailul tău"
+    "delivery_line_bare": "PDF-ul a fost trimis pe e-mailul tău",
+    "labels": {
+      "elements": {
+        "fire": "Foc",
+        "earth": "Pământ",
+        "air": "Aer",
+        "water": "Apă"
+      },
+      "energies": {
+        "sun": "Soare",
+        "moon": "Lună"
+      },
+      "led_template": "condus de {energy}",
+      "months": [
+        "ian.",
+        "feb.",
+        "mar.",
+        "apr.",
+        "mai",
+        "iun.",
+        "iul.",
+        "aug.",
+        "sept.",
+        "oct.",
+        "nov.",
+        "dec."
+      ],
+      "verdicts": {
+        "works": "MERGE",
+        "avoid": "EVITĂ"
+      },
+      "saves_head": "Unde să renunți",
+      "scale_aria": "de la {left} spre {right} — {at} din 100 către {right}"
+    }
   }
 }

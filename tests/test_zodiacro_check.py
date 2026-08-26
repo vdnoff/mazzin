@@ -107,11 +107,34 @@ def shape(node):
 # the twin does not. result_zodiac.js renders them from `result_copy` and
 # falls back to its own English when a funnel declares none — which is what
 # zodiac30 does, and what a Romanian funnel cannot afford to.
-ADDED = ("delivery_line", "delivery_line_bare")
+# FORCED TEST EDIT (1 of 1). The parity check below compares this funnel's
+# whole shape against zodiac30's, and this funnel now legitimately carries
+# keys zodiac30 does not: the localization layer. Every one of them is
+# OPTIONAL in the two JS files — a funnel that declares none renders the
+# English it always did, which the English-default block further down proves
+# against the sources themselves. So the comparison drops them rather than
+# being weakened: everything outside this list is still pinned to the twin,
+# key for key and value for value.
+ADDED = ("delivery_line", "delivery_line_bare", "labels")
+ADDED_BLOCKS = {
+    "checkout": ("unlock_note", "number_words", "redirecting",
+                 "error_checkout", "error_payment", "error_consent"),
+    "report": ("preparing", "locked_aria"),
+    "swipe": ("card_aria",),
+}
+
+
+def without_added(config):
+    """The config with the optional localization keys taken back off."""
+    out = dict(config)
+    for block, keys in ADDED_BLOCKS.items():
+        if block in out:
+            out[block] = {k: v for k, v in out[block].items() if k not in keys}
+    return out
 
 
 def comparable(config):
-    """The config with the two known differences normalised away.
+    """The config with the known differences normalised away.
 
     `sign_cross` is a lookup keyed on the sign LABEL — both readers of it,
     result_zodiac.js and reports.py, ask for `sign_cross[<the label they
@@ -120,7 +143,7 @@ def comparable(config):
     in both and does not move. Compared by position, in the order the sign
     grid lists them.
     """
-    out = dict(config)
+    out = without_added(config)
     copy = dict(config["result_copy"])
     for key in ADDED:
         copy.pop(key, None)
@@ -142,9 +165,13 @@ check("  and sign_cross is keyed on this funnel's own twelve labels",
 check("  with the cusp key untouched, because both readers spell it in code",
       "cusp" in cfg["result_copy"]["profile"]["sign_cross"]
       and len(cfg["result_copy"]["profile"]["sign_cross"]) == 13)
-check("  and those two are the only keys it adds",
+check("  and those three are the only keys result_copy adds",
       set(cfg["result_copy"]) - set(twin["result_copy"]) == set(ADDED),
       str(sorted(set(cfg["result_copy"]) ^ set(twin["result_copy"]))))
+for block, keys in sorted(ADDED_BLOCKS.items()):
+    check("  and %-8s adds only its optional strings" % block,
+          set(cfg[block]) - set(twin[block]) == set(keys),
+          str(sorted(set(cfg[block]) ^ set(twin[block]))))
 check("  which say where the PDF went, in Romanian, with {email} intact",
       "{email}" in cfg["result_copy"]["delivery_line"]
       and cfg["result_copy"]["delivery_line_bare"],
@@ -1315,6 +1342,130 @@ check("  and zodiac30's check still asks nothing about marks",
                 {"shopping": {"items": [{"name": m, "priority_note": "x"}
                                         for m in reports._year_labels()]}})
       is None)
+
+print("\n--- the words the page prints, and the words the PDF prints ---")
+# The free and delivered pages carried element names, energy names, month
+# abbreviations, the verdict badges and two headings in English no matter what
+# the funnel sold in — they were literals in static/js/result_zodiac.js. They
+# are `result_copy.labels` now, and the whole point is that the page and the
+# document agree: a reader who saw MERGE on the page and WORKS in the PDF has
+# been handed two documents about themselves.
+LABELS = cfg["result_copy"]["labels"]
+check("the funnel declares its own page labels", isinstance(LABELS, dict))
+for key in ("elements", "energies", "led_template", "months", "verdicts",
+            "saves_head", "scale_aria"):
+    check("  labels.%-13s is filled" % key, bool(LABELS.get(key)),
+          repr(LABELS.get(key)))
+
+check("elements are reports.py's, exactly",
+      LABELS["elements"] == reports.ELEMENT_LABEL_RO,
+      "%s vs %s" % (LABELS["elements"], reports.ELEMENT_LABEL_RO))
+check("energies are reports.py's, exactly",
+      LABELS["energies"] == reports.ENERGY_LABEL_RO,
+      "%s vs %s" % (LABELS["energies"], reports.ENERGY_LABEL_RO))
+check("verdict badges are reports.py's, exactly",
+      LABELS["verdicts"] == reports.RENDER_WORDS_RO["verdicts"],
+      "%s vs %s" % (LABELS["verdicts"], reports.RENDER_WORDS_RO["verdicts"]))
+check("months are reports.py's twelve, in order",
+      LABELS["months"] == list(reports.MONTH_ABBR_RO), str(LABELS["months"]))
+check("  and none of them is an English month",
+      not set(LABELS["months"]) & set(reports.MONTH_ABBR))
+check("the saves heading reuses the PDF's own word",
+      reports.RENDER_WORDS_RO["save"].lower()[:5] in LABELS["saves_head"].lower(),
+      "%s vs %s" % (LABELS["saves_head"], reports.RENDER_WORDS_RO["save"]))
+check("  and it is not the English heading",
+      LABELS["saves_head"] != "Where to stop spending it")
+check("the two templates keep their tokens",
+      "{energy}" in LABELS["led_template"]
+      and all(t in LABELS["scale_aria"]
+              for t in ("{left}", "{right}", "{at}")),
+      "%s | %s" % (LABELS["led_template"], LABELS["scale_aria"]))
+check("  and neither is still the English one",
+      LABELS["led_template"] != "{energy}-led"
+      and "out of 100 toward" not in LABELS["scale_aria"])
+
+print("\n--- engine.js's own furniture ---")
+ENGINE_KEYS = [("checkout", "unlock_note"), ("checkout", "redirecting"),
+               ("checkout", "error_checkout"), ("checkout", "error_payment"),
+               ("checkout", "error_consent"), ("report", "preparing"),
+               ("report", "locked_aria"), ("swipe", "card_aria")]
+for block, key in ENGINE_KEYS:
+    value = cfg[block].get(key)
+    check("  %s.%-15s is filled" % (block, key), bool(value), repr(value))
+check("the unlock note keeps both its tokens",
+      "{n}" in cfg["checkout"]["unlock_note"]
+      and "{price}" in cfg["checkout"]["unlock_note"],
+      cfg["checkout"]["unlock_note"])
+check("  and counts in Romanian words, not English ones",
+      cfg["checkout"]["number_words"][6] == "șase"
+      and len(cfg["checkout"]["number_words"]) == 11,
+      str(cfg["checkout"]["number_words"]))
+check("the card label keeps its token", "{label}" in cfg["swipe"]["card_aria"])
+# "Blocat" and "Alege" are Romanian words that happen to carry no diacritic;
+# requiring one on every string would be requiring a spelling mistake.
+NO_DIACRITIC = ("locked_aria", "card_aria")
+check("every new string carries its diacritics where Romanian has them",
+      all(DIACRITIC.search(cfg[b][k]) for b, k in ENGINE_KEYS
+          if k not in NO_DIACRITIC),
+      str([k for b, k in ENGINE_KEYS
+           if k not in NO_DIACRITIC and not DIACRITIC.search(cfg[b][k])]))
+check("  and the two that do not are Romanian all the same",
+      cfg["report"]["locked_aria"] != "Locked"
+      and cfg["swipe"]["card_aria"] != "Choose {label}",
+      "%s | %s" % (cfg["report"]["locked_aria"], cfg["swipe"]["card_aria"]))
+check("  and none of them was left in English",
+      not any(v in (
+          "Redirecting...", "Preparing your personalized report\u2026",
+          "Locked", "Choose {label}",
+          "Could not start checkout. Please try again.",
+          "That payment didn't go through. Please try again.",
+          "Please tick the box above to continue.")
+          for v in (cfg[b][k] for b, k in ENGINE_KEYS)))
+
+print("\n--- a funnel that declares none of it renders English ---")
+# The guarantee the other three funnels rest on. Asserted two ways: they
+# declare nothing, and the English every default falls back to is still in
+# the file, character for character.
+JS = os.path.join(ROOT, "static", "js")
+ENGINE_JS = open(os.path.join(JS, "engine.js"), encoding="utf-8").read()
+RESULT_JS = open(os.path.join(JS, "result_zodiac.js"), encoding="utf-8").read()
+for slug in ("kitchen", "kitchen-visualizer", "zodiac", "zodiac30"):
+    other = json.load(open(os.path.join(ROOT, "funnels", slug + ".json"),
+                           encoding="utf-8"))
+    declared = [k for k in ("labels",)
+                if k in (other.get("result_copy") or {})]
+    declared += ["%s.%s" % (b, k) for b, k in ENGINE_KEYS
+                 if k in (other.get(b) or {})]
+    declared += [k for k in ("number_words",) if k in (other.get("checkout") or {})]
+    check("  %-18s declares none of the new keys" % slug, not declared,
+          str(declared))
+ENGLISH = [
+    (ENGINE_JS, r'"Unlock all {n} sections \u00B7 {price}"'),
+    (ENGINE_JS, r'"Preparing your personalized report\u2026"'),
+    (ENGINE_JS, '"Redirecting..."'),
+    (ENGINE_JS, '"Could not start checkout. Please try again."'),
+    (ENGINE_JS, '"That payment didn\'t go through. Please try again."'),
+    (ENGINE_JS, '"Please tick the box above to continue."'),
+    (ENGINE_JS, '"Choose {label}"'),
+    (ENGINE_JS, 'words("report.locked_aria", "Locked")'),
+    (RESULT_JS, '"Where to stop spending it"'),
+    (RESULT_JS, '"{energy}-led"'),
+    (RESULT_JS, '"{left} to {right} — {at} out of 100 toward {right}"'),
+    (RESULT_JS, 'fire: "Fire"'),
+    (RESULT_JS, '{ sun: "Sun", moon: "Moon" }'),
+    (RESULT_JS, '"Jan", "Feb", "Mar"'),
+]
+for source, literal in ENGLISH:
+    check("  default still in the file: %s" % literal[:44],
+          literal in source, literal)
+check("the verdict badge still uppercases the tag when nothing is declared",
+      'mark.toUpperCase()' in RESULT_JS)
+check("every delivered body builder is handed the run it renders for",
+      "build(section.data, ctx)" in RESULT_JS
+      and "function compatibility(data, ctx)" in RESULT_JS
+      and "function career(data, ctx)" in RESULT_JS)
+check("  and the CSS classes stayed English, as the stylesheet expects",
+      '"zr-tag is-" + (mark || "works")' in RESULT_JS)
 
 print("\n--- and the twins are untouched ---")
 # The failure this funnel could cause and no assertion above would see: a

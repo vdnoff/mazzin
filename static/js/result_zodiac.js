@@ -60,13 +60,14 @@
   var MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-  function yearLabels(from) {
+  function yearLabels(from, months) {
+    var names = (months && months.length === 12) ? months : MONTH_ABBR;
     var day = from || new Date();
     var year = day.getFullYear();
     var month = day.getMonth();
     var out = [];
     for (var i = 0; i < 12; i++) {
-      out.push(MONTH_ABBR[month] + " " + year);
+      out.push(names[month] + " " + year);
       month += 1;
       if (month > 11) { month = 0; year += 1; }
     }
@@ -78,7 +79,8 @@
   // in — and this month's otherwise.
   function yearOf(ctx) {
     var stored = (ctx.visuals && ctx.visuals.year) || null;
-    return (stored && stored.length === 12) ? stored : yearLabels();
+    return (stored && stored.length === 12)
+      ? stored : yearLabels(null, label(ctx, "months"));
   }
 
   // The fewest frames worth calling a grid. Below this the run did not
@@ -129,6 +131,63 @@
   // tab that never ran the quiz. The two must agree, so every tiebreak below
   // is stated rather than left to whichever order an array happened to be in.
 
+  // The words this module prints that are not the model's and not the
+  // config's copy: element names, energy names, month abbreviations, the
+  // verdict badges and two headings. They were written in English because
+  // there was one language; `result_copy.labels` is where a funnel that sells
+  // in another one puts its own.
+  //
+  // Absent — which is every funnel but /zodiac-ro — every one of these falls
+  // through to the string this file has always written, byte for byte.
+  //
+  // The server prints the same words on the PDF and in the mail out of
+  // reports.py's RENDER_WORDS, and the two have to agree: a reader who saw
+  // MERGE on the page and WORKS in the document has been shown two documents.
+  // tests/test_zodiacro_check.py holds them to each other.
+  var LABELS_FALLBACK = {
+    elements: ELEMENT_NAME,
+    energies: ENERGY_NAME,
+    led_template: "{energy}-led",
+    months: MONTH_ABBR,
+    verdicts: null,               // null means "uppercase the tag", as before
+    saves_head: "Where to stop spending it",
+    scale_aria: "{left} to {right} — {at} out of 100 toward {right}"
+  };
+
+  function labels(ctx) {
+    var own = ((ctx && ctx.cfg && ctx.cfg.result_copy) || {}).labels;
+    return (own && typeof own === "object") ? own : {};
+  }
+
+  function label(ctx, key) {
+    var own = labels(ctx)[key];
+    return (own === undefined || own === null) ? LABELS_FALLBACK[key] : own;
+  }
+
+  // One of a keyed set — an element, an energy, a verdict — in the funnel's
+  // own words or in this file's. A key the config forgot falls back on its
+  // own rather than taking the whole set down with it.
+  function named(ctx, key, tag, fallback) {
+    var set = labels(ctx)[key];
+    if (set && typeof set === "object" && set[tag]) return set[tag];
+    return fallback;
+  }
+
+  function elementName(ctx, tag) {
+    return named(ctx, "elements", tag, ELEMENT_NAME[tag] || tag);
+  }
+
+  function energyName(ctx, tag) {
+    return named(ctx, "energies", tag, ENERGY_NAME[tag] || tag);
+  }
+
+  function fillLabel(text, values) {
+    return String(text || "").replace(/\{(\w+)\}/g, function (whole, k) {
+      return Object.prototype.hasOwnProperty.call(values, k)
+        ? String(values[k]) : whole;
+    });
+  }
+
   function profileBlock(ctx) {
     var table = ((ctx.cfg && ctx.cfg.result_copy) || {}).profile;
     return (table && typeof table === "object") ? table : null;
@@ -155,7 +214,7 @@
   // Four whole percents that add to a hundred. Rounding each share on its own
   // gives 33/33/17/16 as readily as not, and a caption whose numbers sum to
   // 99 is the one thing on this card a reader can check for themselves.
-  function splitOf(elements) {
+  function splitOf(ctx, elements) {
     var raw = elements.map(function (row) { return Math.max(0, row.score); });
     var total = raw.reduce(function (a, b) { return a + b; }, 0);
     var pcts;
@@ -174,7 +233,7 @@
     return elements.map(function (row, i) {
       return {
         tag: row.tag,
-        name: ELEMENT_NAME[row.tag] || row.tag,
+        name: elementName(ctx, row.tag),
         pct: pcts[i],
         color: ELEMENT_COLOR[row.tag] || "#E8C878"
       };
@@ -236,7 +295,7 @@
       tone: between(tone.bold, tone.calm),
       depth: between(tone.mystic, tone.bold + tone.calm)
     };
-    var split = splitOf(elements);
+    var split = splitOf(ctx, elements);
     var rarity = (((table.rarity || {})[ctx.style.id] || {})[second]
                   || {})[energy] || 0;
 
@@ -249,9 +308,9 @@
       subtype: name,
       subtype_bare: bare,
       subtype_article: /^[AEIOU]/.test(bare) ? "an" : "a",
-      element: ELEMENT_NAME[primary] || primary,
-      second: ELEMENT_NAME[second] || second,
-      energy: ENERGY_NAME[energy] || energy,
+      element: elementName(ctx, primary),
+      second: elementName(ctx, second),
+      energy: energyName(ctx, energy),
       n: String(rarity)
     };
     split.forEach(function (cell) { words[cell.tag] = String(cell.pct); });
@@ -314,8 +373,7 @@
     var pct = share(elements, top);
     var bar = elm("div", "zr-bar");
     bar.setAttribute("role", "img");
-    bar.setAttribute("aria-label",
-                     pct + "% " + (ELEMENT_NAME[top.tag] || top.tag));
+    bar.setAttribute("aria-label", pct + "% " + elementName(ctx, top.tag));
     var fill = elm("span", "zr-bar-fill");
     fill.style.width = pct + "%";
     fill.style.background = ELEMENT_COLOR[top.tag] || "#E8C878";
@@ -323,9 +381,10 @@
     card.appendChild(bar);
 
     var led = lead(ctx.tally(ENERGY), ctx.style.tags);
-    var parts = [pct + "% " + (ELEMENT_NAME[top.tag] || top.tag)];
+    var parts = [pct + "% " + elementName(ctx, top.tag)];
     if (led && led.score > 0) {
-      parts.push((ENERGY_NAME[led.tag] || led.tag) + "-led");
+      parts.push(fillLabel(label(ctx, "led_template"),
+                           { energy: energyName(ctx, led.tag) }));
     }
     if (copy.blend_note) parts.push(copy.blend_note);
     card.appendChild(elm("p", "zr-sub", parts.join(" · ")));
@@ -343,14 +402,14 @@
   // has no run to give it — reports.py stores the same shape on the report
   // and `deliveredHero` hands it straight in.
 
-  function scaleRow(row) {
+  function scaleRow(ctx, row) {
     var wrap = elm("div", "zr-scale");
     wrap.appendChild(elm("span", "zr-scale-pole", row.left));
     var track = elm("span", "zr-scale-track");
     track.setAttribute("role", "img");
-    track.setAttribute("aria-label",
-                       row.left + " to " + row.right + " — " + row.at
-                       + " out of 100 toward " + row.right);
+    track.setAttribute("aria-label", fillLabel(label(ctx, "scale_aria"), {
+      left: row.left, right: row.right, at: row.at
+    }));
     var dot = elm("i", "zr-scale-dot");
     dot.style.left = row.at + "%";
     track.appendChild(dot);
@@ -377,7 +436,7 @@
     return wrap;
   }
 
-  function richHero(badge, data) {
+  function richHero(ctx, badge, data) {
     var card = elm("section", "zr-hero is-rich");
     var head = elm("div", "zr-hero-top");
     head.appendChild(badge);
@@ -393,7 +452,7 @@
     if ((data.scales || []).length) {
       var scales = elm("div", "zr-scales");
       data.scales.forEach(function (row) {
-        scales.appendChild(scaleRow(row));
+        scales.appendChild(scaleRow(ctx, row));
       });
       card.appendChild(scales);
     }
@@ -581,8 +640,7 @@
       fill.style.background = ELEMENT_COLOR[row.tag] || "#E8C878";
       track.appendChild(fill);
       col.appendChild(track);
-      col.appendChild(elm("span", "zr-bal-name",
-                          ELEMENT_NAME[row.tag] || row.tag));
+      col.appendChild(elm("span", "zr-bal-name", elementName(ctx, row.tag)));
       col.appendChild(elm("span", "zr-bal-pct", share(elements, row) + "%"));
       chart.appendChild(col);
     });
@@ -919,7 +977,7 @@
     // draw it from. Below the hero the two pages differ entirely, which is
     // why the branch is the whole body rather than one node.
     root.appendChild(data
-      ? richHero(glyph(ctx.picks.sign), data)
+      ? richHero(ctx, glyph(ctx.picks.sign), data)
       : hero(ctx, copy, elements, top));
     var strip = taps(ctx, copy);
     if (strip) root.appendChild(strip);
@@ -999,7 +1057,7 @@
     return list;
   }
 
-  function compatibility(data) {
+  function compatibility(data, ctx) {
     var frag = document.createDocumentFragment();
     if (data.intro) frag.appendChild(elm("p", "zr-body", data.intro));
     var list = elm("ul", "zr-verdicts");
@@ -1007,8 +1065,9 @@
       var row = elm("li", "zr-verdict");
       var head = elm("p", "zr-verdict-head");
       head.appendChild(elm("span", "zr-combo", pair.combo || ""));
-      var tag = elm("span", "zr-tag is-" + (pair.verdict || "works"),
-                    (pair.verdict || "").toUpperCase());
+      var mark = pair.verdict || "";
+      var tag = elm("span", "zr-tag is-" + (mark || "works"),
+                    named(ctx, "verdicts", mark, mark.toUpperCase()));
       head.appendChild(tag);
       row.appendChild(head);
       if (pair.why) row.appendChild(elm("p", "zr-body", pair.why));
@@ -1032,7 +1091,7 @@
     return frag;
   }
 
-  function career(data) {
+  function career(data, ctx) {
     var frag = document.createDocumentFragment();
     var head = elm("div", "zr-splurge");
     head.appendChild(elm("p", "zr-splurge-head",
@@ -1049,7 +1108,7 @@
       list.appendChild(item);
     });
     if (list.childNodes.length) {
-      frag.appendChild(elm("p", "zr-sub-head", "Where to stop spending it"));
+      frag.appendChild(elm("p", "zr-sub-head", label(ctx, "saves_head")));
       frag.appendChild(list);
     }
     if (data.split_note) {
@@ -1131,7 +1190,7 @@
     var build = section.data && DELIVERED_BODY[section.id];
     if (build) {
       try {
-        body.appendChild(build(section.data));
+        body.appendChild(build(section.data, ctx));
         return item;
       } catch (e) { /* fall through to prose */ }
     }
@@ -1153,7 +1212,7 @@
     // have bookmarked.
     var data = (ctx.visuals && ctx.visuals.profile) || null;
     if (data && data.subtype) {
-      var rich = richHero(glyph(pick), data);
+      var rich = richHero(ctx, glyph(pick), data);
       // The horizon they chose, which the paid card has always carried and
       // the free one never did. Appended here rather than inside `richHero`
       // for exactly that reason: there is no band before the money.
@@ -1193,7 +1252,7 @@
       var dot = elm("i", "zr-el-dot");
       dot.style.background = ELEMENT_COLOR[tag] || "#A8AECC";
       cell.appendChild(dot);
-      cell.appendChild(elm("span", "zr-el-name", ELEMENT_NAME[tag] || tag));
+      cell.appendChild(elm("span", "zr-el-name", elementName(ctx, tag)));
       row.appendChild(cell);
     });
     return row;
