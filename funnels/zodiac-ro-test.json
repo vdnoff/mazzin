@@ -2837,7 +2837,7 @@
     "generating_messages": [
       "Inteligența noastră artificială îți cântărește cele 18 semnale față de cele patru elemente…",
       "Căutăm combinațiile care ți se potrivesc ȚIE…",
-      "Încrucișăm alegerile tale de element și de energie…",
+      "Împletim alegerile tale de element și de energie…",
       "Aproape gata — îți scriem profilul…"
     ],
     "sections": [
@@ -3148,73 +3148,73 @@
       "sign_cross": {
         "Berbec": {
           "fire": "Un Berbec condus de Foc e zodia în stare pură — startul e tot ce contează, iar tu ești deja în mișcare în timp ce încăperea încă se hotărăște.",
-          "earth": "Un Berbec condus de Pământ e o încrucișare autentică — impulsul vine la timp, dar tu construiești lucrul înainte să-l anunți.",
+          "earth": "Un Berbec condus de Pământ e o combinație autentică — impulsul vine la timp, dar tu construiești lucrul înainte să-l anunți.",
           "air": "Un Berbec condus de Aer e o combinație neobișnuită — viteza ta intră în argument, nu în acțiune, și câștigi încăperi în care nici nu voiai să intri.",
           "water": "Un Berbec condus de Apă e o combinație rară — încărcătura e toată acolo și trece prin ce simți, nu prin ce începi."
         },
         "Taur": {
           "fire": "Un Taur condus de Foc e o combinație neobișnuită — răbdarea e reală și stă peste o căldură care se arată doar când ți se ia ceva.",
           "earth": "Un Taur condus de Pământ e zodia în stare pură — ții terenul stând pe el, iar ce păstrezi e măsura ta.",
-          "air": "Un Taur condus de Aer e o încrucișare autentică — te așezi încet și gândești repede, așa că decizia e luată cu mult înainte s-o recunoști.",
+          "air": "Un Taur condus de Aer e o combinație autentică — te așezi încet și gândești repede, așa că decizia e luată cu mult înainte s-o recunoști.",
           "water": "Un Taur condus de Apă e o combinație neobișnuită — statornicia e emoțională, nu materială, iar confortul înseamnă pentru tine să te simtă cineva, nu să ai lucruri în jur."
         },
         "Gemeni": {
           "fire": "Gemenii conduși de Foc sunt o combinație neobișnuită — cele două minți se opresc din ceartă în clipa în care ceva merită făcut, și atunci ești o singură direcție.",
-          "earth": "Gemenii conduși de Pământ sunt o încrucișare autentică — vorbești în posibilități și te angajezi în amănunte, iar amănuntele sunt ce rețin oamenii.",
+          "earth": "Gemenii conduși de Pământ sunt o combinație autentică — vorbești în posibilități și te angajezi în amănunte, iar amănuntele sunt ce rețin oamenii.",
           "air": "Gemenii conduși de Aer sunt zodia în stare pură — gândești cu voce tare, în compania cuiva, iar gândul e gata abia după ce i-a răspuns cineva.",
           "water": "Gemenii conduși de Apă sunt o combinație rară — iuțeala citește starea unei încăperi înaintea cuvintelor ei, iar aceea e jumătatea din tine pe care oamenii o numesc tulburătoare."
         },
         "Rac": {
           "fire": "Un Rac condus de Foc e o combinație neobișnuită — carapacea e tot acolo și în spatele ei stă ceva care iese primul, nu ultimul.",
-          "earth": "Un Rac condus de Pământ e o încrucișare autentică — ai grijă de oameni prin logistică, nu prin sentiment, și lovește mai tare.",
+          "earth": "Un Rac condus de Pământ e o combinație autentică — ai grijă de oameni prin logistică, nu prin sentiment, și lovește mai tare.",
           "air": "Un Rac condus de Aer e o combinație rară — simți totul și îl clasezi, iar distanța pe care o ții e una de lucru, nu una rece.",
           "water": "Un Rac condus de Apă e zodia în stare pură — iei temperatura unei încăperi înainte să-ți dai jos haina și aproape niciodată nu greșești."
         },
         "Leu": {
           "fire": "Un Leu condus de Foc e zodia în stare pură — încălzești o încăpere doar fiind în ea, iar spectacolul și omul sunt același lucru.",
-          "earth": "Un Leu condus de Pământ e o încrucișare autentică — strălucirea e reală și e construită, iar tu preferi să se bazeze cineva pe tine decât să se uite la tine.",
+          "earth": "Un Leu condus de Pământ e o combinație autentică — strălucirea e reală și e construită, iar tu preferi să se bazeze cineva pe tine decât să se uite la tine.",
           "air": "Un Leu condus de Aer e o combinație neobișnuită — focul tău se vede în felul în care decizi, nu în felul în care arzi.",
           "water": "Un Leu condus de Apă e o combinație rară — căldura se întoarce mai întâi înăuntru, iar ce vede încăperea e a doua ei versiune."
         },
         "Fecioară": {
           "fire": "O Fecioară condusă de Foc e o combinație neobișnuită — standardul vine cu căldură în spate și ești în stare să arzi o săptămână pentru un singur amănunt.",
           "earth": "O Fecioară condusă de Pământ e zodia în stare pură — îmbunătățești ce ai în față, iar îmbunătățirea e destul de concretă cât să poți arăta cu degetul spre ea.",
-          "air": "O Fecioară condusă de Aer e o încrucișare autentică — precizia intră în limbaj și poți desface o idee încâlcită într-o singură frază.",
+          "air": "O Fecioară condusă de Aer e o combinație autentică — precizia intră în limbaj și poți desface o idee încâlcită într-o singură frază.",
           "water": "O Fecioară condusă de Apă e o combinație neobișnuită — observi ce nu e în regulă cu un om așa cum alții observă vremea și nu spui aproape nimic din asta."
         },
         "Balanță": {
           "fire": "O Balanță condusă de Foc e o combinație neobișnuită — echilibrul e o decizie pe care o iei mereu din nou, repede și cu voce tare.",
-          "earth": "O Balanță condusă de Pământ e o încrucișare autentică — cântărești lucrurile după cât costă să le păstrezi, iar gustul tău e un buget în lucru.",
+          "earth": "O Balanță condusă de Pământ e o combinație autentică — cântărești lucrurile după cât costă să le păstrezi, iar gustul tău e un buget în lucru.",
           "air": "O Balanță condusă de Aer e zodia în stare pură — ții ambele părți destul cât să vezi forma întregului și abia apoi alegi una.",
           "water": "O Balanță condusă de Apă e o combinație rară — dreptatea e pentru tine ceva simțit și duci un dezechilibru luni întregi mai degrabă decât să-l numești."
         },
         "Scorpion": {
           "fire": "Un Scorpion condus de Foc e o combinație neobișnuită — adâncimea e zgomotoasă, nu tăcută, iar oamenii știu exact unde stau cu tine.",
-          "earth": "Un Scorpion condus de Pământ e o încrucișare autentică — intensitatea intră în ce construiești și ai o răbdare care îi neliniștește pe oameni.",
+          "earth": "Un Scorpion condus de Pământ e o combinație autentică — intensitatea intră în ce construiești și ai o răbdare care îi neliniștește pe oameni.",
           "air": "Un Scorpion condus de Aer e o combinație rară — desfaci un lucru ca să-l înțelegi, iar înțelegerea e locul în care aterizează intensitatea.",
           "water": "Un Scorpion condus de Apă e zodia în stare pură — mergi până la fundul lucrurilor din prima trecere, iar compania superficială te obosește într-o oră."
         },
         "Săgetător": {
           "fire": "Un Săgetător condus de Foc e zodia în stare pură — săgeata pleacă din arc, iar ochirea se face pe drum.",
-          "earth": "Un Săgetător condus de Pământ e o încrucișare autentică — orizontul rămâne scopul, iar acum ai și merinde la tine, și de-asta chiar ajungi.",
+          "earth": "Un Săgetător condus de Pământ e o combinație autentică — orizontul rămâne scopul, iar acum ai și merinde la tine, și de-asta chiar ajungi.",
           "air": "Un Săgetător condus de Aer e o combinație neobișnuită — călătorești prin idei la fel de ușor ca prin locuri, iar discuția e călătoria.",
           "water": "Un Săgetător condus de Apă e o combinație rară — căutarea e la fel de des înăuntru ca în afară și mergi cel mai departe când nu se uită nimeni."
         },
         "Capricorn": {
           "fire": "Un Capricorn condus de Foc e o combinație neobișnuită — urcușul e împins din interior, nu din datorie, iar tu concurezi cu o versiune a ta.",
           "earth": "Un Capricorn condus de Pământ e zodia în stare pură — construiești în piatră, cu bună știință, și preferi să ajungi devreme decât să impresionezi.",
-          "air": "Un Capricorn condus de Aer e o încrucișare autentică — structura e mai întâi în gândire și vezi toată scara înainte s-o atingi.",
+          "air": "Un Capricorn condus de Aer e o combinație autentică — structura e mai întâi în gândire și vezi toată scara înainte s-o atingi.",
           "water": "Un Capricorn condus de Apă e o combinație rară — disciplina apără ceva moale, iar oamenii care trec de ea rămân pentru totdeauna."
         },
         "Vărsător": {
           "fire": "Un Vărsător condus de Foc e o combinație neobișnuită — distanța pe care o ții e o poziție și o aperi cu căldură și pe îndelete.",
-          "earth": "Un Vărsător condus de Pământ e o încrucișare autentică — ideea ciudată vine cu un plan atașat, și de-asta oamenii o urmează.",
+          "earth": "Un Vărsător condus de Pământ e o combinație autentică — ideea ciudată vine cu un plan atașat, și de-asta oamenii o urmează.",
           "air": "Un Vărsător condus de Aer e zodia în stare pură — gândești dinadins din afara încăperii, iar priveliștea de-acolo e contribuția ta.",
           "water": "Un Vărsător condus de Apă e o combinație rară — detașarea e un fel de a-ți păsa la scară mare, iar cazul luat unul câte unul tot te atinge."
         },
         "Pești": {
           "fire": "Peștii conduși de Foc sunt o combinație neobișnuită — visarea are un motor sub ea, iar ce începi ajunge de obicei să fie terminat.",
-          "earth": "Peștii conduși de Pământ sunt o încrucișare autentică — faci real lucrul imaginat, care e jumătatea cea mai rară a imaginației.",
+          "earth": "Peștii conduși de Pământ sunt o combinație autentică — faci real lucrul imaginat, care e jumătatea cea mai rară a imaginației.",
           "air": "Peștii conduși de Aer sunt o combinație rară — trăirea ajunge deja tradusă și poți explica o stare chiar omului care o are.",
           "water": "Peștii conduși de Apă sunt zodia în stare pură — iei vremea încăperii fără să vrei, iar singurătatea e întreținere, nu bosumflare."
         },
