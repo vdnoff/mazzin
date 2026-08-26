@@ -241,7 +241,18 @@
     script.async = true;
     script.src = "https://connect.facebook.net/en_US/fbevents.js";
     document.head.appendChild(script);
-    window.fbq("init", id);
+    // Advanced matching, and one field of it: the session id this funnel has
+    // used since the first tap. It is the identifier that does not depend on
+    // the buyer's inbox — an iCloud relay address or a wallet's own address
+    // is an email Meta cannot join to anybody — and declaring it here is what
+    // makes the PageView, the Lead and the InitiateCheckout this page fires
+    // join to the Purchase the server sends hours later on the same value.
+    //
+    // fbevents.js normalises and hashes it before it leaves; payments.py
+    // hashes the same string the same way. Nothing else is declared: an
+    // advanced-matching object is a place people put email addresses and
+    // phone numbers, and this one carries an opaque id and stops.
+    window.fbq("init", id, sessionId ? { external_id: sessionId } : {});
   }
 
   function startPixel() {

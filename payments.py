@@ -26,10 +26,12 @@ No email address, address or raw request body is ever written to a log line.
 
 import decimal
 import hashlib
+import ipaddress
 import json
 import logging
 import re
 import time
+import urllib.parse
 
 import pymysql.err
 import stripe
@@ -356,6 +358,165 @@ def _metadata(slug, session_id, result_style, tag_scores, choices=None,
     return data
 
 
+# --- what the browser knew, held until the webhook -------------------------
+#
+# The server-side Purchase fires from Stripe's request rather than the
+# buyer's, so by then the buyer's IP and User-Agent are gone — and those are
+# two of the identifiers Meta matches a conversion on. They are captured when
+# the browser asks for a checkout session, held in `checkout_context`, and
+# read once when the webhook lands.
+#
+# Not in Stripe metadata, where the click ids ride: Stripe documents metadata
+# as the wrong place for personal data, an IP address is personal data, and
+# metadata is permanent and dashboard-visible where this row has a retention
+# window and a sweeper. Not in `events` either — tracking.py keeps two enum
+# words about the device and says the raw User-Agent and the IP are stored
+# nowhere, and that rule is about a history kept forever and read by people.
+# This row lives for minutes, is read once by a machine, and is deleted.
+#
+# Everything in here is best effort. A failed capture costs a slightly worse
+# match rate on one conversion; a failed checkout costs the sale.
+
+CONTEXT_UPSERT_SQL = (
+    "INSERT INTO checkout_context (session_id, client_ip, client_ua) "
+    "VALUES (%s, %s, %s) "
+    "ON DUPLICATE KEY UPDATE client_ip = VALUES(client_ip), "
+    "client_ua = VALUES(client_ua), created_at = CURRENT_TIMESTAMP"
+)
+
+CONTEXT_SELECT_SQL = (
+    "SELECT client_ip, client_ua FROM checkout_context "
+    "WHERE session_id = %s LIMIT 1"
+)
+
+# A User-Agent is conventionally under 256 characters. The column is 400 and
+# this is the same number, so a header arriving with sixteen kilobytes of it
+# is truncated here rather than by MySQL.
+UA_MAX = 400
+
+
+def _client_ua():
+    """The buyer's User-Agent header, trimmed to what the column holds."""
+    value = request.headers.get("User-Agent") or ""
+    value = value.strip()[:UA_MAX]
+    return value or None
+
+
+def _client_ip():
+    """The buyer's address, or None.
+
+    Cloudflare sits in front of this app, so `remote_addr` is Cloudflare. The
+    header it sets is read first, then the left-most hop of X-Forwarded-For,
+    then the socket as the last resort. Every candidate is parsed as an
+    address before it is believed: these are client-settable headers, and an
+    unparsed one would be a string of somebody else's choosing on its way to
+    a third party.
+    """
+    candidates = [request.headers.get("CF-Connecting-IP")]
+    forwarded = request.headers.get("X-Forwarded-For") or ""
+    if forwarded:
+        candidates.append(forwarded.split(",")[0])
+    candidates.append(request.remote_addr)
+    for value in candidates:
+        if not value:
+            continue
+        try:
+            return str(ipaddress.ip_address(value.strip()))
+        except ValueError:
+            continue
+    return None
+
+
+def _merged_meta_ids(from_page, from_request):
+    """The click ids to carry, the page's first, and an fbc if we can build one.
+
+    `fbc` is what Meta actually joins a conversion to a click on, so a visitor
+    who arrived with an `fbclid` and no cookie yet is given one in Meta's own
+    format rather than left unattributable. `fbclid` travels too: the send
+    side still knows how to wrap one, and an older row that never got here
+    should keep working.
+    """
+    out = dict(from_request or {})
+    out.update(from_page or {})
+    if not out.get("fbc"):
+        built = _fbc_from_click(out.get("fbclid"))
+        if built:
+            out["fbc"] = built
+    return out
+
+
+def _cookie_meta_ids():
+    """The click identifiers the request itself carries.
+
+    fbevents.js writes `_fbp` and `_fbc` as first-party cookies, so they
+    arrive on this request whether or not the page managed to read them — an
+    extension that blocks `document.cookie` reads, or an engine.js cached from
+    before that code shipped, both still send them here.
+    """
+    out = {}
+    for key, name in (("fbp", "_fbp"), ("fbc", "_fbc")):
+        value = request.cookies.get(name)
+        if isinstance(value, str) and META_ID_RE.match(value):
+            out[key] = value
+    # And the click id off the landing URL, where the browser came straight
+    # from an ad and the cookie has not been written yet.
+    referrer = request.referrer or ""
+    if "fbclid=" in referrer:
+        try:
+            hit = urllib.parse.parse_qs(
+                urllib.parse.urlparse(referrer).query).get("fbclid")
+        except ValueError:
+            hit = None
+        if hit and META_ID_RE.match(hit[0]):
+            out["fbclid"] = hit[0]
+    return out
+
+
+def _fbc_from_click(fbclid, now=None):
+    """Meta's own format for a click id that has no cookie behind it yet.
+
+    `fb.1.<milliseconds>.<fbclid>`: the subdomain index Meta uses for a
+    first-party cookie, then when the click was seen, then the id itself.
+    Built here rather than at send time because "when it was seen" is now —
+    the webhook fires minutes later and would stamp the payment's time onto a
+    click that happened before the funnel was walked.
+    """
+    if not fbclid:
+        return None
+    return "fb.1.%d.%s" % (int((now or time.time()) * 1000), fbclid)
+
+
+def _save_context(session_id, client_ip, client_ua):
+    """Hold the buyer's IP and User-Agent for the webhook. Never raises."""
+    if not session_id or not (client_ip or client_ua):
+        return False
+    try:
+        database.execute(CONTEXT_UPSERT_SQL,
+                         (session_id, client_ip, client_ua))
+        return True
+    except Exception as exc:
+        # Class only, and never the values: this is the one place in the app
+        # that holds an address and a full User-Agent, and a log line is
+        # exactly the durable, human-read place they must not reach.
+        log.warning("checkout context not saved for session: %s",
+                    type(exc).__name__)
+        return False
+
+
+def _read_context(session_id):
+    """(ip, user agent) for a session, or (None, None). Never raises."""
+    if not session_id:
+        return None, None
+    try:
+        row = database.query_one(CONTEXT_SELECT_SQL, (session_id,))
+    except Exception as exc:
+        log.warning("checkout context not read: %s", type(exc).__name__)
+        return None, None
+    if not row:
+        return None, None
+    return (row.get("client_ip") or None), (row.get("client_ua") or None)
+
+
 # --- Meta Conversions API --------------------------------------------------
 
 # The browser never fires Purchase. An ad blocker, a closed tab or a back
@@ -375,7 +536,8 @@ def _capi_url():
 
 def send_purchase_event(purchase_id, slug, amount_cents, currency,
                         email=None, payment_intent=None, meta_ids=None,
-                        event_time=None):
+                        event_time=None, session_id=None,
+                        client_ip=None, client_ua=None):
     """Tell Meta a purchase happened. Returns True if it was accepted.
 
     Best effort by construction: every failure path returns False and the
@@ -400,8 +562,30 @@ def send_purchase_event(purchase_id, slug, amount_cents, currency,
     ids = meta_ids or {}
     user_data = {}
     if email:
-        # The only personal datum that leaves here, and it leaves hashed.
+        # Hashed, always. Meta never sees an address in the clear.
         user_data["em"] = [_sha256(email)]
+    # The identifier that does not depend on the buyer's inbox. An iCloud
+    # relay address, a wallet's own address, a typo — every one of them is an
+    # email Meta cannot join to a person, and each of those purchases was
+    # matching on nothing else. This is the session id the funnel has used
+    # since the first tap: the browser declares it to the pixel at init, so
+    # the Lead and InitiateCheckout it fires carry the same value, and the
+    # Purchase joins to them on it.
+    #
+    # Hashed with the same normalisation as the email, which is not a
+    # preference — fbevents.js normalises and SHA-256s advanced-matching
+    # values in the browser, so anything else here would hash to a different
+    # string and match nothing.
+    if session_id:
+        user_data["external_id"] = _sha256(session_id)
+    # Where the buyer actually was, captured when they asked for a checkout
+    # session because this code runs on Stripe's request and not theirs.
+    # Neither is hashed: Meta's spec takes both in the clear and hashing
+    # either one makes it unusable.
+    if client_ip:
+        user_data["client_ip_address"] = client_ip
+    if client_ua:
+        user_data["client_user_agent"] = client_ua
     if ids.get("fbp"):
         user_data["fbp"] = ids["fbp"]
     # fbc is the joinable click id. Meta will take a raw fbclid wrapped in its
@@ -414,7 +598,9 @@ def send_purchase_event(purchase_id, slug, amount_cents, currency,
 
     if not user_data:
         # Nothing to match on. Meta rejects the event anyway, so do not spend
-        # a request finding that out.
+        # a request finding that out. In practice unreachable now that the
+        # session id is always there, and kept because "always" is a claim
+        # about a caller rather than about this function.
         log.info("purchase %s has no Meta identifiers — event not sent",
                  purchase_id)
         return False
@@ -602,7 +788,21 @@ def _validated_order(body):
             _clean_choices(cfg, body.get("choices"))),
         # Carried through Stripe so the server-side Purchase can be joined to
         # the click that produced it. Never used to decide anything.
-        "meta_ids": _clean_meta_ids(body),
+        #
+        # Two sources, the page's reading of its own cookies and the request's
+        # own. The page's wins where it has one — it read `location.search`
+        # for the click id, which this side only sees through a referrer — and
+        # the request fills the gaps, which is what a blocked `document.cookie`
+        # or an engine.js cached from before that code shipped leaves behind.
+        # Where nothing has a joinable click id but a raw one arrived, it is
+        # wrapped into Meta's format here, while "when the click was seen" is
+        # still now rather than whenever the webhook happens to land.
+        "meta_ids": _merged_meta_ids(_clean_meta_ids(body),
+                                     _cookie_meta_ids()),
+        # Held for the webhook, which fires from Stripe's request and so has
+        # neither of these. Read once, then swept.
+        "client_ip": _client_ip(),
+        "client_ua": _client_ua(),
         "mode": mode,
         "secret": secret,
     }
@@ -626,6 +826,11 @@ def checkout():
     meta_ids = order["meta_ids"]
     mode = order["mode"]
     secret = order["secret"]
+
+    # Before the session, so a Stripe call that succeeds cannot leave the
+    # webhook with nothing to match on. It answers False rather than raising,
+    # so a table that is not there yet costs match quality and not a sale.
+    _save_context(session_id, order["client_ip"], order["client_ua"])
 
     # What Stripe shows on its own payment page and on the receipt. It is the
     # last piece of copy somebody reads before paying and the only one we do
@@ -717,6 +922,9 @@ def payment_intent():
             "STRIPE_TEST_PUBLISHABLE_KEY" if mode == TEST
             else "STRIPE_PUBLISHABLE_KEY")
         return jsonify({}), 502
+
+    # The wallet path reaches the same webhook, so it holds the same context.
+    _save_context(order["session_id"], order["client_ip"], order["client_ua"])
 
     try:
         intent = stripe.PaymentIntent.create(
@@ -1114,11 +1322,17 @@ def stripe_webhook():
                  "purchase event skipped", purchase_id, signed)
     else:
         try:
+            # What the browser knew, read back once. A session that never
+            # got a row — an older payment, a table not yet applied — sends
+            # exactly what it sent before.
+            context_ip, context_ua = _read_context(session_id)
             send_purchase_event(
                 purchase_id, slug, amount_cents, currency,
                 email=details.get("email"), payment_intent=payment_intent,
                 meta_ids=_clean_meta_ids(metadata),
                 event_time=int(event.get("created") or time.time()),
+                session_id=session_id,
+                client_ip=context_ip, client_ua=context_ua,
             )
         except Exception as exc:
             log.warning("Meta purchase event raised for purchase %s: %s",
