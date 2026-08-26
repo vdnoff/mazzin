@@ -357,3 +357,6 @@ bottom.
 
 ## 2026-08-26 — claude/meta-match-enrichment
 - meta: external_id + fbp/fbc + ip/ua match enrichment
+
+## 2026-08-26 — claude/zodiac-ro
+- Romanian localization: zodiac-ro funnel + RO report profile
