@@ -369,3 +369,6 @@ bottom.
 
 ## 2026-08-26 — claude/ro-splurge-json
 - RO splurge root cause: punctuation contract + give-up diagnostic
+
+## 2026-08-26 — claude/ro-report-language
+- RO report language: twin cache fallback, render literals, RO stubs
