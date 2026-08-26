@@ -550,13 +550,22 @@ check("the English shapes are untouched, byte for byte",
           (sid, reports._zodiac_spec(text, sid))
           for sid, text in reports._ZODIAC_SHAPES.items())
       and "440 characters maximum" in reports.ZODIAC_SPEC["splurge"])
-check("  and the two differ only in their numbers",
-      all(re.sub(r"\d+", "#", reports.ZODIAC_RO_SPEC[sid])
-          == re.sub(r"\d+", "#", reports.ZODIAC_SPEC[sid])
+
+
+def shape_only(text):
+    """One shape with its numbers blanked and the RO punctuation rule off."""
+    if text.endswith(reports.ZODIAC_RO_JSON_RULE):
+        text = text[:-len(reports.ZODIAC_RO_JSON_RULE)]
+    return re.sub(r"\d+", "#", text)
+
+
+check("  and the two ask the same questions, in different numbers",
+      all(shape_only(reports.ZODIAC_RO_SPEC[sid])
+          == shape_only(reports.ZODIAC_SPEC[sid])
           for sid in reports.ZODIAC_SPEC),
       str([sid for sid in reports.ZODIAC_SPEC
-           if re.sub(r"\d+", "#", reports.ZODIAC_RO_SPEC[sid])
-           != re.sub(r"\d+", "#", reports.ZODIAC_SPEC[sid])]))
+           if shape_only(reports.ZODIAC_RO_SPEC[sid])
+           != shape_only(reports.ZODIAC_SPEC[sid])]))
 
 print("\n--- Romanian prose is what breaks the JSON ---")
 # The other half of the failure, and the half that is not about length: a
@@ -634,6 +643,140 @@ check("  and a salvaged answer still faces the banned list",
       str(reports._banned_hit(salvaged, reports.ZODIAC_RO_BANNED)))
 check("truncation is not salvaged — it is still truncation",
       reports._parse_detail(ok_json[:400], WANT, [])[0] is None)
+
+print("\n--- the give-up log names the character that did it ---")
+# Six identical failures said only "JSONDecodeError at char 743" — a position
+# and an exception class, never the character. Forty either side is the
+# difference between a seventh guess and a diagnosis.
+SAID = 'Refuz-o clar, cu propoziția: "Pot prelua asta acum." Pune'
+broken = body(PROSE).replace("nu efortul", "nu " + SAID, 1)
+parsed, why = reports._parse_detail(broken, WANT, [])
+check("an invalid-JSON reason carries an excerpt", parsed is None
+      and " near " in why, why)
+check("  wide enough to show the quote in its sentence",
+      "Pot prelua" in why, why)
+multiline = body("Prima linie.\nA doua linie, cu \"ghilimele\" drepte.")
+_, why_nl = reports._parse_detail(
+    multiline.replace('\\"', '"').replace("\\n", "\n"), WANT, [])
+check("  escaped to one line, so an answer cannot forge a log record",
+      why_nl is None or "\n" not in why_nl, repr(why_nl))
+check("  and sized as configured",
+      reports.EXCERPT_EITHER_SIDE == 40
+      and len(reports._excerpt("x" * 400, 200)) <= 2 * 40 + 12)
+check("  a reason with no position gets no excerpt, not a crash",
+      reports._excerpt("abc", None) == "" and reports._excerpt("", 1) == "")
+check("no other failure grew one",
+      " near " not in reports._parse_detail('{"nope": 1}', WANT, [])[1]
+      and " near " not in reports._parse_detail("", WANT, [])[1])
+# The reason string carries the model's own words now; the note sent back to
+# it must not. That invariant is what keeps a bad answer from being quoted
+# into the prompt that asks for a better one.
+leak_notes = []
+reports._parse_detail(broken, WANT, leak_notes)
+leaked = reports._retry_prompt("P", leak_notes)
+check("and the excerpt never reaches the model",
+      "Pot prelua" not in leaked and "Refuz-o clar" not in leaked)
+check("  and the one note it does send is the generic advice",
+      len(leak_notes) == 1
+      and leak_notes[0].startswith("the answer was not valid JSON"),
+      str(leak_notes))
+
+print("\n--- the field that kept breaking it ---")
+# grounded_earth x splurge failed 6/6. `splurge` is the one cached section
+# whose shape asks, three times per answer, for "the sentence to say" — and a
+# model asked for a sentence to say types quotation marks around it.
+check("splurge is the section that asks for a quotable sentence",
+      "sentence to say" in reports._ZODIAC_SHAPES["splurge"]
+      and "sentence to say" not in reports._ZODIAC_SHAPES["mistakes"],
+      "the shape no longer asks for it — this diagnosis is stale")
+check("every RO shape closes on the punctuation contract",
+      all(sid_text.endswith(reports.ZODIAC_RO_JSON_RULE)
+          for sid_text in reports.ZODIAC_RO_SPEC.values()))
+check("  which tells it to write the sentence with no quotation marks",
+      "no quotation marks"
+      in " ".join(reports.ZODIAC_RO_JSON_RULE.split()))
+check("  and offers the Romanian pair as the only alternative",
+      "„" in reports.ZODIAC_RO_JSON_RULE
+      and "U+201E" in reports.ZODIAC_RO_JSON_RULE)
+check("the English shapes carry none of it",
+      not any(reports.ZODIAC_RO_JSON_RULE in t
+              for t in reports.ZODIAC_SPEC.values())
+      and "PUNCTUATION" not in reports.ZODIAC_SPEC["splurge"])
+check("the RO prompt forbids the character outright, not as a preference",
+      "Never type one inside a value" in profile["system"])
+check("  and the English prompt still says nothing about it",
+      "Never type one inside a value" not in reports.ZODIAC_SYSTEM)
+
+print("\n--- and the retry repeats that rule, for this funnel only ---")
+check("the RO profile declares a JSON retry note",
+      profile["json_retry"] is reports.ZODIAC_RO_JSON_RETRY)
+check("  and it is the only profile that does",
+      [slug for slug, pr in reports.PROFILES.items() if pr.get("json_retry")]
+      == ["zodiac-ro"],
+      str([slug for slug, pr in reports.PROFILES.items()
+           if pr.get("json_retry")]))
+check("  naming the quote, the field and what to do instead",
+      "straight double quote" in reports.ZODIAC_RO_JSON_RETRY
+      and "sentence a field asked" in reports.ZODIAC_RO_JSON_RETRY
+      and "NO quotation marks" in reports.ZODIAC_RO_JSON_RETRY)
+check("_generate takes it as an argument, defaulting to none",
+      "json_retry" in reports._generate.__code__.co_varnames
+      and reports._generate.__defaults__[-1] is None)
+check("  and every call site hands the profile's own",
+      open(os.path.join(ROOT, "reports.py"), encoding="utf-8").read().count(
+          'profile.get("json_retry")') == 3)
+
+
+# The wiring, exercised rather than inspected. No network: the client is a
+# stub that returns the same unparseable answer twice, so both attempts and
+# the give-up are driven without a key.
+class _Stub:
+    """A client that answers every call with `text`, recording the prompts."""
+
+    def __init__(self, text):
+        self.text = text
+        self.sent = []
+        self.messages = self
+
+    def create(self, **kw):
+        self.sent.append(kw["messages"][0]["content"])
+        block = type("B", (), {"type": "text", "text": self.text})()
+        return type("M", (), {"content": [block], "stop_reason": "end_turn"})()
+
+
+def retry_for(pr):
+    """The second prompt `_generate` sends for `pr`, on an unparseable answer."""
+    limiter, timeout = reports._limiter, reports._timeout_class
+    reports._limiter = lambda: type(
+        "G", (), {"acquire": lambda s: None, "release": lambda s: None})()
+    reports._timeout_class = lambda: None
+    stub = _Stub(broken)
+    try:
+        reports._generate(stub, "P", WANT, 900, pr["system"], pr["banned"],
+                          pr["retry_detail"], None, pr.get("json_retry"))
+    finally:
+        reports._limiter, reports._timeout_class = limiter, timeout
+    return stub.sent[1]
+
+
+ro_retry = retry_for(profile)
+en_retry = retry_for(reports.ZODIAC_PROFILE)
+kitchen_retry = retry_for(reports.KITCHEN_PROFILE)
+check("a Romanian retry really does carry the rule",
+      reports.ZODIAC_RO_JSON_RETRY in ro_retry)
+check("  and the generic advice before it",
+      0 <= ro_retry.find("punctuation, not length")
+      < ro_retry.find(reports.ZODIAC_RO_JSON_RETRY))
+check("an English zodiac retry gets the generic advice and no more",
+      "This is punctuation, not length" in en_retry
+      and reports.ZODIAC_RO_JSON_RETRY not in en_retry
+      and "„" not in en_retry)
+check("a kitchen retry is the line it has always been",
+      kitchen_retry == "P" + reports.RETRY_NOTE, kitchen_retry[-80:])
+check("and no retry quotes the answer back at the model",
+      not any("Pot prelua" in r
+              for r in (ro_retry, en_retry, kitchen_retry)))
+
 check("  and neither is a stray quote, which no repair can guess at safely",
       reports._parse_detail(
           ok_json.replace("nu efortul", 'nu "efortul"', 1), WANT, [])[0]
