@@ -1238,6 +1238,70 @@ the limit rather than to the sentence you had in mind:
 %s""" % _budget_lines(section_id, budget)
 
 
+# --- the words the module writes itself ------------------------------------
+#
+# Everything a finished report says that comes from neither the funnel config
+# nor the model: the two prefixes the year map marks its months with, the
+# labels the PDF prints around a section's own copy, the badges on the love
+# verdicts, and the handful of fallbacks that stand in when a config or a run
+# is missing a string.
+#
+# They were literals spread down the render path, which is how a Romanian
+# report came back with English headings around Romanian sentences: every
+# section was translated and none of the furniture between them was.
+#
+# The defaults are exactly what every report has printed since the first one,
+# so a profile that declares no words of its own renders byte for byte what it
+# always did. A profile that declares them replaces the whole map, built from
+# this one, so a key added here is never missing from a translation.
+RENDER_WORDS = {
+    # The year map's two marks. Read three times over — the shape the model is
+    # given, the stub that ships when generation fails, and the check that
+    # polices the answer — and all three have to be the same two strings, or
+    # the check refuses what the shape asked for.
+    "year_strong": "Strongest month:",
+    "year_quiet": "Quiet month:",
+    # The PDF's own furniture, printed between the model's sentences.
+    "fix": "Fix:",
+    "skip": "Skip",
+    "splurge": "Splurge",
+    "save": "Save",
+    "verdicts": {"works": "WORKS", "avoid": "AVOID"},
+    # Fallbacks. Each stands in for something a config or a run should have
+    # carried and did not, which is exactly when a reader is least able to
+    # forgive a word in the wrong language.
+    "style_fallback": "Your style",
+    "taps_caption": "Read from your taps:",
+    "pdf_note": ("Keep this — your report also stays available at the link "
+                 "you were sent back to after checkout."),
+    "mail_style": "style",
+    "pdf_filename": "mazzin-%s-report.pdf",
+}
+
+# The same map, in the language /zodiac-ro sold in.
+#
+# "Merită" / "Renunță" rather than a literal Splurge / Save: that section is
+# career energy and never money, and the Romanian words for spending and
+# saving would put this funnel one noun away from the line its own banned list
+# draws. "Merită" heads the work worth the effort, "Renunță" the list of
+# things to decline — which is what those two headings actually mean here.
+RENDER_WORDS_RO = dict(RENDER_WORDS, **{
+    "year_strong": "Cea mai puternică lună:",
+    "year_quiet": "Lună liniștită:",
+    "fix": "Soluție:",
+    "skip": "De evitat",
+    "splurge": "Merită",
+    "save": "Renunță",
+    "verdicts": {"works": "MERGE", "avoid": "EVITĂ"},
+    "style_fallback": "Stilul tău",
+    "taps_caption": "Citit din alegerile tale:",
+    "pdf_note": ("Păstrează-l — profilul tău rămâne disponibil și la linkul "
+                 "primit după plată."),
+    "mail_style": "personal",
+    "pdf_filename": "mazzin-%s-profil.pdf",
+})
+
+
 # The same six shapes, described for the other product. Keyed by the id the
 # renderer dispatches on, written about what the reader was actually sold.
 _ZODIAC_SHAPES = {
@@ -1435,12 +1499,34 @@ them, and a straight ' is safer than a straight " but still better avoided.
 
 One more: every value is one line. No line breaks inside a value."""
 
-# The same six shapes, in Romanian numbers, each closing on that rule.
+def _marked_shapes(words):
+    """The same shapes, with the year map's two marks said in one language.
+
+    Only the shopping shape names them, and it names them as strings to copy
+    rather than as an idea to express — so a Romanian report asked for the
+    English prefix gets the English prefix, which is exactly what shipped.
+
+    A replacement rather than a second shape written out: the two texts are
+    the same instruction and a translation kept as its own copy is a paragraph
+    that stops matching the English the first time either is edited.
+    """
+    shapes = dict(_ZODIAC_SHAPES)
+    shapes["shopping"] = (
+        shapes["shopping"]
+        .replace(RENDER_WORDS["year_strong"], words["year_strong"])
+        .replace(RENDER_WORDS["year_quiet"], words["year_quiet"]))
+    return shapes
+
+
+# The same six shapes, marked in Romanian, in Romanian numbers, each closing
+# on that rule. Three separate things the Romanian shapes are and the English
+# ones are not, and one object rather than three: a second RO spec beside this
+# one would be a shape the profile does not use.
 ZODIAC_RO_SPEC = dict(
     (section_id,
      _zodiac_spec(text, section_id, ZODIAC_RO_PROMPT_BUDGET)
      + ZODIAC_RO_JSON_RULE)
-    for section_id, text in _ZODIAC_SHAPES.items())
+    for section_id, text in _marked_shapes(RENDER_WORDS_RO).items())
 
 
 # What a reader gets when generation fails outright, so it has to be
@@ -1647,6 +1733,216 @@ ZODIAC_STUBS = {
         "skip": [],
     },
 }
+
+
+# --- the same fallbacks, in Romanian ---------------------------------------
+#
+# A stub is what a reader gets when generation fails outright, and until now
+# the Romanian funnel's stubs were the English set: a reader who paid in
+# Romanian and lost the model got an English report, which is the failure the
+# fallback exists to prevent happening twice over. Short and generic like the
+# English ones — a stub knows the archetype's name and nothing else about the
+# person — with the full diacritics, and inside the same Terms line: nothing
+# here foretells anything, and nothing here is medical or financial advice.
+ZODIAC_COLOR_TEXT_RO = [
+    ("cea în care trăiești",
+     "zilele obișnuite, și pe cele pe care vrei să le păstrezi obișnuite",
+     "Stratul cel mai apropiat de tine — ce se poartă fără o decizie."),
+    ("pentru ziua în care ceva trebuie să se miște",
+     "o zi pe săptămână, aleasă dinainte, nu pe moment",
+     "Un singur loc unde cade privirea: o manșetă, o curea, o eșarfă."),
+    ("greutatea de dedesubt",
+     "zilele lungi, și încăperile pe care le ții pentru alții",
+     "Încălțămintea, straturile de deasupra și colțurile camerei în care "
+     "lucrezi."),
+    ("folosită o dată și niciodată de două ori",
+     "seara care contează, și niciuna dintre cele care nu contează",
+     "O singură piesă, la claviculă sau la încheietură."),
+]
+
+ZODIAC_STUBS_RO = {
+    "palette": {
+        "intro": "O paletă {name} se ține pe o culoare în care trăiești, una "
+                 "la care ajungi când o zi trebuie să se întoarcă și una care "
+                 "duce greutatea, ca primele două să nu se ardă.",
+        # The reader's own four, read off the config at build time, exactly as
+        # the English stub does — the page that took the money named them.
+        "colors": FROM_CONFIG,
+        "closing_rule": "Poartă o singură piesă tare, nu trei, și dă-i o zi "
+                        "din săptămână, nu un obicei.",
+    },
+    "mistakes": {
+        "items": [
+            {"title": "Îți citești propria certitudine ca pe o dovadă",
+             "body": "Un profil {name} decide repede și are încredere în "
+                     "viteza asta. O hotărâre luată din neliniște se simte "
+                     "identic, pe dinăuntru, cu una luată din convingere.",
+             "fix": "Dormi o noapte peste orice hotărâre pe care ai "
+                    "putea-o explica în zece secunde."},
+            {"title": "Ții lucrul folositor până când momentul e curat",
+             "body": "Observi mai mult decât oamenii din jur și spui mai "
+                     "puțin. Citirea ta e de obicei corectă și ajunge de "
+                     "obicei târziu, când situația s-a rezolvat deja fără "
+                     "tine.",
+             "fix": "Pune-ți un plafon de trei zile între momentul în care "
+                    "observi ceva și cel în care îl numești, cu tot cu "
+                    "formularea stângace."},
+            {"title": "Absorbi costul în loc să-l numești",
+             "body": "Iei ora în plus și conversația incomodă, și le iei "
+                     "destul de tăcut cât nimeni să nu afle că au fost în "
+                     "plus. În câțiva ani, nivelul de la care se pleacă se "
+                     "mută.",
+             "fix": "Spune ce te-a costat, o dată, în momentul în care se "
+                    "întâmplă, fără să ceri nimic în schimb."},
+            {"title": "Pleci exact când încetează să fie interesant",
+             "body": "Vezi devreme forma unui lucru, care e partea grea. "
+                     "Odată ce forma e clară, restul se citește ca "
+                     "administrație, iar valoarea o strânge cine a rămas.",
+             "fix": "Alege un singur lucru pe trimestru și rămâi în el "
+                    "dincolo de plictiseală."},
+            {"title": "Confunzi faptul că ești constant cu faptul că ești "
+                      "bine",
+             "body": "Pe constanța ta se bazează ceilalți, și e un "
+                     "instrument prost cu care să te măsori pe tine. "
+                     "Săptămânile care te costă cel mai mult arată identic "
+                     "din afară.",
+             "fix": "Ține o măsură a felului în care a mers săptămâna care "
+                    "să nu fie cât din ea ai apucat să treci."},
+        ],
+    },
+    "materials": {
+        "intro": "Tiparul de sub cine te atrage e mai constant decât oamenii "
+                 "în sine. Mergi spre cei care se mișcă în ritmul tău și "
+                 "rămâi cu cei care te încetinesc, ceea ce e un drum scump — "
+                 "și merită știut înainte de următorul.",
+        "pairs": [
+            {"combo": "Semnul tău + un semn de foc", "verdict": "works",
+             "why": "Ritmul se potrivește și niciunul nu așteaptă ca celălalt "
+                    "să termine de decis. Cum îl joci: spune partea tăcută în "
+                    "prima săptămână, nu într-a patra — acesta răspunde bine "
+                    "când i se spune și citește o pauză ca pe o sentință."},
+            {"combo": "Semnul tău + un semn de pământ", "verdict": "works",
+             "why": "Ei țin pământul pe care te miști, iar ținerea asta e "
+                    "ușor de încetat să o vezi. Cum îl joci: numește cu voce "
+                    "tare, în fiecare săptămână, un lucru anume pe care l-au "
+                    "dus — oamenii constanți pleacă atunci când constanța lor "
+                    "nu e citită."},
+            {"combo": "Semnul tău + o oglindă a ta", "verdict": "avoid",
+             "why": "Două energii la fel fac un început rapid și un mijloc "
+                    "scurt, și nimic din pereche nu încetinește nimic. Cum "
+                    "îți protejezi energia: păstrează în săptămâna ta un "
+                    "lucru care e numai al tău și nu-l muta pentru ei."},
+            {"combo": "Semnul tău + cineva care are nevoie să fie dus",
+             "verdict": "avoid",
+             "why": "Ești bun la dus, exact de aceea acesta te costă pe tine "
+                    "mai mult decât pe el. Cum îți protejezi energia: nu mai "
+                    "oferi înainte să ți se ceară, o dată, și uită-te ce face "
+                    "cu golul rămas."},
+        ],
+        "rule": "În prima lună pune a doua întrebare, nu pe prima — "
+                "răspunsul la aceea îți spune ceva.",
+    },
+    "splurge": {
+        "splurge": {
+            "item": "Munca cu o margine vizibilă și un răspuns care vine "
+                    "repede",
+            "why": "O energie {name} dă cel mai mult acolo unde rezultatul se "
+                   "întoarce destul de repede cât să poți corecta după el, și "
+                   "se pierde pe orizonturi lungi, fără semnal. Trei mișcări: "
+                   "pune lucrul cel mai greu în primele două ore ale zilei, "
+                   "înainte să se umple camera; cere un punct de control la "
+                   "jumătatea a orice ține mai mult de o lună; și lucrează "
+                   "cele două zile din jurul unui termen, nu săptămâna "
+                   "dinaintea lui.",
+        },
+        "saves": [
+            {"item": "Munca ce cere să fie jucată",
+             "why": "Energia cu care ești o versiune a ta toată ziua e "
+                    "energie nepusă în munca propriu-zisă. Refuz-o "
+                    "întrebând care e rezultatul — dacă răspunsul e o "
+                    "prezență, nu e muncă."},
+            {"item": "Rolurile construite numai pe întreținere",
+             "why": "O vei face bine, și te va costa mai mult decât pe "
+                    "cineva potrivit pentru ea. Refuz-o numind partea pe "
+                    "care o ții și partea pe care o dai înapoi."},
+            {"item": "Orice se măsoară doar în ore",
+             "why": "Răsplătește prezența în locul judecății, iar judecata e "
+                    "lucrul pe care îl ai cu adevărat. Pune un rezultat pe ea "
+                    "înainte să accepți, sau las-o pe seama cuiva plătit să "
+                    "stea acolo."},
+        ],
+        "split_note": "Pierderea e a doua jumătate a după-amiezii, dată "
+                      "bucată cu bucată lucrurilor care au venit, nu celor pe "
+                      "care le-ai ales. Astup-o rezervându-ți ultimele "
+                      "nouăzeci de minute ale zilei înainte să ți le rezerve "
+                      "altcineva, și tratând blocul acela ca pe ceva ce nu se "
+                      "mută.",
+    },
+    "dna": {
+        "narrative": [
+            "Un plan {name} merge pe trei lucruri deodată: elementul la care "
+            "te întorci sub presiune, energia după care ții timpul și tonul "
+            "pe care ceilalți îl citesc primul. De cele mai multe ori cele "
+            "trei sunt de acord, și cât sunt, ești ușor de suportat și ușor "
+            "de citit pentru tine însuți.",
+            "Partea interesantă e acolo unde se trag una de alta. Tonul "
+            "ajunge înaintea elementului, așa că oamenii întâlnesc suprafața "
+            "și se așază după ea, iar o parte din fiecare săptămână se duce "
+            "pe corectarea unei impresii pe care nu ai vrut să o lași.",
+        ],
+        "implications": [
+            "Decizi mai repede decât poți explica, ceea ce merită crezut și "
+            "merită scris undeva.",
+            "Odihna care arată ca a nu face nimic nu te reface; odihna cu o "
+            "formă, da.",
+            "Oamenii îți citesc tonul ca pe toată poziția ta, așa că lucrul "
+            "spus în treacăt e lucrul pe care îl duc cu ei.",
+        ],
+    },
+    # The same twelve positions as the English stub, with no month named in
+    # the prose: the labels are stamped on at build time out of the reader's
+    # own year. The three marks and the one are the profile's own words, and
+    # they are the same two strings the shape asked the model for.
+    "shopping": {
+        "items": [
+            {"name": "1", "priority_note": "Bună pentru a decide la ce e "
+             "anul acesta, înainte să-ți ceară cineva să te ții de ceva."},
+            {"name": "2", "priority_note": "Bună pentru a curăța ce a lăsat "
+             "deschis anul dinainte — lucrurile mici neterminate, nu cele "
+             "mari."},
+            {"name": "3", "priority_note": "Cea mai puternică lună: ce începi "
+             "aici trece neobservat destul cât să apuce să fie construit "
+             "bine."},
+            {"name": "4", "priority_note": "Bună pentru a spune lucrul pe "
+             "care îl ții de dinainte să înceapă harta asta."},
+            {"name": "5", "priority_note": "Bună pentru începuturile care au "
+             "nevoie de alți oameni în ele."},
+            {"name": "6", "priority_note": "Cea mai puternică lună: judecata "
+             "ta e la cel mai ascuțit — dă-o pe un singur lucru, nu pe "
+             "patru."},
+            {"name": "7", "priority_note": "Bună pentru a strânge, nu pentru "
+             "a adăuga — o lună de terminat, nu de deschis."},
+            {"name": "8", "priority_note": "Lună liniștită: puțin randament "
+             "și multă refacere. Bună pentru citit, pentru reparat și pentru "
+             "a spune nu."},
+            {"name": "9", "priority_note": "Cea mai puternică lună: elanul "
+             "revine, și ce împingi acum ajunge mai departe decât ar "
+             "trebui."},
+            {"name": "10", "priority_note": "Bună pentru munca de reparație, "
+             "în ce ai construit și în cine a construit cu tine."},
+            {"name": "11", "priority_note": "Bună pentru conversațiile în "
+             "jurul cărora tot faci programări."},
+            {"name": "12", "priority_note": "Bună pentru a te uita cinstit "
+             "înapoi la cele unsprezece dinainte și a decide ce se repetă."},
+        ],
+        "skip": [],
+    },
+}
+
+# Which stub sets are the zodiac product's. `_stub_for` stamps the year onto
+# the shopping stub for these and only these, and it used to ask by identity
+# against the one object there was.
+ZODIAC_STUB_SETS = (ZODIAC_STUBS, ZODIAC_STUBS_RO)
 
 
 # The system prompt asks; this refuses. Two of these are a Terms line rather
@@ -1868,17 +2164,27 @@ ZODIAC_RO_JSON_RETRY = (
 # rather than testing one identity.
 ZODIAC_RO_PROFILE = {
     "system": ZODIAC_RO_SYSTEM,
-    # The twin's shapes, asking for fewer characters. See
-    # ZODIAC_RO_PROMPT_BUDGET: the same content is 15-20% longer in Romanian,
-    # and a budget calibrated on English is one this funnel overruns while
-    # writing exactly what it was told to.
+    # The twin's shapes, asking for fewer characters and marking the year map
+    # in this language. See ZODIAC_RO_PROMPT_BUDGET: the same content is
+    # 15-20% longer in Romanian, and a budget calibrated on English is one
+    # this funnel overruns while writing exactly what it was told to.
     "spec": ZODIAC_RO_SPEC,
     "prompt_budget": ZODIAC_RO_PROMPT_BUDGET,
-    # English, and only ever read when generation has failed outright. A
-    # Romanian set is a piece of writing this iteration does not have, and a
-    # publishable English fallback beats an absent section on a page somebody
-    # paid for. Warming the cache is what keeps it out of reach.
-    "stubs": ZODIAC_STUBS,
+    # Romanian, now. These were the English set on the reasoning that a
+    # publishable English fallback beats an absent section — which was true of
+    # an absent section and false of the page that actually shipped, where
+    # three English blocks sat between six Romanian ones.
+    "stubs": ZODIAC_STUBS_RO,
+    "stub_colors": ZODIAC_COLOR_TEXT_RO,
+    # What this report prints between the model's sentences: the PDF's
+    # headings, the love verdicts' badges, and the fallbacks.
+    "words": RENDER_WORDS_RO,
+    # And the check that the year map came back marked in this language.
+    # Declared here rather than on both zodiac profiles: the English funnels
+    # have shipped without it since the first report and a new refusal on that
+    # path would be a section a paying reader loses, whereas the mixed-language
+    # answer this catches is the failure this funnel actually had.
+    "verify_marks": True,
     "cached": ("palette", "mistakes", "splurge"),
     "personal": ("dna", "materials", "shopping"),
     "banned": ZODIAC_RO_BANNED,
@@ -1960,6 +2266,21 @@ def _profile(funnel_slug):
     if slug not in PROFILES and config.is_test_slug(slug):
         slug = slug[:-len(config.TEST_SUFFIX)]
     return PROFILES.get(slug, KITCHEN_PROFILE)
+
+
+def _words(profile):
+    """The strings this profile prints itself.
+
+    A profile that declares none prints the English, which is what every
+    report printed before there was a second language.
+    """
+    return (profile or {}).get("words") or RENDER_WORDS
+
+
+def _year_marks(profile):
+    """(strongest, quiet) — the two prefixes this profile's year map uses."""
+    words = _words(profile)
+    return (words["year_strong"], words["year_quiet"])
 
 
 def personal_sections(funnel_slug):
@@ -2058,6 +2379,10 @@ def _verify_for(profile, style, months=None):
     rules = profile.get("verify")
     if not rules and not months:
         return None
+    # Only where the profile asks. The English funnels have shipped without
+    # this check since the first report, and a check they have never been held
+    # to is a section they can now lose.
+    marks = _year_marks(profile) if profile.get("verify_marks") else None
 
     def verify(want, parsed):
         for section_id in want:
@@ -2067,7 +2392,7 @@ def _verify_for(profile, style, months=None):
                     return problem
             if section_id == "shopping" and months:
                 problem = _verify_months(
-                    (parsed or {}).get(section_id) or {}, months)
+                    (parsed or {}).get(section_id) or {}, months, marks)
                 if problem:
                     return problem
         return None
@@ -2150,7 +2475,8 @@ def _config_hex(colour):
     return raw if isinstance(raw, str) and HEX_RE.match(raw) else None
 
 
-def _stub_for(section_id, name, style=None, stubs=None, months=None):
+def _stub_for(section_id, name, style=None, stubs=None, months=None,
+              colors=None):
     """The placeholder for one section, or None if it has no placeholder.
 
     The mistakes stub is the one that cannot be purely generic any more. The
@@ -2165,14 +2491,15 @@ def _stub_for(section_id, name, style=None, stubs=None, months=None):
         return None
     if isinstance(stub, dict) and stub.get("colors") == FROM_CONFIG:
         stub = dict(stub)
-        stub["colors"] = _stub_colors(style)
+        stub["colors"] = _stub_colors(style, colors)
     if section_id == "mistakes":
         first = _mistake_one(style)
         if first:
             stub = dict(stub)
             # Four behind it: five items, inside the 4-6 the schema allows.
             stub["items"] = [first] + list(stub["items"])[:4]
-    if section_id == "shopping" and (months or stubs is ZODIAC_STUBS):
+    if section_id == "shopping" and (
+            months or any(stubs is one for one in ZODIAC_STUB_SETS)):
         # The year stub carries positions rather than month names; the labels
         # go on here, from the same twelve the generated one is held to. A
         # stub that opened on January under a heading that says otherwise is
@@ -2185,21 +2512,27 @@ def _stub_for(section_id, name, style=None, stubs=None, months=None):
     return _fill(stub, name)
 
 
-def _stub_colors(style):
+def _stub_colors(style, texts=None):
     """The four swatches for a palette stub, out of the style's own reveals.
 
     A config missing its palette — an older one, or one being written — falls
     back to four neutrals rather than to nothing: the section schema wants
     three to five colours, and a stub that fails validation is a section the
     reader simply does not get.
+
+    The colour NAMES are the reader's own and are never translated — the free
+    result showed them by name. What `texts` carries is the sentence about
+    each one, which is prose and belongs to whatever language the report is
+    written in.
     """
-    colours = _style_colors(style)[:len(ZODIAC_COLOR_TEXT)]
+    texts = texts or ZODIAC_COLOR_TEXT
+    colours = _style_colors(style)[:len(texts)]
     if not colours:
         colours = [("Everyday Ground", "#B9AE9C"), ("Signal", "#C0563A"),
                    ("Anchor", "#2E3440"), ("Rare Metal", "#C9A227")]
     out = []
     for index, (name, code) in enumerate(colours):
-        role, when, where = ZODIAC_COLOR_TEXT[index]
+        role, when, where = texts[index]
         out.append({"name": name, "hex": code, "role": role,
                     "finish": when, "where": where})
     return out
@@ -2715,27 +3048,51 @@ def _year_block(months):
           "on this list, and never reorder them.")
 
 
-def _verify_months(data, months):
+# How many of the twelve carry each mark. The shape asks for exactly these
+# two numbers, so a check that polices the marks has to police the same two.
+YEAR_STRONG = 3
+YEAR_QUIET = 1
+
+
+def _verify_months(data, months, marks=None):
     """The year section's labels against the twelve it was handed, or None.
 
     A shape-valid year map that opens in January is the document contradicting
     the page that sold it, and the shape validators cannot see it — they
     police the form, and every month name is a well-formed string.
+
+    `marks` is (strongest, quiet), and only a profile that asks for it passes
+    a pair. Given one, the notes have to open with those exact two prefixes,
+    three times and once — which is how a Romanian year map that came back
+    marked "Strongest month:" is caught here rather than in the PDF.
     """
     if not months:
         return None
     got = [str((row or {}).get("name") or "").strip()
            for row in (data.get("items") or [])]
-    if got == list(months):
-        return None
-    if len(got) != len(months):
-        return ("the year needs exactly %d months and %d arrived — they are "
-                "%s, in that order" % (len(months), len(got),
-                                       ", ".join(months)))
-    wrong = next(n for n, (a, b) in enumerate(zip(got, months), 1) if a != b)
-    return ("month %d is %r and must be %r — the twelve `name` values are "
-            "%s, in that order, copied exactly"
-            % (wrong, got[wrong - 1], months[wrong - 1], ", ".join(months)))
+    if got != list(months):
+        if len(got) != len(months):
+            return ("the year needs exactly %d months and %d arrived — they "
+                    "are %s, in that order" % (len(months), len(got),
+                                               ", ".join(months)))
+        wrong = next(n for n, (a, b) in enumerate(zip(got, months), 1)
+                     if a != b)
+        return ("month %d is %r and must be %r — the twelve `name` values are "
+                "%s, in that order, copied exactly"
+                % (wrong, got[wrong - 1], months[wrong - 1],
+                   ", ".join(months)))
+    if marks:
+        strong, quiet = marks
+        notes = [str((row or {}).get("priority_note") or "").lstrip()
+                 for row in (data.get("items") or [])]
+        counts = (sum(1 for note in notes if note.startswith(strong)),
+                  sum(1 for note in notes if note.startswith(quiet)))
+        if counts != (YEAR_STRONG, YEAR_QUIET):
+            return ("%d notes open with %r and %d with %r — it must be "
+                    "exactly %d and %d, each prefix copied exactly as written"
+                    % (counts[0], strong, counts[1], quiet,
+                       YEAR_STRONG, YEAR_QUIET))
+    return None
 
 
 # --- the reader's own sign -------------------------------------------------
@@ -3752,12 +4109,27 @@ def _generate(client, prompt, want, max_tokens=None, system=None,
 # --- cache -----------------------------------------------------------------
 
 
-def _cache_state(funnel_slug, result_style):
-    """(usable sections, stale row count) for one style.
+def _cache_source(funnel_slug):
+    """The funnel a `-test` twin borrows cached sections from, or None.
 
-    Section-by-section rather than all-or-nothing, because the warmer needs to
-    know which three are missing and the purchase path only needs to know
-    whether all three are there.
+    The same suffix `_profile` strips, read through `config` for the same
+    reason: the route guard, the profile and this all have to spell a twin the
+    same way, and a second copy of the string is how they stop doing that.
+
+    A live slug borrows from nobody, which is the whole of the rule — nothing
+    here can make one funnel read another funnel's rows.
+    """
+    if not config.is_test_slug(funnel_slug or ""):
+        return None
+    return (funnel_slug or "")[:-len(config.TEST_SUFFIX)] or None
+
+
+def _style_rows(funnel_slug, result_style):
+    """(usable sections, stale row count) for one funnel's own rows.
+
+    None for the sections when the read itself failed, which is a different
+    thing from a funnel that has none: the first must not be allowed to look
+    like an empty cache and send a twin off to borrow.
     """
     try:
         rows = database.query_all(SELECT_SECTIONS_SQL, (funnel_slug, result_style))
@@ -3786,6 +4158,41 @@ def _cache_state(funnel_slug, result_style):
             if clean is not None:
                 out[section_id] = clean
     return out, stale
+
+
+def _cache_state(funnel_slug, result_style):
+    """(usable sections, stale row count) for one style.
+
+    Section-by-section rather than all-or-nothing, because the warmer needs to
+    know which three are missing and the purchase path only needs to know
+    whether all three are there.
+
+    A `-test` twin with nothing of its own reads its source funnel's rows. The
+    twin IS that funnel — same styles, same archetypes, same profile, so the
+    same cache tag — and the cached trio is one answer per archetype rather
+    than one per buyer, so the source's answers are already the twin's. Without
+    this a sandbox purchase finds an empty cache, cannot generate three
+    sections inside the budget, and delivers the stubs: which is exactly how a
+    Romanian test purchase came back with three English blocks in it.
+
+    Reads only, and only when the twin has no row of its own — not even a
+    stale one, because a stale row is a funnel that HAS been warmed and is
+    owed a regeneration rather than a loan. The write side stays keyed to the
+    funnel that asked, so nothing a sandbox generates can ever land on a row a
+    paying reader will be served.
+    """
+    out, stale = _style_rows(funnel_slug, result_style)
+    if out is None or out or stale:
+        return out, stale
+    source = _cache_source(funnel_slug)
+    if not source:
+        return out, stale
+    borrowed, borrowed_stale = _style_rows(source, result_style)
+    if not borrowed:
+        return out, stale
+    log.info("%s has no cached sections for %s — reading %s's",
+             funnel_slug, result_style, source)
+    return borrowed, borrowed_stale
 
 
 def _read_cache(funnel_slug, result_style):
@@ -4022,9 +4429,11 @@ def _absorb(job, task, result):
     for section_id in ids:
         if section_id in job["built"]:
             continue                      # already have it (a cache hit)
+        stub_profile = _profile(job["funnel"])
         job["built"][section_id] = _stub_for(
             section_id, job["name"], _style(job["cfg"], job["style_id"]),
-            _profile(job["funnel"])["stubs"], job.get("months"))
+            stub_profile["stubs"], job.get("months"),
+            stub_profile.get("stub_colors"))
         job["paths"][section_id] = "stub"
     return False
 
@@ -4239,7 +4648,8 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
         for section_id in [s.get("id") for s in cfg.get("report", {}).get("sections", [])]:
             if section_id not in built:
                 built[section_id] = _stub_for(section_id, name, style,
-                                              profile["stubs"], months)
+                                              profile["stubs"], months,
+                                              profile.get("stub_colors"))
                 paths[section_id] = "stub"
         content = _assemble(cfg, funnel_slug, result_style, name, built, paths,
                             True, elements, visuals, sign, purpose)
@@ -4979,6 +5389,17 @@ def _pdf_visuals():
     return _pdf_state.visuals
 
 
+def _pdf_words():
+    """What this document prints itself. Set once, at the top of _pdf_html.
+
+    Same channel as the photographs and for the same reason: the six section
+    builders take only their own data, exactly as the browser's do, and the
+    language of the headings between them is the document's business rather
+    than any one section's.
+    """
+    return getattr(_pdf_state, "words", None) or RENDER_WORDS
+
+
 PRINT_DIR = "img/print"
 
 
@@ -5037,8 +5458,9 @@ def _pdf_palette(d):
 def _pdf_mistakes(d):
     return "".join(
         '<div class="numbered"><span class="num">%d</span>'
-        '<div><b>%s</b><p>%s</p><p class="fix">Fix: %s</p></div></div>'
-        % (i + 1, _e(m["title"]), _e(m["body"]), _e(m["fix"]))
+        '<div><b>%s</b><p>%s</p><p class="fix">%s %s</p></div></div>'
+        % (i + 1, _e(m["title"]), _e(m["body"]), _e(_pdf_words()["fix"]),
+           _e(m["fix"]))
         for i, m in enumerate(d["items"])
     )
 
@@ -5047,10 +5469,14 @@ def _pdf_materials(d):
     shots = "".join(_pdf_image(one, "shot", True)
                     for one in (_pdf_visuals().get("materials") or []))
     strip = '<div class="shots">%s</div>' % shots if shots else ""
+    # The class stays the English verdict — it is what the stylesheet colours
+    # the badge on — and only the word inside it is translated.
+    badges = _pdf_words()["verdicts"]
     rows = "".join(
         '<div class="verdict"><b>%s</b> <span class="badge %s">%s</span>'
         "<p>%s</p></div>"
-        % (_e(p["combo"]), p["verdict"], p["verdict"].upper(), _e(p["why"]))
+        % (_e(p["combo"]), p["verdict"],
+           _e(badges.get(p["verdict"]) or p["verdict"].upper()), _e(p["why"]))
         for p in d["pairs"]
     )
     return ('%s<p class="intro">%s</p>%s<p class="callout">%s</p>'
@@ -5070,7 +5496,8 @@ def _pdf_shopping(d):
         "<p><b class='struck'>%s</b> %s</p>" % (_e(s["name"]), _e(s["why"]))
         for s in d["skip"]
     )
-    return '%s<div class="skip"><b>Skip</b>%s</div>' % (items, skips)
+    return ('%s<div class="skip"><b>%s</b>%s</div>'
+            % (items, _e(_pdf_words()["skip"]), skips))
 
 
 def _pdf_dna(d):
@@ -5081,12 +5508,14 @@ def _pdf_dna(d):
 
 
 def _pdf_splurge(d):
+    words = _pdf_words()
     saves = "".join("<p><b>%s</b> %s</p>" % (_e(s["item"]), _e(s["why"]))
                     for s in d["saves"])
-    return ('<div class="splurge"><b>Splurge &mdash; %s</b><p>%s</p></div>'
-            '<div class="saves"><b>Save</b>%s</div>'
+    return ('<div class="splurge"><b>%s &mdash; %s</b><p>%s</p></div>'
+            '<div class="saves"><b>%s</b>%s</div>'
             '<p class="callout">%s</p>'
-            % (_e(d["splurge"]["item"]), _e(d["splurge"]["why"]), saves,
+            % (_e(words["splurge"]), _e(d["splurge"]["item"]),
+               _e(d["splurge"]["why"]), _e(words["save"]), saves,
                _e(d["split_note"])))
 
 
@@ -5258,7 +5687,7 @@ def _zodiac_cover(content, profile, cfg):
         % (" own" if tag == own else "", hexcode, _e(label))
         for tag, label, hexcode in strip
     )
-    name = _e(content.get("style_name") or "Your style")
+    name = _e(content.get("style_name") or _pdf_words()["style_fallback"])
     sign = _e(content.get("sign"))
     blurb = _e((style or {}).get("blurb"))
     return [
@@ -5307,7 +5736,7 @@ def _pdf_taps(cfg):
     """
     ids = _pdf_visuals().get("taps") or []
     caption = ((cfg or {}).get("result_copy") or {}).get("taps_caption") \
-        or "Read from your taps:"
+        or _pdf_words()["taps_caption"]
     cells = []
     for image_id in ids:
         item = (_pdf_visuals().get("images") or {}).get(image_id)
@@ -5327,9 +5756,13 @@ def _pdf_taps(cfg):
 
 
 def _pdf_html(content):
-    name = _e(content.get("style_name") or "Your style")
     structured = _is_schema2(content.get("version"))
     profile = _profile(content.get("funnel"))
+    # What this document prints itself, for the length of this call. Set
+    # before anything is built, because the cover reads it too.
+    words = _words(profile)
+    _pdf_state.words = words
+    name = _e(content.get("style_name") or words["style_fallback"])
     # Same sheet, then the funnel's own ink over it. A funnel with no override
     # renders the document it always did, character for character.
     sheet = PDF_CSS % PDF_FONTS + (profile.get("pdf_css") or "")
@@ -5374,9 +5807,7 @@ def _pdf_html(content):
                else name),
             '<div class="rule"></div>',
             '<p class="cover-note">%s</p>' % _e(
-                profile.get("pdf_note")
-                or ("Keep this — your report also stays available at the link "
-                    "you were sent back to after checkout.")),
+                profile.get("pdf_note") or words["pdf_note"]),
             "</section>",
         ]
     # Only where the run stored one, which is only where the funnel asked for
@@ -5791,10 +6222,12 @@ def send_report_email(purchase_id, email, content, checkout_session=None):
         log.error("requests not installed — report emails are skipped")
         return False
 
-    name = content.get("style_name") or "style"
+    funnel = content.get("funnel") or ""
+    profile = _profile(funnel)
+    words = _words(profile)
+    name = content.get("style_name") or words["mail_style"]
     copy = _email_copy(content)
     token = _result_token(purchase_id, checkout_session)
-    funnel = content.get("funnel") or ""
 
     # No token, no link. The old line built the URL with the query string left
     # off, which is not a broken link — it is a working link to the quiz, and
@@ -5805,7 +6238,6 @@ def send_report_email(purchase_id, email, content, checkout_session=None):
     # Which mail this funnel sends. The link block is part of the template
     # rather than a string appended to it — a table row cannot be dropped into
     # a div — so it is chosen here alongside it.
-    profile = _profile(funnel)
     dark = _is_zodiac(profile)
     link_template = (profile.get("mail_link") or ZODIAC_EMAIL_LINK) if dark \
         else EMAIL_LINK_BLOCK
@@ -5836,7 +6268,7 @@ def send_report_email(purchase_id, email, content, checkout_session=None):
         }),
         "attachments": [
             {
-                "filename": "mazzin-%s-report.pdf" % _slug(name),
+                "filename": words["pdf_filename"] % _slug(name),
                 "content": base64.b64encode(pdf).decode("ascii"),
             }
         ],
