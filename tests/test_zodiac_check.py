@@ -1210,6 +1210,66 @@ check("the palette is four colours with real hex values",
 check("compatibility runs two that work and two that cost",
       sorted(p["verdict"] for p in by_section["materials"]["pairs"])
       == ["avoid", "avoid", "works", "works"])
+
+# The verdict count above is satisfied by two `avoid` rows naming the SAME
+# sign, which is what a Romanian report shipped: one drain named twice, under
+# two different paragraphs. The table behind the prompt names three signs —
+# two magnetic and one draining — and the fourth pairing is the model's own
+# choice, so nothing but this holds it to a sign it has not used yet.
+print("\n--- and four pairings mean four signs ---")
+
+
+def love(*combos):
+    """One materials section, its four pairings named as given."""
+    verdicts = ["works", "works", "avoid", "avoid"]
+    return {"materials": {
+        "intro": "x" * 40, "rule": "r" * 40,
+        "pairs": [{"combo": c, "verdict": v, "why": "y" * 40}
+                  for c, v in zip(combos, verdicts)]}}
+
+
+en_verify = reports._verify_for(reports.ZODIAC_PROFILE,
+                                reports._style(cfg, "deep_water"),
+                                reports._year_labels())
+DUP = love("Cancer + Scorpio", "Cancer + Pisces",
+           "Cancer + Aries", "Cancer + Aries")
+OK = love("Cancer + Scorpio", "Cancer + Pisces",
+          "Cancer + Aries", "Cancer + Capricorn")
+check("the same drain twice is refused", en_verify(("materials",), DUP)
+      is not None, str(en_verify(("materials",), DUP)))
+check("  and the refusal names the sign that repeated",
+      "Aries" in (en_verify(("materials",), DUP) or "")
+      and "Cancer" not in (en_verify(("materials",), DUP) or ""),
+      str(en_verify(("materials",), DUP)))
+check("  four different signs pass", en_verify(("materials",), OK) is None,
+      str(en_verify(("materials",), OK)))
+check("  the check reads the twelve names off the funnel's own table",
+      sorted(reports.COMPATIBILITY) == sorted(
+          i["label"] for i in by_step["sign"]["pairs"][0]["images"]
+          if i["id"] != reports.CUSP_ID))
+check("  a sign name inside a longer word is not a match",
+      reports._verify_pairs(
+          {"pairs": [{"combo": "Cancer + Leo"},
+                     {"combo": "Cancer + Sagittarius"}]},
+          tuple(reports.COMPATIBILITY)) is None)
+check("  a pairing that names no sign at all is not judged",
+      reports._verify_pairs(
+          {"pairs": [{"combo": "Your sign + a fire sign"},
+                     {"combo": "Your sign + a fire sign"}]},
+          tuple(reports.COMPATIBILITY)) is None)
+check("  and the stub the reader falls back to still passes",
+      en_verify(("materials",),
+                {"materials": reports._fill(reports.ZODIAC_STUBS["materials"],
+                                            "X")}) is None)
+check("the prompt says the fourth sign is a second drain, and a new one",
+      all(phrase in reports._compat_block(cfg, walk_with("sign_cancer"),
+                                          reports.COMPATIBILITY)
+          for phrase in ("SECOND draining", "four DIFFERENT signs")),
+      reports._compat_block(cfg, walk_with("sign_cancer"),
+                            reports.COMPATIBILITY)[-220:])
+check("  kitchen declares no table, so nothing of this reaches it",
+      reports.KITCHEN_PROFILE.get("compatibility") is None
+      and reports._verify_for(reports.KITCHEN_PROFILE, None, None) is None)
 check("nothing delivered says a banned word",
       reports._banned_hit(content["sections"], reports.ZODIAC_BANNED) is None,
       str(reports._banned_hit(content["sections"], reports.ZODIAC_BANNED)))

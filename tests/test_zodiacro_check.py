@@ -878,6 +878,63 @@ check("  and the love prompt names its three signs in Romanian",
 check("  where the English table would have named none of them",
       reports._compat_block(cfg, choices, reports.COMPATIBILITY) is None)
 
+# The bug a sandbox purchase on sign Rac delivered: four pairings, and the
+# one draining sign named twice under two different paragraphs. The table
+# names three signs — two magnetic and one draining — the shape asks for
+# four rows, and the fourth was the model's own choice with nothing saying it
+# had to be a sign it had not used. The verdict count was satisfied: two
+# `works` and two `avoid` is exactly what came back.
+rac = ["sign_cancer" if step["id"] == "sign"
+       else step["pairs"][0]["images"][0]["id"] for step in steps]
+block = reports._compat_block(cfg, rac, table)
+check("a Rac is handed three signs, not four",
+      sorted(s for s in table if re.search(r"\b%s\b" % s, block))
+      == sorted(["Rac", "Scorpion", "Pești", "Berbec"]),
+      str(sorted(s for s in table if re.search(r"\b%s\b" % s, block))))
+check("  so the prompt says the fourth is a second drain and a new sign",
+      "SECOND draining" in block and "four DIFFERENT signs" in block,
+      block[-220:])
+
+
+def love(*combos):
+    """One materials section, its four pairings named as given."""
+    verdicts = ["works", "works", "avoid", "avoid"]
+    return {"materials": {
+        "intro": "x" * 40, "rule": "r" * 40,
+        "pairs": [{"combo": c, "verdict": v, "why": "y" * 40}
+                  for c, v in zip(combos, verdicts)]}}
+
+
+DELIVERED = love("Rac + Scorpion", "Rac + Pești",
+                 "Rac + Berbec", "Rac + Berbec")
+CORRECT = love("Rac + Scorpion", "Rac + Pești",
+               "Rac + Berbec", "Rac + Capricorn")
+ro_verify = reports._verify_for(profile, reports._style(cfg, "deep_water"),
+                                reports._months_for(profile))
+check("the section that shipped is refused now",
+      ro_verify(("materials",), DELIVERED) is not None,
+      str(ro_verify(("materials",), DELIVERED)))
+check("  the refusal names Berbec, and not the reader's own sign",
+      "Berbec" in (ro_verify(("materials",), DELIVERED) or "")
+      and "Rac" not in (ro_verify(("materials",), DELIVERED) or ""),
+      str(ro_verify(("materials",), DELIVERED)))
+check("  four distinct Romanian signs pass",
+      ro_verify(("materials",), CORRECT) is None,
+      str(ro_verify(("materials",), CORRECT)))
+check("  the old verdict count alone would have waved it through",
+      sorted(p["verdict"] for p in DELIVERED["materials"]["pairs"])
+      == ["avoid", "avoid", "works", "works"]
+      and reports._v_materials(DELIVERED["materials"]) is not None)
+check("  the check reads the twelve names off this funnel's own table",
+      sorted(table) == sorted(signs))
+check("  and a diacritic sign name is matched whole, not by substring",
+      reports._verify_pairs(
+          {"pairs": [{"combo": "Rac + Pești"},
+                     {"combo": "Rac + Săgetător"}]}, tuple(table)) is None)
+check("the Romanian stub still passes it",
+      ro_verify(("materials",), {"materials": reports._fill(
+          reports.ZODIAC_STUBS_RO["materials"], "X")}) is None)
+
 print("\n--- the mail and the document ---")
 check("zodiac-ro sends its own mail",
       reports._email_copy({"funnel": "zodiac-ro"}) is reports.COPY_ZODIAC_RO)
