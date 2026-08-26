@@ -381,3 +381,6 @@ bottom.
 
 ## 2026-08-26 — claude/ro-combinatie-wording
 - RO wording: încrucișare → combinație across sign_cross lines
+
+## 2026-08-26 — claude/ro-price-199
+- zodiac-ro price: $3.00 -> $1.99
