@@ -375,3 +375,6 @@ bottom.
 
 ## 2026-08-26 — claude/ro-report-language
 - Love section: four pairings must name four different signs
+
+## 2026-08-26 — claude/ro-frontend-strings
+- Free + delivered page strings as config keys, Romanian fill for zodiac-ro
