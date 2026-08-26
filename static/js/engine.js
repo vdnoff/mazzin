@@ -647,7 +647,9 @@
     card.style.setProperty("--i", index);
     // The label is the only human name these images have — "Choose s1a" told
     // a screen reader nothing.
-    card.setAttribute("aria-label", "Choose " + (item.label || item.id));
+    card.setAttribute("aria-label", fillWords(
+      words("swipe.card_aria", "Choose {label}"),
+      { label: item.label || item.id }));
 
     var img = document.createElement("img");
     img.className = "card-img";
@@ -1889,7 +1891,7 @@
     svg.setAttribute("class", "padlock" + (cls ? " " + cls : ""));
     svg.setAttribute("viewBox", "0 0 24 24");
     svg.setAttribute("role", "img");
-    svg.setAttribute("aria-label", "Locked");
+    svg.setAttribute("aria-label", words("report.locked_aria", "Locked"));
 
     var shackle = document.createElementNS(SVG_NS, "path");
     shackle.setAttribute("class", "padlock-shackle");
@@ -2493,14 +2495,21 @@
       el.cta.parentNode.insertBefore(note, el.cta);
       el.ctaNote = note;
     }
-    note.textContent = "Unlock all " + numberWord(sections.length) + " sections \u00B7 " +
-      formatPrice();
+    note.textContent = fillWords(
+      words("checkout.unlock_note", "Unlock all {n} sections \u00B7 {price}"),
+      { n: numberWord(sections.length), price: formatPrice() });
   }
 
+  // Spelled out, because the line reads as a sentence rather than a spec.
+  // A funnel may bring its own list — Romanian counts "șase", not "six" —
+  // and one that does not gets these eleven, unchanged.
+  var NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six",
+                      "seven", "eight", "nine", "ten"];
+
   function numberWord(n) {
-    var words = ["zero", "one", "two", "three", "four", "five", "six",
-                 "seven", "eight", "nine", "ten"];
-    return words[n] || String(n);
+    var own = ((cfg && cfg.checkout) || {}).number_words;
+    var list = (own && own.length > n) ? own : NUMBER_WORDS;
+    return list[n] || String(n);
   }
 
   function watchCta() {
@@ -4530,7 +4539,8 @@
     if (el.ctaNote) el.ctaNote.hidden = true;
     el.analyzing.hidden = false;
     el.analyzingDots.hidden = false;
-    el.analyzingText.textContent = "Preparing your personalized report…";
+    el.analyzingText.textContent = words(
+      "report.preparing", "Preparing your personalized report\u2026");
     darkNow();
     setEmailNote(null);
     startStatusRotation();
@@ -4657,7 +4667,7 @@
 
     el.payError.hidden = true;
     el.payButton.disabled = true;
-    el.payButton.textContent = "Redirecting...";
+    el.payButton.textContent = words("checkout.redirecting", "Redirecting...");
 
     fetch("/api/checkout", {
       method: "POST",
@@ -4681,7 +4691,9 @@
         // fact, and anything more would be describing our own failure into a
         // table that holds one row per visitor action.
         track("checkout_error");
-        el.payError.textContent = "Could not start checkout. Please try again.";
+        el.payError.textContent = words(
+          "checkout.error_checkout",
+          "Could not start checkout. Please try again.");
         el.payError.hidden = false;
         updatePayButton();
       });
@@ -5099,13 +5111,16 @@
   // put back within reach — whatever went wrong with the wallet, the redirect
   // is a way through that does not depend on any of it.
   function xpFailed() {
-    el.payError.textContent = "That payment didn't go through. Please try again.";
+    el.payError.textContent = words(
+      "checkout.error_payment",
+      "That payment didn't go through. Please try again.");
     el.payError.hidden = false;
     xpFallback();
   }
 
   function xpNudgeConsent() {
-    el.payError.textContent = "Please tick the box above to continue.";
+    el.payError.textContent = words(
+      "checkout.error_consent", "Please tick the box above to continue.");
     el.payError.hidden = false;
     if (el.withdrawal) {
       el.withdrawal.classList.remove("is-nudged");
@@ -5391,6 +5406,34 @@
 
   function commerceCopy() {
     return ((cfg && cfg.checkout) || {}).commerce || {};
+  }
+
+  // One optional string off the config, or the English this file has always
+  // written. Same shape as `commerceCopy` above and used the same way: a
+  // funnel that declares nothing renders byte for byte what it rendered
+  // before there was a second language, which is what /kitchen, /zodiac and
+  // /zodiac30 all do.
+  //
+  // `path` is dotted from the config root — "checkout.redirecting" — because
+  // these live where the block they belong to lives rather than in a strings
+  // file off to one side.
+  function words(path, fallback) {
+    var node = cfg;
+    var parts = String(path).split(".");
+    for (var i = 0; i < parts.length && node; i++) {
+      node = node[parts[i]];
+    }
+    return (typeof node === "string" && node) ? node : fallback;
+  }
+
+  // `{token}` substitution for those strings. Deliberately not `fillHook`:
+  // that one fills the reader's own tapped nouns and is bound to a run, and
+  // these are furniture that has to render before any run exists.
+  function fillWords(text, values) {
+    return String(text).replace(/\{(\w+)\}/g, function (whole, key) {
+      return Object.prototype.hasOwnProperty.call(values || {}, key)
+        ? String(values[key]) : whole;
+    });
   }
 
   // The free result page as one argument instead of eleven.
