@@ -460,6 +460,23 @@ check("  and the same shapes, asking for fewer characters",
       profile["spec"] is reports.ZODIAC_RO_SPEC
       and profile["spec"] is not reports.ZODIAC_PROFILE["spec"]
       and sorted(profile["spec"]) == sorted(reports.ZODIAC_PROFILE["spec"]))
+# And marked in this language. The shopping shape names the year map's two
+# marks as strings to COPY rather than as an idea to express, so a Romanian
+# report asked for "Strongest month:" opens three Romanian notes with an
+# English heading — which is what shipped.
+check("    and the year map's two marks said in Romanian",
+      reports.RENDER_WORDS_RO["year_strong"] in profile["spec"]["shopping"]
+      and reports.RENDER_WORDS_RO["year_quiet"] in profile["spec"]["shopping"])
+check("    and no longer in English",
+      reports.RENDER_WORDS["year_strong"] not in profile["spec"]["shopping"]
+      and reports.RENDER_WORDS["year_quiet"] not in profile["spec"]["shopping"])
+check("  the English shape is untouched, character for character",
+      reports.RENDER_WORDS["year_strong"] in reports.ZODIAC_SPEC["shopping"]
+      and reports.ZODIAC_PROFILE["spec"] is reports.ZODIAC_SPEC)
+check("  and the marks are the only thing the shapes differ in, bar numbers",
+      [sid for sid in reports.ZODIAC_SPEC
+       if reports._marked_shapes(reports.RENDER_WORDS_RO)[sid]
+       != reports._ZODIAC_SHAPES[sid]] == ["shopping"])
 check("its prompt asks for Romanian, in the first rule",
       "LANGUAGE" in profile["system"]
       and "Romanian" in profile["system"].split("Every field")[0])
@@ -553,9 +570,17 @@ check("the English shapes are untouched, byte for byte",
 
 
 def shape_only(text):
-    """One shape with its numbers blanked and the RO punctuation rule off."""
+    """One shape with the three things that separate the languages taken off.
+
+    The budgets, the closing punctuation rule, and the two prefixes the year
+    map marks its months with. Normalise all three and what is left is the
+    question itself, which has to be the same question in both.
+    """
     if text.endswith(reports.ZODIAC_RO_JSON_RULE):
         text = text[:-len(reports.ZODIAC_RO_JSON_RULE)]
+    for key in ("year_strong", "year_quiet"):
+        text = text.replace(reports.RENDER_WORDS_RO[key],
+                            reports.RENDER_WORDS[key])
     return re.sub(r"\d+", "#", text)
 
 
@@ -921,6 +946,318 @@ check("  and it holds the same three sections as the twin",
 check("  stamped with the same revisions",
       all(reports._cache_tag("zodiac-ro", s) == reports._cache_tag("zodiac30", s)
           for s in ("palette", "mistakes", "splurge")))
+
+print("\n--- the words the report prints itself ---")
+# The furniture between the sections: the PDF's headings, the badges on the
+# love verdicts, the year map's two marks, and the fallbacks that stand in
+# when a config or a run is missing a string. Every one of them was a literal
+# in the render path, which is how a Romanian report came back with English
+# headings around Romanian sentences.
+check("the profile carries its own words",
+      profile["words"] is reports.RENDER_WORDS_RO
+      and reports._words(profile) is reports.RENDER_WORDS_RO)
+check("  and every English funnel prints the defaults",
+      reports._words(reports.ZODIAC_PROFILE)
+      is reports._words(reports.KITCHEN_PROFILE)
+      is reports._words(reports._profile("kitchen-visualizer"))
+      is reports.RENDER_WORDS)
+check("  a profile that declares none falls back to them",
+      reports._words({}) is reports._words(None) is reports.RENDER_WORDS)
+check("the Romanian map covers every key the English one has",
+      sorted(reports.RENDER_WORDS_RO) == sorted(reports.RENDER_WORDS),
+      str(sorted(set(reports.RENDER_WORDS) ^ set(reports.RENDER_WORDS_RO))))
+
+# The exact English, stated here rather than read off the module: this is the
+# assertion that kitchen, zodiac and zodiac30 print what they always printed,
+# so it has to fail if somebody edits the default rather than the override.
+ENGLISH = {
+    "year_strong": "Strongest month:",
+    "year_quiet": "Quiet month:",
+    "fix": "Fix:",
+    "skip": "Skip",
+    "splurge": "Splurge",
+    "save": "Save",
+    "style_fallback": "Your style",
+    "taps_caption": "Read from your taps:",
+    "mail_style": "style",
+    "pdf_filename": "mazzin-%s-report.pdf",
+}
+for key, value in sorted(ENGLISH.items()):
+    check("  %-16s defaults to the English it always was" % key,
+          reports.RENDER_WORDS[key] == value, repr(reports.RENDER_WORDS[key]))
+check("  verdicts        defaults to WORKS / AVOID",
+      reports.RENDER_WORDS["verdicts"] == {"works": "WORKS",
+                                           "avoid": "AVOID"},
+      str(reports.RENDER_WORDS["verdicts"]))
+check("  pdf_note        defaults to the note kitchen has always printed",
+      reports.RENDER_WORDS["pdf_note"].startswith("Keep this — your report"))
+
+for key in sorted(ENGLISH):
+    value = reports.RENDER_WORDS_RO[key]
+    check("  %-16s is not the English" % key,
+          value != reports.RENDER_WORDS[key], repr(value))
+check("  and the Romanian verdict badges are MERGE / EVITĂ",
+      reports.RENDER_WORDS_RO["verdicts"] == {"works": "MERGE",
+                                              "avoid": "EVITĂ"},
+      str(reports.RENDER_WORDS_RO["verdicts"]))
+check("  the Romanian words carry their diacritics",
+      all(DIACRITIC.search(reports.RENDER_WORDS_RO[k]) for k in
+          ("year_strong", "year_quiet", "fix", "save", "style_fallback",
+           "pdf_note")),
+      str([k for k in ("year_strong", "year_quiet", "fix", "save",
+                       "style_fallback", "pdf_note")
+           if not DIACRITIC.search(reports.RENDER_WORDS_RO[k])]))
+check("  and pass the Romanian Terms check",
+      not [(k, reports._banned_hit(v, reports.ZODIAC_RO_BANNED))
+           for k, v in reports.RENDER_WORDS_RO.items()
+           if reports._banned_hit(v, reports.ZODIAC_RO_BANNED)],
+      str([k for k, v in reports.RENDER_WORDS_RO.items()
+           if reports._banned_hit(v, reports.ZODIAC_RO_BANNED)]))
+check("the attachment still takes the style name once",
+      reports.RENDER_WORDS_RO["pdf_filename"].count("%s") == 1
+      and reports.RENDER_WORDS_RO["pdf_filename"].endswith(".pdf"),
+      reports.RENDER_WORDS_RO["pdf_filename"])
+
+print("\n--- the document those words are printed into ---")
+
+
+def document(slug, style_id="celestial_air"):
+    """One whole report for a funnel, stubbed end to end, as HTML."""
+    funnel = json.load(open(os.path.join(ROOT, "funnels", slug + ".json"),
+                            encoding="utf-8"))
+    style = reports._style(funnel, style_id)
+    prof = reports._profile(slug)
+    months = reports._months_for(prof)
+    built, paths = {}, {}
+    for section in funnel["report"]["sections"]:
+        stub = reports._stub_for(section["id"],
+                                 reports._style_name(funnel, style_id),
+                                 style, prof["stubs"], months,
+                                 prof.get("stub_colors"))
+        if stub is None:
+            continue
+        built[section["id"]] = stub
+        paths[section["id"]] = "stub"
+    return reports._pdf_html(reports._assemble(
+        funnel, slug, style_id, reports._style_name(funnel, style_id),
+        built, paths, True))
+
+
+ro_doc = document("zodiac-ro")
+en_doc = document("zodiac30")
+for word in ("Fix:", ">Splurge ", ">Save<", ">Skip<", ">WORKS<", ">AVOID<",
+             "Your style", "Strongest month:", "Quiet month:"):
+    check("  the Romanian PDF never prints %-18s" % repr(word),
+          word not in ro_doc, word)
+for word, present in ((reports.RENDER_WORDS_RO["fix"], True),
+                      (reports.RENDER_WORDS_RO["splurge"], True),
+                      (reports.RENDER_WORDS_RO["save"], True),
+                      ("MERGE", True), ("EVITĂ", True),
+                      (reports.RENDER_WORDS_RO["year_strong"], True)):
+    check("  and it does print %-28s" % repr(word),
+          (word in ro_doc) is present, word)
+check("  the verdict CLASS stays the English word the stylesheet colours on",
+      'class="badge works"' in ro_doc and 'class="badge avoid"' in ro_doc)
+check("  the document still declares itself Romanian",
+      '<html lang="ro"' in ro_doc)
+check("zodiac30's document is the English one, word for word",
+      all(w in en_doc for w in ("Fix:", "<b>Splurge &mdash;", "<b>Save</b>",
+                                ">WORKS<", ">AVOID<")),
+      str([w for w in ("Fix:", "<b>Splurge &mdash;", "<b>Save</b>",
+                       ">WORKS<", ">AVOID<") if w not in en_doc]))
+check("  and carries not one Romanian word of this funnel's",
+      not [w for w in (reports.RENDER_WORDS_RO[k] for k in
+                       ("fix", "skip", "save", "year_strong", "year_quiet"))
+           if w in en_doc],
+      str([w for w in (reports.RENDER_WORDS_RO[k] for k in
+                       ("fix", "skip", "save", "year_strong", "year_quiet"))
+           if w in en_doc]))
+check("the emailed attachment is named in Romanian",
+      reports._words(profile)["pdf_filename"] % "aer-celest"
+      == "mazzin-aer-celest-profil.pdf")
+check("  and zodiac30's is named exactly as it always was",
+      reports._words(reports.ZODIAC_PROFILE)["pdf_filename"] % "celestial-air"
+      == "mazzin-celestial-air-report.pdf")
+
+print("\n--- the fallbacks, in Romanian ---")
+# What a reader gets when generation fails outright. These were the English
+# set, on the reasoning that a publishable English section beats an absent
+# one — true of an absent section, and false of the page that shipped.
+check("the profile carries its own stubs",
+      profile["stubs"] is reports.ZODIAC_STUBS_RO
+      and profile["stubs"] is not reports.ZODIAC_STUBS)
+check("  and the English funnels still carry theirs",
+      reports.ZODIAC_PROFILE["stubs"] is reports.ZODIAC_STUBS
+      and reports.KITCHEN_PROFILE["stubs"] is reports.STUBS)
+check("  the same six sections as the twin",
+      sorted(reports.ZODIAC_STUBS_RO) == sorted(reports.ZODIAC_STUBS),
+      str(sorted(set(reports.ZODIAC_STUBS) ^ set(reports.ZODIAC_STUBS_RO))))
+
+
+def stub_strings(node):
+    if isinstance(node, str):
+        yield node
+    elif isinstance(node, dict):
+        for value in node.values():
+            for item in stub_strings(value):
+                yield item
+    elif isinstance(node, list):
+        for value in node:
+            for item in stub_strings(value):
+                yield item
+
+
+# `verdict` is a machine value the renderer dispatches on and the stylesheet
+# colours the badge with — "works" and "avoid" are English in every language,
+# and the word the reader actually sees is the badge, which is translated.
+# The year stub's twelve `name` values are positions, not prose: the labels
+# are stamped on at build time out of the reader's own year, in whichever
+# language the profile counts it in.
+MACHINE = (set(reports.VERDICTS) | {reports.FROM_CONFIG}
+           | set(str(n) for n in range(1, 13)))
+RO_STUB_STRINGS = [s for s in stub_strings(reports.ZODIAC_STUBS_RO)
+                   if s not in MACHINE]
+check("  every stub string is Romanian, not the English one",
+      not [s for s in RO_STUB_STRINGS
+           if s in list(stub_strings(reports.ZODIAC_STUBS))],
+      str([s[:40] for s in RO_STUB_STRINGS
+           if s in list(stub_strings(reports.ZODIAC_STUBS))][:3]))
+LONG = [s for s in RO_STUB_STRINGS if len(s) > 40]
+check("  and every long one carries diacritics",
+      not [s for s in LONG if not DIACRITIC.search(s)],
+      str([s[:50] for s in LONG if not DIACRITIC.search(s)][:3]))
+check("  none of them says a banned thing, in either language",
+      not [(s[:40], reports._banned_hit(s, reports.ZODIAC_RO_BANNED))
+           for s in RO_STUB_STRINGS
+           if reports._banned_hit(s, reports.ZODIAC_RO_BANNED)],
+      str([s[:40] for s in RO_STUB_STRINGS
+           if reports._banned_hit(s, reports.ZODIAC_RO_BANNED)][:3]))
+# Section for section against the English set rather than against a flat
+# "must validate": two of the six are templates that only become a section at
+# build time — the palette takes its colours off the config and the year map
+# takes its labels off the clock — and both sets are equally unfinished until
+# `_stub_for` runs.
+
+
+def validates(stubs):
+    return dict((section_id,
+                 reports.VALIDATORS[section_id](
+                     reports._fill(stubs[section_id], "X")) is not None)
+                for section_id in stubs)
+
+
+check("  and each one validates exactly where the English one does",
+      validates(reports.ZODIAC_STUBS_RO) == validates(reports.ZODIAC_STUBS),
+      str([s for s, ok in validates(reports.ZODIAC_STUBS_RO).items()
+           if ok != validates(reports.ZODIAC_STUBS)[s]]))
+check("  the palette stub still takes its colours from the config",
+      reports.ZODIAC_STUBS_RO["palette"]["colors"] == reports.FROM_CONFIG)
+check("  the swatch prose under them is Romanian too",
+      len(reports.ZODIAC_COLOR_TEXT_RO) == len(reports.ZODIAC_COLOR_TEXT)
+      and all(DIACRITIC.search(" ".join(row))
+              for row in reports.ZODIAC_COLOR_TEXT_RO))
+check("  and the profile hands it over",
+      profile["stub_colors"] is reports.ZODIAC_COLOR_TEXT_RO
+      and reports.ZODIAC_PROFILE.get("stub_colors") is None)
+
+ro_style = reports._style(cfg, "celestial_air")
+ro_months = reports._months_for(profile)
+palette = reports._stub_for("palette", reports._style_name(cfg,
+                                                           "celestial_air"),
+                            ro_style, profile["stubs"], ro_months,
+                            profile["stub_colors"])
+check("a built palette stub keeps the reader's own colour NAMES",
+      [(c["name"], c["hex"]) for c in palette["colors"]]
+      == reports._style_colors(ro_style),
+      str([c["name"] for c in palette["colors"]]))
+check("  and says what each one is for in Romanian",
+      all(DIACRITIC.search(c["role"] + c["finish"] + c["where"])
+          for c in palette["colors"]))
+en_palette = reports._stub_for("palette", "Celestial Air",
+                               reports._style(twin, "celestial_air"),
+                               reports.ZODIAC_STUBS)
+check("  where the English stub still says it in English",
+      not DIACRITIC.search("".join(c["role"] + c["finish"] + c["where"]
+                                   for c in en_palette["colors"])))
+check("    and is the swatch prose zodiac30 has always printed",
+      [(c["role"], c["finish"], c["where"]) for c in en_palette["colors"]]
+      == [tuple(row) for row in reports.ZODIAC_COLOR_TEXT])
+
+year = reports._stub_for("shopping", "X", ro_style, profile["stubs"],
+                         ro_months, profile["stub_colors"])
+notes = [i["priority_note"] for i in year["items"]]
+check("the year stub is still stamped with the reader's twelve months",
+      [i["name"] for i in year["items"]] == list(ro_months),
+      str([i["name"] for i in year["items"]][:3]))
+check("  and marks three months and one, in Romanian",
+      sum(n.startswith(reports.RENDER_WORDS_RO["year_strong"])
+          for n in notes) == reports.YEAR_STRONG
+      and sum(n.startswith(reports.RENDER_WORDS_RO["year_quiet"])
+              for n in notes) == reports.YEAR_QUIET,
+      str([n[:30] for n in notes]))
+check("  never with the English prefixes",
+      not [n for n in notes
+           if n.startswith(reports.RENDER_WORDS["year_strong"])
+           or n.startswith(reports.RENDER_WORDS["year_quiet"])])
+
+print("\n--- the year map is checked in the language it was asked for ---")
+GOOD_RO = {"items": [
+    {"name": m,
+     "priority_note": (reports.RENDER_WORDS_RO["year_strong"] if i in (2, 5, 8)
+                       else reports.RENDER_WORDS_RO["year_quiet"] if i == 7
+                       else "Bună pentru") + " ceva anume."}
+    for i, m in enumerate(ro_months)]}
+BAD_EN = {"items": [
+    {"name": m,
+     "priority_note": (reports.RENDER_WORDS["year_strong"] if i in (2, 5, 8)
+                       else reports.RENDER_WORDS["year_quiet"] if i == 7
+                       else "Bună pentru") + " ceva anume."}
+    for i, m in enumerate(ro_months)]}
+check("the Romanian profile asks for the marks to be checked",
+      profile.get("verify_marks") is True)
+check("  and the English one does not — a check they never had is a "
+      "section they can now lose",
+      reports.ZODIAC_PROFILE.get("verify_marks") is None
+      and reports.KITCHEN_PROFILE.get("verify_marks") is None)
+marks = reports._year_marks(profile)
+check("its marks are the two Romanian prefixes",
+      marks == (reports.RENDER_WORDS_RO["year_strong"],
+                reports.RENDER_WORDS_RO["year_quiet"]), str(marks))
+check("  and the twin's are the two English ones",
+      reports._year_marks(reports.ZODIAC_PROFILE)
+      == ("Strongest month:", "Quiet month:"),
+      str(reports._year_marks(reports.ZODIAC_PROFILE)))
+check("a Romanian year map marked in Romanian is accepted",
+      reports._verify_months(GOOD_RO, ro_months, marks) is None,
+      str(reports._verify_months(GOOD_RO, ro_months, marks)))
+check("  the same map marked in English is refused",
+      reports._verify_months(BAD_EN, ro_months, marks) is not None,
+      str(reports._verify_months(BAD_EN, ro_months, marks)))
+check("  and so is one that marks the wrong number of months",
+      reports._verify_months(
+          {"items": [{"name": m, "priority_note": "Bună."}
+                     for m in ro_months]}, ro_months, marks) is not None)
+check("without marks the check is exactly what it always was",
+      reports._verify_months(BAD_EN, ro_months) is None
+      and reports._verify_months(GOOD_RO, ro_months) is None)
+check("  and the month names are still policed first",
+      reports._verify_months(
+          {"items": [{"name": m} for m in reports._year_labels()]},
+          ro_months, marks) is not None)
+ro_verify = reports._verify_for(profile, ro_style, ro_months)
+en_verify = reports._verify_for(reports.ZODIAC_PROFILE,
+                                reports._style(twin, "celestial_air"),
+                                reports._year_labels())
+check("the purchase path's check refuses an English-marked Romanian year",
+      ro_verify(("shopping",), {"shopping": BAD_EN}) is not None)
+check("  accepts the Romanian-marked one",
+      ro_verify(("shopping",), {"shopping": GOOD_RO}) is None,
+      str(ro_verify(("shopping",), {"shopping": GOOD_RO})))
+check("  and zodiac30's check still asks nothing about marks",
+      en_verify(("shopping",),
+                {"shopping": {"items": [{"name": m, "priority_note": "x"}
+                                        for m in reports._year_labels()]}})
+      is None)
 
 print("\n--- and the twins are untouched ---")
 # The failure this funnel could cause and no assertion above would see: a
