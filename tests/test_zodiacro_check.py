@@ -144,6 +144,13 @@ def comparable(config):
     grid lists them.
     """
     out = without_added(config)
+    # The price is this funnel's own now — 199 against the English 300 — and
+    # `shape` keeps numbers, so it would read as drift. Normalised away here
+    # and pinned on its own account below, at "pricing is 199 usd", together
+    # with the assertion that the English twins are still at 300. This is the
+    # one number the two funnels are allowed to disagree on; everything else
+    # numeric stays compared.
+    out["pricing"] = dict(out["pricing"], amount_cents="priced")
     copy = dict(config["result_copy"])
     for key in ADDED:
         copy.pop(key, None)
@@ -158,6 +165,20 @@ def comparable(config):
 
 check("the whole config has the twin's shape",
       shape(comparable(cfg)) == shape(comparable(twin)))
+# `cta` is copy and is translated like every other string; `currency` is not
+# copy and has to match, or two funnels selling the same thing would be
+# charging in different money. So the amount is the ONE thing left that the
+# two are allowed to differ on numerically.
+check("  and the price is the only number the two disagree on",
+      shape(cfg["pricing"]) != shape(twin["pricing"])
+      and shape(dict(cfg["pricing"], amount_cents=0))
+      == shape(dict(twin["pricing"], amount_cents=0)),
+      "%s vs %s" % (cfg["pricing"], twin["pricing"]))
+check("    same keys, same currency, different amount",
+      sorted(cfg["pricing"]) == sorted(twin["pricing"])
+      and cfg["pricing"]["currency"] == twin["pricing"]["currency"] == "usd"
+      and cfg["pricing"]["amount_cents"] != twin["pricing"]["amount_cents"],
+      "%s vs %s" % (cfg["pricing"], twin["pricing"]))
 check("  and sign_cross is keyed on this funnel's own twelve labels",
       [k for k in cfg["result_copy"]["profile"]["sign_cross"] if k != "cusp"]
       == [i["label"] for i in by_step["sign"]["pairs"][0]["images"]],
@@ -289,12 +310,76 @@ check("the purpose map points at the twin's sections",
        for k, v in cfg["result_copy"]["purpose_map"].items()}
       == {k: v["emphasized_section"]
           for k, v in twin["result_copy"]["purpose_map"].items()})
-check("pricing is unchanged: 300 usd",
-      cfg["pricing"]["amount_cents"] == 300
+# This funnel prices on its own now — 199 where the English three still
+# charge 300 — so the shape comparison above stops at the shape and the
+# amount is asserted here, on its own account.
+check("pricing is 199 usd",
+      cfg["pricing"]["amount_cents"] == 199
       and cfg["pricing"]["currency"] == "usd",
       str(cfg["pricing"]))
+check("  integer cents, never a float or a formatted string",
+      isinstance(cfg["pricing"]["amount_cents"], int)
+      and not isinstance(cfg["pricing"]["amount_cents"], bool),
+      repr(cfg["pricing"]["amount_cents"]))
+check("  and the English funnels are untouched at 300",
+      twin["pricing"]["amount_cents"] == english["pricing"]["amount_cents"]
+      == 300,
+      "%s / %s" % (twin["pricing"]["amount_cents"],
+                   english["pricing"]["amount_cents"]))
 check("  and it still transacts live",
       cfg["stripe_mode"] == "live", cfg["stripe_mode"])
+
+print("\n--- one price, and every rendering of it comes from that field ---")
+# The rule the paywall rests on: config carries an amount and a slot, never a
+# spelled-out number. A price written into a sentence is a price that goes on
+# saying 3.00 after the amount moves, on the one screen where being wrong
+# costs the sale and the trust at once.
+PRICEY = re.compile(r"\$\s?\d|\b\d+[.,]\d{2}\b|\b3[.,]00\b")
+spelled = [(p, v) for p, v in STRINGS
+           if PRICEY.search(v) and "75 $" not in v]
+check("no string in the config spells a price out", not spelled,
+      str(spelled[:4]))
+check("  not the old one, in any spelling",
+      not [(p, v) for p, v in STRINGS
+           if re.search(r"\$\s?3\b|\b3[.,]00\b|\b300\b", v)],
+      str([(p, v[:50]) for p, v in STRINGS
+           if re.search(r"\$\s?3\b|\b3[.,]00\b|\b300\b", v)][:4]))
+check("  and the raw file names 300 nowhere either",
+      "300" not in RAW, RAW[max(0, RAW.find("300") - 40):RAW.find("300") + 20])
+SLOTS = [(p, v) for p, v in STRINGS if "{price}" in v]
+check("every line that names a price interpolates {price}",
+      len(SLOTS) == 6, str(sorted(p for p, _v in SLOTS)))
+check("  the CTA, the anchor and the sticky bar among them",
+      all("{price}" in cfg["checkout"][k]
+          for k in ("cta_label", "anchor", "anchor_head", "unlock_note"))
+      and all("{price}" in cfg["checkout"]["commerce"][k]
+              for k in ("anchor_head", "sticky_label")))
+
+
+def short(cents, cur="USD"):
+    """What engine.js formatPriceShort() prints for an amount."""
+    amount = str(cents // 100) if cents % 100 == 0 else "%.2f" % (cents / 100.0)
+    return {"USD": "$", "EUR": "€", "GBP": "£"}.get(cur, "") + amount
+
+
+check("  which renders this amount as $1.99, cents and all",
+      short(cfg["pricing"]["amount_cents"]) == "$1.99",
+      short(cfg["pricing"]["amount_cents"]))
+check("  where the English three still render as $3",
+      short(twin["pricing"]["amount_cents"]) == "$3",
+      short(twin["pricing"]["amount_cents"]))
+# The anchor is a claim about what somebody else charges, not a multiple of
+# what we charge, so it does not move with our price — and the English twins
+# make the same claim, in the same figure.
+check("the 75 $ anchor is left alone, and says the same as the twin's",
+      cfg["checkout"]["anchor"].count("75 $") == 1
+      and twin["checkout"]["anchor"].count("$75") == 1,
+      cfg["checkout"]["anchor"])
+check("  and it is the only figure the copy states outright",
+      sorted(set(re.findall(r"\d+", " ".join(
+          v for _p, v in STRINGS if "$" in v)))) == ["75"],
+      str(sorted(set(re.findall(r"\d+", " ".join(
+          v for _p, v in STRINGS if "$" in v))))))
 
 print("\n--- the tokens the page fills ---")
 TOKEN = re.compile(r"\{(\w+)\}")
@@ -1066,8 +1151,13 @@ check("  and it is not a kitchen mail by another name",
       "kitchen" not in reports.COPY_ZODIAC_RO["subject"].lower())
 check("the opening line is Romanian and names the price",
       DIACRITIC.search(reports._email_opening({"funnel": "zodiac-ro"}))
-      and "$3" in reports._email_opening({"funnel": "zodiac-ro"}),
+      and "$1.99" in reports._email_opening({"funnel": "zodiac-ro"}),
       reports._email_opening({"funnel": "zodiac-ro"}))
+check("  read off the funnel rather than written into the mail",
+      reports._price_paid({"funnel": "zodiac-ro"}) == "$1.99"
+      and reports._price_paid({"funnel": "zodiac30"}) == "$3",
+      "%s / %s" % (reports._price_paid({"funnel": "zodiac-ro"}),
+                   reports._price_paid({"funnel": "zodiac30"})))
 check("  and the English opening is unchanged",
       reports._email_opening({"funnel": "zodiac30"}).startswith("You just spent"),
       reports._email_opening({"funnel": "zodiac30"}))
