@@ -456,8 +456,10 @@ check("  the two English funnels still share one object",
 check("the same section split as the twin",
       profile["personal"] == reports.ZODIAC_PROFILE["personal"]
       and profile["cached"] == reports.ZODIAC_PROFILE["cached"])
-check("  and the same shapes",
-      profile["spec"] is reports.ZODIAC_PROFILE["spec"])
+check("  and the same shapes, asking for fewer characters",
+      profile["spec"] is reports.ZODIAC_RO_SPEC
+      and profile["spec"] is not reports.ZODIAC_PROFILE["spec"]
+      and sorted(profile["spec"]) == sorted(reports.ZODIAC_PROFILE["spec"]))
 check("its prompt asks for Romanian, in the first rule",
       "LANGUAGE" in profile["system"]
       and "Romanian" in profile["system"].split("Every field")[0])
@@ -474,6 +476,168 @@ check("  and holds the JSON keys in English",
       "KEYS stay in English" in profile["system"])
 check("the banned list is enforced on generation, not only in the prompt",
       profile["banned"] is reports.ZODIAC_RO_BANNED)
+
+print("\n--- it asks for a Romanian-sized amount of Romanian ---")
+# Romanian says the same thing in 15-20% more characters, so a prompt budget
+# calibrated on English is one this funnel overruns while writing exactly what
+# it was asked for. `splurge` is where that showed: five long prose fields in
+# one call, and four consecutive failures on grounded_earth.
+RO_BUDGET = reports.ZODIAC_RO_PROMPT_BUDGET
+check("the profile declares its own prompt budget",
+      profile.get("prompt_budget") == RO_BUDGET < reports.PROMPT_BUDGET,
+      "%s vs %s" % (profile.get("prompt_budget"), reports.PROMPT_BUDGET))
+check("  read through the accessor, which defaults to the English one",
+      reports._prompt_budget(profile) == RO_BUDGET
+      and reports._prompt_budget(reports.ZODIAC_PROFILE)
+      == reports._prompt_budget(reports.KITCHEN_PROFILE)
+      == reports._prompt_budget(None) == reports.PROMPT_BUDGET)
+check("  and it is the only profile that sets the key",
+      [slug for slug, p in reports.PROFILES.items()
+       if p.get("prompt_budget")] == ["zodiac-ro"],
+      str([slug for slug, p in reports.PROFILES.items()
+           if p.get("prompt_budget")]))
+
+# The claim the whole change rests on: whatever the prompt asks for, the
+# validator that would throw the section away allows more. Checked over every
+# capped field of every section rather than the ones that happened to fail.
+over = []
+tighter = []
+for section_id in sorted(reports.ZODIAC_RO_SPEC):
+    ceilings = reports._ceilings(section_id)
+    ro = reports._budgets(section_id, RO_BUDGET)
+    en = reports._budgets(section_id)
+    for field, asked in sorted(ro.items()):
+        cap = ceilings[field]
+        if asked > cap:
+            over.append("%s.%s asks %d of %d" % (section_id, field, asked, cap))
+        if asked >= en[field]:
+            tighter.append("%s.%s %d vs %d" % (section_id, field, asked,
+                                               en[field]))
+check("every RO budget is inside the ceiling that polices its field",
+      not over, str(over))
+check("  and every one of them is under the English number",
+      not tighter, str(tighter))
+check("  with real headroom left, not a rounding of it",
+      all(asked <= 0.62 * reports._ceilings(sid)[field]
+          for sid in reports.ZODIAC_RO_SPEC
+          for field, asked in reports._budgets(sid, RO_BUDGET).items()),
+      str([(sid, f, a, reports._ceilings(sid)[f])
+           for sid in reports.ZODIAC_RO_SPEC
+           for f, a in reports._budgets(sid, RO_BUDGET).items()
+           if a > 0.62 * reports._ceilings(sid)[f]]))
+
+# PROMPT_LENGTH is hand-set and overrides the derived default, so a budget
+# that only moved the derived numbers would have left the failing section
+# exactly as it was.
+check("the hand-set lengths came down too, not just the derived ones",
+      all(reports._budgets(sid, RO_BUDGET)[field]
+          < reports.PROMPT_LENGTH[sid][field]
+          for sid, fields in reports.PROMPT_LENGTH.items()
+          for field in fields),
+      str({sid: {f: reports._budgets(sid, RO_BUDGET)[f]
+                 for f in fields}
+           for sid, fields in reports.PROMPT_LENGTH.items()}))
+check("  splurge, the section that failed, asks for less in every field",
+      all(reports._budgets("splurge", RO_BUDGET)[f] < v
+          for f, v in reports._budgets("splurge").items()),
+      "%s vs %s" % (reports._budgets("splurge", RO_BUDGET),
+                    reports._budgets("splurge")))
+check("  and the shape the model is handed states the smaller numbers",
+      "370 characters maximum" in reports.ZODIAC_RO_SPEC["splurge"]
+      and "440 characters maximum" not in reports.ZODIAC_RO_SPEC["splurge"])
+check("the English shapes are untouched, byte for byte",
+      reports.ZODIAC_SPEC == dict(
+          (sid, reports._zodiac_spec(text, sid))
+          for sid, text in reports._ZODIAC_SHAPES.items())
+      and "440 characters maximum" in reports.ZODIAC_SPEC["splurge"])
+check("  and the two differ only in their numbers",
+      all(re.sub(r"\d+", "#", reports.ZODIAC_RO_SPEC[sid])
+          == re.sub(r"\d+", "#", reports.ZODIAC_SPEC[sid])
+          for sid in reports.ZODIAC_SPEC),
+      str([sid for sid in reports.ZODIAC_SPEC
+           if re.sub(r"\d+", "#", reports.ZODIAC_RO_SPEC[sid])
+           != re.sub(r"\d+", "#", reports.ZODIAC_SPEC[sid])]))
+
+print("\n--- Romanian prose is what breaks the JSON ---")
+# The other half of the failure, and the half that is not about length: a
+# 1748-character answer that stopped on end_turn still failed to parse, which
+# only unescaped punctuation explains.
+check("the prompt says the answer is JSON and what breaks it",
+      "not valid JSON" in profile["system"]
+      and "escaped" in profile["system"])
+check("  and offers the Romanian punctuation that costs nothing to parse",
+      "„" in profile["system"])
+check("  the English prompt is unchanged",
+      reports.ZODIAC_PROFILE["system"] is reports.ZODIAC_SYSTEM
+      and "„" not in reports.ZODIAC_SYSTEM)
+
+WANT = ("splurge",)
+
+
+def body(text):
+    """One section's worth of JSON, with `text` in a prose field."""
+    return json.dumps(
+        {"splurge": {"splurge": {"item": "Un curs de trei luni",
+                                 "why": text},
+                     "split_note": text,
+                     "saves": [{"item": "Un caiet", "why": text},
+                               {"item": "O oră pe zi", "why": text}]}},
+        ensure_ascii=False)
+
+
+PROSE = "Banii îți urmează atenția, nu efortul, iar tiparul se rupe. " * 4
+ok_json = body(PROSE)
+
+parsed, why = reports._parse_detail(ok_json, WANT, [])
+check("a valid answer still parses", parsed is not None, why)
+
+# The retry. It used to be handed the diagnostic line inside a block that
+# closes "the character counts are hard limits" — a length correction for a
+# punctuation failure, so the second attempt repeated the first.
+notes = []
+parsed, why = reports._parse_detail(
+    ok_json.replace("nu efortul", 'nu "efortul"', 1), WANT, notes)
+check("an unescaped quote is still refused", parsed is None, str(parsed)[:60])
+check("  and the retry names the failure as a parse failure",
+      notes and "not valid JSON" in notes[0], str(notes))
+retry = reports._retry_prompt("PROMPT", notes)
+check("  telling the model to escape its quotes, not to count characters",
+      "Escape every double quote" in retry
+      and "punctuation, not length" in retry, retry[-200:])
+check("  and it reaches the prompt through the existing retry block",
+      retry.startswith("PROMPT") and reports.RETRY_NOTE in retry)
+check("  where a section that parses adds no note at all",
+      reports._parse_detail(ok_json, WANT, [])[0] is not None
+      and reports._parse_detail(ok_json, WANT, [])[1] is None)
+check("kitchen never sees it — it passes no notes list",
+      reports.KITCHEN_PROFILE["retry_detail"] is False
+      and reports._retry_prompt("PROMPT", None)
+      == "PROMPT" + reports.RETRY_NOTE)
+
+# The one salvage, and the one deliberately not attempted.
+raw_nl = body(PROSE).replace("nu efortul", "nu\nefortul", 1)
+parsed, why = reports._parse_detail(raw_nl, WANT, [])
+check("a raw line break inside a value is recovered", parsed is not None, why)
+check("  losslessly — the text is what the model wrote",
+      parsed and "nu\nefortul" in parsed["splurge"]["splurge"]["why"])
+check("  and still went through the shape and length validators",
+      parsed and len(parsed["splurge"]["split_note"])
+      <= reports._ceilings("splurge")["split_note"])
+long_nl = body("x" * 700 + "\n" + "y" * 700)
+check("  a salvaged answer over its ceiling is still thrown away",
+      reports._parse_detail(long_nl, WANT, [])[0] is None)
+banned_nl = body("Un simptom clar.\nApoi altceva. " * 3)
+salvaged = reports._parse_detail(banned_nl, WANT, [])[0]
+check("  and a salvaged answer still faces the banned list",
+      salvaged is not None
+      and reports._banned_hit(salvaged, reports.ZODIAC_RO_BANNED) is not None,
+      str(reports._banned_hit(salvaged, reports.ZODIAC_RO_BANNED)))
+check("truncation is not salvaged — it is still truncation",
+      reports._parse_detail(ok_json[:400], WANT, [])[0] is None)
+check("  and neither is a stray quote, which no repair can guess at safely",
+      reports._parse_detail(
+          ok_json.replace("nu efortul", 'nu "efortul"', 1), WANT, [])[0]
+      is None)
 
 print("\n--- the year, in Romanian ---")
 months = reports._months_for(profile)
