@@ -363,3 +363,6 @@ bottom.
 
 ## 2026-08-26 — claude/zodiac-ro-test
 - Gated sandbox twin: zodiac-ro-test + TEST_FUNNELS switch
+
+## 2026-08-26 — claude/ro-splurge-json
+- RO report generation: per-profile prompt budget + JSON-safe Romanian output
