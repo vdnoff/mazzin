@@ -378,3 +378,6 @@ bottom.
 
 ## 2026-08-26 — claude/ro-frontend-strings
 - Free + delivered page strings as config keys, Romanian fill for zodiac-ro
+
+## 2026-08-26 — claude/ro-combinatie-wording
+- RO wording: încrucișare → combinație across sign_cross lines
