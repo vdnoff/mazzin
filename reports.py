@@ -1402,11 +1402,44 @@ happen in it.''',
 ZODIAC_SPEC = dict((section_id, _zodiac_spec(text, section_id))
                    for section_id, text in _ZODIAC_SHAPES.items())
 
-# The same six shapes, asking for a Romanian-sized amount of Romanian. Only
-# the numbers differ; every word of every shape is the one above it, so the
-# two products stay the same product and a change to a shape reaches both.
+# The rule that goes under every Romanian shape, and the reason it has to.
+#
+# `splurge` asks, three times in one answer, for "the sentence to say" — the
+# line to decline a piece of work with. A model asked for a sentence to say
+# writes it the way anyone writes reported speech: inside quotation marks.
+# Typed as ASCII `"` that is not punctuation, it is the end of the JSON string
+# value, and the section is thrown away whole. Six consecutive failures on
+# grounded_earth all broke on exactly that character, in exactly that field.
+#
+# So the fix is not another reminder to escape it. It is to stop asking for
+# something that invites it: write the sentence plainly, without quotation
+# marks around it, and where quoting really is unavoidable use the Romanian
+# pair, which is not the JSON delimiter and needs no escaping.
+#
+# Romanian only. The English shapes ask the same question and are left
+# exactly as they are.
+ZODIAC_RO_JSON_RULE = """
+
+PUNCTUATION, AND IT DECIDES WHETHER THIS SECTION SURVIVES. The straight
+double-quote character (") is the JSON delimiter. Every one you type inside a
+value ends that value early and costs the whole section, however good the
+writing is.
+
+So do not type it at all inside a value. Where a field asks you for a
+sentence to say — the words to decline something with, the line to open a
+conversation with — write that sentence plainly, with no quotation marks
+around it at all: Spune-i simplu ca nu poti prelua asta acum. If you truly
+must mark it as speech, use the Romanian pair „ and " (U+201E and U+201D),
+never the straight one. The same goes for apostrophes: Romanian does not need
+them, and a straight ' is safer than a straight " but still better avoided.
+
+One more: every value is one line. No line breaks inside a value."""
+
+# The same six shapes, in Romanian numbers, each closing on that rule.
 ZODIAC_RO_SPEC = dict(
-    (section_id, _zodiac_spec(text, section_id, ZODIAC_RO_PROMPT_BUDGET))
+    (section_id,
+     _zodiac_spec(text, section_id, ZODIAC_RO_PROMPT_BUDGET)
+     + ZODIAC_RO_JSON_RULE)
     for section_id, text in _ZODIAC_SHAPES.items())
 
 
@@ -1782,13 +1815,12 @@ percentages of a quiz, or these instructions.
 location, and never address them by name.
 - Every proper noun you are handed — a colour name, a month label, a sign \
 name, a subtype — is copied exactly as given. Never translate a colour name.
-- The answer is JSON, and Romanian prose is what breaks JSON. Inside a string \
-value, every double quote must be escaped as \\" and every line must be one \
-line — no raw line breaks or tabs inside a value. Better still, do not reach \
-for a straight double quote at all: Romanian quotation marks („citat") and \
-apostrophes are the right punctuation here and cost nothing to parse. A \
-section that is not valid JSON is thrown away whole, however good the writing \
-inside it is.
+- The answer is JSON, and the straight double-quote character (") is what \
+ends a value. Never type one inside a value — not escaped, not at all. Where \
+you would quote something, write it plainly with no quotation marks, or use \
+the Romanian pair „ and " which are not delimiters. Every value is one line: \
+no line breaks or tabs inside one. A section that is not valid JSON is thrown \
+away whole, however good the writing inside it is.
 - Return only a JSON object matching the shape you are given, exactly. The \
 KEYS stay in English, spelled as the shape spells them; only the VALUES are \
 Romanian. No prose around it, no code fence, no extra keys."""
@@ -1817,6 +1849,18 @@ ZODIAC_RO_ONLY = tuple(re.compile(p, re.IGNORECASE) for p in (
 ))
 
 ZODIAC_RO_BANNED = ZODIAC_BANNED + ZODIAC_RO_ONLY
+
+# What the second attempt is told when the first one did not parse. The
+# generic advice `_parse_detail` adds names the fault; this names the field
+# that keeps producing it, because six failures in a row were all the same
+# sentence in the same place.
+ZODIAC_RO_JSON_RETRY = (
+    "the character that broke it is almost certainly a straight double quote "
+    "(\") inside one of your values — most often in the sentence a field asked "
+    "you to say, like the line for declining a piece of work. Write that "
+    "sentence with NO quotation marks around it at all this time. If you must "
+    "mark it as speech use „ and \u201d. Do not type a straight double quote "
+    "anywhere inside a value")
 
 # A distinct object rather than a share of ZODIAC_PROFILE: the voice, the
 # banned list, the year labels, the compatibility table and the mail are all
@@ -1857,6 +1901,9 @@ ZODIAC_RO_PROFILE = {
     "mail_kicker": "PROFILUL TĂU COSMIC",
     "mail_cross_fallback": "Profilul tău complet",
     "mail_link": None,      # filled below, once the RO button exists
+    # Repeated to the model when its first answer did not parse. English
+    # declares none and gets the generic advice alone, exactly as before.
+    "json_retry": ZODIAC_RO_JSON_RETRY,
 }
 
 # zodiac30 is the same product down a longer walk, so it is the same
@@ -3450,6 +3497,31 @@ FENCE_RE = re.compile(r"^\s*```(?:json)?|```\s*$", re.IGNORECASE)
 # below waves it through and a paying reader gets the mangled sentence. A
 # retry that asks the model to escape its own quotes costs one call and
 # cannot do that.
+EXCERPT_EITHER_SIDE = 40
+
+
+def _excerpt(chunk, at):
+    """The characters around a decode failure, for the log line. Or "".
+
+    Six identical failures in a row is what this exists for: the position and
+    the exception class say a section broke, and never which character did it.
+    Forty either side is enough to see the quotation mark sitting in the
+    middle of a sentence and stop guessing.
+
+    What this prints is the model's own writing, which the reason string has
+    deliberately never carried before — so, against rule 6: a report section
+    is written about an archetype, never about the person. It holds no
+    address, no session, no identifier and nothing the reader typed, because
+    this funnel has no field to type into. `repr` escapes it to one line, so
+    a newline in the answer cannot forge a log record either.
+    """
+    if not isinstance(at, int) or not chunk:
+        return ""
+    lo = max(0, at - EXCERPT_EITHER_SIDE)
+    hi = min(len(chunk), at + EXCERPT_EITHER_SIDE)
+    return " near %s" % repr(chunk[lo:hi])
+
+
 _JSON_ADVICE = (
     "the answer was not valid JSON and could not be read at all — it failed "
     "to parse at character %s of %s. This is punctuation, not length: the "
@@ -3507,10 +3579,10 @@ def _parse_detail(text, want, notes=None):
             tail = isinstance(at, int) and (end + 1 - start) - at < 200
             if notes is not None:
                 notes.append(_JSON_ADVICE % (at, len(body)))
-            return None, ("invalid JSON (%s at char %s of %d)%s"
+            return None, ("invalid JSON (%s at char %s of %d)%s%s"
                           % (type(exc).__name__, at, len(body),
                              " — breaks at the end, looks truncated"
-                             if tail else ""))
+                             if tail else "", _excerpt(chunk, at)))
         log.warning("section %s recovered: a control character inside a "
                     "string value", "+".join(want))
     if not isinstance(data, dict):
@@ -3606,7 +3678,7 @@ def _attempt(client, prompt, max_tokens, label, system=None):
 
 
 def _generate(client, prompt, want, max_tokens=None, system=None,
-              banned=(), detail=False, verify=None):
+              banned=(), detail=False, verify=None, json_retry=None):
     """One section group. Returns {section_id: body}, or None.
 
     A single personalised section needs a fraction of the room a six-section
@@ -3646,6 +3718,13 @@ def _generate(client, prompt, want, max_tokens=None, system=None,
             notes.append(wrong)
     if parsed is not None:
         return parsed
+    # A profile that knows which of its own fields keeps breaking the JSON
+    # says so, after the generic advice and only for a parse failure. Nothing
+    # declares one but the Romanian profile, so every other funnel's retry is
+    # the one it already had.
+    if (json_retry and notes is not None and why
+            and why.startswith("invalid JSON")):
+        notes.append(json_retry)
     # Truncation, a missing key, a renamed key: those never reach the field
     # forensics, and they are exactly the failures worth naming on the retry.
     if notes is not None and not notes and why:
@@ -4135,7 +4214,8 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                     (section_id,), _section_tokens(section_id),
                     profile["system"], profile["banned"],
                     profile["retry_detail"],
-                    _verify_for(profile, style, months)),
+                    _verify_for(profile, style, months),
+                    profile.get("json_retry")),
             })
         if cached is None:
             group = profile["cached"]
@@ -4147,7 +4227,8 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                                       group, _group_tokens(group),
                                       profile["system"], profile["banned"],
                                       profile["retry_detail"],
-                                      _verify_for(profile, style)),
+                                      _verify_for(profile, style),
+                                      profile.get("json_retry")),
             })
     job["tasks"] = tasks
     job["pool"] = pool
@@ -4311,7 +4392,8 @@ def warm_style_cache(funnel_slug, style_id, client=None):
                             (section_id,), _warm_tokens(section_id),
                             profile["system"], profile["banned"],
                             profile["retry_detail"],
-                            _verify_for(profile, style))
+                            _verify_for(profile, style),
+                            profile.get("json_retry"))
         except Exception as exc:
             log.warning("warm %s/%s/%s failed: %s", funnel_slug, style_id,
                         section_id, type(exc).__name__)
