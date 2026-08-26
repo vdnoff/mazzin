@@ -354,3 +354,6 @@ bottom.
 
 ## 2026-08-25 — claude/zodiac-go-live
 - zodiac: live payments on
+
+## 2026-08-26 — claude/meta-match-enrichment
+- meta: external_id + fbp/fbc + ip/ua match enrichment
