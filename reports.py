@@ -2383,6 +2383,11 @@ def _verify_for(profile, style, months=None):
     # this check since the first report, and a check they have never been held
     # to is a section they can now lose.
     marks = _year_marks(profile) if profile.get("verify_marks") else None
+    # The twelve names this funnel's cards carry, which is exactly the keys of
+    # the table the love prompt was built from. Read here rather than passed
+    # in: the reader's own sign is in every combo and cancels out, so the
+    # check needs the vocabulary and not the run.
+    signs = tuple(profile.get("compatibility") or ())
 
     def verify(want, parsed):
         for section_id in want:
@@ -2393,6 +2398,11 @@ def _verify_for(profile, style, months=None):
             if section_id == "shopping" and months:
                 problem = _verify_months(
                     (parsed or {}).get(section_id) or {}, months, marks)
+                if problem:
+                    return problem
+            if section_id == "materials" and signs:
+                problem = _verify_pairs(
+                    (parsed or {}).get(section_id) or {}, signs)
                 if problem:
                     return problem
         return None
@@ -3054,6 +3064,73 @@ YEAR_STRONG = 3
 YEAR_QUIET = 1
 
 
+# One compiled word-boundary pattern per sign name, built once per table.
+# `combo` is prose — "Rac + Scorpion", "Leo + a fire sign" — so a plain `in`
+# would find "Leu" inside a longer word and a sign named nowhere would look
+# named. Keyed by the id of the table it came from, which is a module-level
+# constant per language and never rebuilt.
+_SIGN_RES = {}
+
+
+def _sign_res(signs):
+    key = id(signs)
+    if key not in _SIGN_RES:
+        _SIGN_RES[key] = [
+            (name, re.compile(r"\b%s\b" % re.escape(name), re.IGNORECASE))
+            for name in signs]
+    return _SIGN_RES[key]
+
+
+def _verify_pairs(data, signs):
+    """The love section's four pairings against each other, or None.
+
+    The shape asks for four pairings, two that work and two that cost, and
+    the table behind the prompt names three signs: two magnetic and one
+    draining. The fourth is the model's own choice — and nothing said it had
+    to be a sign it had not used yet, so a Romanian report came back naming
+    the one draining sign twice, under two different paragraphs.
+
+    The existing checks could not see it. `_v_materials` counts verdicts and
+    is satisfied by two of each; the character ceilings and the banned list
+    are about words rather than about which sign is in them. A reader looking
+    at the page sees the same name twice with two different readings under
+    it, which is the section arguing with itself.
+
+    Both languages, because the English path has the same gap and has only
+    ever been saved by the model's own preference.
+
+    A pairing that names no sign at all is not judged — a generic combo is a
+    different fault and one this check has no business inventing a verdict on.
+    """
+    if not signs:
+        return None
+    rows = []
+    for index, pair in enumerate(data.get("pairs") or [], 1):
+        combo = str((pair or {}).get("combo") or "")
+        named = frozenset(name for name, rx in _sign_res(signs)
+                          if rx.search(combo))
+        if named:
+            rows.append((index, named))
+    if not rows:
+        return None
+    # The reader's own sign leads every combo, so it is in every row and
+    # cancels out. Inferred rather than passed in, and only used to keep the
+    # refusal readable: naming it back at the model as half the duplicate
+    # would point at the one sign that is supposed to repeat.
+    own = frozenset.intersection(*[named for _i, named in rows])
+    seen = {}
+    for index, named in rows:
+        if named in seen:
+            partner = named - own or named
+            return ("pairing %d names %s, which pairing %d already used — the "
+                    "four pairings name four different signs beside this "
+                    "reader's own, and the second draining one is yours to "
+                    "choose from the signs not yet used"
+                    % (index, " and ".join(sorted(partner)), seen[named]))
+        seen[named] = index
+    return None
+
+
 def _verify_months(data, months, marks=None):
     """The year section's labels against the twelve it was handed, or None.
 
@@ -3484,10 +3561,14 @@ def _compat_block(cfg, choices, table=None):
             "and then what to DO about it, which is the half they came for. "
             "For the two magnetic ones that is the thing that actually works "
             "with them; for the draining one it is the boundary that makes it "
-            "survivable. Use no other signs as the answer to that promise, "
-            "and never write that a relationship will or will not work — "
-            "describe the energy between them and what it takes from each "
-            "side."
+            "survivable. Use no other signs as the answer to that promise. "
+            "The shape asks for a fourth pairing and it is a SECOND draining "
+            "sign, which is yours to choose: pick one that is none of the "
+            "three above. All four pairings name four DIFFERENT signs beside "
+            "this reader's own — never the same sign twice, however "
+            "differently the second entry is written. And never write that a "
+            "relationship will or will not work — describe the energy between "
+            "them and what it takes from each side."
             % (label, magnetic[0], magnetic[1], drains))
 
     neighbours = [name for name in (read.get("neighbours") or [])
@@ -3508,7 +3589,9 @@ def _compat_block(cfg, choices, table=None):
         + "\nName the signs these sets have in common as the magnetic ones "
           "and the friction they share as the draining one, say plainly that "
           "sitting between two signs is why this reads as a blend, and never "
-          "settle on one sign for them.")
+          "settle on one sign for them. The fourth pairing the shape asks for "
+          "is a second draining sign and is yours to choose; all four name "
+          "four DIFFERENT signs, never the same one twice.")
 
 
 def _subtype_block(profile):
