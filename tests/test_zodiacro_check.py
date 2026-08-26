@@ -360,6 +360,68 @@ flat = [p for p, v in PROSE if not DIACRITIC.search(v)]
 check("every long line carries diacritics", not flat, str(flat[:4]))
 check("  and there are enough of them to be a whole translation",
       len(PROSE) >= 90, "%d prose lines" % len(PROSE))
+
+print("\n--- register: a blend of signs is a combinație ---")
+# "încrucișare" is what a geneticist calls a cross. Romanian astrology writing
+# calls a blend of signs or energies a "combinație", which is also what this
+# config's own rarity line has always called it — so thirteen lines saying
+# otherwise were both off-register and arguing with the line beside them.
+#
+# The stem rather than one inflection: încrucișare, încrucișări, Încrucișăm
+# and the diacritic-stripped spellings all have to stay out, or the clinical
+# word comes back in a form this check cannot see.
+CLINICAL = re.compile(r"[îiÎI]ncruci[sș]", re.IGNORECASE)
+clinical = [(p, v) for p, v in STRINGS if CLINICAL.search(v)]
+check("no line in the config says it", not clinical,
+      str([(p, v[:60]) for p, v in clinical[:4]]))
+check("  not in the raw file either, keys included", not CLINICAL.search(RAW))
+check("  nor in the twin, which is generated from it",
+      not CLINICAL.search(open(
+          os.path.join(ROOT, "funnels/zodiac-ro-test.json"),
+          encoding="utf-8").read()))
+# The positive half. A sign_cross line describes a blend only where the
+# element differs from the sign's own: the twelve same-element lines say
+# "zodia în stare pură" and the four cusp lines have their own opening, and
+# neither is a blend to name. Every line that IS one now names it with the
+# same noun the rarity line beside it has always used.
+CROSS = cfg["result_copy"]["profile"]["sign_cross"]
+lines = [v for row in CROSS.values() for v in row.values()]
+# Three tiers, and the change touched only the noun in front of them. The
+# adjective is what says how rare a blend is; flattening neobișnuită / rară /
+# autentică into one word would have cost the product a distinction it sells.
+TIERS = ("combinație autentică", "combinație neobișnuită", "combinație rară")
+blend = [v for v in lines if "combinație" in v]
+plain = [v for v in lines if "combinație" not in v]
+check("every blend line calls it a combinație", len(blend) == 36,
+      "%d of %d" % (len(blend), len(lines)))
+check("  and each carries exactly one of the three tiers",
+      all(sum(t in v for t in TIERS) == 1 for v in blend),
+      str([v[:60] for v in blend if sum(t in v for t in TIERS) != 1][:3]))
+check("  all three tiers survived the swap",
+      all(sum(t in v for v in blend) for t in TIERS),
+      str({t: sum(t in v for v in blend) for t in TIERS}))
+check("  twelve of them are the tier that was reworded",
+      sum(TIERS[0] in v for v in blend) == 12,
+      str(sum(TIERS[0] in v for v in blend)))
+check("  the rarity line says the same word",
+      "combinație" in cfg["result_copy"]["profile"]["rarity_line"],
+      cfg["result_copy"]["profile"]["rarity_line"])
+check("the sixteen that name no blend are the same-element and cusp lines",
+      len(plain) == 16
+      and sum("zodia în stare pură" in v for v in plain) == 12
+      and len(CROSS["cusp"]) == 4,
+      str([v[:50] for v in plain
+           if "zodia în stare pură" not in v and "Cumpăna" not in v]))
+check("  and none of them ever said it either",
+      not [v for v in plain if CLINICAL.search(v)])
+check("the loading line is reworded rather than swapped",
+      "Împletim" in cfg["report"]["generating_messages"][2]
+      and not CLINICAL.search(cfg["report"]["generating_messages"][2]),
+      cfg["report"]["generating_messages"][2])
+check("  because the message before it already opens on that root",
+      "combinațiile" in cfg["report"]["generating_messages"][1]
+      and "Combinăm" not in cfg["report"]["generating_messages"][2],
+      cfg["report"]["generating_messages"][1])
 accented = [p for p, v in STRINGS if DIACRITIC.search(v)]
 check("  with the accents spread across the whole config",
       len(accented) > 300
@@ -520,6 +582,28 @@ check("  and holds the JSON keys in English",
       "KEYS stay in English" in profile["system"])
 check("the banned list is enforced on generation, not only in the prompt",
       profile["banned"] is reports.ZODIAC_RO_BANNED)
+# The other half of the register check. The config is scanned above; this is
+# everything Romanian the module writes on its own account — the prompts, the
+# shapes, the stubs, the mail, the PDF's furniture and the swatch prose.
+# Serialised in one blob rather than walked, so a Romanian string added to any
+# of these objects later is scanned without this list being extended.
+RO_WRITTEN = json.dumps([
+    reports.ZODIAC_RO_SYSTEM, reports.ZODIAC_RO_SPEC,
+    reports.ZODIAC_RO_JSON_RULE, reports.ZODIAC_RO_JSON_RETRY,
+    reports.ZODIAC_STUBS_RO, reports.ZODIAC_COLOR_TEXT_RO,
+    reports.RENDER_WORDS_RO, reports.COPY_ZODIAC_RO,
+    reports.COMPATIBILITY_RO, reports.PDF_ELEMENTS_RO,
+    reports.ZODIAC_EMAIL_LINK_RO,
+    dict((k, v) for k, v in reports.ZODIAC_RO_PROFILE.items()
+         if isinstance(v, str)),
+    reports._email_opening({"funnel": "zodiac-ro"}),
+], ensure_ascii=False, default=str)
+check("and no Romanian string it writes itself says it either",
+      not CLINICAL.search(RO_WRITTEN),
+      str(CLINICAL.findall(RO_WRITTEN)[:4]))
+check("  which is a real body of Romanian, not an empty scan",
+      len(DIACRITIC.findall(RO_WRITTEN)) > 500,
+      "%d accented characters" % len(DIACRITIC.findall(RO_WRITTEN)))
 
 print("\n--- it asks for a Romanian-sized amount of Romanian ---")
 # Romanian says the same thing in 15-20% more characters, so a prompt budget
