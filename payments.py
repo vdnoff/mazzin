@@ -536,7 +536,8 @@ def _capi_url():
 
 def send_purchase_event(purchase_id, slug, amount_cents, currency,
                         email=None, payment_intent=None, meta_ids=None,
-                        event_time=None):
+                        event_time=None, session_id=None,
+                        client_ip=None, client_ua=None):
     """Tell Meta a purchase happened. Returns True if it was accepted.
 
     Best effort by construction: every failure path returns False and the
@@ -561,8 +562,30 @@ def send_purchase_event(purchase_id, slug, amount_cents, currency,
     ids = meta_ids or {}
     user_data = {}
     if email:
-        # The only personal datum that leaves here, and it leaves hashed.
+        # Hashed, always. Meta never sees an address in the clear.
         user_data["em"] = [_sha256(email)]
+    # The identifier that does not depend on the buyer's inbox. An iCloud
+    # relay address, a wallet's own address, a typo — every one of them is an
+    # email Meta cannot join to a person, and each of those purchases was
+    # matching on nothing else. This is the session id the funnel has used
+    # since the first tap: the browser declares it to the pixel at init, so
+    # the Lead and InitiateCheckout it fires carry the same value, and the
+    # Purchase joins to them on it.
+    #
+    # Hashed with the same normalisation as the email, which is not a
+    # preference — fbevents.js normalises and SHA-256s advanced-matching
+    # values in the browser, so anything else here would hash to a different
+    # string and match nothing.
+    if session_id:
+        user_data["external_id"] = _sha256(session_id)
+    # Where the buyer actually was, captured when they asked for a checkout
+    # session because this code runs on Stripe's request and not theirs.
+    # Neither is hashed: Meta's spec takes both in the clear and hashing
+    # either one makes it unusable.
+    if client_ip:
+        user_data["client_ip_address"] = client_ip
+    if client_ua:
+        user_data["client_user_agent"] = client_ua
     if ids.get("fbp"):
         user_data["fbp"] = ids["fbp"]
     # fbc is the joinable click id. Meta will take a raw fbclid wrapped in its
@@ -575,7 +598,9 @@ def send_purchase_event(purchase_id, slug, amount_cents, currency,
 
     if not user_data:
         # Nothing to match on. Meta rejects the event anyway, so do not spend
-        # a request finding that out.
+        # a request finding that out. In practice unreachable now that the
+        # session id is always there, and kept because "always" is a claim
+        # about a caller rather than about this function.
         log.info("purchase %s has no Meta identifiers — event not sent",
                  purchase_id)
         return False
@@ -1297,11 +1322,17 @@ def stripe_webhook():
                  "purchase event skipped", purchase_id, signed)
     else:
         try:
+            # What the browser knew, read back once. A session that never
+            # got a row — an older payment, a table not yet applied — sends
+            # exactly what it sent before.
+            context_ip, context_ua = _read_context(session_id)
             send_purchase_event(
                 purchase_id, slug, amount_cents, currency,
                 email=details.get("email"), payment_intent=payment_intent,
                 meta_ids=_clean_meta_ids(metadata),
                 event_time=int(event.get("created") or time.time()),
+                session_id=session_id,
+                client_ip=context_ip, client_ua=context_ua,
             )
         except Exception as exc:
             log.warning("Meta purchase event raised for purchase %s: %s",
