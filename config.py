@@ -191,6 +191,29 @@ SLUG_RE = re.compile(r"^[a-z0-9_-]{1,32}$")
 # Cache-Control for the /<slug> HTML shell. Short for now; raised later.
 FUNNEL_HTML_MAX_AGE = 300
 
+# Whether the `-test` twins are reachable at all.
+#
+# A twin is a byte-for-byte copy of a live funnel with its slug, its funnel_id
+# and its Stripe mode changed, so it can be walked end to end on test cards
+# without touching the live funnel's numbers. It is also, by construction, a
+# public URL one guessable suffix away from a real one — so it is off unless
+# the server says otherwise, and a fresh deploy that has never heard of this
+# variable exposes nothing.
+#
+# Read through the module rather than copied into a caller's local, because
+# the value that matters is the one at request time.
+TEST_FUNNELS = os.getenv("TEST_FUNNELS", "0") == "1"
+
+# What a `-test` slug is spelled with. One place, so the route guard and the
+# generator cannot drift apart on it.
+TEST_SUFFIX = "-test"
+
+
+def is_test_slug(slug):
+    """True for a slug that names a sandbox twin rather than a live funnel."""
+    return isinstance(slug, str) and slug.endswith(TEST_SUFFIX)
+
+
 # Facade and legal pages change rarely.
 PAGE_HTML_MAX_AGE = 3600
 

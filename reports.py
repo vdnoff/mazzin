@@ -1821,8 +1821,24 @@ def _is_zodiac(profile):
 
 
 def _profile(funnel_slug):
-    """The report profile for a funnel. Unregistered means kitchen."""
-    return PROFILES.get(funnel_slug or "", KITCHEN_PROFILE)
+    """The report profile for a funnel. Unregistered means kitchen.
+
+    A `-test` twin reads the profile of the funnel it was cut from. The twin
+    is that funnel — the same steps, the same copy, the same product — with
+    its Stripe mode changed, so a sandbox purchase has to come back the same
+    report a real one would. Falling through to kitchen instead would have
+    made the twin a test of something nobody sells, and the failure is not
+    one a test card would show you: the walk succeeds, the money moves, and
+    the PDF is simply the wrong document.
+
+    Only the fallback moves. A twin registered here in its own right keeps
+    whatever it was registered with, and its section cache stays its own —
+    that is keyed on the funnel, and the twin is a different funnel.
+    """
+    slug = funnel_slug or ""
+    if slug not in PROFILES and config.is_test_slug(slug):
+        slug = slug[:-len(config.TEST_SUFFIX)]
+    return PROFILES.get(slug, KITCHEN_PROFILE)
 
 
 def personal_sections(funnel_slug):
