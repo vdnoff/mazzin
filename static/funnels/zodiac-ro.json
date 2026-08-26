@@ -1,0 +1,3332 @@
+{
+  "slug": "zodiac-ro",
+  "funnel_id": "zodiac_ro_v1",
+  "locale": "ro",
+  "theme": "zodiac",
+  "stripe_mode": "live",
+  "result_module": "/static/js/result_zodiac.js",
+  "result_css": "/static/css/result_zodiac.css",
+  "meta": {
+    "title": "Care e profilul tău cosmic?",
+    "og_image": "/static/galleries/zodiac/og.webp"
+  },
+  "swipe": {
+    "pairs_count": 18,
+    "headline": "Analiza profilului tău cosmic",
+    "subtext": "18 atingeri. Fără tastare. Un profil cosmic care chiar e al tău.",
+    "subtext_accent": "18 atingeri",
+    "hint": "Atinge ce alegi",
+    "label_mode": "badge",
+    "analyzing_fade_to": "#0E1430",
+    "steps": [
+      {
+        "id": "hook",
+        "question": "Ce cer te cheamă?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "zk1a",
+                "img": "/static/galleries/zodiac/zk1a.webp",
+                "label": "Apus de foc",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F2A33C",
+                    "element": "upper sky"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#D8642A",
+                    "element": "horizon"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#3A1E14",
+                    "element": "ridge line"
+                  }
+                ]
+              },
+              {
+                "id": "zk1b",
+                "img": "/static/galleries/zodiac/zk1b.webp",
+                "label": "Noapte cu stele",
+                "tags": [
+                  "air",
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#C9D2E0",
+                    "element": "high stars"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#3E2E6E",
+                    "element": "mid sky"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#101A38",
+                    "element": "low sky"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sign",
+        "question": "Atinge zodia ta:",
+        "format": "grid12",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sign_aries",
+                "img": "/static/galleries/zodiac/sign_aries.webp",
+                "label": "Berbec",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Ram Scarlet",
+                    "hex": "#D8452C",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#D9822A",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#3A241C",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_taurus",
+                "img": "/static/galleries/zodiac/sign_taurus.webp",
+                "label": "Taur",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "moon"
+                ],
+                "colors": [
+                  {
+                    "name": "Moss Green",
+                    "hex": "#7E9B5E",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#A79E8C",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#4A3826",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_gemini",
+                "img": "/static/galleries/zodiac/sign_gemini.webp",
+                "label": "Gemeni",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#BBD3E6",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Solar Brass",
+                    "hex": "#D4A94E",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#5A6A7A",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_cancer",
+                "img": "/static/galleries/zodiac/sign_cancer.webp",
+                "label": "Rac",
+                "tags": [
+                  "water",
+                  "moon",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#CBD6E2",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#5E8FA0",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#22335C",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_leo",
+                "img": "/static/galleries/zodiac/sign_leo.webp",
+                "label": "Leu",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F5B942",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#D9762A",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#40241A",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_virgo",
+                "img": "/static/galleries/zodiac/sign_virgo.webp",
+                "label": "Fecioară",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "sun"
+                ],
+                "colors": [
+                  {
+                    "name": "Wheat Gold",
+                    "hex": "#C8B87A",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#74905A",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#443422",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_libra",
+                "img": "/static/galleries/zodiac/sign_libra.webp",
+                "label": "Balanță",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#DCE6EE",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#AEC8DE",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Dusk Lilac",
+                    "hex": "#8E8CB0",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_scorpio",
+                "img": "/static/galleries/zodiac/sign_scorpio.webp",
+                "label": "Scorpion",
+                "tags": [
+                  "water",
+                  "mystic",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Surface Teal",
+                    "hex": "#4E8290",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4A2E58",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Abyss Indigo",
+                    "hex": "#141E36",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_sagittarius",
+                "img": "/static/galleries/zodiac/sign_sagittarius.webp",
+                "label": "Săgetător",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Arrow Gold",
+                    "hex": "#E8A83A",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Ember Rust",
+                    "hex": "#B85A24",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#38221A",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_capricorn",
+                "img": "/static/galleries/zodiac/sign_capricorn.webp",
+                "label": "Capricorn",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Summit Grey",
+                    "hex": "#9EA093",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#8C8778",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Granite Dark",
+                    "hex": "#3A3A30",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_aquarius",
+                "img": "/static/galleries/zodiac/sign_aquarius.webp",
+                "label": "Vărsător",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Frost Sky",
+                    "hex": "#AEC6DE",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4E4080",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#3A4656",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_pisces",
+                "img": "/static/galleries/zodiac/sign_pisces.webp",
+                "label": "Pești",
+                "tags": [
+                  "water",
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Sea Mist",
+                    "hex": "#A9C4D6",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4A3A78",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#1A2446",
+                    "element": "lower field"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "seeking",
+        "question": "Ce te-a adus aici în seara asta?",
+        "format": "grid4",
+        "pin_first": true,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sk3a",
+                "img": "/static/galleries/zodiac30/sk3a.webp",
+                "label": "Dragoste",
+                "tags": [
+                  "water",
+                  "mystic",
+                  "purpose_love"
+                ],
+                "colors": [
+                  {
+                    "name": "Nebula Rose",
+                    "hex": "#D48CB4",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4A3078",
+                    "element": "cloud"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#141C3E",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "sk3b",
+                "img": "/static/galleries/zodiac30/sk3b.webp",
+                "label": "Carieră și bani",
+                "tags": [
+                  "fire",
+                  "bold",
+                  "purpose_career"
+                ],
+                "colors": [
+                  {
+                    "name": "Comet Gold",
+                    "hex": "#F0C05A",
+                    "element": "head"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#D8762A",
+                    "element": "tail"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#3A2216",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "sk3c",
+                "img": "/static/galleries/zodiac30/sk3c.webp",
+                "label": "Liniște interioară",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "purpose_peace"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#C2CFD2",
+                    "element": "sky"
+                  },
+                  {
+                    "name": "Slate Green",
+                    "hex": "#6E8478",
+                    "element": "far shore"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#2E3A2C",
+                    "element": "water"
+                  }
+                ]
+              },
+              {
+                "id": "sk3d",
+                "img": "/static/galleries/zodiac30/sk3d.webp",
+                "label": "Drumul de urmat",
+                "tags": [
+                  "air",
+                  "sun",
+                  "purpose_path"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#C6D9EA",
+                    "element": "high sky"
+                  },
+                  {
+                    "name": "Solar Brass",
+                    "hex": "#CFA24E",
+                    "element": "horizon"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#39465A",
+                    "element": "ground"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bond",
+        "question": "Inima ta, chiar acum:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "bd4a",
+                "img": "/static/galleries/zodiac30/bd4a.webp",
+                "label": "Singur(ă), în căutare",
+                "tags": [
+                  "sun",
+                  "bold",
+                  "bond_single"
+                ],
+                "colors": [
+                  {
+                    "name": "Star White",
+                    "hex": "#F6EBC8",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Solar Brass",
+                    "hex": "#D8A648",
+                    "element": "halo"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#141E3C",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "bd4b",
+                "img": "/static/galleries/zodiac30/bd4b.webp",
+                "label": "Îndrăgostit(ă)",
+                "tags": [
+                  "water",
+                  "calm",
+                  "bond_love"
+                ],
+                "colors": [
+                  {
+                    "name": "Sea Mist",
+                    "hex": "#B4CFDC",
+                    "element": "halos"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#3E7A90",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#16244A",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "bd4c",
+                "img": "/static/galleries/zodiac30/bd4c.webp",
+                "label": "E complicat",
+                "tags": [
+                  "moon",
+                  "mystic",
+                  "bond_complicated"
+                ],
+                "colors": [
+                  {
+                    "name": "Corona Gold",
+                    "hex": "#DCB05C",
+                    "element": "corona"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#462C60",
+                    "element": "rim"
+                  },
+                  {
+                    "name": "Eclipse Black",
+                    "hex": "#120E1C",
+                    "element": "disc"
+                  }
+                ]
+              },
+              {
+                "id": "bd4d",
+                "img": "/static/galleries/zodiac30/bd4d.webp",
+                "label": "În vindecare",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "bond_healing"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud Grey",
+                    "hex": "#C4C6BC",
+                    "element": "cloud"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#7A8C64",
+                    "element": "far ridge"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#3A3426",
+                    "element": "ground"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "energy",
+        "question": "Alege-ți sursa de putere",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "en4a",
+                "img": "/static/galleries/zodiac/en4a.webp",
+                "label": "Soare radiant",
+                "tags": [
+                  "fire",
+                  "sun"
+                ],
+                "colors": [
+                  {
+                    "name": "Sun White",
+                    "hex": "#FBE2A0",
+                    "element": "corona"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F2A83C",
+                    "element": "disc"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#C96A22",
+                    "element": "outer sky"
+                  }
+                ]
+              },
+              {
+                "id": "en4b",
+                "img": "/static/galleries/zodiac/en4b.webp",
+                "label": "Lună luminoasă",
+                "tags": [
+                  "water",
+                  "moon"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#D5DDE8",
+                    "element": "disc"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#4E7E92",
+                    "element": "halo"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#16204A",
+                    "element": "outer sky"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "landscape",
+        "question": "Ce lume îți pare acasă?",
+        "format": "grid6",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "ls5a",
+                "img": "/static/galleries/zodiac/ls5a.webp",
+                "label": "Vulcan",
+                "tags": [
+                  "fire",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Smoke Ochre",
+                    "hex": "#C97B3A",
+                    "element": "smoke"
+                  },
+                  {
+                    "name": "Lava Red",
+                    "hex": "#A8321F",
+                    "element": "crater"
+                  },
+                  {
+                    "name": "Basalt Black",
+                    "hex": "#2A1A16",
+                    "element": "slope"
+                  }
+                ]
+              },
+              {
+                "id": "ls5b",
+                "img": "/static/galleries/zodiac/ls5b.webp",
+                "label": "Pădure",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Canopy Light",
+                    "hex": "#A6C078",
+                    "element": "canopy"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#5F8046",
+                    "element": "trunks"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#33452A",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "ls5c",
+                "img": "/static/galleries/zodiac/ls5c.webp",
+                "label": "Munte",
+                "tags": [
+                  "earth",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Snow Grey",
+                    "hex": "#CBD2D6",
+                    "element": "summit"
+                  },
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#8C8B82",
+                    "element": "face"
+                  },
+                  {
+                    "name": "Granite Dark",
+                    "hex": "#3E4038",
+                    "element": "base"
+                  }
+                ]
+              },
+              {
+                "id": "ls5d",
+                "img": "/static/galleries/zodiac/ls5d.webp",
+                "label": "Ocean",
+                "tags": [
+                  "water",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Surface Teal",
+                    "hex": "#5D9BA8",
+                    "element": "surface"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#2E6E82",
+                    "element": "mid water"
+                  },
+                  {
+                    "name": "Abyss Indigo",
+                    "hex": "#132A46",
+                    "element": "deep water"
+                  }
+                ]
+              },
+              {
+                "id": "ls5e",
+                "img": "/static/galleries/zodiac/ls5e.webp",
+                "label": "Deșert",
+                "tags": [
+                  "fire",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Heat Haze",
+                    "hex": "#EBC98C",
+                    "element": "haze"
+                  },
+                  {
+                    "name": "Warm Sand",
+                    "hex": "#D09A55",
+                    "element": "dunes"
+                  },
+                  {
+                    "name": "Dune Shadow",
+                    "hex": "#8A5A2E",
+                    "element": "shadow"
+                  }
+                ]
+              },
+              {
+                "id": "ls5f",
+                "img": "/static/galleries/zodiac/ls5f.webp",
+                "label": "Deasupra norilor",
+                "tags": [
+                  "air",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#CFE2F0",
+                    "element": "high sky"
+                  },
+                  {
+                    "name": "Sky Blue",
+                    "hex": "#9CC3DF",
+                    "element": "mid sky"
+                  },
+                  {
+                    "name": "Cloud White",
+                    "hex": "#E6EDF2",
+                    "element": "cloud floor"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "palette",
+        "question": "Ce paletă îți ține energia?",
+        "format": "grid6",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "pl6a",
+                "img": "/static/galleries/zodiac/pl6a.webp",
+                "label": "Roșuri de jar",
+                "tags": [
+                  "fire",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F0A03C",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#CE5F26",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Signal Red",
+                    "hex": "#8E2A20",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "ember-red"
+              },
+              {
+                "id": "pl6b",
+                "img": "/static/galleries/zodiac/pl6b.webp",
+                "label": "Verzuri de pădure",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Canopy Light",
+                    "hex": "#AFC98A",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#6E8C50",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#3A4A2C",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "forest-green"
+              },
+              {
+                "id": "pl6c",
+                "img": "/static/galleries/zodiac/pl6c.webp",
+                "label": "Ceruri pastelate",
+                "tags": [
+                  "air",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#EDF2F6",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#C3D9EA",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Dusk Lilac",
+                    "hex": "#B7B2D6",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "pastel-sky"
+              },
+              {
+                "id": "pl6d",
+                "img": "/static/galleries/zodiac/pl6d.webp",
+                "label": "Ocean adânc",
+                "tags": [
+                  "water",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Surface Teal",
+                    "hex": "#4E8FA0",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#255E76",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Abyss Indigo",
+                    "hex": "#0E1E3C",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "deep-ocean"
+              },
+              {
+                "id": "pl6e",
+                "img": "/static/galleries/zodiac/pl6e.webp",
+                "label": "Violet cosmic",
+                "tags": [
+                  "water",
+                  "mystic",
+                  "moon"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#C6C2DC",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#5A3E8E",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#1C1740",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "cosmic-violet"
+              },
+              {
+                "id": "pl6f",
+                "img": "/static/galleries/zodiac/pl6f.webp",
+                "label": "Aur celest",
+                "tags": [
+                  "fire",
+                  "sun"
+                ],
+                "colors": [
+                  {
+                    "name": "Sun White",
+                    "hex": "#FBE7B4",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Solar Brass",
+                    "hex": "#D2A245",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#9E6A1E",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "celestial-gold"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "moment",
+        "question": "Ora ta de putere:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "mo7a",
+                "img": "/static/galleries/zodiac/mo7a.webp",
+                "label": "Prima lumină",
+                "tags": [
+                  "sun",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Dawn Cream",
+                    "hex": "#F6DFC0",
+                    "element": "upper sky"
+                  },
+                  {
+                    "name": "Rose Gold",
+                    "hex": "#E2A579",
+                    "element": "horizon"
+                  },
+                  {
+                    "name": "Low Cloud",
+                    "hex": "#8E93A2",
+                    "element": "land"
+                  }
+                ]
+              },
+              {
+                "id": "mo7b",
+                "img": "/static/galleries/zodiac/mo7b.webp",
+                "label": "Cer de miezul nopții",
+                "tags": [
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#B9C4D6",
+                    "element": "moonlight"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#3A2E60",
+                    "element": "mid sky"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#0E1430",
+                    "element": "low sky"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "symbol",
+        "question": "Alege-ți talismanul:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sy8a",
+                "img": "/static/galleries/zodiac/sy8a.webp",
+                "label": "Flacără",
+                "tags": [
+                  "fire",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Flame White",
+                    "hex": "#FBE0A2",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#EE9A32",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Signal Red",
+                    "hex": "#A32E1E",
+                    "element": "base"
+                  }
+                ]
+              },
+              {
+                "id": "sy8b",
+                "img": "/static/galleries/zodiac/sy8b.webp",
+                "label": "Cristal",
+                "tags": [
+                  "earth",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#BFB6A4",
+                    "element": "face"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#7B8C62",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#42382A",
+                    "element": "base"
+                  }
+                ]
+              },
+              {
+                "id": "sy8c",
+                "img": "/static/galleries/zodiac/sy8c.webp",
+                "label": "Pană",
+                "tags": [
+                  "air",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#EAF0F5",
+                    "element": "tip"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#BED4E6",
+                    "element": "vane"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#6E7E8E",
+                    "element": "quill"
+                  }
+                ]
+              },
+              {
+                "id": "sy8d",
+                "img": "/static/galleries/zodiac/sy8d.webp",
+                "label": "Val",
+                "tags": [
+                  "water",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Sea Mist",
+                    "hex": "#B6D2DE",
+                    "element": "crest"
+                  },
+                  {
+                    "name": "Surface Teal",
+                    "hex": "#579CAE",
+                    "element": "face"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#215C72",
+                    "element": "trough"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "moonphase",
+        "question": "Ce lună îți vorbește?",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "mn9a",
+                "img": "/static/galleries/zodiac/mn9a.webp",
+                "label": "Lună nouă",
+                "tags": [
+                  "mystic",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Faint Grey",
+                    "hex": "#6E6E82",
+                    "element": "rim"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#3A3050",
+                    "element": "shadow"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#12121F",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "mn9b",
+                "img": "/static/galleries/zodiac/mn9b.webp",
+                "label": "Semilună",
+                "tags": [
+                  "air",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#C6D6E6",
+                    "element": "lit edge"
+                  },
+                  {
+                    "name": "Dusk Blue",
+                    "hex": "#7E92AE",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#3E4A5E",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "mn9c",
+                "img": "/static/galleries/zodiac/mn9c.webp",
+                "label": "Lună plină",
+                "tags": [
+                  "moon",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon White",
+                    "hex": "#F0F2F6",
+                    "element": "disc"
+                  },
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#B6C0D0",
+                    "element": "halo"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#20284A",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "mn9d",
+                "img": "/static/galleries/zodiac/mn9d.webp",
+                "label": "Eclipsă",
+                "tags": [
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Corona Gold",
+                    "hex": "#E0B458",
+                    "element": "corona"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4A2E64",
+                    "element": "rim"
+                  },
+                  {
+                    "name": "Eclipse Black",
+                    "hex": "#100C1A",
+                    "element": "disc"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "flow",
+        "question": "Ritmul tău firesc:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "fl10a",
+                "img": "/static/galleries/zodiac/fl10a.webp",
+                "label": "Furtună cu fulgere",
+                "tags": [
+                  "air",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Strike White",
+                    "hex": "#F2F0E4",
+                    "element": "strike"
+                  },
+                  {
+                    "name": "Storm Silver",
+                    "hex": "#9AA6B4",
+                    "element": "cloud edge"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#2A3040",
+                    "element": "cloud body"
+                  }
+                ]
+              },
+              {
+                "id": "fl10b",
+                "img": "/static/galleries/zodiac/fl10b.webp",
+                "label": "Lac de munte nemișcat",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#BFCBD6",
+                    "element": "sky"
+                  },
+                  {
+                    "name": "Slate Green",
+                    "hex": "#6E8478",
+                    "element": "far shore"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#33402F",
+                    "element": "water"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "drain",
+        "question": "Ce energie te seacă cel mai tare?",
+        "format": "grid4",
+        "scoring": "inverse",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "dr11a",
+                "img": "/static/galleries/zodiac/dr11a.webp",
+                "label": "Mulțime haotică",
+                "tags": [
+                  "air",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Noise White",
+                    "hex": "#DCDAD2",
+                    "element": "upper"
+                  },
+                  {
+                    "name": "Grey Blue",
+                    "hex": "#8E96A2",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Crowd Slate",
+                    "hex": "#4A4E58",
+                    "element": "lower"
+                  }
+                ]
+              },
+              {
+                "id": "dr11b",
+                "img": "/static/galleries/zodiac/dr11b.webp",
+                "label": "Birou cu neoane",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Strip White",
+                    "hex": "#E8ECE6",
+                    "element": "ceiling"
+                  },
+                  {
+                    "name": "Grey Green",
+                    "hex": "#A8B0A2",
+                    "element": "wall"
+                  },
+                  {
+                    "name": "Carpet Grey",
+                    "hex": "#5E645E",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "dr11c",
+                "img": "/static/galleries/zodiac/dr11c.webp",
+                "label": "Ceață stătută",
+                "tags": [
+                  "water",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Fog White",
+                    "hex": "#D8DEE2",
+                    "element": "upper"
+                  },
+                  {
+                    "name": "Damp Grey",
+                    "hex": "#9AA4AA",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Still Slate",
+                    "hex": "#5A646A",
+                    "element": "lower"
+                  }
+                ]
+              },
+              {
+                "id": "dr11d",
+                "img": "/static/galleries/zodiac/dr11d.webp",
+                "label": "Lumină orbitoare",
+                "tags": [
+                  "fire",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Glare White",
+                    "hex": "#FBF4E0",
+                    "element": "source"
+                  },
+                  {
+                    "name": "Hard Amber",
+                    "hex": "#DCA83C",
+                    "element": "spill"
+                  },
+                  {
+                    "name": "Burnt Edge",
+                    "hex": "#6E4A1E",
+                    "element": "edge"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sanctuary",
+        "question": "Unde ți se încarcă sufletul:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sa12a",
+                "img": "/static/galleries/zodiac/sa12a.webp",
+                "label": "Cameră la lumânare",
+                "tags": [
+                  "earth",
+                  "moon",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Candle Amber",
+                    "hex": "#E8B45E",
+                    "element": "flame"
+                  },
+                  {
+                    "name": "Warm Clay",
+                    "hex": "#9E6444",
+                    "element": "wall"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#3A2A1E",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "sa12b",
+                "img": "/static/galleries/zodiac/sa12b.webp",
+                "label": "Terasă sub stele",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Star Silver",
+                    "hex": "#C8D4E4",
+                    "element": "sky"
+                  },
+                  {
+                    "name": "City Brass",
+                    "hex": "#C4933E",
+                    "element": "skyline"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#28303E",
+                    "element": "rooftop"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "decision",
+        "question": "Când viața se bifurcă, urmezi:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "dc14a",
+                "img": "/static/galleries/zodiac30/dc14a.webp",
+                "label": "Întâi inima",
+                "tags": [
+                  "water",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Sea Mist",
+                    "hex": "#AEC8D8",
+                    "element": "outer stars"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#3A7288",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#121E42",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "dc14b",
+                "img": "/static/galleries/zodiac30/dc14b.webp",
+                "label": "Întâi mintea",
+                "tags": [
+                  "air",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#E4EDF4",
+                    "element": "nodes"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#B4CEE4",
+                    "element": "lattice"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#3E4A5C",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "dc14c",
+                "img": "/static/galleries/zodiac30/dc14c.webp",
+                "label": "Întâi instinctul",
+                "tags": [
+                  "fire",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Flame White",
+                    "hex": "#FBE2A6",
+                    "element": "flame core"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#EE9A32",
+                    "element": "flame body"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#341E16",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "dc14d",
+                "img": "/static/galleries/zodiac30/dc14d.webp",
+                "label": "Întâi timpul",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#B6AE9C",
+                    "element": "glass"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#6E8654",
+                    "element": "falling sand"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#382E20",
+                    "element": "field"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tide",
+        "question": "Ce adevăr seamănă mai mult cu tine?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "td15a",
+                "img": "/static/galleries/zodiac30/td15a.webp",
+                "label": "Simt totul",
+                "tags": [
+                  "water",
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#C4CFDE",
+                    "element": "moonlight"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#2E6A82",
+                    "element": "crest"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#101A3A",
+                    "element": "trough"
+                  }
+                ]
+              },
+              {
+                "id": "td15b",
+                "img": "/static/galleries/zodiac30/td15b.webp",
+                "label": "Țin totul în mine",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#A8A292",
+                    "element": "stone face"
+                  },
+                  {
+                    "name": "Slate Green",
+                    "hex": "#68806E",
+                    "element": "still water"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#33402F",
+                    "element": "shadow"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "door",
+        "question": "Alege ușa prin care ai trece pe nevăzute:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "dr16a",
+                "img": "/static/galleries/zodiac30/dr16a.webp",
+                "label": "Ușă aurie",
+                "tags": [
+                  "fire",
+                  "sun"
+                ],
+                "colors": [
+                  {
+                    "name": "Sun White",
+                    "hex": "#FBE6B0",
+                    "element": "threshold"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#EDA43A",
+                    "element": "frame"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#9E6A1E",
+                    "element": "surround"
+                  }
+                ]
+              },
+              {
+                "id": "dr16b",
+                "img": "/static/galleries/zodiac30/dr16b.webp",
+                "label": "Ușă indigo",
+                "tags": [
+                  "water",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#BEC6DC",
+                    "element": "threshold"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4A3282",
+                    "element": "frame"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#121A3E",
+                    "element": "surround"
+                  }
+                ]
+              },
+              {
+                "id": "dr16c",
+                "img": "/static/galleries/zodiac30/dr16c.webp",
+                "label": "Ușă de piatră verde",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Canopy Light",
+                    "hex": "#A8C084",
+                    "element": "threshold"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#5F8046",
+                    "element": "frame"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#33402A",
+                    "element": "surround"
+                  }
+                ]
+              },
+              {
+                "id": "dr16d",
+                "img": "/static/galleries/zodiac30/dr16d.webp",
+                "label": "Ușă de cer palid",
+                "tags": [
+                  "air",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#E8EFF4",
+                    "element": "threshold"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#B8D2E6",
+                    "element": "frame"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#5A6A7A",
+                    "element": "surround"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "essence",
+        "question": "Esența ta cosmică:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "es13a",
+                "img": "/static/galleries/zodiac/es13a.webp",
+                "label": "Flacără radiantă",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Sun White",
+                    "hex": "#FCE8B4",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F0A234",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Signal Red",
+                    "hex": "#9E2E1E",
+                    "element": "edge"
+                  }
+                ]
+              },
+              {
+                "id": "es13b",
+                "img": "/static/galleries/zodiac/es13b.webp",
+                "label": "Adâncuri liniștite",
+                "tags": [
+                  "water",
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#BCC8DC",
+                    "element": "surface"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#463A78",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#101A3A",
+                    "element": "deep"
+                  }
+                ]
+              },
+              {
+                "id": "es13c",
+                "img": "/static/galleries/zodiac/es13c.webp",
+                "label": "Piatră înrădăcinată",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "moon"
+                ],
+                "colors": [
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#B4AC98",
+                    "element": "face"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#6E8654",
+                    "element": "moss"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#3A2E20",
+                    "element": "base"
+                  }
+                ]
+              },
+              {
+                "id": "es13d",
+                "img": "/static/galleries/zodiac/es13d.webp",
+                "label": "Cer deschis",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#EEF3F7",
+                    "element": "high"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#AECBE2",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Solar Brass",
+                    "hex": "#C89A46",
+                    "element": "horizon"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "seal",
+        "question": "Pecetluiește-ți citirea:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sl18a",
+                "img": "/static/galleries/zodiac30/sl18a.webp",
+                "label": "Soare care răsare",
+                "tags": [
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Sun White",
+                    "hex": "#FBE4AC",
+                    "element": "disc"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F0A63C",
+                    "element": "corona"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#3A2618",
+                    "element": "horizon"
+                  }
+                ]
+              },
+              {
+                "id": "sl18b",
+                "img": "/static/galleries/zodiac30/sl18b.webp",
+                "label": "Lună la zenit",
+                "tags": [
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon White",
+                    "hex": "#EFF2F6",
+                    "element": "disc"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#3E3068",
+                    "element": "high sky"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#0E1430",
+                    "element": "low sky"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "interstitials": [
+    {
+      "after_step": 4,
+      "template": "confirm",
+      "kicker": "Semnal înregistrat",
+      "line": "Două semnale personale, primite.",
+      "sub": "Profilul tău se îngustează.",
+      "cta": "Continuă analiza",
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "hook",
+        "sign",
+        "seeking",
+        "bond"
+      ],
+      "personal": {
+        "axis": "purpose",
+        "lines": {
+          "purpose_love": {
+            "line": "Zodia {sign}, care caută dragostea.",
+            "sub": "Asta restrânge repede cercul."
+          },
+          "purpose_career": {
+            "line": "Zodia {sign}, care caută avânt.",
+            "sub": "Asta restrânge repede cercul."
+          },
+          "purpose_peace": {
+            "line": "Zodia {sign}, care își apără liniștea.",
+            "sub": "Asta restrânge repede cercul."
+          },
+          "purpose_path": {
+            "line": "Zodia {sign}, care își desenează drumul.",
+            "sub": "Asta restrânge repede cercul."
+          }
+        }
+      }
+    },
+    {
+      "after_step": 9,
+      "template": "almost",
+      "kicker": "Tipar detectat",
+      "line": "Profil calibrat {pct}%.",
+      "cta": "Continuă analiza",
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "energy",
+        "landscape",
+        "palette",
+        "moment",
+        "symbol"
+      ],
+      "personal": {
+        "axis": "element",
+        "lines": {
+          "fire": {
+            "line": "Focul câștigă constant.",
+            "sub": "Dacă se menține, citirea ta se schimbă."
+          },
+          "earth": {
+            "line": "Pământul câștigă constant.",
+            "sub": "Dacă se menține, citirea ta se schimbă."
+          },
+          "air": {
+            "line": "Aerul câștigă constant.",
+            "sub": "Dacă se menține, citirea ta se schimbă."
+          },
+          "water": {
+            "line": "Apa câștigă constant.",
+            "sub": "Dacă se menține, citirea ta se schimbă."
+          }
+        }
+      }
+    },
+    {
+      "after_step": 14,
+      "template": "confirm",
+      "kicker": "Stratul adânc",
+      "line": "Stratul adânc, cartografiat.",
+      "sub": "Au mai rămas patru semnale.",
+      "cta": "Continuă analiza",
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "moonphase",
+        "flow",
+        "drain",
+        "sanctuary",
+        "decision"
+      ],
+      "personal": {
+        "step": "decision",
+        "lines": {
+          "dc14a": {
+            "line": "Alegi întâi cu inima.",
+            "sub": "Puțini recunosc asta."
+          },
+          "dc14b": {
+            "line": "Alegi întâi cu mintea.",
+            "sub": "Inima tot are un cuvânt de spus."
+          },
+          "dc14c": {
+            "line": "Întâi instinctul.",
+            "sub": "Cel mai rapid semnal al tău e de obicei și cel mai adevărat."
+          },
+          "dc14d": {
+            "line": "Lași timpul să decidă.",
+            "sub": "Răbdarea e o strategie, nu o amânare."
+          }
+        }
+      }
+    },
+    {
+      "after_step": 18,
+      "template": "almost",
+      "kicker": "Se calibrează",
+      "line": "Toate cele 18 semnale, primite.",
+      "sub": "Majoritatea combinațiilor sunt banale — să vedem cum e a ta.",
+      "cta": "Continuă analiza",
+      "auto_advance_ms": 2400,
+      "echo_steps": [
+        "tide",
+        "door",
+        "essence",
+        "seal"
+      ]
+    }
+  ],
+  "interstitial_working": [
+    "Îți citim alegerile…",
+    "Le cântărim față de cele patru elemente…",
+    "Pregătim ce urmează…"
+  ],
+  "preview_gallery": [
+    {
+      "id": "ls5a",
+      "img": "/static/galleries/zodiac/ls5a.webp",
+      "tags": [
+        "fire",
+        "bold"
+      ]
+    },
+    {
+      "id": "ls5b",
+      "img": "/static/galleries/zodiac/ls5b.webp",
+      "tags": [
+        "earth",
+        "calm"
+      ]
+    },
+    {
+      "id": "ls5c",
+      "img": "/static/galleries/zodiac/ls5c.webp",
+      "tags": [
+        "earth",
+        "bold"
+      ]
+    },
+    {
+      "id": "ls5d",
+      "img": "/static/galleries/zodiac/ls5d.webp",
+      "tags": [
+        "water",
+        "mystic"
+      ]
+    },
+    {
+      "id": "ls5e",
+      "img": "/static/galleries/zodiac/ls5e.webp",
+      "tags": [
+        "fire",
+        "calm"
+      ]
+    },
+    {
+      "id": "ls5f",
+      "img": "/static/galleries/zodiac/ls5f.webp",
+      "tags": [
+        "air",
+        "calm"
+      ]
+    },
+    {
+      "id": "pl6a",
+      "img": "/static/galleries/zodiac/pl6a.webp",
+      "tags": [
+        "fire",
+        "bold"
+      ]
+    },
+    {
+      "id": "pl6b",
+      "img": "/static/galleries/zodiac/pl6b.webp",
+      "tags": [
+        "earth",
+        "calm"
+      ]
+    },
+    {
+      "id": "pl6c",
+      "img": "/static/galleries/zodiac/pl6c.webp",
+      "tags": [
+        "air",
+        "calm"
+      ]
+    },
+    {
+      "id": "pl6d",
+      "img": "/static/galleries/zodiac/pl6d.webp",
+      "tags": [
+        "water",
+        "mystic"
+      ]
+    },
+    {
+      "id": "pl6e",
+      "img": "/static/galleries/zodiac/pl6e.webp",
+      "tags": [
+        "water",
+        "mystic",
+        "moon"
+      ]
+    },
+    {
+      "id": "pl6f",
+      "img": "/static/galleries/zodiac/pl6f.webp",
+      "tags": [
+        "fire",
+        "sun"
+      ]
+    },
+    {
+      "id": "es13a",
+      "img": "/static/galleries/zodiac/es13a.webp",
+      "tags": [
+        "fire",
+        "sun",
+        "bold"
+      ]
+    },
+    {
+      "id": "es13b",
+      "img": "/static/galleries/zodiac/es13b.webp",
+      "tags": [
+        "water",
+        "moon",
+        "mystic"
+      ]
+    },
+    {
+      "id": "es13c",
+      "img": "/static/galleries/zodiac/es13c.webp",
+      "tags": [
+        "earth",
+        "calm",
+        "moon"
+      ]
+    },
+    {
+      "id": "es13d",
+      "img": "/static/galleries/zodiac/es13d.webp",
+      "tags": [
+        "air",
+        "sun",
+        "bold"
+      ]
+    }
+  ],
+  "style_elements": {
+    "title": "Semnalele tale cosmice",
+    "subline": "Recunoscute din alegerile tale — citite pe larg în profilul tău.",
+    "items": [
+      {
+        "id": "flame",
+        "label": "Flacără",
+        "spec": "Element Foc — cardinal, se aprinde repede",
+        "image": "sy8a",
+        "img": "/static/galleries/zodiac/sy8a.webp",
+        "tags": [
+          "fire",
+          "bold"
+        ]
+      },
+      {
+        "id": "crystal",
+        "label": "Cristal",
+        "spec": "Element Pământ — ține, se schimbă greu",
+        "image": "sy8b",
+        "img": "/static/galleries/zodiac/sy8b.webp",
+        "tags": [
+          "earth",
+          "mystic"
+        ]
+      },
+      {
+        "id": "feather",
+        "label": "Pană",
+        "spec": "Element Aer — mutabil, purtat de mișcare",
+        "image": "sy8c",
+        "img": "/static/galleries/zodiac/sy8c.webp",
+        "tags": [
+          "air",
+          "calm"
+        ]
+      },
+      {
+        "id": "wave",
+        "label": "Val",
+        "spec": "Element Apă — cu maree, se întoarce singur",
+        "image": "sy8d",
+        "img": "/static/galleries/zodiac/sy8d.webp",
+        "tags": [
+          "water",
+          "mystic"
+        ]
+      },
+      {
+        "id": "full-moon",
+        "label": "Lună plină",
+        "spec": "Faza de vârf — vizibilă, expresivă, zgomotoasă",
+        "image": "mn9c",
+        "img": "/static/galleries/zodiac/mn9c.webp",
+        "tags": [
+          "moon",
+          "bold"
+        ]
+      },
+      {
+        "id": "new-moon",
+        "label": "Lună nouă",
+        "spec": "Faza întunecată — intimă, în germen, fără grabă",
+        "image": "mn9a",
+        "img": "/static/galleries/zodiac/mn9a.webp",
+        "tags": [
+          "mystic",
+          "calm"
+        ]
+      },
+      {
+        "id": "eclipse",
+        "label": "Eclipsă",
+        "spec": "Faza de umbră — puncte de cotitură, schimbare impusă",
+        "image": "mn9d",
+        "img": "/static/galleries/zodiac/mn9d.webp",
+        "tags": [
+          "moon",
+          "mystic"
+        ]
+      },
+      {
+        "id": "ember-reds",
+        "label": "Roșuri de jar",
+        "spec": "Spectru cald — saturație mare, lumină puțină",
+        "image": "pl6a",
+        "img": "/static/galleries/zodiac/pl6a.webp",
+        "tags": [
+          "fire",
+          "bold"
+        ]
+      },
+      {
+        "id": "deep-ocean",
+        "label": "Ocean adânc",
+        "spec": "Spectru rece — valoare adâncă, o singură nuanță",
+        "image": "pl6d",
+        "img": "/static/galleries/zodiac/pl6d.webp",
+        "tags": [
+          "water",
+          "mystic"
+        ]
+      },
+      {
+        "id": "volcano",
+        "label": "Vulcan",
+        "spec": "Teren de Foc — presiune ținută sub o suprafață",
+        "image": "ls5a",
+        "img": "/static/galleries/zodiac/ls5a.webp",
+        "tags": [
+          "fire",
+          "bold"
+        ]
+      },
+      {
+        "id": "forest",
+        "label": "Pădure",
+        "spec": "Teren de Pământ — înrădăcinat, crește încet, tăcut",
+        "image": "ls5b",
+        "img": "/static/galleries/zodiac/ls5b.webp",
+        "tags": [
+          "earth",
+          "calm"
+        ]
+      },
+      {
+        "id": "open-sky",
+        "label": "Deasupra norilor",
+        "spec": "Teren de Aer — fără hotar, fără vreme",
+        "image": "ls5f",
+        "img": "/static/galleries/zodiac/ls5f.webp",
+        "tags": [
+          "air",
+          "calm"
+        ]
+      }
+    ]
+  },
+  "styles": [
+    {
+      "id": "radiant_fire",
+      "name": "Foc Radiant",
+      "tags": [
+        "fire",
+        "sun",
+        "bold"
+      ],
+      "blurb": "Căldură care ajunge înaintea ta — decizi repede, te angajezi cu voce tare, iar încăperea fie se încălzește lângă tine, fie îți face loc.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Solar Amber",
+              "rgb": [
+                242,
+                163,
+                60
+              ]
+            },
+            {
+              "name": "Ember Gold",
+              "rgb": [
+                216,
+                100,
+                42
+              ]
+            },
+            {
+              "name": "Signal Red",
+              "rgb": [
+                173,
+                51,
+                38
+              ]
+            },
+            {
+              "name": "Ash Basalt",
+              "rgb": [
+                58,
+                30,
+                20
+              ]
+            }
+          ],
+          "line": "Solar Amber e registrul tău de zi cu zi, Signal Red e ce apuci când ai nevoie ca încăperea să se întoarcă spre tine, iar Ash Basalt e greutatea care împiedică totul să ardă până joi.",
+          "talismans": [
+            "Carneol — purtat în buzunar, nu la vedere",
+            "Piatra soarelui — pe un lanț destul de scurt cât să stea la claviculă",
+            "O cheie de alamă ținută în haina pe care o porți cel mai des"
+          ],
+          "lucky_days": "Marți și duminică — prima pentru a începe lucruri, a doua pentru a le termina."
+        },
+        "mistakes": {
+          "setup": "Aceea e cea mai ușor de dus dintre cele cinci. Celelalte patru taie mai adânc, iar cea care te costă cel mai mult acum e",
+          "trigger": "viteza cu care decizi, nu decizia,"
+        },
+        "dna": {
+          "setup": "Focul și Soarele par același lucru din afară și trag în direcții opuse pe dinăuntru, iar ruptura se vede",
+          "trigger": "în alegerile pe care le-ai făcut cel mai repede,"
+        },
+        "materials": {
+          "setup": "Siguranța ți se citește cu mult înainte s-o simți, iar cel care rămâne e cel care",
+          "trigger": "așteaptă să treacă prima săptămână,"
+        },
+        "splurge": {
+          "setup": "Tiparul tău de câștig nu e plat și nici n-a fost menit să fie, iar luna în care se întoarce e",
+          "trigger": "cea de imediat după ce te plictisești,"
+        },
+        "shopping": {
+          "setup": "Două ferestre din următoarele douăsprezece luni duc mai tot elanul tău, iar prima se deschide",
+          "trigger": "mai devreme decât ai plănui,"
+        },
+        "mistake_one": {
+          "title": "Confunzi viteza cu certitudinea",
+          "body": "Elanul tău îți pare o dovadă — decizia a venit repede, deci simți că a venit de undeva din adânc. Uneori vine din nimic altceva decât din disconfortul de a sta pe loc, iar cele două sunt identice pe dinăuntru.",
+          "fix": "Dormi o noapte peste orice decizie pe care ai putea-o explica în mai puțin de zece secunde."
+        }
+      }
+    },
+    {
+      "id": "deep_water",
+      "name": "Apă Adâncă",
+      "tags": [
+        "water",
+        "moon",
+        "mystic"
+      ],
+      "blurb": "Totul se înregistrează și aproape nimic nu se vede — citești o încăpere în câteva secunde și o dai înapoi încet, în termenii tăi.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Moon Silver",
+              "rgb": [
+                196,
+                205,
+                214
+              ]
+            },
+            {
+              "name": "Tidal Teal",
+              "rgb": [
+                42,
+                104,
+                122
+              ]
+            },
+            {
+              "name": "Deep Violet",
+              "rgb": [
+                70,
+                46,
+                104
+              ]
+            },
+            {
+              "name": "Midnight Indigo",
+              "rgb": [
+                24,
+                32,
+                66
+              ]
+            }
+          ],
+          "line": "Midnight Indigo e locul în care ești cel mai mult tu, Moon Silver e ce le permite celorlalți să te găsească acolo, iar Deep Violet e accentul de folosit o dată într-o încăpere și niciodată de două ori.",
+          "talismans": [
+            "Piatra lunii — purtată acolo unde ajungi la ea fără să te uiți",
+            "Labradorit — ținut pe birou, nu pe corp",
+            "Un vas mic cu sare de mare lângă ușa pe care o folosești"
+          ],
+          "lucky_days": "Luni și joi — luni pentru a citi o situație, joi pentru a o spune cu voce tare."
+        },
+        "mistakes": {
+          "setup": "Pe aceea o știai deja pe jumătate. Celelalte patru sunt cele pe care oamenii apropiați le-au observat și nu ți le-au spus, iar cea mai zgomotoasă e",
+          "trigger": "ce faci cu o tăcere,"
+        },
+        "dna": {
+          "setup": "Apa și Luna se înțeleg în aproape tot, de aceea treimea mistică din tine trece neobservată — iese la suprafață",
+          "trigger": "în ce refuzi fără să explici,"
+        },
+        "materials": {
+          "setup": "Dai adâncime devreme și acces târziu, iar nepotrivirea asta e ce se citește greșit drept",
+          "trigger": "distanță, când de fapt e o chestiune de ritm,"
+        },
+        "splurge": {
+          "setup": "Banii îți urmează atenția, nu efortul, iar tiparul se rupe",
+          "trigger": "de fiecare dată când iei un rol care cere să fie jucat,"
+        },
+        "shopping": {
+          "setup": "Cea mai puternică perioadă a ta din anul acesta nu e cea aglomerată, iar ea începe",
+          "trigger": "în luna în care încetezi s-o urmărești,"
+        },
+        "mistake_one": {
+          "title": "Aștepți momentul perfect ca s-o spui",
+          "body": "Absorbi mai mult decât oricine din încăpere și ții mai mult, de aceea citirea ta e aproape mereu corectă. Tot de aceea ajunge după ce situația s-a rezolvat fără tine în ea.",
+          "fix": "Pune-ți un plafon de trei zile între clipa în care observi ceva și clipa în care îl numești, formulări stângace incluse."
+        }
+      }
+    },
+    {
+      "id": "grounded_earth",
+      "name": "Pământ Statornic",
+      "tags": [
+        "earth",
+        "calm",
+        "moon"
+      ],
+      "blurb": "Greutate și răbdare — construiești lucruri care rămân construite, iar valoarea asta stă nevăzută până în ziua în care nu mai stă.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Quarry Stone",
+              "rgb": [
+                166,
+                158,
+                142
+              ]
+            },
+            {
+              "name": "Moss Green",
+              "rgb": [
+                92,
+                112,
+                74
+              ]
+            },
+            {
+              "name": "Warm Clay",
+              "rgb": [
+                158,
+                100,
+                68
+              ]
+            },
+            {
+              "name": "Bark Umber",
+              "rgb": [
+                64,
+                48,
+                36
+              ]
+            }
+          ],
+          "line": "Moss Green și Quarry Stone sunt cele două lângă care poți pune orice, Warm Clay e ce le împiedică pe amândouă să devină austere, iar Bark Umber e de pus pe margini, nu pe câmp.",
+          "talismans": [
+            "Cuarț fumuriu — în buzunarul pe care chiar îl folosești",
+            "Jasp — ținut acolo unde lucrezi, nu acolo unde te odihnești",
+            "O mărgea de lut nesmălțuit pe un șnur simplu"
+          ],
+          "lucky_days": "Vineri și sâmbătă — vineri ca să închei lucruri, sâmbătă ca să le începi."
+        },
+        "mistakes": {
+          "setup": "Aceea e cea mai ieftin de corectat dintre cele cinci. Celelalte patru merg de ani buni, iar în capul listei stă",
+          "trigger": "ce accepți din pură statornicie,"
+        },
+        "dna": {
+          "setup": "Pământul pare calm, iar calmul e luat drept acord, și diferența se vede",
+          "trigger": "în lucrurile pe care nu le mai spui a doua oară,"
+        },
+        "materials": {
+          "setup": "Ești omul de care ceilalți se sprijină ca să stea drept, iar ce nu verifică nimeni e",
+          "trigger": "pe cine te sprijini tu,"
+        },
+        "splurge": {
+          "setup": "Plata ta e sub valoare într-un mod precis și reparabil, iar reparația e",
+          "trigger": "un număr spus o singură dată, fără niciun motiv după el,"
+        },
+        "shopping": {
+          "setup": "Cele douăsprezece luni care vin au în ele o singură balama adevărată, și aceea e",
+          "trigger": "o decizie în jurul căreia dai deja târcoale,"
+        },
+        "mistake_one": {
+          "title": "Absorbi costul în loc să-l numești",
+          "body": "Iei ora în plus și conversația incomodă și le iei destul de tăcut cât nimeni să nu afle că erau în plus. În câțiva ani, nivelul de referință se mută, iar favoarea devine pur și simplu ce faci tu.",
+          "fix": "Spune cât te-a costat, o singură dată, în clipa în care se întâmplă, fără să ceri nimic în schimb."
+        }
+      }
+    },
+    {
+      "id": "celestial_air",
+      "name": "Aer Celest",
+      "tags": [
+        "air",
+        "sun",
+        "bold"
+      ],
+      "blurb": "Ideile trec prin tine mai repede decât apuci să le cheltuiești — pui unul lângă altul lucruri la care nimeni nu s-ar gândi și faci să pară că n-a fost nimic.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Cloud White",
+              "rgb": [
+                232,
+                232,
+                226
+              ]
+            },
+            {
+              "name": "Pale Sky",
+              "rgb": [
+                176,
+                200,
+                218
+              ]
+            },
+            {
+              "name": "Solar Brass",
+              "rgb": [
+                204,
+                164,
+                84
+              ]
+            },
+            {
+              "name": "Storm Slate",
+              "rgb": [
+                72,
+                84,
+                96
+              ]
+            }
+          ],
+          "line": "Pale Sky și Cloud White sunt baza și e bine să rămână aproape plictisitoare; Solar Brass e singura notă caldă care le face să pară alese, iar Storm Slate dă întregului o muchie de ținut.",
+          "talismans": [
+            "Cuarț incolor — mic, la tine, nu la vedere",
+            "Acvamarin — purtat pentru conversațiile care contează",
+            "Un cocor de hârtie împăturit, ținut într-un buzunar de geantă"
+          ],
+          "lucky_days": "Miercuri și duminică — miercuri pentru a vorbi, duminică pentru a hotărî ce a însemnat."
+        },
+        "mistakes": {
+          "setup": "Aceea e jumătatea vizibilă. Celelalte patru stau sub ea, iar cea care îți modelează cele mai multe săptămâni e",
+          "trigger": "cum te porți în a treia zi,"
+        },
+        "dna": {
+          "setup": "Aerul și Soarele te fac ușor de citit, iar îndrăzneala te face de neuitat, și tensiunea dintre ele aterizează",
+          "trigger": "în ce începi și dai mai departe,"
+        },
+        "materials": {
+          "setup": "Ești ușor de cunoscut și greu de atins, iar cel care ajunge la tine e cel care",
+          "trigger": "pune a doua întrebare,"
+        },
+        "splurge": {
+          "setup": "Cei mai buni bani ai tăi vin din acea parte a muncii care ți se pare cel mai puțin interesantă, și anume din",
+          "trigger": "ducerea până la capăt, nu din idee,"
+        },
+        "shopping": {
+          "setup": "O fereastră din anul acesta valorează mai mult decât celelalte unsprezece luni la un loc, iar ea se deschide",
+          "trigger": "în săptămâna în care aproape că anulezi,"
+        },
+        "mistake_one": {
+          "title": "Pleci exact în clipa în care lucrul devine valoros",
+          "body": "Vezi forma unui lucru înaintea tuturor, care e partea grea, și apoi ți se termină interesul. Ideea rămâne a celui care a rămas pe loc, iar tu păstrezi amintirea exactă și inutilă că a fost întâi a ta.",
+          "fix": "Alege un singur lucru pe trimestru și rămâi cu el dincolo de punctul în care încetează să fie interesant."
+        }
+      }
+    }
+  ],
+  "analyzing": {
+    "duration_ms": 2500,
+    "text": "Îți citim semnalele",
+    "messages": [
+      "Îți citim cele 18 semnale…",
+      "Îți cântărim cele 18 semnale față de cele patru elemente…",
+      "Izolăm energia ta dominantă…"
+    ]
+  },
+  "analyzing_echo": true,
+  "report": {
+    "generating_messages": [
+      "Inteligența noastră artificială îți cântărește cele 18 semnale față de cele patru elemente…",
+      "Căutăm combinațiile care ți se potrivesc ȚIE…",
+      "Încrucișăm alegerile tale de element și de energie…",
+      "Aproape gata — îți scriem profilul…"
+    ],
+    "sections": [
+      {
+        "id": "palette",
+        "title": "Paleta ta de putere și talismanele",
+        "enabled": true,
+        "preview": [
+          "Fiecare vine cu codul ei exact și cu cele două nuanțe lângă care nu ar trebui să stea niciodată, pentru că aceeași culoare se citește altfel în lumină caldă decât în lumină rece.",
+          "Profilul numește cele trei pietre care îți țin energia, unde să porți fiecare dintre ele și cele două zile în care deciziile tale prind cel mai bine."
+        ],
+        "reveal": {
+          "mode": "visible"
+        }
+      },
+      {
+        "id": "mistakes",
+        "title": "5 puteri ascunse și puncte oarbe",
+        "teaser_line": "Încă patru, iar cea mai costisitoare e ultima.",
+        "enabled": true,
+        "preview": [
+          "Scrisă pe hârtie pare evidentă și tot îți modelează mai mult din săptămână decât orice altceva de pe lista asta.",
+          "Celelalte patru sunt ordonate după cât din energia ta te costă fiecare, pe tăcute."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "dna",
+        "title": "Planul tău cosmic",
+        "teaser_line": "Cum se împarte alegerea ta — {palette} — între cele mai puternice două elemente ale tale.",
+        "enabled": true,
+        "preview": [
+          "Trei axe, punctate din propriile tale atingeri, și un loc în care trag puternic una împotriva alteia.",
+          "Îți numește elementul, energia și tonul și spune cu care dintre cele trei conduci când ești sub presiune."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "materials",
+        "title": "Dragoste și compatibilitate",
+        "teaser_line": "De ce o anumită zodie te tot găsește.",
+        "enabled": true,
+        "preview": [
+          "E tiparul de sub oamenii pe care îi tot alegi, nu o listă de zodii de evitat.",
+          "Profilul numește cele trei energii cu care lucrezi ușor, pe cea care te costă și ce să spui în prima lună."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "splurge",
+        "title": "Drumul carierei și al banilor",
+        "teaser_line": "Unde câștigă energia ta de {symbol} — și ce să nu mai accepți.",
+        "enabled": true,
+        "preview": [
+          "Ritmul tău de câștig nu e plat și n-a fost niciodată, iar forma lui e mult mai utilă decât o medie.",
+          "Profilul marchează lunile în care energia ta plătește cel mai bine și numește singurul fel de muncă pe care să nu-l mai accepți."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "shopping",
+        "title": "Harta ta de energie pe 12 luni",
+        "teaser_line": "Trei luni puternice. Una tăcută.",
+        "enabled": true,
+        "preview": [
+          "Douăsprezece luni, cu perioadele în care energia ta e de partea ta marcate — și cu cele două în care limpede nu este.",
+          "Fiecare fereastră vine cu ce e bună, așa că lunile tăcute nu se mai citesc ca un eșec."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      }
+    ],
+    "mistake_one": {
+      "title": "Puterea ascunsă #1 din 5",
+      "locked_note": "Puterile 2–5 — în profilul tău complet"
+    },
+    "also": {
+      "title": "Tot în profilul tău",
+      "rows": [
+        {
+          "section": "dna",
+          "hook": "Cum se împart alegerile tale — {palette} — între cele mai puternice două elemente ale tale."
+        },
+        {
+          "section": "splurge",
+          "hook": "Unde câștigă energia ta de {symbol} — și singurul fel de muncă pe care să nu-l mai accepți."
+        },
+        {
+          "section": "shopping",
+          "hook": "Cele două luni în care energia ta de {sign} merge cu tine și cea în care e mai bine să te retragi."
+        },
+        {
+          "title": "Codurile hex exacte ale culorilor tale",
+          "hook": "Codul fiecărei culori de mai sus, unde să o folosești și singura nuanță de care să o ții departe."
+        }
+      ]
+    },
+    "visuals": {
+      "taps": true,
+      "hero": {
+        "glyph_step": "sign",
+        "band_step": "landscape"
+      },
+      "section_steps": {
+        "palette": "palette",
+        "mistakes": "moonphase",
+        "dna": "essence",
+        "materials": "sanctuary",
+        "splurge": "flow",
+        "shopping": "moment"
+      }
+    },
+    "hook_slots": {
+      "sign": {
+        "step": "sign",
+        "fallback": "zodie"
+      },
+      "palette": {
+        "step": "palette",
+        "fallback": "paletă"
+      },
+      "moonphase": {
+        "step": "moonphase",
+        "fallback": "lună"
+      },
+      "symbol": {
+        "step": "symbol",
+        "fallback": "talisman"
+      }
+    }
+  },
+  "pricing": {
+    "amount_cents": 300,
+    "currency": "usd",
+    "cta": "Deblochează-mi profilul complet"
+  },
+  "checkout": {
+    "kicker": "Profilul tău e gata",
+    "product_name": "Raportul profilului tău cosmic",
+    "product_image": "/static/brand/icon-512.png",
+    "single_page": true,
+    "express": true,
+    "withdrawal_consent": false,
+    "commerce": {
+      "anchor_head": "Un profil de {price} în loc de o ședință de 75 $",
+      "anchor_head_accent": "75 $",
+      "price_anchor": "în loc de o ședință privată de 75 $",
+      "price_anchor_accent": "75 $",
+      "price_note": "plată unică",
+      "badges": [
+        "PLATĂ UNICĂ",
+        "FĂRĂ ABONAMENT"
+      ],
+      "price_suffix": "plată unică · fără abonament",
+      "trust": [
+        "Plată securizată prin Stripe",
+        "PDF pe e-mailul tău"
+      ],
+      "mid_line": "Harta ta completă de energie, pentru mai puțin de două cafele.",
+      "mid_line_accent": "două cafele",
+      "mid_button": "Vezi ce e înăuntru ↓",
+      "sticky_label": "Deblochează profilul complet — {price}"
+    },
+    "title": "Profilul tău — {style}",
+    "proof_line": "Construit din cele 18 alegeri ale tale",
+    "manifest": [
+      "Paleta ta de putere cu coduri exacte, plus cele trei talismane",
+      "5 puteri ascunse și puncte oarbe — cu ce să faci în fiecare caz",
+      "Planul tău cosmic: element, energie și ton, punctate",
+      "Dragoste și compatibilitate: tiparul de sub cei pe care îi alegi",
+      "Carieră și bani: lunile în care energia ta plătește cel mai bine",
+      "Harta ta de energie pe 12 luni, marcată fereastră cu fereastră"
+    ],
+    "manifest_hero": "strengths",
+    "manifest_head": "Ce e înăuntru — {n} secțiuni, ale tale pentru totdeauna",
+    "anchor_head": "O citire de {price} a energiei pe care o consumi în fiecare zi",
+    "anchor": "O ședință privată cu un astrolog costă de la 75 $. Profilul tău complet — {price}, o singură dată.",
+    "reframe": "Mai puțin de două cafele. Al tău pentru totdeauna.",
+    "price_suffix": "plată unică",
+    "cta_label": "Deschide-mi profilul complet — {price}",
+    "consent_prechecked": true,
+    "trust": [
+      "Plată securizată prin Stripe",
+      "Livrare instantanee",
+      "Copie PDF pe e-mailul tău"
+    ],
+    "eu_withdrawal_text": "Livrare instantanee — renunț la dreptul meu de retragere în 14 zile."
+  },
+  "result": {
+    "mistakes_teaser": "Ai văzut puterea #1. Celelalte patru merg mai adânc — una explică alegerea ta, {moonphase}.",
+    "value_banner": "Cinci puteri, o citire de compatibilitate și o hartă de energie pe douăsprezece luni — totul construit din cele 18 semnale ale tale, ale tale pentru totdeauna."
+  },
+  "result_copy": {
+    "kicker": "PROFILUL TĂU COSMIC",
+    "blend_note": "combinație rară",
+    "taps_caption": "Citit din alegerile tale",
+    "balance_title": "Echilibrul elementelor tale",
+    "strength_lead": "Alegerile tale — {symbol} și {moonphase} — pun asta pe primul loc.",
+    "offer_sub": "Profilul tău complet — o dată, pentru totdeauna.",
+    "locked_note": "Blocat",
+    "delivered_note": "Un PDF cu acest profil e în căsuța ta de e-mail. Pagina rămâne la linkul primit după plată.",
+    "purpose_map": {
+      "purpose_love": {
+        "emphasized_section": "materials",
+        "offer_sub": "Citirea ta de compatibilitate e înăuntru."
+      },
+      "purpose_career": {
+        "emphasized_section": "splurge",
+        "offer_sub": "Lunile tale de bani sunt înăuntru."
+      },
+      "purpose_peace": {
+        "emphasized_section": "mistakes",
+        "offer_sub": "Liniștea ta are un tipar. E înăuntru."
+      },
+      "purpose_path": {
+        "emphasized_section": "shopping",
+        "offer_sub": "Anul tău, cartografiat fereastră cu fereastră — înăuntru."
+      }
+    },
+    "profile": {
+      "subtypes": {
+        "radiant_fire": {
+          "earth": {
+            "sun": "Forja Luminoasă",
+            "moon": "Jarul Acoperit"
+          },
+          "air": {
+            "sun": "Lumina Sălbatică",
+            "moon": "Flacăra Nopții"
+          },
+          "water": {
+            "sun": "Curentul Cald",
+            "moon": "Arderea Lentă"
+          }
+        },
+        "deep_water": {
+          "fire": {
+            "sun": "Adâncul Însorit",
+            "moon": "Licărul din Adânc"
+          },
+          "earth": {
+            "sun": "Lacul de Piatră",
+            "moon": "Fântâna Nemișcată"
+          },
+          "air": {
+            "sun": "Mareea Limpede",
+            "moon": "Adâncul în Derivă"
+          }
+        },
+        "grounded_earth": {
+          "fire": {
+            "sun": "Creasta Solară",
+            "moon": "Vatra Joasă"
+          },
+          "air": {
+            "sun": "Câmpul Deschis",
+            "moon": "Livada Tăcută"
+          },
+          "water": {
+            "sun": "Piatra de Râu",
+            "moon": "Rădăcina Adâncă"
+          }
+        },
+        "celestial_air": {
+          "fire": {
+            "sun": "Scânteia Solară",
+            "moon": "Vântul Felinarelor"
+          },
+          "earth": {
+            "sun": "Pajiștea Înaltă",
+            "moon": "Ceața Nemișcată"
+          },
+          "water": {
+            "sun": "Suflarea Mării",
+            "moon": "Țesătorul de Ploaie"
+          }
+        }
+      },
+      "sign_cross": {
+        "Berbec": {
+          "fire": "Un Berbec condus de Foc e zodia în stare pură — startul e tot ce contează, iar tu ești deja în mișcare în timp ce încăperea încă se hotărăște.",
+          "earth": "Un Berbec condus de Pământ e o încrucișare autentică — impulsul vine la timp, dar tu construiești lucrul înainte să-l anunți.",
+          "air": "Un Berbec condus de Aer e o combinație neobișnuită — viteza ta intră în argument, nu în acțiune, și câștigi încăperi în care nici nu voiai să intri.",
+          "water": "Un Berbec condus de Apă e o combinație rară — încărcătura e toată acolo și trece prin ce simți, nu prin ce începi."
+        },
+        "Taur": {
+          "fire": "Un Taur condus de Foc e o combinație neobișnuită — răbdarea e reală și stă peste o căldură care se arată doar când ți se ia ceva.",
+          "earth": "Un Taur condus de Pământ e zodia în stare pură — ții terenul stând pe el, iar ce păstrezi e măsura ta.",
+          "air": "Un Taur condus de Aer e o încrucișare autentică — te așezi încet și gândești repede, așa că decizia e luată cu mult înainte s-o recunoști.",
+          "water": "Un Taur condus de Apă e o combinație neobișnuită — statornicia e emoțională, nu materială, iar confortul înseamnă pentru tine să te simtă cineva, nu să ai lucruri în jur."
+        },
+        "Gemeni": {
+          "fire": "Gemenii conduși de Foc sunt o combinație neobișnuită — cele două minți se opresc din ceartă în clipa în care ceva merită făcut, și atunci ești o singură direcție.",
+          "earth": "Gemenii conduși de Pământ sunt o încrucișare autentică — vorbești în posibilități și te angajezi în amănunte, iar amănuntele sunt ce rețin oamenii.",
+          "air": "Gemenii conduși de Aer sunt zodia în stare pură — gândești cu voce tare, în compania cuiva, iar gândul e gata abia după ce i-a răspuns cineva.",
+          "water": "Gemenii conduși de Apă sunt o combinație rară — iuțeala citește starea unei încăperi înaintea cuvintelor ei, iar aceea e jumătatea din tine pe care oamenii o numesc tulburătoare."
+        },
+        "Rac": {
+          "fire": "Un Rac condus de Foc e o combinație neobișnuită — carapacea e tot acolo și în spatele ei stă ceva care iese primul, nu ultimul.",
+          "earth": "Un Rac condus de Pământ e o încrucișare autentică — ai grijă de oameni prin logistică, nu prin sentiment, și lovește mai tare.",
+          "air": "Un Rac condus de Aer e o combinație rară — simți totul și îl clasezi, iar distanța pe care o ții e una de lucru, nu una rece.",
+          "water": "Un Rac condus de Apă e zodia în stare pură — iei temperatura unei încăperi înainte să-ți dai jos haina și aproape niciodată nu greșești."
+        },
+        "Leu": {
+          "fire": "Un Leu condus de Foc e zodia în stare pură — încălzești o încăpere doar fiind în ea, iar spectacolul și omul sunt același lucru.",
+          "earth": "Un Leu condus de Pământ e o încrucișare autentică — strălucirea e reală și e construită, iar tu preferi să se bazeze cineva pe tine decât să se uite la tine.",
+          "air": "Un Leu condus de Aer e o combinație neobișnuită — focul tău se vede în felul în care decizi, nu în felul în care arzi.",
+          "water": "Un Leu condus de Apă e o combinație rară — căldura se întoarce mai întâi înăuntru, iar ce vede încăperea e a doua ei versiune."
+        },
+        "Fecioară": {
+          "fire": "O Fecioară condusă de Foc e o combinație neobișnuită — standardul vine cu căldură în spate și ești în stare să arzi o săptămână pentru un singur amănunt.",
+          "earth": "O Fecioară condusă de Pământ e zodia în stare pură — îmbunătățești ce ai în față, iar îmbunătățirea e destul de concretă cât să poți arăta cu degetul spre ea.",
+          "air": "O Fecioară condusă de Aer e o încrucișare autentică — precizia intră în limbaj și poți desface o idee încâlcită într-o singură frază.",
+          "water": "O Fecioară condusă de Apă e o combinație neobișnuită — observi ce nu e în regulă cu un om așa cum alții observă vremea și nu spui aproape nimic din asta."
+        },
+        "Balanță": {
+          "fire": "O Balanță condusă de Foc e o combinație neobișnuită — echilibrul e o decizie pe care o iei mereu din nou, repede și cu voce tare.",
+          "earth": "O Balanță condusă de Pământ e o încrucișare autentică — cântărești lucrurile după cât costă să le păstrezi, iar gustul tău e un buget în lucru.",
+          "air": "O Balanță condusă de Aer e zodia în stare pură — ții ambele părți destul cât să vezi forma întregului și abia apoi alegi una.",
+          "water": "O Balanță condusă de Apă e o combinație rară — dreptatea e pentru tine ceva simțit și duci un dezechilibru luni întregi mai degrabă decât să-l numești."
+        },
+        "Scorpion": {
+          "fire": "Un Scorpion condus de Foc e o combinație neobișnuită — adâncimea e zgomotoasă, nu tăcută, iar oamenii știu exact unde stau cu tine.",
+          "earth": "Un Scorpion condus de Pământ e o încrucișare autentică — intensitatea intră în ce construiești și ai o răbdare care îi neliniștește pe oameni.",
+          "air": "Un Scorpion condus de Aer e o combinație rară — desfaci un lucru ca să-l înțelegi, iar înțelegerea e locul în care aterizează intensitatea.",
+          "water": "Un Scorpion condus de Apă e zodia în stare pură — mergi până la fundul lucrurilor din prima trecere, iar compania superficială te obosește într-o oră."
+        },
+        "Săgetător": {
+          "fire": "Un Săgetător condus de Foc e zodia în stare pură — săgeata pleacă din arc, iar ochirea se face pe drum.",
+          "earth": "Un Săgetător condus de Pământ e o încrucișare autentică — orizontul rămâne scopul, iar acum ai și merinde la tine, și de-asta chiar ajungi.",
+          "air": "Un Săgetător condus de Aer e o combinație neobișnuită — călătorești prin idei la fel de ușor ca prin locuri, iar discuția e călătoria.",
+          "water": "Un Săgetător condus de Apă e o combinație rară — căutarea e la fel de des înăuntru ca în afară și mergi cel mai departe când nu se uită nimeni."
+        },
+        "Capricorn": {
+          "fire": "Un Capricorn condus de Foc e o combinație neobișnuită — urcușul e împins din interior, nu din datorie, iar tu concurezi cu o versiune a ta.",
+          "earth": "Un Capricorn condus de Pământ e zodia în stare pură — construiești în piatră, cu bună știință, și preferi să ajungi devreme decât să impresionezi.",
+          "air": "Un Capricorn condus de Aer e o încrucișare autentică — structura e mai întâi în gândire și vezi toată scara înainte s-o atingi.",
+          "water": "Un Capricorn condus de Apă e o combinație rară — disciplina apără ceva moale, iar oamenii care trec de ea rămân pentru totdeauna."
+        },
+        "Vărsător": {
+          "fire": "Un Vărsător condus de Foc e o combinație neobișnuită — distanța pe care o ții e o poziție și o aperi cu căldură și pe îndelete.",
+          "earth": "Un Vărsător condus de Pământ e o încrucișare autentică — ideea ciudată vine cu un plan atașat, și de-asta oamenii o urmează.",
+          "air": "Un Vărsător condus de Aer e zodia în stare pură — gândești dinadins din afara încăperii, iar priveliștea de-acolo e contribuția ta.",
+          "water": "Un Vărsător condus de Apă e o combinație rară — detașarea e un fel de a-ți păsa la scară mare, iar cazul luat unul câte unul tot te atinge."
+        },
+        "Pești": {
+          "fire": "Peștii conduși de Foc sunt o combinație neobișnuită — visarea are un motor sub ea, iar ce începi ajunge de obicei să fie terminat.",
+          "earth": "Peștii conduși de Pământ sunt o încrucișare autentică — faci real lucrul imaginat, care e jumătatea cea mai rară a imaginației.",
+          "air": "Peștii conduși de Aer sunt o combinație rară — trăirea ajunge deja tradusă și poți explica o stare chiar omului care o are.",
+          "water": "Peștii conduși de Apă sunt zodia în stare pură — iei vremea încăperii fără să vrei, iar singurătatea e întreținere, nu bosumflare."
+        },
+        "cusp": {
+          "fire": "Cumpăna a două zodii, condusă de Foc — porți energiile a două anotimpuri și una dintre ele se mișcă prima, de fiecare dată.",
+          "earth": "Cumpăna a două zodii, condusă de Pământ — două energii stau în tine, iar cea mai așezată e cea pe care o întâlnesc oamenii.",
+          "air": "Cumpăna a două zodii, condusă de Aer — ții două naturi deodată, de aceea poți susține ambele tabere și le poți crede pe amândouă.",
+          "water": "Cumpăna a două zodii, condusă de Apă — cele două energii între care stai se întâlnesc în ce simți, nu în ce faci."
+        }
+      },
+      "cards": [
+        {
+          "id": "materials",
+          "key": "Dragoste",
+          "icon": "heart",
+          "promise": "care două zodii sunt magnetice pentru tine — și cea care îți secătuiește relațiile",
+          "upgrade": {
+            "purpose_love": "citirea pentru care ai venit — cele două zodii magnetice ale tale și cea care te secătuiește"
+          }
+        },
+        {
+          "id": "mistakes",
+          "key": "Puncte oarbe",
+          "icon": "eye",
+          "promise": "ce a scos la iveală alegerea ta, {moonphase} — puterile #2–5, cea mai costisitoare la final"
+        },
+        {
+          "id": "shopping",
+          "key": "Anul tău",
+          "icon": "calendar",
+          "promise": "{first} → {last} — cele mai puternice 3 luni și singura în care e bine să te retragi"
+        },
+        {
+          "id": "splurge",
+          "key": "Banii",
+          "icon": "coin",
+          "promise": "unde câștigă energia ta — și pe unde se scurge pe tăcute"
+        },
+        {
+          "id": "palette",
+          "key": "Culorile puterii",
+          "icon": "palette",
+          "promise": "cele 4 ale tale, cu coduri exacte + talismane"
+        },
+        {
+          "id": "dna",
+          "key": "Planul",
+          "icon": "map",
+          "promise": "cum te conduce {element} și cum îl alimentează {second}"
+        }
+      ],
+      "scales": [
+        {
+          "id": "energy",
+          "left": "Soare",
+          "right": "Lună"
+        },
+        {
+          "id": "tone",
+          "left": "Îndrăzneț",
+          "right": "Calm"
+        },
+        {
+          "id": "depth",
+          "left": "Mistic",
+          "right": "Ancorat"
+        }
+      ],
+      "rarity": {
+        "radiant_fire": {
+          "earth": {
+            "sun": 10,
+            "moon": 40
+          },
+          "air": {
+            "sun": 15,
+            "moon": 40
+          },
+          "water": {
+            "sun": 25,
+            "moon": 40
+          }
+        },
+        "deep_water": {
+          "fire": {
+            "sun": 40,
+            "moon": 15
+          },
+          "earth": {
+            "sun": 40,
+            "moon": 10
+          },
+          "air": {
+            "sun": 40,
+            "moon": 10
+          }
+        },
+        "grounded_earth": {
+          "fire": {
+            "sun": 30,
+            "moon": 12
+          },
+          "air": {
+            "sun": 30,
+            "moon": 10
+          },
+          "water": {
+            "sun": 40,
+            "moon": 20
+          }
+        },
+        "celestial_air": {
+          "fire": {
+            "sun": 15,
+            "moon": 40
+          },
+          "earth": {
+            "sun": 20,
+            "moon": 40
+          },
+          "water": {
+            "sun": 25,
+            "moon": 40
+          }
+        }
+      },
+      "formula": "{sign} · element {element}, subton {second} · {energy}",
+      "rarity_line": "Aproximativ 1 din {n} citiri ajung la această combinație",
+      "bridge": "Citirea ta răspunde, scrisă anume pentru {subtype_bare}:",
+      "offer_head": "Citirea completă pentru {subtype_bare} — 6 capitole",
+      "split_caption": "{fire}% Foc · {earth}% Pământ · {air}% Aer · {water}% Apă"
+    },
+    "delivery_line": "PDF-ul a fost trimis la {email}",
+    "delivery_line_bare": "PDF-ul a fost trimis pe e-mailul tău"
+  }
+}

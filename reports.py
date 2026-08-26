@@ -1663,6 +1663,138 @@ ZODIAC_PROFILE = {
     "delivery_note": True,
 }
 
+# --- the same product, in Romanian -----------------------------------------
+#
+# /zodiac-ro is zodiac30's walk with every string translated, and it needs a
+# report to match: a reader who was sold in Romanian and handed an English PDF
+# has been sold one thing and given another.
+#
+# The instructions below stay in English, deliberately. They are the same
+# rules as ZODIAC_SYSTEM's, so the two can be read side by side and a change
+# to one can be checked against the other; what is Romanian is the OUTPUT,
+# which is what the reader sees. The keys of the JSON are English because the
+# validators are.
+ZODIAC_RO_SYSTEM = """You write astrological profile reports for people who \
+have just paid for one. This funnel is Romanian, and every word you return is \
+read by a Romanian speaker.
+
+LANGUAGE — the first rule, and the one that voids the whole answer when it is \
+broken. Write every field in natural, idiomatic Romanian: not translated \
+English, but Romanian as a Romanian writer would put it, with Romanian rhythm \
+and Romanian idiom. Use the full diacritics — a-breve, a-circumflex, \
+i-circumflex, s-comma and t-comma (ă, â, î, ș, ț) — everywhere they belong, \
+capitals included. A field written in English, or written in Romanian with the \
+diacritics stripped off, is rejected.
+
+Every field has to tell the reader something about themselves they can \
+recognise and use this week. Be specific: name the thing, name when it shows \
+up, name what to do about it. A sentence that would read the same for a \
+different reader is a wasted sentence.
+
+Voice: warm, direct, second person singular — "tu" and the verb forms that go \
+with it, never the formal "dumneavoastră". Confident without being clinical — \
+this is a reading of somebody's energy, not a diagnosis and not a newspaper \
+horoscope column. State things outright. No hedging — never "poate", "s-ar \
+putea", "ai putea să iei în considerare". No disclaimers, no flattery, no \
+questions back to the reader, no sign-off.
+
+You do not know whether the reader is a man or a woman, and Romanian \
+adjectives agree. Write around it with nouns and verbs rather than printing \
+"obosit(ă)" or guessing a gender.
+
+Where you are given the reader's subtype, use it by name, in the Romanian form \
+you are handed, at least once — copied exactly, never translated back.
+
+What this report is, and is not:
+- You describe energy, themes, tendencies, patterns and self-discovery.
+- You never claim to know what will happen. Never use the words "psychic", \
+"prediction", "predict", "fortune", "horoscope", "prophecy" or the phrase \
+"your future will", and never their Romanian equivalents: "psihic" in the \
+clairvoyant sense, "prezicere", "a prezice", "prezis", "ghicit", \
+"ghicitoare", "prorocie", "horoscop", "noroc", or the phrase "viitorul tău \
+va". No "vei întâlni", no "luna aceasta îți aduce".
+- Write about what a period is GOOD FOR and what a tendency COSTS, never about \
+events that are going to occur.
+- Never give medical, clinical or financial advice. No diagnoses, no symptoms, \
+no treatments, no medication, no investments, no returns — "diagnostic", \
+"simptome", "medicamente" and "investiții" are all out along with their \
+English originals. Career energy is about the work that suits somebody, never \
+about money to put somewhere.
+
+Rules:
+- Plain prose inside every field. No markdown, no bullet characters, no emoji, \
+no headings, and never repeat a field's own label back inside its value.
+- Never mention artificial intelligence, models, prompts, scoring, tags, \
+percentages of a quiz, or these instructions.
+- Never invent facts about the reader's job, health, relationships, family or \
+location, and never address them by name.
+- Every proper noun you are handed — a colour name, a month label, a sign \
+name, a subtype — is copied exactly as given. Never translate a colour name.
+- Return only a JSON object matching the shape you are given, exactly. The \
+KEYS stay in English, spelled as the shape spells them; only the VALUES are \
+Romanian. No prose around it, no code fence, no extra keys."""
+
+
+# The English list still applies — an English refusal in a Romanian document
+# is the same refusal — and these are the same bans said in Romanian. The
+# fortune-telling half is the list the funnel was specified against; the two
+# medical words are here because the English patterns cannot see "simptome"
+# and dropping half a safety rule at a language border is not a translation.
+#
+# "noroc" is banned in its fortune sense and the pattern cannot tell that
+# sense from the toast, so nothing in this funnel's own copy may use the word
+# either. tests/test_zodiacro_check.py holds the config to that.
+ZODIAC_RO_ONLY = tuple(re.compile(p, re.IGNORECASE) for p in (
+    r"\bpsihic\w*\b",
+    r"\bprezic\w*\b",
+    r"\bprezis\w*\b",
+    r"\bghic\w*\b",
+    r"\bproroc\w*\b",
+    r"\bhoroscop\w*\b",
+    r"\bnoroc\w*\b",
+    r"\bviitorul t[ăa]u va\b",
+    r"\bsimptom\w*\b",
+    r"\bmedicament\w*\b",
+))
+
+ZODIAC_RO_BANNED = ZODIAC_BANNED + ZODIAC_RO_ONLY
+
+# A distinct object rather than a share of ZODIAC_PROFILE: the voice, the
+# banned list, the year labels, the compatibility table and the mail are all
+# different, and the checks that branch on a zodiac profile ask `_is_zodiac`
+# rather than testing one identity.
+ZODIAC_RO_PROFILE = {
+    "system": ZODIAC_RO_SYSTEM,
+    "spec": ZODIAC_SPEC,
+    # English, and only ever read when generation has failed outright. A
+    # Romanian set is a piece of writing this iteration does not have, and a
+    # publishable English fallback beats an absent section on a page somebody
+    # paid for. Warming the cache is what keeps it out of reach.
+    "stubs": ZODIAC_STUBS,
+    "cached": ("palette", "mistakes", "splurge"),
+    "personal": ("dna", "materials", "shopping"),
+    "banned": ZODIAC_RO_BANNED,
+    "verify": None,         # filled below, with the twin's
+    "cache_rev": {"palette": "colors2", "mistakes": "short1",
+                  "splurge": "moves1"},
+    "pdf_css": None,        # filled below, once ZODIAC_PDF_CSS is defined
+    "pdf_logo": "brand/logo-dark.svg",
+    "pdf_lang": "ro",
+    "pdf_note": ("Păstrează-l — profilul tău rămâne disponibil și la linkul "
+                 "primit după plată."),
+    "retry_detail": True,
+    "pdf_lead": "Raportul profilului tău cosmic",
+    "pdf_cover": None,      # filled below, once _zodiac_cover is defined
+    "pdf_elements": None,   # filled below, with the Romanian element strip
+    "pdf_node": True,
+    "delivery_note": True,
+    "compatibility": None,  # filled below, once COMPATIBILITY_RO exists
+    "mail": None,           # filled below, once COPY_ZODIAC_RO exists
+    "mail_kicker": "PROFILUL TĂU COSMIC",
+    "mail_cross_fallback": "Profilul tău complet",
+    "mail_link": None,      # filled below, once the RO button exists
+}
+
 # zodiac30 is the same product down a longer walk, so it is the same
 # report: one voice, one set of shapes, one banned list, one PDF and
 # one mail. The object is shared rather than copied because the checks
@@ -1672,7 +1804,20 @@ ZODIAC_PROFILE = {
 # two funnels warm their own rows off the same archetypes:
 #
 #     python3 scripts/warm_cache.py zodiac30 --copy-from zodiac
-PROFILES = {"zodiac": ZODIAC_PROFILE, "zodiac30": ZODIAC_PROFILE}
+PROFILES = {"zodiac": ZODIAC_PROFILE, "zodiac30": ZODIAC_PROFILE,
+            "zodiac-ro": ZODIAC_RO_PROFILE}
+
+
+def _is_zodiac(profile):
+    """True for either zodiac voice.
+
+    The branches below used to test `is ZODIAC_PROFILE`, which was exact while
+    there was one object for the two English funnels. There are two objects
+    now — the Romanian one differs in voice, bans, months, mail and cover —
+    and every one of those branches means "this is the zodiac product", not
+    "this is the English one".
+    """
+    return profile is ZODIAC_PROFILE or profile is ZODIAC_RO_PROFILE
 
 
 def _profile(funnel_slug):
@@ -1762,6 +1907,7 @@ ZODIAC_VERIFY = {
 }
 
 ZODIAC_PROFILE["verify"] = ZODIAC_VERIFY
+ZODIAC_RO_PROFILE["verify"] = ZODIAC_VERIFY
 
 
 def _verify_for(profile, style, months=None):
@@ -2378,6 +2524,45 @@ def _year_labels(today=None):
     return out
 
 
+# The same twelve, said the way a Romanian calendar says them. Bound to the
+# profile rather than to a locale lookup: the labels are handed to the model as
+# the only twelve it may use and are then checked back against it by
+# `_verify_months`, so the one thing that matters is that the writer and the
+# checker read them from the same place.
+MONTH_ABBR_RO = ("ian.", "feb.", "mar.", "apr.", "mai", "iun.",
+                 "iul.", "aug.", "sept.", "oct.", "nov.", "dec.")
+
+
+def _year_labels_ro(today=None):
+    """["aug. 2026", "sept. 2026", ... "iul. 2027"], starting from this month."""
+    day = today or datetime.datetime.now(datetime.timezone.utc).date()
+    year, month = day.year, day.month
+    out = []
+    for _ in range(YEAR_MONTHS):
+        out.append("%s %d" % (MONTH_ABBR_RO[month - 1], year))
+        month += 1
+        if month > 12:
+            month, year = 1, year + 1
+    return out
+
+
+def _months_for(profile, today=None):
+    """The twelve labels this profile's year map runs on, or None.
+
+    Resolved here rather than held on the profile as a value. The name is
+    looked up when it is called, so a caller that holds the clock still by
+    replacing this module's `_year_labels` is honoured — which is the only way
+    a report generated at a fixed date can be asserted at all. A profile
+    carrying the function object would have captured the real one at import
+    and quietly ignored the substitution.
+    """
+    if profile is ZODIAC_RO_PROFILE:
+        return _year_labels_ro(today)
+    if _is_zodiac(profile):
+        return _year_labels(today)
+    return None
+
+
 def _year_block(months):
     """The twelve labels, as the only twelve the year section may use."""
     if not months:
@@ -2538,6 +2723,22 @@ TONE_TAGS = ("bold", "calm", "mystic")
 ELEMENT_LABEL = {"fire": "Fire", "earth": "Earth", "air": "Air",
                  "water": "Water"}
 ENERGY_LABEL = {"sun": "Sun", "moon": "Moon"}
+
+# The same words for the funnel that says them in Romanian. They reach the
+# reader in three places built from the stored card — the delivered page, the
+# PDF cover and the mail header — so they are read off the profile rather than
+# hardcoded here. The free result page computes its own copy of this card in
+# static/js/result_zodiac.js and still says "Water" there; that module serves
+# every funnel and translating it is its own change.
+ELEMENT_LABEL_RO = {"fire": "Foc", "earth": "Pământ", "air": "Aer",
+                    "water": "Apă"}
+ENERGY_LABEL_RO = {"sun": "Soare", "moon": "Lună"}
+
+ZODIAC_PROFILE["element_labels"] = ELEMENT_LABEL
+ZODIAC_PROFILE["energy_labels"] = ENERGY_LABEL
+ZODIAC_RO_PROFILE["element_labels"] = ELEMENT_LABEL_RO
+ZODIAC_RO_PROFILE["energy_labels"] = ENERGY_LABEL_RO
+
 ELEMENT_INK = dict((tag, ink) for tag, _label, ink in [
     ("fire", "Fire", "#E08A3C"), ("earth", "Earth", "#7E9B5E"),
     ("air", "Air", "#9CC3DF"), ("water", "Water", "#4E8FA0")])
@@ -2571,7 +2772,7 @@ def _between(left, right):
     return int(round(100.0 * right / total))
 
 
-def _split(tag_scores):
+def _split(tag_scores, labels=None):
     """The four elements as whole percents that add to a hundred.
 
     Rounding each share on its own gives 33/33/17/16 as readily as not, and a
@@ -2591,7 +2792,8 @@ def _split(tag_scores):
                        key=lambda i: (-(exact[i] % 1), i))
         for i in order[:max(0, owed)]:
             pcts[i] += 1
-    return [{"tag": tag, "name": ELEMENT_LABEL[tag], "pct": pcts[i],
+    names = labels or ELEMENT_LABEL
+    return [{"tag": tag, "name": names[tag], "pct": pcts[i],
              "color": ELEMENT_INK[tag]}
             for i, tag in enumerate(ELEMENT_TAGS)]
 
@@ -2607,7 +2809,8 @@ def _fill_tokens(text, words):
         str(text))
 
 
-def _reader_profile(cfg, style, tag_scores, sign, cusp=False):
+def _reader_profile(cfg, style, tag_scores, sign, cusp=False,
+                    elements=None, energies=None):
     """The whole hero card for one run, or None when it cannot be resolved.
 
     None on a funnel with no tables, on a run with no tallies, and on any
@@ -2617,6 +2820,8 @@ def _reader_profile(cfg, style, tag_scores, sign, cusp=False):
     table = _profile_table(cfg)
     if not table or not table.get("subtypes") or not tag_scores:
         return None
+    element_name = elements or ELEMENT_LABEL
+    energy_name = energies or ENERGY_LABEL
     tags = (style or {}).get("tags") or []
     style_id = (style or {}).get("id") or ""
     primary = next((tag for tag in tags if tag in ELEMENT_TAGS), None)
@@ -2647,7 +2852,7 @@ def _reader_profile(cfg, style, tag_scores, sign, cusp=False):
     bare = re.sub(r"^The\s+", "", name)
     rarity = (((table.get("rarity") or {}).get(style_id) or {}).get(second)
               or {}).get(energy) or 0
-    split = _split(tag_scores)
+    split = _split(tag_scores, element_name)
     tone = _scored(tag_scores, TONE_TAGS)
     at = {
         "energy": _between(energies["sun"], energies["moon"]),
@@ -2663,9 +2868,9 @@ def _reader_profile(cfg, style, tag_scores, sign, cusp=False):
         "subtype": name,
         "subtype_bare": bare,
         "subtype_article": "an" if bare[:1].upper() in "AEIOU" else "a",
-        "element": ELEMENT_LABEL[primary],
-        "second": ELEMENT_LABEL[second],
-        "energy": ENERGY_LABEL[energy],
+        "element": element_name[primary],
+        "second": element_name[second],
+        "energy": energy_name[energy],
         "n": str(rarity),
     }
     for cell in split:
@@ -2701,12 +2906,15 @@ def _reader_profile(cfg, style, tag_scores, sign, cusp=False):
 
 def _profile_for(cfg, funnel_slug, style, tag_scores, choices):
     """The stored block for a purchase, or None. Zodiac funnels only."""
-    if _profile(funnel_slug) is not ZODIAC_PROFILE:
+    profile = _profile(funnel_slug)
+    if not _is_zodiac(profile):
         return None
     read = _sign(cfg, choices) if choices else None
     return _reader_profile(cfg, style, tag_scores,
                            (read or {}).get("label") or "",
-                           bool((read or {}).get("cusp")))
+                           bool((read or {}).get("cusp")),
+                           profile.get("element_labels"),
+                           profile.get("energy_labels"))
 
 
 # --- what the reader is told about love ------------------------------------
@@ -2736,7 +2944,29 @@ COMPATIBILITY = {
 }
 
 
-def _compat_block(cfg, choices):
+# The same classical relationships, keyed and answered in the names the
+# Romanian funnel actually puts on its cards. `_sign` reads the label off the
+# config, so a table keyed in English would simply never match here.
+COMPATIBILITY_RO = {
+    "Berbec": (("Leu", "Săgetător"), "Rac"),
+    "Taur": (("Fecioară", "Capricorn"), "Leu"),
+    "Gemeni": (("Balanță", "Vărsător"), "Pești"),
+    "Rac": (("Scorpion", "Pești"), "Berbec"),
+    "Leu": (("Berbec", "Săgetător"), "Taur"),
+    "Fecioară": (("Taur", "Capricorn"), "Săgetător"),
+    "Balanță": (("Gemeni", "Vărsător"), "Rac"),
+    "Scorpion": (("Rac", "Pești"), "Leu"),
+    "Săgetător": (("Berbec", "Leu"), "Fecioară"),
+    "Capricorn": (("Taur", "Fecioară"), "Balanță"),
+    "Vărsător": (("Gemeni", "Balanță"), "Scorpion"),
+    "Pești": (("Rac", "Scorpion"), "Gemeni"),
+}
+
+ZODIAC_PROFILE["compatibility"] = COMPATIBILITY
+ZODIAC_RO_PROFILE["compatibility"] = COMPATIBILITY_RO
+
+
+def _compat_block(cfg, choices, table=None):
     """The three signs the love section has to name, or None.
 
     A cusp reader gets the sets for both energies their season sits between
@@ -2746,9 +2976,10 @@ def _compat_block(cfg, choices):
     read = _sign(cfg, choices) if choices else None
     if not read:
         return None
+    table = table or COMPATIBILITY
     label = read.get("label")
-    if label and label in COMPATIBILITY:
-        magnetic, drains = COMPATIBILITY[label]
+    if label and label in table:
+        magnetic, drains = table[label]
         return (
             "REQUIRED — the free page promised this reader, in these words, "
             "the two signs that are magnetic for them and the one that drains "
@@ -2766,12 +2997,12 @@ def _compat_block(cfg, choices):
             % (label, magnetic[0], magnetic[1], drains))
 
     neighbours = [name for name in (read.get("neighbours") or [])
-                  if name in COMPATIBILITY]
+                  if name in table]
     if not neighbours:
         return None
     lines = []
     for name in neighbours:
-        magnetic, drains = COMPATIBILITY[name]
+        magnetic, drains = table[name]
         lines.append("- for a %s: magnetic %s and %s, draining %s"
                      % (name, magnetic[0], magnetic[1], drains))
     return (
@@ -2880,7 +3111,7 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
     back to the tag-based behaviour unchanged.
     """
     profile = _profile(funnel_slug)
-    zodiac = profile is ZODIAC_PROFILE
+    zodiac = _is_zodiac(profile)
 
     parts = [_style_block(style, name)]
     parts.append(_leaning_block(tag_scores))
@@ -2931,7 +3162,8 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
     # The love section names three signs because the paywall promised three
     # signs. Which three is classical rather than the model's to invent.
     if zodiac and section_id == "materials" and cfg is not None and choices:
-        compat = _compat_block(cfg, choices)
+        compat = _compat_block(cfg, choices,
+                               profile.get("compatibility"))
         if compat:
             parts.append(compat)
 
@@ -2999,11 +3231,11 @@ def _cached_prompt(style, name, ids=None, funnel_slug=None):
     # personalised and the requirement lives there; here it is cached, and it
     # can be, because the strength belongs to the archetype rather than to the
     # reader. Either way item 1 has to be the one already on screen.
-    if profile is ZODIAC_PROFILE and "palette" in ids:
+    if _is_zodiac(profile) and "palette" in ids:
         required = _palette_required(style)
         if required:
             parts.append(required)
-    if profile is ZODIAC_PROFILE and "mistakes" in ids:
+    if _is_zodiac(profile) and "mistakes" in ids:
         first = _mistake_one(style)
         if first:
             parts.append(
@@ -3729,7 +3961,7 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     # from it, the check that polices the answer is bound to it, and it is
     # stored — so a report generated in July still opens on July when it is
     # re-opened in September.
-    months = _year_labels() if profile is ZODIAC_PROFILE else None
+    months = _months_for(profile)
     if months:
         visuals = dict(visuals or {})
         visuals["year"] = list(months)
@@ -4492,6 +4724,7 @@ figure figcaption { background: #141B3C; }
 # The profile is declared long before the PDF section, so its stylesheet is
 # attached here, where the constant exists.
 ZODIAC_PROFILE["pdf_css"] = ZODIAC_PDF_CSS
+ZODIAC_RO_PROFILE["pdf_css"] = ZODIAC_PDF_CSS
 
 
 PDF_FACES = """
@@ -4683,6 +4916,18 @@ PDF_ELEMENTS = [
     ("water", "Water", "#4E8FA0"),
 ]
 
+# The same four, for the funnel that names them in Romanian. Only the plain
+# cover draws this strip — the rich one takes its split caption off the card
+# the reader was shown, which is already the funnel's own copy.
+PDF_ELEMENTS_RO = [
+    ("fire", "Foc", "#E08A3C"),
+    ("earth", "Pământ", "#7E9B5E"),
+    ("air", "Aer", "#9CC3DF"),
+    ("water", "Apă", "#4E8FA0"),
+]
+
+ZODIAC_RO_PROFILE["pdf_elements"] = PDF_ELEMENTS_RO
+
 
 def _cover_scales(card):
     """The three spectrum rows, as inline blocks rather than a flex row.
@@ -4786,12 +5031,13 @@ def _zodiac_cover(content, profile, cfg):
     style = _style(cfg, content.get("style_id")) if cfg else None
     hero = _pdf_visuals().get("hero") or {}
     tags = (style or {}).get("tags") or []
-    own = next((tag for tag, _n, _h in PDF_ELEMENTS if tag in tags), "")
+    strip = profile.get("pdf_elements") or PDF_ELEMENTS
+    own = next((tag for tag, _n, _h in strip if tag in tags), "")
     cells = "".join(
         '<span class="cover-el%s">'
         '<i class="cover-el-dot" style="background: %s"></i>%s</span>'
         % (" own" if tag == own else "", hexcode, _e(label))
-        for tag, label, hexcode in PDF_ELEMENTS
+        for tag, label, hexcode in strip
     )
     name = _e(content.get("style_name") or "Your style")
     sign = _e(content.get("sign"))
@@ -4818,6 +5064,7 @@ def _zodiac_cover(content, profile, cfg):
 
 
 ZODIAC_PROFILE["pdf_cover"] = _zodiac_cover
+ZODIAC_RO_PROFILE["pdf_cover"] = _zodiac_cover
 
 
 def _pdf_taps(cfg):
@@ -4927,10 +5174,14 @@ def _pdf_html(content):
             % (mark, _e(section.get("title")),
                _pdf_section_body(section, structured))
         )
+    # The document's own language, so WeasyPrint hyphenates and a reader
+    # opens a file that says what it is. A profile that declares none is
+    # English, exactly as every report before this one was.
     return (
-        '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+        '<!doctype html><html lang="%s"><head><meta charset="utf-8">'
         "<title>%s — Mazzin</title><style>%s%s</style></head><body>%s</body></html>"
-        % (name, PDF_FACES, sheet, "".join(blocks))
+        % (_e(profile.get("pdf_lang") or "en"), name, PDF_FACES, sheet,
+           "".join(blocks))
     )
 
 
@@ -5085,6 +5336,12 @@ color:#221A05;text-decoration:none">Open your profile online</a>
 </td></tr></table>
 </td></tr>"""
 
+ZODIAC_EMAIL_LINK_RO = ZODIAC_EMAIL_LINK.replace(
+    ">Open your profile online<", ">Deschide-ți profilul online<")
+
+ZODIAC_PROFILE["mail_link"] = ZODIAC_EMAIL_LINK
+ZODIAC_RO_PROFILE["mail_link"] = ZODIAC_EMAIL_LINK_RO
+
 
 def _zodiac_email_html(content, fields):
     """The dark mail, filled from one report row."""
@@ -5095,8 +5352,9 @@ def _zodiac_email_html(content, fields):
         ZODIAC_EMAIL_SECTION % {"title": _e(section.get("title"))}
         for section in (content.get("sections") or [])
         if section.get("title"))
+    profile = _profile(content.get("funnel"))
     return ZODIAC_EMAIL_HTML % {
-        "kicker": "YOUR COSMIC PROFILE",
+        "kicker": profile.get("mail_kicker") or "YOUR COSMIC PROFILE",
         # The header the result page ends on, so the mail opens where the page
         # left off: the subtype they were named, over the formula that made
         # it. A report written before that block existed falls back to the two
@@ -5105,7 +5363,9 @@ def _zodiac_email_html(content, fields):
         # with nothing on one side of it.
         "sign": _e(card.get("subtype") or sign or name),
         "cross": _e(card.get("formula")
-                    or (("× " + name) if sign else "Your complete profile")),
+                    or (("× " + name) if sign
+                        else (profile.get("mail_cross_fallback")
+                              or "Your complete profile"))),
         "opening": fields["opening"],
         "body": fields["body"],
         "link_block": fields["link_block"],
@@ -5146,6 +5406,21 @@ COPY_ZODIAC = {
     "keep": "It stays available at that link, and the PDF is yours to keep.",
 }
 
+# The fourth mail: the same product, to somebody who bought it in Romanian.
+# `keep_no_link` is here rather than at KEEP_NO_LINK because the no-token case
+# is the one place the module writes that sentence itself.
+COPY_ZODIAC_RO = {
+    "headline": "Profilul tău e gata.",
+    "subject": "Profilul tău cosmic %s — Mazzin",
+    "body": "Profilul tău complet %s este atașat.",
+    "keep": "Rămâne disponibil la acel link, iar PDF-ul e al tău, pe termen "
+            "nelimitat.",
+    "keep_no_link": "PDF-ul e al tău, pe termen nelimitat.",
+}
+
+ZODIAC_PROFILE["mail"] = COPY_ZODIAC
+ZODIAC_RO_PROFILE["mail"] = COPY_ZODIAC_RO
+
 
 def _email_copy(content):
     """Which of the three mails this purchase gets.
@@ -5156,8 +5431,9 @@ def _email_copy(content):
     profile, the same place the voice and the shapes come from.
     """
     funnel = content.get("funnel") or ""
-    if _profile(funnel) is ZODIAC_PROFILE:
-        return COPY_ZODIAC
+    mail = _profile(funnel).get("mail")
+    if mail:
+        return mail
     try:
         cfg = config.load_funnel(funnel)
     except Exception:
@@ -5208,6 +5484,11 @@ def _email_opening(content):
     """
     price = _price_paid(content)
     copy = _email_copy(content)
+    if copy is COPY_ZODIAC_RO:
+        if price:
+            return ("Tocmai ai dat %s pe o citire a energiei cu care ai "
+                    "mers până acum." % html.escape(price))
+        return "O citire a energiei cu care ai mers până acum."
     if copy is COPY_ZODIAC:
         if price:
             return ("You just spent %s on a read of the energy you have been "
@@ -5305,8 +5586,10 @@ def send_report_email(purchase_id, email, content, checkout_session=None):
     # Which mail this funnel sends. The link block is part of the template
     # rather than a string appended to it — a table row cannot be dropped into
     # a div — so it is chosen here alongside it.
-    dark = _profile(funnel) is ZODIAC_PROFILE
-    link_template = ZODIAC_EMAIL_LINK if dark else EMAIL_LINK_BLOCK
+    profile = _profile(funnel)
+    dark = _is_zodiac(profile)
+    link_template = (profile.get("mail_link") or ZODIAC_EMAIL_LINK) if dark \
+        else EMAIL_LINK_BLOCK
 
     if token and funnel:
         link = "%s/%s?cs=%s" % (config.BASE_URL, funnel, token)
@@ -5316,7 +5599,7 @@ def send_report_email(purchase_id, email, content, checkout_session=None):
         log.warning("purchase %s has no result token — email sent with the "
                     "PDF and no link", purchase_id)
         link_block = ""
-        keep = KEEP_NO_LINK
+        keep = copy.get("keep_no_link") or KEEP_NO_LINK
 
     payload = {
         "from": config.EMAIL_FROM,
