@@ -1078,12 +1078,45 @@ around it, no code fence, no extra keys."""
 # repeats the prompt repeats the overrun, so the same four failed twice.
 PROMPT_BUDGET = 0.65
 
+# The same rule, for a language that says the same thing in more characters.
+#
+# Romanian runs 15-20% longer than English for identical content — diacritics
+# cost nothing extra, but the grammar does: articles that suffix the noun,
+# prepositional phrases where English compounds, "de" between almost any two
+# ideas. A budget calibrated on English is therefore a budget a Romanian
+# writer overruns while writing exactly what it was asked for, and `splurge`
+# is where it shows first because that section asks for five long prose fields
+# at once.
+#
+# The ratio to PROMPT_BUDGET is what matters rather than the absolute number:
+# it is applied to the hand-set numbers in PROMPT_LENGTH as well as to the
+# derived ones, because the fields that overrun are the ones PROMPT_LENGTH
+# raises above the default.
+ZODIAC_RO_PROMPT_BUDGET = 0.55
 
-def _budget(cap):
+
+def _budget(cap, budget=None):
     """A round number to ask for, comfortably under a validator ceiling."""
     step = 5 if cap <= 100 else 10
-    target = int(cap * PROMPT_BUDGET)
-    return max(step, target - target % step)
+    target = int(cap * (PROMPT_BUDGET if budget is None else budget))
+    return min(cap, max(step, target - target % step))
+
+
+def _rescale(asked, cap, budget):
+    """One hand-set PROMPT_LENGTH number, in another language's budget.
+
+    Scaled by the ratio between the budgets rather than recomputed from the
+    ceiling, because these numbers are deliberate departures from the derived
+    default — `mistakes` asks for less than the rule would give it and
+    `splurge` asks for more, and both of those judgements survive the
+    translation. Rounded to the same step, and clamped to the ceiling that
+    polices the field so a ratio above 1 could never push one over.
+    """
+    if budget is None or budget == PROMPT_BUDGET:
+        return asked
+    step = 5 if cap <= 100 else 10
+    target = int(asked * (budget / PROMPT_BUDGET))
+    return min(cap, max(step, target - target % step))
 
 
 def _walk_caps(section_id):
@@ -1134,63 +1167,75 @@ PROMPT_LENGTH = {
 }
 
 
-def _budgets(section_id):
+def _ceilings(section_id):
+    """{bare field name: the tightest ceiling that field answers to}."""
+    out = {}
+    for _, field, cap in _walk_caps(section_id):
+        out[field] = min(cap, out.get(field, cap))
+    return out
+
+
+def _budgets(section_id, budget=None):
     """{field name: the number to put in the prompt} for one section.
 
     Keyed by the bare field name, because that is what the shape example says.
     Where a name appears at two depths under different ceilings the tighter
     one wins — one number in the prompt has to satisfy both.
+
+    `budget` is the profile's own, defaulting to the English one. Passing None
+    reproduces this function's previous output exactly.
     """
+    caps = _ceilings(section_id)
     out = {}
     for _, field, cap in _walk_caps(section_id):
-        value = _budget(cap)
+        value = _budget(cap, budget)
         out[field] = min(value, out.get(field, value))
     for field, asked in (PROMPT_LENGTH.get(section_id) or {}).items():
         if field in out:
-            out[field] = asked
+            out[field] = _rescale(asked, caps[field], budget)
     return out
 
 
-def _check_prompt_lengths():
+def _check_prompt_lengths(budget=None):
     """Every stated budget is inside the ceiling that polices it."""
     for section_id, fields in PROMPT_LENGTH.items():
-        ceilings = {}
-        for _, field, cap in _walk_caps(section_id):
-            ceilings[field] = min(cap, ceilings.get(field, cap))
+        ceilings = _ceilings(section_id)
         for field, asked in fields.items():
             cap = ceilings.get(field)
             if cap is None:
                 raise ValueError("PROMPT_LENGTH names %s.%s, which is not a "
                                  "capped field" % (section_id, field))
+            asked = _rescale(asked, cap, budget)
             if asked > cap:
                 raise ValueError("PROMPT_LENGTH asks %d for %s.%s, over its "
                                  "%d ceiling" % (asked, section_id, field, cap))
 
 
 _check_prompt_lengths()
+_check_prompt_lengths(ZODIAC_RO_PROMPT_BUDGET)
 
 
-def _budget_lines(section_id):
+def _budget_lines(section_id, budget=None):
     """The hard-limit recap that closes every zodiac shape.
 
     By path rather than by bare name — `saves[].why` — which is the same
     vocabulary the drift notes use when one of them comes back too long, so
     the correction and the original instruction read as the same thing.
     """
-    budgets = _budgets(section_id)
+    budgets = _budgets(section_id, budget)
     return "\n".join(
         "  %-22s %d characters maximum" % (path, budgets[field])
         for path, field, _ in _walk_caps(section_id))
 
 
-def _zodiac_spec(text, section_id):
+def _zodiac_spec(text, section_id, budget=None):
     """One shape, with its budgets substituted and its recap appended."""
-    return (text % _budgets(section_id)) + """
+    return (text % _budgets(section_id, budget)) + """
 
 LENGTHS ARE HARD LIMITS. Count the characters and stay under every one of
 them — a single field over its limit costs the entire section, so write to
 the limit rather than to the sentence you had in mind:
-%s""" % _budget_lines(section_id)
+%s""" % _budget_lines(section_id, budget)
 
 
 # The same six shapes, described for the other product. Keyed by the id the
@@ -1356,6 +1401,13 @@ happen in it.''',
 
 ZODIAC_SPEC = dict((section_id, _zodiac_spec(text, section_id))
                    for section_id, text in _ZODIAC_SHAPES.items())
+
+# The same six shapes, asking for a Romanian-sized amount of Romanian. Only
+# the numbers differ; every word of every shape is the one above it, so the
+# two products stay the same product and a change to a shape reaches both.
+ZODIAC_RO_SPEC = dict(
+    (section_id, _zodiac_spec(text, section_id, ZODIAC_RO_PROMPT_BUDGET))
+    for section_id, text in _ZODIAC_SHAPES.items())
 
 
 # What a reader gets when generation fails outright, so it has to be
@@ -1730,6 +1782,13 @@ percentages of a quiz, or these instructions.
 location, and never address them by name.
 - Every proper noun you are handed — a colour name, a month label, a sign \
 name, a subtype — is copied exactly as given. Never translate a colour name.
+- The answer is JSON, and Romanian prose is what breaks JSON. Inside a string \
+value, every double quote must be escaped as \\" and every line must be one \
+line — no raw line breaks or tabs inside a value. Better still, do not reach \
+for a straight double quote at all: Romanian quotation marks („citat") and \
+apostrophes are the right punctuation here and cost nothing to parse. A \
+section that is not valid JSON is thrown away whole, however good the writing \
+inside it is.
 - Return only a JSON object matching the shape you are given, exactly. The \
 KEYS stay in English, spelled as the shape spells them; only the VALUES are \
 Romanian. No prose around it, no code fence, no extra keys."""
@@ -1765,7 +1824,12 @@ ZODIAC_RO_BANNED = ZODIAC_BANNED + ZODIAC_RO_ONLY
 # rather than testing one identity.
 ZODIAC_RO_PROFILE = {
     "system": ZODIAC_RO_SYSTEM,
-    "spec": ZODIAC_SPEC,
+    # The twin's shapes, asking for fewer characters. See
+    # ZODIAC_RO_PROMPT_BUDGET: the same content is 15-20% longer in Romanian,
+    # and a budget calibrated on English is one this funnel overruns while
+    # writing exactly what it was told to.
+    "spec": ZODIAC_RO_SPEC,
+    "prompt_budget": ZODIAC_RO_PROMPT_BUDGET,
     # English, and only ever read when generation has failed outright. A
     # Romanian set is a piece of writing this iteration does not have, and a
     # publishable English fallback beats an absent section on a page somebody
@@ -1806,6 +1870,16 @@ ZODIAC_RO_PROFILE = {
 #     python3 scripts/warm_cache.py zodiac30 --copy-from zodiac
 PROFILES = {"zodiac": ZODIAC_PROFILE, "zodiac30": ZODIAC_PROFILE,
             "zodiac-ro": ZODIAC_RO_PROFILE}
+
+
+def _prompt_budget(profile):
+    """The share of a validator's ceiling this profile's prompts ask for.
+
+    A profile that does not declare one gets PROMPT_BUDGET, which is every
+    profile but the Romanian one — so this reads as the English number
+    everywhere it always was.
+    """
+    return (profile or {}).get("prompt_budget") or PROMPT_BUDGET
 
 
 def _is_zodiac(profile):
@@ -3358,6 +3432,32 @@ def _timeout_class():
 
 FENCE_RE = re.compile(r"^\s*```(?:json)?|```\s*$", re.IGNORECASE)
 
+# What the retry is told when the first answer did not parse.
+#
+# It used to be told the diagnostic line instead — "invalid JSON
+# (JSONDecodeError at char 812 of 1748)" — inside a correction block that
+# closes with "the character counts are hard limits, count them before you
+# answer". That is a length instruction for a syntax failure: the model was
+# asked to shorten an answer whose only problem was a quotation mark, so the
+# second attempt made the same mistake in fewer words. This names the actual
+# fault and the actual fix.
+#
+# The repair we do NOT attempt is the matching one: rewriting a stray quote
+# into an escaped quote. Deciding which `"` in a broken document is a
+# delimiter and which is prose is a guess, and a wrong guess does not fail —
+# it welds two fields into one and produces an object that is shape-valid,
+# inside its character ceilings and clean of banned words, so every check
+# below waves it through and a paying reader gets the mangled sentence. A
+# retry that asks the model to escape its own quotes costs one call and
+# cannot do that.
+_JSON_ADVICE = (
+    "the answer was not valid JSON and could not be read at all — it failed "
+    "to parse at character %s of %s. This is punctuation, not length: the "
+    "usual cause is an unescaped double quote inside a string value, or a "
+    "line break in the middle of one. Escape every double quote inside a "
+    "value as \\\" and keep each value on one line, or avoid straight double "
+    "quotes in the prose altogether")
+
 
 def _parse_detail(text, want, notes=None):
     """(parsed, reason). `reason` is None on success, else why it was refused.
@@ -3380,18 +3480,39 @@ def _parse_detail(text, want, notes=None):
         # is what truncation looks like by the time it reaches us.
         return None, ("no closing brace — response ends unterminated"
                       if start >= 0 else "no JSON object in response")
+    chunk = body[start:end + 1]
     try:
-        data = json.loads(body[start:end + 1])
+        data = json.loads(chunk)
     except ValueError as exc:
-        at = getattr(exc, "pos", None)
-        # A response that ran out of room breaks at its own end, and the last
-        # `}` we could find is from some earlier item — so the decode fails
-        # near the tail rather than in the middle. Saying which it is turns a
-        # log line into a diagnosis: run out of room, or came back malformed.
-        tail = isinstance(at, int) and (end + 1 - start) - at < 200
-        return None, ("invalid JSON (%s at char %s of %d)%s"
-                      % (type(exc).__name__, at, len(body),
-                         " — breaks at the end, looks truncated" if tail else ""))
+        # One salvage, and it is the standard library's rather than ours.
+        # `strict=False` accepts literal control characters inside a string
+        # value — a raw newline in the middle of a paragraph, which is one of
+        # the two ways prose breaks JSON. It guesses at nothing: no quote is
+        # reinterpreted, no field is joined to its neighbour, and the text
+        # that comes back is character for character what the model wrote.
+        # Anything it recovers still goes through the same shape validators,
+        # the same character ceilings and the same banned list below.
+        #
+        # The other way prose breaks JSON — an unescaped double quote — is
+        # deliberately NOT repaired here. See the note above `_JSON_ADVICE`.
+        try:
+            data = json.loads(chunk, strict=False)
+        except ValueError:
+            at = getattr(exc, "pos", None)
+            # A response that ran out of room breaks at its own end, and the
+            # last `}` we could find is from some earlier item — so the decode
+            # fails near the tail rather than in the middle. Saying which it
+            # is turns a log line into a diagnosis: run out of room, or came
+            # back malformed.
+            tail = isinstance(at, int) and (end + 1 - start) - at < 200
+            if notes is not None:
+                notes.append(_JSON_ADVICE % (at, len(body)))
+            return None, ("invalid JSON (%s at char %s of %d)%s"
+                          % (type(exc).__name__, at, len(body),
+                             " — breaks at the end, looks truncated"
+                             if tail else ""))
+        log.warning("section %s recovered: a control character inside a "
+                    "string value", "+".join(want))
     if not isinstance(data, dict):
         return None, "top level is %s, not an object" % type(data).__name__
 
