@@ -54,3 +54,37 @@ CREATE TABLE visualizations (
   UNIQUE KEY uq_visualization_purchase (purchase_id),
   FOREIGN KEY (purchase_id) REFERENCES purchases(id)
 );
+
+-- 2026-08-26 — Meta match enrichment
+-- What the browser knew at the moment it asked for a checkout session, held
+-- until the webhook can use it. The server-side Purchase event fires from
+-- Stripe's request, not the buyer's, so by then the buyer's IP and
+-- User-Agent are gone — and those are two of the identifiers Meta matches a
+-- conversion on. Captured at /api/checkout, read once, then swept.
+--
+-- Deliberately NOT Stripe metadata, which is where the click ids ride. Stripe
+-- documents metadata as the wrong place for personal data, and an IP address
+-- is personal data; metadata is also permanent, dashboard-visible and
+-- exportable, where this table has a retention window and a sweeper.
+--
+-- Deliberately NOT the events table either. tracking.py stores two enum words
+-- about the device and says, in as many words, that the raw User-Agent and
+-- the IP are stored nowhere. That rule is about the analytics history, which
+-- is kept forever and read by people; this row exists for minutes, is read
+-- once by a machine, and is deleted. Keeping it in its own table rather than
+-- widening `events` is what keeps that rule true.
+--
+-- Keyed on the session id because that is what already travels to the webhook
+-- in Stripe metadata. One row per session; a second checkout attempt from the
+-- same session overwrites it, which is what you want — the latest attempt is
+-- the one that paid.
+--
+-- Sweep with scripts/cleanup_context.py (cron, daily). Nothing here is worth
+-- keeping past the webhook it was captured for.
+CREATE TABLE checkout_context (
+  session_id CHAR(36) NOT NULL PRIMARY KEY,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  client_ip VARCHAR(45) NULL,
+  client_ua VARCHAR(400) NULL,
+  INDEX idx_context_created (created_at)
+);
