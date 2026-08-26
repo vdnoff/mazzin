@@ -120,10 +120,28 @@ for _rule, _file in PAGES.items():
 
 @app.get("/<slug>")
 def funnel_page(slug):
+    # A `-test` twin is a live funnel's shape on Stripe test keys, and it sits
+    # one guessable suffix away from the real URL. Gated on the server rather
+    # than on a secret in the path: the flag is read here, per request, so
+    # flipping it in .env and restarting is the whole of turning it off.
+    #
+    # The refusal is the same empty 404 an unknown slug gets — same status,
+    # same body, same headers — because a 403 on /zodiac-ro-test is an answer:
+    # it says the twin exists and is merely closed. This says nothing.
+    if config.is_test_slug(slug) and not config.TEST_FUNNELS:
+        return "", 404
     if not config.funnel_exists(slug):
         return "", 404
     resp = send_from_directory(os.path.join(config.STATIC_DIR), "funnel.html")
-    resp.headers["Cache-Control"] = "public, max-age=%d" % config.FUNNEL_HTML_MAX_AGE
+    if config.is_test_slug(slug):
+        # Never cached, anywhere. The edge holding this page is what would
+        # keep a twin answering after the flag went off, and a cache purge is
+        # not a thing anybody should have to remember in that moment.
+        resp.headers["Cache-Control"] = "no-store"
+        resp.headers["X-Robots-Tag"] = "noindex, nofollow"
+    else:
+        resp.headers["Cache-Control"] = (
+            "public, max-age=%d" % config.FUNNEL_HTML_MAX_AGE)
     return resp
 
 
