@@ -1,0 +1,646 @@
+{
+  "frames": {
+    "animal_bear": {
+      "attempts": 1,
+      "bytes": 8040,
+      "cost_usd": 0.063,
+      "note": "luma 51.2 sd 48.1 lit 13.8%",
+      "prompt_sha": "44a28a106bbfc72881c838716412f561802adaf278292f702b578535f85c90cf",
+      "sha256": "f946493354775c6348d0dd19f59b2f0ee3d4bfe267b3850d33fc01d93339c767",
+      "size": "600x800"
+    },
+    "animal_cat": {
+      "attempts": 1,
+      "bytes": 9522,
+      "cost_usd": 0.063,
+      "note": "luma 69.9 sd 66.5 lit 22.8%",
+      "prompt_sha": "47e3d5160eb45a81f21072818470dc827112db9efff31dccc433bf16ebf0321f",
+      "sha256": "80d64a4fad5655ac1005884872fbacf81f1547240e1619fa583b66834d45aad7",
+      "size": "600x800"
+    },
+    "animal_fox": {
+      "attempts": 1,
+      "bytes": 9292,
+      "cost_usd": 0.063,
+      "note": "luma 43.8 sd 45.2 lit 8.5%",
+      "prompt_sha": "877566457986c0cd8147fa331e6e1cd8cd350e4561176d4549f8be027fc1c2f3",
+      "sha256": "e6cf5c739fed4a136f8bbba2dc376002b182ffdc159278e580ab78e6198fa78f",
+      "size": "600x800"
+    },
+    "animal_hawk": {
+      "attempts": 1,
+      "bytes": 12688,
+      "cost_usd": 0.063,
+      "note": "luma 43.3 sd 49.1 lit 13.4%",
+      "prompt_sha": "a8878ffab71c7c0c5832722ce57695c9a1f8b2b445a31eefaaa0364b629b3642",
+      "sha256": "c3ebef9c18133bead9d7dc274b7acbdfce953bcc88b559a89453958654fd9168",
+      "size": "600x800"
+    },
+    "animal_horse": {
+      "attempts": 1,
+      "bytes": 11216,
+      "cost_usd": 0.063,
+      "note": "luma 49.4 sd 58.1 lit 14.4%",
+      "prompt_sha": "802ec491d99de0b270343e23d8379161ad0af844a0d4f9ea6e5af751423eac21",
+      "sha256": "927365c8b71174a939f544a47b4701b3ad4349368934fedf8d399faa20c5d8b2",
+      "size": "600x800"
+    },
+    "animal_lynx": {
+      "attempts": 1,
+      "bytes": 8050,
+      "cost_usd": 0.063,
+      "note": "luma 44.8 sd 46.1 lit 4.8%",
+      "prompt_sha": "55294e95c4c2acfb72cf16ba70b8a1e451aefc16a5dd09c4445db8e781b8fd27",
+      "sha256": "5ed06d01ef8b011a99ee18372e4bdcc3e4ed59d15154feaf21a65feb2d6c965b",
+      "size": "600x800"
+    },
+    "animal_otter": {
+      "attempts": 1,
+      "bytes": 7094,
+      "cost_usd": 0.063,
+      "note": "luma 44.9 sd 37.4 lit 2.0%",
+      "prompt_sha": "5a313463a6508009082575e38d08960e80b37c2644c1a9049600ef66c7f5a240",
+      "sha256": "5ade1ad85e7dae1a45f8e5184049d5c82054db979a9dda7918edf3c2490a859a",
+      "size": "600x800"
+    },
+    "animal_owl": {
+      "attempts": 1,
+      "bytes": 9256,
+      "cost_usd": 0.063,
+      "note": "luma 56.8 sd 61.8 lit 15.0%",
+      "prompt_sha": "c8b76be99dafc05b53d9b4f81861b8d795236d69c7b676a6b358cb335e6cd4fb",
+      "sha256": "6e1e40fb892154533cc7db8a8aa2316db573583c49833c57474d09e3e3db76ed",
+      "size": "600x800"
+    },
+    "animal_raven": {
+      "attempts": 1,
+      "bytes": 8590,
+      "cost_usd": 0.063,
+      "note": "luma 71.5 sd 54.3 lit 18.1%",
+      "prompt_sha": "2ddfdb0122c200dbea1ec43ad0da8981c9a953643499b9959a705bddd223dd14",
+      "sha256": "29c4ac2563525b5790d55c2d99154690e66fb46c2b1b6e4fa5de6675ba196087",
+      "size": "600x800"
+    },
+    "animal_stag": {
+      "attempts": 1,
+      "bytes": 8594,
+      "cost_usd": 0.063,
+      "note": "luma 40.8 sd 35.4 lit 3.9%",
+      "prompt_sha": "d1d40736a11e0496e05b6e6abe519e74b38fb6c7a2434935adb6b14a80009684",
+      "sha256": "18eda114d93bc7855f6473d847f5f813108ed4508d85ea2e2e6197e949d81133",
+      "size": "600x800"
+    },
+    "animal_tortoise": {
+      "attempts": 1,
+      "bytes": 8094,
+      "cost_usd": 0.063,
+      "note": "luma 53.7 sd 48.8 lit 9.8%",
+      "prompt_sha": "b1a79d4b40bcbfb4ae58a1885d253dcba88a25e780636653b83a4e6418805bfe",
+      "sha256": "7d05a5d5675dd28337cf9f25093d1b7863f1e6bc1cf0cf40b7caa0fb3dc4a590",
+      "size": "600x800"
+    },
+    "animal_wolf": {
+      "attempts": 1,
+      "bytes": 8986,
+      "cost_usd": 0.063,
+      "note": "luma 46.9 sd 54.4 lit 11.0%",
+      "prompt_sha": "abe58d02ac84a5fb61e1ab233f24c951c86fb6d9dbe73be2230c7b9509f9778f",
+      "sha256": "349237cd7eade3fe870a0c350d597acdff746daa2560985436839544eaefab9f",
+      "size": "600x800"
+    },
+    "dn12a": {
+      "attempts": 1,
+      "bytes": 8536,
+      "cost_usd": 0.063,
+      "note": "luma 63.8 sd 52.9 lit 9.5%",
+      "prompt_sha": "d7a439bd5c60022abcbebe07dea77f560eff76645c2ef3a85c740dfefdb1dbe5",
+      "sha256": "4837b8499e585c0826c9964c67c533707434d17b85d7b5f77acf9605634866f4",
+      "size": "600x800"
+    },
+    "dn12b": {
+      "attempts": 1,
+      "bytes": 10180,
+      "cost_usd": 0.063,
+      "note": "luma 74.2 sd 42.9 lit 3.7%",
+      "prompt_sha": "29878e2c64a46a4bfc072cfa613d4425ff8d93e1cdaa8e74ad1f5214e8bbd2d7",
+      "sha256": "d33f01fa59ecf8b88014310217476061b7d9059438fdb7bed6e3d51d500b0616",
+      "size": "600x800"
+    },
+    "dn12c": {
+      "attempts": 1,
+      "bytes": 7948,
+      "cost_usd": 0.063,
+      "note": "luma 110.9 sd 43.0 lit 27.9%",
+      "prompt_sha": "74821355a92be5db6deb33254144b90e11582f762361c394e6f22120e4293614",
+      "sha256": "b1e732daeef76aec32fa937d0afe3856e949be6c219103fdeddeadacdd68fa4d",
+      "size": "600x800"
+    },
+    "dn12d": {
+      "attempts": 2,
+      "bytes": 11434,
+      "cost_usd": 0.063,
+      "note": "luma 108.3 sd 62.8 lit 35.2%",
+      "prompt_sha": "0b300543dd593969e66f7eb8187bec169d55601e219f15b703fe90cb5ffe906f",
+      "sha256": "a46294b4b3347d131371ad81f30e30926a0ba9e7ba06077bdabec12adae70063",
+      "size": "600x800"
+    },
+    "en5a": {
+      "attempts": 1,
+      "bytes": 23922,
+      "cost_usd": 0.063,
+      "note": "luma 99.1 sd 65.0 lit 30.2%",
+      "prompt_sha": "6c4ec24929534579a19789c6efd3072b85dfa447a35f75523245d796dc605af0",
+      "sha256": "d2c36bd0575125880d4ab62ad36e5425cfbbe78255244ae7cfc8637ebc4b2654",
+      "size": "600x800"
+    },
+    "en5b": {
+      "attempts": 1,
+      "bytes": 11432,
+      "cost_usd": 0.063,
+      "note": "luma 75.5 sd 63.3 lit 21.3%",
+      "prompt_sha": "3596275331af76e48680b3a666f058aff0ee79a927c59a173e7948dccdbd2ba7",
+      "sha256": "4ace7c35dfe82b8c72b8eafb8536daa8c49fc8d42098d1575169947a14b9bc56",
+      "size": "600x800"
+    },
+    "fk14a": {
+      "attempts": 1,
+      "bytes": 11790,
+      "cost_usd": 0.063,
+      "note": "luma 56.6 sd 37.9 lit 3.8%",
+      "prompt_sha": "c85f8606257a0a84f59a0feda81a5c49ee60f55e5ec893c872e8eb5a91f2e9d2",
+      "sha256": "cfbbd0bb7c308ce806ca99201f62a7e0add697424734ac88e6c4028011e0f348",
+      "size": "600x800"
+    },
+    "fk14b": {
+      "attempts": 1,
+      "bytes": 7748,
+      "cost_usd": 0.063,
+      "note": "luma 51.0 sd 40.1 lit 6.6%",
+      "prompt_sha": "c961ae9b370e7cb67b8e8dedc55645c3460f5645196bfee8a09ca4968f53a205",
+      "sha256": "0981128e9d7e932d9269c3e849e394a23e34befc06666267d272b31e202f4da0",
+      "size": "600x800"
+    },
+    "fk14c": {
+      "attempts": 1,
+      "bytes": 14968,
+      "cost_usd": 0.063,
+      "note": "luma 48.4 sd 39.0 lit 5.5%",
+      "prompt_sha": "5246d8651852cb25a41085dfa0c9cb3e3812a90b6d1e368a7124c802571fd46c",
+      "sha256": "45edb8c80bef8d45ee8a0db4dccfc801a01373e523e252bf241c6bd14db92ea1",
+      "size": "600x800"
+    },
+    "fk14d": {
+      "attempts": 1,
+      "bytes": 12384,
+      "cost_usd": 0.063,
+      "note": "luma 62.8 sd 52.9 lit 8.3%",
+      "prompt_sha": "66f45ab7b522918e707187f9e51accd9e4635b0acda8d4d5745152f2e5ca73a5",
+      "sha256": "c8ed93bcb6db5e6adbb75c3c308c4d66a7cada1c1825791e2aace44290179848",
+      "size": "600x800"
+    },
+    "hb4a": {
+      "attempts": 1,
+      "bytes": 10530,
+      "cost_usd": 0.063,
+      "note": "luma 87.2 sd 48.1 lit 11.8%",
+      "prompt_sha": "90c50f23f9d63959de23361a98db83b5303c4aef8f2259201b9a33476d8d0187",
+      "sha256": "abdba3f33c3fb95da2ca86c52a73999604bc570ed5890c478b3fa9b97e518e75",
+      "size": "600x800"
+    },
+    "hb4b": {
+      "attempts": 1,
+      "bytes": 8372,
+      "cost_usd": 0.063,
+      "note": "luma 57.7 sd 43.0 lit 6.4%",
+      "prompt_sha": "5a93f509962a391b0678d390496fcb8bbb7eb8b3ab402ed5fccfb9aac2d3e79f",
+      "sha256": "0726880d540126a24552e8b7c13dd26fdc56b79999cfbc9652bbc1196aa1c3ac",
+      "size": "600x800"
+    },
+    "hb4c": {
+      "attempts": 1,
+      "bytes": 16696,
+      "cost_usd": 0.063,
+      "note": "luma 63.1 sd 41.1 lit 12.1%",
+      "prompt_sha": "5fac5ef06c44e1b41cd79b55cbde185e2a45eac9440f62b99c723b2bf04f568b",
+      "sha256": "ca4c18e86804b7ba0f4538df7d8d2b5616404d0aecb21f46fc0218b9c0ba693b",
+      "size": "600x800"
+    },
+    "hb4d": {
+      "attempts": 1,
+      "bytes": 9878,
+      "cost_usd": 0.063,
+      "note": "luma 85.3 sd 39.1 lit 2.9%",
+      "prompt_sha": "8150cb8fc1c389af13333897347d0721dccc3e5d6d44000f880931803e432a83",
+      "sha256": "8e1c867c0082723c490956fb3afcf6e8815beb180a470143a253d6ac2bc18df8",
+      "size": "600x800"
+    },
+    "og": {
+      "attempts": 1,
+      "bytes": 19310,
+      "cost_usd": 0.063,
+      "note": "luma 45.5 sd 37.7 lit 4.8%",
+      "prompt_sha": "79e5ddb485a446d784eff04f3f96f5c3e6a2254845678e347ac199757cd258f8",
+      "sha256": "d49b56dd18d1ca93283aa2f13d4b55166da3619c29dd99a6ceaa91a58af444ad",
+      "size": "1200x630"
+    },
+    "pd16a": {
+      "attempts": 1,
+      "bytes": 15176,
+      "cost_usd": 0.063,
+      "note": "luma 67.6 sd 50.0 lit 13.7%",
+      "prompt_sha": "ae02c5e9fdbeaaea901883ba2ab4a5ffe40f20e0a58ad6ae1cce719538214266",
+      "sha256": "52c69d52478b5d6888118f11991a3cec64563c059ef213d788e15d00abf15c94",
+      "size": "600x800"
+    },
+    "pd16b": {
+      "attempts": 1,
+      "bytes": 9378,
+      "cost_usd": 0.063,
+      "note": "luma 40.9 sd 40.4 lit 6.8%",
+      "prompt_sha": "3c2df2dba8cf0d180f5eade76c8908215e237918b7c2895f4e25aa99b4717785",
+      "sha256": "1b24f0fc15408defe10f605aa218083169abaf385f4942fd43c24187c0186d6a",
+      "size": "600x800"
+    },
+    "pd16c": {
+      "attempts": 1,
+      "bytes": 15286,
+      "cost_usd": 0.063,
+      "note": "luma 58.9 sd 68.2 lit 15.3%",
+      "prompt_sha": "ddbac8373599d36c297ec683f73b0131af9cee9d50600fa93a22f3dc1ff4f51a",
+      "sha256": "76b0cbf05da6ff25cd244a9835a0a73f74d48243b35978c08e8b1b56139c5e9d",
+      "size": "600x800"
+    },
+    "pd16d": {
+      "attempts": 1,
+      "bytes": 10970,
+      "cost_usd": 0.063,
+      "note": "luma 44.6 sd 53.8 lit 10.5%",
+      "prompt_sha": "6c2ad2daf3dec909db2402e593f6796653a492fc33e97a34c64dbf851e4cfd9b",
+      "sha256": "cfb11518631a353859e8182a000837b9ccc0f4e4550000f7b673fce287872f28",
+      "size": "600x800"
+    },
+    "pe17a": {
+      "attempts": 1,
+      "bytes": 11790,
+      "cost_usd": 0.063,
+      "note": "luma 43.5 sd 43.9 lit 8.5%",
+      "prompt_sha": "c11dc2b1c249bccb4fc15cebde4f3ae8bdc080061c79af5faa4bce8c5b600c6a",
+      "sha256": "778893d37a0c0033ab0f55efaf28197615300faa8e9668d4102a395f7b8f3a4b",
+      "size": "600x800"
+    },
+    "pe17b": {
+      "attempts": 1,
+      "bytes": 11138,
+      "cost_usd": 0.063,
+      "note": "luma 50.3 sd 61.4 lit 15.1%",
+      "prompt_sha": "917a3e1c3ace0757b5b947a92aba4cacaea3c9ff273c4e72039afed695081a5a",
+      "sha256": "bbbf0928dfcc85d52d087ee15bc5f3ca9ce362e4b77e1c0817c152fa642ae355",
+      "size": "600x800"
+    },
+    "pe17c": {
+      "attempts": 1,
+      "bytes": 13098,
+      "cost_usd": 0.063,
+      "note": "luma 60.4 sd 71.3 lit 22.4%",
+      "prompt_sha": "a8727b9a7ecd1c0260ec9b5febf4efd49f941277a1784154d86f7d6a48824de0",
+      "sha256": "6e8ebedf5dd0bcf780be7cc8a9b2d085c8ba7dfe4e5c37c1cb8da27bd2d3b7d0",
+      "size": "600x800"
+    },
+    "pe17d": {
+      "attempts": 1,
+      "bytes": 10156,
+      "cost_usd": 0.063,
+      "note": "luma 66.9 sd 70.0 lit 15.0%",
+      "prompt_sha": "3e0eee6ea99f6b3a3c9117501a15cd2ec78ab63e9732e029ff1cdf89fb03f125",
+      "sha256": "6b09d46425d6f9a82e25761630f9bc865de84adecf1361fbcede4325d9ec6be0",
+      "size": "600x800"
+    },
+    "pi15a": {
+      "attempts": 1,
+      "bytes": 11784,
+      "cost_usd": 0.063,
+      "note": "luma 47.9 sd 49.6 lit 8.7%",
+      "prompt_sha": "16377138798f88e7c33d9474eec1b77473f57d1bd24d67828793821b6e081dfa",
+      "sha256": "a1f6840e54bcb05fd86007b904fbcfe19228964b5a87b9a51fafd9a7a7dacd63",
+      "size": "600x800"
+    },
+    "pi15b": {
+      "attempts": 1,
+      "bytes": 10384,
+      "cost_usd": 0.063,
+      "note": "luma 36.4 sd 31.5 lit 3.1%",
+      "prompt_sha": "cd4a0d70f13e41c26fa6a0719f18bf0478df676a789dc34d57ca5d0efca4cbd1",
+      "sha256": "4e201572ffb7fe26a44f7e4afbbf662a6909d401d4fe0be5cfaa582d2e7142c7",
+      "size": "600x800"
+    },
+    "pk1a": {
+      "attempts": 1,
+      "bytes": 13846,
+      "cost_usd": 0.063,
+      "note": "luma 63.0 sd 58.5 lit 11.7%",
+      "prompt_sha": "2c94a805f84b54dceb13e463c28feaec8af18a9b5e1e542d0b4357d3846dc129",
+      "sha256": "7774b9c4dc1b43b2c7b54baef49637ab4ea89af29bdcb79b88869ebf3ba1831c",
+      "size": "600x800"
+    },
+    "pk1b": {
+      "attempts": 1,
+      "bytes": 15952,
+      "cost_usd": 0.063,
+      "note": "luma 54.2 sd 53.9 lit 8.8%",
+      "prompt_sha": "5dc2c0d896e4a5c9087acd9288414802b532d1b6837b5e2627afaf5303780a33",
+      "sha256": "9205d6bca71c3381769315e2837df9166176f607629d578b14062abb91fae72c",
+      "size": "600x800"
+    },
+    "pl7a": {
+      "attempts": 1,
+      "bytes": 6786,
+      "cost_usd": 0.063,
+      "note": "luma 80.4 sd 70.4 lit 19.7%",
+      "prompt_sha": "59795c0c8fa6892d5c22f2211f2672704c0cd8f84181d18e22cdee939191c876",
+      "sha256": "6f57576a4bbd1a1a7f45d3a581cbd0898da2dddd7acdd30335870b7598929045",
+      "size": "600x800"
+    },
+    "pl7b": {
+      "attempts": 1,
+      "bytes": 6916,
+      "cost_usd": 0.063,
+      "note": "luma 81.1 sd 61.8 lit 21.9%",
+      "prompt_sha": "40cd1add1c1378b750faf84abd8103d5d172743d553138540584b9c50d1d624f",
+      "sha256": "bfa457e03c78fe4a8d0e2192a8a4a91bcc21b2389cd0b1ac4387c1946d27882b",
+      "size": "600x800"
+    },
+    "pl7c": {
+      "attempts": 2,
+      "bytes": 3918,
+      "cost_usd": 0.063,
+      "note": "luma 140.5 sd 41.2 lit 50.8%",
+      "prompt_sha": "ce4a9a4e859a8b11bd8edbfa4e9ec0207bb7468c2caa78a3be576208f994b21c",
+      "sha256": "2c49113e0492682436ff281713c126bd293f1c1b8d211d840f02027a4b2e4e19",
+      "size": "600x800"
+    },
+    "pl7d": {
+      "attempts": 1,
+      "bytes": 4698,
+      "cost_usd": 0.063,
+      "note": "luma 107.6 sd 73.8 lit 36.6%",
+      "prompt_sha": "7ab5bd4a0d682e78cbf5c302c99c1ab190cdc30cea6dac191e4266740e106095",
+      "sha256": "381d6eff04b89e2a1350779f58b205fa5b7ef830c2e6624a709e6e5c88e2e0eb",
+      "size": "600x800"
+    },
+    "pl7e": {
+      "attempts": 1,
+      "bytes": 6920,
+      "cost_usd": 0.063,
+      "note": "luma 61.9 sd 61.7 lit 18.6%",
+      "prompt_sha": "2b963e70a8446a91c794094b5c87c365bc001a56c26d53ab9ade74044206c493",
+      "sha256": "e31b15e0f9b6b7d6b480e45b81035a705dbbf99d13f4e0413ce676f6d2c8057c",
+      "size": "600x800"
+    },
+    "pl7f": {
+      "attempts": 1,
+      "bytes": 3598,
+      "cost_usd": 0.063,
+      "note": "luma 90.1 sd 82.8 lit 31.5%",
+      "prompt_sha": "4960b5b88404ac36a80d5d47d14f171cd91382ba976fe20695aeea68764b7c35",
+      "sha256": "4043017f357a33b760c32d1773eddfa60690aa44534d7fc727482b3473d28651",
+      "size": "600x800"
+    },
+    "pm8a": {
+      "attempts": 1,
+      "bytes": 12552,
+      "cost_usd": 0.063,
+      "note": "luma 48.1 sd 54.4 lit 11.7%",
+      "prompt_sha": "200209f8cdcdd26f112d17ae5347545261c1e66d20bb537b52fe2afb10bcf4c7",
+      "sha256": "6ceb9ecca31f75c0e74b796b5ffdd29b2c901bb6632ae23c1bbba274578cac9a",
+      "size": "600x800"
+    },
+    "pm8b": {
+      "attempts": 1,
+      "bytes": 12632,
+      "cost_usd": 0.063,
+      "note": "luma 53.1 sd 62.0 lit 12.7%",
+      "prompt_sha": "0476d895fee3ac66e7aed389e8df57300a7f9afdbdab2e22fcb6b809388e7980",
+      "sha256": "bf76f61a7c6338e356d103ae3d4435759fda3c1291c1c6e1a06af4634e0d0aaf",
+      "size": "600x800"
+    },
+    "pr11a": {
+      "attempts": 1,
+      "bytes": 11228,
+      "cost_usd": 0.063,
+      "note": "luma 68.7 sd 74.5 lit 18.1%",
+      "prompt_sha": "9d80f30b799bf66d9c62d30f470e5c423e164041db1acb93c3c963cee6ed9d77",
+      "sha256": "4142bfa1c4d4ece11234fd9102e668b54c494499c52313375c31deffc31d3608",
+      "size": "600x800"
+    },
+    "pr11b": {
+      "attempts": 1,
+      "bytes": 9420,
+      "cost_usd": 0.063,
+      "note": "luma 32.7 sd 34.6 lit 3.9%",
+      "prompt_sha": "24eb6c37bfa0809abf1f3a4eefd9295663c6f878ccd3f70cdba0cb369aea9cd2",
+      "sha256": "2c54bbce40d2ef641598ee96e3f1ebd6140fb336c1565903e76cf48d7c1f8be6",
+      "size": "600x800"
+    },
+    "ps13a": {
+      "attempts": 1,
+      "bytes": 11094,
+      "cost_usd": 0.063,
+      "note": "luma 78.0 sd 27.4 lit 4.1%",
+      "prompt_sha": "6582e3ebbccb3af5faf7dfb858fe13eb571d12bd2a95ae677374938705f91a6e",
+      "sha256": "6d652aea8bbeffb4021bac87ba749659976c17bb494d32da2364cc3fdc83812e",
+      "size": "600x800"
+    },
+    "ps13b": {
+      "attempts": 1,
+      "bytes": 12032,
+      "cost_usd": 0.063,
+      "note": "luma 67.2 sd 70.5 lit 18.3%",
+      "prompt_sha": "c6ed5c6b08cb5f86b01201b46984dafef0b7dfe28315be92898f394c7e3ebea0",
+      "sha256": "7fcfe7e9b1ee2150302a4527d976ea289824da08d27f91da5976964b92226b2b",
+      "size": "600x800"
+    },
+    "pt9a": {
+      "attempts": 1,
+      "bytes": 9084,
+      "cost_usd": 0.063,
+      "note": "luma 74.0 sd 83.5 lit 22.8%",
+      "prompt_sha": "47d1cf9ae355935c7acd3dd36d318ffd665b745a4cb33c72fb99ac91936d7d25",
+      "sha256": "fa360b669a2fa07c18f108b713f6030b635d24aed5a2163e382635667abc21b1",
+      "size": "600x800"
+    },
+    "pt9b": {
+      "attempts": 1,
+      "bytes": 10774,
+      "cost_usd": 0.063,
+      "note": "luma 33.2 sd 28.8 lit 2.5%",
+      "prompt_sha": "ccf6f679a128f4a9c1b5f0ddcf17d0c7423c8eb6f233e2ae71de81c4c7eeb758",
+      "sha256": "e095dc64780693cab9906c65c6299f94dc5472f62c5b739b62ed0e3854cb1b5d",
+      "size": "600x800"
+    },
+    "pt9c": {
+      "attempts": 1,
+      "bytes": 14140,
+      "cost_usd": 0.063,
+      "note": "luma 49.7 sd 38.2 lit 5.7%",
+      "prompt_sha": "f5974a41f54544776f842eb898b43dfe2091d04265d963832a9fde5606b5581b",
+      "sha256": "a989a3c5c02a0eed6a10e40495d702c7c84623e763c79641e25d922d96c589e8",
+      "size": "600x800"
+    },
+    "pt9d": {
+      "attempts": 1,
+      "bytes": 10906,
+      "cost_usd": 0.063,
+      "note": "luma 48.5 sd 55.0 lit 14.3%",
+      "prompt_sha": "395e579a3f2dabe9b00e4e53ca7c292b5693d39b9907717e2cb09ee0521c7312",
+      "sha256": "5f2c870573585d636141b2784350b72f356ae57c00f671df152eff1633d3b8b5",
+      "size": "600x800"
+    },
+    "pv6a": {
+      "attempts": 1,
+      "bytes": 14784,
+      "cost_usd": 0.063,
+      "note": "luma 77.3 sd 74.4 lit 20.7%",
+      "prompt_sha": "337773d24c18bc8b572f7a3c5b574fedb1c01102f1817aa506373024b7d5b976",
+      "sha256": "316e624fff8f5da243b9a8e4835ef15fe1956bb3f71a56456e05ee164407e143",
+      "size": "600x800"
+    },
+    "pv6b": {
+      "attempts": 1,
+      "bytes": 9856,
+      "cost_usd": 0.063,
+      "note": "luma 40.4 sd 39.5 lit 8.8%",
+      "prompt_sha": "10147070a3ddc8d9ae00d4a1e2687ec5cb700224c570617e99af3e09d190d65f",
+      "sha256": "cbf5c0a73a8a0404ddc7e99767ccf8369a6f0ccadbe3d7167be6c8c21a58ca83",
+      "size": "600x800"
+    },
+    "pv6c": {
+      "attempts": 1,
+      "bytes": 12532,
+      "cost_usd": 0.063,
+      "note": "luma 39.9 sd 40.3 lit 4.5%",
+      "prompt_sha": "5bc9053ec7bdc06177858da861138ec4e08ee38c82d98d8440508f45cbf103fa",
+      "sha256": "77866f0f408b069fddf34e5069a14ee510b438095935e3b9831c77269d653ab5",
+      "size": "600x800"
+    },
+    "pv6d": {
+      "attempts": 2,
+      "bytes": 20538,
+      "cost_usd": 0.063,
+      "note": "luma 46.4 sd 35.4 lit 5.2%",
+      "prompt_sha": "ba9ff727f6df4369459fe02a16436856fe3971d781b2eaa56bf00f51e29da6c5",
+      "sha256": "86eac80a5e27ebbd28d3ed3fee3a9d4b71abeac7843b05a8dae8d8fdc70d4e34",
+      "size": "600x800"
+    },
+    "pv6e": {
+      "attempts": 1,
+      "bytes": 13432,
+      "cost_usd": 0.063,
+      "note": "luma 85.5 sd 70.1 lit 23.3%",
+      "prompt_sha": "785c7ffb14ed47ed9596a367ebcb1f54829b2cb160e2baf4944b289caaf358fa",
+      "sha256": "03dd89fc0d1a31f7cc563259eb312fd258780947d22b6778f99f1775adbbaf6e",
+      "size": "600x800"
+    },
+    "pv6f": {
+      "attempts": 1,
+      "bytes": 7454,
+      "cost_usd": 0.063,
+      "note": "luma 29.6 sd 37.0 lit 5.2%",
+      "prompt_sha": "b169dc20ab2c9ba0b86469f743ecde547cd1feb16bc201f1d6bfc210e42b1f87",
+      "sha256": "f9256d06c10de0c2e010665a60dfdf38d58cdc62ce1f437a834b3c973bc6052e",
+      "size": "600x800"
+    },
+    "pz18a": {
+      "attempts": 1,
+      "bytes": 12794,
+      "cost_usd": 0.063,
+      "note": "luma 60.0 sd 53.7 lit 14.8%",
+      "prompt_sha": "60d2d0da0f5d70b3b9de524389e6043fae7fc73a2c6772752764b01f763ca120",
+      "sha256": "0dbb0193adf6567de14cb2e2dc9d574fe7c5bdf4e4b53d307021fb4c7e1f31e8",
+      "size": "600x800"
+    },
+    "pz18b": {
+      "attempts": 1,
+      "bytes": 10084,
+      "cost_usd": 0.063,
+      "note": "luma 92.7 sd 87.3 lit 28.8%",
+      "prompt_sha": "959a871f30ed359695e5a2dcb0ea489c7732d16e14896a31263f9a1f204cd152",
+      "sha256": "c27bf7f0937742eb61ffeb98e788c5804461905ac55e6dae2e03c5e11953f055",
+      "size": "600x800"
+    },
+    "sq3a": {
+      "attempts": 1,
+      "bytes": 7354,
+      "cost_usd": 0.063,
+      "note": "luma 60.6 sd 43.2 lit 6.5%",
+      "prompt_sha": "9e1aab6e5d69e0736ccb74f5a2c464e4afaa0720e13142f1fe5f632b9e005f81",
+      "sha256": "d0a799242ce861c68460045b368839f56dbd146866ed2d9e4c682be8809ae759",
+      "size": "600x800"
+    },
+    "sq3b": {
+      "attempts": 1,
+      "bytes": 8194,
+      "cost_usd": 0.063,
+      "note": "luma 41.6 sd 44.3 lit 6.9%",
+      "prompt_sha": "23bffda3c9bf4983ba84e502088a4601c5f939e3ea47018f98d8cc94cd33fda4",
+      "sha256": "9a6db6d70d6be705e86b223fe2ac5b75e157c3ec34eacad3ca1486416bffac15",
+      "size": "600x800"
+    },
+    "sq3c": {
+      "attempts": 1,
+      "bytes": 10914,
+      "cost_usd": 0.063,
+      "note": "luma 65.6 sd 43.9 lit 7.2%",
+      "prompt_sha": "8547612d598def52d9ddd93f960b9f90cc85b194e7d08e55ecc086c1cd205f10",
+      "sha256": "5e4cf92ed5de6591f96e3848ee9d7e84e62f8aa883e6b2ea403f68e5400405fa",
+      "size": "600x800"
+    },
+    "sq3d": {
+      "attempts": 1,
+      "bytes": 9374,
+      "cost_usd": 0.063,
+      "note": "luma 84.0 sd 57.0 lit 28.0%",
+      "prompt_sha": "4d1f95356475c337d20b1eb54c3c07d6c6206881bf2d7355fc00bd528ad0c4d8",
+      "sha256": "6def4fcee71ddb868e69d1918a5dafd3909779b8dcba6c310f98f6b42725a72a",
+      "size": "600x800"
+    },
+    "wt10a": {
+      "attempts": 1,
+      "bytes": 7084,
+      "cost_usd": 0.063,
+      "note": "luma 118.3 sd 48.7 lit 32.3%",
+      "prompt_sha": "7d3f45717afa5680d816a98b506fc244389a5a0b1967657c3593708bea2e4522",
+      "sha256": "03ad00ea59928f29b6c11c6231667d67492284761203f0ed3c5918cb4d53ec59",
+      "size": "600x800"
+    },
+    "wt10b": {
+      "attempts": 1,
+      "bytes": 9750,
+      "cost_usd": 0.063,
+      "note": "luma 37.6 sd 29.6 lit 3.7%",
+      "prompt_sha": "b729acc42d973cd78879c094f1a010f47835140c8049f382c24f7f11fcf0d1a2",
+      "sha256": "76e185ad33012e131885464115f0d8ef240bd31dac237f307019bac60b9f1791",
+      "size": "600x800"
+    },
+    "wt10c": {
+      "attempts": 1,
+      "bytes": 6756,
+      "cost_usd": 0.063,
+      "note": "luma 99.7 sd 51.3 lit 29.1%",
+      "prompt_sha": "6a7830cd5a8ea9159f4fd180ba0502297c6858e708264b05a74aed285766d36c",
+      "sha256": "6e103ee5dc0a74d04f7052ae49f9965daf5bc48776c213fde578cd0332eb257a",
+      "size": "600x800"
+    },
+    "wt10d": {
+      "attempts": 1,
+      "bytes": 12592,
+      "cost_usd": 0.063,
+      "note": "luma 96.2 sd 42.9 lit 24.6%",
+      "prompt_sha": "3e1d1679e2a1189221da0ca4bcd297c955efc67e7e9e890acab69aa17e6f4f21",
+      "sha256": "d6a33ef9d74c54353566aac189fafb1b27414c7a36b64d4ad5eac66a6094303e",
+      "size": "600x800"
+    }
+  },
+  "model": "gpt-image-1",
+  "note": "What gen_persona.py has really drawn. A rerun skips an id whose file still hashes to what is recorded here, so a hand-edited frame is left alone, not painted over.",
+  "quality": "medium"
+}
