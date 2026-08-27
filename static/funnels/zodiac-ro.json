@@ -2981,9 +2981,11 @@
     "locked_aria": "Blocat"
   },
   "pricing": {
-    "amount_cents": 199,
-    "currency": "usd",
-    "cta": "Deblochează-mi profilul complet"
+    "amount_cents": 999,
+    "currency": "ron",
+    "cta": "Deblochează-mi profilul complet",
+    "price_format": "{amount} lei",
+    "decimal_mark": ","
   },
   "checkout": {
     "kicker": "Profilul tău e gata",
@@ -2993,10 +2995,10 @@
     "express": true,
     "withdrawal_consent": false,
     "commerce": {
-      "anchor_head": "Un profil de {price} în loc de o ședință de 75 $",
-      "anchor_head_accent": "75 $",
-      "price_anchor": "în loc de o ședință privată de 75 $",
-      "price_anchor_accent": "75 $",
+      "anchor_head": "Un profil de {price} în loc de o ședință de la 350 de lei",
+      "anchor_head_accent": "350 de lei",
+      "price_anchor": "în loc de o ședință privată de la 350 de lei",
+      "price_anchor_accent": "350 de lei",
       "price_note": "plată unică",
       "badges": [
         "PLATĂ UNICĂ",
@@ -3007,8 +3009,8 @@
         "Plată securizată prin Stripe",
         "PDF pe e-mailul tău"
       ],
-      "mid_line": "Harta ta completă de energie, pentru mai puțin de două cafele.",
-      "mid_line_accent": "două cafele",
+      "mid_line": "Harta ta completă de energie, pentru mai puțin de o cafea.",
+      "mid_line_accent": "o cafea",
       "mid_button": "Vezi ce e înăuntru ↓",
       "sticky_label": "Deblochează profilul complet — {price}"
     },
@@ -3025,8 +3027,8 @@
     "manifest_hero": "strengths",
     "manifest_head": "Ce e înăuntru — {n} secțiuni, ale tale pentru totdeauna",
     "anchor_head": "O citire de {price} a energiei pe care o consumi în fiecare zi",
-    "anchor": "O ședință privată cu un astrolog costă de la 75 $. Profilul tău complet — {price}, o singură dată.",
-    "reframe": "Mai puțin de două cafele. Al tău pentru totdeauna.",
+    "anchor": "O ședință privată cu un astrolog costă de la 350 de lei. Profilul tău complet — {price}, o singură dată.",
+    "reframe": "Mai puțin de o cafea. Al tău pentru totdeauna.",
     "price_suffix": "plată unică",
     "cta_label": "Deschide-mi profilul complet — {price}",
     "consent_prechecked": true,
