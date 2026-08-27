@@ -477,7 +477,7 @@
                 "label": "Inner quiet",
                 "tags": [
                   "anchor",
-                  "calm",
+                  "inner",
                   "purpose_peace"
                 ],
                 "colors": [
@@ -753,7 +753,7 @@
                 "label": "A minimal, tidy desk",
                 "tags": [
                   "anchor",
-                  "calm"
+                  "inner"
                 ],
                 "colors": [
                   {
@@ -779,7 +779,7 @@
                 "label": "A cosy reading nook",
                 "tags": [
                   "wave",
-                  "inner"
+                  "calm"
                 ],
                 "colors": [
                   {
@@ -858,7 +858,7 @@
                 "label": "A night desk under a lamp",
                 "tags": [
                   "prism",
-                  "calm"
+                  "inner"
                 ],
                 "colors": [
                   {
@@ -922,7 +922,7 @@
                 "label": "Moss & stone",
                 "tags": [
                   "anchor",
-                  "calm"
+                  "inner"
                 ],
                 "colors": [
                   {
@@ -948,7 +948,7 @@
                 "label": "Paper & ink",
                 "tags": [
                   "prism",
-                  "calm"
+                  "inner"
                 ],
                 "colors": [
                   {
@@ -974,7 +974,8 @@
                 "label": "Teal & still water",
                 "tags": [
                   "wave",
-                  "inner"
+                  "inner",
+                  "deep"
                 ],
                 "colors": [
                   {
@@ -1026,7 +1027,7 @@
                 "label": "Clay & daylight",
                 "tags": [
                   "drive",
-                  "calm"
+                  "outer"
                 ],
                 "colors": [
                   {
@@ -1232,7 +1233,7 @@
       },
       {
         "id": "weather",
-        "question": "Your weather, most days:",
+        "question": "Your inner weather lately?",
         "format": "grid4",
         "pairs": [
           {
@@ -1322,7 +1323,7 @@
                 "label": "Steady rain",
                 "tags": [
                   "wave",
-                  "calm"
+                  "deep"
                 ],
                 "colors": [
                   {
@@ -1477,7 +1478,7 @@
                 "label": "Somebody else's crisis",
                 "tags": [
                   "wave",
-                  "inner"
+                  "outer"
                 ],
                 "colors": [
                   {
@@ -1838,8 +1839,7 @@
                 "label": "Gather your people",
                 "tags": [
                   "wave",
-                  "outer",
-                  "deep"
+                  "outer"
                 ],
                 "colors": [
                   {
@@ -1929,7 +1929,7 @@
                 "label": "Steadiness",
                 "tags": [
                   "anchor",
-                  "inner"
+                  "deep"
                 ],
                 "colors": [
                   {
@@ -2008,57 +2008,56 @@
       },
       {
         "id": "seal",
-        "question": "Seal your profile:",
+        "question": "Ten years from now, the win is…",
         "format": "pair",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
-                "id": "sg18a",
-                "img": "/static/galleries/persona/sg18a.webp",
-                "label": "Sunrise",
+                "id": "pz18a",
+                "img": "/static/galleries/persona/pz18a.webp",
+                "label": "A life full of stories",
                 "tags": [
-                  "drive",
-                  "outer"
+                  "outer",
+                  "bold"
                 ],
                 "colors": [
                   {
                     "name": "Dawn Sand",
                     "hex": "#EAD6A8",
-                    "element": "disc"
+                    "element": "far light"
                   },
                   {
                     "name": "Dune Sand",
                     "hex": "#C8A97E",
-                    "element": "sky"
+                    "element": "road"
                   },
                   {
                     "name": "Deep Navy",
                     "hex": "#12202C",
-                    "element": "land"
+                    "element": "distance"
                   }
                 ]
               },
               {
-                "id": "sg18b",
-                "img": "/static/galleries/persona/sg18b.webp",
-                "label": "Lamplight",
+                "id": "pz18b",
+                "img": "/static/galleries/persona/pz18b.webp",
+                "label": "A life that feels like peace",
                 "tags": [
-                  "prism",
                   "inner",
-                  "deep"
+                  "calm"
                 ],
                 "colors": [
                   {
-                    "name": "Lamp Sand",
-                    "hex": "#E2CDA0",
-                    "element": "shade"
+                    "name": "Pale Sand",
+                    "hex": "#DED2B4",
+                    "element": "window"
                   },
                   {
-                    "name": "Deep Teal",
-                    "hex": "#2A7078",
-                    "element": "spill"
+                    "name": "Sea Teal",
+                    "hex": "#3E8E8A",
+                    "element": "sill"
                   },
                   {
                     "name": "Ink Navy",
@@ -2250,7 +2249,7 @@
       "img": "/static/galleries/persona/pv6b.webp",
       "tags": [
         "anchor",
-        "calm"
+        "inner"
       ]
     },
     {
@@ -2258,7 +2257,7 @@
       "img": "/static/galleries/persona/pv6c.webp",
       "tags": [
         "wave",
-        "inner"
+        "calm"
       ]
     },
     {
@@ -2283,7 +2282,7 @@
       "img": "/static/galleries/persona/pv6f.webp",
       "tags": [
         "prism",
-        "calm"
+        "inner"
       ]
     },
     {
@@ -2299,7 +2298,7 @@
       "img": "/static/galleries/persona/pl7b.webp",
       "tags": [
         "anchor",
-        "calm"
+        "inner"
       ]
     },
     {
@@ -2307,7 +2306,7 @@
       "img": "/static/galleries/persona/pl7c.webp",
       "tags": [
         "prism",
-        "calm"
+        "inner"
       ]
     },
     {
@@ -2315,7 +2314,8 @@
       "img": "/static/galleries/persona/pl7d.webp",
       "tags": [
         "wave",
-        "inner"
+        "inner",
+        "deep"
       ]
     },
     {
@@ -2331,7 +2331,7 @@
       "img": "/static/galleries/persona/pl7f.webp",
       "tags": [
         "drive",
-        "calm"
+        "outer"
       ]
     },
     {
@@ -2347,7 +2347,7 @@
       "img": "/static/galleries/persona/pe17b.webp",
       "tags": [
         "anchor",
-        "inner"
+        "deep"
       ]
     },
     {
@@ -2391,7 +2391,7 @@
         "img": "/static/galleries/persona/pl7b.webp",
         "tags": [
           "anchor",
-          "calm"
+          "inner"
         ]
       },
       {
@@ -2402,7 +2402,8 @@
         "img": "/static/galleries/persona/pl7d.webp",
         "tags": [
           "wave",
-          "inner"
+          "inner",
+          "deep"
         ]
       },
       {
@@ -2413,7 +2414,7 @@
         "img": "/static/galleries/persona/pl7c.webp",
         "tags": [
           "prism",
-          "calm"
+          "inner"
         ]
       },
       {
@@ -2463,7 +2464,7 @@
       {
         "id": "clear-sky",
         "label": "Clear sky",
-        "spec": "Open weather — visible, unhurried",
+        "spec": "Open mood — settled, and looking outward",
         "image": "wt10a",
         "img": "/static/galleries/persona/wt10a.webp",
         "tags": [
@@ -2474,7 +2475,7 @@
       {
         "id": "low-fog",
         "label": "Low fog",
-        "spec": "Closed weather — private, slow to lift",
+        "spec": "Closed mood — inward, and slow to lift",
         "image": "wt10c",
         "img": "/static/galleries/persona/wt10c.webp",
         "tags": [
@@ -2501,7 +2502,7 @@
         "img": "/static/galleries/persona/pv6f.webp",
         "tags": [
           "prism",
-          "calm"
+          "inner"
         ]
       }
     ]
@@ -3041,7 +3042,7 @@
     "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right."
   },
   "result": {
-    "mistakes_teaser": "You've seen strength #1. The other four run deeper — one explains your {weather} choice.",
+    "mistakes_teaser": "You've seen strength #1. The other four run deeper — one explains the {weather} you named.",
     "value_banner": "Five strengths, a read on how you connect and a twelve-month energy map — all of it built from your own 18 signals, yours to keep."
   },
   "result_copy": {
@@ -3051,7 +3052,7 @@
     "balance_title": "Your axis balance",
     "head_title": "Your shape",
     "head_caption": "Four axes, scored off your own taps and drawn to the strongest of them. The bead on the arc is your outer-to-inner lean.",
-    "strength_lead": "Your {carry} and your {weather} put this one first.",
+    "strength_lead": "Your {carry} and the {weather} you've been under put this one first.",
     "offer_sub": "Your complete profile — once, forever.",
     "locked_note": "Locked",
     "delivered_note": "A PDF of this profile is in your inbox. This page stays at the link you were sent back to.",
@@ -3220,7 +3221,7 @@
           "id": "mistakes",
           "key": "Blind spots",
           "icon": "eye",
-          "promise": "what your {weather} pick gave away — strengths #2–5, the costliest last"
+          "promise": "what naming {weather} gave away — strengths #2–5, the costliest last"
         },
         {
           "id": "shopping",
@@ -3267,7 +3268,7 @@
       "rarity": {
         "igniter": {
           "anchor": {
-            "outer": 12,
+            "outer": 10,
             "inner": 40
           },
           "wave": {
@@ -3275,31 +3276,31 @@
             "inner": 40
           },
           "prism": {
-            "outer": 10,
+            "outer": 12,
             "inner": 40
           }
         },
         "keeper": {
           "drive": {
-            "outer": 25,
+            "outer": 40,
             "inner": 15
           },
           "wave": {
             "outer": 40,
-            "inner": 25
+            "inner": 15
           },
           "prism": {
-            "outer": 30,
+            "outer": 40,
             "inner": 15
           }
         },
         "feeler": {
           "drive": {
-            "outer": 10,
+            "outer": 12,
             "inner": 40
           },
           "anchor": {
-            "outer": 20,
+            "outer": 15,
             "inner": 40
           },
           "prism": {
@@ -3309,12 +3310,12 @@
         },
         "thinker": {
           "drive": {
-            "outer": 20,
+            "outer": 40,
             "inner": 12
           },
           "anchor": {
             "outer": 40,
-            "inner": 20
+            "inner": 15
           },
           "wave": {
             "outer": 40,

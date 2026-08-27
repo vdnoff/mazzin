@@ -141,7 +141,7 @@ WANT = [
     ("palette", "grid6", "Which moodboard is yours?"),
     ("moment", "pair", "When do you lose track of time?"),
     ("talisman", "grid4", "Which one lives in your bag?"),
-    ("weather", "grid4", "Your weather, most days:"),
+    ("weather", "grid4", "Your inner weather lately?"),
     ("rhythm", "pair", "Your sharpest hour?"),
     ("drain", "grid4", "Which of these drains you most?"),
     ("sanctuary", "pair", "After a hard day, you reset by\u2026"),
@@ -149,7 +149,7 @@ WANT = [
     ("tide", "pair", "Deadline pressure hits. You\u2026"),
     ("door", "grid4", "A free Saturday appears. First instinct?"),
     ("essence", "grid4", "People come to you for\u2026"),
-    ("seal", "pair", "Seal your profile:"),
+    ("seal", "pair", "Ten years from now, the win is\u2026"),
 ]
 check("step ids and order", [s["id"] for s in steps] == [w[0] for w in WANT],
       str([s["id"] for s in steps]))
@@ -218,20 +218,22 @@ SCENARIOS = {
     "door": ["Road trip", "Build or fix something", "Gather your people",
              "Museum, bookshop, deep dive"],
     "essence": ["A push", "Steadiness", "Comfort", "Answers"],
+    "seal": ["A life full of stories", "A life that feels like peace"],
 }
 for sid, labels in sorted(SCENARIOS.items()):
     got = [i["label"] for i in by_step[sid]["pairs"][0]["images"]]
     check("  %-12s offers the answers it was redesigned around" % sid,
           got == labels, str(got))
-check("nine steps were replaced, and the other nine kept their ids",
-      len(SCENARIOS) == 9 and set(SCENARIOS) <= {s["id"] for s in steps})
+check("ten steps were replaced, and the rest kept their ids",
+      len(SCENARIOS) == 10 and set(SCENARIOS) <= {s["id"] for s in steps})
 # The frames were renamed with the content. The generator skips an id already
 # on disk, so a replaced picture that kept its id would keep the old
 # gradient — the rename is what forces the art to be redrawn.
 for sid in SCENARIOS:
     old_ids = {"hook": "ph1", "environment": "ev6", "moment": "mo8",
                "talisman": "tl9", "rhythm": "rh11", "sanctuary": "sn13",
-               "tide": "tr15", "door": "dw16", "essence": "es17"}[sid]
+               "tide": "tr15", "door": "dw16", "essence": "es17",
+               "seal": "sg18"}[sid]
     check("  %-12s frames were renamed with the content" % sid,
           not [i["id"] for i in by_step[sid]["pairs"][0]["images"]
                if i["id"].startswith(old_ids)],
@@ -242,8 +244,45 @@ for sid in sorted(SCENARIOS):
     q = by_step[sid]["question"].lower()
     check("  %-12s asks what they do" % sid,
           any(w in q for w in ("you", "your", "does", "do ", "lives",
-                               "come", "hits", "appears", "work", "lose")),
+                               "come", "hits", "appears", "work", "lose",
+                               "win", "from now")),
           by_step[sid]["question"])
+
+# The weather step kept its four pictures and changed what it asks: the sky
+# was a picture to like, the mood is a thing the reader reports about
+# themselves. Same frames, same ids, so no art was redrawn for it — which is
+# why the ids are asserted to have *stayed* here, the opposite of the nine.
+WEATHER = ["Clear sky", "Gathering storm", "Low fog", "Steady rain"]
+weather_cards = by_step["weather"]["pairs"][0]["images"]
+check("the weather step keeps its four states",
+      [i["label"] for i in weather_cards] == WEATHER,
+      str([i["label"] for i in weather_cards]))
+check("  and its frames, because the pictures did not change",
+      all(i["id"].startswith("wt10") for i in weather_cards),
+      str([i["id"] for i in weather_cards]))
+check("  but asks for a self-report rather than a preference",
+      by_step["weather"]["question"] == "Your inner weather lately?",
+      by_step["weather"]["question"])
+# And the sentences that print the tapped label had to move with it. "your low
+# fog put this one first" reads as a possession; a mood is a spell you have
+# been under.
+check("  and the copy that prints the label reads it as a mood",
+      "the {weather} you've been under" in cfg["result_copy"]["strength_lead"]
+      and "the {weather} you named" in cfg["result"]["mistakes_teaser"],
+      cfg["result_copy"]["strength_lead"])
+check("  with no sentence still calling it a thing they own",
+      not [t for t in strings(cfg) if "your {weather}" in t],
+      str([t for t in strings(cfg) if "your {weather}" in t]))
+
+# Two cards on one step with the same tags are one card asked twice: whichever
+# the reader taps, the run learns the same thing. The tuner reaches for this
+# constantly — identical tags are often locally optimal — so it is pinned.
+for step in steps:
+    tagsets = [tuple(sorted(i["tags"]))
+               for i in step["pairs"][0]["images"]]
+    check("  %-12s asks something different on every card" % step["id"],
+          len(set(tagsets)) == len(tagsets),
+          str([t for t in tagsets if tagsets.count(t) > 1]))
 
 print("\n--- the twelve animals ---")
 ANIMALS = ["Owl", "Fox", "Wolf", "Bear", "Stag", "Raven",
