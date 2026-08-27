@@ -37,6 +37,11 @@ def check(label, ok, detail=""):
                             ("  " + detail) if detail and not ok else ""))
 
 
+# The two files whose English defaults this funnel is the exception to.
+JS = os.path.join(ROOT, "static", "js")
+ENGINE_JS = open(os.path.join(JS, "engine.js"), encoding="utf-8").read()
+RESULT_JS = open(os.path.join(JS, "result_zodiac.js"), encoding="utf-8").read()
+
 PATH = os.path.join(ROOT, "funnels/zodiac-ro.json")
 RAW = open(PATH, encoding="utf-8").read()
 cfg = json.loads(RAW)
@@ -144,13 +149,14 @@ def comparable(config):
     grid lists them.
     """
     out = without_added(config)
-    # The price is this funnel's own now — 199 against the English 300 — and
-    # `shape` keeps numbers, so it would read as drift. Normalised away here
-    # and pinned on its own account below, at "pricing is 199 usd", together
-    # with the assertion that the English twins are still at 300. This is the
-    # one number the two funnels are allowed to disagree on; everything else
-    # numeric stays compared.
-    out["pricing"] = dict(out["pricing"], amount_cents="priced")
+    # FORCED TEST EDIT. The price WAS the one number the two funnels were
+    # allowed to disagree on, with the currency pinned equal. This funnel
+    # takes Romanian Leu now — a different amount, a different currency, and
+    # two optional keys for writing it — so the whole `pricing` block is
+    # normalised here and pinned on its own account below, at "pricing is 999
+    # ron", together with the assertion that the English three are still at
+    # 300 usd. Everything outside `pricing` stays compared, number for number.
+    out["pricing"] = "priced"
     copy = dict(config["result_copy"])
     for key in ADDED:
         copy.pop(key, None)
@@ -165,18 +171,14 @@ def comparable(config):
 
 check("the whole config has the twin's shape",
       shape(comparable(cfg)) == shape(comparable(twin)))
-# `cta` is copy and is translated like every other string; `currency` is not
-# copy and has to match, or two funnels selling the same thing would be
-# charging in different money. So the amount is the ONE thing left that the
-# two are allowed to differ on numerically.
-check("  and the price is the only number the two disagree on",
-      shape(cfg["pricing"]) != shape(twin["pricing"])
-      and shape(dict(cfg["pricing"], amount_cents=0))
-      == shape(dict(twin["pricing"], amount_cents=0)),
+# `pricing` is the one block the two funnels are allowed to disagree on
+# whole: this one sells in lei and the English three in dollars.
+check("  and `pricing` is the only block they disagree on",
+      cfg["pricing"] != twin["pricing"]
+      and shape(comparable(cfg)) == shape(comparable(twin)),
       "%s vs %s" % (cfg["pricing"], twin["pricing"]))
-check("    same keys, same currency, different amount",
-      sorted(cfg["pricing"]) == sorted(twin["pricing"])
-      and cfg["pricing"]["currency"] == twin["pricing"]["currency"] == "usd"
+check("    a different currency, not just a different number",
+      cfg["pricing"]["currency"] != twin["pricing"]["currency"]
       and cfg["pricing"]["amount_cents"] != twin["pricing"]["amount_cents"],
       "%s vs %s" % (cfg["pricing"], twin["pricing"]))
 check("  and sign_cross is keyed on this funnel's own twelve labels",
@@ -310,20 +312,31 @@ check("the purpose map points at the twin's sections",
        for k, v in cfg["result_copy"]["purpose_map"].items()}
       == {k: v["emphasized_section"]
           for k, v in twin["result_copy"]["purpose_map"].items()})
-# This funnel prices on its own now — 199 where the English three still
-# charge 300 — so the shape comparison above stops at the shape and the
-# amount is asserted here, on its own account.
-check("pricing is 199 usd",
-      cfg["pricing"]["amount_cents"] == 199
-      and cfg["pricing"]["currency"] == "usd",
+# This funnel presents in Romanian Leu. Stripe takes RON as a presentment
+# currency and settles in ours, so the config carries bani the way every
+# other funnel carries cents: an integer minor unit, server-derived, never
+# sent by the client. 999 bani = 9,99 lei.
+check("pricing is 999 ron",
+      cfg["pricing"]["amount_cents"] == 999
+      and cfg["pricing"]["currency"] == "ron",
       str(cfg["pricing"]))
+check("  written the way Romanian writes money",
+      cfg["pricing"].get("price_format") == "{amount} lei"
+      and cfg["pricing"].get("decimal_mark") == ",",
+      str(cfg["pricing"]))
+check("  and the English three declare neither key, so they format as before",
+      not any(k in json.load(open(os.path.join(ROOT, "funnels", slug + ".json"),
+                                  encoding="utf-8"))["pricing"]
+              for slug in ("zodiac", "zodiac30", "kitchen")
+              for k in ("price_format", "decimal_mark")))
 check("  integer cents, never a float or a formatted string",
       isinstance(cfg["pricing"]["amount_cents"], int)
       and not isinstance(cfg["pricing"]["amount_cents"], bool),
       repr(cfg["pricing"]["amount_cents"]))
-check("  and the English funnels are untouched at 300",
-      twin["pricing"]["amount_cents"] == english["pricing"]["amount_cents"]
-      == 300,
+check("  and the English funnels are untouched at 300 usd",
+      twin["pricing"]["currency"] == english["pricing"]["currency"] == "usd"
+      and twin["pricing"]["amount_cents"]
+      == english["pricing"]["amount_cents"] == 300,
       "%s / %s" % (twin["pricing"]["amount_cents"],
                    english["pricing"]["amount_cents"]))
 check("  and it still transacts live",
@@ -356,30 +369,114 @@ check("  the CTA, the anchor and the sticky bar among them",
               for k in ("anchor_head", "sticky_label")))
 
 
-def short(cents, cur="USD"):
-    """What engine.js formatPriceShort() prints for an amount."""
-    amount = str(cents // 100) if cents % 100 == 0 else "%.2f" % (cents / 100.0)
+def short(pricing):
+    """What engine.js formatPriceShort() prints, mirrored here.
+
+    Both formatters take the funnel's own `price_format` when it declares
+    one and fall through to the symbol table when it does not, which is what
+    keeps the dollar funnels rendering what they always rendered. The real
+    functions are in static/js/engine.js; this is the same branch, and the
+    source assertions below hold the two together.
+    """
+    cents = pricing["amount_cents"]
+    amount = (str(cents // 100) if cents % 100 == 0
+              else "%.2f" % (cents / 100.0))
+    mark = pricing.get("decimal_mark")
+    if mark:
+        amount = amount.replace(".", mark)
+    shape_ = pricing.get("price_format")
+    if shape_:
+        return shape_.replace("{amount}", amount)
+    cur = (pricing.get("currency") or "usd").upper()
     return {"USD": "$", "EUR": "€", "GBP": "£"}.get(cur, "") + amount
 
 
-check("  which renders this amount as $1.99, cents and all",
-      short(cfg["pricing"]["amount_cents"]) == "$1.99",
-      short(cfg["pricing"]["amount_cents"]))
-check("  where the English three still render as $3",
-      short(twin["pricing"]["amount_cents"]) == "$3",
-      short(twin["pricing"]["amount_cents"]))
-# The anchor is a claim about what somebody else charges, not a multiple of
-# what we charge, so it does not move with our price — and the English twins
-# make the same claim, in the same figure.
-check("the 75 $ anchor is left alone, and says the same as the twin's",
-      cfg["checkout"]["anchor"].count("75 $") == 1
-      and twin["checkout"]["anchor"].count("$75") == 1,
+def long(pricing):
+    """And what formatPrice() prints — the paywall's own line."""
+    cents = pricing["amount_cents"]
+    amount = "%.2f" % (cents / 100.0)
+    mark = pricing.get("decimal_mark")
+    if mark:
+        amount = amount.replace(".", mark)
+    shape_ = pricing.get("price_format")
+    if shape_:
+        return shape_.replace("{amount}", amount)
+    return amount + " " + (pricing.get("currency") or "usd").upper()
+
+
+check("  which renders as 9,99 lei, short form and long",
+      short(cfg["pricing"]) == long(cfg["pricing"]) == "9,99 lei",
+      "%s / %s" % (short(cfg["pricing"]), long(cfg["pricing"])))
+for slug in ("zodiac", "zodiac30", "kitchen", "kitchen-visualizer"):
+    en = json.load(open(os.path.join(ROOT, "funnels", slug + ".json"),
+                        encoding="utf-8"))["pricing"]
+    check("  %-19s still renders $3 and 3.00 USD" % slug,
+          short(en) == "$3" and long(en) == "3.00 USD",
+          "%s / %s" % (short(en), long(en)))
+
+
+def js_body(name):
+    """One function out of engine.js, from its `function` line to its close."""
+    head = ENGINE_JS.index("  function %s(" % name)
+    return ENGINE_JS[head:ENGINE_JS.index("\n  }\n", head)]
+
+
+check("both engine.js formatters read the funnel's own format",
+      all("priceFormat()" in js_body(fn) and "priceAmount(cents," in js_body(fn)
+          for fn in ("formatPrice", "formatPriceShort")),
+      str([fn for fn in ("formatPrice", "formatPriceShort")
+           if "priceFormat()" not in js_body(fn)
+           or "priceAmount(cents," not in js_body(fn)]))
+check("  the short one drops the minor units on a round amount, as before",
+      "cents % 100 === 0" in js_body("formatPriceShort")
+      and "cents % 100 === 0" in js_body("priceAmount"))
+check("  and fall through to the symbol table when there is none",
+      'var SYMBOLS = { USD: "$", EUR: "€", GBP: "£" };' in ENGINE_JS
+      and 'return (cents / 100).toFixed(2) + " " + cur;' in ENGINE_JS
+      and 'SYMBOLS[cur] ? SYMBOLS[cur] + amount : amount + " " + cur' in ENGINE_JS)
+
+# The anchor is a claim about what somebody else charges. It moves with the
+# currency, not with our price: a card that quoted lei against dollars would
+# be asking the reader to do the conversion.
+check("the anchor is stated in lei, like everything else on the card",
+      "350 de lei" in cfg["checkout"]["anchor"]
+      and "350 de lei" in cfg["checkout"]["commerce"]["anchor_head"]
+      and "350 de lei" in cfg["checkout"]["commerce"]["price_anchor"],
       cfg["checkout"]["anchor"])
-check("  and it is the only figure the copy states outright",
+check("  and the English twins still quote $75, untouched",
+      twin["checkout"]["anchor"].count("$75") == 1
+      and english["checkout"]["anchor"].count("$75") == 1)
+check("no dollar sign survives anywhere in this funnel's copy",
+      not [p for p, v in STRINGS if "$" in v],
+      str([p for p, v in STRINGS if "$" in v][:4]))
+check("  and no string says usd either",
+      not [p for p, v in STRINGS
+           if re.search(r"\busd\b", v, re.I) and p != "/pricing/currency"],
+      str([p for p, v in STRINGS if re.search(r"\busd\b", v, re.I)][:4]))
+check("  350 is the only figure the copy states outright",
       sorted(set(re.findall(r"\d+", " ".join(
-          v for _p, v in STRINGS if "$" in v)))) == ["75"],
+          v for p, v in STRINGS if "lei" in v and p != "/pricing/price_format"))))
+      == ["350"],
       str(sorted(set(re.findall(r"\d+", " ".join(
-          v for _p, v in STRINGS if "$" in v))))))
+          v for p, v in STRINGS if "lei" in v
+          and p != "/pricing/price_format"))))))
+check("the coffee is one coffee now, which 9,99 lei is under",
+      "o cafea" in cfg["checkout"]["commerce"]["mid_line"]
+      and "o cafea" in cfg["checkout"]["reframe"]
+      and "cafele" not in " ".join(v for _p, v in STRINGS),
+      "%s | %s" % (cfg["checkout"]["commerce"]["mid_line"],
+                   cfg["checkout"]["reframe"]))
+check("  and the accent is still a substring of the line it accents",
+      cfg["checkout"]["commerce"]["mid_line_accent"]
+      in cfg["checkout"]["commerce"]["mid_line"]
+      and cfg["checkout"]["commerce"]["anchor_head_accent"]
+      in cfg["checkout"]["commerce"]["anchor_head"]
+      and cfg["checkout"]["commerce"]["price_anchor_accent"]
+      in cfg["checkout"]["commerce"]["price_anchor"])
+check("every {price} slot reads with the amount substituted",
+      all("{price}" not in v.replace("{price}", short(cfg["pricing"]))
+          and "  " not in v.replace("{price}", short(cfg["pricing"]))
+          for _p, v in STRINGS if "{price}" in v))
 
 print("\n--- the tokens the page fills ---")
 TOKEN = re.compile(r"\{(\w+)\}")
@@ -1151,10 +1248,10 @@ check("  and it is not a kitchen mail by another name",
       "kitchen" not in reports.COPY_ZODIAC_RO["subject"].lower())
 check("the opening line is Romanian and names the price",
       DIACRITIC.search(reports._email_opening({"funnel": "zodiac-ro"}))
-      and "$1.99" in reports._email_opening({"funnel": "zodiac-ro"}),
+      and "9,99 lei" in reports._email_opening({"funnel": "zodiac-ro"}),
       reports._email_opening({"funnel": "zodiac-ro"}))
 check("  read off the funnel rather than written into the mail",
-      reports._price_paid({"funnel": "zodiac-ro"}) == "$1.99"
+      reports._price_paid({"funnel": "zodiac-ro"}) == "9,99 lei"
       and reports._price_paid({"funnel": "zodiac30"}) == "$3",
       "%s / %s" % (reports._price_paid({"funnel": "zodiac-ro"}),
                    reports._price_paid({"funnel": "zodiac30"})))
@@ -1600,9 +1697,6 @@ print("\n--- a funnel that declares none of it renders English ---")
 # The guarantee the other three funnels rest on. Asserted two ways: they
 # declare nothing, and the English every default falls back to is still in
 # the file, character for character.
-JS = os.path.join(ROOT, "static", "js")
-ENGINE_JS = open(os.path.join(JS, "engine.js"), encoding="utf-8").read()
-RESULT_JS = open(os.path.join(JS, "result_zodiac.js"), encoding="utf-8").read()
 for slug in ("kitchen", "kitchen-visualizer", "zodiac", "zodiac30"):
     other = json.load(open(os.path.join(ROOT, "funnels", slug + ".json"),
                            encoding="utf-8"))

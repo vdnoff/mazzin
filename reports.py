@@ -6202,6 +6202,17 @@ def _price_paid(content):
     # Cents are integers and stay integers; this is display, not arithmetic.
     whole, part = divmod(cents, 100)
     amount = str(whole) if part == 0 else "%d.%02d" % (whole, part)
+    # The funnel's own way of writing money, where a symbol in front of a
+    # point-separated number is the wrong shape — Romanian writes 9,99 lei.
+    # The same two optional keys engine.js reads, so the page, the mail and
+    # the PDF name one price in one format. Absent on every dollar funnel,
+    # which therefore renders exactly what it always did.
+    mark = pricing.get("decimal_mark")
+    if isinstance(mark, str) and mark:
+        amount = amount.replace(".", mark)
+    shape = pricing.get("price_format")
+    if isinstance(shape, str) and shape:
+        return shape.replace("{amount}", amount)
     symbol = SYMBOLS.get(currency)
     return (symbol + amount) if symbol else ("%s %s" % (amount, currency))
 

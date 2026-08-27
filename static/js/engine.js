@@ -4552,10 +4552,38 @@
   function formatPrice() {
     var cents = cfg.pricing.amount_cents;
     var cur = (cfg.pricing.currency || "usd").toUpperCase();
+    var own = priceFormat();
+    if (own) return own.replace("{amount}", priceAmount(cents, false));
     return (cents / 100).toFixed(2) + " " + cur;
   }
 
   var SYMBOLS = { USD: "$", EUR: "€", GBP: "£" };
+
+  // How this funnel writes its own money, when a symbol in front of a
+  // point-separated number is the wrong shape for it.
+  //
+  // `pricing.price_format` is a slot for the amount — "{amount} lei" — and
+  // `pricing.decimal_mark` the character between the units and the minor
+  // units. Romanian writes 9,99 lei: comma, and the word after the number
+  // rather than a symbol before it.
+  //
+  // Both optional, and both absent on every funnel that sells in dollars, so
+  // /kitchen, /zodiac and /zodiac30 render the "$3" and the "3.00 USD" they
+  // have always rendered, character for character. The symbol table above is
+  // still what a dollar, euro or pound funnel uses; this is only for the
+  // currencies whose convention it cannot express.
+  function priceAmount(cents, short) {
+    var pricing = (cfg && cfg.pricing) || {};
+    var text = (short && cents % 100 === 0)
+      ? String(cents / 100) : (cents / 100).toFixed(2);
+    var mark = pricing.decimal_mark;
+    return (typeof mark === "string" && mark) ? text.replace(".", mark) : text;
+  }
+
+  function priceFormat() {
+    var own = ((cfg && cfg.pricing) || {}).price_format;
+    return (typeof own === "string" && own) ? own : null;
+  }
 
   // The same amount, short enough to sit inside a sentence. "3.00 USD" is
   // right on its own line and wrong in "This report costs ___", so copy that
@@ -4564,6 +4592,8 @@
   function formatPriceShort() {
     var cents = cfg.pricing.amount_cents;
     var cur = (cfg.pricing.currency || "usd").toUpperCase();
+    var own = priceFormat();
+    if (own) return own.replace("{amount}", priceAmount(cents, true));
     var amount = cents % 100 === 0 ? String(cents / 100)
                                    : (cents / 100).toFixed(2);
     return SYMBOLS[cur] ? SYMBOLS[cur] + amount : amount + " " + cur;
