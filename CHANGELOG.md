@@ -384,3 +384,6 @@ bottom.
 
 ## 2026-08-26 — claude/ro-price-199
 - zodiac-ro price: $3.00 -> $1.99
+
+## 2026-08-27 — claude/persona-phase1-xrd7ye
+- persona phase 1: config + result module + placeholders + tests
