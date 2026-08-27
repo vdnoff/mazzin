@@ -393,3 +393,6 @@ bottom.
 
 ## 2026-08-27 — claude/persona-phase16
 - persona phase 1.6: behavioral steps, Your shape reposition, persona theme, AXES
+
+## 2026-08-27 — claude/persona-phase2-art
+- persona phase 2: art generator script
