@@ -17,6 +17,7 @@ asserted before the server-side profile that will eventually enforce them.
 No database, no network, no key. Everything is read off disk.
 """
 import collections
+import importlib.util
 import json
 import os
 import random
@@ -471,6 +472,116 @@ check("nothing imports it — it is a console script",
            if f.endswith(".py")
            and "gen_persona_placeholders" in open(
                os.path.join(ROOT, f), encoding="utf-8").read()])
+
+print("\n--- the art generator ---")
+# The script that replaces the placeholders with real frames. It is console
+# work — nothing imports it and no route reaches it — so what is checked here
+# is that it reads the same source of truth the funnel does, and that the
+# rules the art has to obey are actually in the prompt rather than only in the
+# brief that asked for them.
+art = open(os.path.join(ROOT, "scripts/gen_persona.py"),
+           encoding="utf-8").read()
+OG_C = [{"name": "Ink", "hex": "#101820", "element": "ground"}]
+check("it reads this funnel's config",
+      'CONFIG = os.path.join(ROOT, "funnels", "persona.json")' in art)
+check("  and writes into this funnel's gallery",
+      '"static", "galleries", "persona"' in art)
+check("  filtering on the path, so another gallery is never written",
+      'OWNED = "/static/galleries/persona/"' in art
+      and 'item["img"].startswith(OWNED)' in art)
+check("  at the committed frame geometry",
+      "FRAME = (600, 800)" in art and "OG = (1200, 630)" in art
+      and "QUALITY = 80" in art)
+check("every frame carries the locked identity",
+      "STYLE = (" in art and "#101820" in art and "#4EDDC4" in art
+      and "#D9B98C" in art)
+# Asserted against the assembled prompt rather than the source text, which is
+# the difference between checking what gets sent and checking how it was
+# typed: the negatives are one string split over six source lines, so "no
+# constellations" appears in what the model receives and nowhere in the file.
+art_mod = importlib.util.module_from_spec(
+    importlib.util.spec_from_file_location(
+        "gen_persona", os.path.join(ROOT, "scripts/gen_persona.py")))
+art_mod.__loader__.exec_module(art_mod)
+sample = art_mod.frames(cfg)
+built = " ".join(f["prompt"] for f in sample).lower()
+check("  and it builds a prompt for every frame plus the share card",
+      len(sample) == len(images) + 1
+      and sample[-1]["id"] == "og", str(len(sample)))
+# Each negative is here because the model reaches for exactly that thing
+# unasked when told to illustrate identity.
+for banned in ("no human faces", "no text", "no letters", "no logos",
+               "no stars", "no constellations", "no zodiac signs",
+               "no tarot", "no crystals", "no moons"):
+    check("  every prompt forbids %s" % banned,
+          all(banned in f["prompt"].lower() for f in sample), banned)
+check("  and allows a person only as a silhouette", "silhouette" in built)
+check("  every prompt names the ink, the teal and the sand",
+      all(all(hexcode in f["prompt"].lower()
+              for hexcode in ("#101820", "#4eddc4", "#d9b98c"))
+          for f in sample))
+check("  and carries that frame's own three colours",
+      all(all(c["hex"] in art_mod.prompt_for(
+          st["id"], st.get("question", ""), i["label"], i["colors"])
+          for c in i["colors"])
+          for st in steps for i in st["pairs"][0]["images"]))
+check("  no prompt asks for something the negatives ban",
+      not [f["id"] for f in sample
+           if "constellation of" in f["prompt"].lower()
+           or "a star" in f["prompt"].lower()],
+      str([f["id"] for f in sample
+           if "constellation of" in f["prompt"].lower()]))
+check("  the animal prompts read as English",
+      "of an owl" in art_mod.prompt_for("animal", "", "Owl", OG_C)
+      and "of a fox" in art_mod.prompt_for("animal", "", "Fox", OG_C))
+# A prompt that bans constellations and then asks for one is a prompt arguing
+# with itself. The share card wants four joined points; it must not call them
+# that.
+og_block = art[art.index("OG_SCENE = ("):art.index("def scene_for")]
+check("the share card does not ask for what the negatives ban",
+      not [w for w in ("constellation", "star", "zodiac", "moon")
+           if w in og_block.lower()],
+      str([w for w in ("constellation", "star", "zodiac", "moon")
+           if w in og_block.lower()]))
+check("  and it draws the head the result page draws",
+      "profile" in og_block and "no face" in og_block)
+check("the twelve animals are asked for as one matched set",
+      "ANIMAL_SET" in art and "same construction language" in art
+      and "same share of the frame" in art)
+check("  with an article that reads, because Owl and Otter exist",
+      "def article(" in art and '"an" if' in art)
+check("the moodboard step is asked for as colour fields, not objects",
+      "MOODBOARD" in art and "no objects" in art)
+# The zodiac rule carried over: the check is after the render, not in front of
+# it. What did not carry is the kitchen exposure lift — these frames are meant
+# to be dark, and lifting them to a photograph's mean luma would throw the
+# identity away on every one of them.
+check("a render is checked for legibility after it comes back",
+      "def legibility(" in art and "MIN_LIT" in art
+      and "MAX_MEAN_LUMA" in art and "MIN_STDDEV" in art)
+check("  and a frame that fails it is redrawn, not corrected",
+      "redrawing" in art and "lift_exposure" not in art)
+check("  the checker never loses a frame to its own failure",
+      "unmeasured" in art)
+# Idempotency, and why it cannot be the placeholder script's rule.
+check("a rerun skips what it has really drawn",
+      "def already_drawn(" in art and "sha256" in art)
+check("  recorded outside the gallery, which holds frames and nothing else",
+      'MANIFEST = os.path.join(os.path.dirname(os.path.abspath(__file__))'
+      in art)
+check("  and keyed on the bytes, not on a file-size guess",
+      "def sha(" in art and "hashlib.sha256" in art)
+check("it can be run without spending anything",
+      '"--dry-run"' in art and "dry run: nothing called" in art)
+check("  and refuses to run at all with no key",
+      'OPENAI_API_KEY is not set' in art)
+check("it logs what each frame cost",
+      "cost_usd" in art and "spent" in art)
+check("nothing imports it — it is a console script",
+      not [f for f in os.listdir(ROOT)
+           if f.endswith(".py")
+           and "gen_persona" in open(os.path.join(ROOT, f),
+                                     encoding="utf-8").read()])
 
 print("\n--- service tags ---")
 service_images = [i for i in images if set(i["tags"]) & SERVICE]
