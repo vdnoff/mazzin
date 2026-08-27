@@ -28,56 +28,54 @@
             "id": "p1",
             "images": [
               {
-                "id": "ph1a",
-                "img": "/static/galleries/persona/ph1a.webp",
-                "label": "Sunrise cliff",
+                "id": "pk1a",
+                "img": "/static/galleries/persona/pk1a.webp",
+                "label": "Running shoes at dawn",
                 "tags": [
                   "drive",
-                  "outer",
                   "bold"
                 ],
                 "colors": [
                   {
-                    "name": "Flare Coral",
-                    "hex": "#F08A55",
-                    "element": "high sky"
+                    "name": "Dawn Sand",
+                    "hex": "#E4D5B4",
+                    "element": "sky"
                   },
                   {
-                    "name": "Cliff Bronze",
-                    "hex": "#B4703C",
-                    "element": "rock face"
+                    "name": "Signal Teal",
+                    "hex": "#4EBCB0",
+                    "element": "path"
                   },
                   {
-                    "name": "Sea Ink",
-                    "hex": "#14222C",
-                    "element": "water"
+                    "name": "Ink Navy",
+                    "hex": "#101820",
+                    "element": "ground"
                   }
                 ]
               },
               {
-                "id": "ph1b",
-                "img": "/static/galleries/persona/ph1b.webp",
-                "label": "Rainy library",
+                "id": "pk1b",
+                "img": "/static/galleries/persona/pk1b.webp",
+                "label": "Slow coffee, notebook open",
                 "tags": [
-                  "prism",
-                  "inner",
-                  "deep"
+                  "anchor",
+                  "calm"
                 ],
                 "colors": [
                   {
-                    "name": "Window Grey",
-                    "hex": "#9AA8B0",
-                    "element": "glass"
+                    "name": "Pale Sand",
+                    "hex": "#DCCBA6",
+                    "element": "page"
                   },
                   {
-                    "name": "Spine Violet",
-                    "hex": "#6A5A96",
-                    "element": "shelves"
+                    "name": "Dune Sand",
+                    "hex": "#C8A97E",
+                    "element": "table"
                   },
                   {
-                    "name": "Reading Ink",
-                    "hex": "#111A22",
-                    "element": "floor"
+                    "name": "Deep Navy",
+                    "hex": "#12202C",
+                    "element": "room"
                   }
                 ]
               }
@@ -104,18 +102,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Feather Fawn",
-                    "hex": "#C8B48E",
+                    "name": "Pale Sand",
+                    "hex": "#DED0AE",
                     "element": "upper field"
                   },
                   {
-                    "name": "Lens Violet",
-                    "hex": "#8E7AC4",
+                    "name": "Sea Teal",
+                    "hex": "#3E8E8A",
                     "element": "mid field"
                   },
                   {
-                    "name": "Hollow Ink",
-                    "hex": "#181F26",
+                    "name": "Night Ink",
+                    "hex": "#0F1A22",
                     "element": "lower field"
                   }
                 ]
@@ -130,18 +128,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Flare Coral",
-                    "hex": "#F0845A",
+                    "name": "Warm Sand",
+                    "hex": "#D9C39B",
                     "element": "upper field"
                   },
                   {
-                    "name": "Brush Rust",
-                    "hex": "#B4522C",
+                    "name": "Dune Sand",
+                    "hex": "#C08A54",
                     "element": "mid field"
                   },
                   {
-                    "name": "Burrow Ink",
-                    "hex": "#1C1A18",
+                    "name": "Ink Navy",
+                    "hex": "#101820",
                     "element": "lower field"
                   }
                 ]
@@ -156,18 +154,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Winter Silver",
-                    "hex": "#BCC8CE",
+                    "name": "Mist Sand",
+                    "hex": "#D2CDB8",
                     "element": "upper field"
                   },
                   {
-                    "name": "Tide Teal",
-                    "hex": "#4A9E92",
+                    "name": "Signal Teal",
+                    "hex": "#4EBCB0",
                     "element": "mid field"
                   },
                   {
-                    "name": "Timber Ink",
-                    "hex": "#161E22",
+                    "name": "Slate Navy",
+                    "hex": "#16202A",
                     "element": "lower field"
                   }
                 ]
@@ -182,18 +180,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Sage Stone",
-                    "hex": "#A6B592",
+                    "name": "Warm Sand",
+                    "hex": "#D6BE96",
                     "element": "upper field"
                   },
                   {
-                    "name": "Bark Umber",
-                    "hex": "#7A5C3A",
+                    "name": "Amber Sand",
+                    "hex": "#B08C5E",
                     "element": "mid field"
                   },
                   {
-                    "name": "Den Ink",
-                    "hex": "#191C16",
+                    "name": "Deep Navy",
+                    "hex": "#12202C",
                     "element": "lower field"
                   }
                 ]
@@ -208,18 +206,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Frost Sage",
-                    "hex": "#9AAE92",
+                    "name": "Pale Sand",
+                    "hex": "#D8C6A2",
                     "element": "upper field"
                   },
                   {
-                    "name": "Antler Bronze",
-                    "hex": "#8A6A44",
+                    "name": "Deep Teal",
+                    "hex": "#2A7078",
                     "element": "mid field"
                   },
                   {
-                    "name": "Pine Ink",
-                    "hex": "#141C18",
+                    "name": "Night Ink",
+                    "hex": "#0F1A22",
                     "element": "lower field"
                   }
                 ]
@@ -234,17 +232,17 @@
                 ],
                 "colors": [
                   {
-                    "name": "Storm Pewter",
-                    "hex": "#8E9AA2",
+                    "name": "Mist Sand",
+                    "hex": "#CBC7B4",
                     "element": "upper field"
                   },
                   {
-                    "name": "Oil Teal",
-                    "hex": "#2E6E70",
+                    "name": "Deep Teal",
+                    "hex": "#2A7078",
                     "element": "mid field"
                   },
                   {
-                    "name": "Wing Ink",
+                    "name": "Ink Navy",
                     "hex": "#101820",
                     "element": "lower field"
                   }
@@ -260,18 +258,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Snow Linen",
-                    "hex": "#D2D6D2",
+                    "name": "Bright Sand",
+                    "hex": "#E8DCBC",
                     "element": "upper field"
                   },
                   {
-                    "name": "Lens Violet",
-                    "hex": "#9A80D4",
+                    "name": "Bright Teal",
+                    "hex": "#4EDDC4",
                     "element": "mid field"
                   },
                   {
-                    "name": "Thicket Ink",
-                    "hex": "#1A1E24",
+                    "name": "Slate Navy",
+                    "hex": "#16202A",
                     "element": "lower field"
                   }
                 ]
@@ -286,8 +284,8 @@
                 ],
                 "colors": [
                   {
-                    "name": "River Foam",
-                    "hex": "#BEDCD8",
+                    "name": "Foam Sand",
+                    "hex": "#DFD8BE",
                     "element": "upper field"
                   },
                   {
@@ -296,8 +294,8 @@
                     "element": "mid field"
                   },
                   {
-                    "name": "Bank Ink",
-                    "hex": "#132022",
+                    "name": "Deep Navy",
+                    "hex": "#12202C",
                     "element": "lower field"
                   }
                 ]
@@ -312,18 +310,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Thermal Amber",
-                    "hex": "#E0A25A",
+                    "name": "Warm Sand",
+                    "hex": "#DCC298",
                     "element": "upper field"
                   },
                   {
-                    "name": "Talon Rust",
-                    "hex": "#A0522E",
+                    "name": "Amber Sand",
+                    "hex": "#B08C5E",
                     "element": "mid field"
                   },
                   {
-                    "name": "Ridge Ink",
-                    "hex": "#151A20",
+                    "name": "Night Ink",
+                    "hex": "#0F1A22",
                     "element": "lower field"
                   }
                 ]
@@ -338,18 +336,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Shell Sage",
-                    "hex": "#A8B896",
+                    "name": "Pale Sand",
+                    "hex": "#DACDAA",
                     "element": "upper field"
                   },
                   {
-                    "name": "Field Olive",
-                    "hex": "#6E7A4E",
+                    "name": "Sea Teal",
+                    "hex": "#3E8E8A",
                     "element": "mid field"
                   },
                   {
-                    "name": "Furrow Ink",
-                    "hex": "#171C18",
+                    "name": "Slate Navy",
+                    "hex": "#16202A",
                     "element": "lower field"
                   }
                 ]
@@ -364,18 +362,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Dust Apricot",
-                    "hex": "#E8B486",
+                    "name": "Dust Sand",
+                    "hex": "#E0C79C",
                     "element": "upper field"
                   },
                   {
-                    "name": "Mane Rust",
-                    "hex": "#B0603A",
+                    "name": "Dune Sand",
+                    "hex": "#C8A97E",
                     "element": "mid field"
                   },
                   {
-                    "name": "Paddock Ink",
-                    "hex": "#1A1A18",
+                    "name": "Deep Navy",
+                    "hex": "#12202C",
                     "element": "lower field"
                   }
                 ]
@@ -390,18 +388,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Sill Grey",
-                    "hex": "#A2AAB2",
+                    "name": "Mist Sand",
+                    "hex": "#CFC9B2",
                     "element": "upper field"
                   },
                   {
-                    "name": "Iris Violet",
-                    "hex": "#7A64BE",
+                    "name": "Sea Teal",
+                    "hex": "#3E8E8A",
                     "element": "mid field"
                   },
                   {
-                    "name": "Corner Ink",
-                    "hex": "#12161C",
+                    "name": "Ink Navy",
+                    "hex": "#101820",
                     "element": "lower field"
                   }
                 ]
@@ -430,18 +428,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Warm Blush",
-                    "hex": "#E29AA6",
+                    "name": "Warm Sand",
+                    "hex": "#DCC5A0",
                     "element": "core"
                   },
                   {
-                    "name": "Dusk Teal",
-                    "hex": "#3E7E82",
+                    "name": "Sea Teal",
+                    "hex": "#3E8E8A",
                     "element": "surround"
                   },
                   {
-                    "name": "Evening Ink",
-                    "hex": "#121C24",
+                    "name": "Night Ink",
+                    "hex": "#0F1A22",
                     "element": "field"
                   }
                 ]
@@ -457,18 +455,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Signal Amber",
-                    "hex": "#F0B45A",
+                    "name": "Bright Sand",
+                    "hex": "#E6D3A8",
                     "element": "core"
                   },
                   {
-                    "name": "Ember Rust",
-                    "hex": "#C05E2E",
+                    "name": "Amber Sand",
+                    "hex": "#B08C5E",
                     "element": "surround"
                   },
                   {
-                    "name": "Desk Ink",
-                    "hex": "#1A1814",
+                    "name": "Ink Navy",
+                    "hex": "#101820",
                     "element": "field"
                   }
                 ]
@@ -479,23 +477,23 @@
                 "label": "Inner quiet",
                 "tags": [
                   "anchor",
-                  "calm",
+                  "inner",
                   "purpose_peace"
                 ],
                 "colors": [
                   {
-                    "name": "Morning Sage",
-                    "hex": "#AEC0A2",
+                    "name": "Pale Sand",
+                    "hex": "#D8CDB0",
                     "element": "core"
                   },
                   {
-                    "name": "Slate Green",
-                    "hex": "#5E7468",
+                    "name": "Signal Teal",
+                    "hex": "#4EBCB0",
                     "element": "surround"
                   },
                   {
-                    "name": "Still Ink",
-                    "hex": "#141C1A",
+                    "name": "Slate Navy",
+                    "hex": "#16202A",
                     "element": "field"
                   }
                 ]
@@ -511,18 +509,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Pale Horizon",
-                    "hex": "#C6D6DE",
+                    "name": "Mist Sand",
+                    "hex": "#D0CCB6",
                     "element": "core"
                   },
                   {
-                    "name": "Lens Violet",
-                    "hex": "#7E6ABE",
+                    "name": "Deep Teal",
+                    "hex": "#2A7078",
                     "element": "surround"
                   },
                   {
-                    "name": "Verge Ink",
-                    "hex": "#131922",
+                    "name": "Deep Navy",
+                    "hex": "#12202C",
                     "element": "field"
                   }
                 ]
@@ -545,23 +543,23 @@
                 "label": "Single & searching",
                 "tags": [
                   "outer",
-                  "bold",
+                  "deep",
                   "bond_single"
                 ],
                 "colors": [
                   {
-                    "name": "Street Amber",
-                    "hex": "#E8A85E",
+                    "name": "Bright Sand",
+                    "hex": "#E8D6AC",
                     "element": "upper"
                   },
                   {
-                    "name": "Neon Coral",
-                    "hex": "#E2705A",
+                    "name": "Dune Sand",
+                    "hex": "#C8A97E",
                     "element": "mid"
                   },
                   {
-                    "name": "Pavement Ink",
-                    "hex": "#191B20",
+                    "name": "Deep Navy",
+                    "hex": "#12202C",
                     "element": "lower"
                   }
                 ]
@@ -572,23 +570,23 @@
                 "label": "In love",
                 "tags": [
                   "wave",
-                  "calm",
+                  "deep",
                   "bond_love"
                 ],
                 "colors": [
                   {
-                    "name": "Linen Cream",
-                    "hex": "#E6DCC8",
+                    "name": "Foam Sand",
+                    "hex": "#E2D9C0",
                     "element": "upper"
                   },
                   {
-                    "name": "Soft Teal",
-                    "hex": "#68B4AA",
+                    "name": "Signal Teal",
+                    "hex": "#4EBCB0",
                     "element": "mid"
                   },
                   {
-                    "name": "Blanket Ink",
-                    "hex": "#141E20",
+                    "name": "Slate Navy",
+                    "hex": "#16202A",
                     "element": "lower"
                   }
                 ]
@@ -599,23 +597,23 @@
                 "label": "It's complicated",
                 "tags": [
                   "prism",
-                  "deep",
+                  "inner",
                   "bond_complicated"
                 ],
                 "colors": [
                   {
-                    "name": "Split Grey",
-                    "hex": "#9EA6AE",
+                    "name": "Mist Sand",
+                    "hex": "#CBC7B4",
                     "element": "upper"
                   },
                   {
-                    "name": "Bruise Violet",
-                    "hex": "#6A5292",
+                    "name": "Deep Teal",
+                    "hex": "#2A7078",
                     "element": "mid"
                   },
                   {
-                    "name": "Late Ink",
-                    "hex": "#12151C",
+                    "name": "Ink Navy",
+                    "hex": "#101820",
                     "element": "lower"
                   }
                 ]
@@ -626,23 +624,23 @@
                 "label": "Healing",
                 "tags": [
                   "anchor",
-                  "calm",
+                  "inner",
                   "bond_healing"
                 ],
                 "colors": [
                   {
-                    "name": "Bandage Linen",
-                    "hex": "#DCD8C6",
+                    "name": "Pale Sand",
+                    "hex": "#DED2B2",
                     "element": "upper"
                   },
                   {
-                    "name": "New Sage",
-                    "hex": "#96AE88",
+                    "name": "Sea Teal",
+                    "hex": "#3E8E8A",
                     "element": "mid"
                   },
                   {
-                    "name": "Ground Ink",
-                    "hex": "#161C18",
+                    "name": "Night Ink",
+                    "hex": "#0F1A22",
                     "element": "lower"
                   }
                 ]
@@ -669,18 +667,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Stage Amber",
-                    "hex": "#F0A84E",
+                    "name": "Bright Sand",
+                    "hex": "#EAD6A6",
                     "element": "lights"
                   },
                   {
-                    "name": "Crowd Coral",
-                    "hex": "#D8664E",
+                    "name": "Dune Sand",
+                    "hex": "#C8A97E",
                     "element": "heads"
                   },
                   {
-                    "name": "Night Ink",
-                    "hex": "#171A22",
+                    "name": "Deep Navy",
+                    "hex": "#12202C",
                     "element": "ground"
                   }
                 ]
@@ -695,18 +693,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Cloud Linen",
-                    "hex": "#CFD8D2",
+                    "name": "Mist Sand",
+                    "hex": "#D4CFBA",
                     "element": "sky"
                   },
                   {
-                    "name": "Trail Sage",
-                    "hex": "#7E9480",
+                    "name": "Sea Teal",
+                    "hex": "#3E8E8A",
                     "element": "hillside"
                   },
                   {
-                    "name": "Path Ink",
-                    "hex": "#141A18",
+                    "name": "Night Ink",
+                    "hex": "#0F1A22",
                     "element": "ground"
                   }
                 ]
@@ -717,146 +715,120 @@
       },
       {
         "id": "environment",
-        "question": "Which place feels like home?",
+        "question": "Where does your mind work best?",
         "format": "grid6",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
-                "id": "ev6a",
-                "img": "/static/galleries/persona/ev6a.webp",
-                "label": "A workshop",
+                "id": "pv6a",
+                "img": "/static/galleries/persona/pv6a.webp",
+                "label": "A busy creative studio",
                 "tags": [
-                  "drive",
+                  "outer",
                   "bold"
                 ],
                 "colors": [
                   {
-                    "name": "Bulb Amber",
-                    "hex": "#F0B466",
-                    "element": "lamp"
+                    "name": "Bright Sand",
+                    "hex": "#E8D5A8",
+                    "element": "windows"
                   },
                   {
-                    "name": "Copper Rust",
-                    "hex": "#B2603A",
-                    "element": "bench"
+                    "name": "Dune Sand",
+                    "hex": "#C8A97E",
+                    "element": "benches"
                   },
                   {
-                    "name": "Shop Ink",
-                    "hex": "#1B1A16",
+                    "name": "Deep Navy",
+                    "hex": "#12202C",
                     "element": "corners"
                   }
                 ]
               },
               {
-                "id": "ev6b",
-                "img": "/static/galleries/persona/ev6b.webp",
-                "label": "An old forest",
+                "id": "pv6b",
+                "img": "/static/galleries/persona/pv6b.webp",
+                "label": "A minimal, tidy desk",
                 "tags": [
                   "anchor",
+                  "inner"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Sand",
+                    "hex": "#DFD3B4",
+                    "element": "surface"
+                  },
+                  {
+                    "name": "Signal Teal",
+                    "hex": "#4EBCB0",
+                    "element": "one object"
+                  },
+                  {
+                    "name": "Slate Navy",
+                    "hex": "#16202A",
+                    "element": "wall"
+                  }
+                ]
+              },
+              {
+                "id": "pv6c",
+                "img": "/static/galleries/persona/pv6c.webp",
+                "label": "A cosy reading nook",
+                "tags": [
+                  "wave",
                   "calm"
                 ],
                 "colors": [
                   {
-                    "name": "Canopy Sage",
-                    "hex": "#9CB48C",
-                    "element": "canopy"
+                    "name": "Warm Sand",
+                    "hex": "#D9C39B",
+                    "element": "cushions"
                   },
                   {
-                    "name": "Trunk Umber",
-                    "hex": "#6E5A3C",
-                    "element": "trunks"
+                    "name": "Amber Sand",
+                    "hex": "#B08C5E",
+                    "element": "throw"
                   },
                   {
-                    "name": "Forest Ink",
-                    "hex": "#131C16",
+                    "name": "Ink Navy",
+                    "hex": "#101820",
+                    "element": "alcove"
+                  }
+                ]
+              },
+              {
+                "id": "pv6d",
+                "img": "/static/galleries/persona/pv6d.webp",
+                "label": "A grand library hall",
+                "tags": [
+                  "prism",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Mist Sand",
+                    "hex": "#CEC9B2",
+                    "element": "high light"
+                  },
+                  {
+                    "name": "Deep Teal",
+                    "hex": "#2A7078",
+                    "element": "galleries"
+                  },
+                  {
+                    "name": "Night Ink",
+                    "hex": "#0F1A22",
                     "element": "floor"
                   }
                 ]
               },
               {
-                "id": "ev6c",
-                "img": "/static/galleries/persona/ev6c.webp",
-                "label": "A rooftop, city below",
-                "tags": [
-                  "outer",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Skyline Amber",
-                    "hex": "#E8A860",
-                    "element": "horizon"
-                  },
-                  {
-                    "name": "Window Coral",
-                    "hex": "#C86A56",
-                    "element": "towers"
-                  },
-                  {
-                    "name": "Roof Ink",
-                    "hex": "#161A22",
-                    "element": "parapet"
-                  }
-                ]
-              },
-              {
-                "id": "ev6d",
-                "img": "/static/galleries/persona/ev6d.webp",
-                "label": "A river bend",
-                "tags": [
-                  "wave",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Shallow Teal",
-                    "hex": "#7EC8BE",
-                    "element": "shallows"
-                  },
-                  {
-                    "name": "Deep Teal",
-                    "hex": "#2E7E7E",
-                    "element": "channel"
-                  },
-                  {
-                    "name": "Bank Ink",
-                    "hex": "#111C20",
-                    "element": "bank"
-                  }
-                ]
-              },
-              {
-                "id": "ev6e",
-                "img": "/static/galleries/persona/ev6e.webp",
-                "label": "A reading room",
-                "tags": [
-                  "prism",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Page Linen",
-                    "hex": "#DED6C4",
-                    "element": "pages"
-                  },
-                  {
-                    "name": "Shade Violet",
-                    "hex": "#8272B4",
-                    "element": "lampshade"
-                  },
-                  {
-                    "name": "Study Ink",
-                    "hex": "#14171E",
-                    "element": "shelves"
-                  }
-                ]
-              },
-              {
-                "id": "ev6f",
-                "img": "/static/galleries/persona/ev6f.webp",
-                "label": "An open coast",
+                "id": "pv6e",
+                "img": "/static/galleries/persona/pv6e.webp",
+                "label": "A park bench with a laptop",
                 "tags": [
                   "wave",
                   "outer",
@@ -864,19 +836,45 @@
                 ],
                 "colors": [
                   {
-                    "name": "Salt Linen",
-                    "hex": "#D8E2E0",
+                    "name": "Foam Sand",
+                    "hex": "#DED8C0",
                     "element": "sky"
                   },
                   {
-                    "name": "Surf Teal",
-                    "hex": "#4EBCB0",
-                    "element": "water"
+                    "name": "Bright Teal",
+                    "hex": "#4EDDC4",
+                    "element": "green"
                   },
                   {
-                    "name": "Shore Ink",
-                    "hex": "#121E22",
-                    "element": "rocks"
+                    "name": "Slate Navy",
+                    "hex": "#16202A",
+                    "element": "path"
+                  }
+                ]
+              },
+              {
+                "id": "pv6f",
+                "img": "/static/galleries/persona/pv6f.webp",
+                "label": "A night desk under a lamp",
+                "tags": [
+                  "prism",
+                  "inner"
+                ],
+                "colors": [
+                  {
+                    "name": "Lamp Sand",
+                    "hex": "#E4CFA0",
+                    "element": "pool of light"
+                  },
+                  {
+                    "name": "Sea Teal",
+                    "hex": "#3E8E8A",
+                    "element": "desk edge"
+                  },
+                  {
+                    "name": "Ink Navy",
+                    "hex": "#101820",
+                    "element": "room"
                   }
                 ]
               }
@@ -898,22 +896,22 @@
                 "label": "Ember & rust",
                 "tags": [
                   "drive",
-                  "bold"
+                  "deep"
                 ],
                 "colors": [
                   {
-                    "name": "Flare Coral",
-                    "hex": "#F08A55",
+                    "name": "Bright Sand",
+                    "hex": "#EAD3A0",
                     "element": "upper swatch"
                   },
                   {
-                    "name": "Ember Rust",
-                    "hex": "#B5532C",
+                    "name": "Amber Sand",
+                    "hex": "#B08C5E",
                     "element": "mid swatch"
                   },
                   {
-                    "name": "Cinder Ink",
-                    "hex": "#1C1714",
+                    "name": "Ink Navy",
+                    "hex": "#101820",
                     "element": "lower swatch"
                   }
                 ]
@@ -924,22 +922,22 @@
                 "label": "Moss & stone",
                 "tags": [
                   "anchor",
-                  "calm"
+                  "inner"
                 ],
                 "colors": [
                   {
-                    "name": "Moss Sage",
-                    "hex": "#A2B890",
+                    "name": "Pale Sand",
+                    "hex": "#D8CFB2",
                     "element": "upper swatch"
                   },
                   {
-                    "name": "Quarry Grey",
-                    "hex": "#8A9088",
+                    "name": "Sea Teal",
+                    "hex": "#3E8E8A",
                     "element": "mid swatch"
                   },
                   {
-                    "name": "Bedrock Ink",
-                    "hex": "#161C18",
+                    "name": "Slate Navy",
+                    "hex": "#16202A",
                     "element": "lower swatch"
                   }
                 ]
@@ -950,22 +948,22 @@
                 "label": "Paper & ink",
                 "tags": [
                   "prism",
-                  "calm"
+                  "inner"
                 ],
                 "colors": [
                   {
-                    "name": "Paper Linen",
-                    "hex": "#E2DCCE",
+                    "name": "Bright Sand",
+                    "hex": "#E8DCBC",
                     "element": "upper swatch"
                   },
                   {
-                    "name": "Graphite Grey",
-                    "hex": "#7C848C",
+                    "name": "Signal Teal",
+                    "hex": "#4EBCB0",
                     "element": "mid swatch"
                   },
                   {
-                    "name": "Ink Black",
-                    "hex": "#111820",
+                    "name": "Night Ink",
+                    "hex": "#0F1A22",
                     "element": "lower swatch"
                   }
                 ]
@@ -976,22 +974,23 @@
                 "label": "Teal & still water",
                 "tags": [
                   "wave",
-                  "inner"
+                  "inner",
+                  "deep"
                 ],
                 "colors": [
                   {
-                    "name": "Bright Teal",
-                    "hex": "#4EDDC4",
+                    "name": "Foam Sand",
+                    "hex": "#DCD8C2",
                     "element": "upper swatch"
                   },
                   {
-                    "name": "Deep Teal",
-                    "hex": "#2A7078",
+                    "name": "Bright Teal",
+                    "hex": "#4EDDC4",
                     "element": "mid swatch"
                   },
                   {
-                    "name": "Trench Ink",
-                    "hex": "#0F1A20",
+                    "name": "Deep Navy",
+                    "hex": "#12202C",
                     "element": "lower swatch"
                   }
                 ]
@@ -1002,22 +1001,22 @@
                 "label": "Brass & dusk",
                 "tags": [
                   "prism",
-                  "calm"
+                  "deep"
                 ],
                 "colors": [
                   {
-                    "name": "Brass Gold",
-                    "hex": "#C8A462",
+                    "name": "Warm Sand",
+                    "hex": "#DCC49C",
                     "element": "upper swatch"
                   },
                   {
-                    "name": "Dusk Violet",
-                    "hex": "#6E5C9E",
+                    "name": "Deep Teal",
+                    "hex": "#2A7078",
                     "element": "mid swatch"
                   },
                   {
-                    "name": "Nightfall Ink",
-                    "hex": "#131622",
+                    "name": "Ink Navy",
+                    "hex": "#101820",
                     "element": "lower swatch"
                   }
                 ]
@@ -1032,18 +1031,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Daylight Apricot",
-                    "hex": "#F2BE7E",
+                    "name": "Dawn Sand",
+                    "hex": "#E6D2A4",
                     "element": "upper swatch"
                   },
                   {
-                    "name": "Clay Terracotta",
-                    "hex": "#C4714A",
+                    "name": "Dune Sand",
+                    "hex": "#C8A97E",
                     "element": "mid swatch"
                   },
                   {
-                    "name": "Kiln Ink",
-                    "hex": "#1E1A16",
+                    "name": "Deep Navy",
+                    "hex": "#12202C",
                     "element": "lower swatch"
                   }
                 ]
@@ -1054,60 +1053,60 @@
       },
       {
         "id": "moment",
-        "question": "Your best hour:",
+        "question": "When do you lose track of time?",
         "format": "pair",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
-                "id": "mo8a",
-                "img": "/static/galleries/persona/mo8a.webp",
-                "label": "First light, coffee",
+                "id": "pm8a",
+                "img": "/static/galleries/persona/pm8a.webp",
+                "label": "Deep in conversation",
                 "tags": [
-                  "drive",
-                  "calm"
+                  "wave",
+                  "outer"
                 ],
                 "colors": [
                   {
-                    "name": "Kitchen Amber",
-                    "hex": "#F0C08A",
-                    "element": "window"
+                    "name": "Foam Sand",
+                    "hex": "#E0D9C0",
+                    "element": "faces"
                   },
                   {
-                    "name": "Cup Rust",
-                    "hex": "#B4693E",
+                    "name": "Bright Teal",
+                    "hex": "#4EDDC4",
                     "element": "table"
                   },
                   {
-                    "name": "Early Ink",
-                    "hex": "#191A18",
+                    "name": "Slate Navy",
+                    "hex": "#16202A",
                     "element": "room"
                   }
                 ]
               },
               {
-                "id": "mo8b",
-                "img": "/static/galleries/persona/mo8b.webp",
-                "label": "Long past midnight",
+                "id": "pm8b",
+                "img": "/static/galleries/persona/pm8b.webp",
+                "label": "Deep in a solo project",
                 "tags": [
                   "prism",
-                  "deep"
+                  "inner"
                 ],
                 "colors": [
                   {
-                    "name": "Screen Silver",
-                    "hex": "#A6B0BA",
-                    "element": "glow"
+                    "name": "Lamp Sand",
+                    "hex": "#E2CDA0",
+                    "element": "work light"
                   },
                   {
-                    "name": "Late Violet",
-                    "hex": "#6A5AA2",
-                    "element": "walls"
+                    "name": "Deep Teal",
+                    "hex": "#2A7078",
+                    "element": "tools"
                   },
                   {
-                    "name": "Small Hours Ink",
-                    "hex": "#0F131A",
+                    "name": "Ink Navy",
+                    "hex": "#101820",
                     "element": "room"
                   }
                 ]
@@ -1118,113 +1117,113 @@
       },
       {
         "id": "talisman",
-        "question": "Pick the one you'd carry:",
+        "question": "Which one lives in your bag?",
         "format": "grid4",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
-                "id": "tl9a",
-                "img": "/static/galleries/persona/tl9a.webp",
-                "label": "Key",
+                "id": "pt9a",
+                "img": "/static/galleries/persona/pt9a.webp",
+                "label": "A notebook and pen",
+                "tags": [
+                  "prism",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Bright Sand",
+                    "hex": "#E8DCBC",
+                    "element": "pages"
+                  },
+                  {
+                    "name": "Signal Teal",
+                    "hex": "#4EBCB0",
+                    "element": "band"
+                  },
+                  {
+                    "name": "Night Ink",
+                    "hex": "#0F1A22",
+                    "element": "cover"
+                  }
+                ]
+              },
+              {
+                "id": "pt9b",
+                "img": "/static/galleries/persona/pt9b.webp",
+                "label": "Headphones",
+                "tags": [
+                  "inner",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Mist Sand",
+                    "hex": "#D2CDB8",
+                    "element": "cups"
+                  },
+                  {
+                    "name": "Sea Teal",
+                    "hex": "#3E8E8A",
+                    "element": "band"
+                  },
+                  {
+                    "name": "Ink Navy",
+                    "hex": "#101820",
+                    "element": "cable"
+                  }
+                ]
+              },
+              {
+                "id": "pt9c",
+                "img": "/static/galleries/persona/pt9c.webp",
+                "label": "Running shoes",
                 "tags": [
                   "drive",
                   "bold"
                 ],
                 "colors": [
                   {
-                    "name": "Worn Brass",
-                    "hex": "#D8A45E",
-                    "element": "bow"
+                    "name": "Bright Sand",
+                    "hex": "#EAD5A4",
+                    "element": "upper"
                   },
                   {
-                    "name": "Ember Rust",
-                    "hex": "#A85A32",
-                    "element": "shaft"
+                    "name": "Dune Sand",
+                    "hex": "#C8A97E",
+                    "element": "sole"
                   },
                   {
-                    "name": "Pocket Ink",
-                    "hex": "#191712",
-                    "element": "cloth"
+                    "name": "Deep Navy",
+                    "hex": "#12202C",
+                    "element": "shadow"
                   }
                 ]
               },
               {
-                "id": "tl9b",
-                "img": "/static/galleries/persona/tl9b.webp",
-                "label": "Compass",
-                "tags": [
-                  "prism",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Dial Linen",
-                    "hex": "#DCD6C6",
-                    "element": "face"
-                  },
-                  {
-                    "name": "Needle Violet",
-                    "hex": "#8272C0",
-                    "element": "needle"
-                  },
-                  {
-                    "name": "Case Ink",
-                    "hex": "#141820",
-                    "element": "case"
-                  }
-                ]
-              },
-              {
-                "id": "tl9c",
-                "img": "/static/galleries/persona/tl9c.webp",
-                "label": "Feather",
+                "id": "pt9d",
+                "img": "/static/galleries/persona/pt9d.webp",
+                "label": "A camera",
                 "tags": [
                   "wave",
-                  "deep"
+                  "outer"
                 ],
                 "colors": [
                   {
-                    "name": "Barb Silver",
-                    "hex": "#C2CED2",
-                    "element": "vane"
+                    "name": "Foam Sand",
+                    "hex": "#DED8C0",
+                    "element": "body"
                   },
                   {
-                    "name": "Quill Teal",
-                    "hex": "#3E8E8A",
-                    "element": "shaft"
+                    "name": "Bright Teal",
+                    "hex": "#4EDDC4",
+                    "element": "lens ring"
                   },
                   {
-                    "name": "Table Ink",
-                    "hex": "#101A1E",
-                    "element": "surface"
-                  }
-                ]
-              },
-              {
-                "id": "tl9d",
-                "img": "/static/galleries/persona/tl9d.webp",
-                "label": "Anchor",
-                "tags": [
-                  "anchor",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Salt Sage",
-                    "hex": "#A8B89C",
-                    "element": "fluke"
-                  },
-                  {
-                    "name": "Iron Olive",
-                    "hex": "#66704E",
-                    "element": "shank"
-                  },
-                  {
-                    "name": "Harbour Ink",
-                    "hex": "#141A18",
-                    "element": "ground"
+                    "name": "Slate Navy",
+                    "hex": "#16202A",
+                    "element": "grip"
                   }
                 ]
               }
@@ -1234,7 +1233,7 @@
       },
       {
         "id": "weather",
-        "question": "Your weather, most days:",
+        "question": "Your inner weather lately?",
         "format": "grid4",
         "pairs": [
           {
@@ -1250,18 +1249,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "High Linen",
-                    "hex": "#D6E0E2",
+                    "name": "Bright Sand",
+                    "hex": "#E6DCBE",
                     "element": "zenith"
                   },
                   {
-                    "name": "Day Teal",
-                    "hex": "#7EB8BE",
+                    "name": "Signal Teal",
+                    "hex": "#4EBCB0",
                     "element": "mid sky"
                   },
                   {
-                    "name": "Field Ink",
-                    "hex": "#16201F",
+                    "name": "Slate Navy",
+                    "hex": "#16202A",
                     "element": "ground"
                   }
                 ]
@@ -1272,22 +1271,22 @@
                 "label": "Gathering storm",
                 "tags": [
                   "drive",
-                  "bold"
+                  "outer"
                 ],
                 "colors": [
                   {
-                    "name": "Break Amber",
-                    "hex": "#E8A45E",
+                    "name": "Warm Sand",
+                    "hex": "#DCC298",
                     "element": "gap"
                   },
                   {
-                    "name": "Anvil Rust",
-                    "hex": "#9E5638",
+                    "name": "Amber Sand",
+                    "hex": "#B08C5E",
                     "element": "cloud edge"
                   },
                   {
-                    "name": "Front Ink",
-                    "hex": "#1A1A1E",
+                    "name": "Ink Navy",
+                    "hex": "#101820",
                     "element": "cloud base"
                   }
                 ]
@@ -1302,18 +1301,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Fog Pearl",
-                    "hex": "#C8D0D2",
+                    "name": "Mist Sand",
+                    "hex": "#CFC9B4",
                     "element": "upper"
                   },
                   {
-                    "name": "Muffled Violet",
-                    "hex": "#6C6890",
+                    "name": "Deep Teal",
+                    "hex": "#2A7078",
                     "element": "mid"
                   },
                   {
-                    "name": "Hollow Ink",
-                    "hex": "#121820",
+                    "name": "Night Ink",
+                    "hex": "#0F1A22",
                     "element": "lower"
                   }
                 ]
@@ -1324,22 +1323,22 @@
                 "label": "Steady rain",
                 "tags": [
                   "wave",
-                  "calm"
+                  "deep"
                 ],
                 "colors": [
                   {
-                    "name": "Rain Silver",
-                    "hex": "#BCCACE",
+                    "name": "Foam Sand",
+                    "hex": "#D8D4BE",
                     "element": "upper"
                   },
                   {
-                    "name": "Wet Teal",
-                    "hex": "#4E9A9A",
+                    "name": "Sea Teal",
+                    "hex": "#3E8E8A",
                     "element": "mid"
                   },
                   {
-                    "name": "Gutter Ink",
-                    "hex": "#111A1E",
+                    "name": "Deep Navy",
+                    "hex": "#12202C",
                     "element": "lower"
                   }
                 ]
@@ -1350,61 +1349,61 @@
       },
       {
         "id": "rhythm",
-        "question": "Your natural rhythm:",
+        "question": "Your sharpest hour?",
         "format": "pair",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
-                "id": "rh11a",
-                "img": "/static/galleries/persona/rh11a.webp",
-                "label": "Sprint, then stop",
+                "id": "pr11a",
+                "img": "/static/galleries/persona/pr11a.webp",
+                "label": "First light, at the desk",
                 "tags": [
-                  "drive",
-                  "outer"
+                  "anchor",
+                  "bold"
                 ],
                 "colors": [
                   {
-                    "name": "Track Amber",
-                    "hex": "#F0A65E",
-                    "element": "lane"
+                    "name": "Dawn Sand",
+                    "hex": "#E8D4A6",
+                    "element": "window"
                   },
                   {
-                    "name": "Effort Rust",
-                    "hex": "#B85838",
-                    "element": "shadow"
+                    "name": "Dune Sand",
+                    "hex": "#C8A97E",
+                    "element": "desk"
                   },
                   {
-                    "name": "Start Ink",
-                    "hex": "#1B1815",
-                    "element": "ground"
+                    "name": "Slate Navy",
+                    "hex": "#16202A",
+                    "element": "room"
                   }
                 ]
               },
               {
-                "id": "rh11b",
-                "img": "/static/galleries/persona/rh11b.webp",
-                "label": "Mile after even mile",
+                "id": "pr11b",
+                "img": "/static/galleries/persona/pr11b.webp",
+                "label": "Midnight, under the lamp",
                 "tags": [
-                  "anchor",
+                  "prism",
                   "deep"
                 ],
                 "colors": [
                   {
-                    "name": "Road Linen",
-                    "hex": "#D2D8CE",
-                    "element": "sky"
+                    "name": "Lamp Sand",
+                    "hex": "#E0CB9E",
+                    "element": "lamp pool"
                   },
                   {
-                    "name": "Verge Sage",
-                    "hex": "#8CA286",
-                    "element": "verge"
+                    "name": "Deep Teal",
+                    "hex": "#2A7078",
+                    "element": "papers"
                   },
                   {
-                    "name": "Tarmac Ink",
-                    "hex": "#161A18",
-                    "element": "road"
+                    "name": "Ink Navy",
+                    "hex": "#101820",
+                    "element": "room"
                   }
                 ]
               }
@@ -1431,18 +1430,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Strip White",
-                    "hex": "#E4E6E2",
+                    "name": "Flat Sand",
+                    "hex": "#D6D2C2",
                     "element": "ceiling"
                   },
                   {
-                    "name": "Chatter Grey",
-                    "hex": "#9AA0A2",
+                    "name": "Grey Teal",
+                    "hex": "#7C9498",
                     "element": "room"
                   },
                   {
-                    "name": "Carpet Ink",
-                    "hex": "#4E5250",
+                    "name": "Slate Navy",
+                    "hex": "#2A3540",
                     "element": "floor"
                   }
                 ]
@@ -1453,22 +1452,22 @@
                 "label": "An open-ended wait",
                 "tags": [
                   "anchor",
-                  "inner"
+                  "calm"
                 ],
                 "colors": [
                   {
-                    "name": "Waiting Linen",
-                    "hex": "#DCDCD2",
+                    "name": "Flat Sand",
+                    "hex": "#D2CEBE",
                     "element": "wall"
                   },
                   {
-                    "name": "Chair Grey",
-                    "hex": "#A0A498",
+                    "name": "Grey Teal",
+                    "hex": "#7C9498",
                     "element": "seats"
                   },
                   {
-                    "name": "Lino Ink",
-                    "hex": "#585C52",
+                    "name": "Slate Navy",
+                    "hex": "#2A3540",
                     "element": "floor"
                   }
                 ]
@@ -1479,22 +1478,22 @@
                 "label": "Somebody else's crisis",
                 "tags": [
                   "wave",
-                  "inner"
+                  "outer"
                 ],
                 "colors": [
                   {
-                    "name": "Alarm Pearl",
-                    "hex": "#D0D6D8",
+                    "name": "Flat Sand",
+                    "hex": "#CFCBBC",
                     "element": "upper"
                   },
                   {
-                    "name": "Cold Teal",
-                    "hex": "#7E9698",
+                    "name": "Grey Teal",
+                    "hex": "#7C9498",
                     "element": "mid"
                   },
                   {
-                    "name": "Corridor Ink",
-                    "hex": "#4A5456",
+                    "name": "Slate Navy",
+                    "hex": "#2A3540",
                     "element": "lower"
                   }
                 ]
@@ -1505,22 +1504,23 @@
                 "label": "A day with no plan",
                 "tags": [
                   "prism",
-                  "calm"
+                  "inner",
+                  "deep"
                 ],
                 "colors": [
                   {
-                    "name": "Blank Linen",
-                    "hex": "#E0DCD4",
+                    "name": "Flat Sand",
+                    "hex": "#D4D0C0",
                     "element": "upper"
                   },
                   {
-                    "name": "Idle Grey",
-                    "hex": "#A2A0A8",
+                    "name": "Grey Teal",
+                    "hex": "#7C9498",
                     "element": "mid"
                   },
                   {
-                    "name": "Afternoon Ink",
-                    "hex": "#54525C",
+                    "name": "Slate Navy",
+                    "hex": "#2A3540",
                     "element": "lower"
                   }
                 ]
@@ -1531,61 +1531,61 @@
       },
       {
         "id": "sanctuary",
-        "question": "Where you refill:",
+        "question": "After a hard day, you reset by…",
         "format": "pair",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
-                "id": "sn13a",
-                "img": "/static/galleries/persona/sn13a.webp",
-                "label": "A lit kitchen, late",
+                "id": "ps13a",
+                "img": "/static/galleries/persona/ps13a.webp",
+                "label": "Outside, moving, with people",
+                "tags": [
+                  "outer",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Bright Sand",
+                    "hex": "#EAD5A6",
+                    "element": "streetlight"
+                  },
+                  {
+                    "name": "Dune Sand",
+                    "hex": "#C8A97E",
+                    "element": "crowd"
+                  },
+                  {
+                    "name": "Deep Navy",
+                    "hex": "#12202C",
+                    "element": "road"
+                  }
+                ]
+              },
+              {
+                "id": "ps13b",
+                "img": "/static/galleries/persona/ps13b.webp",
+                "label": "Blanket, book, quiet",
                 "tags": [
                   "inner",
                   "calm"
                 ],
                 "colors": [
                   {
-                    "name": "Bulb Linen",
-                    "hex": "#E8DEC4",
-                    "element": "lamp"
+                    "name": "Warm Sand",
+                    "hex": "#DCC7A0",
+                    "element": "blanket"
                   },
                   {
-                    "name": "Counter Sage",
-                    "hex": "#8CA090",
-                    "element": "counter"
+                    "name": "Sea Teal",
+                    "hex": "#3E8E8A",
+                    "element": "book"
                   },
                   {
-                    "name": "Kitchen Ink",
-                    "hex": "#151C1A",
+                    "name": "Ink Navy",
+                    "hex": "#101820",
                     "element": "room"
-                  }
-                ]
-              },
-              {
-                "id": "sn13b",
-                "img": "/static/galleries/persona/sn13b.webp",
-                "label": "A busy street at dusk",
-                "tags": [
-                  "outer",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Awning Amber",
-                    "hex": "#EEA85E",
-                    "element": "awnings"
-                  },
-                  {
-                    "name": "Dusk Coral",
-                    "hex": "#C86A58",
-                    "element": "sky"
-                  },
-                  {
-                    "name": "Street Ink",
-                    "hex": "#171A20",
-                    "element": "road"
                   }
                 ]
               }
@@ -1611,18 +1611,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Pulse Blush",
-                    "hex": "#E29CA2",
+                    "name": "Warm Sand",
+                    "hex": "#DCC5A0",
                     "element": "core"
                   },
                   {
-                    "name": "Depth Teal",
-                    "hex": "#3A8286",
+                    "name": "Sea Teal",
+                    "hex": "#3E8E8A",
                     "element": "surround"
                   },
                   {
-                    "name": "Chest Ink",
-                    "hex": "#121C20",
+                    "name": "Night Ink",
+                    "hex": "#0F1A22",
                     "element": "field"
                   }
                 ]
@@ -1637,18 +1637,18 @@
                 ],
                 "colors": [
                   {
-                    "name": "Diagram Linen",
-                    "hex": "#DED8CA",
+                    "name": "Bright Sand",
+                    "hex": "#E6DCBC",
                     "element": "core"
                   },
                   {
-                    "name": "Reason Violet",
-                    "hex": "#8074BE",
+                    "name": "Signal Teal",
+                    "hex": "#4EBCB0",
                     "element": "surround"
                   },
                   {
-                    "name": "Slate Ink",
-                    "hex": "#141820",
+                    "name": "Slate Navy",
+                    "hex": "#16202A",
                     "element": "field"
                   }
                 ]
@@ -1659,22 +1659,22 @@
                 "label": "Gut first",
                 "tags": [
                   "drive",
-                  "bold"
+                  "outer"
                 ],
                 "colors": [
                   {
-                    "name": "Flash Amber",
-                    "hex": "#F2B05E",
+                    "name": "Bright Sand",
+                    "hex": "#EAD3A0",
                     "element": "core"
                   },
                   {
-                    "name": "Instinct Rust",
-                    "hex": "#B85436",
+                    "name": "Amber Sand",
+                    "hex": "#B08C5E",
                     "element": "surround"
                   },
                   {
-                    "name": "Quick Ink",
-                    "hex": "#1B1714",
+                    "name": "Ink Navy",
+                    "hex": "#101820",
                     "element": "field"
                   }
                 ]
@@ -1685,22 +1685,22 @@
                 "label": "Time first",
                 "tags": [
                   "anchor",
-                  "calm"
+                  "deep"
                 ],
                 "colors": [
                   {
-                    "name": "Dial Sage",
-                    "hex": "#AEBEA0",
+                    "name": "Pale Sand",
+                    "hex": "#D8CFB2",
                     "element": "core"
                   },
                   {
-                    "name": "Patience Olive",
-                    "hex": "#6A7854",
+                    "name": "Deep Teal",
+                    "hex": "#2A7078",
                     "element": "surround"
                   },
                   {
-                    "name": "Long Ink",
-                    "hex": "#161C18",
+                    "name": "Deep Navy",
+                    "hex": "#12202C",
                     "element": "field"
                   }
                 ]
@@ -1711,62 +1711,61 @@
       },
       {
         "id": "tide",
-        "question": "Which is more true?",
+        "question": "Deadline pressure hits. You…",
         "format": "pair",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
-                "id": "tr15a",
-                "img": "/static/galleries/persona/tr15a.webp",
-                "label": "I feel everything",
+                "id": "pi15a",
+                "img": "/static/galleries/persona/pi15a.webp",
+                "label": "Speed up, go all in",
                 "tags": [
-                  "wave",
-                  "inner",
-                  "deep"
+                  "drive",
+                  "bold"
                 ],
                 "colors": [
                   {
-                    "name": "Spray Pearl",
-                    "hex": "#C8DCDA",
-                    "element": "crest"
+                    "name": "Bright Sand",
+                    "hex": "#EAD3A0",
+                    "element": "screen glow"
                   },
                   {
-                    "name": "Swell Teal",
-                    "hex": "#3E8E92",
-                    "element": "body"
+                    "name": "Dune Sand",
+                    "hex": "#C8A97E",
+                    "element": "desk"
                   },
                   {
-                    "name": "Undertow Ink",
-                    "hex": "#0F1C22",
-                    "element": "depth"
+                    "name": "Ink Navy",
+                    "hex": "#101820",
+                    "element": "room"
                   }
                 ]
               },
               {
-                "id": "tr15b",
-                "img": "/static/galleries/persona/tr15b.webp",
-                "label": "I hold everything",
+                "id": "pi15b",
+                "img": "/static/galleries/persona/pi15b.webp",
+                "label": "Slow down, make a list",
                 "tags": [
                   "anchor",
                   "calm"
                 ],
                 "colors": [
                   {
-                    "name": "Ledge Sage",
-                    "hex": "#A8B89A",
-                    "element": "top"
+                    "name": "Pale Sand",
+                    "hex": "#DFD3B4",
+                    "element": "paper"
                   },
                   {
-                    "name": "Granite Grey",
-                    "hex": "#7A8078",
-                    "element": "face"
+                    "name": "Signal Teal",
+                    "hex": "#4EBCB0",
+                    "element": "pen"
                   },
                   {
-                    "name": "Base Ink",
-                    "hex": "#151A16",
-                    "element": "base"
+                    "name": "Slate Navy",
+                    "hex": "#16202A",
+                    "element": "desk"
                   }
                 ]
               }
@@ -1776,113 +1775,113 @@
       },
       {
         "id": "door",
-        "question": "Pick the door you'd walk through blind:",
+        "question": "A free Saturday appears. First instinct?",
         "format": "grid4",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
-                "id": "dw16a",
-                "img": "/static/galleries/persona/dw16a.webp",
-                "label": "Bronze door",
+                "id": "pd16a",
+                "img": "/static/galleries/persona/pd16a.webp",
+                "label": "Road trip",
                 "tags": [
                   "drive",
                   "outer"
                 ],
                 "colors": [
                   {
-                    "name": "Bronze Amber",
-                    "hex": "#DCA05C",
-                    "element": "panel"
+                    "name": "Dawn Sand",
+                    "hex": "#E8D4A6",
+                    "element": "horizon"
                   },
                   {
-                    "name": "Patina Rust",
-                    "hex": "#A85E36",
-                    "element": "frame"
+                    "name": "Dune Sand",
+                    "hex": "#C8A97E",
+                    "element": "road"
                   },
                   {
-                    "name": "Threshold Ink",
-                    "hex": "#1A1714",
-                    "element": "gap"
+                    "name": "Deep Navy",
+                    "hex": "#12202C",
+                    "element": "verge"
                   }
                 ]
               },
               {
-                "id": "dw16b",
-                "img": "/static/galleries/persona/dw16b.webp",
-                "label": "Teal-glazed door",
-                "tags": [
-                  "wave",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Glaze Teal",
-                    "hex": "#5EC0B4",
-                    "element": "panel"
-                  },
-                  {
-                    "name": "Deep Teal",
-                    "hex": "#2A6E74",
-                    "element": "frame"
-                  },
-                  {
-                    "name": "Threshold Ink",
-                    "hex": "#101A20",
-                    "element": "gap"
-                  }
-                ]
-              },
-              {
-                "id": "dw16c",
-                "img": "/static/galleries/persona/dw16c.webp",
-                "label": "Green-stone door",
+                "id": "pd16b",
+                "img": "/static/galleries/persona/pd16b.webp",
+                "label": "Build or fix something",
                 "tags": [
                   "anchor",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Stone Sage",
-                    "hex": "#A6B694",
-                    "element": "panel"
-                  },
-                  {
-                    "name": "Lichen Olive",
-                    "hex": "#68764E",
-                    "element": "frame"
-                  },
-                  {
-                    "name": "Threshold Ink",
-                    "hex": "#151A16",
-                    "element": "gap"
-                  }
-                ]
-              },
-              {
-                "id": "dw16d",
-                "img": "/static/galleries/persona/dw16d.webp",
-                "label": "Glass door",
-                "tags": [
-                  "prism",
                   "inner"
                 ],
                 "colors": [
                   {
-                    "name": "Pane Linen",
-                    "hex": "#DAE0DE",
-                    "element": "panel"
+                    "name": "Warm Sand",
+                    "hex": "#D9C39B",
+                    "element": "workbench"
                   },
                   {
-                    "name": "Edge Violet",
-                    "hex": "#8878C0",
-                    "element": "frame"
+                    "name": "Amber Sand",
+                    "hex": "#B08C5E",
+                    "element": "tools"
                   },
                   {
-                    "name": "Threshold Ink",
-                    "hex": "#12161E",
-                    "element": "gap"
+                    "name": "Ink Navy",
+                    "hex": "#101820",
+                    "element": "shadow"
+                  }
+                ]
+              },
+              {
+                "id": "pd16c",
+                "img": "/static/galleries/persona/pd16c.webp",
+                "label": "Gather your people",
+                "tags": [
+                  "wave",
+                  "outer"
+                ],
+                "colors": [
+                  {
+                    "name": "Foam Sand",
+                    "hex": "#E0D9C0",
+                    "element": "table"
+                  },
+                  {
+                    "name": "Bright Teal",
+                    "hex": "#4EDDC4",
+                    "element": "glasses"
+                  },
+                  {
+                    "name": "Slate Navy",
+                    "hex": "#16202A",
+                    "element": "room"
+                  }
+                ]
+              },
+              {
+                "id": "pd16d",
+                "img": "/static/galleries/persona/pd16d.webp",
+                "label": "Museum, bookshop, deep dive",
+                "tags": [
+                  "prism",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Mist Sand",
+                    "hex": "#CEC9B2",
+                    "element": "high windows"
+                  },
+                  {
+                    "name": "Deep Teal",
+                    "hex": "#2A7078",
+                    "element": "cases"
+                  },
+                  {
+                    "name": "Night Ink",
+                    "hex": "#0F1A22",
+                    "element": "floor"
                   }
                 ]
               }
@@ -1892,117 +1891,114 @@
       },
       {
         "id": "essence",
-        "question": "Your essence, in one:",
+        "question": "People come to you for…",
         "format": "grid4",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
-                "id": "es17a",
-                "img": "/static/galleries/persona/es17a.webp",
-                "label": "A struck match",
+                "id": "pe17a",
+                "img": "/static/galleries/persona/pe17a.webp",
+                "label": "A push",
                 "tags": [
                   "drive",
-                  "outer",
-                  "bold"
+                  "outer"
                 ],
                 "colors": [
                   {
-                    "name": "Strike Amber",
-                    "hex": "#F4B45E",
-                    "element": "flame"
+                    "name": "Bright Sand",
+                    "hex": "#EAD5A4",
+                    "element": "light"
                   },
                   {
-                    "name": "Flare Coral",
-                    "hex": "#E0724A",
-                    "element": "head"
+                    "name": "Amber Sand",
+                    "hex": "#B08C5E",
+                    "element": "hand"
                   },
                   {
-                    "name": "Match Ink",
-                    "hex": "#1C1814",
-                    "element": "stick"
+                    "name": "Ink Navy",
+                    "hex": "#101820",
+                    "element": "ground"
                   }
                 ]
               },
               {
-                "id": "es17b",
-                "img": "/static/galleries/persona/es17b.webp",
-                "label": "A held stone",
+                "id": "pe17b",
+                "img": "/static/galleries/persona/pe17b.webp",
+                "label": "Steadiness",
                 "tags": [
                   "anchor",
-                  "inner",
-                  "calm"
+                  "deep"
                 ],
                 "colors": [
                   {
-                    "name": "Palm Sage",
-                    "hex": "#AEBCA0",
-                    "element": "hand"
-                  },
-                  {
-                    "name": "River Grey",
-                    "hex": "#7E867C",
+                    "name": "Pale Sand",
+                    "hex": "#D8CDB0",
                     "element": "stone"
                   },
                   {
-                    "name": "Hold Ink",
-                    "hex": "#161C18",
+                    "name": "Sea Teal",
+                    "hex": "#3E8E8A",
+                    "element": "grain"
+                  },
+                  {
+                    "name": "Slate Navy",
+                    "hex": "#16202A",
                     "element": "shadow"
                   }
                 ]
               },
               {
-                "id": "es17c",
-                "img": "/static/galleries/persona/es17c.webp",
-                "label": "A running river",
+                "id": "pe17c",
+                "img": "/static/galleries/persona/pe17c.webp",
+                "label": "Comfort",
                 "tags": [
                   "wave",
-                  "outer",
+                  "calm",
                   "deep"
                 ],
                 "colors": [
                   {
-                    "name": "Riffle Pearl",
-                    "hex": "#C4DCD8",
-                    "element": "surface"
+                    "name": "Warm Sand",
+                    "hex": "#DCC7A0",
+                    "element": "cloth"
                   },
                   {
-                    "name": "Bright Teal",
-                    "hex": "#4EDDC4",
-                    "element": "current"
+                    "name": "Signal Teal",
+                    "hex": "#4EBCB0",
+                    "element": "cup"
                   },
                   {
-                    "name": "Channel Ink",
-                    "hex": "#101C20",
-                    "element": "bed"
+                    "name": "Deep Navy",
+                    "hex": "#12202C",
+                    "element": "table"
                   }
                 ]
               },
               {
-                "id": "es17d",
-                "img": "/static/galleries/persona/es17d.webp",
-                "label": "A clear lens",
+                "id": "pe17d",
+                "img": "/static/galleries/persona/pe17d.webp",
+                "label": "Answers",
                 "tags": [
                   "prism",
-                  "inner",
                   "deep"
                 ],
                 "colors": [
                   {
-                    "name": "Optic Linen",
-                    "hex": "#DCE0DC",
-                    "element": "glass"
+                    "name": "Bright Sand",
+                    "hex": "#E6DCBC",
+                    "element": "page"
                   },
                   {
-                    "name": "Focus Violet",
-                    "hex": "#7E6CC2",
-                    "element": "ring"
+                    "name": "Deep Teal",
+                    "hex": "#2A7078",
+                    "element": "diagram"
                   },
                   {
-                    "name": "Barrel Ink",
-                    "hex": "#12161E",
-                    "element": "barrel"
+                    "name": "Night Ink",
+                    "hex": "#0F1A22",
+                    "element": "desk"
                   }
                 ]
               }
@@ -2012,62 +2008,60 @@
       },
       {
         "id": "seal",
-        "question": "Seal your profile:",
+        "question": "Ten years from now, the win is…",
         "format": "pair",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
-                "id": "sg18a",
-                "img": "/static/galleries/persona/sg18a.webp",
-                "label": "Sunrise",
+                "id": "pz18a",
+                "img": "/static/galleries/persona/pz18a.webp",
+                "label": "A life full of stories",
                 "tags": [
-                  "drive",
                   "outer",
                   "bold"
                 ],
                 "colors": [
                   {
-                    "name": "Rise Amber",
-                    "hex": "#F4B268",
-                    "element": "disc"
+                    "name": "Dawn Sand",
+                    "hex": "#EAD6A8",
+                    "element": "far light"
                   },
                   {
-                    "name": "Flare Coral",
-                    "hex": "#DE7A50",
-                    "element": "sky"
+                    "name": "Dune Sand",
+                    "hex": "#C8A97E",
+                    "element": "road"
                   },
                   {
-                    "name": "Horizon Ink",
-                    "hex": "#1A1A1C",
-                    "element": "land"
+                    "name": "Deep Navy",
+                    "hex": "#12202C",
+                    "element": "distance"
                   }
                 ]
               },
               {
-                "id": "sg18b",
-                "img": "/static/galleries/persona/sg18b.webp",
-                "label": "Lamplight",
+                "id": "pz18b",
+                "img": "/static/galleries/persona/pz18b.webp",
+                "label": "A life that feels like peace",
                 "tags": [
-                  "prism",
                   "inner",
-                  "deep"
+                  "calm"
                 ],
                 "colors": [
                   {
-                    "name": "Shade Linen",
-                    "hex": "#E0D4BC",
-                    "element": "shade"
+                    "name": "Pale Sand",
+                    "hex": "#DED2B4",
+                    "element": "window"
                   },
                   {
-                    "name": "Glow Violet",
-                    "hex": "#7C6AB8",
-                    "element": "spill"
+                    "name": "Sea Teal",
+                    "hex": "#3E8E8A",
+                    "element": "sill"
                   },
                   {
-                    "name": "Room Ink",
-                    "hex": "#111620",
+                    "name": "Ink Navy",
+                    "hex": "#101820",
                     "element": "room"
                   }
                 ]
@@ -2243,52 +2237,52 @@
   ],
   "preview_gallery": [
     {
-      "id": "ev6a",
-      "img": "/static/galleries/persona/ev6a.webp",
+      "id": "pv6a",
+      "img": "/static/galleries/persona/pv6a.webp",
       "tags": [
-        "drive",
+        "outer",
         "bold"
       ]
     },
     {
-      "id": "ev6b",
-      "img": "/static/galleries/persona/ev6b.webp",
+      "id": "pv6b",
+      "img": "/static/galleries/persona/pv6b.webp",
       "tags": [
         "anchor",
+        "inner"
+      ]
+    },
+    {
+      "id": "pv6c",
+      "img": "/static/galleries/persona/pv6c.webp",
+      "tags": [
+        "wave",
         "calm"
       ]
     },
     {
-      "id": "ev6c",
-      "img": "/static/galleries/persona/ev6c.webp",
-      "tags": [
-        "outer",
-        "deep"
-      ]
-    },
-    {
-      "id": "ev6d",
-      "img": "/static/galleries/persona/ev6d.webp",
-      "tags": [
-        "wave",
-        "deep"
-      ]
-    },
-    {
-      "id": "ev6e",
-      "img": "/static/galleries/persona/ev6e.webp",
+      "id": "pv6d",
+      "img": "/static/galleries/persona/pv6d.webp",
       "tags": [
         "prism",
-        "calm"
+        "deep"
       ]
     },
     {
-      "id": "ev6f",
-      "img": "/static/galleries/persona/ev6f.webp",
+      "id": "pv6e",
+      "img": "/static/galleries/persona/pv6e.webp",
       "tags": [
         "wave",
         "outer",
         "deep"
+      ]
+    },
+    {
+      "id": "pv6f",
+      "img": "/static/galleries/persona/pv6f.webp",
+      "tags": [
+        "prism",
+        "inner"
       ]
     },
     {
@@ -2296,7 +2290,7 @@
       "img": "/static/galleries/persona/pl7a.webp",
       "tags": [
         "drive",
-        "bold"
+        "deep"
       ]
     },
     {
@@ -2304,7 +2298,7 @@
       "img": "/static/galleries/persona/pl7b.webp",
       "tags": [
         "anchor",
-        "calm"
+        "inner"
       ]
     },
     {
@@ -2312,7 +2306,7 @@
       "img": "/static/galleries/persona/pl7c.webp",
       "tags": [
         "prism",
-        "calm"
+        "inner"
       ]
     },
     {
@@ -2320,7 +2314,8 @@
       "img": "/static/galleries/persona/pl7d.webp",
       "tags": [
         "wave",
-        "inner"
+        "inner",
+        "deep"
       ]
     },
     {
@@ -2328,7 +2323,7 @@
       "img": "/static/galleries/persona/pl7e.webp",
       "tags": [
         "prism",
-        "calm"
+        "deep"
       ]
     },
     {
@@ -2340,38 +2335,35 @@
       ]
     },
     {
-      "id": "es17a",
-      "img": "/static/galleries/persona/es17a.webp",
+      "id": "pe17a",
+      "img": "/static/galleries/persona/pe17a.webp",
       "tags": [
         "drive",
-        "outer",
-        "bold"
+        "outer"
       ]
     },
     {
-      "id": "es17b",
-      "img": "/static/galleries/persona/es17b.webp",
+      "id": "pe17b",
+      "img": "/static/galleries/persona/pe17b.webp",
       "tags": [
         "anchor",
-        "inner",
-        "calm"
-      ]
-    },
-    {
-      "id": "es17c",
-      "img": "/static/galleries/persona/es17c.webp",
-      "tags": [
-        "wave",
-        "outer",
         "deep"
       ]
     },
     {
-      "id": "es17d",
-      "img": "/static/galleries/persona/es17d.webp",
+      "id": "pe17c",
+      "img": "/static/galleries/persona/pe17c.webp",
+      "tags": [
+        "wave",
+        "calm",
+        "deep"
+      ]
+    },
+    {
+      "id": "pe17d",
+      "img": "/static/galleries/persona/pe17d.webp",
       "tags": [
         "prism",
-        "inner",
         "deep"
       ]
     }
@@ -2388,7 +2380,7 @@
         "img": "/static/galleries/persona/pl7a.webp",
         "tags": [
           "drive",
-          "bold"
+          "deep"
         ]
       },
       {
@@ -2399,7 +2391,7 @@
         "img": "/static/galleries/persona/pl7b.webp",
         "tags": [
           "anchor",
-          "calm"
+          "inner"
         ]
       },
       {
@@ -2410,7 +2402,8 @@
         "img": "/static/galleries/persona/pl7d.webp",
         "tags": [
           "wave",
-          "inner"
+          "inner",
+          "deep"
         ]
       },
       {
@@ -2421,57 +2414,57 @@
         "img": "/static/galleries/persona/pl7c.webp",
         "tags": [
           "prism",
+          "inner"
+        ]
+      },
+      {
+        "id": "notebook",
+        "label": "Notebook and pen",
+        "spec": "What you carry — thinking, on paper",
+        "image": "pt9a",
+        "img": "/static/galleries/persona/pt9a.webp",
+        "tags": [
+          "prism",
+          "deep"
+        ]
+      },
+      {
+        "id": "headphones",
+        "label": "Headphones",
+        "spec": "What you carry — a door you can close",
+        "image": "pt9b",
+        "img": "/static/galleries/persona/pt9b.webp",
+        "tags": [
+          "inner",
           "calm"
         ]
       },
       {
-        "id": "key",
-        "label": "Key",
-        "spec": "A carried object — opening, not keeping",
-        "image": "tl9a",
-        "img": "/static/galleries/persona/tl9a.webp",
+        "id": "shoes",
+        "label": "Running shoes",
+        "spec": "What you carry — motion, kept ready",
+        "image": "pt9c",
+        "img": "/static/galleries/persona/pt9c.webp",
         "tags": [
           "drive",
           "bold"
         ]
       },
       {
-        "id": "compass",
-        "label": "Compass",
-        "spec": "A carried object — direction over speed",
-        "image": "tl9b",
-        "img": "/static/galleries/persona/tl9b.webp",
-        "tags": [
-          "prism",
-          "calm"
-        ]
-      },
-      {
-        "id": "feather",
-        "label": "Feather",
-        "spec": "A carried object — carried on movement",
-        "image": "tl9c",
-        "img": "/static/galleries/persona/tl9c.webp",
+        "id": "camera",
+        "label": "Camera",
+        "spec": "What you carry — attention, pointed outward",
+        "image": "pt9d",
+        "img": "/static/galleries/persona/pt9d.webp",
         "tags": [
           "wave",
-          "deep"
-        ]
-      },
-      {
-        "id": "anchor-object",
-        "label": "Anchor",
-        "spec": "A carried object — weight, on purpose",
-        "image": "tl9d",
-        "img": "/static/galleries/persona/tl9d.webp",
-        "tags": [
-          "anchor",
-          "calm"
+          "outer"
         ]
       },
       {
         "id": "clear-sky",
         "label": "Clear sky",
-        "spec": "Open weather — visible, unhurried",
+        "spec": "Open mood — settled, and looking outward",
         "image": "wt10a",
         "img": "/static/galleries/persona/wt10a.webp",
         "tags": [
@@ -2482,7 +2475,7 @@
       {
         "id": "low-fog",
         "label": "Low fog",
-        "spec": "Closed weather — private, slow to lift",
+        "spec": "Closed mood — inward, and slow to lift",
         "image": "wt10c",
         "img": "/static/galleries/persona/wt10c.webp",
         "tags": [
@@ -2491,25 +2484,25 @@
         ]
       },
       {
-        "id": "workshop",
-        "label": "Workshop",
-        "spec": "Made ground — pressure with a bench under it",
-        "image": "ev6a",
-        "img": "/static/galleries/persona/ev6a.webp",
+        "id": "studio",
+        "label": "A busy studio",
+        "spec": "Where you think — company, and noise you choose",
+        "image": "pv6a",
+        "img": "/static/galleries/persona/pv6a.webp",
         "tags": [
-          "drive",
+          "outer",
           "bold"
         ]
       },
       {
-        "id": "old-forest",
-        "label": "Old forest",
-        "spec": "Grown ground — rooted, slow to change",
-        "image": "ev6b",
-        "img": "/static/galleries/persona/ev6b.webp",
+        "id": "night-desk",
+        "label": "A night desk",
+        "spec": "Where you think — one lamp, and no interruptions",
+        "image": "pv6f",
+        "img": "/static/galleries/persona/pv6f.webp",
         "tags": [
-          "anchor",
-          "calm"
+          "prism",
+          "inner"
         ]
       }
     ]
@@ -2908,7 +2901,7 @@
       {
         "id": "splurge",
         "title": "Work & Money Path",
-        "teaser_line": "Where your {talisman} energy earns — and what to stop taking on.",
+        "teaser_line": "Where your {carry} energy earns — and what to stop taking on.",
         "enabled": true,
         "preview": [
           "Your working rhythm is not flat and never was, and the shape of it is far more useful than an average.",
@@ -2945,7 +2938,7 @@
         },
         {
           "section": "splurge",
-          "hook": "Where your {talisman} energy earns — and the one kind of work to stop taking."
+          "hook": "Where your {carry} energy earns — and the one kind of work to stop taking."
         },
         {
           "section": "shopping",
@@ -2985,9 +2978,9 @@
         "step": "weather",
         "fallback": "weather"
       },
-      "talisman": {
+      "carry": {
         "step": "talisman",
-        "fallback": "talisman"
+        "fallback": "everyday carry"
       }
     }
   },
@@ -3049,7 +3042,7 @@
     "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right."
   },
   "result": {
-    "mistakes_teaser": "You've seen strength #1. The other four run deeper — one explains your {weather} choice.",
+    "mistakes_teaser": "You've seen strength #1. The other four run deeper — one explains the {weather} you named.",
     "value_banner": "Five strengths, a read on how you connect and a twelve-month energy map — all of it built from your own 18 signals, yours to keep."
   },
   "result_copy": {
@@ -3059,7 +3052,7 @@
     "balance_title": "Your axis balance",
     "head_title": "Your shape",
     "head_caption": "Four axes, scored off your own taps and drawn to the strongest of them. The bead on the arc is your outer-to-inner lean.",
-    "strength_lead": "Your {talisman} and your {weather} put this one first.",
+    "strength_lead": "Your {carry} and the {weather} you've been under put this one first.",
     "offer_sub": "Your complete profile — once, forever.",
     "locked_note": "Locked",
     "delivered_note": "A PDF of this profile is in your inbox. This page stays at the link you were sent back to.",
@@ -3228,7 +3221,7 @@
           "id": "mistakes",
           "key": "Blind spots",
           "icon": "eye",
-          "promise": "what your {weather} pick gave away — strengths #2–5, the costliest last"
+          "promise": "what naming {weather} gave away — strengths #2–5, the costliest last"
         },
         {
           "id": "shopping",
@@ -3279,7 +3272,7 @@
             "inner": 40
           },
           "wave": {
-            "outer": 15,
+            "outer": 20,
             "inner": 40
           },
           "prism": {
@@ -3289,44 +3282,44 @@
         },
         "keeper": {
           "drive": {
-            "outer": 15,
+            "outer": 40,
             "inner": 15
           },
           "wave": {
             "outer": 40,
-            "inner": 40
+            "inner": 15
           },
           "prism": {
             "outer": 40,
-            "inner": 20
+            "inner": 15
           }
         },
         "feeler": {
           "drive": {
-            "outer": 8,
+            "outer": 12,
             "inner": 40
           },
           "anchor": {
-            "outer": 40,
+            "outer": 15,
             "inner": 40
           },
           "prism": {
-            "outer": 20,
+            "outer": 15,
             "inner": 40
           }
         },
         "thinker": {
           "drive": {
-            "outer": 20,
-            "inner": 10
+            "outer": 40,
+            "inner": 12
           },
           "anchor": {
             "outer": 40,
-            "inner": 25
+            "inner": 15
           },
           "wave": {
             "outer": 40,
-            "inner": 20
+            "inner": 25
           }
         }
       },

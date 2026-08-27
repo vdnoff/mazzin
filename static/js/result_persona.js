@@ -395,19 +395,28 @@
     return wrap;
   }
 
-  function richHero(badge, data) {
+  function richHero(badge, data, copy) {
     var card = elm("section", "pr-hero is-rich");
-    var head = elm("div", "pr-hero-top");
-    head.appendChild(badge);
+    var top = elm("div", "pr-hero-top");
+    top.appendChild(badge);
     var id = elm("div", "pr-hero-id");
     id.appendChild(elm("h1", "pr-subtype", data.subtype));
     if (data.formula) id.appendChild(elm("p", "pr-formula", data.formula));
-    head.appendChild(id);
-    card.appendChild(head);
+    top.appendChild(id);
+    card.appendChild(top);
 
     if (data.rarity_line) {
       card.appendChild(elm("p", "pr-ribbon", data.rarity_line));
     }
+    // The drawing, directly under the name and the rarity and above the three
+    // scales. It was the last thing on the page, below six locked cards, and
+    // it is the one part of the card that is a picture of the reader rather
+    // than a row of numbers — so it opens the card and the scales read as its
+    // detail. Inside `richHero` rather than at either call site because both
+    // the free page and the delivered one draw this card, and a reposition
+    // applied in one place is a reposition that drifts.
+    var drawing = headBlock(copy || {}, data);
+    if (drawing) card.appendChild(drawing);
     if ((data.scales || []).length) {
       var scales = elm("div", "pr-scales");
       data.scales.forEach(function (row) {
@@ -1104,7 +1113,7 @@
     // it from. Below the hero the two pages differ entirely, which is why the
     // branch is the whole body rather than one node.
     root.appendChild(data
-      ? richHero(glyph(ctx.picks.animal), data)
+      ? richHero(glyph(ctx.picks.animal), data, copy)
       : hero(ctx, copy, axes, top));
     var strip = taps(ctx, copy);
     if (strip) root.appendChild(strip);
@@ -1114,8 +1123,6 @@
       var line = bridge(ctx, data);
       if (line) root.appendChild(line);
       root.appendChild(questions(ctx, data));
-      var head = headBlock(copy, data);
-      if (head) root.appendChild(head);
     } else {
       root.appendChild(path(ctx, copy, axes));
     }
@@ -1328,7 +1335,7 @@
     // were sent to and still have bookmarked.
     var data = (ctx.visuals && ctx.visuals.profile) || null;
     if (data && data.subtype) {
-      var rich = richHero(glyph(pick), data);
+      var rich = richHero(glyph(pick), data, copy);
       // The place they chose, which the paid card has always carried and the
       // free one never did. Appended here rather than inside `richHero` for
       // exactly that reason: there is no band before the money.
@@ -1452,12 +1459,6 @@
     root.appendChild(deliveredHero(ctx, copy));
     var strip = deliveredTaps(ctx, copy);
     if (strip) root.appendChild(strip);
-    // The same head as before the money, off the same stored block. A report
-    // written before that block existed has no split to draw and gets no
-    // head, which is the page it was sold on.
-    var head = headBlock(copy, (ctx.visuals && ctx.visuals.profile) || null);
-    if (head) root.appendChild(head);
-
     // Same reorder after the money as before it: the section they came for is
     // the first one they meet. `ctx.purpose` is the tag off the stored report
     // — this tab may never have run the quiz — and a report without one

@@ -119,11 +119,24 @@ def main():
     if not os.path.exists(os.path.join(OUT, "og.webp")):
         card = write("og", gradient(OG, OG_COLORS))
 
+    # A frame whose id the config no longer references is deleted rather than
+    # left behind. The gallery is meant to be exactly what the funnel shows,
+    # and a step redesign renames ids by the dozen — without this the
+    # directory silently accumulates the art of every walk this funnel used to
+    # be, and the one check that would notice is a test nobody runs on a
+    # deploy. Only .webp files are touched, and only in this gallery.
+    keep = {i + ".webp" for i, _stops in items} | {"og.webp"}
+    orphans = sorted(f for f in os.listdir(OUT)
+                     if f.endswith(".webp") and f not in keep)
+    for name in orphans:
+        os.remove(os.path.join(OUT, name))
+
     print("%d of %d frames written -> %s (%d KB), %d already on disk, "
-          "og.webp %s"
+          "og.webp %s, %d orphan%s removed"
           % (len(missing), len(items), OUT, round((total + card) / 1024),
              len(items) - len(missing),
-             "written" if card else "already there"))
+             "written" if card else "already there",
+             len(orphans), "" if len(orphans) == 1 else "s"))
 
 
 if __name__ == "__main__":
