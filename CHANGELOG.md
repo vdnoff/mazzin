@@ -387,3 +387,6 @@ bottom.
 
 ## 2026-08-27 — claude/persona-phase1-xrd7ye
 - persona phase 1: config + result module + placeholders + tests
+
+## 2026-08-27 — claude/ro-pricing-ron
+- zodiac-ro pricing: 9.99 RON presentment + copy pass
