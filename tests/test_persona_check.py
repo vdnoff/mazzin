@@ -522,7 +522,7 @@ check("  every prompt names the ink, the teal and the sand",
           for f in sample))
 check("  and carries that frame's own three colours",
       all(all(c["hex"] in art_mod.prompt_for(
-          st["id"], st.get("question", ""), i["label"], i["colors"])
+          i["id"], st["id"], st.get("question", ""), i["label"], i["colors"])
           for c in i["colors"])
           for st in steps for i in st["pairs"][0]["images"]))
 check("  no prompt asks for something the negatives ban",
@@ -532,19 +532,47 @@ check("  no prompt asks for something the negatives ban",
       str([f["id"] for f in sample
            if "constellation of" in f["prompt"].lower()]))
 check("  the animal prompts read as English",
-      "of an owl" in art_mod.prompt_for("animal", "", "Owl", OG_C)
-      and "of a fox" in art_mod.prompt_for("animal", "", "Fox", OG_C))
+      "of an owl" in art_mod.prompt_for("x", "animal", "", "Owl", OG_C)
+      and "of a fox" in art_mod.prompt_for("x", "animal", "", "Fox", OG_C))
 # A prompt that bans constellations and then asks for one is a prompt arguing
 # with itself. The share card wants four joined points; it must not call them
 # that.
-og_block = art[art.index("OG_SCENE = ("):art.index("def scene_for")]
+og_prompt = [f["prompt"] for f in sample if f["id"] == "og"][0].lower()
 check("the share card does not ask for what the negatives ban",
-      not [w for w in ("constellation", "star", "zodiac", "moon")
-           if w in og_block.lower()],
-      str([w for w in ("constellation", "star", "zodiac", "moon")
-           if w in og_block.lower()]))
-check("  and it draws the head the result page draws",
-      "profile" in og_block and "no face" in og_block)
+      not [w for w in ("constellation", "zodiac", "moon", "tarot")
+           if w in og_prompt.split("absolutely no")[0]],
+      str([w for w in ("constellation", "zodiac", "moon", "tarot")
+           if w in og_prompt.split("absolutely no")[0]]))
+check("  and it draws the head the result page draws, without a face",
+      "profile" in og_prompt and "no face" in og_prompt)
+# Two frames failed the legibility gate three draws out of three, and both
+# prompts said the same wrong thing: an object sitting in the dark rather than
+# an object made of light. The gate was right and was not touched; these pin
+# the fix, because "quiet frame, generous space, dark object" is exactly what
+# a calm-minimal brief drifts back toward.
+lit_frames = {"pt9a": "the notebook", "og": "the head"}
+for frame_id, what in sorted(lit_frames.items()):
+    text = [f["prompt"] for f in sample if f["id"] == frame_id][0].lower()
+    check("  %s asks for %s to carry the light" % (frame_id, what),
+          ("is the light in this frame" in text
+           or "drawn as light" in text), frame_id)
+    check("    and to be large in the frame rather than lost in it",
+          ("dominates the frame" in text
+           or "large in the card" in text), frame_id)
+    check("    with a glow, not just an edge",
+          "glow" in text, frame_id)
+check("  and the gate they failed was not loosened to let them through",
+      "MIN_LIT = 0.02" in art and "MAX_MEAN_LUMA = 150.0" in art
+      and "MIN_STDDEV = 12.0" in art)
+# The override is keyed per frame so one relit scene does not change what the
+# other sixty-nine are asked for.
+check("  a relit frame is an override, not a change to every frame",
+      "SCENE_OVERRIDES" in art
+      and sorted(art_mod.SCENE_OVERRIDES) == ["pt9a"],
+      str(sorted(art_mod.SCENE_OVERRIDES)))
+check("    and every other frame still comes off the step templates",
+      all(f["prompt"].count("An open notebook") == 0
+          for f in sample if f["id"] != "pt9a"))
 check("the twelve animals are asked for as one matched set",
       "ANIMAL_SET" in art and "same construction language" in art
       and "same share of the frame" in art)

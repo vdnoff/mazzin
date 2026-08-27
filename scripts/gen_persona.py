@@ -175,13 +175,22 @@ MOODBOARD = (
 )
 
 OG_SCENE = (
-    "A centred human head shown in clean profile as a single continuous thin "
-    "teal outline against the deep ink-navy ground — the head empty inside, "
-    "no face, no features, no eye, no mouth. Inside the skull a small sparse "
-    "arrangement of four teal points joined by thin straight lines, evenly "
-    "spaced like the corners of a simple technical diagram. "
-    "Wide empty margins on both sides. A single soft warm sand glow low "
-    "behind the head."
+    # The first version asked for "a single continuous thin teal outline" with
+    # "wide empty margins", which is a 1200x630 card that is almost entirely
+    # ground: three draws at luma 27-31, under 2% lit. A thin line cannot
+    # carry a share card. So the head is drawn as light rather than as an
+    # edge — a luminous profile with a halo and a lit interior, large in the
+    # frame — which is the same motif the result page draws, brighter.
+    "A human head in clean profile, centred, drawn as light on the deep "
+    "ink-navy ground. The profile line is a bright electric-teal stroke with "
+    "a soft luminous glow blooming off it, and the inside of the head is "
+    "filled with a soft teal-to-ink gradient so it reads as a lit volume "
+    "rather than an empty outline. No face, no features, no eye, no mouth, "
+    "no ear. Within the head, four small bright teal points joined by thin "
+    "straight lines, evenly spaced like the corners of a simple technical "
+    "diagram. A broad warm sand glow rises low behind the head and lifts the "
+    "ground around it. The head is large in the card, filling most of its "
+    "height, with the light spilling well past the profile."
 )
 
 
@@ -190,8 +199,40 @@ def article(word):
     return "an" if word[:1].lower() in "aeiou" else "a"
 
 
-def scene_for(step_id, question, label, colors):
+# Two frames the generic templates got wrong, and the reason is the same both
+# times: the scene described an object sitting in the dark rather than an
+# object made of light, and on an ink ground that is a picture of nothing.
+#
+# pt9a asks for a notebook. Its config colours put Night Ink on the *cover* —
+# the largest surface a notebook has — and the behavioural template asks for a
+# "quiet" moment with generous space around it, so three draws came back at
+# luma 35-43 with under 2% of the frame lit: a closed dark book on dark
+# ground. The fix is not more light in the room, it is making the notebook the
+# thing that is lit: open, pages up, and filling the frame.
+#
+# Keyed by image id and checked before the step templates, so a frame that
+# needs its own direction can have it without loosening what the other
+# sixty-nine are asked for.
+
+SCENE_OVERRIDES = {
+    "pt9a": (
+        "An open notebook lying flat, seen from just above, with a slim pen "
+        "resting across the right-hand page. The notebook is the light in "
+        "this frame: the two pale sand pages glow warmly and fill most of the "
+        "composition, bright against the deep ink-navy ground, with a clean "
+        "teal edge-light running along the outer edge of the pages and down "
+        "the length of the pen. The dark cover shows only as a thin band "
+        "around the lit pages. Pages blank and unruled. Close in — the "
+        "notebook is the subject and dominates the frame, with only a narrow "
+        "margin of ink around it. No hand, no person, no desk clutter."
+    ),
+}
+
+
+def scene_for(image_id, step_id, question, label, colors):
     """The one sentence that says what this particular frame shows."""
+    if image_id in SCENE_OVERRIDES:
+        return SCENE_OVERRIDES[image_id]
     if step_id == "animal":
         return ANIMAL_SET % (article(label), label.lower())
     if step_id == "palette":
@@ -210,10 +251,10 @@ def scene_for(step_id, question, label, colors):
     )
 
 
-def prompt_for(step_id, question, label, colors):
+def prompt_for(image_id, step_id, question, label, colors):
     return "\n".join([
         STYLE,
-        scene_for(step_id, question, label, colors),
+        scene_for(image_id, step_id, question, label, colors),
         "Within the locked palette, lean this frame's colour toward: %s."
         % rgb_words(colors),
         NEGATIVE,
@@ -257,8 +298,9 @@ def frames(cfg):
                     "id": item["id"],
                     "size": FRAME,
                     "api_size": API_PORTRAIT,
-                    "prompt": prompt_for(step["id"], step.get("question", ""),
-                                         item["label"], item["colors"]),
+                    "prompt": prompt_for(
+                        item["id"], step["id"], step.get("question", ""),
+                        item["label"], item["colors"]),
                 })
     out.append({"id": "og", "size": OG, "api_size": API_LANDSCAPE,
                 "prompt": og_prompt()})
