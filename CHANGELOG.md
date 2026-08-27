@@ -390,3 +390,6 @@ bottom.
 
 ## 2026-08-27 — claude/ro-pricing-ron
 - zodiac-ro pricing: 9.99 RON presentment + copy pass
+
+## 2026-08-27 — claude/persona-phase16
+- persona phase 1.6: behavioral steps, Your shape reposition, persona theme, AXES
