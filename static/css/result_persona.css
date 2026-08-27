@@ -1,0 +1,1144 @@
+/* The persona result page.
+ *
+ * A conscious fork of static/css/result_zodiac.css: the same page, in this
+ * funnel's own ink. Loaded only by a funnel whose config names it, and every
+ * rule scoped under `.result-module` with a `pr-` prefix, so the two result
+ * stylesheets cannot reach each other's pages even when a browser has both in
+ * cache. mazzin.css is untouched: kitchen's result and zodiac's are the same
+ * documents they were.
+ *
+ * The palette is the gallery's — #101820 ink through to the electric teal the
+ * frames are lit with — because the page and the artwork on it should look
+ * like one thing.
+ */
+
+/* The ground behind the page as well as under it. The module full-bleeds its
+   own width, but the shell's padding sits above and below it — and on the
+   delivered page, reached from a link in an email, the analysing fade never
+   ran, so the body is still the quiz's white. This stylesheet only loads for
+   a funnel that asked for it, so naming the colour here is naming it once. */
+body:has(.result-module) {
+  background-color: #101820;
+}
+
+.result-module {
+  --pr-ink: #101820;
+  --pr-panel: #16202A;
+  --pr-panel-2: #1C2833;
+  --pr-line: rgba(78, 221, 196, 0.20);
+  --pr-teal: #4EDDC4;
+  --pr-text: #E8EFF0;
+  --pr-muted: #A6B6BC;
+  /* One tier below --pr-muted and still 5.6:1 on the panel ink, which is what
+     a body-sized line needs. It is the colour of every teaser, the tap
+     caption and the trust row, so a grey chosen for looks rather than for
+     contrast would be most of the small type on the page. */
+  --pr-faint: #85979E;
+
+  /* Full bleed, exactly. body carries `padding: 0 18px`, so the pull has to
+     be that number and not a rounded one — at -20px the page scrolls two
+     pixels sideways on a phone, which is a small number and a real defect. */
+  margin: 0 -18px;
+  padding: 26px 18px 40px;
+  background:
+    radial-gradient(120% 60% at 50% 0%, #17272E 0%, rgba(16, 24, 32, 0) 70%),
+    var(--pr-ink);
+  color: var(--pr-text);
+  text-align: left;
+}
+
+/* --- a) kicker -------------------------------------------------------------- */
+
+.pr-kicker {
+  margin: 0 0 16px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-align: center;
+  color: var(--pr-teal);
+}
+
+/* --- b) the ID card --------------------------------------------------------- */
+
+.pr-hero {
+  padding: 22px 20px 24px;
+  border: 1px solid var(--pr-line);
+  border-radius: 20px;
+  background: linear-gradient(180deg, var(--pr-panel-2) 0%,
+                              var(--pr-panel) 100%);
+  text-align: center;
+}
+
+/* The animal frame, masked to a disc. The animal is centred in the art, so
+   the crop is the animal and nothing has to be drawn over it. */
+.pr-glyph {
+  display: block;
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 14px;
+  border: 2px solid var(--pr-teal);
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 0 6px rgba(78, 221, 196, 0.08);
+}
+
+.pr-glyph img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.pr-animal {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--pr-text);
+}
+
+.pr-cross {
+  margin: 4px 0 18px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--pr-teal);
+}
+
+.pr-bar {
+  height: 8px;
+  margin: 0 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.pr-bar-fill { display: block; height: 100%; border-radius: 999px; }
+
+.pr-sub {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  color: var(--pr-muted);
+}
+
+/* --- b2) the rich profile card ------------------------------------------------
+
+   The card the reader is actually sold on. Left-aligned where the plain ID
+   card is centred, because it is a document about them rather than a title
+   page: the animal and the name sit on one row the way a byline does, and
+   everything under it is read as a column. */
+
+.pr-hero.is-rich { padding: 20px 18px 22px; text-align: left; }
+
+.pr-hero-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* The disc, smaller than the centred one it replaces and no longer floated
+   into the middle of the card. `flex: none` because a long subtype name will
+   otherwise take the disc's width off it. */
+.pr-hero.is-rich .pr-glyph {
+  flex: none;
+  width: 62px;
+  height: 62px;
+  margin: 0;
+  box-shadow: 0 0 0 4px rgba(78, 221, 196, 0.08);
+}
+
+.pr-hero-id { min-width: 0; }
+
+.pr-subtype {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: var(--pr-text);
+}
+
+.pr-formula {
+  margin: 5px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--pr-teal);
+}
+
+/* The rarity, and the only teal fill on the page above the pay button. It is
+   a measured number — the walk model plays the funnel a couple of hundred
+   thousand times to get it — so it is allowed to look like a claim. */
+.pr-ribbon {
+  display: inline-block;
+  margin: 16px 0 0;
+  padding: 6px 12px;
+  border: 1px solid rgba(78, 221, 196, 0.45);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #06231F;
+  background: linear-gradient(180deg, #7DF0DB 0%, var(--pr-teal) 100%);
+}
+
+.pr-scales { margin: 18px 0 0; }
+
+.pr-scale {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 10px;
+}
+
+.pr-scale:last-child { margin-bottom: 0; }
+
+/* Both poles are the same width, so three stacked scales line their tracks up
+   with each other and the dots read as one instrument rather than three. */
+.pr-scale-pole {
+  flex: none;
+  width: 52px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pr-faint);
+}
+
+.pr-scale-pole.is-right { text-align: right; }
+
+.pr-scale-track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.pr-scale-dot {
+  position: absolute;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  margin: -5.5px 0 0 -5.5px;
+  border-radius: 50%;
+  background: var(--pr-teal);
+  box-shadow: 0 0 0 3px rgba(78, 221, 196, 0.16);
+}
+
+/* The four axes as one bar rather than four columns. The gap above it is
+   wider than the one between the scales, because at 18px the bar reads as a
+   fourth scale — the one LIGHT and DEEP were labelling — rather than as the
+   next thing down. */
+.pr-split { margin: 24px 0 0; }
+
+.pr-split-bar {
+  display: flex;
+  height: 9px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pr-split-seg { display: block; height: 100%; }
+
+.pr-split-caption {
+  margin: 8px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--pr-muted);
+}
+
+.pr-hairline {
+  height: 0;
+  margin: 16px 0 0;
+  border: 0;
+  border-top: 1px solid var(--pr-line);
+}
+
+.pr-crossline {
+  margin: 14px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--pr-muted);
+}
+
+/* --- b3) the head -------------------------------------------------------------
+
+   The one drawing on the page. It gets a panel of its own rather than a place
+   inside the hero card: the hero is read in one pass and this is looked at,
+   and the two want different amounts of time.
+
+   Every colour inside the SVG is set on the element, not from here — the same
+   drawing has to be reproducible server-side for the PDF — so this rule owns
+   the box, the legend and nothing that is drawn. */
+
+.pr-head {
+  margin: 26px 0 0;
+  padding: 18px 16px 16px;
+  border: 1px solid var(--pr-line);
+  border-radius: 20px;
+  background: var(--pr-panel);
+}
+
+.pr-head-title {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pr-faint);
+}
+
+.pr-head-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* The drawing is 420 wide and the card is narrower than that on a small
+     phone; `height: auto` on a viewBox scales it rather than cropping it, and
+     the max keeps it from becoming the whole screen on a large one. */
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+/* Two by two rather than a row of four: at a quarter of a phone's width the
+   name and the number wrap onto three lines each. */
+.pr-head-legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pr-head-key {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--pr-muted);
+}
+
+.pr-head-arrow {
+  flex: none;
+  width: 14px;
+  font-size: 13px;
+  line-height: 1;
+  text-align: center;
+  color: var(--pr-teal);
+}
+
+.pr-head-name { flex: 1 1 auto; min-width: 0; }
+
+.pr-head-value {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--pr-text);
+}
+
+.pr-head-caption {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--pr-faint);
+}
+
+/* --- c) read from your taps -------------------------------------------------- */
+
+.pr-taps { margin: 24px 0 6px; }
+
+.pr-taps-caption {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pr-faint);
+}
+
+/* Every frame of the run, six to a row. Grid rather than flex, because the
+   last row is rarely full and flex would stretch three squares across the
+   width of six. The gap is small on purpose: this reads as a contact sheet —
+   one object with a count — rather than as eighteen separate pictures. */
+.pr-taps-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pr-tap { min-width: 0; }
+
+.pr-tap img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid rgba(78, 221, 196, 0.18);
+}
+
+/* --- d) the node path -------------------------------------------------------- */
+
+.pr-path {
+  position: relative;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The line the nodes sit on. Behind them, stopping at the last one rather
+   than running off the end of the list. */
+.pr-path::before {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 10px;
+  bottom: 26px;
+  width: 1px;
+  background: linear-gradient(180deg,
+                              var(--pr-teal) 0%,
+                              rgba(78, 221, 196, 0.35) 35%,
+                              rgba(78, 221, 196, 0.08) 100%);
+}
+
+.pr-node {
+  position: relative;
+  padding: 0 0 22px 38px;
+}
+
+.pr-node:last-child { padding-bottom: 4px; }
+
+.pr-node-mark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  font-size: 11px;
+  line-height: 23px;
+  text-align: center;
+}
+
+.pr-node.is-open .pr-node-mark {
+  color: var(--pr-ink);
+  background: var(--pr-teal);
+  box-shadow: 0 0 0 4px rgba(78, 221, 196, 0.14);
+}
+
+.pr-node.is-locked .pr-node-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pr-faint);
+  background: var(--pr-panel-2);
+  border: 1px solid rgba(133, 151, 158, 0.35);
+}
+
+.pr-node.is-locked .pr-node-mark svg {
+  display: block;
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: var(--pr-faint);
+  stroke-width: 1.6;
+}
+
+.pr-node-title {
+  margin: 1px 0 0;
+  font-family: var(--font-display, inherit);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.pr-node.is-locked .pr-node-title {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  /* Room for the LOCKED badge in the corner, reserved rather than hoped for:
+     the longest title here runs the full width without it. */
+  padding-right: 58px;
+  color: var(--pr-muted);
+}
+
+.pr-lock {
+  position: absolute;
+  right: 0;
+  top: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pr-faint);
+}
+
+.pr-teaser {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--pr-faint);
+}
+
+/* the four-axis chart */
+.pr-balance {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin: 14px 0 0;
+  height: 92px;
+}
+
+.pr-bal {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.pr-bal-track {
+  display: flex;
+  align-items: flex-end;
+  height: 62px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.pr-bal-fill {
+  display: block;
+  width: 100%;
+  border-radius: 6px;
+  min-height: 3px;
+}
+
+.pr-bal-name {
+  margin-top: 6px;
+  font-size: 12px;
+  text-align: center;
+  color: var(--pr-muted);
+}
+
+.pr-bal-pct {
+  font-size: 11px;
+  text-align: center;
+  color: var(--pr-faint);
+}
+
+/* the free strength */
+.pr-lead {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  font-style: italic;
+  color: var(--pr-teal);
+}
+
+.pr-strength-title {
+  margin: 10px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--pr-text);
+}
+
+.pr-strength-body,
+.pr-strength-fix {
+  margin: 7px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--pr-muted);
+}
+
+.pr-strength-fix { color: var(--pr-teal); }
+
+/* --- d2) the free strength, and the six questions ---------------------------- */
+
+/* The one open node, out of the list. Same mark and same type as it has
+   inside the path; what it loses is the thread, which cannot run between one
+   point and itself. */
+.pr-free { margin: 26px 0 0; padding: 0; list-style: none; }
+
+.pr-free .pr-node { padding-bottom: 0; }
+
+.pr-bridge {
+  margin: 26px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--pr-teal);
+}
+
+.pr-cards { margin: 12px 0 0; padding: 0; list-style: none; }
+
+.pr-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin: 0 0 9px;
+  padding: 13px 40px 13px 13px;
+  border: 1px solid var(--pr-line);
+  border-radius: 14px;
+  background: var(--pr-panel);
+}
+
+.pr-card:last-child { margin-bottom: 0; }
+
+/* The chapter they said they came for. One step up, and no further: a
+   brighter edge and a lit icon, on the card that is already first. */
+.pr-card.is-lead {
+  border-color: rgba(78, 221, 196, 0.55);
+  background: linear-gradient(180deg, var(--pr-panel-2) 0%,
+                              var(--pr-panel) 100%);
+}
+
+.pr-card-icon { flex: none; width: 20px; height: 20px; margin-top: 1px; }
+
+.pr-card-icon svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--pr-teal);
+  stroke-width: 1.3;
+  opacity: 0.85;
+}
+
+.pr-card.is-lead .pr-card-icon svg { opacity: 1; stroke-width: 1.5; }
+
+.pr-card-line {
+  margin: 0;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--pr-text);
+}
+
+.pr-card-key { font-weight: 700; color: var(--pr-teal); }
+
+.pr-card-lock {
+  position: absolute;
+  right: 13px;
+  top: 14px;
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
+.pr-card-lock svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: var(--pr-faint);
+  stroke-width: 1.5;
+}
+
+/* --- e) the offer ------------------------------------------------------------ */
+
+.pr-offer {
+  margin: 28px 0 0;
+  padding: 22px 18px 18px;
+  border: 1px solid var(--pr-line);
+  border-radius: 20px;
+  background: var(--pr-panel);
+  text-align: center;
+}
+
+/* What the six chapters add up to, named as the thing they were just told
+   they are. Above the anchor rather than instead of it: the anchor is the
+   price argument and this is the product. */
+.pr-offer-head {
+  margin: 0 0 8px;
+  font-family: var(--font-display, inherit);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--pr-text);
+}
+
+/* The comparison, demoted to a footnote on the price. */
+.pr-anchor {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--pr-faint);
+}
+
+.pr-teal { color: var(--pr-teal); }
+
+/* What the reader is actually deciding about. Nothing else on this card comes
+   near it, which is the whole point. */
+.pr-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.pr-price-now {
+  font-family: var(--font-display, inherit);
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--pr-teal);
+}
+
+.pr-price-note {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--pr-muted);
+}
+
+/* The two things a reader worries about at a card form, said where they
+   worry about them. */
+.pr-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pr-badge {
+  padding: 5px 11px;
+  border: 1px solid rgba(78, 221, 196, 0.45);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pr-teal);
+}
+
+.pr-offer-sub {
+  margin: 14px 0 18px;
+  font-size: 14px;
+  color: var(--pr-muted);
+}
+
+/* engine.js's own consent box and pay button, restyled where they now sit.
+   Same elements, same listeners — this is paint, not plumbing. */
+.pr-offer .withdrawal {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin: 0 0 14px;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: left;
+  color: var(--pr-muted);
+}
+
+.pr-offer .withdrawal.is-off { display: none; }
+
+.pr-offer .withdrawal input { margin: 2px 0 0; accent-color: var(--pr-teal); }
+
+.pr-offer .cta {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 16px 18px;
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--font-display, inherit);
+  font-size: 16px;
+  font-weight: 700;
+  color: #06231F;
+  background: linear-gradient(180deg, #7DF0DB 0%, var(--pr-teal) 100%);
+  box-shadow: 0 6px 20px rgba(78, 221, 196, 0.22);
+  cursor: pointer;
+}
+
+.pr-offer .cta:disabled {
+  color: var(--pr-faint);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: none;
+  cursor: default;
+}
+
+/* The wallet, when a funnel offers one. engine.js builds every part of this
+   and it arrives styled for kitchen's white page. Colour only: the geometry
+   is what stops the block shifting when the element answers, and none of it
+   is touched here. */
+.pr-offer .xp { margin: 0 0 12px; }
+
+.pr-offer .xp__ghost {
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.11) 42%,
+    rgba(255, 255, 255, 0.11) 58%, rgba(255, 255, 255, 0.05) 100%);
+  background-size: 220% 100%;
+  border-radius: 999px;
+}
+
+.pr-offer .xp-summary {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--pr-line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  text-align: left;
+}
+
+.pr-offer .xp-summary__name { color: var(--pr-text); }
+.pr-offer .xp-summary__amount { color: var(--pr-teal); }
+.pr-offer .xp-summary__price,
+.pr-offer .xp-summary__terms,
+.pr-offer .xp-summary__trust { color: var(--pr-faint); }
+
+.pr-offer .pay-error {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: #F0A0A0;
+}
+
+.pr-trust {
+  margin: 14px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  color: var(--pr-faint);
+}
+
+.pr-offer .legal-links {
+  margin: 12px 0 0;
+  font-size: 11px;
+}
+
+.pr-offer .legal-links a { color: var(--pr-faint); }
+
+@media (prefers-reduced-motion: reduce) {
+  .result-module * { animation: none !important; transition: none !important; }
+}
+
+/* --- the delivered report ---------------------------------------------------
+
+   The same page with the locks off. Every node is open, so the type inside
+   them is the document rather than a teaser and is sized as such — this is
+   read on a phone, at length, by somebody who paid for it. */
+
+/* A slim bar across the top of the paid page, above the kicker: the first
+   thing a buyer sees, on both ways in. Quiet on purpose — a confirmation, not
+   a banner — so it is the panel tone the cards are already drawn in, and the
+   only lit thing on it is the tick.
+
+   Pulled out to the module's own edges and up over its top padding, so it
+   sits flush against the top of the page the way a status bar does. The
+   numbers are the module's own: -18px is the shell's horizontal padding,
+   -26px its top. */
+.result-module.is-delivered .pr-sent {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: -26px -18px 20px;
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--pr-line);
+  background: var(--pr-panel);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--pr-muted);
+}
+
+.pr-sent-check { flex: none; width: 16px; height: 16px; }
+
+.pr-sent-check svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #7BC4A8;
+  stroke-width: 1.9;
+}
+
+.pr-sent-text { min-width: 0; }
+
+/* The address is what the reader is actually checking, so it is the one part
+   of the line set in ink rather than in the muted grey around it. `anywhere`
+   because an address is one unbroken token and a long one would otherwise
+   push the bar sideways on a narrow phone. */
+.pr-sent-mail {
+  color: #F0F5F4;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.result-module.is-delivered .pr-hero { margin-bottom: 4px; }
+
+/* The axis row on the delivered card. Four cells, one lit: the reader's own
+   axis, taken from the archetype rather than from a tally that no longer
+   exists by the time this page is opened from a mail. */
+.pr-axes {
+  display: flex;
+  gap: 6px;
+  margin: 18px 0 0;
+}
+
+.pr-ax {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 4px;
+  border: 1px solid var(--pr-line);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pr-faint);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.pr-ax-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  opacity: 0.45;
+}
+
+.pr-ax.is-own {
+  color: var(--pr-teal);
+  border-color: rgba(78, 221, 196, 0.45);
+  background: rgba(78, 221, 196, 0.10);
+}
+
+.pr-ax.is-own .pr-ax-dot { opacity: 1; }
+
+/* --- the photographs they chose ------------------------------------------ */
+
+/* Every image on this page came out of their own run, so each one is framed
+   the way the cards were: rounded, on a hairline of the same teal the nodes
+   are marked in. Modest on purpose — the frame is evidence beside the
+   sentence, not an illustration the sentence hangs off. */
+.pr-shot {
+  margin: 12px 0 0;
+  border: 1px solid rgba(78, 221, 196, 0.28);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--pr-panel);
+}
+
+.pr-shot img {
+  display: block;
+  width: 100%;
+  height: 132px;
+  object-fit: cover;
+}
+
+.pr-shot-cap {
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pr-faint);
+  border-top: 1px solid var(--pr-line);
+}
+
+/* The one under the hero card is wider and shallower — a horizon rather than
+   a portrait, which is what a place pick is. */
+.pr-band {
+  margin-top: 18px;
+  border-radius: 16px;
+}
+
+.pr-band img { height: 108px; }
+
+/* The keyword the chapter was sold under, over the title it was sold as. */
+.pr-node-key {
+  margin: 0 0 3px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pr-teal);
+}
+
+.pr-body {
+  margin: 10px 0 0;
+  font-size: 15px;
+  line-height: 1.62;
+  color: var(--pr-muted);
+}
+
+.pr-note {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-left: 2px solid var(--pr-teal);
+  border-radius: 0 8px 8px 0;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--pr-text);
+}
+
+.pr-sub-head {
+  margin: 16px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pr-faint);
+}
+
+.pr-fix { margin: 8px 0 0; font-size: 15px; line-height: 1.6;
+          color: var(--pr-teal); }
+
+/* the colours, paid */
+.pr-swatches { margin: 14px 0 0; }
+
+.pr-swatch { display: flex; gap: 12px; margin: 0 0 14px; }
+
+.pr-swatch-dot {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.pr-swatch-text { min-width: 0; }
+
+.pr-swatch-head { margin: 0; display: flex; gap: 8px; align-items: baseline;
+                  flex-wrap: wrap; }
+
+.pr-swatch-name { font-size: 15px; font-weight: 700; color: var(--pr-text); }
+
+.pr-swatch-hex {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--pr-teal);
+}
+
+.pr-swatch-role { margin: 3px 0 0; font-size: 13px; line-height: 1.45;
+                  color: var(--pr-faint); }
+.pr-swatch-where { margin: 4px 0 0; font-size: 14px; line-height: 1.55;
+                   color: var(--pr-muted); }
+
+/* the five strengths */
+.pr-list { margin: 14px 0 0; padding: 0; list-style: none; }
+
+.pr-item { display: flex; gap: 12px; margin: 0 0 20px; }
+
+.pr-item-num {
+  flex: none;
+  width: 22px;
+  font-family: var(--font-display, inherit);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--pr-teal);
+}
+
+.pr-item-body { min-width: 0; }
+
+.pr-item-title { margin: 0; font-size: 16px; font-weight: 700;
+                 line-height: 1.35; color: var(--pr-text); }
+
+/* how you connect */
+.pr-verdicts { margin: 14px 0 0; padding: 0; list-style: none; }
+
+.pr-verdict { margin: 0 0 16px; }
+
+.pr-verdict-head { margin: 0; display: flex; gap: 8px; align-items: center;
+                   flex-wrap: wrap; }
+
+.pr-combo { font-size: 15px; font-weight: 700; color: var(--pr-text); }
+
+.pr-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.pr-tag.is-works { color: #A8D8B0; background: rgba(120, 200, 140, 0.15); }
+.pr-tag.is-avoid { color: #E8A8A8; background: rgba(220, 120, 120, 0.15); }
+
+/* the blueprint */
+.pr-implications {
+  margin: 14px 0 0;
+  padding: 0 0 0 18px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--pr-muted);
+}
+
+.pr-implications li { margin: 0 0 8px; }
+.pr-implications li::marker { color: var(--pr-teal); }
+
+/* work */
+.pr-splurge {
+  margin: 14px 0 0;
+  padding: 14px 16px;
+  border: 1px solid var(--pr-line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.pr-splurge-head { margin: 0; font-size: 15px; font-weight: 700;
+                   color: var(--pr-teal); }
+.pr-splurge .pr-body { margin-top: 8px; }
+
+.pr-saves { margin: 10px 0 0; padding: 0; list-style: none; }
+
+.pr-save {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--pr-muted);
+}
+
+.pr-save-item { font-weight: 700; color: var(--pr-text); }
+
+/* the year */
+.pr-months { margin: 14px 0 0; padding: 0; list-style: none;
+             counter-reset: pr-month; }
+
+.pr-month {
+  position: relative;
+  margin: 0 0 12px;
+  padding-left: 26px;
+  counter-increment: pr-month;
+}
+
+.pr-month::before {
+  content: counter(pr-month);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  font-family: var(--font-display, inherit);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--pr-teal);
+}
+
+.pr-month-name { display: block; font-size: 15px; font-weight: 700;
+                 color: var(--pr-text); }
+.pr-month-note { display: block; margin-top: 2px; font-size: 14px;
+                 line-height: 1.55; color: var(--pr-muted); }
+
+/* what stands where the offer was */
+.pr-footnote {
+  margin: 30px 0 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--pr-line);
+  font-size: 13px;
+  line-height: 1.55;
+  text-align: center;
+  color: var(--pr-faint);
+}

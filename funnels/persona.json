@@ -1,0 +1,3340 @@
+{
+  "slug": "persona",
+  "funnel_id": "persona_v1",
+  "locale": "en",
+  "theme": "persona",
+  "stripe_mode": "test",
+  "result_module": "/static/js/result_persona.js",
+  "result_css": "/static/css/result_persona.css",
+  "meta": {
+    "title": "Your Mind Profile",
+    "og_image": "/static/galleries/persona/og.webp"
+  },
+  "swipe": {
+    "pairs_count": 18,
+    "headline": "Your mind profile analysis",
+    "subtext": "18 taps. No typing. A profile that's actually yours.",
+    "subtext_accent": "18 taps",
+    "hint": "Tap your choice",
+    "label_mode": "badge",
+    "analyzing_fade_to": "#0E1A1E",
+    "steps": [
+      {
+        "id": "hook",
+        "question": "Which morning is yours?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "ph1a",
+                "img": "/static/galleries/persona/ph1a.webp",
+                "label": "Sunrise cliff",
+                "tags": [
+                  "drive",
+                  "outer",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Flare Coral",
+                    "hex": "#F08A55",
+                    "element": "high sky"
+                  },
+                  {
+                    "name": "Cliff Bronze",
+                    "hex": "#B4703C",
+                    "element": "rock face"
+                  },
+                  {
+                    "name": "Sea Ink",
+                    "hex": "#14222C",
+                    "element": "water"
+                  }
+                ]
+              },
+              {
+                "id": "ph1b",
+                "img": "/static/galleries/persona/ph1b.webp",
+                "label": "Rainy library",
+                "tags": [
+                  "prism",
+                  "inner",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Window Grey",
+                    "hex": "#9AA8B0",
+                    "element": "glass"
+                  },
+                  {
+                    "name": "Spine Violet",
+                    "hex": "#6A5A96",
+                    "element": "shelves"
+                  },
+                  {
+                    "name": "Reading Ink",
+                    "hex": "#111A22",
+                    "element": "floor"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "animal",
+        "question": "Which one is you?",
+        "format": "grid12",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "animal_owl",
+                "img": "/static/galleries/persona/animal_owl.webp",
+                "label": "Owl",
+                "tags": [
+                  "prism",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Feather Fawn",
+                    "hex": "#C8B48E",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Lens Violet",
+                    "hex": "#8E7AC4",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Hollow Ink",
+                    "hex": "#181F26",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "animal_fox",
+                "img": "/static/galleries/persona/animal_fox.webp",
+                "label": "Fox",
+                "tags": [
+                  "drive",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Flare Coral",
+                    "hex": "#F0845A",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Brush Rust",
+                    "hex": "#B4522C",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Burrow Ink",
+                    "hex": "#1C1A18",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "animal_wolf",
+                "img": "/static/galleries/persona/animal_wolf.webp",
+                "label": "Wolf",
+                "tags": [
+                  "wave",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Winter Silver",
+                    "hex": "#BCC8CE",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Tide Teal",
+                    "hex": "#4A9E92",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Timber Ink",
+                    "hex": "#161E22",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "animal_bear",
+                "img": "/static/galleries/persona/animal_bear.webp",
+                "label": "Bear",
+                "tags": [
+                  "anchor",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Sage Stone",
+                    "hex": "#A6B592",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#7A5C3A",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Den Ink",
+                    "hex": "#191C16",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "animal_stag",
+                "img": "/static/galleries/persona/animal_stag.webp",
+                "label": "Stag",
+                "tags": [
+                  "anchor",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Frost Sage",
+                    "hex": "#9AAE92",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Antler Bronze",
+                    "hex": "#8A6A44",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Pine Ink",
+                    "hex": "#141C18",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "animal_raven",
+                "img": "/static/galleries/persona/animal_raven.webp",
+                "label": "Raven",
+                "tags": [
+                  "wave",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Storm Pewter",
+                    "hex": "#8E9AA2",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Oil Teal",
+                    "hex": "#2E6E70",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Wing Ink",
+                    "hex": "#101820",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "animal_lynx",
+                "img": "/static/galleries/persona/animal_lynx.webp",
+                "label": "Lynx",
+                "tags": [
+                  "prism",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Snow Linen",
+                    "hex": "#D2D6D2",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Lens Violet",
+                    "hex": "#9A80D4",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Thicket Ink",
+                    "hex": "#1A1E24",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "animal_otter",
+                "img": "/static/galleries/persona/animal_otter.webp",
+                "label": "Otter",
+                "tags": [
+                  "wave",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "River Foam",
+                    "hex": "#BEDCD8",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Bright Teal",
+                    "hex": "#4EDDC4",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Bank Ink",
+                    "hex": "#132022",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "animal_hawk",
+                "img": "/static/galleries/persona/animal_hawk.webp",
+                "label": "Hawk",
+                "tags": [
+                  "drive",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Thermal Amber",
+                    "hex": "#E0A25A",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Talon Rust",
+                    "hex": "#A0522E",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Ridge Ink",
+                    "hex": "#151A20",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "animal_tortoise",
+                "img": "/static/galleries/persona/animal_tortoise.webp",
+                "label": "Tortoise",
+                "tags": [
+                  "anchor",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Shell Sage",
+                    "hex": "#A8B896",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Field Olive",
+                    "hex": "#6E7A4E",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Furrow Ink",
+                    "hex": "#171C18",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "animal_horse",
+                "img": "/static/galleries/persona/animal_horse.webp",
+                "label": "Horse",
+                "tags": [
+                  "drive",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Dust Apricot",
+                    "hex": "#E8B486",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Mane Rust",
+                    "hex": "#B0603A",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Paddock Ink",
+                    "hex": "#1A1A18",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "animal_cat",
+                "img": "/static/galleries/persona/animal_cat.webp",
+                "label": "Cat",
+                "tags": [
+                  "prism",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Sill Grey",
+                    "hex": "#A2AAB2",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Iris Violet",
+                    "hex": "#7A64BE",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Corner Ink",
+                    "hex": "#12161C",
+                    "element": "lower field"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "seeking",
+        "question": "What pulled you here today?",
+        "format": "grid4",
+        "pin_first": true,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sq3a",
+                "img": "/static/galleries/persona/sq3a.webp",
+                "label": "Love",
+                "tags": [
+                  "wave",
+                  "deep",
+                  "purpose_love"
+                ],
+                "colors": [
+                  {
+                    "name": "Warm Blush",
+                    "hex": "#E29AA6",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Dusk Teal",
+                    "hex": "#3E7E82",
+                    "element": "surround"
+                  },
+                  {
+                    "name": "Evening Ink",
+                    "hex": "#121C24",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "sq3b",
+                "img": "/static/galleries/persona/sq3b.webp",
+                "label": "Career & money",
+                "tags": [
+                  "drive",
+                  "outer",
+                  "purpose_career"
+                ],
+                "colors": [
+                  {
+                    "name": "Signal Amber",
+                    "hex": "#F0B45A",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Ember Rust",
+                    "hex": "#C05E2E",
+                    "element": "surround"
+                  },
+                  {
+                    "name": "Desk Ink",
+                    "hex": "#1A1814",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "sq3c",
+                "img": "/static/galleries/persona/sq3c.webp",
+                "label": "Inner quiet",
+                "tags": [
+                  "anchor",
+                  "calm",
+                  "purpose_peace"
+                ],
+                "colors": [
+                  {
+                    "name": "Morning Sage",
+                    "hex": "#AEC0A2",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Slate Green",
+                    "hex": "#5E7468",
+                    "element": "surround"
+                  },
+                  {
+                    "name": "Still Ink",
+                    "hex": "#141C1A",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "sq3d",
+                "img": "/static/galleries/persona/sq3d.webp",
+                "label": "The road ahead",
+                "tags": [
+                  "prism",
+                  "deep",
+                  "purpose_path"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Horizon",
+                    "hex": "#C6D6DE",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Lens Violet",
+                    "hex": "#7E6ABE",
+                    "element": "surround"
+                  },
+                  {
+                    "name": "Verge Ink",
+                    "hex": "#131922",
+                    "element": "field"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bond",
+        "question": "Your heart, right now:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "hb4a",
+                "img": "/static/galleries/persona/hb4a.webp",
+                "label": "Single & searching",
+                "tags": [
+                  "outer",
+                  "bold",
+                  "bond_single"
+                ],
+                "colors": [
+                  {
+                    "name": "Street Amber",
+                    "hex": "#E8A85E",
+                    "element": "upper"
+                  },
+                  {
+                    "name": "Neon Coral",
+                    "hex": "#E2705A",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Pavement Ink",
+                    "hex": "#191B20",
+                    "element": "lower"
+                  }
+                ]
+              },
+              {
+                "id": "hb4b",
+                "img": "/static/galleries/persona/hb4b.webp",
+                "label": "In love",
+                "tags": [
+                  "wave",
+                  "calm",
+                  "bond_love"
+                ],
+                "colors": [
+                  {
+                    "name": "Linen Cream",
+                    "hex": "#E6DCC8",
+                    "element": "upper"
+                  },
+                  {
+                    "name": "Soft Teal",
+                    "hex": "#68B4AA",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Blanket Ink",
+                    "hex": "#141E20",
+                    "element": "lower"
+                  }
+                ]
+              },
+              {
+                "id": "hb4c",
+                "img": "/static/galleries/persona/hb4c.webp",
+                "label": "It's complicated",
+                "tags": [
+                  "prism",
+                  "deep",
+                  "bond_complicated"
+                ],
+                "colors": [
+                  {
+                    "name": "Split Grey",
+                    "hex": "#9EA6AE",
+                    "element": "upper"
+                  },
+                  {
+                    "name": "Bruise Violet",
+                    "hex": "#6A5292",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Late Ink",
+                    "hex": "#12151C",
+                    "element": "lower"
+                  }
+                ]
+              },
+              {
+                "id": "hb4d",
+                "img": "/static/galleries/persona/hb4d.webp",
+                "label": "Healing",
+                "tags": [
+                  "anchor",
+                  "calm",
+                  "bond_healing"
+                ],
+                "colors": [
+                  {
+                    "name": "Bandage Linen",
+                    "hex": "#DCD8C6",
+                    "element": "upper"
+                  },
+                  {
+                    "name": "New Sage",
+                    "hex": "#96AE88",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Ground Ink",
+                    "hex": "#161C18",
+                    "element": "lower"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "energy",
+        "question": "Where does your battery fill?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "en5a",
+                "img": "/static/galleries/persona/en5a.webp",
+                "label": "Festival crowd",
+                "tags": [
+                  "outer",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Stage Amber",
+                    "hex": "#F0A84E",
+                    "element": "lights"
+                  },
+                  {
+                    "name": "Crowd Coral",
+                    "hex": "#D8664E",
+                    "element": "heads"
+                  },
+                  {
+                    "name": "Night Ink",
+                    "hex": "#171A22",
+                    "element": "ground"
+                  }
+                ]
+              },
+              {
+                "id": "en5b",
+                "img": "/static/galleries/persona/en5b.webp",
+                "label": "Solitary trail",
+                "tags": [
+                  "inner",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud Linen",
+                    "hex": "#CFD8D2",
+                    "element": "sky"
+                  },
+                  {
+                    "name": "Trail Sage",
+                    "hex": "#7E9480",
+                    "element": "hillside"
+                  },
+                  {
+                    "name": "Path Ink",
+                    "hex": "#141A18",
+                    "element": "ground"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "environment",
+        "question": "Which place feels like home?",
+        "format": "grid6",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "ev6a",
+                "img": "/static/galleries/persona/ev6a.webp",
+                "label": "A workshop",
+                "tags": [
+                  "drive",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Bulb Amber",
+                    "hex": "#F0B466",
+                    "element": "lamp"
+                  },
+                  {
+                    "name": "Copper Rust",
+                    "hex": "#B2603A",
+                    "element": "bench"
+                  },
+                  {
+                    "name": "Shop Ink",
+                    "hex": "#1B1A16",
+                    "element": "corners"
+                  }
+                ]
+              },
+              {
+                "id": "ev6b",
+                "img": "/static/galleries/persona/ev6b.webp",
+                "label": "An old forest",
+                "tags": [
+                  "anchor",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Canopy Sage",
+                    "hex": "#9CB48C",
+                    "element": "canopy"
+                  },
+                  {
+                    "name": "Trunk Umber",
+                    "hex": "#6E5A3C",
+                    "element": "trunks"
+                  },
+                  {
+                    "name": "Forest Ink",
+                    "hex": "#131C16",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "ev6c",
+                "img": "/static/galleries/persona/ev6c.webp",
+                "label": "A rooftop, city below",
+                "tags": [
+                  "outer",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Skyline Amber",
+                    "hex": "#E8A860",
+                    "element": "horizon"
+                  },
+                  {
+                    "name": "Window Coral",
+                    "hex": "#C86A56",
+                    "element": "towers"
+                  },
+                  {
+                    "name": "Roof Ink",
+                    "hex": "#161A22",
+                    "element": "parapet"
+                  }
+                ]
+              },
+              {
+                "id": "ev6d",
+                "img": "/static/galleries/persona/ev6d.webp",
+                "label": "A river bend",
+                "tags": [
+                  "wave",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Shallow Teal",
+                    "hex": "#7EC8BE",
+                    "element": "shallows"
+                  },
+                  {
+                    "name": "Deep Teal",
+                    "hex": "#2E7E7E",
+                    "element": "channel"
+                  },
+                  {
+                    "name": "Bank Ink",
+                    "hex": "#111C20",
+                    "element": "bank"
+                  }
+                ]
+              },
+              {
+                "id": "ev6e",
+                "img": "/static/galleries/persona/ev6e.webp",
+                "label": "A reading room",
+                "tags": [
+                  "prism",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Page Linen",
+                    "hex": "#DED6C4",
+                    "element": "pages"
+                  },
+                  {
+                    "name": "Shade Violet",
+                    "hex": "#8272B4",
+                    "element": "lampshade"
+                  },
+                  {
+                    "name": "Study Ink",
+                    "hex": "#14171E",
+                    "element": "shelves"
+                  }
+                ]
+              },
+              {
+                "id": "ev6f",
+                "img": "/static/galleries/persona/ev6f.webp",
+                "label": "An open coast",
+                "tags": [
+                  "wave",
+                  "outer",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Salt Linen",
+                    "hex": "#D8E2E0",
+                    "element": "sky"
+                  },
+                  {
+                    "name": "Surf Teal",
+                    "hex": "#4EBCB0",
+                    "element": "water"
+                  },
+                  {
+                    "name": "Shore Ink",
+                    "hex": "#121E22",
+                    "element": "rocks"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "palette",
+        "question": "Which moodboard is yours?",
+        "format": "grid6",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "pl7a",
+                "img": "/static/galleries/persona/pl7a.webp",
+                "label": "Ember & rust",
+                "tags": [
+                  "drive",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Flare Coral",
+                    "hex": "#F08A55",
+                    "element": "upper swatch"
+                  },
+                  {
+                    "name": "Ember Rust",
+                    "hex": "#B5532C",
+                    "element": "mid swatch"
+                  },
+                  {
+                    "name": "Cinder Ink",
+                    "hex": "#1C1714",
+                    "element": "lower swatch"
+                  }
+                ]
+              },
+              {
+                "id": "pl7b",
+                "img": "/static/galleries/persona/pl7b.webp",
+                "label": "Moss & stone",
+                "tags": [
+                  "anchor",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Moss Sage",
+                    "hex": "#A2B890",
+                    "element": "upper swatch"
+                  },
+                  {
+                    "name": "Quarry Grey",
+                    "hex": "#8A9088",
+                    "element": "mid swatch"
+                  },
+                  {
+                    "name": "Bedrock Ink",
+                    "hex": "#161C18",
+                    "element": "lower swatch"
+                  }
+                ]
+              },
+              {
+                "id": "pl7c",
+                "img": "/static/galleries/persona/pl7c.webp",
+                "label": "Paper & ink",
+                "tags": [
+                  "prism",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Paper Linen",
+                    "hex": "#E2DCCE",
+                    "element": "upper swatch"
+                  },
+                  {
+                    "name": "Graphite Grey",
+                    "hex": "#7C848C",
+                    "element": "mid swatch"
+                  },
+                  {
+                    "name": "Ink Black",
+                    "hex": "#111820",
+                    "element": "lower swatch"
+                  }
+                ]
+              },
+              {
+                "id": "pl7d",
+                "img": "/static/galleries/persona/pl7d.webp",
+                "label": "Teal & still water",
+                "tags": [
+                  "wave",
+                  "inner"
+                ],
+                "colors": [
+                  {
+                    "name": "Bright Teal",
+                    "hex": "#4EDDC4",
+                    "element": "upper swatch"
+                  },
+                  {
+                    "name": "Deep Teal",
+                    "hex": "#2A7078",
+                    "element": "mid swatch"
+                  },
+                  {
+                    "name": "Trench Ink",
+                    "hex": "#0F1A20",
+                    "element": "lower swatch"
+                  }
+                ]
+              },
+              {
+                "id": "pl7e",
+                "img": "/static/galleries/persona/pl7e.webp",
+                "label": "Brass & dusk",
+                "tags": [
+                  "prism",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Brass Gold",
+                    "hex": "#C8A462",
+                    "element": "upper swatch"
+                  },
+                  {
+                    "name": "Dusk Violet",
+                    "hex": "#6E5C9E",
+                    "element": "mid swatch"
+                  },
+                  {
+                    "name": "Nightfall Ink",
+                    "hex": "#131622",
+                    "element": "lower swatch"
+                  }
+                ]
+              },
+              {
+                "id": "pl7f",
+                "img": "/static/galleries/persona/pl7f.webp",
+                "label": "Clay & daylight",
+                "tags": [
+                  "drive",
+                  "outer"
+                ],
+                "colors": [
+                  {
+                    "name": "Daylight Apricot",
+                    "hex": "#F2BE7E",
+                    "element": "upper swatch"
+                  },
+                  {
+                    "name": "Clay Terracotta",
+                    "hex": "#C4714A",
+                    "element": "mid swatch"
+                  },
+                  {
+                    "name": "Kiln Ink",
+                    "hex": "#1E1A16",
+                    "element": "lower swatch"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "moment",
+        "question": "Your best hour:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "mo8a",
+                "img": "/static/galleries/persona/mo8a.webp",
+                "label": "First light, coffee",
+                "tags": [
+                  "drive",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Kitchen Amber",
+                    "hex": "#F0C08A",
+                    "element": "window"
+                  },
+                  {
+                    "name": "Cup Rust",
+                    "hex": "#B4693E",
+                    "element": "table"
+                  },
+                  {
+                    "name": "Early Ink",
+                    "hex": "#191A18",
+                    "element": "room"
+                  }
+                ]
+              },
+              {
+                "id": "mo8b",
+                "img": "/static/galleries/persona/mo8b.webp",
+                "label": "Long past midnight",
+                "tags": [
+                  "prism",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Screen Silver",
+                    "hex": "#A6B0BA",
+                    "element": "glow"
+                  },
+                  {
+                    "name": "Late Violet",
+                    "hex": "#6A5AA2",
+                    "element": "walls"
+                  },
+                  {
+                    "name": "Small Hours Ink",
+                    "hex": "#0F131A",
+                    "element": "room"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "talisman",
+        "question": "Pick the one you'd carry:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "tl9a",
+                "img": "/static/galleries/persona/tl9a.webp",
+                "label": "Key",
+                "tags": [
+                  "drive",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Worn Brass",
+                    "hex": "#D8A45E",
+                    "element": "bow"
+                  },
+                  {
+                    "name": "Ember Rust",
+                    "hex": "#A85A32",
+                    "element": "shaft"
+                  },
+                  {
+                    "name": "Pocket Ink",
+                    "hex": "#191712",
+                    "element": "cloth"
+                  }
+                ]
+              },
+              {
+                "id": "tl9b",
+                "img": "/static/galleries/persona/tl9b.webp",
+                "label": "Compass",
+                "tags": [
+                  "prism",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Dial Linen",
+                    "hex": "#DCD6C6",
+                    "element": "face"
+                  },
+                  {
+                    "name": "Needle Violet",
+                    "hex": "#8272C0",
+                    "element": "needle"
+                  },
+                  {
+                    "name": "Case Ink",
+                    "hex": "#141820",
+                    "element": "case"
+                  }
+                ]
+              },
+              {
+                "id": "tl9c",
+                "img": "/static/galleries/persona/tl9c.webp",
+                "label": "Feather",
+                "tags": [
+                  "wave",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Barb Silver",
+                    "hex": "#C2CED2",
+                    "element": "vane"
+                  },
+                  {
+                    "name": "Quill Teal",
+                    "hex": "#3E8E8A",
+                    "element": "shaft"
+                  },
+                  {
+                    "name": "Table Ink",
+                    "hex": "#101A1E",
+                    "element": "surface"
+                  }
+                ]
+              },
+              {
+                "id": "tl9d",
+                "img": "/static/galleries/persona/tl9d.webp",
+                "label": "Anchor",
+                "tags": [
+                  "anchor",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Salt Sage",
+                    "hex": "#A8B89C",
+                    "element": "fluke"
+                  },
+                  {
+                    "name": "Iron Olive",
+                    "hex": "#66704E",
+                    "element": "shank"
+                  },
+                  {
+                    "name": "Harbour Ink",
+                    "hex": "#141A18",
+                    "element": "ground"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "weather",
+        "question": "Your weather, most days:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "wt10a",
+                "img": "/static/galleries/persona/wt10a.webp",
+                "label": "Clear sky",
+                "tags": [
+                  "outer",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "High Linen",
+                    "hex": "#D6E0E2",
+                    "element": "zenith"
+                  },
+                  {
+                    "name": "Day Teal",
+                    "hex": "#7EB8BE",
+                    "element": "mid sky"
+                  },
+                  {
+                    "name": "Field Ink",
+                    "hex": "#16201F",
+                    "element": "ground"
+                  }
+                ]
+              },
+              {
+                "id": "wt10b",
+                "img": "/static/galleries/persona/wt10b.webp",
+                "label": "Gathering storm",
+                "tags": [
+                  "drive",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Break Amber",
+                    "hex": "#E8A45E",
+                    "element": "gap"
+                  },
+                  {
+                    "name": "Anvil Rust",
+                    "hex": "#9E5638",
+                    "element": "cloud edge"
+                  },
+                  {
+                    "name": "Front Ink",
+                    "hex": "#1A1A1E",
+                    "element": "cloud base"
+                  }
+                ]
+              },
+              {
+                "id": "wt10c",
+                "img": "/static/galleries/persona/wt10c.webp",
+                "label": "Low fog",
+                "tags": [
+                  "inner",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Fog Pearl",
+                    "hex": "#C8D0D2",
+                    "element": "upper"
+                  },
+                  {
+                    "name": "Muffled Violet",
+                    "hex": "#6C6890",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Hollow Ink",
+                    "hex": "#121820",
+                    "element": "lower"
+                  }
+                ]
+              },
+              {
+                "id": "wt10d",
+                "img": "/static/galleries/persona/wt10d.webp",
+                "label": "Steady rain",
+                "tags": [
+                  "wave",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Rain Silver",
+                    "hex": "#BCCACE",
+                    "element": "upper"
+                  },
+                  {
+                    "name": "Wet Teal",
+                    "hex": "#4E9A9A",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Gutter Ink",
+                    "hex": "#111A1E",
+                    "element": "lower"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rhythm",
+        "question": "Your natural rhythm:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "rh11a",
+                "img": "/static/galleries/persona/rh11a.webp",
+                "label": "Sprint, then stop",
+                "tags": [
+                  "drive",
+                  "outer"
+                ],
+                "colors": [
+                  {
+                    "name": "Track Amber",
+                    "hex": "#F0A65E",
+                    "element": "lane"
+                  },
+                  {
+                    "name": "Effort Rust",
+                    "hex": "#B85838",
+                    "element": "shadow"
+                  },
+                  {
+                    "name": "Start Ink",
+                    "hex": "#1B1815",
+                    "element": "ground"
+                  }
+                ]
+              },
+              {
+                "id": "rh11b",
+                "img": "/static/galleries/persona/rh11b.webp",
+                "label": "Mile after even mile",
+                "tags": [
+                  "anchor",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Road Linen",
+                    "hex": "#D2D8CE",
+                    "element": "sky"
+                  },
+                  {
+                    "name": "Verge Sage",
+                    "hex": "#8CA286",
+                    "element": "verge"
+                  },
+                  {
+                    "name": "Tarmac Ink",
+                    "hex": "#161A18",
+                    "element": "road"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "drain",
+        "question": "Which of these drains you most?",
+        "format": "grid4",
+        "scoring": "inverse",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "dn12a",
+                "img": "/static/galleries/persona/dn12a.webp",
+                "label": "A room of small talk",
+                "tags": [
+                  "outer",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Strip White",
+                    "hex": "#E4E6E2",
+                    "element": "ceiling"
+                  },
+                  {
+                    "name": "Chatter Grey",
+                    "hex": "#9AA0A2",
+                    "element": "room"
+                  },
+                  {
+                    "name": "Carpet Ink",
+                    "hex": "#4E5250",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "dn12b",
+                "img": "/static/galleries/persona/dn12b.webp",
+                "label": "An open-ended wait",
+                "tags": [
+                  "anchor",
+                  "inner"
+                ],
+                "colors": [
+                  {
+                    "name": "Waiting Linen",
+                    "hex": "#DCDCD2",
+                    "element": "wall"
+                  },
+                  {
+                    "name": "Chair Grey",
+                    "hex": "#A0A498",
+                    "element": "seats"
+                  },
+                  {
+                    "name": "Lino Ink",
+                    "hex": "#585C52",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "dn12c",
+                "img": "/static/galleries/persona/dn12c.webp",
+                "label": "Somebody else's crisis",
+                "tags": [
+                  "wave",
+                  "inner"
+                ],
+                "colors": [
+                  {
+                    "name": "Alarm Pearl",
+                    "hex": "#D0D6D8",
+                    "element": "upper"
+                  },
+                  {
+                    "name": "Cold Teal",
+                    "hex": "#7E9698",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Corridor Ink",
+                    "hex": "#4A5456",
+                    "element": "lower"
+                  }
+                ]
+              },
+              {
+                "id": "dn12d",
+                "img": "/static/galleries/persona/dn12d.webp",
+                "label": "A day with no plan",
+                "tags": [
+                  "prism",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Blank Linen",
+                    "hex": "#E0DCD4",
+                    "element": "upper"
+                  },
+                  {
+                    "name": "Idle Grey",
+                    "hex": "#A2A0A8",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Afternoon Ink",
+                    "hex": "#54525C",
+                    "element": "lower"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sanctuary",
+        "question": "Where you refill:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sn13a",
+                "img": "/static/galleries/persona/sn13a.webp",
+                "label": "A lit kitchen, late",
+                "tags": [
+                  "inner",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Bulb Linen",
+                    "hex": "#E8DEC4",
+                    "element": "lamp"
+                  },
+                  {
+                    "name": "Counter Sage",
+                    "hex": "#8CA090",
+                    "element": "counter"
+                  },
+                  {
+                    "name": "Kitchen Ink",
+                    "hex": "#151C1A",
+                    "element": "room"
+                  }
+                ]
+              },
+              {
+                "id": "sn13b",
+                "img": "/static/galleries/persona/sn13b.webp",
+                "label": "A busy street at dusk",
+                "tags": [
+                  "outer",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Awning Amber",
+                    "hex": "#EEA85E",
+                    "element": "awnings"
+                  },
+                  {
+                    "name": "Dusk Coral",
+                    "hex": "#C86A58",
+                    "element": "sky"
+                  },
+                  {
+                    "name": "Street Ink",
+                    "hex": "#171A20",
+                    "element": "road"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "decision",
+        "question": "When life forks, you follow:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "fk14a",
+                "img": "/static/galleries/persona/fk14a.webp",
+                "label": "Heart first",
+                "tags": [
+                  "wave",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Pulse Blush",
+                    "hex": "#E29CA2",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Depth Teal",
+                    "hex": "#3A8286",
+                    "element": "surround"
+                  },
+                  {
+                    "name": "Chest Ink",
+                    "hex": "#121C20",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "fk14b",
+                "img": "/static/galleries/persona/fk14b.webp",
+                "label": "Head first",
+                "tags": [
+                  "prism",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Diagram Linen",
+                    "hex": "#DED8CA",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Reason Violet",
+                    "hex": "#8074BE",
+                    "element": "surround"
+                  },
+                  {
+                    "name": "Slate Ink",
+                    "hex": "#141820",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "fk14c",
+                "img": "/static/galleries/persona/fk14c.webp",
+                "label": "Gut first",
+                "tags": [
+                  "drive",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Flash Amber",
+                    "hex": "#F2B05E",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Instinct Rust",
+                    "hex": "#B85436",
+                    "element": "surround"
+                  },
+                  {
+                    "name": "Quick Ink",
+                    "hex": "#1B1714",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "fk14d",
+                "img": "/static/galleries/persona/fk14d.webp",
+                "label": "Time first",
+                "tags": [
+                  "anchor",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Dial Sage",
+                    "hex": "#AEBEA0",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Patience Olive",
+                    "hex": "#6A7854",
+                    "element": "surround"
+                  },
+                  {
+                    "name": "Long Ink",
+                    "hex": "#161C18",
+                    "element": "field"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tide",
+        "question": "Which is more true?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "tr15a",
+                "img": "/static/galleries/persona/tr15a.webp",
+                "label": "I feel everything",
+                "tags": [
+                  "wave",
+                  "inner",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Spray Pearl",
+                    "hex": "#C8DCDA",
+                    "element": "crest"
+                  },
+                  {
+                    "name": "Swell Teal",
+                    "hex": "#3E8E92",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Undertow Ink",
+                    "hex": "#0F1C22",
+                    "element": "depth"
+                  }
+                ]
+              },
+              {
+                "id": "tr15b",
+                "img": "/static/galleries/persona/tr15b.webp",
+                "label": "I hold everything",
+                "tags": [
+                  "anchor",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Ledge Sage",
+                    "hex": "#A8B89A",
+                    "element": "top"
+                  },
+                  {
+                    "name": "Granite Grey",
+                    "hex": "#7A8078",
+                    "element": "face"
+                  },
+                  {
+                    "name": "Base Ink",
+                    "hex": "#151A16",
+                    "element": "base"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "door",
+        "question": "Pick the door you'd walk through blind:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "dw16a",
+                "img": "/static/galleries/persona/dw16a.webp",
+                "label": "Bronze door",
+                "tags": [
+                  "drive",
+                  "outer"
+                ],
+                "colors": [
+                  {
+                    "name": "Bronze Amber",
+                    "hex": "#DCA05C",
+                    "element": "panel"
+                  },
+                  {
+                    "name": "Patina Rust",
+                    "hex": "#A85E36",
+                    "element": "frame"
+                  },
+                  {
+                    "name": "Threshold Ink",
+                    "hex": "#1A1714",
+                    "element": "gap"
+                  }
+                ]
+              },
+              {
+                "id": "dw16b",
+                "img": "/static/galleries/persona/dw16b.webp",
+                "label": "Teal-glazed door",
+                "tags": [
+                  "wave",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Glaze Teal",
+                    "hex": "#5EC0B4",
+                    "element": "panel"
+                  },
+                  {
+                    "name": "Deep Teal",
+                    "hex": "#2A6E74",
+                    "element": "frame"
+                  },
+                  {
+                    "name": "Threshold Ink",
+                    "hex": "#101A20",
+                    "element": "gap"
+                  }
+                ]
+              },
+              {
+                "id": "dw16c",
+                "img": "/static/galleries/persona/dw16c.webp",
+                "label": "Green-stone door",
+                "tags": [
+                  "anchor",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Stone Sage",
+                    "hex": "#A6B694",
+                    "element": "panel"
+                  },
+                  {
+                    "name": "Lichen Olive",
+                    "hex": "#68764E",
+                    "element": "frame"
+                  },
+                  {
+                    "name": "Threshold Ink",
+                    "hex": "#151A16",
+                    "element": "gap"
+                  }
+                ]
+              },
+              {
+                "id": "dw16d",
+                "img": "/static/galleries/persona/dw16d.webp",
+                "label": "Glass door",
+                "tags": [
+                  "prism",
+                  "inner"
+                ],
+                "colors": [
+                  {
+                    "name": "Pane Linen",
+                    "hex": "#DAE0DE",
+                    "element": "panel"
+                  },
+                  {
+                    "name": "Edge Violet",
+                    "hex": "#8878C0",
+                    "element": "frame"
+                  },
+                  {
+                    "name": "Threshold Ink",
+                    "hex": "#12161E",
+                    "element": "gap"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "essence",
+        "question": "Your essence, in one:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "es17a",
+                "img": "/static/galleries/persona/es17a.webp",
+                "label": "A struck match",
+                "tags": [
+                  "drive",
+                  "outer",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Strike Amber",
+                    "hex": "#F4B45E",
+                    "element": "flame"
+                  },
+                  {
+                    "name": "Flare Coral",
+                    "hex": "#E0724A",
+                    "element": "head"
+                  },
+                  {
+                    "name": "Match Ink",
+                    "hex": "#1C1814",
+                    "element": "stick"
+                  }
+                ]
+              },
+              {
+                "id": "es17b",
+                "img": "/static/galleries/persona/es17b.webp",
+                "label": "A held stone",
+                "tags": [
+                  "anchor",
+                  "inner",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Palm Sage",
+                    "hex": "#AEBCA0",
+                    "element": "hand"
+                  },
+                  {
+                    "name": "River Grey",
+                    "hex": "#7E867C",
+                    "element": "stone"
+                  },
+                  {
+                    "name": "Hold Ink",
+                    "hex": "#161C18",
+                    "element": "shadow"
+                  }
+                ]
+              },
+              {
+                "id": "es17c",
+                "img": "/static/galleries/persona/es17c.webp",
+                "label": "A running river",
+                "tags": [
+                  "wave",
+                  "outer",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Riffle Pearl",
+                    "hex": "#C4DCD8",
+                    "element": "surface"
+                  },
+                  {
+                    "name": "Bright Teal",
+                    "hex": "#4EDDC4",
+                    "element": "current"
+                  },
+                  {
+                    "name": "Channel Ink",
+                    "hex": "#101C20",
+                    "element": "bed"
+                  }
+                ]
+              },
+              {
+                "id": "es17d",
+                "img": "/static/galleries/persona/es17d.webp",
+                "label": "A clear lens",
+                "tags": [
+                  "prism",
+                  "inner",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Optic Linen",
+                    "hex": "#DCE0DC",
+                    "element": "glass"
+                  },
+                  {
+                    "name": "Focus Violet",
+                    "hex": "#7E6CC2",
+                    "element": "ring"
+                  },
+                  {
+                    "name": "Barrel Ink",
+                    "hex": "#12161E",
+                    "element": "barrel"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "seal",
+        "question": "Seal your profile:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sg18a",
+                "img": "/static/galleries/persona/sg18a.webp",
+                "label": "Sunrise",
+                "tags": [
+                  "drive",
+                  "outer",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Rise Amber",
+                    "hex": "#F4B268",
+                    "element": "disc"
+                  },
+                  {
+                    "name": "Flare Coral",
+                    "hex": "#DE7A50",
+                    "element": "sky"
+                  },
+                  {
+                    "name": "Horizon Ink",
+                    "hex": "#1A1A1C",
+                    "element": "land"
+                  }
+                ]
+              },
+              {
+                "id": "sg18b",
+                "img": "/static/galleries/persona/sg18b.webp",
+                "label": "Lamplight",
+                "tags": [
+                  "prism",
+                  "inner",
+                  "deep"
+                ],
+                "colors": [
+                  {
+                    "name": "Shade Linen",
+                    "hex": "#E0D4BC",
+                    "element": "shade"
+                  },
+                  {
+                    "name": "Glow Violet",
+                    "hex": "#7C6AB8",
+                    "element": "spill"
+                  },
+                  {
+                    "name": "Room Ink",
+                    "hex": "#111620",
+                    "element": "room"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "interstitials": [
+    {
+      "after_step": 4,
+      "template": "confirm",
+      "kicker": "Signal recorded",
+      "line": "Two personal signals in.",
+      "sub": "Your profile is narrowing.",
+      "cta": "Continue analysis",
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "hook",
+        "animal",
+        "seeking",
+        "bond"
+      ],
+      "personal": {
+        "step": "animal",
+        "lines": {
+          "animal_owl": {
+            "line": "An Owl, watching first.",
+            "sub": "That narrows it fast."
+          },
+          "animal_fox": {
+            "line": "A Fox, and already round the side.",
+            "sub": "That narrows it fast."
+          },
+          "animal_wolf": {
+            "line": "A Wolf, and never only for yourself.",
+            "sub": "That narrows it fast."
+          },
+          "animal_bear": {
+            "line": "A Bear, taking up the room you take up.",
+            "sub": "That narrows it fast."
+          },
+          "animal_stag": {
+            "line": "A Stag, holding the ground you stand on.",
+            "sub": "That narrows it fast."
+          },
+          "animal_raven": {
+            "line": "A Raven, drawn to what nobody names.",
+            "sub": "That narrows it fast."
+          },
+          "animal_lynx": {
+            "line": "A Lynx, seeing far more than you say.",
+            "sub": "That narrows it fast."
+          },
+          "animal_otter": {
+            "line": "An Otter, and not solemn about any of it.",
+            "sub": "That narrows it fast."
+          },
+          "animal_hawk": {
+            "line": "A Hawk, deciding from height.",
+            "sub": "That narrows it fast."
+          },
+          "animal_tortoise": {
+            "line": "A Tortoise, arriving anyway.",
+            "sub": "That narrows it fast."
+          },
+          "animal_horse": {
+            "line": "A Horse, built to go.",
+            "sub": "That narrows it fast."
+          },
+          "animal_cat": {
+            "line": "A Cat, in the seat with the best angle.",
+            "sub": "That narrows it fast."
+          }
+        }
+      }
+    },
+    {
+      "after_step": 9,
+      "template": "almost",
+      "kicker": "Pattern detected",
+      "line": "Profile {pct}% calibrated.",
+      "cta": "Continue analysis",
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "energy",
+        "environment",
+        "palette",
+        "moment",
+        "talisman"
+      ],
+      "personal": {
+        "axis": "axis",
+        "lines": {
+          "drive": {
+            "line": "Drive keeps winning.",
+            "sub": "If it holds, your profile changes."
+          },
+          "anchor": {
+            "line": "Anchor keeps winning.",
+            "sub": "If it holds, your profile changes."
+          },
+          "wave": {
+            "line": "Wave keeps winning.",
+            "sub": "If it holds, your profile changes."
+          },
+          "prism": {
+            "line": "Prism keeps winning.",
+            "sub": "If it holds, your profile changes."
+          }
+        }
+      }
+    },
+    {
+      "after_step": 14,
+      "template": "confirm",
+      "kicker": "Deep layer",
+      "line": "Deep layer mapped.",
+      "sub": "Four signals left.",
+      "cta": "Continue analysis",
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "weather",
+        "rhythm",
+        "drain",
+        "sanctuary",
+        "decision"
+      ],
+      "personal": {
+        "step": "decision",
+        "lines": {
+          "fk14a": {
+            "line": "You choose with your heart first.",
+            "sub": "Few admit that."
+          },
+          "fk14b": {
+            "line": "You choose with your head first.",
+            "sub": "The heart still votes."
+          },
+          "fk14c": {
+            "line": "Gut first.",
+            "sub": "Your fastest signal is usually your truest."
+          },
+          "fk14d": {
+            "line": "You let time decide.",
+            "sub": "Patience is a strategy, not a delay."
+          }
+        }
+      }
+    },
+    {
+      "after_step": 18,
+      "template": "almost",
+      "kicker": "Calibrating",
+      "line": "All 18 signals in.",
+      "sub": "Most blends are common — let's see yours.",
+      "cta": "Continue analysis",
+      "auto_advance_ms": 2400,
+      "echo_steps": [
+        "tide",
+        "door",
+        "essence",
+        "seal"
+      ]
+    }
+  ],
+  "interstitial_working": [
+    "Reading your choices…",
+    "Weighing them against the four axes…",
+    "Preparing what's next…"
+  ],
+  "preview_gallery": [
+    {
+      "id": "ev6a",
+      "img": "/static/galleries/persona/ev6a.webp",
+      "tags": [
+        "drive",
+        "bold"
+      ]
+    },
+    {
+      "id": "ev6b",
+      "img": "/static/galleries/persona/ev6b.webp",
+      "tags": [
+        "anchor",
+        "calm"
+      ]
+    },
+    {
+      "id": "ev6c",
+      "img": "/static/galleries/persona/ev6c.webp",
+      "tags": [
+        "outer",
+        "deep"
+      ]
+    },
+    {
+      "id": "ev6d",
+      "img": "/static/galleries/persona/ev6d.webp",
+      "tags": [
+        "wave",
+        "deep"
+      ]
+    },
+    {
+      "id": "ev6e",
+      "img": "/static/galleries/persona/ev6e.webp",
+      "tags": [
+        "prism",
+        "calm"
+      ]
+    },
+    {
+      "id": "ev6f",
+      "img": "/static/galleries/persona/ev6f.webp",
+      "tags": [
+        "wave",
+        "outer",
+        "deep"
+      ]
+    },
+    {
+      "id": "pl7a",
+      "img": "/static/galleries/persona/pl7a.webp",
+      "tags": [
+        "drive",
+        "bold"
+      ]
+    },
+    {
+      "id": "pl7b",
+      "img": "/static/galleries/persona/pl7b.webp",
+      "tags": [
+        "anchor",
+        "calm"
+      ]
+    },
+    {
+      "id": "pl7c",
+      "img": "/static/galleries/persona/pl7c.webp",
+      "tags": [
+        "prism",
+        "calm"
+      ]
+    },
+    {
+      "id": "pl7d",
+      "img": "/static/galleries/persona/pl7d.webp",
+      "tags": [
+        "wave",
+        "inner"
+      ]
+    },
+    {
+      "id": "pl7e",
+      "img": "/static/galleries/persona/pl7e.webp",
+      "tags": [
+        "prism",
+        "calm"
+      ]
+    },
+    {
+      "id": "pl7f",
+      "img": "/static/galleries/persona/pl7f.webp",
+      "tags": [
+        "drive",
+        "outer"
+      ]
+    },
+    {
+      "id": "es17a",
+      "img": "/static/galleries/persona/es17a.webp",
+      "tags": [
+        "drive",
+        "outer",
+        "bold"
+      ]
+    },
+    {
+      "id": "es17b",
+      "img": "/static/galleries/persona/es17b.webp",
+      "tags": [
+        "anchor",
+        "inner",
+        "calm"
+      ]
+    },
+    {
+      "id": "es17c",
+      "img": "/static/galleries/persona/es17c.webp",
+      "tags": [
+        "wave",
+        "outer",
+        "deep"
+      ]
+    },
+    {
+      "id": "es17d",
+      "img": "/static/galleries/persona/es17d.webp",
+      "tags": [
+        "prism",
+        "inner",
+        "deep"
+      ]
+    }
+  ],
+  "style_elements": {
+    "title": "Your Signals",
+    "subline": "Recognized from your choices — read in full in your profile.",
+    "items": [
+      {
+        "id": "flare",
+        "label": "Flare",
+        "spec": "Drive — the tag that starts things",
+        "image": "pl7a",
+        "img": "/static/galleries/persona/pl7a.webp",
+        "tags": [
+          "drive",
+          "bold"
+        ]
+      },
+      {
+        "id": "stone",
+        "label": "Stone",
+        "spec": "Anchor — the tag that holds them",
+        "image": "pl7b",
+        "img": "/static/galleries/persona/pl7b.webp",
+        "tags": [
+          "anchor",
+          "calm"
+        ]
+      },
+      {
+        "id": "current",
+        "label": "Current",
+        "spec": "Wave — the tag that reads the room",
+        "image": "pl7d",
+        "img": "/static/galleries/persona/pl7d.webp",
+        "tags": [
+          "wave",
+          "inner"
+        ]
+      },
+      {
+        "id": "lens",
+        "label": "Lens",
+        "spec": "Prism — the tag that takes them apart",
+        "image": "pl7c",
+        "img": "/static/galleries/persona/pl7c.webp",
+        "tags": [
+          "prism",
+          "calm"
+        ]
+      },
+      {
+        "id": "key",
+        "label": "Key",
+        "spec": "A carried object — opening, not keeping",
+        "image": "tl9a",
+        "img": "/static/galleries/persona/tl9a.webp",
+        "tags": [
+          "drive",
+          "bold"
+        ]
+      },
+      {
+        "id": "compass",
+        "label": "Compass",
+        "spec": "A carried object — direction over speed",
+        "image": "tl9b",
+        "img": "/static/galleries/persona/tl9b.webp",
+        "tags": [
+          "prism",
+          "calm"
+        ]
+      },
+      {
+        "id": "feather",
+        "label": "Feather",
+        "spec": "A carried object — carried on movement",
+        "image": "tl9c",
+        "img": "/static/galleries/persona/tl9c.webp",
+        "tags": [
+          "wave",
+          "deep"
+        ]
+      },
+      {
+        "id": "anchor-object",
+        "label": "Anchor",
+        "spec": "A carried object — weight, on purpose",
+        "image": "tl9d",
+        "img": "/static/galleries/persona/tl9d.webp",
+        "tags": [
+          "anchor",
+          "calm"
+        ]
+      },
+      {
+        "id": "clear-sky",
+        "label": "Clear sky",
+        "spec": "Open weather — visible, unhurried",
+        "image": "wt10a",
+        "img": "/static/galleries/persona/wt10a.webp",
+        "tags": [
+          "outer",
+          "calm"
+        ]
+      },
+      {
+        "id": "low-fog",
+        "label": "Low fog",
+        "spec": "Closed weather — private, slow to lift",
+        "image": "wt10c",
+        "img": "/static/galleries/persona/wt10c.webp",
+        "tags": [
+          "inner",
+          "deep"
+        ]
+      },
+      {
+        "id": "workshop",
+        "label": "Workshop",
+        "spec": "Made ground — pressure with a bench under it",
+        "image": "ev6a",
+        "img": "/static/galleries/persona/ev6a.webp",
+        "tags": [
+          "drive",
+          "bold"
+        ]
+      },
+      {
+        "id": "old-forest",
+        "label": "Old forest",
+        "spec": "Grown ground — rooted, slow to change",
+        "image": "ev6b",
+        "img": "/static/galleries/persona/ev6b.webp",
+        "tags": [
+          "anchor",
+          "calm"
+        ]
+      }
+    ]
+  },
+  "styles": [
+    {
+      "id": "igniter",
+      "name": "The Igniter",
+      "tags": [
+        "drive",
+        "outer",
+        "bold"
+      ],
+      "blurb": "You start things. The room knows what you think before you have finished deciding it, and most of what you have built began as a sentence you said out loud too early.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Flare Coral",
+              "rgb": [
+                240,
+                138,
+                85
+              ]
+            },
+            {
+              "name": "Ember Rust",
+              "rgb": [
+                181,
+                83,
+                44
+              ]
+            },
+            {
+              "name": "Signal Amber",
+              "rgb": [
+                240,
+                180,
+                90
+              ]
+            },
+            {
+              "name": "Cinder Ink",
+              "rgb": [
+                28,
+                23,
+                20
+              ]
+            }
+          ],
+          "line": "Flare coral is your everyday register, signal amber is what you reach for when you want the room to turn, and cinder ink is the weight that keeps the other two from burning out by Thursday.",
+          "talismans": [
+            "A brass key, in the coat you actually wear",
+            "A folding knife — carried, not shown",
+            "One notebook small enough to finish"
+          ],
+          "lucky_days": "Tuesday and Saturday — the first for starting things, the second for finishing them."
+        },
+        "mistakes": {
+          "setup": "That one is the easiest of the five to live with. The other four cut deeper, and the one costing you most right now is",
+          "trigger": "the speed you decide at, not the decision,"
+        },
+        "dna": {
+          "setup": "Drive and outward pull read as the same thing from outside and work against each other inside, and the split shows",
+          "trigger": "in the choices you made fastest,"
+        },
+        "materials": {
+          "setup": "You are read as certain long before you feel it, and the person who lasts with you is the one who",
+          "trigger": "waits out your first week,"
+        },
+        "splurge": {
+          "setup": "Your working energy is not flat and was never meant to be, and the month it turns is",
+          "trigger": "the one straight after you get bored,"
+        },
+        "shopping": {
+          "setup": "Two windows in the next twelve months carry most of your momentum, and the first opens",
+          "trigger": "earlier than you would plan for,"
+        },
+        "mistake_one": {
+          "title": "You mistake speed for certainty",
+          "body": "Your momentum reads to you as evidence — the decision came fast, so it feels like it came from somewhere deep. Sometimes it came from nothing but the discomfort of sitting still, and the two are identical from the inside.",
+          "fix": "Sleep one night on any decision you could explain in under ten seconds."
+        }
+      }
+    },
+    {
+      "id": "keeper",
+      "name": "The Keeper",
+      "tags": [
+        "anchor",
+        "inner",
+        "calm"
+      ],
+      "blurb": "You hold. People bring you the thing they cannot put down, and you take it without comment — which is why almost nobody has ever asked what you are carrying.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Moss Sage",
+              "rgb": [
+                162,
+                184,
+                144
+              ]
+            },
+            {
+              "name": "Quarry Grey",
+              "rgb": [
+                138,
+                144,
+                136
+              ]
+            },
+            {
+              "name": "Field Olive",
+              "rgb": [
+                110,
+                122,
+                78
+              ]
+            },
+            {
+              "name": "Bedrock Ink",
+              "rgb": [
+                22,
+                28,
+                24
+              ]
+            }
+          ],
+          "line": "Moss sage is where you are most yourself, quarry grey is what you wear when you would rather not be read, and field olive is the one that makes a room feel like it has been there a while.",
+          "talismans": [
+            "A river stone, in the pocket you use least",
+            "A wooden handle worn smooth by one hand",
+            "A key to a door you no longer need to open"
+          ],
+          "lucky_days": "Sunday and Wednesday — the first for deciding, the second for saying it."
+        },
+        "mistakes": {
+          "setup": "That one is the easiest of the five to admit to. The other four cost more, and the one running your week right now is",
+          "trigger": "the weight you agreed to carry silently,"
+        },
+        "dna": {
+          "setup": "Steadiness and privacy look like one trait from outside and are two inside, and the seam between them shows",
+          "trigger": "in the questions you took longest on,"
+        },
+        "materials": {
+          "setup": "You are the safest person most people know, and the one who lasts with you is the one who",
+          "trigger": "asks a second time,"
+        },
+        "splurge": {
+          "setup": "Your working energy runs long rather than hot, and the month it pays best is",
+          "trigger": "later than the calendar suggests,"
+        },
+        "shopping": {
+          "setup": "Most of your next twelve months is steady and two stretches are not, and the first of them lands",
+          "trigger": "just after you have taken something else on,"
+        },
+        "mistake_one": {
+          "title": "You call it patience when it is postponement",
+          "body": "Waiting is a real strategy and you are genuinely good at it, which is exactly why it hides the other thing — the conversation you have been not-having for months looks identical, from the outside, to one you are wisely timing.",
+          "fix": "Name a date for the thing you are waiting on. If you cannot, you are not waiting."
+        }
+      }
+    },
+    {
+      "id": "feeler",
+      "name": "The Feeler",
+      "tags": [
+        "wave",
+        "outer",
+        "deep"
+      ],
+      "blurb": "You read rooms before you read people, and people before they have said anything. It is the most useful thing about you and it is not free.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Bright Teal",
+              "rgb": [
+                78,
+                221,
+                196
+              ]
+            },
+            {
+              "name": "Deep Teal",
+              "rgb": [
+                42,
+                112,
+                120
+              ]
+            },
+            {
+              "name": "Riffle Pearl",
+              "rgb": [
+                196,
+                220,
+                216
+              ]
+            },
+            {
+              "name": "Trench Ink",
+              "rgb": [
+                15,
+                26,
+                32
+              ]
+            }
+          ],
+          "line": "Bright teal is the one people notice, deep teal is where you actually live, and riffle pearl is what keeps the other two from reading as cold.",
+          "talismans": [
+            "A feather kept flat between two pages",
+            "A shell small enough to close a hand around",
+            "One ring you only take off to swim"
+          ],
+          "lucky_days": "Monday and Friday — the first for listening, the second for saying what you heard."
+        },
+        "mistakes": {
+          "setup": "That one is the easiest of the five to laugh about. The other four sit lower, and the one taking the most from you now is",
+          "trigger": "the mood you picked up and kept,"
+        },
+        "dna": {
+          "setup": "Depth and openness pull in opposite directions and you run both at once, and where they meet shows",
+          "trigger": "in the pictures you chose without thinking,"
+        },
+        "materials": {
+          "setup": "You know how somebody feels before they do, and the one who lasts with you is the one who",
+          "trigger": "says the thing plainly,"
+        },
+        "splurge": {
+          "setup": "Your working energy moves in tides rather than hours, and the month it comes back in is",
+          "trigger": "the one you would have written off,"
+        },
+        "shopping": {
+          "setup": "Your next twelve months has two high stretches and one flat one, and the flat one arrives",
+          "trigger": "right after the busiest thing you agree to,"
+        },
+        "mistake_one": {
+          "title": "You take on the room's weather as your own",
+          "body": "You walk into a tense room and come out tense, and by the evening it has stopped being the room's and become yours. Nobody handed it to you; you picked it up on the way past, which is why you cannot find where it came from.",
+          "fix": "After any hard room, name out loud whose feeling it was. Out loud — thinking it does not work."
+        }
+      }
+    },
+    {
+      "id": "thinker",
+      "name": "The Thinker",
+      "tags": [
+        "prism",
+        "inner",
+        "deep"
+      ],
+      "blurb": "You take things apart to understand them, including yourself, and you are the only person you have never quite finished with.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Lens Violet",
+              "rgb": [
+                138,
+                122,
+                196
+              ]
+            },
+            {
+              "name": "Paper Linen",
+              "rgb": [
+                226,
+                220,
+                206
+              ]
+            },
+            {
+              "name": "Brass Gold",
+              "rgb": [
+                200,
+                164,
+                98
+              ]
+            },
+            {
+              "name": "Ink Black",
+              "rgb": [
+                17,
+                24,
+                32
+              ]
+            }
+          ],
+          "line": "Lens violet is the one that makes people ask what you do, paper linen is where you think best, and brass gold is the warmth that stops the other two reading as cold.",
+          "talismans": [
+            "A compass that does not need to be accurate",
+            "One good pen, refilled rather than replaced",
+            "A magnifier, in a drawer you open weekly"
+          ],
+          "lucky_days": "Thursday and Sunday — the first for deciding, the second for changing your mind."
+        },
+        "mistakes": {
+          "setup": "That one is the easiest of the five to explain away. The other four are harder, and the one running you this month is",
+          "trigger": "the answer you already have and keep testing,"
+        },
+        "dna": {
+          "setup": "Distance and depth look like one habit and are two, and the join between them shows",
+          "trigger": "in the questions you answered instantly,"
+        },
+        "materials": {
+          "setup": "You are read as cool long before you feel it, and the one who lasts with you is the one who",
+          "trigger": "keeps asking after you go quiet,"
+        },
+        "splurge": {
+          "setup": "Your working energy pays in the months you are left alone, and the first of those is",
+          "trigger": "not the one you have blocked out,"
+        },
+        "shopping": {
+          "setup": "Two windows in your next twelve months are worth more than the other ten, and the first opens",
+          "trigger": "while you are still preparing for it,"
+        },
+        "mistake_one": {
+          "title": "You research the thing instead of doing it",
+          "body": "Understanding a problem feels near-identical to solving it, and you are good enough at the first that you can stay there for months. The tell is that you can describe every option and have not started any.",
+          "fix": "When you catch yourself on the third source, stop and do the smallest version of the thing instead."
+        }
+      }
+    }
+  ],
+  "analyzing": {
+    "duration_ms": 2500,
+    "text": "Reading your signals",
+    "messages": [
+      "Reading your 18 signals…",
+      "Weighing your 18 signals against the four axes…",
+      "Isolating your leading axis…"
+    ]
+  },
+  "analyzing_echo": true,
+  "report": {
+    "generating_messages": [
+      "Our AI is weighing your 18 signals against the four axes…",
+      "Searching for the combinations that fit YOU…",
+      "Cross-referencing your axis and energy picks…",
+      "Almost there — writing your profile…"
+    ],
+    "sections": [
+      {
+        "id": "palette",
+        "title": "Your Colours & Three Things to Carry",
+        "enabled": true,
+        "preview": [
+          "Each one is given with its exact code and the two shades it should never sit beside, because the same colour reads differently under warm light than it does under cold.",
+          "The profile names the three objects worth carrying, where to keep each of them, and the two days your decisions land best."
+        ],
+        "reveal": {
+          "mode": "visible"
+        }
+      },
+      {
+        "id": "mistakes",
+        "title": "5 Hidden Strengths & Blind Spots",
+        "teaser_line": "Four more, and the costliest one is last.",
+        "enabled": true,
+        "preview": [
+          "It reads as obvious written down, and it still shapes more of your week than anything else on this list.",
+          "The remaining four are ranked by how much of your energy each one is quietly costing you."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "dna",
+        "title": "Your Mind Blueprint",
+        "teaser_line": "How your {palette} splits between your two strongest axes.",
+        "enabled": true,
+        "preview": [
+          "Three scales, read off your own taps, and one place where they pull hard against each other.",
+          "It names your axis, your energy and your tone, and says which of the three you lead with when you are under pressure."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "materials",
+        "title": "How You Connect",
+        "teaser_line": "Why one kind of person keeps finding you.",
+        "enabled": true,
+        "preview": [
+          "It is the pattern underneath the people you keep choosing, rather than a list of types to avoid.",
+          "The profile names the two profiles you work with easily, the one that costs you, and what to say in the first month."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "splurge",
+        "title": "Work & Money Path",
+        "teaser_line": "Where your {talisman} energy earns — and what to stop taking on.",
+        "enabled": true,
+        "preview": [
+          "Your working rhythm is not flat and never was, and the shape of it is far more useful than an average.",
+          "The profile marks the months your energy pays best and names the one kind of work to stop accepting."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "shopping",
+        "title": "Your 12-Month Energy Map",
+        "teaser_line": "Three strong months. One quiet one.",
+        "enabled": true,
+        "preview": [
+          "Twelve months, marked for the stretches where your energy is behind you and the two where it plainly is not.",
+          "Every window comes with what it is good for, so the quiet months stop reading as failure."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      }
+    ],
+    "mistake_one": {
+      "title": "Hidden Strength #1 of 5",
+      "locked_note": "Strengths 2–5 — inside your full profile"
+    },
+    "also": {
+      "title": "Also in your profile",
+      "rows": [
+        {
+          "section": "dna",
+          "hook": "How your {palette} choices split between your two strongest axes."
+        },
+        {
+          "section": "splurge",
+          "hook": "Where your {talisman} energy earns — and the one kind of work to stop taking."
+        },
+        {
+          "section": "shopping",
+          "hook": "The two months your {animal} energy runs with you, and the one to stay quiet through."
+        },
+        {
+          "title": "Your Exact Colour Codes",
+          "hook": "The code for every colour above, where to use it, and the one shade to keep away from it."
+        }
+      ]
+    },
+    "visuals": {
+      "taps": true,
+      "hero": {
+        "glyph_step": "animal",
+        "band_step": "environment"
+      },
+      "section_steps": {
+        "palette": "palette",
+        "mistakes": "weather",
+        "dna": "essence",
+        "materials": "sanctuary",
+        "splurge": "rhythm",
+        "shopping": "moment"
+      }
+    },
+    "hook_slots": {
+      "animal": {
+        "step": "animal",
+        "fallback": "animal"
+      },
+      "palette": {
+        "step": "palette",
+        "fallback": "moodboard"
+      },
+      "weather": {
+        "step": "weather",
+        "fallback": "weather"
+      },
+      "talisman": {
+        "step": "talisman",
+        "fallback": "talisman"
+      }
+    }
+  },
+  "pricing": {
+    "amount_cents": 300,
+    "currency": "usd",
+    "cta": "Unlock my full profile"
+  },
+  "checkout": {
+    "kicker": "Your profile is ready",
+    "product_name": "Your Mind Profile Report",
+    "product_image": "/static/brand/icon-512.png",
+    "single_page": true,
+    "express": true,
+    "withdrawal_consent": false,
+    "commerce": {
+      "anchor_head": "A {price} profile instead of a $25 paperback",
+      "anchor_head_accent": "$25",
+      "price_anchor": "instead of a $25 paperback about somebody else",
+      "price_anchor_accent": "$25",
+      "price_note": "one-time",
+      "badges": [
+        "One-time",
+        "No subscription, ever"
+      ],
+      "price_suffix": "one-time · no subscription",
+      "trust": [
+        "Secure via Stripe",
+        "PDF to your email"
+      ],
+      "mid_line": "Your complete profile, for less than two coffees.",
+      "mid_line_accent": "two coffees",
+      "mid_button": "See what's inside ↓",
+      "sticky_label": "Unlock full profile — {price}"
+    },
+    "title": "Your {style} Profile",
+    "proof_line": "Built from your 18 choices",
+    "manifest": [
+      "Your colours with exact codes, plus three things to carry",
+      "5 hidden strengths and blind spots — with what to do about each",
+      "Your blueprint: axis, energy and tone, scored",
+      "How you connect: the pattern under who you choose",
+      "Work & money: the months your energy pays best",
+      "Your 12-month energy map, marked window by window"
+    ],
+    "manifest_hero": "strengths",
+    "manifest_head": "What's inside — {n} sections, yours forever",
+    "anchor_head": "A {price} read on the energy you spend every day",
+    "anchor": "A paperback about somebody else costs $25. Your complete profile — {price}, once.",
+    "reframe": "Less than two coffees. Yours forever.",
+    "price_suffix": "one-time",
+    "cta_label": "Open my full profile — {price}",
+    "consent_prechecked": true,
+    "trust": [
+      "Secure payment via Stripe",
+      "Instant delivery",
+      "PDF copy to your email"
+    ],
+    "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right."
+  },
+  "result": {
+    "mistakes_teaser": "You've seen strength #1. The other four run deeper — one explains your {weather} choice.",
+    "value_banner": "Five strengths, a read on how you connect and a twelve-month energy map — all of it built from your own 18 signals, yours to keep."
+  },
+  "result_copy": {
+    "kicker": "YOUR MIND PROFILE",
+    "blend_note": "rare blend",
+    "taps_caption": "Read from your taps:",
+    "balance_title": "Your axis balance",
+    "head_title": "Your shape",
+    "head_caption": "Four axes, scored off your own taps and drawn to the strongest of them. The bead on the arc is your outer-to-inner lean.",
+    "strength_lead": "Your {talisman} and your {weather} put this one first.",
+    "offer_sub": "Your complete profile — once, forever.",
+    "locked_note": "Locked",
+    "delivered_note": "A PDF of this profile is in your inbox. This page stays at the link you were sent back to.",
+    "purpose_map": {
+      "purpose_love": {
+        "emphasized_section": "materials",
+        "offer_sub": "How you connect is inside."
+      },
+      "purpose_career": {
+        "emphasized_section": "splurge",
+        "offer_sub": "Your working months are inside."
+      },
+      "purpose_peace": {
+        "emphasized_section": "mistakes",
+        "offer_sub": "Your calm has a pattern. It's inside."
+      },
+      "purpose_path": {
+        "emphasized_section": "shopping",
+        "offer_sub": "Your year, mapped window by window — inside."
+      }
+    },
+    "profile": {
+      "subtypes": {
+        "igniter": {
+          "anchor": {
+            "outer": "The Open Flame",
+            "inner": "The Coiled Spring"
+          },
+          "wave": {
+            "outer": "The Steady Spark",
+            "inner": "The Patient Ember"
+          },
+          "prism": {
+            "outer": "The Signal Fire",
+            "inner": "The Slow Burn"
+          }
+        },
+        "keeper": {
+          "drive": {
+            "outer": "The Standing Stone",
+            "inner": "The Quiet Fortress"
+          },
+          "wave": {
+            "outer": "The Harbor Wall",
+            "inner": "The Still Foundation"
+          },
+          "prism": {
+            "outer": "The Old Oak",
+            "inner": "The Deep Root"
+          }
+        },
+        "feeler": {
+          "drive": {
+            "outer": "The Rising Tide",
+            "inner": "The Hidden Spring"
+          },
+          "anchor": {
+            "outer": "The Warm Shore",
+            "inner": "The Gentle Stream"
+          },
+          "prism": {
+            "outer": "The Open Sea",
+            "inner": "The Deep Current"
+          }
+        },
+        "thinker": {
+          "drive": {
+            "outer": "The Bright Beacon",
+            "inner": "The Sharp Compass"
+          },
+          "anchor": {
+            "outer": "The Clear Lens",
+            "inner": "The Quiet Cartographer"
+          },
+          "wave": {
+            "outer": "The Far Lighthouse",
+            "inner": "The Night Astronomer"
+          }
+        }
+      },
+      "animal_cross": {
+        "Owl": {
+          "drive": "An Owl that leads with drive is uncommon — the watching is still the first thing you do, and it is over much faster than anyone expects.",
+          "anchor": "An Owl that leads with anchor is a genuine cross — you watch, and then you stay, and both halves are unusual on their own.",
+          "wave": "An Owl that leads with wave is rare — what you are reading is the mood of the room rather than its facts, and you are almost never wrong about it.",
+          "prism": "An Owl that leads with prism runs true — you would rather understand a thing than be early to it, and you are usually both."
+        },
+        "Fox": {
+          "drive": "A Fox that leads with drive runs true — you find the gap and you are already through it while the room is still describing the wall.",
+          "anchor": "A Fox that leads with anchor is a genuine cross — the quickness is all still there and it now has somewhere to put things, which is why yours actually accumulate.",
+          "wave": "A Fox that leads with wave is uncommon — the cleverness goes into people rather than problems, and it reads as charm from the outside.",
+          "prism": "A Fox that leads with prism is uncommon — you solve things sideways, and the answer usually arrives before you can explain the route."
+        },
+        "Wolf": {
+          "drive": "A Wolf that leads with drive is uncommon — the loyalty is the same and it moves first, which is how you end up leading things you never asked for.",
+          "anchor": "A Wolf that leads with anchor is a genuine cross — you are the one who stays, and the group works out much later that this was the whole structure.",
+          "wave": "A Wolf that leads with wave runs true — you belong to your people before you belong to yourself, and you feel a rift in the room days before it opens.",
+          "prism": "A Wolf that leads with prism is rare — you watch your own pack the way an outsider would, and you love them no less for it."
+        },
+        "Bear": {
+          "drive": "A Bear that leads with drive is a genuine cross — the size is real and it moves, and people do not get more than one warning.",
+          "anchor": "A Bear that leads with anchor runs true — you take up the space you take up, and what is behind you is safe by the simple fact of being behind you.",
+          "wave": "A Bear that leads with wave is uncommon — the protection is emotional rather than physical, and you know who in the room needs it.",
+          "prism": "A Bear that leads with prism is rare — the strength is in what you have thought through, and you are far harder to argue with than to move."
+        },
+        "Stag": {
+          "drive": "A Stag that leads with drive is uncommon — the bearing is the same and it goes forward, which is a different animal entirely once it does.",
+          "anchor": "A Stag that leads with anchor runs true — you hold your ground by standing on it, and the standing is most of what you are known for.",
+          "wave": "A Stag that leads with wave is a genuine cross — the dignity is a way of protecting something soft, and the people who see that stay.",
+          "prism": "A Stag that leads with prism is uncommon — you keep the high ground because the view from it is better, not because it is higher."
+        },
+        "Raven": {
+          "drive": "A Raven that leads with drive is uncommon — the curiosity has an engine under it, and what you pick up tends to get used.",
+          "anchor": "A Raven that leads with anchor is rare — you collect and you keep, and the collection turns out to have been a plan the whole time.",
+          "wave": "A Raven that leads with wave runs true — you are drawn to the thing everyone is avoiding, and you are the one who finally names it.",
+          "prism": "A Raven that leads with prism is a genuine cross — you take the dark thing apart to see how it works, which is why it stops frightening you first."
+        },
+        "Lynx": {
+          "drive": "A Lynx that leads with drive is a genuine cross — the patience is real and it ends abruptly, and the timing is the whole skill.",
+          "anchor": "A Lynx that leads with anchor is uncommon — you wait where you are rather than circling, and that is a harder kind of waiting.",
+          "wave": "A Lynx that leads with wave is rare — you feel the shift in a room before it shows, and you have never been able to say how.",
+          "prism": "A Lynx that leads with prism runs true — you see far more than you say, and what you do say has usually been checked twice."
+        },
+        "Otter": {
+          "drive": "An Otter that leads with drive is uncommon — the play has a purpose behind it, and you get further having fun than most people do working.",
+          "anchor": "An Otter that leads with anchor is a genuine cross — you are the lightest person in a serious room and the last one to leave it.",
+          "wave": "An Otter that leads with wave runs true — you move with what is happening rather than against it, and you make everything around you easier by being in it.",
+          "prism": "An Otter that leads with prism is uncommon — the lightness is a working method, and you solve things by refusing to be solemn about them."
+        },
+        "Hawk": {
+          "drive": "A Hawk that leads with drive runs true — you see it, you commit, and the descent is the only part anyone witnesses.",
+          "anchor": "A Hawk that leads with anchor is a genuine cross — the eye is the same and the patience is new, which makes you far more dangerous to a bad plan.",
+          "wave": "A Hawk that leads with wave is rare — the height you keep is a way of feeling the whole field at once rather than a way of staying out of it.",
+          "prism": "A Hawk that leads with prism is uncommon — you climb for the view, and the decision is made long before the dive."
+        },
+        "Tortoise": {
+          "drive": "A Tortoise that leads with drive is rare — the pace is a choice rather than a limit, and the day it changes people get it wrong entirely.",
+          "anchor": "A Tortoise that leads with anchor runs true — you arrive, always, and the arriving is worth more than any of the speed around you.",
+          "wave": "A Tortoise that leads with wave is uncommon — the shell is there because you feel everything, not because you feel nothing.",
+          "prism": "A Tortoise that leads with prism is a genuine cross — you are slow because you are checking, and you are checking because you intend to be right."
+        },
+        "Horse": {
+          "drive": "A Horse that leads with drive runs true — you were built to go, and standing still is the only thing you are genuinely bad at.",
+          "anchor": "A Horse that leads with anchor is a genuine cross — all that power, pointed at one field, which is why what you build tends to last.",
+          "wave": "A Horse that leads with wave is uncommon — you read the person holding the rein before you read the road.",
+          "prism": "A Horse that leads with prism is rare — you want to know where the road goes before you take it, and you take it anyway."
+        },
+        "Cat": {
+          "drive": "A Cat that leads with drive is uncommon — the self-possession is the same and it now wants things, which makes you very hard to divert.",
+          "anchor": "A Cat that leads with anchor is a genuine cross — you keep your own counsel and your own address, and both are non-negotiable.",
+          "wave": "A Cat that leads with wave is rare — you know exactly how the room feels and you have decided it is not your problem, except when it is.",
+          "prism": "A Cat that leads with prism runs true — you observe from the one seat with the best angle, and you were there before anybody noticed you come in."
+        }
+      },
+      "cards": [
+        {
+          "id": "materials",
+          "key": "Close ties",
+          "icon": "heart",
+          "promise": "which two profiles fit you easily — and the one that quietly costs you",
+          "upgrade": {
+            "purpose_love": "the read you came for — the two profiles that fit you, and the one that drains you"
+          }
+        },
+        {
+          "id": "mistakes",
+          "key": "Blind spots",
+          "icon": "eye",
+          "promise": "what your {weather} pick gave away — strengths #2–5, the costliest last"
+        },
+        {
+          "id": "shopping",
+          "key": "Your year",
+          "icon": "calendar",
+          "promise": "{first} → {last} — your 3 strongest months, and the 1 to stay quiet in"
+        },
+        {
+          "id": "splurge",
+          "key": "Work",
+          "icon": "coin",
+          "promise": "where your energy earns — and where it quietly leaks"
+        },
+        {
+          "id": "palette",
+          "key": "Your colours",
+          "icon": "palette",
+          "promise": "your 4, with exact codes + three things to carry"
+        },
+        {
+          "id": "dna",
+          "key": "Blueprint",
+          "icon": "map",
+          "promise": "how {axis} leads you and {second} feeds it"
+        }
+      ],
+      "scales": [
+        {
+          "id": "tone",
+          "left": "Bold",
+          "right": "Calm"
+        },
+        {
+          "id": "energy",
+          "left": "Outer",
+          "right": "Inner"
+        },
+        {
+          "id": "depth",
+          "left": "Light",
+          "right": "Deep"
+        }
+      ],
+      "rarity": {
+        "igniter": {
+          "anchor": {
+            "outer": 10,
+            "inner": 40
+          },
+          "wave": {
+            "outer": 15,
+            "inner": 40
+          },
+          "prism": {
+            "outer": 12,
+            "inner": 40
+          }
+        },
+        "keeper": {
+          "drive": {
+            "outer": 15,
+            "inner": 15
+          },
+          "wave": {
+            "outer": 40,
+            "inner": 40
+          },
+          "prism": {
+            "outer": 40,
+            "inner": 20
+          }
+        },
+        "feeler": {
+          "drive": {
+            "outer": 8,
+            "inner": 40
+          },
+          "anchor": {
+            "outer": 40,
+            "inner": 40
+          },
+          "prism": {
+            "outer": 20,
+            "inner": 40
+          }
+        },
+        "thinker": {
+          "drive": {
+            "outer": 20,
+            "inner": 10
+          },
+          "anchor": {
+            "outer": 40,
+            "inner": 25
+          },
+          "wave": {
+            "outer": 40,
+            "inner": 20
+          }
+        }
+      },
+      "formula": "{animal} · {axis}-led, {second} undercurrent · {energy}",
+      "rarity_line": "About 1 in {n} profiles land this blend",
+      "bridge": "Your profile answers, specifically for {subtype_article} {subtype_bare}:",
+      "offer_head": "The full {subtype_bare} profile — 6 chapters",
+      "split_caption": "{drive}% Drive · {anchor}% Anchor · {wave}% Wave · {prism}% Prism"
+    }
+  }
+}
