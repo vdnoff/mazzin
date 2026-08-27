@@ -133,6 +133,86 @@ body.theme-zodiac #mid-cta {
   background: linear-gradient(180deg, #F2D68F 0%, #E8C878 100%);
 }
 
+/* The personality funnel's own colours, on exactly the same terms as the
+   celestial block above: only the two things a reader reads as progress, and
+   the screen between steps. The ink and the teal are result_persona.css's, to
+   the value, so the quiz and the reading are one product rather than two that
+   happen to be linked. */
+body.theme-persona .pip { background: rgba(78, 221, 196, 0.24); }
+body.theme-persona .pip.is-done { background: #4EDDC4; }
+
+/* The selected badge on the twelve-card identity grid, for the same reason
+   the celestial one takes it: the default is the rust every other funnel
+   confirms in, and on an ink-and-teal card that is the one colour on screen
+   belonging to somebody else. */
+body.theme-persona .cards.is-grid12 .card.is-chosen .card-name {
+  color: #06231F;
+  background: #4EDDC4;
+}
+
+body.theme-persona .analyzing-bar { background: rgba(78, 221, 196, 0.20); }
+body.theme-persona .analyzing-bar-fill {
+  background: linear-gradient(90deg,
+    rgba(78, 221, 196, 0.20) 0%, #4EDDC4 45%, #4EDDC4 55%,
+    rgba(78, 221, 196, 0.20) 100%);
+}
+
+/* The beat between steps, on the ground the result page ends on. */
+body.theme-persona #screen-interstitial.is-active {
+  background:
+    radial-gradient(120% 55% at 50% 0%, #17272E 0%, rgba(16, 24, 32, 0) 70%),
+    #101820;
+  color: #E8EFF0;
+}
+
+body.theme-persona .mid-kicker { color: #4EDDC4; }
+body.theme-persona .mid-line { color: #E8EFF0; }
+body.theme-persona .mid-sub,
+body.theme-persona .mid-next,
+body.theme-persona .mid-working { color: #A6B6BC; }
+body.theme-persona .mid-progress-label { color: #85979E; }
+
+body.theme-persona .mid-spinner {
+  border-color: rgba(78, 221, 196, 0.28);
+  border-top-color: #4EDDC4;
+}
+
+/* The one thing that moves on a self-advancing beat, in the teal the funnel
+   ends on. The track is that teal at a sixth, so the rule reads as a distance
+   covered rather than as a bar sitting on the page.
+
+   Set through the tokens the accent already reads — `--accent` and
+   `--accent-soft` — rather than by restating the backgrounds on `.mid-accent`
+   the way the celestial block above does. Two reasons, and the second is the
+   load-bearing one. It is less to keep in step: the bar and its track are
+   painted once, in the base rules, and a theme only says what colour. And the
+   auto-advance mode is asserted elsewhere to have no styling outside a fixed
+   list of selectors — a guard written when this funnel was the only theme,
+   which a second `.mid-accent` rule would trip even though it is scoped to a
+   body class no other funnel wears.
+
+   Scoped to the interstitial screen and no further, for the same reason the
+   celestial block gives: repainting `--accent` on the whole body would teal
+   the hint dot and the reaction chip on the white quiz cards too, and teal on
+   white is a contrast failure. Inside this screen the ground is ink. */
+body.theme-persona #screen-interstitial {
+  --accent: #4EDDC4;
+  --accent-soft: rgba(78, 221, 196, 0.16);
+}
+
+/* Their own frames, on the funnel's own ground. */
+body.theme-persona .mid-echo-cell,
+body.theme-persona .analyzing-cell {
+  border-color: rgba(78, 221, 196, 0.30);
+  background: rgba(16, 24, 32, 0.55);
+}
+
+body.theme-persona #screen-interstitial .cta,
+body.theme-persona #mid-cta {
+  color: #06231F;
+  background: linear-gradient(180deg, #7DF0DB 0%, #4EDDC4 100%);
+}
+
 /* The arrival. The quiz is a light page and the reading is a dark one, and
    without this the change happens in a single frame at the moment the result
    lands — which reads as a different site rather than as a door opening. The

@@ -402,9 +402,17 @@
   // by their being here — kitchen scores against neither word.
   var ELEMENT_AXIS = ["fire", "earth", "air", "water"];
   var ENERGY_AXIS = ["sun", "moon"];
+  // The personality funnel's four, on the same terms. `axis` is the word that
+  // funnel uses for the thing `element` is to the celestial ones, and it is
+  // named here for the one reason any of these are: an interstitial keyed on
+  // an axis this file has never heard of resolves to no leader at all,
+  // silently, so the beat quietly shows its own line forever. Adding the row
+  // is the whole of teaching it. No other funnel scores against these four
+  // words, so no other funnel can be moved by their being here.
+  var AXIS_AXIS = ["drive", "anchor", "wave", "prism"];
   var AXES = {
     tone: TONE_AXIS, material: MATERIAL_AXIS, season: SEASON_AXIS,
-    element: ELEMENT_AXIS, energy: ENERGY_AXIS
+    element: ELEMENT_AXIS, energy: ENERGY_AXIS, axis: AXIS_AXIS
   };
 
   // The tag they have chosen most on one axis, or null when the axis has not

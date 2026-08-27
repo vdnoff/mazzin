@@ -344,6 +344,38 @@ body:has(.result-module) {
   color: var(--pr-faint);
 }
 
+/* The head sits inside the profile card now, between the rarity ribbon and
+   the three scales, so it loses the chrome it needed as a panel of its own: a
+   bordered box inside a bordered box reads as a mistake. What it keeps is the
+   rule above and below, which is what makes it a band of the card rather than
+   something floating in it.
+
+   The standalone rule above is deliberately left in place. This file and
+   result_persona.js sit behind a CDN and can be a version apart; an older
+   module that still appends the head at the top level should get the panel it
+   was drawn for rather than an unstyled block. */
+.pr-hero .pr-head {
+  margin: 18px 0 0;
+  padding: 16px 0 0;
+  border: 0;
+  border-top: 1px solid var(--pr-line);
+  border-radius: 0;
+  background: none;
+}
+
+.pr-hero .pr-head-legend { margin-top: 12px; }
+
+.pr-hero .pr-head-caption { margin-bottom: 2px; }
+
+/* And the scales that now follow it get the same separation the split bar
+   already had, so the card reads as three bands rather than as a drawing with
+   loose rows under it. */
+.pr-hero .pr-head + .pr-scales {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--pr-line);
+}
+
 /* --- c) read from your taps -------------------------------------------------- */
 
 .pr-taps { margin: 24px 0 6px; }

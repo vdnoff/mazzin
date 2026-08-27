@@ -29,6 +29,13 @@ sys.path.insert(0, REPO)
 ROOT = REPO
 GALLERY = os.path.join(ROOT, "static/galleries/persona")
 
+# Every funnel on disk that is not this one. Discovered rather than listed:
+# a hardcoded roster stops looking at the next funnel somebody adds, which is
+# exactly what happened when zodiac-ro landed mid-branch.
+NEIGHBOUR_SLUGS = sorted(
+    f[:-len(".json")] for f in os.listdir(os.path.join(REPO, "funnels"))
+    if f.endswith(".json") and f != "persona.json")
+
 fails = []
 checks = [0]
 
@@ -130,18 +137,18 @@ WANT = [
     ("seeking", "grid4", "What pulled you here today?"),
     ("bond", "grid4", "Your heart, right now:"),
     ("energy", "pair", "Where does your battery fill?"),
-    ("environment", "grid6", "Which place feels like home?"),
+    ("environment", "grid6", "Where does your mind work best?"),
     ("palette", "grid6", "Which moodboard is yours?"),
-    ("moment", "pair", "Your best hour:"),
-    ("talisman", "grid4", "Pick the one you'd carry:"),
+    ("moment", "pair", "When do you lose track of time?"),
+    ("talisman", "grid4", "Which one lives in your bag?"),
     ("weather", "grid4", "Your weather, most days:"),
-    ("rhythm", "pair", "Your natural rhythm:"),
+    ("rhythm", "pair", "Your sharpest hour?"),
     ("drain", "grid4", "Which of these drains you most?"),
-    ("sanctuary", "pair", "Where you refill:"),
+    ("sanctuary", "pair", "After a hard day, you reset by\u2026"),
     ("decision", "grid4", "When life forks, you follow:"),
-    ("tide", "pair", "Which is more true?"),
-    ("door", "grid4", "Pick the door you'd walk through blind:"),
-    ("essence", "grid4", "Your essence, in one:"),
+    ("tide", "pair", "Deadline pressure hits. You\u2026"),
+    ("door", "grid4", "A free Saturday appears. First instinct?"),
+    ("essence", "grid4", "People come to you for\u2026"),
     ("seal", "pair", "Seal your profile:"),
 ]
 check("step ids and order", [s["id"] for s in steps] == [w[0] for w in WANT],
@@ -192,6 +199,51 @@ for step in steps:
     check("  %-12s holds the %d its format draws" % (step["id"], want),
           len(step["pairs"][0]["images"]) == want,
           str(len(step["pairs"][0]["images"])))
+
+print("\n--- the nine behavioural steps ---")
+# Phase 1.6 replaced the scenery with scenarios. Each of these asks what the
+# reader does rather than which picture they like, and the cards are the
+# answers to that question — so the labels are pinned, not just the count.
+SCENARIOS = {
+    "hook": ["Running shoes at dawn", "Slow coffee, notebook open"],
+    "environment": ["A busy creative studio", "A minimal, tidy desk",
+                    "A cosy reading nook", "A grand library hall",
+                    "A park bench with a laptop", "A night desk under a lamp"],
+    "moment": ["Deep in conversation", "Deep in a solo project"],
+    "talisman": ["A notebook and pen", "Headphones", "Running shoes",
+                 "A camera"],
+    "rhythm": ["First light, at the desk", "Midnight, under the lamp"],
+    "sanctuary": ["Outside, moving, with people", "Blanket, book, quiet"],
+    "tide": ["Speed up, go all in", "Slow down, make a list"],
+    "door": ["Road trip", "Build or fix something", "Gather your people",
+             "Museum, bookshop, deep dive"],
+    "essence": ["A push", "Steadiness", "Comfort", "Answers"],
+}
+for sid, labels in sorted(SCENARIOS.items()):
+    got = [i["label"] for i in by_step[sid]["pairs"][0]["images"]]
+    check("  %-12s offers the answers it was redesigned around" % sid,
+          got == labels, str(got))
+check("nine steps were replaced, and the other nine kept their ids",
+      len(SCENARIOS) == 9 and set(SCENARIOS) <= {s["id"] for s in steps})
+# The frames were renamed with the content. The generator skips an id already
+# on disk, so a replaced picture that kept its id would keep the old
+# gradient — the rename is what forces the art to be redrawn.
+for sid in SCENARIOS:
+    old_ids = {"hook": "ph1", "environment": "ev6", "moment": "mo8",
+               "talisman": "tl9", "rhythm": "rh11", "sanctuary": "sn13",
+               "tide": "tr15", "door": "dw16", "essence": "es17"}[sid]
+    check("  %-12s frames were renamed with the content" % sid,
+          not [i["id"] for i in by_step[sid]["pairs"][0]["images"]
+               if i["id"].startswith(old_ids)],
+          str([i["id"] for i in by_step[sid]["pairs"][0]["images"]]))
+# And the questions ask about behaviour rather than about scenery. A question
+# with no verb in it is the old kind.
+for sid in sorted(SCENARIOS):
+    q = by_step[sid]["question"].lower()
+    check("  %-12s asks what they do" % sid,
+          any(w in q for w in ("you", "your", "does", "do ", "lives",
+                               "come", "hits", "appears", "work", "lose")),
+          by_step[sid]["question"])
 
 print("\n--- the twelve animals ---")
 ANIMALS = ["Owl", "Fox", "Wolf", "Bear", "Stag", "Raven",
@@ -361,6 +413,18 @@ check("  and skips that too when it is already there",
       'os.path.exists(os.path.join(OUT, "og.webp"))' in gen)
 check("the gradient runs through the colours the config carries",
       '[c["hex"] for c in item["colors"]]' in gen)
+# Phase 1.6 renamed frames by the dozen, so the generator sweeps as well as
+# writes: a .webp whose id the config no longer names is deleted, or the
+# directory quietly keeps the art of every walk this funnel used to be.
+check("it deletes a frame the config no longer references",
+      "orphans = sorted(f for f in os.listdir(OUT)" in gen
+      and "os.remove(os.path.join(OUT, name))" in gen)
+check("  keeping the share card, which has no config entry behind it",
+      'keep = {i + ".webp" for i, _stops in items} | {"og.webp"}' in gen)
+check("  and touching nothing that is not a frame",
+      'f.endswith(".webp") and f not in keep' in gen)
+check("  in this gallery only", gen.count("os.remove(") == 1
+      and "os.remove(os.path.join(OUT," in gen)
 check("it draws no text onto a placeholder",
       "ImageDraw" not in gen and "ImageFont" not in gen)
 check("nothing imports it — it is a console script",
@@ -616,20 +680,42 @@ for after, rule in sorted((e["after_step"], e["personal"]) for e in mids
               for row in rule["lines"].values()),
           str([k for k, v in rule["lines"].items()
                if not (v.get("line") and v.get("sub"))]))
-# The one thing about this funnel engine.js does not yet know. `personalTag`
-# resolves an accumulated axis only when AXES declares it, and AXES is a table
-# in engine.js — which this phase does not touch. So the axis beat falls back
-# to its own base line today, honestly, and this check is what will say so on
-# the day the engine learns the word.
+# The axis beat, which phase 1 shipped dormant. `personalTag` resolves an
+# accumulated axis only when AXES declares it, and until this phase AXES was a
+# table that had never heard of these four words — so the beat fell back to its
+# own base line on every run. The check below was written to fail the day the
+# engine learned them, and this is that day.
 declared = set(re.findall(r"(\w+):\s*\w+_AXIS",
                           re.search(r"var AXES = \{([^}]*)\}",
                                     engine, re.S).group(1)))
-check("engine.js does not declare this funnel's axis yet",
-      "axis" not in declared, str(sorted(declared)))
-check("  so the axis beat shows its own line, which is written and honest",
-      by_after[9]["line"] == "Profile {pct}% calibrated.",
-      by_after[9]["line"])
-check("  and the two step-keyed beats work today, because a step is a step",
+check("engine.js declares this funnel's axis", "axis" in declared,
+      str(sorted(declared)))
+check("  as the four words this funnel scores on, in order",
+      re.search(r"var AXIS_AXIS = \[([^\]]*)\]", engine).group(1)
+      .replace('"', "").replace(" ", "").split(",")
+      == ["drive", "anchor", "wave", "prism"],
+      re.search(r"var AXIS_AXIS = \[([^\]]*)\]", engine).group(1))
+check("  which is exactly the set the axis beat writes lines for",
+      sorted(by_after[9]["personal"]["lines"]) == sorted(AXIS))
+check("  so every one of those lines can now be reached",
+      set(by_after[9]["personal"]["lines"]) <= set(declared and AXIS))
+check("  and it still declares the words it always did, unmoved",
+      {"tone", "material", "season", "element", "energy"} <= declared,
+      str(sorted(declared)))
+check("  the celestial axes byte for byte, so no zodiac funnel moved",
+      re.search(r"var ELEMENT_AXIS = \[([^\]]*)\]", engine).group(1)
+      .replace('"', "").replace(" ", "").split(",")
+      == ["fire", "earth", "air", "water"]
+      and re.search(r"var ENERGY_AXIS = \[([^\]]*)\]", engine).group(1)
+      .replace('"', "").replace(" ", "").split(",") == ["sun", "moon"])
+check("  and no other funnel scores against a word persona named",
+      not [slug for slug in NEIGHBOUR_SLUGS
+           for st in json.load(open(
+               os.path.join(ROOT, "funnels/%s.json" % slug),
+               encoding="utf-8"))["styles"]
+           if set(st["tags"]) & AXIS],
+      str(AXIS))
+check("  the two step-keyed beats are unaffected, because a step is a step",
       all(rule.get("step") in by_step for rule in
           [by_after[4]["personal"], by_after[14]["personal"]]))
 
@@ -661,6 +747,18 @@ check("every placeholder in the copy is one something fills",
 check("the hook slots are all actually used somewhere",
       set(cfg["report"]["hook_slots"]) <= used,
       str(sorted(set(cfg["report"]["hook_slots"]) - used)))
+# `talisman` was the last mystical word in the on-screen copy: a slot key the
+# reader met as "Your {talisman} and your {weather}". The step keeps its id —
+# ids are stable across this phase — but the word the copy reads is the plain
+# one now.
+check("no on-screen token is the old mystical one",
+      "carry" in cfg["report"]["hook_slots"]
+      and "talisman" not in cfg["report"]["hook_slots"],
+      str(sorted(cfg["report"]["hook_slots"])))
+check("  and it still reads off the step that asks what they carry",
+      cfg["report"]["hook_slots"]["carry"]["step"] == "talisman")
+check("  with a fallback that is a phrase, not a hole",
+      cfg["report"]["hook_slots"]["carry"]["fallback"] == "everyday carry")
 for key, rule in cfg["report"]["hook_slots"].items():
     check("hook slot %-10s names a step this funnel has" % key,
           rule["step"] in by_step and rule.get("fallback"), str(rule))
@@ -1286,19 +1384,137 @@ check("the head is drawn from the block the hero card is built from",
       "function headValues(data)" in module
       and "(data.split || []).forEach" in module
       and "function headBlock(copy, data)" in module)
-check("  so it survives a page with no run behind it",
-      "headBlock(copy, (ctx.visuals && ctx.visuals.profile) || null)"
-      in module)
 check("  and is skipped rather than drawn empty when there is no block",
       "if (!data || !(data.split || []).length) return null;" in module)
-check("it sits between the question cards and the offer",
-      module.index("root.appendChild(questions(ctx, data));")
-      < module.index("var head = headBlock(copy, data);")
-      < module.index("root.appendChild(offer(ctx, copy, data));"))
+# Phase 1.6 moved it. It was the last block on the page, under six locked
+# cards; it is the top of the profile card now, directly below the name and
+# the rarity and above the three scales.
+hero_src = module[module.index("function richHero("):
+                  module.index("// --- b3) the head")]
+check("the head is drawn inside the profile card",
+      "var drawing = headBlock(copy || {}, data);" in hero_src
+      and "card.appendChild(drawing)" in hero_src)
+check("  below the subtype name and the rarity line",
+      hero_src.index('elm("h1", "pr-subtype"')
+      < hero_src.index('elm("p", "pr-ribbon"')
+      < hero_src.index("var drawing = headBlock("))
+check("  and above the three scales",
+      hero_src.index("var drawing = headBlock(")
+      < hero_src.index('elm("div", "pr-scales")'))
+check("  and above the axis split, which is still under the scales",
+      hero_src.index('elm("div", "pr-scales")')
+      < hero_src.index("splitBar(data)"))
+# One call site, not two. Both the free page and the delivered page draw this
+# card, so a reposition made inside it cannot drift between them — which is
+# the whole reason it moved in here rather than being appended twice.
+check("both views get it from the one place, so they cannot disagree",
+      module.count("headBlock(") == 2
+      and "richHero(glyph(ctx.picks.animal), data, copy)" in module
+      and "richHero(glyph(pick), data, copy)" in module)
+check("  and neither view appends a head of its own any more",
+      "root.appendChild(head)" not in module)
+check("the stylesheet unwraps it inside the card, so it is a band not a box",
+      ".pr-hero .pr-head {" in sheet
+      and "border: 0;" in sheet.split(".pr-hero .pr-head {")[1][:220]
+      and "background: none;" in sheet.split(".pr-hero .pr-head {")[1][:260])
+check("  while the standalone panel rule stays, for a CDN version skew",
+      re.search(r"^\.pr-head \{", sheet, re.M) is not None)
 check("the config gives it a heading and a line saying what it is",
       cfg["result_copy"]["head_title"] == "Your shape"
       and cfg["result_copy"]["head_caption"].startswith("Four axes"),
       str(cfg["result_copy"].get("head_title")))
+
+print("\n--- the quiz chrome wears the funnel's colours ---")
+# Phase 1 declared `"theme": "persona"` and mazzin.css had never heard of it,
+# so the class landed and nothing painted it: a dark result page at the end of
+# a default-coloured quiz. This is the block that finishes it.
+mazzin = open(os.path.join(ROOT, "static/css/mazzin.css"),
+              encoding="utf-8").read()
+theme_rules = [r.strip() for r in
+               re.findall(r"^[^\s@}/][^{}]*(?=\{)", mazzin, re.M)
+               if "theme-persona" in r]
+check("mazzin.css paints this funnel's theme", len(theme_rules) >= 8,
+      str(len(theme_rules)))
+check("  every rule of it is scoped to the funnel's own body class",
+      all(r.startswith("body.theme-persona") for r in theme_rules),
+      str([r for r in theme_rules
+           if not r.startswith("body.theme-persona")][:3]))
+check("  in the same teal and ink the result page uses",
+      "#4EDDC4" in mazzin and "#101820" in mazzin
+      and "--pr-teal: #4EDDC4;" in sheet and "--pr-ink: #101820;" in sheet)
+check("  covering the pips, the analysing bar and the beat between steps",
+      all(sel in mazzin for sel in (
+          "body.theme-persona .pip",
+          "body.theme-persona .analyzing-bar",
+          "body.theme-persona #screen-interstitial.is-active",
+          "body.theme-persona .mid-kicker")))
+# The progress rule is themed through the tokens the base rules already read,
+# not by restating its background. test_zodiac30_check asserts that the
+# auto-advance mode carries no styling outside a fixed list of selectors — a
+# guard written when zodiac was the only theme — and a second `.mid-accent`
+# rule trips it even when scoped to a body class no other funnel wears. The
+# tokens do the same job and leave that guard true.
+check("  and the progress rule is themed through the accent tokens",
+      "body.theme-persona #screen-interstitial {" in mazzin
+      and "--accent: #4EDDC4;" in mazzin
+      and "--accent-soft: rgba(78, 221, 196, 0.16);" in mazzin)
+check("  adding no rule of its own to the auto-advance mode",
+      not [r for r in theme_rules
+           if "mid-accent" in r or "is-auto" in r],
+      str([r for r in theme_rules
+           if "mid-accent" in r or "is-auto" in r]))
+check("  and repainting the accent no wider than that one screen",
+      not re.search(r"^body\.theme-persona \{", mazzin, re.M),
+      "the accent must not reach the white quiz cards")
+check("the config asks for that theme by name", cfg["theme"] == "persona")
+# The neighbours' own theme block is what this must not have disturbed.
+zodiac_rules = [r.strip() for r in
+                re.findall(r"^[^\s@}/][^{}]*(?=\{)", mazzin, re.M)
+                if "theme-zodiac" in r]
+check("  and zodiac's block is still there, whole",
+      len(zodiac_rules) >= 14
+      and "body.theme-zodiac .pip.is-done { background: #E8C878; }" in mazzin,
+      str(len(zodiac_rules)))
+check("  with no rule serving both themes at once",
+      not [r for r in theme_rules if "theme-zodiac" in r]
+      and not [r for r in zodiac_rules if "theme-persona" in r])
+
+print("\n--- the instrument actually moves ---")
+# The band says the four names are shared out evenly. It says nothing about
+# the three scales under them, and a vocabulary that spends one tone word
+# everywhere gives every reader the same three dots. Three dots that never
+# move are decoration, so they are measured here too.
+
+
+def _between(a, b):
+    return 50.0 if not (a + b) else 100.0 * b / (a + b)
+
+
+def scale_at(scores):
+    def g(t):
+        return max(0, scores.get(t, 0))
+
+    between = _between
+    return {"tone": between(g("bold"), g("calm")),
+            "energy": between(g("outer"), g("inner")),
+            "depth": between(g("bold") + g("calm"), g("deep"))}
+
+
+_rng = random.Random(31337)
+_at = {"tone": [], "energy": [], "depth": []}
+for _ in range(6000):
+    sc = play(lambda st, opts: _rng.choice(opts), _rng)
+    for k, v in scale_at(sc).items():
+        _at[k].append(v)
+for name, vals in sorted(_at.items()):
+    mean = sum(vals) / len(vals)
+    sd = (sum((v - mean) ** 2 for v in vals) / len(vals)) ** 0.5
+    check("  %-6s sits off the rail (20-80) and spreads (sd>=8)" % name,
+          20.0 <= mean <= 80.0 and sd >= 8.0,
+          "mean %.1f sd %.1f" % (mean, sd))
+    lo = sum(1 for v in vals if v < 45) / len(vals)
+    check("    and lands on both sides of the middle",
+          0.1 <= lo <= 0.9, "%.2f below 45" % lo)
 
 print("\n--- and the neighbours are untouched ---")
 # The failure this funnel could cause that no persona assertion would see: a
@@ -1309,9 +1525,7 @@ print("\n--- and the neighbours are untouched ---")
 # looking at the new one and nobody notices — and this file has already been
 # through that once, when zodiac-ro landed. Every config on disk that is not
 # persona is a neighbour, whatever it is called.
-NEIGHBOURS = sorted(f[:-len(".json")]
-                    for f in os.listdir(os.path.join(ROOT, "funnels"))
-                    if f.endswith(".json") and f != "persona.json")
+NEIGHBOURS = NEIGHBOUR_SLUGS
 check("there are neighbours to check at all", len(NEIGHBOURS) >= 4,
       str(NEIGHBOURS))
 check("  and persona is one config among them, not a replacement for one",
