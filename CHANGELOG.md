@@ -396,3 +396,6 @@ bottom.
 
 ## 2026-08-27 — claude/persona-phase2-art
 - persona phase 2: art generator script
+
+## 2026-08-27 — claude/persona-art-two-prompts
+- persona art: relight pt9a and og prompts
