@@ -429,3 +429,6 @@ bottom.
 
 ## 2026-08-28 — claude/persona-v3a1-share
 - persona: totem override — whole-body light, complexity, magic
+
+## 2026-08-28 — claude/persona-v3a1-share
+- persona: trait-framing copy + share voice
