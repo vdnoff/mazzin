@@ -20,19 +20,24 @@ clay` is the soft-3D clay direction picked out of that review; `--style
 sculpt` is the abstract sculptural-forms direction the owner then locked,
 after rejecting both. All three write into the same directory under their own
 id prefix, so the sets sit side by side on the phone and the comparison is one
-scroll rather than three runs of memory. Nothing overwrites anything:
-`s_morning_run`, `clay_s_morning_run` and `sculpt_s_morning_run` are the same
-question answered three ways.
+scroll rather than three runs of memory. Nothing overwrites anything.
 
 The geometry, the retry, the crop, the cost log and the safe-area rule are
-shared. What a style owns is its prefix, its negatives, its id prefix and —
-for sculpt only — its own scene table.
+shared. What a style owns is its prefix, its negatives, its id prefix and,
+optionally, its own sample list.
 
-That last one is the real split. vector and clay differ in material and agree
-on everything else: both draw the scene, both put people in it. sculpt throws
-the scene out and carries meaning in form alone, so it cannot reuse a scene
-list written as "four friends laughing around a kitchen table" and cannot be
-talked into it with a note. It brings its own eight, under the same ids.
+That last one is the real split, and it is sculpt's alone. vector and clay
+differ in material and agree on everything else: both answer the same eight
+questions under the same eight ids, so `s_morning_run` and `clay_s_morning_run`
+are one question drawn two ways. sculpt does not answer those questions at
+all. Its eight are idiom-states — a compressed coil, a collapsed volume —
+which are not answers to anything, so it brings its own list and its own ids
+(`sculpt_i_wound_up`) rather than claiming a correspondence that is not there.
+
+The vector and clay prompts are frozen. Both sets were reviewed as they stand,
+so a change to either would silently invalidate what is already on disk; the
+suite pins each against a digest and fails if this file moves one byte of
+them.
 
 The vector and clay prompts are frozen. Both sets were reviewed as they stand,
 so a change to either would silently invalidate what is already on disk; the
@@ -352,77 +357,91 @@ SCULPT_NEGATIVE = (
     "a dim, murky, drab or low-key palette."
 )
 
-# sculpt's own eight, in the order the shared list uses, keyed by the same
-# ids. Same questions, answered in form: what the runner frame is *about* is
-# stored energy, so the runner becomes a coil under tension. Nothing here
-# names an object from the world except as pure geometry.
-SCULPT_SCENES = {
-    # Every one leads with its gesture, because the verb is the thing that
-    # was missing: v1 described what each form WAS and got eight objects
-    # sitting still. Each also owns a distinct silhouette class — vertical
-    # spiral, low slab, nested curves, cluster, drooping-over-a-wedge, flat
-    # spread, horizontal drift, tall arc — so the set varies at tile size.
-    "s_morning_run": (
-        "A tight coil of terracotta clay caught mid-launch: wound close at "
-        "the base and released upward, tilted forward off the vertical and "
-        "lifting clear of the ground with open air beneath its lowest turn, "
-        "the whole form straining up and away. Its leading tip is electric "
-        "teal. Off-balance, asymmetric, unmistakably going somewhere."
-    ),
-    "s_morning_slow": (
-        "A soft ochre clay mass settled and gone slack: low and wide, spread "
-        "by its own weight, its edges slumping gently outward where it has "
-        "relaxed down onto the surface beneath it. One shallow electric "
-        "teal seam runs through the spread. Heavy, restful, unhurried — at "
-        "ease rather than rigid, and clearly not going to move."
-    ),
-    "s_battery_home": (
-        "A small rounded form curled snugly into a sheltering hollow of "
-        "terracotta clay, tucked in so close that the hollow's inner curve "
-        "and the curled form's outer curve meet along their whole length. A "
-        "soft electric teal glaze sits on the inner form. Held rather than "
-        "enclosed: solitude as comfort, a perfect fit."
-    ),
-    "s_battery_people": (
-        "Four rounded sand and ochre clay forms of different heights leaning "
-        "hard into one another, pressing warm where their sides meet and "
-        "flattening slightly at each contact, with one small electric teal "
-        "form nestled low in the middle of the huddle. Weight shared, every "
-        "gap closed, the whole cluster tipped together off any single axis."
-    ),
-    "s_drain_meeting": (
-        "A soft muted grey-brown clay form wilting: half-deflated and "
-        "sagging, drooping over the sharp edge of a dull, heavy, wedge-shaped "
-        "slab, its lower end hanging limp toward the ground. The slab is "
-        "angular and hard-cornered where the form is spent and soft; a "
-        "hairline crack runs along its top. A thin electric teal line traces "
-        "the drooping edge. Drained, sagging, going nowhere."
-    ),
-    "s_bag_notebook": (
-        "An open wave-spread of sand-toned clay, creased once down its "
-        "centre and opening upward, with a slim electric teal cylinder "
-        "resting across it at an angle — tilted as though just set down a "
-        "moment ago and not yet straightened. Hero-object scale, nothing "
-        "else in the composition, the tilt breaking the symmetry."
-    ),
-    "s_weather_fog": (
-        "A low soft mass of pale cream clay drifting sideways over a few "
-        "small rounded ochre mounds, stretched thin in the direction it is "
-        "travelling, one trailing edge pulling away behind it and thinning "
-        "to nothing. A narrow electric teal band runs low through the "
-        "drift. Quiet and moving, calm rather than gloomy."
-    ),
-    "s_character_cartographer": (
-        "A tall poised arc of warm sand-toned clay rising and curving over "
-        "at its top, raising a small glowing sphere aloft at the far end of "
-        "its reach — the gesture of seeking, of lighting the way ahead. The "
-        "sphere carries an electric teal inlay and throws a soft warm glow "
-        "back down the arc. Upright, watchful, asymmetric, and composed as "
-        "an emblem: centred, poster-like, evenly lit, with the quiet "
-        "authority of a maker's mark, at the scale and consistency where "
-        "eight of these side by side would obviously belong to one set."
-    ),
-}
+# --- sculpt v3: the eight idiom-states ---------------------------------------
+#
+# v2 fixed the surface and the set still said nothing, and the review found
+# why: the scenes were asking abstract forms to depict situations. "A draining
+# meeting" is a story. A form cannot narrate — it has no before and after, no
+# cause, nobody it is happening to — so a sculpture of a meeting is either a
+# meeting (figures, a table, the thing the style bans) or it is a shape that
+# happens to be drooping, which is what came back.
+#
+# v3 drops situations for states. Every frame is a physical-metaphor state
+# that ordinary language already uses for a psychological one: wound up,
+# drained, scattered, grounded, on edge, carrying, walled off, lit up. These
+# are not descriptions of a form, they ARE forms — "wound up" is a compressed
+# coil, "drained" is a collapsed volume with the air gone. The metaphor was
+# already physical before anybody applied it to a mood, which is why a
+# sculpture can carry it and a sculpture of a meeting cannot.
+#
+# The test the set has to pass runs both ways. Word alone must be sculptable
+# without ambiguity: hand "wound up" to a sculptor and one shape comes back.
+# Image alone must return the word: show the render and "wound up" is what
+# occurs to you. A frame that only works in one direction is decoration with
+# a caption.
+#
+# Hence its own ids. sculpt no longer answers the same eight questions as
+# vector and clay under shared ids — the idioms ARE the concept under test,
+# and filing them as `sculpt_s_morning_run` would say the coil is one answer
+# to the morning question when it is not an answer to a question at all. The
+# sample list is the style's own, and the id carries the idiom, so the two-way
+# test is checkable from the id alone.
+SCULPT_SAMPLES = [
+    ("i_wound_up",
+     "A coil of terracotta clay wound up tight: its turns compressed hard "
+     "against one another with almost no gap left between them, the whole "
+     "spring shortened under its own load and leaning slightly off "
+     "vertical, loaded and about to release. A restrained electric teal "
+     "band marks the innermost turn. Stored energy, held."),
+
+    ("i_drained",
+     "A hollow clay form drained and slumped empty: its walls collapsed "
+     "inward, the air gone out of it, the whole skin sagging and draped "
+     "loosely over its own base with nothing left holding it up. Muted "
+     "grey-brown, the flattest tone in the set, with one faint electric "
+     "teal line along the fallen rim. Emptied, not resting."),
+
+    ("i_scattered",
+     "One clay form scattered: broken into five or six fragments drifting "
+     "apart across the composition, each piece carrying the sharp fractured "
+     "edge where it parted from its neighbour, clear gaps of empty backdrop "
+     "opening between them. The pieces still read as one object that came "
+     "apart. One fragment is electric teal. Dispersed, not arranged."),
+
+    ("i_grounded",
+     "A dense monolith of terracotta clay standing grounded: a wide rooted "
+     "base flaring where it meets the ground and carrying the mass "
+     "squarely, the whole volume low, settled, planted and immovable. Soft "
+     "and rounded throughout, with one calm electric teal seam running down "
+     "the base. Unhurried weight, going nowhere and untroubled by it."),
+
+    ("i_on_edge",
+     "A heavy rounded clay mass balanced on edge: resting on a single sharp "
+     "point of contact, tipped past its own centre and visibly about to go "
+     "over, held for one more moment by nothing much. A thin electric teal "
+     "line marks the point it is balanced on. Tense stillness, not rest."),
+
+    ("i_carrying",
+     "A tall clay form carrying a heavy sphere: bowed and compressed under "
+     "the weight pressing down on its upper surface, its sides bulging "
+     "where the load pushes through it, still upright and still holding. "
+     "The sphere is a dull dense ochre; a restrained electric teal band "
+     "circles the bearing form. Bearing it, not buckling."),
+
+    ("i_walled_off",
+     "A soft rounded clay form walled off: enclosed inside a thick smooth "
+     "curving wall it raised around itself, the wall unbroken but for one "
+     "narrow opening, the inner form intact and quite separate. Warm sand "
+     "wall, ochre form, a small electric teal mark at the opening. "
+     "Sheltered and apart, both at once."),
+
+    ("i_lit_up",
+     "A clay form lit up from within: a bright electric teal core glowing "
+     "out through a network of fine cracks and seams that run across its "
+     "surface, the light spilling from inside the volume rather than "
+     "falling on it, warm terracotta shell against the glow. The one frame "
+     "in the set that gives light instead of holding it."),
+]
 
 
 # The registry, and the whole of what a style owns: a prefix, its negatives,
@@ -436,7 +455,7 @@ STYLES = {
     "clay": {"style": CLAY_STYLE, "negative": CLAY_NEGATIVE,
              "prefix": "clay_"},
     "sculpt": {"style": SCULPT_STYLE, "negative": SCULPT_NEGATIVE,
-               "prefix": "sculpt_", "scenes": SCULPT_SCENES},
+               "prefix": "sculpt_", "samples": SCULPT_SAMPLES},
 }
 DEFAULT_STYLE = "vector"
 
@@ -567,20 +586,13 @@ STYLE_SCENE_NOTES = {
 
 
 def scene_for(base_id, scene, style=DEFAULT_STYLE):
-    """What this style draws for a given sample id.
+    """The scene text, plus whatever this style adds to it.
 
-    Three cases, and they are a hierarchy rather than a menu. A style with its
-    own scene table replaces the shared scene outright — sculpt carries no
-    people and no places, so a scene about four friends at a kitchen table is
-    not something it can soften into shape. A style with a note appends to the
-    shared scene. A style with neither draws the shared scene as written.
-
-    A replacement wins over a note, and never silently merges with one: a
-    scene that has been thrown out has no wording left for a note to correct.
+    Only clay adds anything: two corrections and one note, on the shared
+    scenes it inherits. A style that disagrees with the shared scenes more
+    deeply than a note can fix brings its own sample list instead — that is
+    what sculpt does — so there is no per-id replacement mechanism here.
     """
-    scenes = STYLES[style].get("scenes")
-    if scenes is not None:
-        return scenes[base_id]
     note = STYLE_SCENE_NOTES.get(style, {}).get(base_id)
     return scene + " " + note if note else scene
 
@@ -609,11 +621,19 @@ def sample_id_for(base_id, style=DEFAULT_STYLE):
 
 
 def samples(style=DEFAULT_STYLE):
-    """The batch, in the order it is drawn and reviewed."""
+    """The batch, in the order it is drawn and reviewed.
+
+    A style either answers the shared eight questions — vector and clay do,
+    under the shared ids — or brings its own list entirely. sculpt brings its
+    own, because its eight are idiom-states rather than answers to anything,
+    and filing them under the shared ids would claim a correspondence that is
+    not there.
+    """
+    listing = STYLES[style].get("samples") or SAMPLES
     return [{"id": sample_id_for(base_id, style), "base_id": base_id,
              "style": style, "size": FRAME, "api_size": API_PORTRAIT,
              "prompt": prompt_for(scene_for(base_id, scene, style), style)}
-            for base_id, scene in SAMPLES]
+            for base_id, scene in listing]
 
 
 # --- the call ----------------------------------------------------------------

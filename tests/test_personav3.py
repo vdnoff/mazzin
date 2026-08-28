@@ -16,19 +16,28 @@ below is asserted three times, and the interesting checks are the seams:
     thing it is asking for;
   - sculpt inverts what the other two are careful to allow. vector and clay
     go out of their way to permit a face at two dots and a line; sculpt bans
-    figures, faces and scenes outright, and carries its own scene table
-    because a scene about four friends at a kitchen table is not something a
-    pure-form style can be talked into with a note;
+    figures, faces and scenes outright;
+  - and since v3 it does not share their ids either. Its eight are
+    idiom-states — wound up, drained, scattered — physical metaphors that
+    ordinary language already uses for psychological ones, so the word IS
+    the shape. They are not answers to the shared eight questions, so they
+    get their own sample list and their own ids. The two-way principle is
+    pinned structurally: the id carries the idiom, the idiom word must
+    appear in the frame's own text, and the text must then say what that
+    word looks like as a form;
   - the figure ban is checked on the positive half of a prompt only. The
     negatives necessarily say "no faces", and a whole-prompt search would
     flag the refusal as if it were a request. Craft vocabulary — finger
     impressions, hand-sculpted — is subtracted before the ban runs, since
     those name a surface and a process rather than a thing to draw, and the
     subtraction is itself checked so it cannot quietly become a hole;
-  - sculpt v2 adds four rules the review asked for and each is pinned: a
-    pose verb per scene (eight verbs, no two alike), the handmade marks
-    named as visible rather than subtle, tension vocabulary confined to the
-    one strained composition, and the contrast rule stated once;
+  - the v2 prefix rules are all still pinned: a gesture per composition
+    (eight, no two alike, none a restatement of the form language), the
+    handmade marks named as visible rather than subtle, and the contrast
+    rule stated once. The tension vocabulary now gates on whether a form is
+    physically discontinuous — broken, on a point, cracked open — rather
+    than on whether a scene is strained, because v3's idioms are mostly
+    expressive and a tense/calm split would have permitted it everywhere;
   - each style's ids carry a prefix so all three sets share one directory
     without collision — except vector, which carries none, because renaming
     the first reviewed set would orphan it;
@@ -418,47 +427,83 @@ check("an unmeasurable frame is kept, not dropped",
       unmeasured_ok and "unmeasured" in unmeasured_note)
 
 
-print("\n--- the sculpt batch ---")
+print("\n--- the sculpt batch: eight idiom-states ---")
+# v3 changes what a sculpt frame IS, so it changes the ids too. The eight are
+# no longer answers to the shared eight questions — they are physical-metaphor
+# states, and filing them as sculpt_s_morning_run would claim a
+# correspondence that is not there.
+SCULPT_WANT = ["i_wound_up", "i_drained", "i_scattered", "i_grounded",
+               "i_on_edge", "i_carrying", "i_walled_off", "i_lit_up"]
+
 sculpt_plan = v3.samples("sculpt")
 sculpt_ids = [f["id"] for f in sculpt_plan]
 check("eight sculpt samples", len(sculpt_plan) == 8, str(len(sculpt_plan)))
-check("the same eight ids, in the same order",
-      [f["base_id"] for f in sculpt_plan] == WANT, str(sculpt_ids))
+check("the eight idioms, in order",
+      [f["base_id"] for f in sculpt_plan] == SCULPT_WANT, str(sculpt_ids))
 check("every sculpt id carries the sculpt_ prefix",
-      sculpt_ids == ["sculpt_" + i for i in WANT], str(sculpt_ids))
-check("  so nothing collides with either set already on disk",
-      not (set(sculpt_ids) & set(vector)) and
-      not (set(sculpt_ids) & set(clay_by_id)))
-check("  and all three sets share one directory and one geometry",
+      sculpt_ids == ["sculpt_" + i for i in SCULPT_WANT], str(sculpt_ids))
+check("  and the idiom prefix that marks them as states",
+      all(i.startswith("sculpt_i_") for i in sculpt_ids))
+check("  so nothing collides with the two sets already on disk",
+      not (set(sculpt_ids) & set(vector))
+      and not (set(sculpt_ids) & set(clay_by_id)))
+# The v1/v2 sculpt frames are on disk under sculpt_s_*. These are new files
+# beside them, not overwrites, so both can be compared on the phone.
+check("  nor with the sculpt frames v1 and v2 already wrote",
+      not any(i.startswith("sculpt_s_") for i in sculpt_ids))
+check("  and sculpt no longer answers the shared questions",
+      not (set(f["base_id"] for f in sculpt_plan) & set(WANT)))
+check("  and all three sets still share one directory and one geometry",
       all(f["size"] == v3.FRAME and f["api_size"] == v3.API_PORTRAIT
           for f in sculpt_plan))
 
 sculpt_by_id = {f["id"]: f["prompt"] for f in sculpt_plan}
 
-# sculpt is the one style that replaces the shared scene rather than adding to
-# it, so the pin is on its own eight rather than on the shared subjects. Each
-# is pinned to the form it is supposed to be, because a form language is
-# exactly the kind of text that drifts into decoration unnoticed.
-SCULPT_FORM = {
-    "s_morning_run": ["coil", "tilted forward", "clear of the ground"],
-    "s_morning_slow": ["low and wide", "own weight", "at ease"],
-    "s_battery_home": ["hollow", "tucked in", "perfect fit"],
-    "s_battery_people": ["huddle", "pressing warm", "weight shared"],
-    "s_drain_meeting": ["half-deflated", "slab", "hanging limp"],
-    "s_bag_notebook": ["wave-spread", "cylinder", "breaking the symmetry"],
-    "s_weather_fog": ["mounds", "stretched thin", "trailing edge"],
-    "s_character_cartographer": ["arc", "sphere", "inlay", "emblem"],
+
+print("\n--- the two-way test, made structural ---")
+# The principle the set is built on: word alone must be sculptable without
+# ambiguity, and image alone must return the word. A prompt can only be
+# checked on the first half of that — the second is what the owner review is
+# for — but the first half has a structural shape. The id IS the idiom, the
+# idiom word must appear in the frame's own text, and the text must then say
+# what that word looks like as a form. A frame missing the word is a shape
+# with a caption; a frame missing the form language is a caption with no
+# shape.
+IDIOM_FORM = {
+    "i_wound_up": ["coil", "compressed", "about to release"],
+    "i_drained": ["collapsed", "sagging", "draped"],
+    "i_scattered": ["fragments", "drifting apart", "gaps"],
+    "i_grounded": ["monolith", "wide rooted base", "immovable"],
+    "i_on_edge": ["balanced", "point of contact", "about to go over"],
+    "i_carrying": ["bowed", "sphere", "weight pressing down"],
+    "i_walled_off": ["wall", "enclosed", "opening"],
+    "i_lit_up": ["glowing", "core", "cracks and seams"],
 }
-for base_id, words in SCULPT_FORM.items():
-    text = sculpt_by_id["sculpt_" + base_id].lower()
-    missing = [w for w in words if w not in text]
-    check("  sculpt_%s is the form it was asked for" % base_id, not missing,
-          str(missing))
-check("  the totem carries the teal inlay that decides the emblem system",
-      "teal inlay" in sculpt_by_id["sculpt_s_character_cartographer"].lower())
-check("  and reads as one of a set of eight",
-      "eight of these"
-      in sculpt_by_id["sculpt_s_character_cartographer"].lower())
+check("every idiom has its form language pinned",
+      sorted(IDIOM_FORM) == sorted(SCULPT_WANT))
+
+scene_of = dict(v3.SCULPT_SAMPLES)
+for base_id in SCULPT_WANT:
+    # The id is the label word: i_wound_up -> "wound up". Derived rather than
+    # written out again, so an id and its idiom cannot drift apart.
+    word = base_id[len("i_"):].replace("_", " ")
+    scene = scene_of[base_id].lower()
+    check("  sculpt_%s says '%s' in its own text" % (base_id, word),
+          word in scene)
+    missing = [w for w in IDIOM_FORM[base_id] if w not in scene]
+    check("  sculpt_%s says what '%s' looks like" % (base_id, word),
+          not missing, str(missing))
+
+check("no two idioms are the same word", len(set(SCULPT_WANT)) == 8)
+# Every one of these is a physical state before it is a psychological one,
+# which is the whole reason a sculpture can carry it. None of them names a
+# situation, which is what v2 got wrong.
+for base_id in SCULPT_WANT:
+    word = base_id[len("i_"):].replace("_", " ")
+    check("  '%s' is a state, not a scene" % word,
+          not re.search(r"\b(meeting|morning|run|commute|party|office)\b",
+                        word))
+
 
 
 print("\n--- the sculpt prompts carry the sculpt identity ---")
@@ -506,27 +551,34 @@ check("  and calls a static balanced still-life a failure",
 check("  with the one exemption that is not a loophole",
       "unless the composition's meaning is itself stillness" in sculpt_low)
 
-# One verb per scene, in the scene text itself. The prefix asking for a
-# gesture is not the same as each scene naming one, and the second is what
-# actually differentiates eight frames.
-POSE = {
-    "s_morning_run": "launch",
-    "s_morning_slow": "settled",
-    "s_battery_home": "curled",
-    "s_battery_people": "leaning",
-    "s_drain_meeting": "wilting",
-    "s_bag_notebook": "tilted",
-    "s_weather_fog": "drifting",
-    "s_character_cartographer": "raising",
+# The rule survives v3 and gets easier to satisfy, because an idiom-state is
+# already a thing a form is doing rather than a thing it is. What still has to
+# be checked is that each scene SAYS the doing — a state named and then
+# described statically is the v2 failure in new clothes.
+#
+# Pinned separately from IDIOM_FORM above and deliberately not overlapping it:
+# that table checks the form is described, this one checks it is in motion or
+# under load.
+GESTURE = {
+    "i_wound_up": "leaning",
+    "i_drained": "nothing left holding it up",
+    "i_scattered": "came apart",
+    "i_grounded": "flaring where it meets",
+    "i_on_edge": "tipped past",
+    "i_carrying": "bulging where the load",
+    "i_walled_off": "raised around itself",
+    "i_lit_up": "spilling from inside",
 }
-check("every scene has a pose verb pinned",
-      sorted(POSE) == sorted(WANT))
-for base_id, verb in POSE.items():
-    check("  sculpt_%s is %s" % (base_id, verb),
-          verb in v3.SCULPT_SCENES[base_id].lower())
-# Eight different verbs, or the set repeats itself in a new vocabulary.
-check("  and no two scenes share a verb",
-      len(set(POSE.values())) == 8)
+check("every idiom has a gesture pinned",
+      sorted(GESTURE) == sorted(SCULPT_WANT))
+for base_id, phrase in GESTURE.items():
+    check("  sculpt_%s is doing something: '%s'" % (base_id, phrase),
+          phrase in scene_of[base_id].lower())
+# Eight different gestures, or the set repeats itself in a new vocabulary.
+check("  and no two idioms share a gesture",
+      len(set(GESTURE.values())) == 8)
+check("  none of them is a restatement of the form language",
+      not any(GESTURE[b] in " ".join(IDIOM_FORM[b]) for b in SCULPT_WANT))
 
 
 print("\n--- v2 rule 2: the handmade marks, unmissable ---")
@@ -551,9 +603,9 @@ check("  the surface reads as just-worked",
 # Material identity does not lapse just because a scene is describing a
 # gesture: every scene names the clay it is made of, so the verb never
 # arrives without the material attached.
-for base_id in WANT:
+for base_id in SCULPT_WANT:
     check("  sculpt_%s names its material" % base_id,
-          "clay" in v3.SCULPT_SCENES[base_id].lower())
+          "clay" in scene_of[base_id].lower())
 
 
 print("\n--- v2 rule 3: tension vocabulary, only where meant ---")
@@ -570,18 +622,27 @@ check("  angular for strained",
 check("  and matte clay either way", "matte clay throughout" in sculpt_low)
 
 TENSION = re.compile(r"\b(angular|pinched|wedge|wedged|wedge-shaped|jagged|"
-                     r"cracked|crack|hard-cornered|sharp)\b")
-STRAINED = {"s_drain_meeting"}
-for base_id in WANT:
-    scene = v3.SCULPT_SCENES[base_id].lower()
+                     r"cracked|cracks|crack|hard-cornered|sharp|fractured)\b")
+
+# v2 had one strained scene out of eight and gated on that. v3's idioms are
+# mostly expressive, so a simple tense/calm split would let the vocabulary
+# everywhere and check nothing. The gate is on the FORM instead: three idioms
+# are physically discontinuous — a thing broken, a thing on a point, a thing
+# cracked open — and the hard-edge words are how you say that. The other five
+# are continuous volumes, where the same words would just add spikes to a
+# shape that is meant to read as soft, which is what the vocabulary is for.
+HARD_EDGED = {"i_scattered", "i_on_edge", "i_lit_up"}
+for base_id in SCULPT_WANT:
+    scene = scene_of[base_id].lower()
     hits = sorted(set(TENSION.findall(scene)))
-    if base_id in STRAINED:
-        check("  sculpt_%s carries the tension vocabulary" % base_id, hits,
-              "none")
+    if base_id in HARD_EDGED:
+        check("  sculpt_%s breaks, so it may say so" % base_id, hits, "none")
     else:
-        check("  sculpt_%s stays soft, as a calm scene should" % base_id,
-              not hits, str(hits))
-check("  exactly one scene is under pressure", len(STRAINED) == 1)
+        check("  sculpt_%s is one continuous volume, and stays soft"
+              % base_id, not hits, str(hits))
+check("  three of the eight are discontinuous, five are not",
+      len(HARD_EDGED) == 3
+      and len(set(SCULPT_WANT) - HARD_EDGED) == 5)
 
 
 print("\n--- v2 rule 4: contrast, and something worth stopping on ---")
@@ -612,7 +673,8 @@ for phrase in ["two steps deeper", "rim light", "contact shadow",
                "enigmatic object"]:
     check("  '%s' is stated once, in the prefix" % phrase,
           sculpt_low.count(phrase) == 1
-          and all(phrase not in v3.SCULPT_SCENES[b].lower() for b in WANT))
+          and all(phrase not in scene_of[b].lower()
+                  for b in SCULPT_WANT))
 
 
 print("\n--- the figure ban, which is the reversal this style is ---")
@@ -698,22 +760,30 @@ check("  and never as the dark gallery's way of drawing a person",
       "flat silhouette" not in sculpt_low)
 
 
-print("\n--- sculpt replaces the scene, it does not decorate it ---")
-check("sculpt is the only style with its own scene table",
-      [st for st in sorted(v3.STYLES) if "scenes" in v3.STYLES[st]]
+print("\n--- sculpt brings its own list, it does not borrow one ---")
+# v2 kept the shared eight ids and swapped the scene text under them. v3 drops
+# that: the idioms are not answers to the shared questions, so they get their
+# own list and their own ids, and the per-id scene-replacement mechanism is
+# gone with them — one override mechanism (clay's notes) rather than two.
+check("sculpt is the only style with its own sample list",
+      [st for st in sorted(v3.STYLES) if "samples" in v3.STYLES[st]]
       == ["sculpt"])
-check("  it covers every shared id and adds none",
-      sorted(v3.SCULPT_SCENES) == sorted(WANT), str(sorted(v3.SCULPT_SCENES)))
-check("  a replacement wins over a note",
-      v3.scene_for("s_morning_run", "SHARED", "sculpt")
-      == v3.SCULPT_SCENES["s_morning_run"])
-check("  and the shared scene text never reaches a sculpt prompt",
-      all(shared not in sculpt_by_id["sculpt_" + base_id]
-          for base_id, shared in v3.SAMPLES))
-check("  while clay still appends to the shared scene",
-      v3.scene_for("s_morning_run", "SHARED", "clay").startswith("SHARED "))
-check("  and vector still draws it as written",
-      v3.scene_for("s_morning_run", "SHARED", "vector") == "SHARED")
+check("  and it is the eight idioms",
+      [b for b, _ in v3.SCULPT_SAMPLES] == SCULPT_WANT,
+      str([b for b, _ in v3.SCULPT_SAMPLES]))
+check("  vector and clay still draw the shared list",
+      all([f["base_id"] for f in v3.samples(st)] == WANT
+          for st in ("vector", "clay")))
+check("  the per-id scene-replacement mechanism is gone",
+      not hasattr(v3, "SCULPT_SCENES")
+      and all("scenes" not in spec for spec in v3.STYLES.values()))
+check("  clay's notes still work, which is the one override left",
+      v3.scene_for("s_morning_run", "SHARED", "clay").startswith("SHARED ")
+      and v3.scene_for("s_morning_run", "SHARED", "vector") == "SHARED")
+# A style with no list of its own falls back to the shared eight rather than
+# drawing nothing, so a fourth style is one entry away from working.
+check("  and a style without its own list falls back to the shared one",
+      [f["base_id"] for f in v3.samples("vector")] == WANT)
 
 
 print("\n--- clay gets its own colour floor, and only that ---")
@@ -959,7 +1029,7 @@ check("a clay id is not accepted by the vector run", code == 2, str(code))
 code, out = run(["--style", "sculpt", "--dry-run"])
 check("--style sculpt exits 0", code == 0, str(code))
 check("  draws all eight sculpt ids",
-      all(("sculpt_" + i) in out for i in WANT)
+      all(("sculpt_" + i) in out for i in SCULPT_WANT)
       and out.count("via 1024x1536") == 8)
 check("  says which style it is running", "sculpt style" in out)
 check("  prints the sculpt prefix and no other",
@@ -967,11 +1037,11 @@ check("  prints the sculpt prefix and no other",
       and v3.VECTOR_STYLE not in out and v3.CLAY_STYLE not in out)
 check("  and wrote nothing", not os.path.exists(v3.OUT))
 
-code, bare = run(["--style", "sculpt", "--only", "s_weather_fog", "--dry-run"])
-check("--only takes the bare scene id under --style sculpt",
+code, bare = run(["--style", "sculpt", "--only", "i_lit_up", "--dry-run"])
+check("--only takes the bare idiom id under --style sculpt",
       code == 0 and bare.count("via 1024x1536") == 1
-      and "sculpt_s_weather_fog" in bare)
-code, pref = run(["--style", "sculpt", "--only", "sculpt_s_weather_fog",
+      and "sculpt_i_lit_up" in bare)
+code, pref = run(["--style", "sculpt", "--only", "sculpt_i_lit_up",
                   "--dry-run"])
 check("  and the prefixed id names the same frame",
       code == 0 and pref == bare)
@@ -981,6 +1051,12 @@ code, out = run(["--style", "sculpt", "--only", "clay_s_weather_fog",
 check("another style's id is refused by a sculpt run", code == 2, str(code))
 check("  and the message names the style it was refused for",
       "sculpt" in out and "clay_s_weather_fog" in out)
+
+# The shared ids are the sharpest case: they are real ids in two other styles
+# and mean nothing here, so a sculpt run must refuse them rather than draw
+# something adjacent.
+code, out = run(["--style", "sculpt", "--only", "s_weather_fog", "--dry-run"])
+check("  and a shared id means nothing to sculpt now", code == 2, str(code))
 
 # argparse rejects a style that does not exist, before any planning happens.
 try:
