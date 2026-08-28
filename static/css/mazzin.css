@@ -253,7 +253,10 @@ body.theme-persona #mid-cta {
    differently on the two formats, so borrowing that is both simpler and
    automatically right. */
 body.theme-persona .card {
-  --tile-bar: 34px;
+  /* One line of type with four or five pixels of air each side of it. The
+     first bar was 34 — the same line with twice that padding — and read as a
+     panel rather than as a caption. */
+  --tile-bar: 26px;
   /* Behind the picture, showing only where the frame does not reach: the
      median of the renders' own top edges, measured across all forty-four. */
   background: #CEA371;
@@ -270,12 +273,43 @@ body.theme-persona .card-img {
   padding-bottom: var(--tile-bar);
 }
 
-/* The four-up shows the whole frame. Its image zone is about 174x246 against
-   a 3:4 render — close enough that `contain` costs a few pixels of band and
-   crops nothing. */
+/* Both formats fill their zone. `contain` left thin bands down the sides of
+   the four-up and they were rejected on sight, so the picture covers instead.
+   
+   Which edge that costs is worth stating, because it is the opposite of what
+   you would guess: the four-up's zone is about 174x254, an aspect of 0.685
+   against the render's 0.75, so the zone is NARROWER than the frame and cover
+   fills the height and trims the SIDES — about four percent off each — not
+   the top and bottom. Measured against the painted pixels of all forty-four
+   renders, no card loses clay to it. */
 body.theme-persona .cards.is-grid4 .card-img {
-  object-fit: contain;
-  object-position: center 100%;
+  object-fit: cover;
+  object-position: center center;
+  /* And cover now crops nothing at all, because the zone it fills is the
+     render's own shape.
+
+     `aspect-ratio` applies to the box `box-sizing` names, so content-box is
+     what makes this exact: the CONTENT box — the area object-fit works
+     inside — comes out 3:4, and the bar's reserve is added outside it. With
+     border-box the ratio would land on the padded box and the zone would be
+     26px short of 3:4, which is most of the trim back again.
+
+     The tile ends up about 258px tall at 390px where it was 291. That eleven
+     percent is what it costs; what it buys is measured in the suite — cover
+     used to take the outer 8.3% of each side at 360px, and 27 of the 36
+     four-up renders lost real clay to it — the worst of them,
+     chapter_climbing, by seven percent of the frame's width. */
+  box-sizing: content-box;
+  height: auto;
+  aspect-ratio: 3 / 4;
+}
+
+/* The tile and its row size to that, rather than stretching around it. */
+body.theme-persona .cards.is-grid4 .card { height: auto; }
+
+body.theme-persona .cards.is-grid4 {
+  grid-auto-rows: auto;
+  align-items: start;
 }
 
 /* The two-up fills instead. Its zone is 174x570, an aspect of 0.305, and no
