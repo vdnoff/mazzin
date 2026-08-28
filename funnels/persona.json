@@ -2491,7 +2491,7 @@
    "share": {
     "button": "Share your shape",
     "title": "I'm {subtype}. Which shape are you?",
-    "text": "13 taps, no typing. Find the shape that's yours.",
+    "text": "Your shape is waiting. Find it.",
     "url_base": "/persona/s/",
     "copied": "Link copied",
     "failed": "Could not share"

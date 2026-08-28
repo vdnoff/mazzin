@@ -730,6 +730,14 @@ check("the config carries the share copy",
       json.dumps(sorted(share)))
 check("  the title names the persona through a token",
       "{subtype}" in share["title"], share["title"])
+# The share page's reader has just seen somebody else's totem. What they are
+# promised is their own shape — not that the quiz is quick, which is the
+# funnel page's argument to make and was this line's until now.
+check("  the promise is the reader's own shape",
+      share["text"] == "Your shape is waiting. Find it.", share["text"])
+check("  and it no longer sells ease of use",
+      not re.search(r"\b(taps?|typing|quick|fast|minutes?)\b",
+                    share["text"].lower()), share["text"])
 check("  and the base points at the share route",
       share["url_base"] == "/persona/s/", share["url_base"])
 check("eight share cards, one per persona",
@@ -796,6 +804,11 @@ for a, e in PERSONAS:
           "%s" % resp.status_code)
 resp = client.get("/persona/s/igniter_outer")
 body = resp.get_data(as_text=True)
+check("the promise reaches the page a crawler unfurls",
+      body.count('content="%s"' % share["text"]) == 3,
+      "description, og:description and twitter:description")
+check("  and is what a human reads on it too",
+      "<p>%s</p>" % share["text"] in body)
 check("the page is cacheable at the edge",
       resp.headers.get("Cache-Control", "").startswith("public, max-age="),
       resp.headers.get("Cache-Control"))
