@@ -484,6 +484,57 @@ SCULPT_HEAD_NEGATIVE = (
 SCULPT_NEGATIVE_OVERRIDES = {"p_head_base": SCULPT_HEAD_NEGATIVE}
 
 
+# --- the totem block: what a culmination frame has to be ---------------------
+#
+# The owner's verdict on the first totem was "too plain" — it read as a vase.
+# That is the right verdict and the diagnosis is structural: the sculpt prefix
+# is written for quiz cards, which have to be legible at tile size on a light
+# ground and must not shout, and a totem is the opposite object. It is the
+# last thing the product shows, it is what the reader is being told they are,
+# and it has to look like something behind glass.
+#
+# So this is an additional block rather than an edit to the prefix. Quiz cards
+# keep the light warm backdrop they were designed for; totems get the result
+# page's world — dusk, one hard light, deep shadow — and three demands the
+# cards do not carry.
+#
+# Applied to totem ids only. `TOTEM_IDS` is the whole coupling, and v3-B's
+# eight inherit it by being named here.
+TOTEM_STYLE = (
+    "This frame is a totem: the culmination piece, not a quiz card. Three "
+    "things are required of it and none of them is optional. "
+    # 1 — inner light. The cracked-egg formula: matter, a visible event, and
+    # light escaping from inside it. A teal-painted surface is the failure
+    # this is written against, because painted teal reads as decoration and
+    # the whole rule of the set is that teal marks where the meaning is.
+    "INNER LIGHT, MANDATORY: the form is lit from within and the light gets "
+    "out — a bright electric teal glow emitted from inside the volume, "
+    "escaping through cracks, seams, a split or an opening, or showing as a "
+    "molten core through a fissure in the clay. The light spills onto the "
+    "surrounding clay as a soft glow bloom and throws its own colour into the "
+    "shadow. This is emitted light, never a teal-painted surface and never a "
+    "teal object sitting next to the form. "
+    # 2 — presentation. The quiz's cream sweep is what makes a totem read as
+    # a vase on a shelf; this is the museum case.
+    "DRAMATIC PRESENTATION: a dark dusk-warm backdrop in deep umbra — "
+    "markedly darker than the light backdrop the quiz cards are shot "
+    "against, the world of the result page rather than the quiz. One single "
+    "dramatic spotlight from above and to one side, a pronounced bright rim "
+    "light tracing the contour, and a deep soft shadow pooling beneath. "
+    "Museum-piece lighting: the object is behind glass, alone in the dark. "
+    # 3 — exclusivity. Restating the pose-verb rule at the top of its range,
+    # because a totem that stands still is a vase however it is lit.
+    "EXCLUSIVITY: a rare collectible artifact, poster composition, centred "
+    "and reverent. The form is dynamic and caught mid-gesture — the "
+    "pose-verb rule applies doubly here, and a static symmetrical object is "
+    "the failure this frame is most likely to come back as."
+)
+
+# Which frames the block is applied to. Exactly the totems: a quiz card handed
+# this block would come back dark, off-brief and unreadable at tile size.
+TOTEM_IDS = {"p_totem_open_flame"}
+
+
 # --- the v3-A preview: three frames the funnel rewrite needs now -------------
 #
 # Not idioms, and filed apart from them under `p_` for that reason. These are
@@ -688,6 +739,20 @@ def negative_for(base_id, style=DEFAULT_STYLE):
     return STYLES[style]["negative"]
 
 
+def style_for(base_id, style=DEFAULT_STYLE):
+    """The prefix this frame is drawn on.
+
+    The style's own, plus the totem block where the frame is a totem. Stacked
+    rather than swapped: a totem is a sculpt frame first — same material, same
+    handmade marks, same safe area — and then a sculpt frame under museum
+    lighting. Swapping the prefix would lose everything the first one says.
+    """
+    prefix = STYLES[style]["style"]
+    if style == "sculpt" and base_id in TOTEM_IDS:
+        return prefix + " " + TOTEM_STYLE
+    return prefix
+
+
 def prompt_for(scene, style=DEFAULT_STYLE, base_id=None):
     """The four blocks every sample is built from, in the same order.
 
@@ -697,8 +762,7 @@ def prompt_for(scene, style=DEFAULT_STYLE, base_id=None):
     script centre-crops it to 3:4 and the tile crops again, whichever way the
     picture was drawn.
     """
-    spec = STYLES[style]
-    return "\n".join([spec["style"], SAFE_AREA, scene,
+    return "\n".join([style_for(base_id, style), SAFE_AREA, scene,
                       negative_for(base_id, style)])
 
 

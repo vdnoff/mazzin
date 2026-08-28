@@ -17,8 +17,13 @@
  * The page, top to bottom: a kicker, the rich profile card — totem on a lit
  * pedestal, persona name and essence, rarity, a sentence woven from their own
  * picks, four trait bars and the clay head — the strip of frames they
- * actually tapped, the one strength they get for nothing, the six questions
- * the profile answers, each behind a lock, and the offer.
+ * actually tapped, the six questions the profile answers — each behind a
+ * lock — and the offer.
+ *
+ * The free strength that used to sit between the strip and the questions is
+ * gone. It was the one thing given away that the paywall was also selling,
+ * and reading it answered enough of the question to stop being a reason to
+ * pay. The locked teasers stay: they are the offer.
  *
  * The card is one of eight personas: the run's tallies resolve to an
  * archetype and an energy lean, and `result_copy.profile` in the config turns
@@ -350,6 +355,10 @@
       rarity: rarity,
       rarer: rarer,
       totem: TOTEM_DIR + ctx.style.id + "_" + energy + ".webp",
+      // The persona as one string, which is what the share card, the share
+      // page and the share event are all keyed by. Built once here so the
+      // three cannot spell it differently.
+      persona_slug: ctx.style.id + "_" + energy,
       narrative: narrativeOf(ctx, name),
       traits: traitsOf(table, split),
       words: words,
@@ -430,6 +439,74 @@
     return para;
   }
 
+  // The share control, and the only thing on this page that hands something
+  // out rather than taking something in.
+  //
+  // Free page only. After the money the reader has a report to read and a
+  // link that is theirs — offering to broadcast the persona at that moment is
+  // the wrong ask on the wrong page, and `deliveredHero` does not pass the
+  // option that draws this.
+  //
+  // Two paths, because the Web Share API is a phone feature and this page has
+  // desktop readers. Where it exists the sheet is the whole interaction; where
+  // it does not the link goes to the clipboard and a small toast says so. A
+  // reader who dismisses the native sheet is not a failure and gets nothing:
+  // `AbortError` is the ordinary way that dialog closes.
+  function shareBlock(ctx, data, copy) {
+    var share = (copy && copy.share) || {};
+    if (!data || !data.persona_slug) return null;
+
+    var base = share.url_base || "/persona/s/";
+    var url = location.origin + base + data.persona_slug;
+    var wrap = elm("div", "pr-share");
+    var button = elm("button", "pr-share-btn",
+                     share.button || "Share your shape");
+    button.type = "button";
+    var toast = elm("span", "pr-share-toast", "");
+    toast.setAttribute("role", "status");
+
+    function say(text) {
+      toast.textContent = text;
+      toast.classList.add("is-on");
+    }
+
+    button.addEventListener("click", function () {
+      // Fired before either path runs, and once. What the reader does with
+      // the sheet after that is theirs; the event is the intent, and the
+      // return leg is counted separately as `subid=share-<id>` on whoever
+      // arrives.
+      try {
+        ctx.track("share_tap", { persona: data.persona_slug });
+      } catch (e) { /* a tap is not worth losing to a blocked beacon */ }
+
+      var payload = {
+        title: fill(share.title || "", data.words || {}),
+        text: share.text || "",
+        url: url
+      };
+      if (navigator.share) {
+        navigator.share(payload).catch(function (err) {
+          if (err && err.name === "AbortError") return;
+          say(share.failed || "Could not share");
+        });
+        return;
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () {
+          say(share.copied || "Link copied");
+        }, function () {
+          say(share.failed || "Could not share");
+        });
+        return;
+      }
+      say(share.failed || "Could not share");
+    });
+
+    wrap.appendChild(button);
+    wrap.appendChild(toast);
+    return wrap;
+  }
+
   // Four bars, one per trait: a clay track with a teal fill and the human
   // word beside it. The stacked split bar this replaces put the four traits
   // in one rule, which reads as a budget being divided rather than as four
@@ -502,7 +579,7 @@
   // has no run to give it — reports.py stores the same shape on the report
   // and `deliveredHero` hands it straight in.
 
-  function richHero(badge, data, copy) {
+  function richHero(badge, data, copy, opts) {
     var card = elm("section", "pr-hero is-rich");
     // v3 order: the totem first and large, then who that makes them, then the
     // measure, then the sentence built from their own picks. The badge the
@@ -524,6 +601,10 @@
     }
     var story = narrativeBlock(data.narrative);
     if (story) card.appendChild(story);
+    if (opts && opts.share && opts.ctx) {
+      var handout = shareBlock(opts.ctx, data, copy || {});
+      if (handout) card.appendChild(handout);
+    }
     var bars = traitBars(data);
     if (bars) card.appendChild(bars);
     // The drawing, directly under the name and the rarity and above the three
@@ -918,26 +999,6 @@
     return item;
   }
 
-  function strength(ctx, copy) {
-    var one = ctx.strength;
-    if (!one || !one.title || !one.body) return null;
-    var item = node("open", ctx.strengthCopy.title || "Hidden Strength #1");
-    var body = item.querySelector(".pr-node-body");
-
-    // The line that makes this theirs. Filled by engine.js's own hook
-    // machinery, so every name in it is a card this reader tapped.
-    var opener = ctx.fillHook(copy.strength_lead || "");
-    if (opener && opener.indexOf("{") === -1) {
-      body.appendChild(elm("p", "pr-lead", opener));
-    }
-    body.appendChild(elm("h3", "pr-strength-title", one.title));
-    body.appendChild(elm("p", "pr-strength-body", one.body));
-    if (one.fix) {
-      body.appendChild(elm("p", "pr-strength-fix", "→ " + one.fix));
-    }
-    return item;
-  }
-
   function locked(ctx, section, copy, isLead) {
     var item = node("locked", section.title);
     if (isLead) item.classList.add("is-lead");
@@ -965,9 +1026,7 @@
   function path(ctx, copy, axes) {
     var list = elm("ol", "pr-path");
     list.appendChild(balance(ctx, copy, axes));
-    var free = strength(ctx, copy);
-    if (free) list.appendChild(free);
-    // The two open nodes above are the free half and keep their places. The
+    // The balance chart above is the free half now and keeps its place. The
     // reorder is inside what is still shut, so the section they came for is
     // the first locked thing they meet rather than the fourth.
     var want = emphasised(purposeRule(ctx));
@@ -976,19 +1035,6 @@
       list.appendChild(locked(ctx, section, copy, section.id === want));
     });
     return list;
-  }
-
-  // --- d2) the free strength, standing on its own ----------------------------
-
-  function freeStrength(ctx, copy) {
-    var one = strength(ctx, copy);
-    if (!one) return null;
-    // A list of one rather than a section, because `node` builds an `li` and
-    // a stray list item outside a list is still `display: list-item` — which
-    // draws a second, smaller bullet beside the mark.
-    var block = elm("ul", "pr-free");
-    block.appendChild(one);
-    return block;
   }
 
   // --- d3) the six questions -------------------------------------------------
@@ -1224,13 +1270,12 @@
     // it from. Below the hero the two pages differ entirely, which is why the
     // branch is the whole body rather than one node.
     root.appendChild(data
-      ? richHero(glyph(ctx.picks.now), data, copy)
+      ? richHero(glyph(ctx.picks.now), data, copy,
+                 { share: true, ctx: ctx })
       : hero(ctx, copy, axes, top));
     var strip = taps(ctx, copy);
     if (strip) root.appendChild(strip);
     if (data) {
-      var free = freeStrength(ctx, copy);
-      if (free) root.appendChild(free);
       var line = bridge(ctx, data);
       if (line) root.appendChild(line);
       root.appendChild(questions(ctx, data));

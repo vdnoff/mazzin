@@ -84,6 +84,13 @@ ALLOWED_EVENTS = {
     # looking at an Apple Pay button or a trip to a hosted page is the first
     # thing you would want to know, and nothing recorded it.
     "pay_ready",
+    # The reader handing the result to somebody else. It is the only event
+    # here that describes a person leaving with something rather than moving
+    # through the funnel, and it is the front of a loop the funnel otherwise
+    # has no measurement of: what comes back arrives as `subid=share-<id>` on
+    # an ordinary `funnel_start`, through the attribution columns that already
+    # exist, so this event and that one are the two ends of the same number.
+    "share_tap",
 }
 
 # How many cells one swipe step can have drawn. This is engine.js's GRID_SIZE
@@ -334,7 +341,11 @@ _INDEX = {}     # slug -> (mtime, {"pairs": frozenset, "images": frozenset})
 
 
 def _funnel_index(slug):
-    """The step/pair keys and image ids one funnel can produce, or None.
+    """The step/pair keys, image ids and share cards one funnel can produce.
+
+    None when the slug names no config. Everything in here is something the
+    client is allowed to claim it drew or handed over, so it is exactly what
+    the config says and nothing derived.
 
     Held rather than re-read. This runs once per swipe, and a file read plus a
     JSON parse to check three short strings would be by far the slowest thing
@@ -370,12 +381,24 @@ def _funnel_index(slug):
                 if isinstance(item, dict) and isinstance(item.get("id"), str):
                     images.add(item["id"])
 
-    index = {"pairs": frozenset(pairs), "images": frozenset(images)}
+    shares = set()
+    for card in (cfg.get("share_cards") or []):
+        if isinstance(card, dict) and isinstance(card.get("id"), str):
+            shares.add(card["id"])
+
+    index = {"pairs": frozenset(pairs), "images": frozenset(images),
+             "shares": frozenset(shares)}
     _INDEX[slug] = (stamp, index)
     return index
 
 
 SWIPE_EXTRA_KEYS = frozenset(("pair", "shown", "chosen"))
+
+# What a share tap says: which card was handed over. One key, and its value is
+# checked against the share cards the config declares rather than against a
+# list kept here — the same rule every other id on this path follows, and the
+# reason a funnel that declares none can produce no valid share tap at all.
+SHARE_EXTRA_KEYS = frozenset(("persona",))
 
 # How somebody arrived at the offer. A closed set, because the point of the
 # field is to be grouped by — one typo in a client that ships to everybody
@@ -404,17 +427,38 @@ def _clean_paywall_view(value):
     return {"src": src}
 
 
+def _clean_share_tap(funnel, value):
+    """`{"persona": "<share card id>"}`, checked against the config.
+
+    The id is not parsed and not pattern-matched: it either is one of the
+    share cards this funnel declares or it is not. That keeps the funnel's own
+    vocabulary out of this module — a second funnel wanting the same event
+    declares its own cards and needs nothing here — and it keeps the column a
+    closed set, which is the only reason it is worth grouping by.
+    """
+    if set(value) != SHARE_EXTRA_KEYS:
+        raise ValueError("extra")
+    index = _funnel_index(funnel)
+    if index is None:
+        raise ValueError("extra")
+    persona = value["persona"]
+    if not isinstance(persona, str) or persona not in index["shares"]:
+        raise ValueError("extra")
+    return {"persona": persona}
+
+
 def _clean_extra(funnel, event, value):
     """The event payload, rebuilt from validated parts. Raises on junk.
 
-    Four events carry one: a swipe says which pair it drew and which image was
+    Five events carry one: a swipe says which pair it drew and which image was
     tapped, a paywall view says how the reader got to the offer, a pay tap says
-    which of the two buttons took it, and a visualizer upload says which side
-    of the money it happened on. Every string is checked against something this
-    module can enumerate — ids this funnel could actually have shown, or one of
-    the closed sets above — and the value stored is assembled here rather than
-    passed through, so nothing reaches the events column that did not come out
-    of the config or this file.
+    which of the two buttons took it, a visualizer upload says which side of
+    the money it happened on, and a share tap says which card was handed
+    over. Every string is checked against something this module can
+    enumerate — ids this funnel could actually have shown, or one of the
+    closed sets above — and the value stored is assembled here rather than
+    passed through, so nothing reaches the events column that did not come
+    out of the config or this file.
 
     This used to take any JSON object up to four thousand characters and write
     it — which made the column a free write for anybody who found the endpoint,
@@ -434,6 +478,8 @@ def _clean_extra(funnel, event, value):
         return _clean_pay_tap(value)
     if event == "pay_ready":
         return _clean_pay_ready(value)
+    if event == "share_tap":
+        return _clean_share_tap(funnel, value)
     if event != "swipe":
         raise ValueError("extra")
     if set(value) != SWIPE_EXTRA_KEYS:

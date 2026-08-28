@@ -268,11 +268,12 @@ gallery = {f[:-len(".webp")] for f in os.listdir(GALLERY)
            if f.endswith(".webp")}
 check("every card has a frame", set(by_id) <= gallery,
       str(sorted(set(by_id) - gallery)[:4]))
+SLOTS = ({"og", "head_base"}
+         | {"totem_%s_%s" % p for p in PERSONAS}
+         | {"share_%s_%s" % p for p in PERSONAS})
 check("  and the gallery carries nothing the walk dropped",
-      not (gallery - set(by_id) - {"og", "head_base"}
-           - {"totem_%s_%s" % p for p in PERSONAS}),
-      str(sorted(gallery - set(by_id) - {"og", "head_base"}
-                 - {"totem_%s_%s" % p for p in PERSONAS})[:4]))
+      not (gallery - set(by_id) - SLOTS),
+      str(sorted(gallery - set(by_id) - SLOTS)[:4]))
 check("the share card survived to v3-B", "og" in gallery)
 check("the result page's clay head has a base frame", "head_base" in gallery)
 check("  and every persona has a totem",
@@ -315,9 +316,19 @@ check("  keyed to the funnel's own axes",
       [t["tag"] for t in prof["traits"]]
       == ["drive", "anchor", "wave", "prism"],
       str([t["tag"] for t in prof["traits"]]))
-check("the rarity line says one of eight",
-      "1 of 8" in prof["rarity_line"] and "{rarer}" in prof["rarity_line"],
+# The two halves argued: "one person in eight" is not rare, and printing both
+# invited the reader to notice. The measured number is the half worth keeping.
+check("the rarity line makes the rarity claim",
+      "{rarer}" in prof["rarity_line"]
+      and prof["rarity_line"].lower().startswith("rarer than"),
       prof["rarity_line"])
+check("  and no longer says one of eight",
+      "1 of 8" not in prof["rarity_line"]
+      and "1 of 8" not in json.dumps(cfg),
+      prof["rarity_line"])
+check("  while the rarity data itself is untouched",
+      all(prof["rarity"][a][e] and prof["rarer_than"][a][e]
+          for a, e in PERSONAS))
 check("the four styles are tagged on their axis and nothing else",
       all(s["tags"] == [a] for a, name in ARCH.items()
           for s in cfg["styles"] if s["id"] == name),
@@ -640,6 +651,126 @@ check("  and finds the opening frame by label, not by a pasted id",
       and 'ids[i].indexOf("now_") === 0' in module)
 
 
+print("\n--- the free strength is gone ---")
+# It was the one thing given away that the paywall was also selling: reading
+# it answered enough of the question to stop being a reason to pay. What stays
+# is the locked teasers, which are the offer.
+check("the module draws no free strength",
+      "function freeStrength(" not in module
+      and "function strength(ctx" not in module
+      and "pr-strength-title" not in module)
+check("  and the stylesheet carries none of its rules",
+      not any(c in sheet for c in (".pr-free", ".pr-strength-title",
+                                   ".pr-strength-body", ".pr-lead")))
+check("  the render path no longer calls it", "freeStrength(" not in module)
+# The paid page's own strengths section is a different thing and survives.
+check("but the delivered page still renders what was bought",
+      "function strengths(data)" in module
+      and "mistakes: strengths" in module)
+check("  and the locked teasers that carry the paywall are still drawn",
+      "function locked(" in module and "function questions(" in module
+      and ".pr-teaser" in sheet)
+
+
+print("\n--- the share loop ---")
+share = prof["share"]
+check("the config carries the share copy",
+      all(share.get(k) for k in ("button", "title", "text", "url_base",
+                                 "copied", "failed")),
+      json.dumps(sorted(share)))
+check("  the title names the persona through a token",
+      "{subtype}" in share["title"], share["title"])
+check("  and the base points at the share route",
+      share["url_base"] == "/persona/s/", share["url_base"])
+check("eight share cards, one per persona",
+      [c["id"] for c in cfg["share_cards"]]
+      == ["%s_%s" % p for p in PERSONAS],
+      str([c["id"] for c in cfg["share_cards"]]))
+check("  each with three named hexes",
+      all(len(c["colors"]) == 3
+          and all(HEX.match(x["hex"]) and x.get("name") and x.get("element")
+                  for x in c["colors"])
+          for c in cfg["share_cards"]))
+check("  each naming its persona",
+      [c["persona"] for c in cfg["share_cards"]]
+      == [prof["subtypes"][a][e] for a, e in PERSONAS])
+check("  and each with a placeholder on disk",
+      all(("share_%s_%s" % p) in gallery for p in PERSONAS),
+      str([p for p in PERSONAS if ("share_%s_%s" % p) not in gallery]))
+
+check("the module draws a share button", "function shareBlock(" in module
+      and ".pr-share-btn" in sheet)
+check("  using the Web Share API where it exists",
+      "navigator.share" in module)
+check("  falling back to the clipboard and a toast",
+      "navigator.clipboard" in module and ".pr-share-toast" in sheet
+      and 'role", "status"' in module)
+check("  and treating a dismissed sheet as no failure",
+      'err.name === "AbortError"' in module)
+check("  it fires share_tap with the persona",
+      'ctx.track("share_tap", { persona: data.persona_slug })' in module)
+check("  and the slug is built once, where the totem path is",
+      'persona_slug: ctx.style.id + "_" + energy' in module)
+# Free page only. After the money the reader has a report and a link of their
+# own, and the ask is wrong there.
+check("the free page passes the option that draws it",
+      "{ share: true, ctx: ctx }" in module)
+check("  and the delivered page does not",
+      re.search(r"richHero\(glyph\(pick\), data, copy\)", module)
+      is not None)
+check("  so the button cannot render without a run behind it",
+      "if (!data || !data.persona_slug) return null;" in module)
+
+check("share_tap is registered server-side",
+      "share_tap" in open(os.path.join(ROOT, "tracking.py"),
+                          encoding="utf-8").read())
+
+
+print("\n--- the share landing route ---")
+sys.path.insert(0, ROOT)
+from app import app as flask_app  # noqa: E402
+
+client = flask_app.test_client()
+for a, e in PERSONAS:
+    slug = "%s_%s" % (a, e)
+    resp = client.get("/persona/s/" + slug)
+    body = resp.get_data(as_text=True)
+    ok = (resp.status_code == 200
+          and ('og:image" content="https://mazzin.com'
+               '/static/galleries/persona/share_%s.webp' % slug) in body
+          and ('og:url" content="https://mazzin.com/persona/s/%s' % slug)
+          in body
+          and prof["subtypes"][a][e] in body
+          and ('href="/persona?subid=share-%s"' % slug) in body)
+    check("  /persona/s/%s serves its own card" % slug, ok,
+          "%s" % resp.status_code)
+resp = client.get("/persona/s/igniter_outer")
+body = resp.get_data(as_text=True)
+check("the page is cacheable at the edge",
+      resp.headers.get("Cache-Control", "").startswith("public, max-age="),
+      resp.headers.get("Cache-Control"))
+check("  and carries its content for a crawler, not just a redirect",
+      "<h1>" in body and "og:title" in body
+      and "Which shape are you?" in body)
+check("  with a visible link that works without script",
+      'class="cta"' in body and body.index('class="cta"') < body.index(
+          "<script>"))
+for junk in ("nope", "igniter", "igniter_outer.html", "..", "%2e%2e"):
+    check("  /persona/s/%s is a 404" % junk,
+          client.get("/persona/s/" + junk).status_code == 404)
+
+# The pages are generated from the config, so they can drift from it. The
+# generator's own --check is what makes that a test failure rather than a
+# surprise in production.
+import subprocess  # noqa: E402
+gen = subprocess.run(
+    [sys.executable, os.path.join(ROOT, "scripts",
+                                  "gen_persona_share_pages.py"), "--check"],
+    capture_output=True, text=True)
+check("the share pages on disk match the config", gen.returncode == 0,
+      (gen.stdout + gen.stderr).strip()[:120])
+
+
 print("\n--- the words this vertical does not use ---")
 BANNED = [
     "psychic", "prediction", "predictions", "predict", "fortune",
@@ -709,11 +840,26 @@ check("  and result_zodiac.js knows nothing about persona",
                           encoding="utf-8").read()))
 check("engine.js knows nothing about persona either — it is all config",
       not OWN.search(engine), str(OWN.findall(engine)[:3]))
-check("  and app.py routes it without naming it",
-      not OWN.search(open(os.path.join(ROOT, "app.py"),
-                          encoding="utf-8").read())
-      and "funnel_exists" in open(os.path.join(ROOT, "app.py"),
-                                  encoding="utf-8").read())
+# app.py used to name this funnel nowhere at all, which was the proof the
+# walk is config-driven. v3-A.1 adds the one exception: a share landing route
+# whose whole subject is this funnel's personas. The claim narrows rather than
+# lapsing — the funnel page is still slug-generic, and the naming is confined
+# to the share route.
+app_py = open(os.path.join(ROOT, "app.py"), encoding="utf-8").read()
+check("app.py still serves the funnel page without naming it",
+      "funnel_exists" in app_py
+      and not OWN.search(app_py[app_py.index("def funnel_page("):]))
+check("  and names persona only for the share route",
+      app_py.count('@app.get("/persona/s/<persona>")') == 1
+      and app_py.count('load_funnel("persona")') == 1)
+# Three GET routes in the file: /health, the share page, and /<slug>. The
+# count is the guard — a second persona route, or a template being rendered
+# here, is the change this check exists to catch.
+check("  which is one route and not a second page renderer",
+      app_py.count("@app.get(") == 3
+      and "render_template" not in app_py
+      and "PERSONA_SHARE_DIR" in app_py,
+      str(app_py.count("@app.get(")))
 zodiac_rules = [r.strip() for r in
                 re.findall(r"^[^\s@}/][^{}]*(?=\{)", mazzin, re.M)
                 if "theme-zodiac" in r]
