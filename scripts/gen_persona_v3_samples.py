@@ -330,6 +330,14 @@ SCULPT_STYLE = (
     "sand, warm grey — with electric teal (#4EDDC4) as an accent material "
     "on exactly one element of the form, the thread that runs through the "
     "set. "
+    # The two rules the idiom review added. Both are about where meaning is
+    # allowed to live: in the material, never in the decoration.
+    "State-bearing colour: the tone itself carries the state — a drained "
+    "form is drained in its colour as well as its shape, a charged one is "
+    "warm and lit. Never a pleasant palette laid over an unrelated form. "
+    "Teal at the meaning point: the electric teal marks the one place where "
+    "the state is happening — the point of contact, the opening, the seam, "
+    "the core — and never sits anywhere as decoration. "
     "Pure form only: the meaning is carried by shape, volume, weight and "
     "gesture, never by depicting anything. Each composition is an enigmatic "
     "object — evocative, open to interpretation, a shape that makes the "
@@ -444,6 +452,77 @@ SCULPT_SAMPLES = [
 ]
 
 
+# The head is the one frame in this style that is allowed to be a head, and
+# it is an exception rather than an oversight, so it is written down as one.
+#
+# The result page draws a clay head with the reader's radar inlaid on the
+# cranium. That is the product, and it needs a head — which the sculpt
+# negatives otherwise refuse outright, correctly, because every other frame
+# asking for one would be the failure this style exists to avoid. So this
+# frame swaps the blanket ban for a narrower one: a featureless sculptural
+# profile is allowed, and everything that would make it a person — eyes, a
+# mouth, hair, expression, a likeness, anything below the neck — is refused
+# by name. Nothing else may claim this negative; the suite pins it to this id.
+SCULPT_HEAD_NEGATIVE = (
+    "Absolutely no eyes, no eyeball, no iris, no pupil, no mouth, no lips, "
+    "no teeth, no ear, no nostril, no eyebrow, no hair of any kind, no "
+    "expression, no realistic or detailed face, no photographic likeness, "
+    "no recognisable person. The profile is a plain sculptural edge and "
+    "nothing more. "
+    "Nothing below the neck: no shoulders, no body, no arms, no hands, and "
+    "no second form anywhere in the frame. "
+    "No scenes, no environments, no rooms, no interiors, no furniture. "
+    "No text, no letters, no numbers, no words, no logos, no watermarks. "
+    "No photorealism of real materials, no glass, no chrome, no polished "
+    "metal, no wet or glossy surfaces, no busy texture, no clutter. "
+    "Never a night setting, never a black or midnight-blue background, "
+    "never a dim, murky, drab or low-key palette."
+)
+
+# Keyed by base id and consulted only by sculpt. One entry, and the intent is
+# that it stays one entry.
+SCULPT_NEGATIVE_OVERRIDES = {"p_head_base": SCULPT_HEAD_NEGATIVE}
+
+
+# --- the v3-A preview: three frames the funnel rewrite needs now -------------
+#
+# Not idioms, and filed apart from them under `p_` for that reason. These are
+# production slots the v3-A config and result page reference by path, drawn
+# early so the concept can be seen assembled rather than described: the clay
+# head the result page overlays its radar onto, one persona totem, and one
+# card face from the new walk. The full set is v3-B; these three are the ones
+# that decide whether the rest is worth drawing.
+SCULPT_PREVIEW = [
+    ("p_head_base",
+     "A clay head in clean profile, seen side-on: a simplified sculptural "
+     "head form in matte terracotta, cut off cleanly at the neck and resting "
+     "as a studio object. The whole upper cranial area is one smooth, even, "
+     "unbroken clay surface — deliberately empty and unmarked, a blank field "
+     "with no features, no texture and no detail anywhere on it — while the "
+     "brow, nose and jaw of the profile are softly modelled. A restrained "
+     "electric teal seam runs along the base of the neck. Centred, upright, "
+     "evenly lit, with the empty cranial field held clear of every edge."),
+
+    ("p_totem_open_flame",
+     "An upward-twisting clay form: a single column of warm terracotta "
+     "rising and turning as it climbs, widening as it goes, its whole "
+     "mass leaning into the ascent, with a bright electric teal glow at the "
+     "very tip where the twist opens out. The tone warms from deep ochre "
+     "at the base to lit amber at the top, so the colour climbs with the "
+     "form. "
+     "Matter, a visible event, and light from inside — an open flame with no "
+     "fire in it. Composed as an emblem: centred, poster-like, evenly lit."),
+
+    ("p_chapter_climbing",
+     "A rounded clay form climbing a slope: a compact ochre volume caught "
+     "part-way up a rising sand-toned incline, tilted forward into the climb "
+     "with its trailing edge still stretched down the slope behind it and "
+     "clear ground above it yet to cover. A restrained electric teal mark "
+     "sits where the form meets the slope, at the point it is pushing "
+     "against. Effortful and unfinished, and clearly going up."),
+]
+
+
 # The registry, and the whole of what a style owns: a prefix, its negatives,
 # and the prefix its ids carry so two sets share one directory without
 # colliding. The scenes, the geometry, the crop, the retry and the safe-area
@@ -455,7 +534,8 @@ STYLES = {
     "clay": {"style": CLAY_STYLE, "negative": CLAY_NEGATIVE,
              "prefix": "clay_"},
     "sculpt": {"style": SCULPT_STYLE, "negative": SCULPT_NEGATIVE,
-               "prefix": "sculpt_", "samples": SCULPT_SAMPLES},
+               "prefix": "sculpt_",
+               "samples": SCULPT_SAMPLES + SCULPT_PREVIEW},
 }
 DEFAULT_STYLE = "vector"
 
@@ -597,7 +677,18 @@ def scene_for(base_id, scene, style=DEFAULT_STYLE):
     return scene + " " + note if note else scene
 
 
-def prompt_for(scene, style=DEFAULT_STYLE):
+def negative_for(base_id, style=DEFAULT_STYLE):
+    """The refusals this frame is drawn against.
+
+    A style's own negatives, unless one frame has been granted its own — which
+    exactly one has, and for a reason recorded above it.
+    """
+    if style == "sculpt" and base_id in SCULPT_NEGATIVE_OVERRIDES:
+        return SCULPT_NEGATIVE_OVERRIDES[base_id]
+    return STYLES[style]["negative"]
+
+
+def prompt_for(scene, style=DEFAULT_STYLE, base_id=None):
     """The four blocks every sample is built from, in the same order.
 
     The safe-area rule sits in the same slot in every style and is the same
@@ -607,7 +698,8 @@ def prompt_for(scene, style=DEFAULT_STYLE):
     picture was drawn.
     """
     spec = STYLES[style]
-    return "\n".join([spec["style"], SAFE_AREA, scene, spec["negative"]])
+    return "\n".join([spec["style"], SAFE_AREA, scene,
+                      negative_for(base_id, style)])
 
 
 def sample_id_for(base_id, style=DEFAULT_STYLE):
@@ -632,7 +724,8 @@ def samples(style=DEFAULT_STYLE):
     listing = STYLES[style].get("samples") or SAMPLES
     return [{"id": sample_id_for(base_id, style), "base_id": base_id,
              "style": style, "size": FRAME, "api_size": API_PORTRAIT,
-             "prompt": prompt_for(scene_for(base_id, scene, style), style)}
+             "prompt": prompt_for(scene_for(base_id, scene, style), style,
+                                  base_id)}
             for base_id, scene in listing]
 
 

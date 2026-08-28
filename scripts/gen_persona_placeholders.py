@@ -27,6 +27,8 @@ is one somebody forgets to replace.
 Written into static/galleries/persona/:
     <image id>.webp   600x800, one per persona-owned image still missing
     og.webp           1200x630, the share card — this funnel has its own
+    head_base.webp    800x800, the clay head the result page inlays on
+    totem_<persona>.webp  600x800, one per persona, eight of them
 """
 import json
 import os
@@ -42,9 +44,33 @@ FRAME = (600, 800)
 QUALITY = 80
 
 # The share card is the one frame with no image in the config behind it: ink
-# base through the teal the whole funnel ends on.
+# base through the teal the whole funnel ends on. Left as it is by v3-A — the
+# frame on disk is not redrawn, and v3-B replaces it with the rest of the art.
 OG = (1200, 630)
 OG_COLORS = ["#4EDDC4", "#2A7078", "#1C2833", "#101820"]
+
+# Two more frames with no config image behind them, both slots the result page
+# reads by path. They are stand-ins in the v3 palette until v3-B renders them:
+# the clay head the radar is inlaid on, and one totem per persona.
+#
+# The head is square because it is displayed on a pedestal card rather than as
+# a quiz tile, and the overlay is positioned against its own box.
+HEAD = (800, 800)
+HEAD_COLORS = ["#E8D5B5", "#C98A3E", "#B4643C", "#8E4A2C"]
+
+TOTEM = (600, 800)
+# Warmed toward what each persona is: flame amber, stone sand, tide teal,
+# beacon ochre, each dropping into the umbra the result page sits on.
+TOTEM_COLORS = {
+    "igniter_outer": ["#F2C070", "#E0A24E", "#B4643C", "#241A10"],
+    "igniter_inner": ["#E0A24E", "#B4643C", "#8E4A2C", "#241A10"],
+    "keeper_outer": ["#E8D5B5", "#D9BE95", "#A89684", "#241A10"],
+    "keeper_inner": ["#D9BE95", "#A89684", "#6E655C", "#241A10"],
+    "feeler_outer": ["#7DF0DB", "#4EDDC4", "#0F6F62", "#241A10"],
+    "feeler_inner": ["#4EDDC4", "#0F6F62", "#2A5048", "#241A10"],
+    "thinker_outer": ["#F3E3CC", "#E0A24E", "#0F6F62", "#241A10"],
+    "thinker_inner": ["#C98A3E", "#8E4A2C", "#0F6F62", "#241A10"],
+}
 
 
 def rgb(value):
@@ -119,23 +145,37 @@ def main():
     if not os.path.exists(os.path.join(OUT, "og.webp")):
         card = write("og", gradient(OG, OG_COLORS))
 
+    # The result page's own two slots. Same rule as every other frame: an id
+    # already on disk is left alone, so v3-B's renders survive a rerun.
+    extras = [("head_base", HEAD, HEAD_COLORS)]
+    extras += [("totem_" + key, TOTEM, stops)
+               for key, stops in sorted(TOTEM_COLORS.items())]
+    made = 0
+    for name, size, stops in extras:
+        if not os.path.exists(os.path.join(OUT, name + ".webp")):
+            card += write(name, gradient(size, stops))
+            made += 1
+
     # A frame whose id the config no longer references is deleted rather than
     # left behind. The gallery is meant to be exactly what the funnel shows,
     # and a step redesign renames ids by the dozen — without this the
     # directory silently accumulates the art of every walk this funnel used to
     # be, and the one check that would notice is a test nobody runs on a
     # deploy. Only .webp files are touched, and only in this gallery.
-    keep = {i + ".webp" for i, _stops in items} | {"og.webp"}
+    keep = ({i + ".webp" for i, _stops in items} | {"og.webp"}
+            | {name + ".webp" for name, _s, _c in extras})
     orphans = sorted(f for f in os.listdir(OUT)
                      if f.endswith(".webp") and f not in keep)
     for name in orphans:
         os.remove(os.path.join(OUT, name))
 
     print("%d of %d frames written -> %s (%d KB), %d already on disk, "
-          "og.webp %s, %d orphan%s removed"
+          "og.webp %s, %d result slot%s written, %d orphan%s removed"
           % (len(missing), len(items), OUT, round((total + card) / 1024),
              len(items) - len(missing),
-             "written" if card else "already there",
+             "already there" if os.path.exists(os.path.join(OUT, "og.webp"))
+             else "written",
+             made, "" if made == 1 else "s",
              len(orphans), "" if len(orphans) == 1 else "s"))
 
 

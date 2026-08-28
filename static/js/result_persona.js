@@ -6,23 +6,25 @@
  * button that charges, are engine.js's own live nodes moved into this layout
  * rather than rebuilt in it. What differs is everything the fork exists for:
  * the vocabulary is drive/anchor/wave/prism rather than the four elements,
- * the ink is teal on #101820 rather than gold on indigo, every class carries
- * a `pr-` prefix so the two stylesheets cannot reach each other's pages, and
- * this page draws a head.
+ * the ground is a deep warm umbra with clay slabs on it rather than gold on
+ * indigo, every class carries a `pr-` prefix so the two stylesheets cannot
+ * reach each other's pages, and this page draws a head.
  *
  * It is a fork rather than a shared file on purpose. The two funnels are two
  * products in two voices, and a single module parameterised over both would
  * be a file where every third line asks which one it is running for.
  *
- * The page, top to bottom: a kicker, the rich profile card, the strip of
- * frames they actually tapped, the one strength they get for nothing, the six
- * questions the profile answers — each behind a lock — the head diagram, and
- * the offer.
+ * The page, top to bottom: a kicker, the rich profile card — totem on a lit
+ * pedestal, persona name and essence, rarity, a sentence woven from their own
+ * picks, four trait bars and the clay head — the strip of frames they
+ * actually tapped, the one strength they get for nothing, the six questions
+ * the profile answers, each behind a lock, and the offer.
  *
- * The card is a named subtype rather than a crossing of two words: the run's
- * tallies resolve to an archetype, a runner-up axis and an energy lean, and
- * `result_copy.profile` in the config turns those three into a name, a
- * measured rarity and a line about the reader's own animal.
+ * The card is one of eight personas: the run's tallies resolve to an
+ * archetype and an energy lean, and `result_copy.profile` in the config turns
+ * those two into a name, a one-line essence, a measured rarity and a totem.
+ * The runner-up axis survives as an undercurrent in the formula line — real,
+ * and a detail rather than an identity.
  *
  * A config with no `profile` block still renders: the plain ID card and the
  * node path are kept below and drawn instead. This file and the config it
@@ -141,7 +143,7 @@
   // Everything the hero card and the head say, computed from the tallies the
   // run already produced. Nothing here asks engine.js for anything new: the
   // archetype, the runner-up axis and the energy lean are all in `ctx.tally`,
-  // and the names, the rarity and the animal line are all in the config.
+  // and the names, the essence lines and the rarity are all in the config.
   //
   // reports.py computes the same block server-side and stores it on the
   // report, because the delivered page is opened from a link in an email in a
@@ -208,6 +210,65 @@
     });
   }
 
+  // Where the eight persona totems live. One image per archetype and energy,
+  // placeholders until v3-B renders them; the path is built rather than
+  // configured because the naming is the persona and there is nothing to
+  // choose.
+  var TOTEM_DIR = "/static/galleries/persona/totem_";
+
+  // The four traits, in human words. The tags are the funnel's own vocabulary
+  // and stay in the data; these are what a reader is shown, and they come off
+  // the config so the page and the report cannot disagree about them.
+  function traitsOf(table, split) {
+    var names = {};
+    (table.traits || []).forEach(function (row) {
+      if (row && row.tag) names[row.tag] = row.name || row.tag;
+    });
+    return split.map(function (cell) {
+      return {
+        tag: cell.tag,
+        name: names[cell.tag] || AXIS_NAME[cell.tag] || cell.tag,
+        pct: cell.pct
+      };
+    });
+  }
+
+  // The paragraph, woven from what they actually picked.
+  //
+  // The claim the whole funnel makes is that the shapes unlock something, so
+  // the reading has to quote them back — not "you are curious" but "you
+  // reached for *lit up*". Three picks carry it: the shape they opened on,
+  // the chapter they said they are in, and the fork they follow. Those are
+  // the three the interstitials already echoed, so the page finishes a
+  // sentence the quiz started.
+  //
+  // Returns a list of parts rather than a string: a label is set in italics
+  // and a string would have to be parsed back apart to do it. Each part is
+  // {text} or {em} and the renderer turns them into text and <em>.
+  var NARRATIVE_STEPS = ["now", "chapter", "forks"];
+
+  function narrativeOf(ctx, name) {
+    var picks = (ctx && ctx.picks) || {};
+    var got = NARRATIVE_STEPS
+      .map(function (id) { return picks[id]; })
+      .filter(function (pick) { return pick && pick.label; });
+    if (!got.length) return null;
+
+    var parts = [{ text: "You opened on " },
+                 { em: got[0].label.toLowerCase() }];
+    if (got.length > 1) {
+      parts.push({ text: ", said the chapter you are in is " });
+      parts.push({ em: got[1].label.toLowerCase() });
+    }
+    if (got.length > 2) {
+      parts.push({ text: ", and when it forks you follow " });
+      parts.push({ em: got[2].label.toLowerCase() });
+    }
+    parts.push({ text: ". That is " + name + ", and the rest of this page "
+                       + "is what those three unlock." });
+    return parts;
+  }
+
   // The whole card, or null when the config carries no table for it — which
   // is what sends `render` back to the plain page below.
   function profileOf(ctx, axes, top) {
@@ -242,11 +303,15 @@
       })[0] || ENERGY[0];
     }
 
-    var name = ((table.subtypes[ctx.style.id] || {})[second] || {})[energy];
+    // v3: eight personas, one per archetype and energy. The 24-name table was
+    // archetype x runner-up x energy, which named a blend nobody could hold in
+    // their head and split the audience so fine that four of the cells were
+    // unreachable. The runner-up survives as an undercurrent in the formula
+    // line — it is real, and it is a detail rather than an identity.
+    var name = (table.subtypes[ctx.style.id] || {})[energy];
     if (!name) return null;
 
-    var pick = ctx.picks && ctx.picks.animal;
-    var animal = (pick && pick.label) || "";
+    var essence = ((table.essence || {})[ctx.style.id] || {})[energy] || "";
 
     var tone = positive(ctx.tally(TONE));
     var at = {
@@ -255,22 +320,22 @@
       depth: between(tone.bold + tone.calm, tone.deep)
     };
     var split = splitOf(axes);
-    var rarity = (((table.rarity || {})[ctx.style.id] || {})[second]
-                  || {})[energy] || 0;
+    var rarity = ((table.rarity || {})[ctx.style.id] || {})[energy] || 0;
+    var rarer = ((table.rarer_than || {})[ctx.style.id] || {})[energy] || 0;
 
     var bare = name.replace(/^The\s+/, "");
     var year = yearOf(ctx);
     var words = {
       first: year[0],
       last: year[year.length - 1],
-      animal: animal,
       subtype: name,
       subtype_bare: bare,
       subtype_article: /^[AEIOU]/.test(bare) ? "an" : "a",
       axis: AXIS_NAME[primary] || primary,
       second: AXIS_NAME[second] || second,
       energy: ENERGY_NAME[energy] || energy,
-      n: String(rarity)
+      n: String(rarity),
+      rarer: String(rarer)
     };
     split.forEach(function (cell) { words[cell.tag] = String(cell.pct); });
 
@@ -279,16 +344,19 @@
       primary: primary,
       second: second,
       energy: energy,
-      animal: animal,
       subtype: name,
       subtype_bare: bare,
+      essence: essence,
       rarity: rarity,
+      rarer: rarer,
+      totem: TOTEM_DIR + ctx.style.id + "_" + energy + ".webp",
+      narrative: narrativeOf(ctx, name),
+      traits: traitsOf(table, split),
       words: words,
       // The formula loses its leading separator rather than printing one when
-      // a run never reached the animal step.
+      // a run never reached the opening step.
       formula: fill(table.formula || "", words).replace(/^\s*·\s*/, ""),
-      rarity_line: rarity ? fill(table.rarity_line || "", words) : "",
-      cross_line: ((table.animal_cross || {})[animal] || {})[primary] || "",
+      rarity_line: rarer ? fill(table.rarity_line || "", words) : "",
       split: split,
       split_caption: fill(table.split_caption || "", words),
       scales: (table.scales || []).map(function (row) {
@@ -308,8 +376,8 @@
 
   // --- b) the ID card --------------------------------------------------------
 
-  // Their own animal frame, masked to a disc. The animal is centred in the
-  // art, so a centre crop is the animal and nothing else needs drawing.
+  // The frame they opened the quiz on, masked to a disc. The form is centred
+  // in the art, so a centre crop is the shape and nothing else needs drawing.
   function glyph(pick) {
     var badge = elm("span", "pr-glyph");
     if (!pick) return badge;
@@ -321,13 +389,78 @@
     return badge;
   }
 
+  // The totem on its pedestal, under a spotlight. The persona's own form,
+  // lit the way the sculptures in the quiz were lit, so the reading opens on
+  // the same gallery the quiz was walked through — at dusk rather than in
+  // daylight, which is what the analysing fade has just done to the page.
+  //
+  // The image is a slot: a placeholder until v3-B renders the eight. It is
+  // built from the persona rather than chosen, so a missing file is a missing
+  // render and never a missing branch.
+  function pedestal(data) {
+    var stand = elm("figure", "pr-totem");
+    var light = elm("span", "pr-totem-light");
+    light.setAttribute("aria-hidden", "true");
+    stand.appendChild(light);
+    if (data && data.totem) {
+      var img = document.createElement("img");
+      img.className = "pr-totem-art";
+      img.src = data.totem;
+      img.alt = "";
+      img.decoding = "async";
+      stand.appendChild(img);
+    }
+    var plinth = elm("span", "pr-totem-plinth");
+    plinth.setAttribute("aria-hidden", "true");
+    stand.appendChild(plinth);
+    return stand;
+  }
+
+  // The narrative, with the reader's own picks set in italics.
+  function narrativeBlock(parts) {
+    if (!parts || !parts.length) return null;
+    var para = elm("p", "pr-narrative");
+    parts.forEach(function (part) {
+      if (part.em) {
+        para.appendChild(elm("em", "pr-quote", part.em));
+      } else {
+        para.appendChild(document.createTextNode(part.text || ""));
+      }
+    });
+    return para;
+  }
+
+  // Four bars, one per trait: a clay track with a teal fill and the human
+  // word beside it. The stacked split bar this replaces put the four traits
+  // in one rule, which reads as a budget being divided rather than as four
+  // things the reader has different amounts of.
+  function traitBars(data) {
+    var rows = (data && data.traits) || [];
+    if (!rows.length) return null;
+    var wrap = elm("div", "pr-traits");
+    rows.forEach(function (row) {
+      var line = elm("div", "pr-trait");
+      line.appendChild(elm("span", "pr-trait-name", row.name));
+      var track = elm("span", "pr-trait-track");
+      track.setAttribute("role", "img");
+      track.setAttribute("aria-label",
+                         row.name + " " + row.pct + " out of 100");
+      var fillBar = elm("i", "pr-trait-fill");
+      fillBar.style.width = row.pct + "%";
+      track.appendChild(fillBar);
+      line.appendChild(track);
+      line.appendChild(elm("span", "pr-trait-value", row.pct + "%"));
+      wrap.appendChild(line);
+    });
+    return wrap;
+  }
+
   function hero(ctx, copy, axes, top) {
     var card = elm("section", "pr-hero");
-    card.appendChild(glyph(ctx.picks.animal));
+    card.appendChild(glyph(ctx.picks.now));
 
-    var animal = (ctx.picks.animal && ctx.picks.animal.label)
-      || ctx.style.name;
-    card.appendChild(elm("h1", "pr-animal", animal));
+    var opener = (ctx.picks.now && ctx.picks.now.label) || ctx.style.name;
+    card.appendChild(elm("h1", "pr-animal", opener));
     card.appendChild(elm("p", "pr-cross", "× " + ctx.style.name));
 
     var pct = share(axes, top);
@@ -353,61 +486,46 @@
 
   // --- b2) the rich profile card ---------------------------------------------
   //
-  // The card both halves of the funnel draw: animal and name on one row, the
-  // rarity ribbon under it, three spectrum scales, the four-axis split, and
-  // the reader's own animal read against the axis they actually led with.
+  // The card both halves of the funnel draw, top to bottom: the persona's
+  // totem on a lit pedestal, the name and its one-line essence, the rarity
+  // ribbon, the sentence woven from the reader's own picks, four trait bars,
+  // and the clay head.
+  //
+  // The three spectrum scales and the stacked split bar this replaced are
+  // gone. The split said the same thing as the trait bars in a form that read
+  // as a budget being divided, and two of the three scales were measuring the
+  // tone tags, which v3 keeps as scoring flavour and report material rather
+  // than as something the result page has to explain. The energy scale
+  // survives in the data, unrendered, because the head reads its lean off it.
   //
   // It takes a finished block rather than a run, because the delivered page
   // has no run to give it — reports.py stores the same shape on the report
   // and `deliveredHero` hands it straight in.
 
-  function scaleRow(row) {
-    var wrap = elm("div", "pr-scale");
-    wrap.appendChild(elm("span", "pr-scale-pole", row.left));
-    var track = elm("span", "pr-scale-track");
-    track.setAttribute("role", "img");
-    track.setAttribute("aria-label",
-                       row.left + " to " + row.right + " — " + row.at
-                       + " out of 100 toward " + row.right);
-    var dot = elm("i", "pr-scale-dot");
-    dot.style.left = row.at + "%";
-    track.appendChild(dot);
-    wrap.appendChild(track);
-    wrap.appendChild(elm("span", "pr-scale-pole is-right", row.right));
-    return wrap;
-  }
-
-  function splitBar(data) {
-    var wrap = elm("div", "pr-split");
-    var bar = elm("div", "pr-split-bar");
-    bar.setAttribute("role", "img");
-    bar.setAttribute("aria-label", data.split_caption || "");
-    (data.split || []).forEach(function (cell) {
-      var seg = elm("span", "pr-split-seg");
-      seg.style.width = cell.pct + "%";
-      seg.style.background = cell.color || "#4EDDC4";
-      bar.appendChild(seg);
-    });
-    wrap.appendChild(bar);
-    if (data.split_caption) {
-      wrap.appendChild(elm("p", "pr-split-caption", data.split_caption));
-    }
-    return wrap;
-  }
-
   function richHero(badge, data, copy) {
     var card = elm("section", "pr-hero is-rich");
-    var top = elm("div", "pr-hero-top");
-    top.appendChild(badge);
+    // v3 order: the totem first and large, then who that makes them, then the
+    // measure, then the sentence built from their own picks. The badge the
+    // callers still pass is the frame they opened the quiz on; it rides in
+    // the identity row rather than leading the card, because the totem is now
+    // the picture of them and the pick is the evidence for it.
+    card.appendChild(pedestal(data));
+
     var id = elm("div", "pr-hero-id");
     id.appendChild(elm("h1", "pr-subtype", data.subtype));
+    if (data.essence) {
+      id.appendChild(elm("p", "pr-essence", data.essence));
+    }
     if (data.formula) id.appendChild(elm("p", "pr-formula", data.formula));
-    top.appendChild(id);
-    card.appendChild(top);
+    card.appendChild(id);
 
     if (data.rarity_line) {
       card.appendChild(elm("p", "pr-ribbon", data.rarity_line));
     }
+    var story = narrativeBlock(data.narrative);
+    if (story) card.appendChild(story);
+    var bars = traitBars(data);
+    if (bars) card.appendChild(bars);
     // The drawing, directly under the name and the rarity and above the three
     // scales. It was the last thing on the page, below six locked cards, and
     // it is the one part of the card that is a picture of the reader rather
@@ -417,58 +535,54 @@
     // applied in one place is a reposition that drifts.
     var drawing = headBlock(copy || {}, data);
     if (drawing) card.appendChild(drawing);
-    if ((data.scales || []).length) {
-      var scales = elm("div", "pr-scales");
-      data.scales.forEach(function (row) {
-        scales.appendChild(scaleRow(row));
-      });
-      card.appendChild(scales);
-    }
-    if ((data.split || []).length) card.appendChild(splitBar(data));
-    if (data.cross_line) {
-      card.appendChild(elm("hr", "pr-hairline"));
-      card.appendChild(elm("p", "pr-crossline", data.cross_line));
-    }
     return card;
   }
 
-  // --- b3) the head ----------------------------------------------------------
+  // --- b3) the clay head -----------------------------------------------------
   //
   // The one drawing on this page, and the only thing on it that is not a bar.
-  // A profile in outline with the four axes plotted inside it, so the reader
-  // sees the shape of their own answers rather than four more percentages.
   //
-  // Everything it draws comes off the same block the hero card is built from —
-  // `split` for the four axes, the `energy` scale for the lean — so there is
-  // nothing here the delivered page and the PDF cannot also read: the block is
-  // stored on the report while the run still exists, which is why the head
-  // survives a tab that never ran the quiz.
+  // v1 drew the whole thing in SVG: a profile outline in stroke, with the
+  // radar inside its skull. v3 splits it in two. The head is a rendered clay
+  // profile — the same material as every card in the quiz, with a smooth
+  // empty cranium left in it on purpose — and the radar is inlaid on that
+  // empty field: grooves pressed into the clay, a teal glaze poured in the
+  // shape of the reader, beads set at the points.
   //
-  // Geometry is fixed and stated. The silhouette was drawn once, against the
-  // mockup, and the radar is centred inside its skull rather than on the
-  // canvas — the whole point of the drawing is that the shape sits in a head,
-  // and a radar centred on the box would sit in a cheek.
+  // The split is what makes it belong to the funnel. A stroked outline is a
+  // diagram of a head; a photographed clay head with a mark pressed into it
+  // is an object from the same gallery as the shapes they just picked, which
+  // is the whole claim the product makes.
+  //
+  // What did not change is where the numbers come from. Everything drawn
+  // here comes off the same block the hero card is built from — `split` for
+  // the four traits, the `energy` scale for the lean — so the delivered page
+  // and the PDF can draw it from a stored block with no run in the tab.
 
-  var HEAD_PATH = [
-    "M 372 400 C 366 380 358 360 360 336 C 362 318 372 300 382 284",
-    "C 398 254 406 220 404 186 C 400 128 356 84 292 76 C 236 68 178 86 152 128",
-    "C 138 150 131 170 129 192 C 128 198 124 202 123 206 C 126 209 129 210 129 214",
-    "C 127 220 118 236 106 254 C 101 262 96 268 95 271 C 94 275 96 277 100 277",
-    "C 105 278 110 277 111 281 C 111 285 107 287 107 291 C 107 294 112 295 113 298",
-    "C 114 302 110 304 110 308 C 110 312 116 313 117 317 C 118 321 114 323 114 327",
-    "C 114 334 118 342 126 347 C 140 356 158 361 174 363 C 182 364 187 366 189 371",
-    "C 191 375 191 380 190 385"
-  ].join(" ");
+  // The rendered base. A placeholder until v3-B, and referenced by path for
+  // the same reason the totems are: there is nothing to choose.
+  var HEAD_BASE = "/static/galleries/persona/head_base.webp";
 
-  var HEAD_CX = 262;
-  var HEAD_CY = 204;
-  var HEAD_R = 120;
-  var LEAN_ARC = "M 150 66 Q 262 6 374 66";
+  // The overlay's own box. It is square and self-contained — the cranial
+  // field it sits on is positioned by the stylesheet against the image, and
+  // the SVG knows only its own centre. v1's geometry was measured against a
+  // silhouette this file drew itself and could not survive the image
+  // replacing it.
+  var INLAY_SIZE = 240;
+  var HEAD_CX = 120;
+  var HEAD_CY = 120;
+  var HEAD_R = 96;
+  var LEAN_ARC = "M 24 44 Q 120 -6 216 44";
 
-  // Which way each axis points out of the centre, and the glyph the legend
-  // gives it. Up is the axis that starts things and down is the one that holds
-  // ground, which is the only arrangement of these four a reader does not have
-  // to be told.
+  // The clay the grooves are pressed into, and the glaze poured in them.
+  var GROOVE = "#7A5334";
+  var GROOVE_SOFT = "#8E6742";
+  var GLAZE = "#4EDDC4";
+
+  // Which way each trait points out of the centre, and the glyph the legend
+  // gives it. Up is the trait that starts things and down is the one that
+  // holds ground, which is the only arrangement of these four a reader does
+  // not have to be told.
   var HEAD_AXES = [
     { tag: "drive", dx: 0, dy: -1, arrow: "↑" },
     { tag: "prism", dx: 1, dy: 0, arrow: "→" },
@@ -476,10 +590,11 @@
     { tag: "wave", dx: -1, dy: 0, arrow: "←" }
   ];
 
-  // The four axes as 0-100, scaled so the reader's strongest reaches the outer
-  // ring. Shares of a hundred would put every polygon inside the middle circle
-  // and every reader's shape would look like everybody else's; the shape is
-  // the subject here, and the numbers are printed underneath it either way.
+  // The four traits as 0-100, scaled so the reader's strongest reaches the
+  // outer ring. Shares of a hundred would put every polygon inside the middle
+  // circle and every reader's shape would look like everybody else's; the
+  // shape is the subject here, and the numbers are printed underneath it
+  // either way.
   function headValues(data) {
     var by = {};
     (data.split || []).forEach(function (cell) {
@@ -495,112 +610,95 @@
     return out;
   }
 
-  // Where the dot on the arc sits, 0 hard outer and 100 hard inner. The energy
-  // scale is the same measurement the card above already shows, read off the
-  // block by id rather than by position so a config that reorders its scales
-  // moves the dot with them.
+  // Where the bead on the arc sits, 0 hard outer and 100 hard inner. Read off
+  // the block by id rather than by position so a config that reorders its
+  // scales does not silently move it.
   function leanAt(data) {
     var rows = data.scales || [];
     for (var i = 0; i < rows.length; i++) {
-      if (rows[i].id === "energy" && typeof rows[i].at === "number") {
+      if (rows[i] && rows[i].id === "energy") {
         return Math.max(0, Math.min(100, rows[i].at));
       }
     }
     return 50;
   }
 
-  // A point on the lean arc, which is one quadratic curve from (150,66)
-  // through (262,6) to (374,66). Solved rather than measured off the path,
-  // because the same arithmetic has to give the same dot in Python.
   function leanPoint(t) {
     var u = 1 - t;
     return {
-      x: u * u * 150 + 2 * u * t * 262 + t * t * 374,
-      y: u * u * 66 + 2 * u * t * 6 + t * t * 66
+      x: u * u * 24 + 2 * u * t * 120 + t * t * 216,
+      y: u * u * 44 + 2 * u * t * -6 + t * t * 44
     };
   }
 
+  // The inlay. No head in it: the head is the photograph underneath.
   function headSvg(data) {
     var values = headValues(data);
     var svg = svgEl("svg", {
-      viewBox: "0 0 420 410", class: "pr-head-svg", role: "img",
+      viewBox: "0 0 " + INLAY_SIZE + " " + INLAY_SIZE,
+      class: "pr-head-svg", role: "img",
       "aria-label": HEAD_AXES.map(function (row) {
         return (AXIS_NAME[row.tag] || row.tag) + " " + values[row.tag];
       }).join(", ") + " out of 100"
     });
-    var g = svgEl("g", { transform: "translate(-40,0)" });
 
-    // The grid, under the outline. Three rings and two crosshairs, in the
-    // quietest ink on the page: it is a ruler, and a ruler that reads as
-    // drawing would compete with the one line here that is.
-    [40, 80, 120].forEach(function (r) {
-      g.appendChild(svgEl("circle", {
-        cx: HEAD_CX, cy: HEAD_CY, r: r,
-        fill: "none", stroke: "#26333D", "stroke-width": 1
+    // The grid, as grooves pressed into the clay. Warm and darker than the
+    // surface rather than a lighter ruled line: a groove in clay reads as a
+    // shadow, and a light stroke would sit on top of the head like ink.
+    [HEAD_R / 3, HEAD_R * 2 / 3, HEAD_R].forEach(function (r) {
+      svg.appendChild(svgEl("circle", {
+        cx: HEAD_CX, cy: HEAD_CY, r: r.toFixed(1),
+        fill: "none", stroke: GROOVE, "stroke-width": 1.5,
+        "stroke-opacity": 0.55
       }));
     });
     [[HEAD_CX, HEAD_CY - HEAD_R, HEAD_CX, HEAD_CY + HEAD_R],
      [HEAD_CX - HEAD_R, HEAD_CY, HEAD_CX + HEAD_R, HEAD_CY]]
       .forEach(function (line) {
-        g.appendChild(svgEl("line", {
+        svg.appendChild(svgEl("line", {
           x1: line[0], y1: line[1], x2: line[2], y2: line[3],
-          stroke: "#26333D", "stroke-width": 1
+          stroke: GROOVE, "stroke-width": 1.5, "stroke-opacity": 0.55
         }));
       });
 
-    // The outline, over the grid and under the reader's own shape. That order
-    // is the whole illusion: the rings belong to the paper, the polygon
-    // belongs to the person, and the head is the thing between them.
-    g.appendChild(svgEl("path", {
-      d: HEAD_PATH, fill: "none", stroke: "#7E8C96", "stroke-width": 6,
-      "stroke-linecap": "round", "stroke-linejoin": "round"
-    }));
-
+    // The reader's own shape, as glaze poured into the field. Heavier fill
+    // than v1's outline-on-ink: on clay the colour is the mark, and a thin
+    // stroke would read as drawn on rather than run in.
     var points = HEAD_AXES.map(function (row) {
       var r = HEAD_R * (values[row.tag] || 0) / 100;
       return { x: HEAD_CX + row.dx * r, y: HEAD_CY + row.dy * r };
     });
-    g.appendChild(svgEl("polygon", {
+    svg.appendChild(svgEl("polygon", {
       points: points.map(function (p) {
         return p.x.toFixed(1) + "," + p.y.toFixed(1);
       }).join(" "),
-      fill: "#4EDDC4", "fill-opacity": 0.16,
-      stroke: "#4EDDC4", "stroke-width": 2, "stroke-linejoin": "round"
+      fill: GLAZE, "fill-opacity": 0.42,
+      stroke: GLAZE, "stroke-width": 2.5, "stroke-linejoin": "round"
     }));
     points.forEach(function (p) {
-      g.appendChild(svgEl("circle", {
-        cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: 3.5, fill: "#4EDDC4"
+      svg.appendChild(svgEl("circle", {
+        cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: 4, fill: GLAZE
       }));
     });
 
-    // The lean, over the crown. One dashed arc with a lit bead on it: which
-    // way the reader's charge runs is a single number and deserves a single
-    // mark, not a fourth bar.
-    g.appendChild(svgEl("path", {
-      d: LEAN_ARC, fill: "none", stroke: "#3A4750", "stroke-width": 1,
+    // The lean, over the crown. One dashed groove with a lit bead on it:
+    // which way the reader's charge runs is a single number and deserves a
+    // single mark, not a fifth bar.
+    svg.appendChild(svgEl("path", {
+      d: LEAN_ARC, fill: "none", stroke: GROOVE_SOFT, "stroke-width": 1.2,
       "stroke-dasharray": "3 5"
     }));
     var bead = leanPoint(leanAt(data) / 100);
-    g.appendChild(svgEl("circle", {
-      cx: bead.x.toFixed(1), cy: bead.y.toFixed(1), r: 4.5, fill: "#4EDDC4"
+    svg.appendChild(svgEl("circle", {
+      cx: bead.x.toFixed(1), cy: bead.y.toFixed(1), r: 5, fill: GLAZE
     }));
-    var outer = svgEl("text", {
-      x: 136, y: 82, "text-anchor": "end", "font-size": 11, fill: "#8A97A0"
-    });
-    outer.textContent = "outer";
-    g.appendChild(outer);
-    var inner = svgEl("text", {
-      x: 388, y: 82, "text-anchor": "start", "font-size": 11, fill: "#4EDDC4"
-    });
-    inner.textContent = "inner";
-    g.appendChild(inner);
-
-    svg.appendChild(g);
     return svg;
   }
 
   function headLegend(data) {
     var values = headValues(data);
+    var names = {};
+    (data.traits || []).forEach(function (row) { names[row.tag] = row.name; });
     var list = elm("ul", "pr-head-legend");
     HEAD_AXES.forEach(function (row) {
       var cell = elm("li", "pr-head-key");
@@ -608,7 +706,7 @@
       mark.setAttribute("aria-hidden", "true");
       cell.appendChild(mark);
       cell.appendChild(elm("span", "pr-head-name",
-                           AXIS_NAME[row.tag] || row.tag));
+                           names[row.tag] || AXIS_NAME[row.tag] || row.tag));
       cell.appendChild(elm("span", "pr-head-value",
                            String(values[row.tag] || 0)));
       list.appendChild(cell);
@@ -622,7 +720,20 @@
     if (copy.head_title) {
       block.appendChild(elm("p", "pr-head-title", copy.head_title));
     }
-    block.appendChild(headSvg(data));
+    // The base and the inlay in one positioned box. The image carries the
+    // head; the stylesheet puts the overlay on the cranium; neither knows
+    // anything about the other beyond the box they share.
+    var plate = elm("div", "pr-head-plate");
+    var base = document.createElement("img");
+    base.className = "pr-head-base";
+    base.src = HEAD_BASE;
+    base.alt = "";
+    base.decoding = "async";
+    plate.appendChild(base);
+    var field = elm("div", "pr-head-inlay");
+    field.appendChild(headSvg(data));
+    plate.appendChild(field);
+    block.appendChild(plate);
     block.appendChild(headLegend(data));
     if (copy.head_caption) {
       block.appendChild(elm("p", "pr-head-caption", copy.head_caption));
@@ -1113,7 +1224,7 @@
     // it from. Below the hero the two pages differ entirely, which is why the
     // branch is the whole body rather than one node.
     root.appendChild(data
-      ? richHero(glyph(ctx.picks.animal), data, copy)
+      ? richHero(glyph(ctx.picks.now), data, copy)
       : hero(ctx, copy, axes, top));
     var strip = taps(ctx, copy);
     if (strip) root.appendChild(strip);
@@ -1328,7 +1439,7 @@
   function deliveredHero(ctx, copy) {
     var card = elm("section", "pr-hero");
     var hero_visuals = (ctx.visuals && ctx.visuals.hero) || {};
-    var pick = ctx.images[hero_visuals.glyph || animalImageId(ctx)];
+    var pick = ctx.images[hero_visuals.glyph || shapeImageId(ctx)];
     // The same card as before the money, off the block reports.py measured
     // while the run still existed and stored on the report. Without one the
     // plain delivered card is drawn instead, which is the page those readers
@@ -1346,10 +1457,10 @@
       }
       return rich;
     }
-    var animal = animalOf(ctx);
+    var shape = shapeOf(ctx);
     card.appendChild(glyph(pick));
-    card.appendChild(elm("h1", "pr-animal", animal || ctx.style.name));
-    if (animal) {
+    card.appendChild(elm("h1", "pr-animal", shape || ctx.style.name));
+    if (shape) {
       card.appendChild(elm("p", "pr-cross", "× " + ctx.style.name));
     }
     if (ctx.style.blurb) {
@@ -1384,26 +1495,33 @@
     return row;
   }
 
-  // What the stored report calls the reader's animal.
+  // What the stored report calls the shape the reader opened on.
   //
   // engine.js's delivered context carries the slot under the name the first
   // funnel to need it gave it, `sign`, and that name is engine.js's business
-  // rather than this funnel's: the word on this page is animal, and both are
-  // read here so the module works against the contract as it stands and
-  // against the day it grows the clearer name.
-  function animalOf(ctx) {
-    return (ctx && (ctx.animal || ctx.sign)) || "";
+  // rather than this funnel's: the word on this page is the shape, and all
+  // three spellings are read here so the module works against the contract as
+  // it stands, against the animal-shaped report v1 wrote, and against the day
+  // engine.js grows the clearer name.
+  function shapeOf(ctx) {
+    return (ctx && (ctx.shape || ctx.animal || ctx.sign)) || "";
   }
 
-  // The animal's own frame, found by name. The stored report keeps the animal
-  // as a label rather than an id, because that is what the mail and the PDF
-  // need.
-  function animalImageId(ctx) {
-    var want = animalOf(ctx).toLowerCase();
+  // That shape's own frame, found by label. The stored report keeps it as a
+  // label rather than an id, because that is what the mail and the PDF need,
+  // so the label is matched against the step's own images instead of being
+  // pasted into an id — v3's ids are `now_<slug>` and a label like "Lit up"
+  // does not spell one.
+  function shapeImageId(ctx) {
+    var want = shapeOf(ctx).toLowerCase();
     if (!want) return "";
     var ids = Object.keys(ctx.images);
     for (var i = 0; i < ids.length; i++) {
-      if (ids[i] === "animal_" + want) return ids[i];
+      var image = ctx.images[ids[i]];
+      if (ids[i].indexOf("now_") === 0
+          && image && String(image.label || "").toLowerCase() === want) {
+        return ids[i];
+      }
     }
     return "";
   }

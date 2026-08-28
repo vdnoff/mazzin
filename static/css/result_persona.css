@@ -1,39 +1,53 @@
-/* The persona result page.
+/* The persona result page — the gallery at dusk.
  *
  * A conscious fork of static/css/result_zodiac.css: the same page, in this
- * funnel's own ink. Loaded only by a funnel whose config names it, and every
- * rule scoped under `.result-module` with a `pr-` prefix, so the two result
- * stylesheets cannot reach each other's pages even when a browser has both in
- * cache. mazzin.css is untouched: kitchen's result and zodiac's are the same
- * documents they were.
+ * funnel's own material. Loaded only by a funnel whose config names it, and
+ * every rule scoped under `.result-module` with a `pr-` prefix, so the two
+ * result stylesheets cannot reach each other's pages even when a browser has
+ * both in cache. mazzin.css is untouched here: kitchen's result and zodiac's
+ * are the same documents they were.
  *
- * The palette is the gallery's — #101820 ink through to the electric teal the
- * frames are lit with — because the page and the artwork on it should look
- * like one thing.
+ * v3 turns the page warm and keeps it dark, which sounds like a contradiction
+ * and is the whole design. The quiz is a gallery in daylight — cream sweep,
+ * clay forms, the theme block in mazzin.css. This is the same room after
+ * hours: a deep warm umbra ground, the reader's own forms lit on it, and the
+ * teal doing what it did on the cards, marking the one place where the
+ * meaning is. The ink-navy this replaces was a different room.
+ *
+ * So the palette has no cool greys in it. Every surface, line and muted text
+ * colour is a warm neutral, and the teal is the only cool thing on the page —
+ * which is what makes it read as a signal rather than as a colour scheme.
  */
 
 /* The ground behind the page as well as under it. The module full-bleeds its
    own width, but the shell's padding sits above and below it — and on the
    delivered page, reached from a link in an email, the analysing fade never
-   ran, so the body is still the quiz's white. This stylesheet only loads for
-   a funnel that asked for it, so naming the colour here is naming it once. */
+   ran, so the body is still the quiz's cream. This stylesheet only loads for
+   a funnel that asked for it, so naming the colour here is naming it once.
+
+   The value is the config's `analyzing_fade_to`, to the digit: the fade lands
+   the browser on this exact colour and then this rule holds it there. Two
+   values a shade apart would show as a step at the end of the wait. */
 body:has(.result-module) {
-  background-color: #101820;
+  background-color: #241A10;
 }
 
 .result-module {
-  --pr-ink: #101820;
-  --pr-panel: #16202A;
-  --pr-panel-2: #1C2833;
-  --pr-line: rgba(78, 221, 196, 0.20);
+  --pr-umbra: #241A10;
+  --pr-slab: #33251A;
+  --pr-slab-2: #3E2D20;
+  --pr-line: rgba(201, 138, 62, 0.26);
   --pr-teal: #4EDDC4;
-  --pr-text: #E8EFF0;
-  --pr-muted: #A6B6BC;
-  /* One tier below --pr-muted and still 5.6:1 on the panel ink, which is what
-     a body-sized line needs. It is the colour of every teaser, the tap
-     caption and the trust row, so a grey chosen for looks rather than for
-     contrast would be most of the small type on the page. */
-  --pr-faint: #85979E;
+  --pr-teal-soft: rgba(78, 221, 196, 0.16);
+  --pr-clay: #B4643C;
+  --pr-sand: #D9BE95;
+  --pr-text: #F3E3CC;
+  --pr-muted: #C2AB90;
+  /* One tier below --pr-muted and still 5.4:1 on the slab, which is what a
+     body-sized line needs. It is the colour of every teaser, the tap caption
+     and the trust row, so a neutral chosen for looks rather than for contrast
+     would be most of the small type on the page. */
+  --pr-faint: #A18F79;
 
   /* Full bleed, exactly. body carries `padding: 0 18px`, so the pull has to
      be that number and not a rounded one — at -20px the page scrolls two
@@ -41,11 +55,12 @@ body:has(.result-module) {
   margin: 0 -18px;
   padding: 26px 18px 40px;
   background:
-    radial-gradient(120% 60% at 50% 0%, #17272E 0%, rgba(16, 24, 32, 0) 70%),
-    var(--pr-ink);
+    radial-gradient(120% 60% at 50% 0%, #3A2A1B 0%, rgba(36, 26, 16, 0) 70%),
+    var(--pr-umbra);
   color: var(--pr-text);
   text-align: left;
 }
+
 
 /* --- a) kicker -------------------------------------------------------------- */
 
@@ -64,8 +79,8 @@ body:has(.result-module) {
   padding: 22px 20px 24px;
   border: 1px solid var(--pr-line);
   border-radius: 20px;
-  background: linear-gradient(180deg, var(--pr-panel-2) 0%,
-                              var(--pr-panel) 100%);
+  background: linear-gradient(180deg, var(--pr-slab-2) 0%,
+                              var(--pr-slab) 100%);
   text-align: center;
 }
 
@@ -127,24 +142,51 @@ body:has(.result-module) {
 
 .pr-hero.is-rich { padding: 20px 18px 22px; text-align: left; }
 
-.pr-hero-top {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+/* The totem on its pedestal, under a spotlight. The first thing on the page
+   and the largest: it is the picture of the reader, and everything under it
+   is the reading of it. The light is a soft cone from above rather than a
+   glow around the art, so the form reads as an object standing in the room
+   the quiz was walked through. */
+.pr-totem {
+  position: relative;
+  margin: 0 0 18px;
+  padding: 18px 0 0;
+  text-align: center;
 }
 
-/* The disc, smaller than the centred one it replaces and no longer floated
-   into the middle of the card. `flex: none` because a long subtype name will
-   otherwise take the disc's width off it. */
-.pr-hero.is-rich .pr-glyph {
-  flex: none;
-  width: 62px;
-  height: 62px;
-  margin: 0;
-  box-shadow: 0 0 0 4px rgba(78, 221, 196, 0.08);
+.pr-totem-light {
+  position: absolute;
+  inset: 0 0 22px;
+  border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
+  background: radial-gradient(70% 58% at 50% 12%,
+    rgba(242, 192, 112, 0.20) 0%, rgba(242, 192, 112, 0) 72%);
+  pointer-events: none;
 }
 
-.pr-hero-id { min-width: 0; }
+.pr-totem-art {
+  position: relative;
+  display: block;
+  width: 148px;
+  height: 197px;
+  margin: 0 auto;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+/* The plinth the form stands on: one warm ellipse, darker than the slab, read
+   as the shadow the spotlight casts rather than as a shape of its own. */
+.pr-totem-plinth {
+  position: relative;
+  display: block;
+  width: 168px;
+  height: 14px;
+  margin: -4px auto 0;
+  border-radius: 50%;
+  background: radial-gradient(closest-side,
+    rgba(20, 13, 7, 0.55) 0%, rgba(20, 13, 7, 0) 100%);
+}
+
+.pr-hero-id { min-width: 0; text-align: center; }
 
 .pr-subtype {
   margin: 0;
@@ -157,7 +199,7 @@ body:has(.result-module) {
 }
 
 .pr-formula {
-  margin: 5px 0 0;
+  margin: 8px 0 0;
   font-size: 12px;
   line-height: 1.4;
   font-weight: 600;
@@ -166,8 +208,10 @@ body:has(.result-module) {
 }
 
 /* The rarity, and the only teal fill on the page above the pay button. It is
-   a measured number — the walk model plays the funnel a couple of hundred
-   thousand times to get it — so it is allowed to look like a claim. */
+   a measured number — the suite walks every path the config allows to get it,
+   four million of them — so it is allowed to look like a claim. The dark text
+   on it is the page's own ground, so the chip reads as umbra showing through
+   the teal rather than as a second dark colour. */
 .pr-ribbon {
   display: inline-block;
   margin: 16px 0 0;
@@ -177,90 +221,88 @@ body:has(.result-module) {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: #06231F;
+  color: var(--pr-umbra);
   background: linear-gradient(180deg, #7DF0DB 0%, var(--pr-teal) 100%);
 }
 
-.pr-scales { margin: 18px 0 0; }
+/* The essence: one line under the name, and the only line on the card in the
+   reader's second person. It is set in the sand rather than the full text
+   colour so the name above it stays the loudest thing in the block. */
+.pr-essence {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--pr-sand);
+}
 
-.pr-scale {
+/* The sentence built from what they actually picked. Their own labels are the
+   only italics on the page, and they are teal, because the claim the funnel
+   makes is that those picks unlocked this — so the page has to show its
+   working in the reader's own words. */
+.pr-narrative {
+  margin: 16px 0 0;
+  padding: 14px 14px 15px;
+  border-left: 2px solid var(--pr-teal);
+  border-radius: 0 12px 12px 0;
+  background: rgba(78, 221, 196, 0.06);
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: left;
+  color: var(--pr-text);
+}
+
+.pr-quote {
+  font-style: italic;
+  color: var(--pr-teal);
+}
+
+/* Four bars, one per trait. A clay track with a teal fill: the same two
+   materials the head below is made of, so the numbers and the drawing read as
+   one instrument rather than as a chart beside a picture. */
+.pr-traits { margin: 20px 0 0; }
+
+.pr-trait {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   margin: 0 0 10px;
 }
 
-.pr-scale:last-child { margin-bottom: 0; }
+.pr-trait:last-child { margin-bottom: 0; }
 
-/* Both poles are the same width, so three stacked scales line their tracks up
-   with each other and the dots read as one instrument rather than three. */
-.pr-scale-pole {
-  flex: none;
-  width: 52px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.pr-trait-name {
+  flex: 0 0 84px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: left;
+  color: var(--pr-muted);
+}
+
+.pr-trait-track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(180, 100, 60, 0.30);
+  overflow: hidden;
+}
+
+.pr-trait-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2E9E8C 0%, var(--pr-teal) 100%);
+}
+
+.pr-trait-value {
+  flex: 0 0 34px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
   color: var(--pr-faint);
 }
 
-.pr-scale-pole.is-right { text-align: right; }
-
-.pr-scale-track {
-  position: relative;
-  flex: 1 1 auto;
-  height: 3px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.10);
-}
-
-.pr-scale-dot {
-  position: absolute;
-  top: 50%;
-  width: 11px;
-  height: 11px;
-  margin: -5.5px 0 0 -5.5px;
-  border-radius: 50%;
-  background: var(--pr-teal);
-  box-shadow: 0 0 0 3px rgba(78, 221, 196, 0.16);
-}
-
-/* The four axes as one bar rather than four columns. The gap above it is
-   wider than the one between the scales, because at 18px the bar reads as a
-   fourth scale — the one LIGHT and DEEP were labelling — rather than as the
-   next thing down. */
-.pr-split { margin: 24px 0 0; }
-
-.pr-split-bar {
-  display: flex;
-  height: 9px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.pr-split-seg { display: block; height: 100%; }
-
-.pr-split-caption {
-  margin: 8px 0 0;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--pr-muted);
-}
-
-.pr-hairline {
-  height: 0;
-  margin: 16px 0 0;
-  border: 0;
-  border-top: 1px solid var(--pr-line);
-}
-
-.pr-crossline {
-  margin: 14px 0 0;
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--pr-muted);
-}
 
 /* --- b3) the head -------------------------------------------------------------
 
@@ -270,14 +312,20 @@ body:has(.result-module) {
 
    Every colour inside the SVG is set on the element, not from here — the same
    drawing has to be reproducible server-side for the PDF — so this rule owns
-   the box, the legend and nothing that is drawn. */
+   the box, the legend and nothing that is drawn.
+
+   v3 makes the head two layers. The base is a rendered clay profile with a
+   smooth empty cranium left in it; the SVG is the inlay pressed into that
+   field. This file positions the inlay against the image and knows nothing
+   about either — which is what lets v3-B replace the render without touching
+   the drawing, and lets the drawing keep being generated from tallies. */
 
 .pr-head {
   margin: 26px 0 0;
   padding: 18px 16px 16px;
   border: 1px solid var(--pr-line);
   border-radius: 20px;
-  background: var(--pr-panel);
+  background: var(--pr-slab);
 }
 
 .pr-head-title {
@@ -289,15 +337,44 @@ body:has(.result-module) {
   color: var(--pr-faint);
 }
 
+/* The two layers, in one box that owns the aspect. The plate is square
+   because the render is, and everything inside it is positioned in percent of
+   that square — so the inlay stays on the cranium at every width without a
+   media query, and moves with the art if v3-B reframes it. */
+.pr-head-plate {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  aspect-ratio: 1 / 1;
+}
+
+.pr-head-base {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  object-fit: cover;
+}
+
+/* The cranial field. These four numbers are the whole coupling between this
+   sheet and the render: the smooth empty zone the head prompt asks for, as a
+   share of the frame. If v3-B moves the crown, this is what moves with it. */
+.pr-head-inlay {
+  position: absolute;
+  top: 13%;
+  left: 26%;
+  width: 48%;
+  height: 48%;
+}
+
 .pr-head-svg {
   display: block;
   width: 100%;
-  height: auto;
-  /* The drawing is 420 wide and the card is narrower than that on a small
-     phone; `height: auto` on a viewBox scales it rather than cropping it, and
-     the max keeps it from becoming the whole screen on a large one. */
-  max-width: 360px;
-  margin: 0 auto;
+  height: 100%;
+  /* The inlay is a square viewBox filling its field; the field is what has
+     been positioned, so the drawing simply fills it. */
+  overflow: visible;
 }
 
 /* Two by two rather than a row of four: at a quarter of a phone's width the
@@ -344,11 +421,10 @@ body:has(.result-module) {
   color: var(--pr-faint);
 }
 
-/* The head sits inside the profile card now, between the rarity ribbon and
-   the three scales, so it loses the chrome it needed as a panel of its own: a
-   bordered box inside a bordered box reads as a mistake. What it keeps is the
-   rule above and below, which is what makes it a band of the card rather than
-   something floating in it.
+/* The head sits inside the profile card, under the trait bars, so it loses
+   the chrome it needed as a panel of its own: a bordered box inside a
+   bordered box reads as a mistake. What it keeps is the rule above it, which
+   is what makes it a band of the card rather than something floating in it.
 
    The standalone rule above is deliberately left in place. This file and
    result_persona.js sit behind a CDN and can be a version apart; an older
@@ -367,13 +443,11 @@ body:has(.result-module) {
 
 .pr-hero .pr-head-caption { margin-bottom: 2px; }
 
-/* And the scales that now follow it get the same separation the split bar
-   already had, so the card reads as three bands rather than as a drawing with
-   loose rows under it. */
-.pr-hero .pr-head + .pr-scales {
+/* The head is the last band of the card in v3, so nothing follows it to be
+   separated from. The trait bars above it take the rule instead. */
+.pr-hero .pr-traits + .pr-head {
   margin-top: 18px;
   padding-top: 16px;
-  border-top: 1px solid var(--pr-line);
 }
 
 /* --- c) read from your taps -------------------------------------------------- */
@@ -458,7 +532,7 @@ body:has(.result-module) {
 }
 
 .pr-node.is-open .pr-node-mark {
-  color: var(--pr-ink);
+  color: var(--pr-umbra);
   background: var(--pr-teal);
   box-shadow: 0 0 0 4px rgba(78, 221, 196, 0.14);
 }
@@ -468,7 +542,7 @@ body:has(.result-module) {
   align-items: center;
   justify-content: center;
   color: var(--pr-faint);
-  background: var(--pr-panel-2);
+  background: var(--pr-slab-2);
   border: 1px solid rgba(133, 151, 158, 0.35);
 }
 
@@ -616,7 +690,7 @@ body:has(.result-module) {
   padding: 13px 40px 13px 13px;
   border: 1px solid var(--pr-line);
   border-radius: 14px;
-  background: var(--pr-panel);
+  background: var(--pr-slab);
 }
 
 .pr-card:last-child { margin-bottom: 0; }
@@ -625,8 +699,8 @@ body:has(.result-module) {
    brighter edge and a lit icon, on the card that is already first. */
 .pr-card.is-lead {
   border-color: rgba(78, 221, 196, 0.55);
-  background: linear-gradient(180deg, var(--pr-panel-2) 0%,
-                              var(--pr-panel) 100%);
+  background: linear-gradient(180deg, var(--pr-slab-2) 0%,
+                              var(--pr-slab) 100%);
 }
 
 .pr-card-icon { flex: none; width: 20px; height: 20px; margin-top: 1px; }
@@ -679,7 +753,7 @@ body:has(.result-module) {
   padding: 22px 18px 18px;
   border: 1px solid var(--pr-line);
   border-radius: 20px;
-  background: var(--pr-panel);
+  background: var(--pr-slab);
   text-align: center;
 }
 
@@ -877,7 +951,7 @@ body:has(.result-module) {
   margin: -26px -18px 20px;
   padding: 11px 18px;
   border-bottom: 1px solid var(--pr-line);
-  background: var(--pr-panel);
+  background: var(--pr-slab);
   font-size: 13px;
   line-height: 1.4;
   color: var(--pr-muted);
@@ -960,7 +1034,7 @@ body:has(.result-module) {
   border: 1px solid rgba(78, 221, 196, 0.28);
   border-radius: 14px;
   overflow: hidden;
-  background: var(--pr-panel);
+  background: var(--pr-slab);
 }
 
 .pr-shot img {

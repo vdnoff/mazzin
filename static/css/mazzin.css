@@ -135,51 +135,63 @@ body.theme-zodiac #mid-cta {
 
 /* The personality funnel's own colours, on exactly the same terms as the
    celestial block above: only the two things a reader reads as progress, and
-   the screen between steps. The ink and the teal are result_persona.css's, to
-   the value, so the quiz and the reading are one product rather than two that
-   happen to be linked. */
-body.theme-persona .pip { background: rgba(78, 221, 196, 0.24); }
-body.theme-persona .pip.is-done { background: #4EDDC4; }
+   the screen between steps.
 
-/* The selected badge on the twelve-card identity grid, for the same reason
-   the celestial one takes it: the default is the rust every other funnel
-   confirms in, and on an ink-and-teal card that is the one colour on screen
-   belonging to somebody else. */
-body.theme-persona .cards.is-grid12 .card.is-chosen .card-name {
-  color: #06231F;
-  background: #4EDDC4;
+   v3 turns this warm. The quiz is now a gallery in daylight — cream and soft
+   peach, clay forms on a lit ground — and the reading it ends on is that same
+   gallery at dusk. The two used to be one ink page followed by another; the
+   change is what makes the analysing wait mean something, because the light
+   goes down across it rather than the site changing.
+
+   The teal survives the move and changes value to do it. #4EDDC4 is the
+   result page's teal on an umbra ground, where it is the brightest thing on
+   screen; the same teal on cream is barely a colour and fails contrast as
+   type. So the chrome runs on a deep teal that reads as the same hue at the
+   density cream needs, and the bright one stays where it belongs — on the
+   dark screens, and on the clay. */
+body.theme-persona .pip { background: rgba(15, 111, 98, 0.20); }
+body.theme-persona .pip.is-done { background: #0F6F62; }
+
+/* The selected badge on a card grid. The default is the rust every other
+   funnel confirms in, which on a cream-and-clay card is the one colour on
+   screen belonging to somebody else. */
+body.theme-persona .cards .card.is-chosen .card-name {
+  color: #FBF3E7;
+  background: #0F6F62;
 }
 
-body.theme-persona .analyzing-bar { background: rgba(78, 221, 196, 0.20); }
+body.theme-persona .analyzing-bar { background: rgba(15, 111, 98, 0.16); }
 body.theme-persona .analyzing-bar-fill {
   background: linear-gradient(90deg,
-    rgba(78, 221, 196, 0.20) 0%, #4EDDC4 45%, #4EDDC4 55%,
-    rgba(78, 221, 196, 0.20) 100%);
+    rgba(15, 111, 98, 0.18) 0%, #0F6F62 45%, #0F6F62 55%,
+    rgba(15, 111, 98, 0.18) 100%);
 }
 
-/* The beat between steps, on the ground the result page ends on. */
+/* The beat between steps, on the warm ground the quiz is lit by — a soft
+   peach rise off a cream field, which is the studio sweep the sculptures are
+   photographed against. */
 body.theme-persona #screen-interstitial.is-active {
   background:
-    radial-gradient(120% 55% at 50% 0%, #17272E 0%, rgba(16, 24, 32, 0) 70%),
-    #101820;
-  color: #E8EFF0;
+    radial-gradient(120% 55% at 50% 0%, #F7E2CC 0%, rgba(251, 243, 231, 0) 70%),
+    #FBF3E7;
+  color: #2B1E12;
 }
 
-body.theme-persona .mid-kicker { color: #4EDDC4; }
-body.theme-persona .mid-line { color: #E8EFF0; }
+body.theme-persona .mid-kicker { color: #0F6F62; }
+body.theme-persona .mid-line { color: #2B1E12; }
 body.theme-persona .mid-sub,
 body.theme-persona .mid-next,
-body.theme-persona .mid-working { color: #A6B6BC; }
-body.theme-persona .mid-progress-label { color: #85979E; }
+body.theme-persona .mid-working { color: #7A6552; }
+body.theme-persona .mid-progress-label { color: #93806D; }
 
 body.theme-persona .mid-spinner {
-  border-color: rgba(78, 221, 196, 0.28);
-  border-top-color: #4EDDC4;
+  border-color: rgba(15, 111, 98, 0.24);
+  border-top-color: #0F6F62;
 }
 
 /* The one thing that moves on a self-advancing beat, in the teal the funnel
-   ends on. The track is that teal at a sixth, so the rule reads as a distance
-   covered rather than as a bar sitting on the page.
+   carries throughout. The track is that teal at a sixth, so the rule reads as
+   a distance covered rather than as a bar sitting on the page.
 
    Set through the tokens the accent already reads — `--accent` and
    `--accent-soft` — rather than by restating the backgrounds on `.mid-accent`
@@ -191,26 +203,28 @@ body.theme-persona .mid-spinner {
    which a second `.mid-accent` rule would trip even though it is scoped to a
    body class no other funnel wears.
 
-   Scoped to the interstitial screen and no further, for the same reason the
-   celestial block gives: repainting `--accent` on the whole body would teal
-   the hint dot and the reaction chip on the white quiz cards too, and teal on
-   white is a contrast failure. Inside this screen the ground is ink. */
+   Scoped to the interstitial screen and no further. The reason has survived
+   the repaint and inverted: the quiz cards are lighter than this screen now,
+   and a token repainted on the whole body would put the deep teal on the hint
+   dot and the reaction chip where the base rust is already correct against
+   the cards' own warm white. */
 body.theme-persona #screen-interstitial {
-  --accent: #4EDDC4;
-  --accent-soft: rgba(78, 221, 196, 0.16);
+  --accent: #0F6F62;
+  --accent-soft: rgba(15, 111, 98, 0.14);
 }
 
-/* Their own frames, on the funnel's own ground. */
+/* Their own frames, on the funnel's own ground. A warm hairline and a paler
+   inset than the sweep, so a tapped frame sits forward of it. */
 body.theme-persona .mid-echo-cell,
 body.theme-persona .analyzing-cell {
-  border-color: rgba(78, 221, 196, 0.30);
-  background: rgba(16, 24, 32, 0.55);
+  border-color: rgba(15, 111, 98, 0.26);
+  background: rgba(255, 252, 246, 0.72);
 }
 
 body.theme-persona #screen-interstitial .cta,
 body.theme-persona #mid-cta {
-  color: #06231F;
-  background: linear-gradient(180deg, #7DF0DB 0%, #4EDDC4 100%);
+  color: #FBF3E7;
+  background: linear-gradient(180deg, #14907F 0%, #0F6F62 100%);
 }
 
 /* The arrival. The quiz is a light page and the reading is a dark one, and
