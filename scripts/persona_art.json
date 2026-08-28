@@ -154,12 +154,12 @@
       "size": "800x800"
     },
     "hour_after_dark": {
-      "bytes": 16626,
+      "bytes": 12760,
       "cost_usd": 0.063,
       "kind": "quiz",
-      "note": "luma 123.7 sd 70.3 sat 129.2",
+      "note": "luma 134.4 sd 70.0 sat 115.4",
       "recipe_sha": "6f110adde84d1ddb175bf58c86570e48e87147e94abe22a550bc640ba7828b9d",
-      "sha256": "e0f8bb8977f395f11c8b0058ecccce144413d8cf71f6a1f491dba776097e2335",
+      "sha256": "c36605a6af41325aae22552cf59e1096d4fe0f4fb6859f518b52b129fdcde4ad",
       "size": "600x800"
     },
     "hour_first_light": {
