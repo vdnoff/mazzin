@@ -447,3 +447,6 @@ bottom.
 
 ## 2026-08-28 — claude/persona-tile-presentation
 - persona: full-width label bar + tall pair art
+
+## 2026-08-28 — claude/zodiac30-summer-sale
+- zodiac30: summer sale  until Aug 31
