@@ -1,6 +1,22 @@
 #!/usr/bin/env python3
 """Checks over scripts/gen_persona_v3_samples.py — the v3 style sampler.
 
+Two candidate styles now: the flat-vector set the owner first reviewed, and
+the soft-3D clay direction they picked out of that review. They share the
+eight scenes, the geometry, the crop and the safe-area rule, and differ in
+their prefix, their negatives and their id prefix — so most of what is
+asserted below is asserted twice, once per style, and the interesting checks
+are the ones about the seam between them:
+
+  - the vector prompts are frozen against a digest, because those eight frames
+    are on disk and were reviewed as they stand;
+  - clay does not inherit the vector ban on "3D render", which is the exact
+    thing it is asking for;
+  - clay ids carry a prefix so both sets share one directory without
+    collision, and vector ids carry none, because renaming the reviewed set
+    would orphan it;
+  - clay's colour floor is its own lower number, not the vector floor moved.
+
 The sampler is a proposal, not a surface. It draws eight frames in the bright
 quiz style the owner asked to see before any config rewrite, writes them to a
 directory nothing points at, and is judged by a human looking at a phone. So
@@ -20,6 +36,7 @@ No database, no network, no key, no Pillow. The sampler is imported and its
 prompt assembly and sanity floor are exercised directly; the draw itself is
 never reached, and a check that would have reached it fails instead.
 """
+import hashlib
 import importlib.util
 import io
 import os
@@ -67,12 +84,12 @@ check("  and it does not import gen_persona",
       and "from gen_persona" not in source)
 
 
-print("\n--- the batch ---")
+print("\n--- the vector batch ---")
 WANT = ["s_morning_run", "s_morning_slow", "s_battery_home",
         "s_battery_people", "s_drain_meeting", "s_bag_notebook",
         "s_weather_fog", "s_character_cartographer"]
 
-plan = v3.samples()
+plan = v3.samples("vector")
 ids = [f["id"] for f in plan]
 check("eight samples", len(plan) == 8, str(len(plan)))
 check("the eight ids that were asked for, in order", ids == WANT, str(ids))
@@ -99,18 +116,18 @@ for sample_id, words in SUBJECT.items():
           str(missing))
 
 
-print("\n--- every prompt carries the v3 identity ---")
+print("\n--- every vector prompt carries the flat-vector identity ---")
 for sample_id, text in by_id.items():
     check("  %s opens on the shared style prefix" % sample_id,
-          text.startswith(v3.STYLE))
+          text.startswith(v3.VECTOR_STYLE))
     check("  %s carries the safe-area rule" % sample_id,
           v3.SAFE_AREA in text)
     check("  %s ends on the shared negatives" % sample_id,
-          text.endswith(v3.NEGATIVE))
+          text.endswith(v3.VECTOR_NEGATIVE))
     check("  %s asks for the teal accent thread" % sample_id,
           "#4EDDC4" in text)
 
-low = v3.STYLE.lower()
+low = v3.VECTOR_STYLE.lower()
 for word in ["flat", "vector", "warm", "cream", "coral", "amber",
              "leaf green", "phone-tile"]:
     check("  style says '%s'" % word, word in low)
@@ -132,10 +149,17 @@ check("demands a whole, unclipped subject",
 check("says the crop happens twice",
       "centre-cropped" in rule and "again" in rule)
 check("composes for a vertical card", "vertical card" in rule)
-# Stated once and shared, not pasted per scene: a seventy-frame redraw is
-# where a per-prompt copy of this rule drifts.
+# Stated once and shared, not pasted per scene and not once per style: a
+# seventy-frame redraw is where a copy of this rule drifts, and the crop it is
+# written against belongs to the pipeline, not to the material.
 check("it lives in one shared constant",
       source.count("Composition for a vertical card") == 1)
+check("  and both styles get that same constant, verbatim",
+      all(v3.SAFE_AREA in f["prompt"]
+          for st in v3.STYLES for f in v3.samples(st)))
+for st in sorted(v3.STYLES):
+    check("  exactly once in every %s prompt" % st,
+          all(f["prompt"].count(v3.SAFE_AREA) == 1 for f in v3.samples(st)))
 
 
 print("\n--- and none of the dark gallery's vocabulary ---")
@@ -158,6 +182,169 @@ for sample_id, text in by_id.items():
 joined = " ".join(by_id.values()).lower()
 check("faces are not banned outright",
       "no human faces" not in joined and "no faces" not in joined)
+
+
+print("\n--- the flat-vector set is frozen ---")
+# The eight vector frames were reviewed as they stand and are on disk. A
+# change to their prompt text would make the committed set and the script
+# disagree about what the set is, silently — the files would still be there
+# and would no longer be what the script draws. So all eight are pinned to a
+# digest, and adding a style is not allowed to move one byte of them.
+#
+# If a vector prompt is ever genuinely meant to change, this digest is the
+# thing to update, deliberately, in the same commit as the redraw.
+VECTOR_DIGEST = ("bde9d1bd1610f68ba21922107ee4f8f7715"
+                 "d0b0f4143c3e46fe8b1d26baa6870")
+vector = {f["id"]: f["prompt"] for f in v3.samples("vector")}
+joined = "\n\x00\n".join(vector[k] for k in sorted(vector))
+actual = hashlib.sha256(joined.encode("utf-8")).hexdigest()
+check("all eight vector prompts are byte-for-byte what was reviewed",
+      actual == VECTOR_DIGEST, actual)
+check("  and the default style is still vector",
+      v3.DEFAULT_STYLE == "vector"
+      and [f["id"] for f in v3.samples()] == WANT)
+check("  so the vector ids carry no prefix",
+      v3.STYLES["vector"]["prefix"] == "")
+
+
+print("\n--- the clay batch ---")
+check("both styles exist and no more", sorted(v3.STYLES) == ["clay", "vector"],
+      str(sorted(v3.STYLES)))
+
+clay_plan = v3.samples("clay")
+clay_ids = [f["id"] for f in clay_plan]
+check("eight clay samples", len(clay_plan) == 8, str(len(clay_plan)))
+check("the same eight scenes, in the same order",
+      [f["base_id"] for f in clay_plan] == WANT, str(clay_ids))
+check("every clay id carries the clay_ prefix",
+      clay_ids == ["clay_" + i for i in WANT], str(clay_ids))
+check("  so nothing collides with the vector set on disk",
+      not (set(clay_ids) & set(vector)))
+check("  and both sets share one directory",
+      all(f["size"] == v3.FRAME and f["api_size"] == v3.API_PORTRAIT
+          for f in clay_plan))
+
+clay_by_id = {f["id"]: f["prompt"] for f in clay_plan}
+for base_id, words in SUBJECT.items():
+    text = clay_by_id["clay_" + base_id].lower()
+    missing = [w for w in words if w not in text]
+    check("  clay_%s is the same picture as its twin" % base_id, not missing,
+          str(missing))
+
+
+print("\n--- the clay prompts carry the clay identity ---")
+for sample_id, text in clay_by_id.items():
+    check("  %s opens on the clay prefix" % sample_id,
+          text.startswith(v3.CLAY_STYLE))
+    check("  %s carries the safe-area rule" % sample_id,
+          v3.SAFE_AREA in text)
+    check("  %s ends on the clay negatives" % sample_id,
+          text.endswith(v3.CLAY_NEGATIVE))
+    check("  %s asks for the teal accent thread" % sample_id,
+          "#4EDDC4" in text)
+    check("  %s is not wearing the vector prefix" % sample_id,
+          v3.VECTOR_STYLE not in text and v3.VECTOR_NEGATIVE not in text)
+
+clay_low = v3.CLAY_STYLE.lower()
+for word in ["soft 3d", "clay", "matte", "rounded", "studio lighting",
+             "soft diffused shadows", "depth-of-field", "cream",
+             "peach", "phone-tile"]:
+    check("  clay style says '%s'" % word, word in clay_low)
+check("  it asks for a premium app aesthetic",
+      "premium modern app aesthetic" in clay_low)
+check("  it says rendered, not sculpted by hand",
+      "rendered, not sculpted by hand" in clay_low)
+check("  it refuses a clinical white ground", "pure white" in clay_low)
+check("  it allows moulded characters with minimal faces",
+      "moulded in clay" in clay_low and "dot eyes" in clay_low)
+check("  and refuses realistic and childish in the same breath",
+      "never realistic and never childish" in clay_low)
+
+
+print("\n--- the guardrails that keep clay off claymation ---")
+# The failure mode this brief is defined against. Ask a model for clay with no
+# guardrail and it draws Aardman: stop-motion, thumbprints, a nursery. That
+# reads cheaper than the flat set, not more premium, so each refusal is named
+# rather than left to the positive prompt to imply.
+clay_neg = v3.CLAY_NEGATIVE.lower()
+for word in ["claymation", "stop-motion", "plasticine", "aardman",
+             "fingerprints", "thumbprints", "childish", "toy-like",
+             "nursery"]:
+    check("  clay negatives refuse '%s'" % word, word in clay_neg)
+check("  and refuse photorealism and real faces",
+      "no photorealism" in clay_neg
+      and "no realistic detailed faces" in clay_neg)
+
+# The one line clay must NOT inherit. The vector set bans "no 3D render",
+# which is the exact thing clay is asking for; carried across it would fight
+# the prefix in the same prompt.
+check("clay does not ban the 3D render it is asking for",
+      "3d render" not in clay_neg)
+check("  while the vector set still bans it",
+      "no 3D render" in v3.VECTOR_NEGATIVE)
+check("  and the two negative lists are genuinely different text",
+      v3.CLAY_NEGATIVE != v3.VECTOR_NEGATIVE)
+
+
+print("\n--- and no dark-identity vocabulary in the clay set either ---")
+for sample_id, text in clay_by_id.items():
+    low_text = text.lower()
+    hit = [w for w in DARK if w in low_text]
+    check("  %s carries none of it" % sample_id, not hit, str(hit))
+clay_joined = " ".join(clay_by_id.values()).lower()
+check("faces are not banned outright in clay",
+      "no human faces" not in clay_joined and "no faces" not in clay_joined)
+
+
+print("\n--- what clay says that vector does not ---")
+# The character portrait is the frame that decides the eight-personas asset,
+# and "collectible figure" is a clay idea: it is what makes a moulded figure
+# read as one of a set. Said to a flat render it would just ask for a sticker,
+# so it is a note on one scene in one style, not a sentence on all sixteen.
+portrait = clay_by_id["clay_s_character_cartographer"]
+check("the clay portrait asks for a collectible-figure feel",
+      "collectible" in portrait.lower())
+check("  and for a set of eight that belong together",
+      "eight of these" in portrait.lower())
+check("  and is still centred and poster-like",
+      "poster-like" in portrait.lower() and "centred" in portrait.lower())
+check("  while the vector portrait is left as reviewed",
+      "collectible" not in by_id["s_character_cartographer"].lower())
+
+# Two scenes describe their subjects as "flat" — written when flat was the
+# material. The scene text is shared and the vector prompts are frozen, so
+# clay cannot reword them; it overrules them in the same slot instead.
+for base_id in ("s_morning_run", "s_drain_meeting"):
+    text = clay_by_id["clay_" + base_id].lower()
+    check("  clay_%s names the material as moulded clay" % base_id,
+          "moulded clay" in text)
+    check("  clay_%s refuses the flat reading outright" % base_id,
+          "never a flat graphic" in text or "never flat graphic" in text)
+    check("  clay_%s still carries the scene's own 'flat' wording" % base_id,
+          "flat buildings" in text or "flat figures" in text)
+check("  and the vector twins are untouched by that",
+      all("moulded" not in by_id[b].lower()
+          for b in ("s_morning_run", "s_drain_meeting")))
+check("no clay note leaks into a scene that did not ask for one",
+      sum(1 for t in clay_by_id.values()
+          if "moulded clay" in t or "collectible" in t) == 3)
+
+
+print("\n--- --style routes, and routes nothing else ---")
+check("prompt_for defaults to vector",
+      v3.prompt_for(v3.SAMPLES[0][1]) == v3.prompt_for(v3.SAMPLES[0][1],
+                                                       "vector"))
+check("sample_id_for prefixes clay and only clay",
+      v3.sample_id_for("s_x", "clay") == "clay_s_x"
+      and v3.sample_id_for("s_x", "vector") == "s_x")
+# A typo'd style must not quietly draw the wrong set into the wrong ids.
+try:
+    v3.samples("marble")
+    raised = False
+except KeyError:
+    raised = True
+check("an unknown style raises, it does not silently fall back to vector",
+      raised)
 
 
 print("\n--- the sanity floor is v3's, not the ink gallery's ---")
@@ -193,6 +380,45 @@ check("the palest frame in the batch still clears it",
 unmeasured_ok, unmeasured_note = v3.sanity(None)
 check("an unmeasurable frame is kept, not dropped",
       unmeasured_ok and "unmeasured" in unmeasured_note)
+
+
+print("\n--- clay gets its own colour floor, and only that ---")
+# Matte clay lit in a studio is a less saturated picture than flat vector art
+# on the same ground: a highlight washes toward white and a shade toward grey,
+# where a vector fill holds one saturation edge to edge. So clay's colour
+# floor is lower — and lower on its own number, rather than by dragging the
+# vector floor down to meet it.
+check("clay's colour floor is lower than vector's",
+      v3.CLAY_MIN_SATURATION < v3.MIN_SATURATION,
+      "%.1f vs %.1f" % (v3.CLAY_MIN_SATURATION, v3.MIN_SATURATION))
+check("  and vector's is untouched at what it was", v3.MIN_SATURATION == 15.0,
+      "%.1f" % v3.MIN_SATURATION)
+check("  min_saturation routes by style",
+      v3.min_saturation("clay") == v3.CLAY_MIN_SATURATION
+      and v3.min_saturation("vector") == v3.MIN_SATURATION
+      and v3.min_saturation() == v3.MIN_SATURATION)
+
+# The band between the two floors is the whole point of the second number: a
+# pale clay render lands there, and vector would have thrown it away.
+PALE_CLAY = (198.0, 26.0, 12.0)
+check("a pale clay render passes as clay", v3.sanity(PALE_CLAY, "clay")[0])
+check("  and would have been rejected as vector",
+      not v3.sanity(PALE_CLAY, "vector")[0])
+
+# Everything else about the floor is shared, and still catches what it caught.
+check("clay still rejects near-black", not v3.sanity((28.0, 30.0, 40.0),
+                                                     "clay")[0])
+check("clay still rejects blank white", not v3.sanity((252.0, 2.0, 1.0),
+                                                      "clay")[0])
+check("clay still rejects a flat wash", not v3.sanity((225.0, 3.0, 20.0),
+                                                      "clay")[0])
+check("clay still rejects a colourless render",
+      not v3.sanity((180.0, 50.0, 4.0), "clay")[0])
+check("  because a greyscale frame is nowhere near the clay floor",
+      4.0 < v3.CLAY_MIN_SATURATION)
+check("clay keeps an unmeasurable frame", v3.sanity(None, "clay")[0])
+check("sanity still defaults to the vector floor",
+      v3.sanity(PALE_CLAY) == v3.sanity(PALE_CLAY, "vector"))
 
 
 print("\n--- the crop and the measurement, when Pillow is here ---")
@@ -299,6 +525,63 @@ one = buf.getvalue()
 check("--only draws the named sample alone",
       code == 0 and one.count("via 1024x1536") == 1
       and "s_weather_fog" in one)
+
+
+print("\n--- --style routes the run ---")
+
+
+def run(argv):
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        rc = v3.main(argv)
+    return rc, out.getvalue()
+
+code, out = run(["--style", "clay", "--dry-run"])
+check("--style clay exits 0", code == 0, str(code))
+check("  draws all eight clay ids",
+      all(("clay_" + i) in out for i in WANT)
+      and out.count("via 1024x1536") == 8)
+check("  says which style it is running", "clay style" in out)
+check("  prints the clay prefix, not the vector one",
+      v3.CLAY_STYLE in out and v3.VECTOR_STYLE not in out)
+check("  and wrote nothing", not os.path.exists(v3.OUT))
+
+code, out = run(["--dry-run"])
+check("no --style is still the vector set",
+      code == 0 and "vector style" in out
+      and v3.VECTOR_STYLE in out and v3.CLAY_STYLE not in out)
+
+# The prefix is bookkeeping for a shared directory; nobody reviewing clay
+# thinks of the fog card as anything but the fog card, so both spellings work.
+code, bare = run(["--style", "clay", "--only", "s_weather_fog", "--dry-run"])
+check("--only takes the bare scene id under --style clay",
+      code == 0 and bare.count("via 1024x1536") == 1
+      and "clay_s_weather_fog" in bare)
+code, pref = run(["--style", "clay", "--only", "clay_s_weather_fog",
+                  "--dry-run"])
+check("  and the prefixed id names the same frame",
+      code == 0 and pref == bare)
+
+code, out = run(["--style", "clay", "--only", "s_nope", "--dry-run"])
+check("an unknown id under clay is refused", code == 2, str(code))
+check("  and the message names the style it was refused for",
+      "clay" in out and "s_nope" in out)
+
+# A vector-only id must not resolve under clay, or a typo would draw the wrong
+# set. The vector ids have no prefix, so `clay_s_morning_run` is the one that
+# cannot exist in the vector plan.
+code, out = run(["--only", "clay_s_morning_run", "--dry-run"])
+check("a clay id is not accepted by the vector run", code == 2, str(code))
+
+# argparse rejects a style that does not exist, before any planning happens.
+try:
+    with contextlib.redirect_stdout(io.StringIO()), \
+            contextlib.redirect_stderr(io.StringIO()):
+        v3.main(["--style", "marble", "--dry-run"])
+    refused = False
+except SystemExit as exc:
+    refused = exc.code != 0
+check("--style marble is refused at the command line", refused)
 
 if saved_key is not None:
     os.environ["OPENAI_API_KEY"] = saved_key
