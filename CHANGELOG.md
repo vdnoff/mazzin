@@ -441,3 +441,6 @@ bottom.
 
 ## 2026-08-28 — claude/persona-afterdark-fix
 - persona: afterdark card + result polish — inlay on cranium, dark ink, totem+head pair, centered rarity
+
+## 2026-08-28 — claude/persona-tile-presentation
+- persona: labels below tiles + uncropped pair frames
