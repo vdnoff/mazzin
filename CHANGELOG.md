@@ -414,3 +414,6 @@ bottom.
 
 ## 2026-08-28 — claude/persona-v3-sculpt-idioms
 - persona v3 sculpt v3: embodied-idiom forms
+
+## 2026-08-28 — claude/persona-v3a
+- persona v3-A: shapes concept — config, gallery-at-dusk result, tests
