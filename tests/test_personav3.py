@@ -805,31 +805,119 @@ print("\n--- the totem block: a culmination frame, not a quiz card ---")
 # frame in the product has to be. So the block stacks on top rather than
 # replacing, and it applies to totems and nothing else.
 totem_low = v3.TOTEM_STYLE.lower()
-check("inner light is mandatory and named as such",
-      "inner light, mandatory" in totem_low)
-# Not new language: this is `sculpt_i_lit_up`'s own, which is the one phrasing
-# of inner light in this file known to have rendered correctly — and it did it
-# on the bright backdrop, which is the whole reason it is the recipe now.
+# Draw seven passed every floor and lost on "not inspiring enough to share":
+# the glow sat at the tip and the frame read as a tidy object with a lit
+# detail. The three demands below are the owner's, in his order — light,
+# complexity, magic — and each is pinned on the phrase that carries it.
+# The conflict the assembled prompt actually contained. The base sculpt
+# prefix restricts teal to "exactly one element of the form" — correct for a
+# quiz card, and the most likely reason draw seven's glow came back as a lit
+# tip, since the block was asking for more light while the prefix above it
+# asked for one spot of it. Both are read in the same breath, so the override
+# has to be explicit.
+check("the base prefix does restrict teal to one element",
+      "on exactly one element of the form" in v3.SCULPT_STYLE.lower())
+check("  and the totem block overrides it by name",
+      "overriding the one-element teal rule above" in totem_low
+      and "that rule is for quiz cards" in totem_low
+      and "it runs throughout the piece as light" in totem_low)
+check("  while the quiz cards keep the rule",
+      all("on exactly one element of the form"
+          in sculpt_by_id["sculpt_" + b].lower()
+          and "overriding the one-element" not in
+          sculpt_by_id["sculpt_" + b].lower()
+          for b in SCULPT_WANT))
+
+check("inner light is the event, not a detail",
+      "inner light is the event, not a detail" in totem_low
+      and "its light is the subject of the picture" in totem_low)
+check("  a molten core, not a lit tip",
+      "molten electric teal core burns inside the form" in totem_low)
+# The specific failure: a tip. The block now says whole form, twice, and
+# refuses the tip by name.
+check("  veins and fissures across the whole form",
+      "wind across the whole form from base to tip" in totem_low
+      and "light spills out of every one of them" in totem_low)
+check("  and the tip-only reading is refused outright",
+      "not one lit point, not only the tip" in totem_low)
+check("  with a strong bloom on the clay around each vein",
+      "strong soft bloom washes the clay around each vein" in totem_low
+      and "gathers and brightens where veins run close together" in totem_low)
+check("  and the glow reflected on the sweep at the contact",
+      "teal reflection lies on the sweep where the form meets it"
+      in totem_low)
+check("  the whole piece reads as a lantern", "lantern lit from within"
+      in totem_low)
+# What survives from the lit_up recipe: the light is emitted, not painted.
 lit_up = dict(v3.SCULPT_SAMPLES)["i_lit_up"].lower()
-for phrase in ["cracks and seams", "spilling from inside",
-               "rather than falling on it", "terracotta"]:
-    check("  carries lit_up's '%s'" % phrase,
-          phrase in totem_low and phrase in lit_up)
-check("  a teal core glowing out through the surface",
-      "bright electric teal core glows out through a network of fine cracks"
-      in totem_low)
-check("  through a split or an opening where there are no cracks",
-      "a split or an opening in the volume" in totem_low)
-check("  with a bloom on the clay around each crack",
-      "soft teal glow bloom on the clay immediately around each crack"
-      in totem_low)
-check("  and a painted teal surface refused by name",
-      "never a teal-painted surface" in totem_low
+check("  it still keeps lit_up's emitted-not-painted rule",
+      "rather than falling on it" in totem_low
+      and "rather than falling on it" in lit_up
+      and "never a teal-painted surface" in totem_low
       and "never a teal object sitting next to the form" in totem_low)
-# The failure the six draws actually were: the glow became the picture.
-check("  the glow is a detail in lit clay, not the light source",
-      "the clay stays fully lit and fully readable as clay" in totem_low
-      and "not the light source for the picture" in totem_low)
+check("  and the clay still reads as clay under all the light",
+      "still fully readable as clay" in totem_low)
+
+check("sculptural complexity is demanded, far beyond a quiz card",
+      "sculptural complexity, far beyond a quiz card" in totem_low
+      and all(w in totem_low for w in
+              ["layered twisting volumes", "carved undercuts",
+               "flowing ridges and folds", "deliberate fine detail"]))
+check("  measured against the quiz cards by name",
+      "master sculptor's centrepiece beside the plain single forms"
+      in totem_low
+      and "obvious at a glance" in totem_low)
+# The sculpt negatives refuse busy texture and clutter, and intricate is not
+# busy. Naming the distinction is what lets one negative list keep meaning
+# what it says while this frame asks for a rich surface.
+check("  intricate, and explicitly not busy",
+      "intricate but never busy" in totem_low
+      and "never noise, never scattered clutter, never surface fuzz"
+      in totem_low)
+check("  every detail a decision rather than an accident",
+      "deliberate carved decision" in totem_low)
+check("  while the silhouette still answers to the pose-verb rule",
+      "silhouette stays governed by the pose-verb rule" in totem_low
+      and "readable as one shape at phone-tile size" in totem_low)
+check("  and the scene it is applied to still ascends",
+      "rising and turning as it climbs"
+      in dict(v3.SCULPT_PREVIEW)["p_totem_open_flame"].lower())
+
+check("a little magic is granted, and only to totems",
+      "a little magic, for totems only" in totem_low
+      and "glowing teal particles drift upward from the fissures"
+      in totem_low
+      and "faint luminous haze" in totem_low)
+# Fenced hard: this is the direction that turns kitsch fastest.
+for refused in ["no lightning", "no bolts",
+                "no sparkles scattered across the frame", "no magic effects",
+                "no fantasy kitsch"]:
+    check("  and fenced: '%s'" % refused, refused in totem_low)
+check("  restrained, and said so",
+      "restrained and premium" in totem_low
+      and "a handful of embers rising off a lit object, nothing more"
+      in totem_low)
+check("  with the clay identity still reading underneath",
+      "matte clay and its handmade finger marks still read clearly"
+      in totem_low)
+
+# The fence that matters most: none of this may reach a quiz card. The block
+# is totem-only, so this is really a check that it stayed that way.
+MAGIC = re.compile(r"\b(particles?|haze|glowing|luminous|molten|veins?|"
+                   r"fissures?|lantern|magic)\b")
+leaked = [b for b in SCULPT_WANT
+          if MAGIC.search(sculpt_by_id["sculpt_" + b].lower())
+          and b != "i_lit_up"]
+check("no quiz card inherits the magic vocabulary", not leaked, str(leaked))
+check("  and none of them carries particles or haze at all",
+      not [b for b in SCULPT_WANT
+           if re.search(r"\b(particles?|haze|lantern)\b",
+                        sculpt_by_id["sculpt_" + b].lower())])
+# i_lit_up is the one idiom that legitimately glows — it is the recipe this
+# block was built from — and it still may not carry the magic.
+check("  not even the idiom the recipe came from",
+      not re.search(r"\b(particles?|haze|lantern|molten)\b",
+                    sculpt_by_id["sculpt_i_lit_up"].lower()))
 
 check("the totem is shot on the same light backdrop as every other frame",
       "same light warm backdrop as every other frame" in totem_low
@@ -847,7 +935,8 @@ check("  no request for a darker ground survives anywhere in the block",
 check("  the only mentions of dark are the two refusals",
       [m.start() for m in re.finditer("dark", totem_low)]
       == [totem_low.index("frame is dark") + len("frame is "),
-          totem_low.index("not through darkness") + len("not through ")],
+          totem_low.index("never through darkness")
+          + len("never through ")],
       str(re.findall(r".{22}dark.{10}", totem_low)))
 check("  and the pedestal that carries the dusk is on the result page",
       ".pr-totem-light" in open(
@@ -865,14 +954,13 @@ check("the presentation that survived is rim light and poster framing",
       and "reverent centred poster composition" in totem_low)
 
 check("exclusivity is asked for, not implied",
-      "exclusivity through form and detail, not through darkness" in totem_low
+      "exclusivity through form, light and detail, never through darkness"
+      in totem_low
       and "rare collectible artifact" in totem_low)
-check("  and it comes from the form being finer, not from the light",
-      "finer, more deliberate and more intricate than a quiz card"
-      in totem_low)
-check("  and the pose-verb rule is restated at the top of its range",
-      "pose-verb rule applies doubly" in totem_low
-      and "static symmetrical object is the failure" in totem_low)
+check("  and it is measured by whether it is worth sending",
+      "worth stopping on and worth sending to somebody" in totem_low)
+check("  and the failure it keeps coming back as is named",
+      "static symmetrical object is the failure" in totem_low)
 
 # The coupling, both ways. A totem that lost the block would come back plain;
 # a quiz card that gained it would come back dark and unreadable at tile size.
@@ -1202,6 +1290,42 @@ else:
     check("  a lit totem on the warm sweep passes", ok, note)
     check("    and it is judged on the same exposure as a quiz card",
           judged(LIT_TOTEM, "i_wound_up")[0])
+    # Why the bounds survive "more light". More teal does raise the frame's
+    # saturation — it displaces the pale sweep, which is the least saturated
+    # thing in the picture — but it raises it toward teal's own reading and
+    # no further. #4EDDC4 measures sat 165, so a frame made entirely of glow
+    # would sit at 165 and the ceiling is 235. There is no amount of teal
+    # that breaches it, which is the property that matters, and it is worth
+    # asserting because "more glow must mean more saturation, so raise the
+    # ceiling" is the plausible wrong conclusion.
+    VEINED = [(.45, (243, 227, 204)), (.35, (180, 100, 60)),
+              (.20, (78, 221, 196))]
+    MAGIC = [(.35, (243, 227, 204)), (.25, (180, 100, 60)),
+             (.40, (78, 221, 196))]
+    ok, note = judged(VEINED)
+    check("  veins across the whole form stay inside both bounds", ok, note)
+    ok, note = judged(MAGIC)
+    check("  and so does veins plus particles and haze", ok, note)
+    veined = v3.measure(v3.to_webp(composite(VEINED), v3.FRAME)[1])
+    magic = v3.measure(v3.to_webp(composite(MAGIC), v3.FRAME)[1])
+    ceiling = v3.floor_for("sculpt", TOTEM_ID)["max_sat"]
+    check("    with the ceiling still a long way off",
+          magic[2] < ceiling - 80,
+          "sat %.1f vs ceiling %.1f" % (magic[2], ceiling))
+    check("    more teal does raise saturation, as it should",
+          magic[2] > veined[2], "%.1f vs %.1f" % (magic[2], veined[2]))
+    # The asymptote, measured: a frame that is nothing but glow.
+    all_teal = v3.measure(v3.to_webp(
+        composite([(1.0, (78, 221, 196))]), v3.FRAME)[1])
+    check("    but only ever toward teal's own reading",
+          all_teal[2] < ceiling - 60,
+          "pure teal sits at sat %.1f, ceiling %.1f" % (all_teal[2], ceiling))
+    check("    which is why no amount of glow can breach the ceiling",
+          max(veined[2], magic[2]) < all_teal[2] <= ceiling)
+    check("    and the exposure barely moves either way",
+          abs(magic[0] - veined[0]) < 12,
+          "%.1f vs %.1f" % (magic[0], veined[0]))
+
     # The dark render, which is what six draws produced. It is a defect again.
     ok, note = judged([(.80, (10, 8, 6)), (.16, (18, 16, 12)),
                        (.04, (78, 221, 196))])
