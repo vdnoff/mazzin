@@ -654,66 +654,109 @@ check("  and repainting the accent no wider than that one screen",
 check("the config asks for that theme by name", cfg["theme"] == "persona")
 
 
-print("\n--- the tiles: whole sculpture, label underneath ---")
-# Two defects the owner found on the live quiz, both fixed in CSS scoped to
-# this funnel's body class. engine.js is untouched: the label is a sibling of
-# the image inside the card, not a child of it, so moving it below the picture
-# never needed a new label mode.
+print("\n--- the tile: two zones that cannot overlap ---")
+# The label is a full-width bar on the tile's bottom edge and the picture is
+# strictly above it. What makes that exact rather than approximate is that one
+# variable is both the bar's height and the padding reserved out of the
+# image's content box: object-fit works inside the content box, so the drawn
+# frame ends at the bar's top edge by construction, on both formats, at every
+# tile size, with no per-format number.
 engine_src = open(os.path.join(ROOT, "static/js/engine.js"),
                   encoding="utf-8").read()
 check("engine.js still knows only the badge mode",
       engine_src.count('labelMode() === "badge"') == 1
       and 'labelMode() === "caption"' not in engine_src)
-check("  and the card is still image, then label, then tick",
-      re.search(r'card\.appendChild\(img\);(?:.|\n)*?'
-                r'name\.className = "card-name";(?:.|\n)*?'
-                r'check\.className = "check";', engine_src) is not None)
 
-# 1. The label moves below the picture. It was pinned 8px off the bottom of
-#    the card and sat on the base of the form — which on a clay sculpture is
-#    the part that says what it is.
-check("the persona label hangs below the tile",
-      re.search(r"body\.theme-persona \.card-name \{[^}]*top: 100%;"
-                r"[^}]*bottom: auto;", mazzin, re.S) is not None)
-check("  with room left for it under the row",
-      re.search(r"body\.theme-persona \.cards \{[^}]*padding-bottom:",
+check("one variable sets the bar height and the image's reserve",
+      re.search(r"body\.theme-persona \.card \{[^}]*--tile-bar: 34px;",
                 mazzin, re.S) is not None
-      and re.search(r"body\.theme-persona \.cards\.is-grid4 \{[^}]*"
-                    r"row-gap:", mazzin, re.S) is not None)
-check("  and the card no longer clips it",
-      re.search(r"body\.theme-persona \.card \{[^}]*overflow: visible;",
-                mazzin, re.S) is not None)
-check("  it keeps the pill, on the page rather than on the picture",
-      re.search(r"body\.theme-persona \.card-name \{[^}]*"
-                r"background: rgba\(243, 227, 204", mazzin, re.S) is not None)
-
-# 2. The pair frames were cropped: tiles stretched to the elastic row's
-#    height with object-fit: cover, so a 3:4 render in a 174x604 box lost
-#    about three fifths of its width.
-check("the persona tile takes the render's own aspect",
-      re.search(r"body\.theme-persona \.card \{[^}]*aspect-ratio: 3 / 4;",
-                mazzin, re.S) is not None)
-check("  and the image is never cropped",
-      re.search(r"body\.theme-persona \.card-img \{[^}]*"
-                r"object-fit: contain;", mazzin, re.S) is not None)
-check("  the row sizes to the tiles rather than stretching them",
-      re.search(r"body\.theme-persona \.cards \{[^}]*flex: 0 0 auto;"
-                r"[^}]*min-height: 0;", mazzin, re.S) is not None)
-check("  which is the aspect the gallery is actually drawn at",
-      True)
-
-# The neighbours keep the presentation they had. These are the base rules the
-# persona block overrides, unscoped and unchanged — if they moved, every other
-# funnel's tiles moved with them.
-check("the shared card rules are untouched",
-      re.search(r"^\.card-name \{[^}]*bottom: 8px;", mazzin, re.M | re.S)
+      and re.search(r"body\.theme-persona \.card-img \{[^}]*"
+                    r"box-sizing: border-box;[^}]*"
+                    r"padding-bottom: var\(--tile-bar\);", mazzin, re.S)
       is not None
-      and re.search(r"^\.card-img \{[^}]*object-fit: cover;", mazzin,
+      and re.search(r"body\.theme-persona \.card-name \{[^}]*"
+                    r"height: var\(--tile-bar\);", mazzin, re.S) is not None)
+check("the bar spans the tile and sits on its bottom edge",
+      re.search(r"body\.theme-persona \.card-name \{[^}]*left: 0;"
+                r"[^}]*right: 0;[^}]*bottom: 0;", mazzin, re.S) is not None
+      and re.search(r"body\.theme-persona \.card-name \{[^}]*"
+                    r"max-width: none;", mazzin, re.S) is not None)
+check("  the pill's centring is undone with it",
+      re.search(r"body\.theme-persona \.card-name \{[^}]*transform: none;",
+                mazzin, re.S) is not None)
+check("  one line, centred, with equal air above and below",
+      re.search(r"body\.theme-persona \.card-name \{[^}]*"
+                r"align-items: center;[^}]*justify-content: center;",
+                mazzin, re.S) is not None
+      and re.search(r"body\.theme-persona \.card-name \{[^}]*"
+                    r"padding: 0 10px;", mazzin, re.S) is not None)
+check("  solid, and no gradient — the celestial suite's rule",
+      re.search(r"body\.theme-persona \.card-name \{[^}]*"
+                r"background: rgba\(43, 30, 18, 0\.92\);", mazzin, re.S)
+      is not None
+      and not [b for b in mazzin.split("}")
+               if ".card" in b.split("{")[0]
+               and "gradient" in b.split("{")[-1]])
+check("  and it borrows the tile's own corners rather than carrying any",
+      re.search(r"body\.theme-persona \.card-name \{[^}]*border-radius: 0;",
+                mazzin, re.S) is not None
+      and re.search(r"^\.card \{[^}]*overflow: hidden;", mazzin,
                     re.M | re.S) is not None)
-check("  so a funnel without this theme still overlays its label",
-      re.search(r"^\.card \{[^}]*height: 100%;[^}]*overflow: hidden;",
-                mazzin, re.M | re.S) is not None)
-check("  and every new rule is scoped to this funnel",
+
+# The four-up shows the whole frame; the two-up fills from tall art.
+check("the four-up shows the whole frame",
+      re.search(r"body\.theme-persona \.cards\.is-grid4 \.card-img \{"
+                r"[^}]*object-fit: contain;", mazzin, re.S) is not None)
+check("the two-up fills its zone instead",
+      re.search(r"body\.theme-persona \.cards:not\(\.is-grid4\) "
+                r"\.card-img \{[^}]*object-fit: cover;", mazzin, re.S)
+      is not None)
+
+# And the art that fill is safe on. Derived from the config's own formats.
+import importlib.util as _il                                  # noqa: E402
+_spec = _il.spec_from_file_location("gp", os.path.join(ROOT, "scripts",
+                                                       "gen_persona.py"))
+_gp = _il.module_from_spec(_spec)
+sys.path.insert(0, os.path.join(ROOT, "scripts"))
+_spec.loader.exec_module(_gp)
+pair_cards = _gp.pair_ids(cfg)
+check("the two-up cards are derived from the config, not listed",
+      pair_cards == {i["id"] for s_ in steps if s_["format"] == "pair"
+                     for i in s_["pairs"][0]["images"]})
+check("  which is eight cards on four steps",
+      len(pair_cards) == 8
+      and len([s_ for s_ in steps if s_["format"] == "pair"]) == 4,
+      str(sorted(pair_cards)))
+plan = {f["id"]: f for f in _gp.frames(cfg)}
+check("  they are drawn tall and nothing else is",
+      {i for i, f in plan.items() if f.get("size") == (600, 900)}
+      == pair_cards,
+      str(sorted({i for i, f in plan.items()
+                  if f.get("size") == (600, 900)} ^ pair_cards)))
+check("  600x900 is what the model returns, so they are not cropped at all",
+      _gp.FRAME_TALL == (600, 900) and _gp.API_PORTRAIT == "1024x1536")
+check("  and every one carries the tall-composition note",
+      all(_gp.PAIR_NOTE in plan[i]["prompt"] for i in pair_cards))
+check("  which no other card carries",
+      not [i for i, f in plan.items()
+           if f["kind"] == "quiz" and i not in pair_cards
+           and _gp.PAIR_NOTE in f["prompt"]])
+# The note asks for side margin as well as top and bottom, because what a
+# cover crop takes from a tile this narrow is width.
+check("  the note reserves the sides, which is what cover actually crops",
+      "wide plain backdrop left and right" in _gp.PAIR_NOTE
+      and "central third of the width" in _gp.PAIR_NOTE)
+check("the placeholder generator knows the tall shape too",
+      "FRAME_TALL = (600, 900)" in open(
+          os.path.join(ROOT, "scripts/gen_persona_placeholders.py"),
+          encoding="utf-8").read())
+
+check("the shared card rules are untouched",
+      re.search(r"^\.card-img \{[^}]*object-fit: cover;", mazzin,
+                re.M | re.S) is not None
+      and re.search(r"^\.card-name \{[^}]*position: absolute;", mazzin,
+                    re.M | re.S) is not None)
+check("  and every persona rule is scoped to this funnel",
       all(r.startswith("body.theme-persona") for r in theme_rules))
 
 

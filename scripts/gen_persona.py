@@ -174,16 +174,66 @@ def colour_phrase(colour):
     return "%s (%s) %s%s" % (colour["name"], colour["hex"], lead, element)
 
 
+# --- the pair steps draw tall ------------------------------------------------
+#
+# A two-up tile is very tall and very narrow — about 174x604 at 390px, and
+# 174x570 once the label bar is taken off the bottom, which is an aspect of
+# 0.305. A 3:4 render shown whole inside that leaves three fifths of the tile
+# empty, and shown by `cover` loses three fifths of its width. Neither is a
+# picture worth looking at, so the pair art is drawn tall instead and the tile
+# fills itself from it.
+#
+# 600x900 is a 2:3 output, which is exactly what the model returns at
+# 1024x1536 — so unlike every other frame in this gallery, a pair render is
+# not cropped by the generator at all.
+FRAME_TALL = (600, 900)
+
+PAIR_NOTE = (
+    "Composed for a tall narrow frame — a vertical form with generous plain "
+    "backdrop above and below; the backdrop is part of the composition."
+    # The sentence above is the brief's. This one is added because the
+    # geometry needs it and the brief's does not cover it: the tile is
+    # narrower in aspect than even a 2:3 render, so what `cover` removes is
+    # WIDTH, not height — 27% off each side at 390px. Backdrop above and
+    # below does not protect against that; backdrop at the sides does, and
+    # the sculpt prefix's own safe area only reserves 15%.
+    " Leave the sides as generous as the top and bottom: the form occupies "
+    "the central third of the width, with wide plain backdrop left and right "
+    "of it, so the frame can be cropped hard to a narrower shape and lose "
+    "nothing but backdrop."
+)
+
+
+def pair_ids(cfg):
+    """Every card on a two-up step, from the config's own formats.
+
+    Derived rather than listed: the brief named four steps and guessed ten
+    cards, the config says four steps and eight, and the config is what the
+    walk actually draws.
+    """
+    return {item["id"]
+            for step in cfg["swipe"]["steps"] if step.get("format") == "pair"
+            for pair in step["pairs"] for item in pair["images"]}
+
+
 def rgb_words(colors):
     """The frame's own three colours, as the prompt should say them."""
     return ", ".join(colour_phrase(c) for c in colors)
 
 
-def quiz_prompt(item):
-    """A quiz card: the sculpt prefix, the config's own words, its colours."""
+def quiz_prompt(item, tall=False):
+    """A quiz card: the sculpt prefix, the config's own words, its colours.
+
+    A two-up card also carries the tall-composition note, which is what makes
+    its prompt — and so its manifest recipe — differ from the frame already on
+    disk, so exactly those eight replan and the other thirty-six do not.
+    """
+    scene = item["form"]
+    if tall:
+        scene += " " + PAIR_NOTE
     return assemble(
         SCULPT_STYLE,
-        item["form"] + " Within the palette, lean this frame's colour "
+        scene + " Within the palette, lean this frame's colour "
         "toward: %s." % rgb_words(item["colors"]),
         SCULPT_NEGATIVE)
 
@@ -215,16 +265,19 @@ def frames(cfg):
     the count it owns.
     """
     out, seen = [], set()
+    tall = pair_ids(cfg)
     for step in cfg["swipe"]["steps"]:
         for pair in step["pairs"]:
             for item in pair["images"]:
                 if item["id"] in seen or not item["img"].startswith(OWNED):
                     continue
                 seen.add(item["id"])
+                is_tall = item["id"] in tall
                 out.append({"id": item["id"], "kind": "quiz",
-                            "size": FRAME, "api_size": API_PORTRAIT,
+                            "size": FRAME_TALL if is_tall else FRAME,
+                            "api_size": API_PORTRAIT,
                             "band": persona_style.QUIZ_BAND,
-                            "prompt": quiz_prompt(item)})
+                            "prompt": quiz_prompt(item, is_tall)})
 
     for persona_id, name, essence in personas(cfg):
         frame_id = "totem_" + persona_id
