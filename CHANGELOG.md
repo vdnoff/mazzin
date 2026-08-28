@@ -426,3 +426,6 @@ bottom.
 
 ## 2026-08-28 — claude/persona-v3a1-share
 - persona: totem light recipe — lit_up formula on warm sweep
+
+## 2026-08-28 — claude/persona-v3a1-share
+- persona: totem override — whole-body light, complexity, magic
