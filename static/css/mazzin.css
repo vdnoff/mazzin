@@ -229,70 +229,83 @@ body.theme-persona #mid-cta {
 
 /* --- persona tile presentation ---------------------------------------------
 
-   The owner reviewed the previous version of this block on a phone and sent
-   it back. That version moved the label below the picture and locked the tile
-   to the render's 3:4. It fixed both defects and lost two things worth more:
-   the pill-on-artwork look is part of this funnel's style, and the two-up's
-   tall tiles are the drama of the format. Small aspect-locked tiles with
-   captions under them read as a gallery index rather than as a choice.
+   The tile is two zones that do not overlap: a label bar along the bottom
+   edge, and the picture strictly above it.
 
-   So the label goes back on the image and the tiles go back to full height.
-   Nothing here overrides either — the shared rules do both, and this block
-   simply stops fighting them. What changes instead is the crop: `contain`
-   fits the whole render inside the tile, and the tile's own background
-   carries what that leaves over.
+   The bar replaces the pill. Its height is one variable, and that variable is
+   also the padding reserved out of the image's own content box — which is
+   what makes the two zones exact rather than approximately clear of each
+   other. `object-fit` works inside the content box, so the drawn picture ends
+   precisely at the bar's top edge on every tile size and both formats, with
+   no per-format number and no reliance on the artwork having a margin.
 
-   The arithmetic is worth writing down, because it is what this block spends.
-   A pair tile at 390px is about 174x604 — an aspect of 0.29 against the
-   render's 0.75 — so a whole 3:4 frame inside it is 174x232, and a little
-   over three fifths of the tile is background. There is no placement or tone
-   that changes that number; it is what showing a 3:4 picture whole inside a
-   0.29 box costs.
+   That last point is why the strip is reserved rather than borrowed. The
+   renders were asked for a safe margin and mostly have about seven percent of
+   clear ground at the bottom, but the tightest of the forty-four has 0.2% —
+   the form runs to the frame's edge — so a label overlapping the artwork by
+   any amount would sit on clay there.
 
-   The badge's clearance is bought with a reserved strip rather than with the
-   renders' own margin, because that margin is not reliably there. Measured
-   across all forty-four frames, the clay-free band at the bottom of a render
-   is a median 7.4% and a minimum of 0.2% — on the tightest card the form runs
-   to the frame's edge. A badge overlapping the artwork by any amount would
-   sit on clay on that card, so it overlaps none of it.
+   No gradient anywhere on a card: the celestial suite asserts that, because
+   the label was once a scrim across the whole card and dimming the art is the
+   regression that guard prevents.
 
-   The background tones are the medians of the renders' own edges, measured
-   rather than picked, and they are flat rather than a gradient: a card may
-   not carry one. That rule is asserted by the celestial suite and it is a
-   good rule — the label was once a scrim across the whole card and dimming
-   the art is the regression it exists to prevent. A gradient behind an opaque
-   image is not that, but the guard cannot tell the difference and narrowing
-   it to fit this funnel would be worth less than the guard. */
+   The bar needs no radius of its own — `.card` clips to its own, and clips
+   differently on the two formats, so borrowing that is both simpler and
+   automatically right. */
 body.theme-persona .card {
-  /* The two-up's spare space is above the frame, so this is the median of the
-     renders' top edges. */
+  --tile-bar: 34px;
+  /* Behind the picture, showing only where the frame does not reach: the
+     median of the renders' own top edges, measured across all forty-four. */
   background: #CEA371;
 }
 
 body.theme-persona .cards.is-grid4 .card {
-  /* The four-up's is the badge strip below it, so this is the median of the
-     renders' grounds. */
+  /* The four-up's spare space is the thin band the reserve leaves, which sits
+     against the renders' grounds rather than their skies. */
   background: #D5AB7C;
 }
 
 body.theme-persona .card-img {
-  /* The whole frame, never cropped. This is the entire fix for the
-     long-standing pair complaint: the tile keeps the shape it had and the
-     render stops being cut to fit it. */
-  object-fit: contain;
-  /* The badge's own strip, reserved out of the image's box rather than hoped
-     for. `object-fit` works inside the content box, so padding here shrinks
-     the area the frame is fitted into and the drawn picture ends above the
-     pill by construction — at every tile size, on both formats, without a
-     number per format. The pill is 8px off the bottom and about 27 tall, so
-     46 clears it with ten to spare. */
   box-sizing: border-box;
-  padding-bottom: 46px;
-  /* Bottom-anchored in what is left, so the picture sits directly above its
-     own label on both formats and whatever the tile has spare falls above the
-     frame, where it reads as headroom rather than as a gap between the
-     picture and its name. */
+  padding-bottom: var(--tile-bar);
+}
+
+/* The four-up shows the whole frame. Its image zone is about 174x246 against
+   a 3:4 render — close enough that `contain` costs a few pixels of band and
+   crops nothing. */
+body.theme-persona .cards.is-grid4 .card-img {
+  object-fit: contain;
   object-position: center 100%;
+}
+
+/* The two-up fills instead. Its zone is 174x570, an aspect of 0.305, and no
+   render aspect fills that without losing width — so the art is drawn tall
+   (600x900) and composed with the sides left wide enough that what goes is
+   backdrop. See PAIR_NOTE in scripts/gen_persona.py: at 390px this crop takes
+   27% off each side, and the sculpt prefix's own safe area only reserves 15%,
+   which is why that note asks for a third more. */
+body.theme-persona .cards:not(.is-grid4) .card-img {
+  object-fit: cover;
+  object-position: center center;
+}
+
+/* The bar itself: full width, on the tile's bottom edge, one line of text
+   with equal air above and below it. */
+body.theme-persona .card-name {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-width: none;
+  height: var(--tile-bar);
+  padding: 0 10px;
+  border-radius: 0;
+  transform: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(43, 30, 18, 0.92);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /* The arrival. The quiz is a light page and the reading is a dark one, and

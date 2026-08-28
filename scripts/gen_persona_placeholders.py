@@ -42,6 +42,11 @@ OUT = os.path.join(ROOT, "static", "galleries", "persona")
 OWNED = "/static/galleries/persona/"
 
 FRAME = (600, 800)
+# A two-up card is drawn tall: its tile is far narrower in aspect than a 3:4
+# frame, so gen_persona.py renders those eight at 2:3 and the tile fills
+# itself from them. A stand-in has to be the same shape or replacing one with
+# a placeholder would change the layout rather than only the picture.
+FRAME_TALL = (600, 900)
 QUALITY = 80
 
 # The share card is the one frame with no image in the config behind it: ink
@@ -118,13 +123,15 @@ def images_in(cfg):
     found = {}
     order = []
     for step in cfg["swipe"]["steps"]:
+        tall = step.get("format") == "pair"
         for pair in step["pairs"]:
             for item in pair["images"]:
                 if item["id"] in found or not item["img"].startswith(OWNED):
                     continue
-                found[item["id"]] = [c["hex"] for c in item["colors"]]
+                found[item["id"]] = ([c["hex"] for c in item["colors"]],
+                                     FRAME_TALL if tall else FRAME)
                 order.append(item["id"])
-    return [(i, found[i]) for i in order]
+    return [(i, found[i][0], found[i][1]) for i in order]
 
 
 def write(name, image):
@@ -139,11 +146,11 @@ def main():
 
     os.makedirs(OUT, exist_ok=True)
     items = images_in(cfg)
-    missing = [(i, stops) for i, stops in items
+    missing = [(i, stops, size) for i, stops, size in items
                if not os.path.exists(os.path.join(OUT, i + ".webp"))]
     total = 0
-    for image_id, stops in missing:
-        total += write(image_id, gradient(FRAME, stops))
+    for image_id, stops, size in missing:
+        total += write(image_id, gradient(size, stops))
 
     card = 0
     if not os.path.exists(os.path.join(OUT, "og.webp")):
@@ -174,7 +181,7 @@ def main():
     # directory silently accumulates the art of every walk this funnel used to
     # be, and the one check that would notice is a test nobody runs on a
     # deploy. Only .webp files are touched, and only in this gallery.
-    keep = ({i + ".webp" for i, _stops in items} | {"og.webp"}
+    keep = ({i + ".webp" for i, _s, _z in items} | {"og.webp"}
             | {name + ".webp" for name, _s, _c in extras})
     orphans = sorted(f for f in os.listdir(OUT)
                      if f.endswith(".webp") and f not in keep)
