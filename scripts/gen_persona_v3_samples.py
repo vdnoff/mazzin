@@ -6,30 +6,38 @@ reaches it, and no config references what it writes:
 
     pip install pillow
     export OPENAI_API_KEY=sk-...
-    cd ~/mazzin && python3 scripts/gen_persona_v3_samples.py --style clay
+    cd ~/mazzin && python3 scripts/gen_persona_v3_samples.py --style sculpt
 
     python3 scripts/gen_persona_v3_samples.py --dry-run          # prompts only
-    python3 scripts/gen_persona_v3_samples.py --style clay --dry-run
+    python3 scripts/gen_persona_v3_samples.py --style sculpt --dry-run
     python3 scripts/gen_persona_v3_samples.py --only s_bag_notebook --force
-    python3 scripts/gen_persona_v3_samples.py --style clay --force
+    python3 scripts/gen_persona_v3_samples.py --style sculpt --force
 
---- two styles, one directory ----------------------------------------------
+--- three styles, one directory --------------------------------------------
 
-`--style vector` is the flat-vector set the owner first reviewed; `--style
-clay` is the soft-3D clay direction they picked out of that review. Both
-write into the same directory, the clay ids carrying a `clay_` prefix, so the
-two sets sit side by side on the phone and the comparison is one scroll rather
-than two runs of memory. Nothing overwrites anything: `s_morning_run` and
-`clay_s_morning_run` are the same scene drawn two ways.
+`--style vector` is the flat-vector set the owner reviewed first; `--style
+clay` is the soft-3D clay direction picked out of that review; `--style
+sculpt` is the abstract sculptural-forms direction the owner then locked,
+after rejecting both. All three write into the same directory under their own
+id prefix, so the sets sit side by side on the phone and the comparison is one
+scroll rather than three runs of memory. Nothing overwrites anything:
+`s_morning_run`, `clay_s_morning_run` and `sculpt_s_morning_run` are the same
+question answered three ways.
 
-The eight scenes, the geometry, the retry, the crop and the cost log are
-shared. What a style owns is its prefix, its negatives and its id prefix —
-because those are the three things that actually differ, and a second copy of
-the scene list is a second thing to keep in step.
+The geometry, the retry, the crop, the cost log and the safe-area rule are
+shared. What a style owns is its prefix, its negatives, its id prefix and —
+for sculpt only — its own scene table.
 
-The flat-vector prompts are frozen. They were reviewed as they stand, so a
-change to them would silently invalidate the set already on disk; the suite
-pins all eight against a digest and fails if this file moves one byte of them.
+That last one is the real split. vector and clay differ in material and agree
+on everything else: both draw the scene, both put people in it. sculpt throws
+the scene out and carries meaning in form alone, so it cannot reuse a scene
+list written as "four friends laughing around a kitchen table" and cannot be
+talked into it with a note. It brings its own eight, under the same ids.
+
+The vector and clay prompts are frozen. Both sets were reviewed as they stand,
+so a change to either would silently invalidate what is already on disk; the
+suite pins each against a digest and fails if this file moves one byte of
+them.
 
 --- why this is a separate script ------------------------------------------
 
@@ -68,9 +76,10 @@ greyscale with no colour in it — and passes everything else. The owner review
 is the real gate, and a floor that second-guesses the thing being reviewed
 would be filtering the evidence.
 
-The floor is shared by both styles but for one number: matte clay on a cream
-ground is a softer, less saturated picture than flat vector art on the same
-ground, so clay gets a lower colour floor. See CLAY_MIN_SATURATION.
+The floor is shared by every style but for one number, the colour floor: a
+matte material on a warm ground is a softer, less saturated picture than flat
+vector art, so clay and sculpt each get a lower one. See
+MIN_SATURATION_BY_STYLE.
 """
 import argparse
 import base64
@@ -220,6 +229,124 @@ CLAY_NEGATIVE = (
     "dim, murky, drab or low-key palette, no clutter, no busy background."
 )
 
+# The sculpt prefix — the direction the owner locked, and the one that breaks
+# the pattern the other two share.
+#
+# vector and clay differ in material and agree on everything else: both draw
+# the scene, both put people in it, both were judged on whether the people
+# looked right. sculpt throws the scene out. Meaning is carried by form alone —
+# a coil, a hollow, a cluster — on a warm monochrome backdrop, the way a
+# product still-life carries it. So sculpt is the one style that cannot reuse
+# the shared scene list: a scene written as "four friends laughing around a
+# kitchen table" is not a thing this style can draw, and softening it with a
+# note would produce exactly the half-and-half render the direction rejects.
+# It brings its own eight, keyed by the same ids so the sets line up for
+# review.
+#
+# The figure ban is the reversal, and it is absolute. vector and clay go out
+# of their way to permit a face at two dots and a line; here a face of any
+# kind is the failure. It is stated in the prefix and again in the negatives,
+# because "abstract sculptural form" on its own is a brief a model will
+# cheerfully answer with a little clay person.
+SCULPT_STYLE = (
+    "Premium 3D clay sculpture still-life render. A single abstract "
+    "sculptural composition, photographed as a product still-life. "
+    "Matte clay and plasticine material with a subtle fingerprint-and-tool "
+    "surface texture, soft organic rounded volumes with softly bevelled "
+    "edges. "
+    "Studio product lighting from one direction, with one soft shadow "
+    "falling consistently across the whole set. "
+    "Warm monochrome backdrop — peach, cream and soft terracotta tones, a "
+    "plain seamless studio sweep — never a clinical pure white, never a "
+    "shadowed or low-key ground, with generous negative space around the "
+    "form. "
+    "One to three warm sculpture tones per composition — terracotta, ochre, "
+    "sand, warm grey — with electric teal (#4EDDC4) as an accent material on "
+    "exactly one element of the form, the thread that runs through the set. "
+    "Pure form only: the meaning is carried by shape, volume, weight and "
+    "gesture, never by depicting anything. Its outline alone reads as one "
+    "bold shape in half a second at phone-tile size."
+)
+
+# The negatives carry the ban a second time, in the blunter register a
+# negative list is read in. "No people" is not enough on its own — a model
+# handed a sculptural brief will offer a bust, a mannequin or a pair of hands
+# and consider the brief met — so the near misses are named.
+SCULPT_NEGATIVE = (
+    "Absolutely no human figures, no people, no bodies, no busts, no "
+    "mannequins, no hands, no faces of any kind, no eyes, no facial "
+    "features, no characters, no creatures, no animals. "
+    "No scenes, no environments, no landscapes with places in them, no "
+    "rooms, no interiors, no furniture, no buildings, no vehicles, no "
+    "recognisable everyday props. "
+    "No text, no letters, no numbers, no words, no logos, no watermarks, no "
+    "user-interface elements. "
+    "No photorealism of real materials, no glass, no chrome, no polished "
+    "metal, no wet or glossy surfaces, no busy texture, no clutter. "
+    "Never a night setting, never a black or midnight-blue background, never "
+    "a dim, murky, drab or low-key palette."
+)
+
+# sculpt's own eight, in the order the shared list uses, keyed by the same
+# ids. Same questions, answered in form: what the runner frame is *about* is
+# stored energy, so the runner becomes a coil under tension. Nothing here
+# names an object from the world except as pure geometry.
+SCULPT_SCENES = {
+    "s_morning_run": (
+        "A taut upward-launching coil spring of matte terracotta clay, wound "
+        "tight at the base and released into a long rising sweep, energy "
+        "frozen at the top of its leap. The very tip of the coil is electric "
+        "teal. Light, springing, about to go."
+    ),
+    "s_morning_slow": (
+        "A single smooth settled monolith of warm sand-toned clay, a heavy "
+        "rounded slab resting fully on its base with softly worn edges, "
+        "entirely at rest and going nowhere. One narrow electric teal seam "
+        "runs across it. Still, warm, unhurried."
+    ),
+    "s_battery_home": (
+        "One soft rounded ochre form nested inside a larger sheltering "
+        "hollow of terracotta clay that curves protectively around it "
+        "without enclosing it. The inner form carries a soft electric teal "
+        "glaze. Solitude as comfort — held, not trapped."
+    ),
+    "s_battery_people": (
+        "A warm cluster of four or five rounded clay forms of slightly "
+        "different heights leaning inward against one another, their curved "
+        "sides touching, weight shared between them. One form is electric "
+        "teal. Companionable, close, unmistakably a group."
+    ),
+    "s_drain_meeting": (
+        "One soft rounded clay form pressed flat and spreading sideways "
+        "under a heavy vertical stack of identical hard rings bearing down "
+        "on it, each ring exactly like the last. A thin electric teal line "
+        "marks the compressed form. Weight and monotony, in pure form."
+    ),
+    "s_bag_notebook": (
+        "An object-totem: a crisp folded wave of sand-toned clay, creased "
+        "once down its centre and opening upward like a spread, with a slim "
+        "electric teal cylinder resting across the fold. Presented straight "
+        "on, hero-object scale, nothing else in the composition."
+    ),
+    "s_weather_fog": (
+        "A low soft drifting mass of pale cream clay, rolled thin and "
+        "spreading horizontally, settling over a few small rounded ochre "
+        "mounds that show through it. One thin electric teal band runs low "
+        "through the drift. Calm and soft, quietly hopeful, never gloomy."
+    ),
+    "s_character_cartographer": (
+        "An emblem-totem: one smooth polished sphere of warm clay seated in "
+        "a shallow rounded cradle, perched on a broad unrolling wave of "
+        "sand-toned clay that curls open beneath it like a chart unfurling. "
+        "An electric teal inlay is set into the sphere. Composed as a "
+        "collectible emblem — centred, symmetrical, poster-like, evenly lit, "
+        "with the quiet authority of a maker's mark, at the scale and "
+        "consistency where eight of these side by side would obviously "
+        "belong to one set."
+    ),
+}
+
+
 # The registry, and the whole of what a style owns: a prefix, its negatives,
 # and the prefix its ids carry so two sets share one directory without
 # colliding. The scenes, the geometry, the crop, the retry and the safe-area
@@ -230,6 +357,8 @@ STYLES = {
                "prefix": ""},
     "clay": {"style": CLAY_STYLE, "negative": CLAY_NEGATIVE,
              "prefix": "clay_"},
+    "sculpt": {"style": SCULPT_STYLE, "negative": SCULPT_NEGATIVE,
+               "prefix": "sculpt_", "scenes": SCULPT_SCENES},
 }
 DEFAULT_STYLE = "vector"
 
@@ -360,7 +489,20 @@ STYLE_SCENE_NOTES = {
 
 
 def scene_for(base_id, scene, style=DEFAULT_STYLE):
-    """The scene text, plus whatever this style adds to it."""
+    """What this style draws for a given sample id.
+
+    Three cases, and they are a hierarchy rather than a menu. A style with its
+    own scene table replaces the shared scene outright — sculpt carries no
+    people and no places, so a scene about four friends at a kitchen table is
+    not something it can soften into shape. A style with a note appends to the
+    shared scene. A style with neither draws the shared scene as written.
+
+    A replacement wins over a note, and never silently merges with one: a
+    scene that has been thrown out has no wording left for a note to correct.
+    """
+    scenes = STYLES[style].get("scenes")
+    if scenes is not None:
+        return scenes[base_id]
     note = STYLE_SCENE_NOTES.get(style, {}).get(base_id)
     return scene + " " + note if note else scene
 
@@ -368,11 +510,11 @@ def scene_for(base_id, scene, style=DEFAULT_STYLE):
 def prompt_for(scene, style=DEFAULT_STYLE):
     """The four blocks every sample is built from, in the same order.
 
-    The safe-area rule sits in the same slot for both styles and is the same
-    text in both, because the crop it is written against is a property of the
-    pipeline rather than of the material — the render is 2:3, this script
-    centre-crops it to 3:4 and the tile crops again, whichever way the picture
-    was drawn.
+    The safe-area rule sits in the same slot in every style and is the same
+    text in all of them, because the crop it is written against is a property
+    of the pipeline rather than of the material — the render is 2:3, this
+    script centre-crops it to 3:4 and the tile crops again, whichever way the
+    picture was drawn.
     """
     spec = STYLES[style]
     return "\n".join([spec["style"], SAFE_AREA, scene, spec["negative"]])
@@ -494,6 +636,32 @@ MIN_SATURATION = 15.0
 # though the margin above got thinner.
 CLAY_MIN_SATURATION = 10.0
 
+# sculpt sits in the same place as clay and for the same reason, but on its
+# own knob rather than sharing clay's: it is the same matte material, and its
+# backdrop is a warm monochrome sweep rather than the cream-plus-coral the
+# other two put behind a subject, so a correct frame is a narrower band of
+# warm hues than either.
+#
+# It is not obviously lower than clay in practice — terracotta and ochre read
+# as muted to the eye but are not low-saturation numbers, since saturation
+# here is (max-min)/max over the channels and a warm tone spreads them wide.
+# What could sit low is the palest scene in the set, the fog drift, which is
+# cream clay over ochre mounds and mostly backdrop. 10.0 clears that with room
+# and still sits far above a colourless render, which comes back near zero.
+# Pinned rather than derived: if a sculpt run rejects a frame that looks right
+# in the log's `sat` reading, this is the line to move.
+SCULPT_MIN_SATURATION = 10.0
+
+# Keyed rather than branched, now that there are three: a fourth style that
+# forgets to add itself here gets the vector floor, which is the strict one,
+# so the failure is a rejected frame and a look at this table rather than a
+# silently unchecked batch.
+MIN_SATURATION_BY_STYLE = {
+    "vector": MIN_SATURATION,
+    "clay": CLAY_MIN_SATURATION,
+    "sculpt": SCULPT_MIN_SATURATION,
+}
+
 
 def measure(img):
     """`(mean_luma, stddev, mean_saturation)` for a frame, or None.
@@ -512,7 +680,7 @@ def measure(img):
 
 def min_saturation(style=DEFAULT_STYLE):
     """The colour floor this style is judged against."""
-    return CLAY_MIN_SATURATION if style == "clay" else MIN_SATURATION
+    return MIN_SATURATION_BY_STYLE.get(style, MIN_SATURATION)
 
 
 def sanity(stats, style=DEFAULT_STYLE):
