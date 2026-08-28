@@ -87,15 +87,27 @@ vector art, so clay and sculpt each get a lower one. See
 MIN_SATURATION_BY_STYLE.
 """
 import argparse
-import base64
-import binascii
-import io
 import json
 import os
 import sys
-import time
-import urllib.error
-import urllib.request
+
+# The style and the mechanics, shared with the production generator so the two
+# cannot drift. Imported under the same names this file used when it owned
+# them, so nothing downstream — including its own suite — has to know.
+#
+# The path insert is for the suite, which loads this file by path rather than
+# running it: a direct `python3 scripts/gen_persona_v3_samples.py` already has
+# scripts/ at the head of sys.path and would not need it.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import persona_style       # noqa: E402
+from persona_style import (                                   # noqa: E402
+    API_BASE, API_PORTRAIT, CLAY_MIN_SATURATION, FRAME, GenerationError,
+    IMAGE_QUALITY, MAX_MEAN_LUMA, MIN_MEAN_LUMA, MIN_SATURATION, MIN_STDDEV,
+    MODEL, PRICE, QUALITY, SAFE_AREA, SCULPT_HEAD_NEGATIVE,
+    SCULPT_MIN_SATURATION, SCULPT_NEGATIVE, SCULPT_STYLE, TIMEOUT_S,
+    TOTEM_MAX_SATURATION, TOTEM_STYLE, assemble, generate, measure, to_webp,
+    verdict,
+)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "static", "galleries", "persona_v3_samples")
@@ -103,24 +115,12 @@ OUT = os.path.join(ROOT, "static", "galleries", "persona_v3_samples")
 # The committed frame geometry, matched to the live gallery on purpose: these
 # samples are judged as quiz tiles, so they have to be exactly the shape and
 # the weight a quiz tile is.
-FRAME = (600, 800)
-QUALITY = 80
 
-API_PORTRAIT = "1024x1536"
-MODEL = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-1")
-IMAGE_QUALITY = os.getenv("PERSONA_IMAGE_QUALITY", "medium")
-TIMEOUT_S = float(os.getenv("OPENAI_TIMEOUT_S", "180"))
-API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
 
 # Per-image list price, keyed (quality, api size), same published rates
 # gen_persona.py assumes. Not read from the API, stale the day the price list
 # moves, `--price` overrides — the number printed is an estimate and the
 # invoice is the truth.
-PRICE = {
-    ("low", API_PORTRAIT): 0.016,
-    ("medium", API_PORTRAIT): 0.063,
-    ("high", API_PORTRAIT): 0.25,
-}
 
 # --- the v3 quiz identity ----------------------------------------------------
 #
@@ -163,16 +163,6 @@ VECTOR_STYLE = (
 # the render is a subject with its head off. Asking every frame for the same
 # generous safe area is the only fix that scales to a seventy-frame redraw,
 # and stating it once is what keeps it identical across all of them.
-SAFE_AREA = (
-    "Composition for a vertical card, with a generous safe area. The image "
-    "will be centre-cropped and then cropped again by the interface, so the "
-    "entire subject must sit well inside the central safe area of the frame. "
-    "Keep nothing important in the outer 15 percent on any side — not the "
-    "top, not the bottom, not the left, not the right. The subject is whole "
-    "and complete and is never touched, clipped or cut off by the frame "
-    "edge, and a wide calm margin of plain background runs all the way "
-    "around it."
-)
 
 # The negatives, written to stay clear of the dark gallery's own vocabulary.
 # "No ink-navy ground" would steer as well as anything here and would also put
@@ -286,84 +276,12 @@ CLAY_NEGATIVE = (
 # kind is the failure. It is stated in the prefix and again in the negatives,
 # because "abstract sculptural form" on its own is a brief a model will
 # cheerfully answer with a little clay person.
-SCULPT_STYLE = (
-    "Premium 3D clay sculpture still-life render. A single abstract "
-    "sculptural composition, photographed as a product still-life. "
-    # 2 — handmade authenticity. First in the prefix because it is the note
-    # the v1 renders missed hardest: they came back machine-smooth, and a
-    # perfectly even volume reads as a 3D asset rather than as clay.
-    "Freshly hand-sculpted matte clay and plasticine, and it must visibly "
-    "look it: soft finger impressions and press marks pushed into the "
-    "surface, gentle pinch ridges along the edges, slightly uneven planes "
-    "and imperfect edges, and a faint asymmetry to every volume that no "
-    "machine would leave. Unglazed, visibly a little rough. Never "
-    "machine-smooth, never CAD-perfect, never glossy, never a polished "
-    "product render — the surface should read as clay worked by touch "
-    "moments ago. "
-    # 1 — the pose verb. Stated as a requirement with a named failure mode,
-    # because "abstract sculptural form" on its own reliably returns a
-    # symmetrical object sitting still, which is what made all eight v1
-    # frames read the same.
-    "Every composition shows its form DOING something: one clear physical "
-    "gesture — launching, slumping, leaning, huddling, wilting, reaching — "
-    "readable in the silhouette alone at phone-tile size. Asymmetry and "
-    "implied motion are required. A static, balanced, evenly rounded "
-    "still-life is a failure of this brief, unless the composition's "
-    "meaning is itself stillness. "
-    # 3 — tension vocabulary, as a rule rather than a blanket. The scenes
-    # decide; the prefix only says the two registers exist.
-    "Form language follows feeling: soft, rounded, swelling volumes where "
-    "the composition is warm or calm; angular, pinched, wedged, cracked or "
-    "jagged elements where it is strained or under pressure. Matte clay "
-    "throughout, either way. "
-    # 4 — contrast, so the form separates at tile size, and intrigue, so it
-    # is worth stopping on.
-    "Studio product lighting from one direction: a subtle rim light picking "
-    "out the contour, and a defined soft contact shadow anchoring the form "
-    "to the ground beneath it, so the sculpture separates cleanly from its "
-    "background at thumbnail size. The backdrop is a plain seamless warm "
-    "monochrome studio sweep, two steps deeper and less saturated than the "
-    "sculpture tones themselves — never a clinical pure white, never a "
-    "shadowed or low-key ground — with generous negative space around the "
-    "form. "
-    "One to three warm sculpture tones per composition — terracotta, ochre, "
-    "sand, warm grey — with electric teal (#4EDDC4) as an accent material "
-    "on exactly one element of the form, the thread that runs through the "
-    "set. "
-    # The two rules the idiom review added. Both are about where meaning is
-    # allowed to live: in the material, never in the decoration.
-    "State-bearing colour: the tone itself carries the state — a drained "
-    "form is drained in its colour as well as its shape, a charged one is "
-    "warm and lit. Never a pleasant palette laid over an unrelated form. "
-    "Teal at the meaning point: the electric teal marks the one place where "
-    "the state is happening — the point of contact, the opening, the seam, "
-    "the core — and never sits anywhere as decoration. "
-    "Pure form only: the meaning is carried by shape, volume, weight and "
-    "gesture, never by depicting anything. Each composition is an enigmatic "
-    "object — evocative, open to interpretation, a shape that makes the "
-    "viewer pause and read themselves into it. Vary the silhouettes "
-    "strongly from one composition to the next, so no two read alike."
-)
 
 
 # The negatives carry the ban a second time, in the blunter register a
 # negative list is read in. "No people" is not enough on its own — a model
 # handed a sculptural brief will offer a bust, a mannequin or a pair of hands
 # and consider the brief met — so the near misses are named.
-SCULPT_NEGATIVE = (
-    "Absolutely no human figures, no people, no bodies, no busts, no "
-    "mannequins, no hands, no faces of any kind, no eyes, no facial "
-    "features, no characters, no creatures, no animals. "
-    "No scenes, no environments, no landscapes with places in them, no "
-    "rooms, no interiors, no furniture, no buildings, no vehicles, no "
-    "recognisable everyday props. "
-    "No text, no letters, no numbers, no words, no logos, no watermarks, no "
-    "user-interface elements. "
-    "No photorealism of real materials, no glass, no chrome, no polished "
-    "metal, no wet or glossy surfaces, no busy texture, no clutter. "
-    "Never a night setting, never a black or midnight-blue background, never "
-    "a dim, murky, drab or low-key palette."
-)
 
 # --- sculpt v3: the eight idiom-states ---------------------------------------
 #
@@ -463,21 +381,6 @@ SCULPT_SAMPLES = [
 # profile is allowed, and everything that would make it a person — eyes, a
 # mouth, hair, expression, a likeness, anything below the neck — is refused
 # by name. Nothing else may claim this negative; the suite pins it to this id.
-SCULPT_HEAD_NEGATIVE = (
-    "Absolutely no eyes, no eyeball, no iris, no pupil, no mouth, no lips, "
-    "no teeth, no ear, no nostril, no eyebrow, no hair of any kind, no "
-    "expression, no realistic or detailed face, no photographic likeness, "
-    "no recognisable person. The profile is a plain sculptural edge and "
-    "nothing more. "
-    "Nothing below the neck: no shoulders, no body, no arms, no hands, and "
-    "no second form anywhere in the frame. "
-    "No scenes, no environments, no rooms, no interiors, no furniture. "
-    "No text, no letters, no numbers, no words, no logos, no watermarks. "
-    "No photorealism of real materials, no glass, no chrome, no polished "
-    "metal, no wet or glossy surfaces, no busy texture, no clutter. "
-    "Never a night setting, never a black or midnight-blue background, "
-    "never a dim, murky, drab or low-key palette."
-)
 
 # Keyed by base id and consulted only by sculpt. One entry, and the intent is
 # that it stays one entry.
@@ -556,70 +459,6 @@ SCULPT_NEGATIVE_OVERRIDES = {"p_head_base": SCULPT_HEAD_NEGATIVE}
 # sparkles, no fantasy kitsch, and the matte clay still reading underneath —
 # because this is the direction that turns cheap fastest, and a quiz card
 # that ever inherited it would stop being a quiz card.
-TOTEM_STYLE = (
-    "This frame is a totem: the culmination piece, not a quiz card. It is "
-    "shot on exactly the same light warm backdrop as every other frame in "
-    "this set — the same plain seamless warm monochrome studio sweep, the "
-    "same bright even light. Nothing about this frame is dark. "
-    # 1 — light. Draw seven passed the floors and the owner's verdict was
-    # "not inspiring enough to share": the glow was a detail on a tidy
-    # object. So the glow becomes the event. Whole form rather than the tip,
-    # which is the specific thing that came back too small to carry a frame.
-    # The base prefix restricts teal to "exactly one element of the form",
-    # which is right for a quiz card and is very likely why draw seven's glow
-    # came back as a lit tip: the block was asking for more light while the
-    # prefix above it was asking for one spot of it. The override has to be
-    # explicit, because the two are read in the same breath.
-    "OVERRIDING THE ONE-ELEMENT TEAL RULE ABOVE: that rule is for quiz "
-    "cards. On a totem the teal is not one accent on one element — it runs "
-    "throughout the piece as light. "
-    "INNER LIGHT IS THE EVENT, NOT A DETAIL: a molten electric teal core "
-    "burns inside the form and its light is the subject of the picture. "
-    "Luminous veins and fine fissures wind across the whole form from base "
-    "to tip — not one lit point, not only the tip — and light spills out of "
-    "every one of them. A strong soft bloom washes the clay around each "
-    "vein, the glow gathers and brightens where veins run close together, "
-    "and a subtle teal reflection lies on the sweep where the form meets "
-    "it. The whole piece reads as a lantern lit from within. The light "
-    "still comes from inside the volume rather than falling on it: emitted "
-    "light, never a teal-painted surface and never a teal object sitting "
-    "next to the form. Warm terracotta and ochre clay against that glow, "
-    "still fully readable as clay. "
-    # 2 — complexity. The totem has to look expensive beside a quiz card,
-    # and the quiz cards are deliberately plain, so the difference is the
-    # frame's whole argument for existing.
-    "SCULPTURAL COMPLEXITY, FAR BEYOND A QUIZ CARD: layered twisting "
-    "volumes that turn over and past one another, carved undercuts, flowing "
-    "ridges and folds, and deliberate fine detail across the whole surface "
-    "— a master sculptor's centrepiece beside the plain single forms of the "
-    "quiz cards. That difference should be obvious at a glance and it is "
-    "the point of the frame. Intricate but never busy: every ridge, fold "
-    "and undercut is a deliberate carved decision, never noise, never "
-    "scattered clutter, never surface fuzz. The silhouette stays governed "
-    "by the pose-verb rule — dynamic, asymmetric, caught mid-gesture, and "
-    "readable as one shape at phone-tile size — while the surface inside it "
-    "is rich. "
-    # 3 — magic. Granted to totems and to nothing else, and fenced, because
-    # this is the direction that turns kitsch fastest.
-    "A LITTLE MAGIC, FOR TOTEMS ONLY: a few tiny soft glowing teal "
-    "particles drift upward from the fissures, and a faint luminous haze "
-    "hangs close around the brightest part of the glow. Restrained and "
-    "premium — a handful of embers rising off a lit object, nothing more. "
-    "No lightning, no bolts, no sparkles scattered across the frame, no "
-    "magic effects, no fantasy kitsch. The matte clay and its handmade "
-    "finger marks still read clearly underneath all of it. "
-    # 4 — presentation, unchanged and still working.
-    "PRESENTATION: a pronounced bright rim light tracing the whole contour "
-    "so the form separates crisply from the sweep, a defined soft contact "
-    "shadow anchoring it, and a reverent centred poster composition with "
-    "generous space around it. The object is presented, not photographed in "
-    "passing. "
-    # 5 — exclusivity, and the failure that keeps coming back.
-    "EXCLUSIVITY THROUGH FORM, LIGHT AND DETAIL, NEVER THROUGH DARKNESS: a "
-    "rare collectible artifact, worth stopping on and worth sending to "
-    "somebody. A static symmetrical object is the failure this frame is "
-    "most likely to come back as."
-)
 
 # Which frames the block is applied to. Exactly the totems: a quiz card handed
 # this block would come back dark, off-brief and unreadable at tile size.
@@ -853,8 +692,8 @@ def prompt_for(scene, style=DEFAULT_STYLE, base_id=None):
     script centre-crops it to 3:4 and the tile crops again, whichever way the
     picture was drawn.
     """
-    return "\n".join([style_for(base_id, style), SAFE_AREA, scene,
-                      negative_for(base_id, style)])
+    return assemble(style_for(base_id, style), scene,
+                    negative_for(base_id, style))
 
 
 def sample_id_for(base_id, style=DEFAULT_STYLE):
@@ -887,83 +726,20 @@ def samples(style=DEFAULT_STYLE):
 # --- the call ----------------------------------------------------------------
 
 
-class GenerationError(Exception):
-    def __init__(self, code, retriable=True):
-        Exception.__init__(self, code)
-        self.code = code
-        self.retriable = retriable
-
-
-def _post_generation(prompt, api_size, key):
-    """One call to images/generations. Returns raw image bytes."""
-    body = json.dumps({"model": MODEL, "prompt": prompt, "size": api_size,
-                       "quality": IMAGE_QUALITY, "n": 1}).encode("utf-8")
-    req = urllib.request.Request(
-        API_BASE.rstrip("/") + "/images/generations",
-        data=body, method="POST",
-        headers={"Authorization": "Bearer " + key,
-                 "Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT_S) as res:
-            payload = json.loads(res.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        hint = ""
-        try:
-            detail = json.loads(exc.read().decode("utf-8"))
-            hint = str((detail.get("error") or {}).get("code") or "")[:80]
-        except Exception:
-            pass
-        # 429 and 5xx are worth another go; a 400 means the request itself is
-        # wrong and will be exactly as wrong the second time.
-        raise GenerationError(
-            "http_%d %s" % (exc.code, hint),
-            retriable=(exc.code == 429 or exc.code >= 500))
-    except Exception as exc:
-        raise GenerationError("transport %s" % type(exc).__name__)
-
-    data = (payload or {}).get("data") or []
-    encoded = (data[0] or {}).get("b64_json") if data else None
-    if not encoded:
-        raise GenerationError("empty_response")
-    try:
-        return base64.b64decode(encoded, validate=True)
-    except (binascii.Error, ValueError):
-        raise GenerationError("bad_image", retriable=False)
-
-
-def generate(prompt, api_size, key, tries=3):
-    """The draw, with retries on the failures that are worth retrying."""
-    last = None
-    for attempt in range(tries):
-        try:
-            return _post_generation(prompt, api_size, key)
-        except GenerationError as err:
-            last = err
-            if not err.retriable:
-                raise
-            if attempt + 1 < tries:
-                time.sleep(2 * (attempt + 1))
-    raise last
-
-
 # --- the sanity floor --------------------------------------------------------
 
 # Bright art on a warm ground sits high. Below this the render came back as a
 # dark picture, which for v3 means the model ignored the brief rather than
 # that the frame is merely moody.
-MIN_MEAN_LUMA = 90.0
 
 # And above this, with nothing else going on, it is a blown-out or empty page.
-MAX_MEAN_LUMA = 245.0
 
 # One flat wash — cream rectangle, white rectangle — scores fine on luma and
 # is still not a picture.
-MIN_STDDEV = 10.0
 
 # Saturated friendly palette, or it is not the style. A greyscale or
 # near-greyscale render fails here and nowhere else; the threshold is low
 # enough that the palest frame in the batch (the fog card) clears it.
-MIN_SATURATION = 15.0
 
 # Clay sits lower, and gets its own number rather than dragging the vector
 # floor down with it. Matte clay lit in a studio is a desaturated material by
@@ -980,7 +756,6 @@ MIN_SATURATION = 15.0
 # catching is a colourless render, and those come back near zero — a true
 # greyscale frame is nowhere near 10, so the margin below is intact even
 # though the margin above got thinner.
-CLAY_MIN_SATURATION = 10.0
 
 # sculpt sits in the same place as clay and for the same reason, but on its
 # own knob rather than sharing clay's: it is the same matte material, and its
@@ -996,7 +771,6 @@ CLAY_MIN_SATURATION = 10.0
 # and still sits far above a colourless render, which comes back near zero.
 # Pinned rather than derived: if a sculpt run rejects a frame that looks right
 # in the log's `sat` reading, this is the line to move.
-SCULPT_MIN_SATURATION = 10.0
 
 # Keyed rather than branched, now that there are three: a fourth style that
 # forgets to add itself here gets the vector floor, which is the strict one,
@@ -1028,22 +802,6 @@ MIN_SATURATION_BY_STYLE = {
 # it. Correct renders measure 140-150 and a teal-heavy one might reach 200;
 # the ceiling sits just under the reading the owner called neon, which leaves
 # every correct render a wide margin.
-TOTEM_MAX_SATURATION = 235.0
-
-
-def measure(img):
-    """`(mean_luma, stddev, mean_saturation)` for a frame, or None.
-
-    Split from the verdict so the floor can be reasoned about — and tested —
-    without an image or Pillow in the room.
-    """
-    try:
-        from PIL import ImageStat
-        grey = ImageStat.Stat(img.convert("L"))
-        sat = ImageStat.Stat(img.convert("HSV").getchannel("S"))
-        return grey.mean[0], grey.stddev[0], sat.mean[0]
-    except Exception:
-        return None
 
 
 def min_saturation(style=DEFAULT_STYLE):
@@ -1061,16 +819,9 @@ def floor_for(style=DEFAULT_STYLE, base_id=None):
     the way they fail is the teal drowning the clay rather than anything
     about how bright they are.
     """
-    band = {
-        "min_luma": MIN_MEAN_LUMA,
-        "max_luma": MAX_MEAN_LUMA,
-        "min_sd": MIN_STDDEV,
-        "min_sat": min_saturation(style),
-        "max_sat": None,
-    }
-    if style == "sculpt" and base_id in TOTEM_IDS:
-        band["max_sat"] = TOTEM_MAX_SATURATION
-    return band
+    max_sat = (TOTEM_MAX_SATURATION
+               if style == "sculpt" and base_id in TOTEM_IDS else None)
+    return persona_style.band(min_saturation(style), max_sat)
 
 
 def sanity(stats, style=DEFAULT_STYLE, base_id=None):
@@ -1082,38 +833,7 @@ def sanity(stats, style=DEFAULT_STYLE, base_id=None):
     `floor_for` — and the note prints the numbers either way, so a rejection
     can be read against the thresholds without rerunning anything.
     """
-    if stats is None:
-        # A frame is never lost to the checker. If it cannot be measured it is
-        # kept and the note says so — it is going in front of a human anyway.
-        return True, "unmeasured"
-    mean, sd, sat = stats
-    band = floor_for(style, base_id)
-    ok = (band["min_luma"] <= mean <= band["max_luma"]
-          and sd >= band["min_sd"] and sat >= band["min_sat"]
-          and (band["max_sat"] is None or sat <= band["max_sat"]))
-    return ok, "luma %.1f sd %.1f sat %.1f" % (mean, sd, sat)
-
-
-def to_webp(raw, size):
-    """The model's image, centre-cropped to the committed frame and encoded."""
-    from PIL import Image
-
-    img = Image.open(io.BytesIO(raw))
-    img.load()
-    img = img.convert("RGB")
-
-    want_w, want_h = size
-    scale = max(want_w / img.width, want_h / img.height)
-    img = img.resize((max(1, int(round(img.width * scale))),
-                      max(1, int(round(img.height * scale)))),
-                     Image.LANCZOS)
-    left = (img.width - want_w) // 2
-    top = (img.height - want_h) // 2
-    img = img.crop((left, top, left + want_w, top + want_h))
-
-    buf = io.BytesIO()
-    img.save(buf, "WEBP", quality=QUALITY, method=6)
-    return buf.getvalue(), img
+    return verdict(stats, floor_for(style, base_id))
 
 
 # --- the run -----------------------------------------------------------------
