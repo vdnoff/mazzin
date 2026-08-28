@@ -420,3 +420,6 @@ bottom.
 
 ## 2026-08-28 — claude/persona-v3a1-share
 - persona v3-A.1: result cleanup, share loop, totem rule, copy fixes
+
+## 2026-08-28 — claude/persona-v3a1-share
+- persona: totem floor class + dusk language fix
