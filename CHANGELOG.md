@@ -399,3 +399,6 @@ bottom.
 
 ## 2026-08-27 — claude/persona-art-two-prompts
 - persona art: relight pt9a and og prompts
+
+## 2026-08-28 — claude/persona-v3-style-samples-spnzz9
+- persona v3: bright quiz-art style sampler
