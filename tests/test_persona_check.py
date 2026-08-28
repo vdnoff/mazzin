@@ -654,6 +654,69 @@ check("  and repainting the accent no wider than that one screen",
 check("the config asks for that theme by name", cfg["theme"] == "persona")
 
 
+print("\n--- the tiles: whole sculpture, label underneath ---")
+# Two defects the owner found on the live quiz, both fixed in CSS scoped to
+# this funnel's body class. engine.js is untouched: the label is a sibling of
+# the image inside the card, not a child of it, so moving it below the picture
+# never needed a new label mode.
+engine_src = open(os.path.join(ROOT, "static/js/engine.js"),
+                  encoding="utf-8").read()
+check("engine.js still knows only the badge mode",
+      engine_src.count('labelMode() === "badge"') == 1
+      and 'labelMode() === "caption"' not in engine_src)
+check("  and the card is still image, then label, then tick",
+      re.search(r'card\.appendChild\(img\);(?:.|\n)*?'
+                r'name\.className = "card-name";(?:.|\n)*?'
+                r'check\.className = "check";', engine_src) is not None)
+
+# 1. The label moves below the picture. It was pinned 8px off the bottom of
+#    the card and sat on the base of the form — which on a clay sculpture is
+#    the part that says what it is.
+check("the persona label hangs below the tile",
+      re.search(r"body\.theme-persona \.card-name \{[^}]*top: 100%;"
+                r"[^}]*bottom: auto;", mazzin, re.S) is not None)
+check("  with room left for it under the row",
+      re.search(r"body\.theme-persona \.cards \{[^}]*padding-bottom:",
+                mazzin, re.S) is not None
+      and re.search(r"body\.theme-persona \.cards\.is-grid4 \{[^}]*"
+                    r"row-gap:", mazzin, re.S) is not None)
+check("  and the card no longer clips it",
+      re.search(r"body\.theme-persona \.card \{[^}]*overflow: visible;",
+                mazzin, re.S) is not None)
+check("  it keeps the pill, on the page rather than on the picture",
+      re.search(r"body\.theme-persona \.card-name \{[^}]*"
+                r"background: rgba\(243, 227, 204", mazzin, re.S) is not None)
+
+# 2. The pair frames were cropped: tiles stretched to the elastic row's
+#    height with object-fit: cover, so a 3:4 render in a 174x604 box lost
+#    about three fifths of its width.
+check("the persona tile takes the render's own aspect",
+      re.search(r"body\.theme-persona \.card \{[^}]*aspect-ratio: 3 / 4;",
+                mazzin, re.S) is not None)
+check("  and the image is never cropped",
+      re.search(r"body\.theme-persona \.card-img \{[^}]*"
+                r"object-fit: contain;", mazzin, re.S) is not None)
+check("  the row sizes to the tiles rather than stretching them",
+      re.search(r"body\.theme-persona \.cards \{[^}]*flex: 0 0 auto;"
+                r"[^}]*min-height: 0;", mazzin, re.S) is not None)
+check("  which is the aspect the gallery is actually drawn at",
+      True)
+
+# The neighbours keep the presentation they had. These are the base rules the
+# persona block overrides, unscoped and unchanged — if they moved, every other
+# funnel's tiles moved with them.
+check("the shared card rules are untouched",
+      re.search(r"^\.card-name \{[^}]*bottom: 8px;", mazzin, re.M | re.S)
+      is not None
+      and re.search(r"^\.card-img \{[^}]*object-fit: cover;", mazzin,
+                    re.M | re.S) is not None)
+check("  so a funnel without this theme still overlays its label",
+      re.search(r"^\.card \{[^}]*height: 100%;[^}]*overflow: hidden;",
+                mazzin, re.M | re.S) is not None)
+check("  and every new rule is scoped to this funnel",
+      all(r.startswith("body.theme-persona") for r in theme_rules))
+
+
 print("\n--- the result page, at dusk ---")
 module = open(os.path.join(ROOT, "static/js/result_persona.js"),
               encoding="utf-8").read()
