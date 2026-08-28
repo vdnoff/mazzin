@@ -435,15 +435,33 @@ print("\n--- the sculpt batch: eight idiom-states ---")
 SCULPT_WANT = ["i_wound_up", "i_drained", "i_scattered", "i_grounded",
                "i_on_edge", "i_carrying", "i_walled_off", "i_lit_up"]
 
+# v3-A adds three production slots the funnel rewrite needs now — the clay
+# head, one totem, one card face. They are not idioms and are filed apart
+# under p_ so the concept set stays exactly eight.
+SCULPT_PREVIEW_WANT = ["p_head_base", "p_totem_open_flame",
+                       "p_chapter_climbing"]
+
 sculpt_plan = v3.samples("sculpt")
 sculpt_ids = [f["id"] for f in sculpt_plan]
-check("eight sculpt samples", len(sculpt_plan) == 8, str(len(sculpt_plan)))
+idiom_plan = [f for f in sculpt_plan if f["base_id"].startswith("i_")]
+preview_plan = [f for f in sculpt_plan if f["base_id"].startswith("p_")]
+check("eleven sculpt samples: eight idioms and three preview slots",
+      len(sculpt_plan) == 11, str(len(sculpt_plan)))
 check("the eight idioms, in order",
-      [f["base_id"] for f in sculpt_plan] == SCULPT_WANT, str(sculpt_ids))
+      [f["base_id"] for f in idiom_plan] == SCULPT_WANT,
+      str([f["base_id"] for f in idiom_plan]))
+check("  and the concept set is still exactly eight", len(idiom_plan) == 8)
+check("the three preview slots, in order",
+      [f["base_id"] for f in preview_plan] == SCULPT_PREVIEW_WANT,
+      str([f["base_id"] for f in preview_plan]))
 check("every sculpt id carries the sculpt_ prefix",
-      sculpt_ids == ["sculpt_" + i for i in SCULPT_WANT], str(sculpt_ids))
-check("  and the idiom prefix that marks them as states",
-      all(i.startswith("sculpt_i_") for i in sculpt_ids))
+      sculpt_ids == ["sculpt_" + f["base_id"] for f in sculpt_plan],
+      str(sculpt_ids))
+check("  idioms are marked i_, preview slots p_",
+      all(i.startswith("sculpt_i_") for i in
+          [f["id"] for f in idiom_plan])
+      and all(i.startswith("sculpt_p_") for i in
+              [f["id"] for f in preview_plan]))
 check("  so nothing collides with the two sets already on disk",
       not (set(sculpt_ids) & set(vector))
       and not (set(sculpt_ids) & set(clay_by_id)))
@@ -512,8 +530,9 @@ for sample_id, text in sculpt_by_id.items():
           text.startswith(v3.SCULPT_STYLE))
     check("  %s carries the safe-area rule, once" % sample_id,
           text.count(v3.SAFE_AREA) == 1)
-    check("  %s ends on the sculpt negatives" % sample_id,
-          text.endswith(v3.SCULPT_NEGATIVE))
+    if sample_id != "sculpt_p_head_base":
+        check("  %s ends on the sculpt negatives" % sample_id,
+              text.endswith(v3.SCULPT_NEGATIVE))
     check("  %s asks for the teal accent thread" % sample_id,
           "#4EDDC4" in text)
     check("  %s wears no other style's prefix" % sample_id,
@@ -530,6 +549,12 @@ check("  it asks for one to three warm tones per composition",
       "one to three warm sculpture tones" in sculpt_low)
 check("  it puts the teal on exactly one element",
       "on exactly one element" in sculpt_low)
+check("  it makes the colour carry the state",
+      "state-bearing colour" in sculpt_low
+      and "never a pleasant palette laid over an unrelated form" in sculpt_low)
+check("  and puts the teal only where the state is happening",
+      "teal at the meaning point" in sculpt_low
+      and "never sits anywhere as decoration" in sculpt_low)
 check("  and it says the meaning is carried by form, not by depiction",
       "the meaning is carried by shape" in sculpt_low
       and "never by depicting anything" in sculpt_low)
@@ -690,7 +715,8 @@ FIGURE = re.compile(
     r"\b(humans?|figures?|persons?|people|faces?|facial|eyes?|characters?|"
     r"creatures?|animals?|scenes?|rooms?|interiors?|furniture|tables?|"
     r"chairs?|couch|friends?|runner|hands?|fingers?|body|bodies|"
-    r"portraits?|buildings?|notebooks?|mugs?|lamps?|cats?|clocks?)\b")
+    r"portraits?|buildings?|notebooks?|mugs?|lamps?|cats?|clocks?|"
+    r"heads?|busts?|skulls?|necks?|brows?|jaws?|noses?|profiles?)\b")
 
 # The handmade brief needs the vocabulary of hands without ever asking for a
 # hand: finger impressions are a surface, hand-sculpted is a process. Those
@@ -719,11 +745,77 @@ check("  and the craft phrases themselves come back clean",
       not FIGURE.search(without_craft(
           "hand-sculpted clay with soft finger impressions and press marks")))
 
+# One frame is exempt, and the exemption is named rather than inferred: the
+# result page inlays the reader's radar on a clay cranium, so that frame has
+# to be a head. Every other frame in every style is held to the ban, and the
+# head is held to a narrower one of its own instead — checked below.
+HEAD_EXEMPT = "sculpt_p_head_base"
 for sample_id, text in sculpt_by_id.items():
+    if sample_id == HEAD_EXEMPT:
+        continue
     positive = without_craft("\n".join(text.split("\n")[:3]).lower())
     hits = sorted(set(FIGURE.findall(positive)))
     check("  %s asks for no figure, no scene, no prop" % sample_id,
           not hits, str(hits))
+
+# The ban has to be able to catch a head, or exempting one frame from it
+# would mean nothing.
+check("the ban would catch a head anywhere else",
+      sorted(set(FIGURE.findall("a clay head in profile, brow and jaw")))
+      == ["brow", "head", "jaw", "profile"])
+check("  and exactly one frame is exempt from it",
+      len([f for f in sculpt_plan
+           if f["base_id"] in v3.SCULPT_NEGATIVE_OVERRIDES]) == 1)
+
+
+print("\n--- the head, the one declared exception ---")
+head_prompt = sculpt_by_id[HEAD_EXEMPT]
+check("it is drawn on the sculpt prefix like everything else",
+      head_prompt.startswith(v3.SCULPT_STYLE)
+      and head_prompt.count(v3.SAFE_AREA) == 1)
+check("but on its own negatives",
+      head_prompt.endswith(v3.SCULPT_HEAD_NEGATIVE)
+      and v3.SCULPT_NEGATIVE not in head_prompt)
+head_neg = v3.SCULPT_HEAD_NEGATIVE.lower()
+for word in ["no eyes", "no mouth", "no lips", "no ear", "no nostril",
+             "no eyebrow", "no hair of any kind", "no expression",
+             "no realistic or detailed face", "no photographic likeness",
+             "no recognisable person"]:
+    check("  the head still refuses '%s'" % word, word in head_neg)
+check("  and everything below the neck",
+      "nothing below the neck" in head_neg
+      and "no shoulders" in head_neg and "no second form" in head_neg)
+check("  the profile is an edge, not a face",
+      "a plain sculptural edge and nothing more" in head_neg)
+# The whole point of the frame: a blank cranium for the radar to sit on.
+head_scene = dict(v3.SCULPT_PREVIEW)["p_head_base"].lower()
+check("the cranium is empty, which is what the overlay needs",
+      "smooth, even, unbroken clay surface" in head_scene
+      and "no features, no texture and no detail" in head_scene)
+check("  and held clear of the frame edges",
+      "held clear of every edge" in head_scene)
+check("  no other frame claims the head negative",
+      list(v3.SCULPT_NEGATIVE_OVERRIDES) == ["p_head_base"])
+
+
+print("\n--- the three preview slots the funnel rewrite needs ---")
+preview_by_id = {f["base_id"]: f["prompt"].lower() for f in preview_plan}
+check("the totem is matter, a visible event and inner light",
+      all(w in preview_by_id["p_totem_open_flame"]
+          for w in ["upward-twisting", "teal glow at the very tip",
+                    "colour climbs with the form"]))
+check("  and reads as an emblem, like the cartographer totem did",
+      "composed as an emblem" in preview_by_id["p_totem_open_flame"])
+check("the climbing card is climbing",
+      all(w in preview_by_id["p_chapter_climbing"]
+          for w in ["climbing a slope", "tilted forward into the climb",
+                    "clearly going up"]))
+check("  with the teal at the point of contact, not as decoration",
+      "teal mark sits where the form meets the slope"
+      in preview_by_id["p_chapter_climbing"])
+for base_id in SCULPT_PREVIEW_WANT:
+    check("  sculpt_%s names its material" % base_id,
+          "clay" in preview_by_id[base_id])
 
 check("the safe-area rule itself is figure-free, so it is safe to share",
       not FIGURE.search(v3.SAFE_AREA.lower()))
@@ -1028,9 +1120,10 @@ check("a clay id is not accepted by the vector run", code == 2, str(code))
 
 code, out = run(["--style", "sculpt", "--dry-run"])
 check("--style sculpt exits 0", code == 0, str(code))
-check("  draws all eight sculpt ids",
-      all(("sculpt_" + i) in out for i in SCULPT_WANT)
-      and out.count("via 1024x1536") == 8)
+check("  draws all eleven sculpt ids",
+      all(("sculpt_" + i) in out
+          for i in SCULPT_WANT + SCULPT_PREVIEW_WANT)
+      and out.count("via 1024x1536") == 11)
 check("  says which style it is running", "sculpt style" in out)
 check("  prints the sculpt prefix and no other",
       v3.SCULPT_STYLE in out

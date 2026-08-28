@@ -1,3333 +1,2493 @@
 {
-  "slug": "persona",
-  "funnel_id": "persona_v1",
-  "locale": "en",
-  "theme": "persona",
-  "stripe_mode": "test",
-  "result_module": "/static/js/result_persona.js",
-  "result_css": "/static/css/result_persona.css",
-  "meta": {
-    "title": "Your Mind Profile",
-    "og_image": "/static/galleries/persona/og.webp"
-  },
-  "swipe": {
-    "pairs_count": 18,
-    "headline": "Your mind profile analysis",
-    "subtext": "18 taps. No typing. A profile that's actually yours.",
-    "subtext_accent": "18 taps",
-    "hint": "Tap your choice",
-    "label_mode": "badge",
-    "analyzing_fade_to": "#0E1A1E",
-    "steps": [
-      {
-        "id": "hook",
-        "question": "Which morning is yours?",
-        "format": "pair",
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "pk1a",
-                "img": "/static/galleries/persona/pk1a.webp",
-                "label": "Running shoes at dawn",
-                "tags": [
-                  "drive",
-                  "bold"
-                ],
-                "colors": [
-                  {
-                    "name": "Dawn Sand",
-                    "hex": "#E4D5B4",
-                    "element": "sky"
-                  },
-                  {
-                    "name": "Signal Teal",
-                    "hex": "#4EBCB0",
-                    "element": "path"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "ground"
-                  }
-                ]
-              },
-              {
-                "id": "pk1b",
-                "img": "/static/galleries/persona/pk1b.webp",
-                "label": "Slow coffee, notebook open",
-                "tags": [
-                  "anchor",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Pale Sand",
-                    "hex": "#DCCBA6",
-                    "element": "page"
-                  },
-                  {
-                    "name": "Dune Sand",
-                    "hex": "#C8A97E",
-                    "element": "table"
-                  },
-                  {
-                    "name": "Deep Navy",
-                    "hex": "#12202C",
-                    "element": "room"
-                  }
-                ]
-              }
-            ]
-          }
+ "slug": "persona",
+ "funnel_id": "persona_v3",
+ "locale": "en",
+ "theme": "persona",
+ "stripe_mode": "test",
+ "result_module": "/static/js/result_persona.js",
+ "result_css": "/static/css/result_persona.css",
+ "meta": {
+  "title": "Your Shape",
+  "og_image": "/static/galleries/persona/og.webp"
+ },
+ "swipe": {
+  "pairs_count": 13,
+  "headline": "Shapes that unlock what's underneath",
+  "subtext": "13 taps. No typing. Pick the shape that feels like you.",
+  "subtext_accent": "13 taps",
+  "hint": "Pick the shape that feels like you",
+  "label_mode": "badge",
+  "analyzing_fade_to": "#241A10",
+  "steps": [
+   {
+    "id": "now",
+    "question": "Which shape is you, right now?",
+    "format": "grid4",
+    "pairs": [
+     {
+      "id": "p1",
+      "images": [
+       {
+        "id": "now_wound_up",
+        "img": "/static/galleries/persona/now_wound_up.webp",
+        "label": "Wound up",
+        "form": "A coil compressed tight, its turns pressed hard together, loaded and leaning off vertical — held energy with nowhere yet to go.",
+        "tags": [
+         "drive",
+         "bold"
+        ],
+        "colors": [
+         {
+          "name": "Terracotta",
+          "hex": "#B4643C",
+          "element": "coil"
+         },
+         {
+          "name": "Signal Teal",
+          "hex": "#4EDDC4",
+          "element": "innermost turn"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
         ]
-      },
-      {
-        "id": "animal",
-        "question": "Which one is you?",
-        "format": "grid12",
-        "shuffle": false,
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "animal_owl",
-                "img": "/static/galleries/persona/animal_owl.webp",
-                "label": "Owl",
-                "tags": [
-                  "prism",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Pale Sand",
-                    "hex": "#DED0AE",
-                    "element": "upper field"
-                  },
-                  {
-                    "name": "Sea Teal",
-                    "hex": "#3E8E8A",
-                    "element": "mid field"
-                  },
-                  {
-                    "name": "Night Ink",
-                    "hex": "#0F1A22",
-                    "element": "lower field"
-                  }
-                ]
-              },
-              {
-                "id": "animal_fox",
-                "img": "/static/galleries/persona/animal_fox.webp",
-                "label": "Fox",
-                "tags": [
-                  "drive",
-                  "bold"
-                ],
-                "colors": [
-                  {
-                    "name": "Warm Sand",
-                    "hex": "#D9C39B",
-                    "element": "upper field"
-                  },
-                  {
-                    "name": "Dune Sand",
-                    "hex": "#C08A54",
-                    "element": "mid field"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "lower field"
-                  }
-                ]
-              },
-              {
-                "id": "animal_wolf",
-                "img": "/static/galleries/persona/animal_wolf.webp",
-                "label": "Wolf",
-                "tags": [
-                  "wave",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Mist Sand",
-                    "hex": "#D2CDB8",
-                    "element": "upper field"
-                  },
-                  {
-                    "name": "Signal Teal",
-                    "hex": "#4EBCB0",
-                    "element": "mid field"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#16202A",
-                    "element": "lower field"
-                  }
-                ]
-              },
-              {
-                "id": "animal_bear",
-                "img": "/static/galleries/persona/animal_bear.webp",
-                "label": "Bear",
-                "tags": [
-                  "anchor",
-                  "bold"
-                ],
-                "colors": [
-                  {
-                    "name": "Warm Sand",
-                    "hex": "#D6BE96",
-                    "element": "upper field"
-                  },
-                  {
-                    "name": "Amber Sand",
-                    "hex": "#B08C5E",
-                    "element": "mid field"
-                  },
-                  {
-                    "name": "Deep Navy",
-                    "hex": "#12202C",
-                    "element": "lower field"
-                  }
-                ]
-              },
-              {
-                "id": "animal_stag",
-                "img": "/static/galleries/persona/animal_stag.webp",
-                "label": "Stag",
-                "tags": [
-                  "anchor",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Pale Sand",
-                    "hex": "#D8C6A2",
-                    "element": "upper field"
-                  },
-                  {
-                    "name": "Deep Teal",
-                    "hex": "#2A7078",
-                    "element": "mid field"
-                  },
-                  {
-                    "name": "Night Ink",
-                    "hex": "#0F1A22",
-                    "element": "lower field"
-                  }
-                ]
-              },
-              {
-                "id": "animal_raven",
-                "img": "/static/galleries/persona/animal_raven.webp",
-                "label": "Raven",
-                "tags": [
-                  "wave",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Mist Sand",
-                    "hex": "#CBC7B4",
-                    "element": "upper field"
-                  },
-                  {
-                    "name": "Deep Teal",
-                    "hex": "#2A7078",
-                    "element": "mid field"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "lower field"
-                  }
-                ]
-              },
-              {
-                "id": "animal_lynx",
-                "img": "/static/galleries/persona/animal_lynx.webp",
-                "label": "Lynx",
-                "tags": [
-                  "prism",
-                  "bold"
-                ],
-                "colors": [
-                  {
-                    "name": "Bright Sand",
-                    "hex": "#E8DCBC",
-                    "element": "upper field"
-                  },
-                  {
-                    "name": "Bright Teal",
-                    "hex": "#4EDDC4",
-                    "element": "mid field"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#16202A",
-                    "element": "lower field"
-                  }
-                ]
-              },
-              {
-                "id": "animal_otter",
-                "img": "/static/galleries/persona/animal_otter.webp",
-                "label": "Otter",
-                "tags": [
-                  "wave",
-                  "bold"
-                ],
-                "colors": [
-                  {
-                    "name": "Foam Sand",
-                    "hex": "#DFD8BE",
-                    "element": "upper field"
-                  },
-                  {
-                    "name": "Bright Teal",
-                    "hex": "#4EDDC4",
-                    "element": "mid field"
-                  },
-                  {
-                    "name": "Deep Navy",
-                    "hex": "#12202C",
-                    "element": "lower field"
-                  }
-                ]
-              },
-              {
-                "id": "animal_hawk",
-                "img": "/static/galleries/persona/animal_hawk.webp",
-                "label": "Hawk",
-                "tags": [
-                  "drive",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Warm Sand",
-                    "hex": "#DCC298",
-                    "element": "upper field"
-                  },
-                  {
-                    "name": "Amber Sand",
-                    "hex": "#B08C5E",
-                    "element": "mid field"
-                  },
-                  {
-                    "name": "Night Ink",
-                    "hex": "#0F1A22",
-                    "element": "lower field"
-                  }
-                ]
-              },
-              {
-                "id": "animal_tortoise",
-                "img": "/static/galleries/persona/animal_tortoise.webp",
-                "label": "Tortoise",
-                "tags": [
-                  "anchor",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Pale Sand",
-                    "hex": "#DACDAA",
-                    "element": "upper field"
-                  },
-                  {
-                    "name": "Sea Teal",
-                    "hex": "#3E8E8A",
-                    "element": "mid field"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#16202A",
-                    "element": "lower field"
-                  }
-                ]
-              },
-              {
-                "id": "animal_horse",
-                "img": "/static/galleries/persona/animal_horse.webp",
-                "label": "Horse",
-                "tags": [
-                  "drive",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Dust Sand",
-                    "hex": "#E0C79C",
-                    "element": "upper field"
-                  },
-                  {
-                    "name": "Dune Sand",
-                    "hex": "#C8A97E",
-                    "element": "mid field"
-                  },
-                  {
-                    "name": "Deep Navy",
-                    "hex": "#12202C",
-                    "element": "lower field"
-                  }
-                ]
-              },
-              {
-                "id": "animal_cat",
-                "img": "/static/galleries/persona/animal_cat.webp",
-                "label": "Cat",
-                "tags": [
-                  "prism",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Mist Sand",
-                    "hex": "#CFC9B2",
-                    "element": "upper field"
-                  },
-                  {
-                    "name": "Sea Teal",
-                    "hex": "#3E8E8A",
-                    "element": "mid field"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "lower field"
-                  }
-                ]
-              }
-            ]
-          }
+       },
+       {
+        "id": "now_settled",
+        "img": "/static/galleries/persona/now_settled.webp",
+        "label": "Settled",
+        "form": "A soft mass slumped at rest, low and wide, spread by its own weight with its edges relaxed outward — nothing left to brace against.",
+        "tags": [
+         "anchor",
+         "calm"
+        ],
+        "colors": [
+         {
+          "name": "Sand",
+          "hex": "#D9BE95",
+          "element": "mass"
+         },
+         {
+          "name": "Amber",
+          "hex": "#E0A24E",
+          "element": "warm side"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
         ]
-      },
-      {
-        "id": "seeking",
-        "question": "What pulled you here today?",
-        "format": "grid4",
-        "pin_first": true,
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "sq3a",
-                "img": "/static/galleries/persona/sq3a.webp",
-                "label": "Love",
-                "tags": [
-                  "wave",
-                  "deep",
-                  "purpose_love"
-                ],
-                "colors": [
-                  {
-                    "name": "Warm Sand",
-                    "hex": "#DCC5A0",
-                    "element": "core"
-                  },
-                  {
-                    "name": "Sea Teal",
-                    "hex": "#3E8E8A",
-                    "element": "surround"
-                  },
-                  {
-                    "name": "Night Ink",
-                    "hex": "#0F1A22",
-                    "element": "field"
-                  }
-                ]
-              },
-              {
-                "id": "sq3b",
-                "img": "/static/galleries/persona/sq3b.webp",
-                "label": "Career & money",
-                "tags": [
-                  "drive",
-                  "outer",
-                  "purpose_career"
-                ],
-                "colors": [
-                  {
-                    "name": "Bright Sand",
-                    "hex": "#E6D3A8",
-                    "element": "core"
-                  },
-                  {
-                    "name": "Amber Sand",
-                    "hex": "#B08C5E",
-                    "element": "surround"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "field"
-                  }
-                ]
-              },
-              {
-                "id": "sq3c",
-                "img": "/static/galleries/persona/sq3c.webp",
-                "label": "Inner quiet",
-                "tags": [
-                  "anchor",
-                  "inner",
-                  "purpose_peace"
-                ],
-                "colors": [
-                  {
-                    "name": "Pale Sand",
-                    "hex": "#D8CDB0",
-                    "element": "core"
-                  },
-                  {
-                    "name": "Signal Teal",
-                    "hex": "#4EBCB0",
-                    "element": "surround"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#16202A",
-                    "element": "field"
-                  }
-                ]
-              },
-              {
-                "id": "sq3d",
-                "img": "/static/galleries/persona/sq3d.webp",
-                "label": "The road ahead",
-                "tags": [
-                  "prism",
-                  "deep",
-                  "purpose_path"
-                ],
-                "colors": [
-                  {
-                    "name": "Mist Sand",
-                    "hex": "#D0CCB6",
-                    "element": "core"
-                  },
-                  {
-                    "name": "Deep Teal",
-                    "hex": "#2A7078",
-                    "element": "surround"
-                  },
-                  {
-                    "name": "Deep Navy",
-                    "hex": "#12202C",
-                    "element": "field"
-                  }
-                ]
-              }
-            ]
-          }
+       },
+       {
+        "id": "now_scattered",
+        "img": "/static/galleries/persona/now_scattered.webp",
+        "label": "Scattered",
+        "form": "One form broken into fragments drifting apart, clear gaps of empty ground opening between the pieces — still recognisably one thing.",
+        "tags": [
+         "wave",
+         "outer"
+        ],
+        "colors": [
+         {
+          "name": "Ochre",
+          "hex": "#C98A3E",
+          "element": "fragments"
+         },
+         {
+          "name": "Signal Teal",
+          "hex": "#4EDDC4",
+          "element": "one fragment"
+         },
+         {
+          "name": "Pale Sand",
+          "hex": "#E8D5B5",
+          "element": "sweep"
+         }
         ]
-      },
-      {
-        "id": "bond",
-        "question": "Your heart, right now:",
-        "format": "grid4",
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "hb4a",
-                "img": "/static/galleries/persona/hb4a.webp",
-                "label": "Single & searching",
-                "tags": [
-                  "outer",
-                  "deep",
-                  "bond_single"
-                ],
-                "colors": [
-                  {
-                    "name": "Bright Sand",
-                    "hex": "#E8D6AC",
-                    "element": "upper"
-                  },
-                  {
-                    "name": "Dune Sand",
-                    "hex": "#C8A97E",
-                    "element": "mid"
-                  },
-                  {
-                    "name": "Deep Navy",
-                    "hex": "#12202C",
-                    "element": "lower"
-                  }
-                ]
-              },
-              {
-                "id": "hb4b",
-                "img": "/static/galleries/persona/hb4b.webp",
-                "label": "In love",
-                "tags": [
-                  "wave",
-                  "deep",
-                  "bond_love"
-                ],
-                "colors": [
-                  {
-                    "name": "Foam Sand",
-                    "hex": "#E2D9C0",
-                    "element": "upper"
-                  },
-                  {
-                    "name": "Signal Teal",
-                    "hex": "#4EBCB0",
-                    "element": "mid"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#16202A",
-                    "element": "lower"
-                  }
-                ]
-              },
-              {
-                "id": "hb4c",
-                "img": "/static/galleries/persona/hb4c.webp",
-                "label": "It's complicated",
-                "tags": [
-                  "prism",
-                  "inner",
-                  "bond_complicated"
-                ],
-                "colors": [
-                  {
-                    "name": "Mist Sand",
-                    "hex": "#CBC7B4",
-                    "element": "upper"
-                  },
-                  {
-                    "name": "Deep Teal",
-                    "hex": "#2A7078",
-                    "element": "mid"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "lower"
-                  }
-                ]
-              },
-              {
-                "id": "hb4d",
-                "img": "/static/galleries/persona/hb4d.webp",
-                "label": "Healing",
-                "tags": [
-                  "anchor",
-                  "inner",
-                  "bond_healing"
-                ],
-                "colors": [
-                  {
-                    "name": "Pale Sand",
-                    "hex": "#DED2B2",
-                    "element": "upper"
-                  },
-                  {
-                    "name": "Sea Teal",
-                    "hex": "#3E8E8A",
-                    "element": "mid"
-                  },
-                  {
-                    "name": "Night Ink",
-                    "hex": "#0F1A22",
-                    "element": "lower"
-                  }
-                ]
-              }
-            ]
-          }
+       },
+       {
+        "id": "now_lit_up",
+        "img": "/static/galleries/persona/now_lit_up.webp",
+        "label": "Lit up",
+        "form": "A form with a bright teal core glowing out through fine cracks in its surface — the light coming from inside the volume, not falling on it.",
+        "tags": [
+         "prism",
+         "deep"
+        ],
+        "colors": [
+         {
+          "name": "Deep Terracotta",
+          "hex": "#8E4A2C",
+          "element": "shell"
+         },
+         {
+          "name": "Signal Teal",
+          "hex": "#4EDDC4",
+          "element": "core"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
         ]
-      },
-      {
-        "id": "energy",
-        "question": "Where does your battery fill?",
-        "format": "pair",
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "en5a",
-                "img": "/static/galleries/persona/en5a.webp",
-                "label": "Festival crowd",
-                "tags": [
-                  "outer",
-                  "bold"
-                ],
-                "colors": [
-                  {
-                    "name": "Bright Sand",
-                    "hex": "#EAD6A6",
-                    "element": "lights"
-                  },
-                  {
-                    "name": "Dune Sand",
-                    "hex": "#C8A97E",
-                    "element": "heads"
-                  },
-                  {
-                    "name": "Deep Navy",
-                    "hex": "#12202C",
-                    "element": "ground"
-                  }
-                ]
-              },
-              {
-                "id": "en5b",
-                "img": "/static/galleries/persona/en5b.webp",
-                "label": "Solitary trail",
-                "tags": [
-                  "inner",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Mist Sand",
-                    "hex": "#D4CFBA",
-                    "element": "sky"
-                  },
-                  {
-                    "name": "Sea Teal",
-                    "hex": "#3E8E8A",
-                    "element": "hillside"
-                  },
-                  {
-                    "name": "Night Ink",
-                    "hex": "#0F1A22",
-                    "element": "ground"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "environment",
-        "question": "Where does your mind work best?",
-        "format": "grid6",
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "pv6a",
-                "img": "/static/galleries/persona/pv6a.webp",
-                "label": "A busy creative studio",
-                "tags": [
-                  "outer",
-                  "bold"
-                ],
-                "colors": [
-                  {
-                    "name": "Bright Sand",
-                    "hex": "#E8D5A8",
-                    "element": "windows"
-                  },
-                  {
-                    "name": "Dune Sand",
-                    "hex": "#C8A97E",
-                    "element": "benches"
-                  },
-                  {
-                    "name": "Deep Navy",
-                    "hex": "#12202C",
-                    "element": "corners"
-                  }
-                ]
-              },
-              {
-                "id": "pv6b",
-                "img": "/static/galleries/persona/pv6b.webp",
-                "label": "A minimal, tidy desk",
-                "tags": [
-                  "anchor",
-                  "inner"
-                ],
-                "colors": [
-                  {
-                    "name": "Pale Sand",
-                    "hex": "#DFD3B4",
-                    "element": "surface"
-                  },
-                  {
-                    "name": "Signal Teal",
-                    "hex": "#4EBCB0",
-                    "element": "one object"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#16202A",
-                    "element": "wall"
-                  }
-                ]
-              },
-              {
-                "id": "pv6c",
-                "img": "/static/galleries/persona/pv6c.webp",
-                "label": "A cosy reading nook",
-                "tags": [
-                  "wave",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Warm Sand",
-                    "hex": "#D9C39B",
-                    "element": "cushions"
-                  },
-                  {
-                    "name": "Amber Sand",
-                    "hex": "#B08C5E",
-                    "element": "throw"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "alcove"
-                  }
-                ]
-              },
-              {
-                "id": "pv6d",
-                "img": "/static/galleries/persona/pv6d.webp",
-                "label": "A grand library hall",
-                "tags": [
-                  "prism",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Mist Sand",
-                    "hex": "#CEC9B2",
-                    "element": "high light"
-                  },
-                  {
-                    "name": "Deep Teal",
-                    "hex": "#2A7078",
-                    "element": "galleries"
-                  },
-                  {
-                    "name": "Night Ink",
-                    "hex": "#0F1A22",
-                    "element": "floor"
-                  }
-                ]
-              },
-              {
-                "id": "pv6e",
-                "img": "/static/galleries/persona/pv6e.webp",
-                "label": "A park bench with a laptop",
-                "tags": [
-                  "wave",
-                  "outer",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Foam Sand",
-                    "hex": "#DED8C0",
-                    "element": "sky"
-                  },
-                  {
-                    "name": "Bright Teal",
-                    "hex": "#4EDDC4",
-                    "element": "green"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#16202A",
-                    "element": "path"
-                  }
-                ]
-              },
-              {
-                "id": "pv6f",
-                "img": "/static/galleries/persona/pv6f.webp",
-                "label": "A night desk under a lamp",
-                "tags": [
-                  "prism",
-                  "inner"
-                ],
-                "colors": [
-                  {
-                    "name": "Lamp Sand",
-                    "hex": "#E4CFA0",
-                    "element": "pool of light"
-                  },
-                  {
-                    "name": "Sea Teal",
-                    "hex": "#3E8E8A",
-                    "element": "desk edge"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "room"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "palette",
-        "question": "Which moodboard is yours?",
-        "format": "grid6",
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "pl7a",
-                "img": "/static/galleries/persona/pl7a.webp",
-                "label": "Ember & rust",
-                "tags": [
-                  "drive",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Bright Sand",
-                    "hex": "#EAD3A0",
-                    "element": "upper swatch"
-                  },
-                  {
-                    "name": "Amber Sand",
-                    "hex": "#B08C5E",
-                    "element": "mid swatch"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "lower swatch"
-                  }
-                ]
-              },
-              {
-                "id": "pl7b",
-                "img": "/static/galleries/persona/pl7b.webp",
-                "label": "Moss & stone",
-                "tags": [
-                  "anchor",
-                  "inner"
-                ],
-                "colors": [
-                  {
-                    "name": "Pale Sand",
-                    "hex": "#D8CFB2",
-                    "element": "upper swatch"
-                  },
-                  {
-                    "name": "Sea Teal",
-                    "hex": "#3E8E8A",
-                    "element": "mid swatch"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#16202A",
-                    "element": "lower swatch"
-                  }
-                ]
-              },
-              {
-                "id": "pl7c",
-                "img": "/static/galleries/persona/pl7c.webp",
-                "label": "Paper & ink",
-                "tags": [
-                  "prism",
-                  "inner"
-                ],
-                "colors": [
-                  {
-                    "name": "Bright Sand",
-                    "hex": "#E8DCBC",
-                    "element": "upper swatch"
-                  },
-                  {
-                    "name": "Signal Teal",
-                    "hex": "#4EBCB0",
-                    "element": "mid swatch"
-                  },
-                  {
-                    "name": "Night Ink",
-                    "hex": "#0F1A22",
-                    "element": "lower swatch"
-                  }
-                ]
-              },
-              {
-                "id": "pl7d",
-                "img": "/static/galleries/persona/pl7d.webp",
-                "label": "Teal & still water",
-                "tags": [
-                  "wave",
-                  "inner",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Foam Sand",
-                    "hex": "#DCD8C2",
-                    "element": "upper swatch"
-                  },
-                  {
-                    "name": "Bright Teal",
-                    "hex": "#4EDDC4",
-                    "element": "mid swatch"
-                  },
-                  {
-                    "name": "Deep Navy",
-                    "hex": "#12202C",
-                    "element": "lower swatch"
-                  }
-                ]
-              },
-              {
-                "id": "pl7e",
-                "img": "/static/galleries/persona/pl7e.webp",
-                "label": "Brass & dusk",
-                "tags": [
-                  "prism",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Warm Sand",
-                    "hex": "#DCC49C",
-                    "element": "upper swatch"
-                  },
-                  {
-                    "name": "Deep Teal",
-                    "hex": "#2A7078",
-                    "element": "mid swatch"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "lower swatch"
-                  }
-                ]
-              },
-              {
-                "id": "pl7f",
-                "img": "/static/galleries/persona/pl7f.webp",
-                "label": "Clay & daylight",
-                "tags": [
-                  "drive",
-                  "outer"
-                ],
-                "colors": [
-                  {
-                    "name": "Dawn Sand",
-                    "hex": "#E6D2A4",
-                    "element": "upper swatch"
-                  },
-                  {
-                    "name": "Dune Sand",
-                    "hex": "#C8A97E",
-                    "element": "mid swatch"
-                  },
-                  {
-                    "name": "Deep Navy",
-                    "hex": "#12202C",
-                    "element": "lower swatch"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "moment",
-        "question": "When do you lose track of time?",
-        "format": "pair",
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "pm8a",
-                "img": "/static/galleries/persona/pm8a.webp",
-                "label": "Deep in conversation",
-                "tags": [
-                  "wave",
-                  "outer"
-                ],
-                "colors": [
-                  {
-                    "name": "Foam Sand",
-                    "hex": "#E0D9C0",
-                    "element": "faces"
-                  },
-                  {
-                    "name": "Bright Teal",
-                    "hex": "#4EDDC4",
-                    "element": "table"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#16202A",
-                    "element": "room"
-                  }
-                ]
-              },
-              {
-                "id": "pm8b",
-                "img": "/static/galleries/persona/pm8b.webp",
-                "label": "Deep in a solo project",
-                "tags": [
-                  "prism",
-                  "inner"
-                ],
-                "colors": [
-                  {
-                    "name": "Lamp Sand",
-                    "hex": "#E2CDA0",
-                    "element": "work light"
-                  },
-                  {
-                    "name": "Deep Teal",
-                    "hex": "#2A7078",
-                    "element": "tools"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "room"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "talisman",
-        "question": "Which one lives in your bag?",
-        "format": "grid4",
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "pt9a",
-                "img": "/static/galleries/persona/pt9a.webp",
-                "label": "A notebook and pen",
-                "tags": [
-                  "prism",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Bright Sand",
-                    "hex": "#E8DCBC",
-                    "element": "pages"
-                  },
-                  {
-                    "name": "Signal Teal",
-                    "hex": "#4EBCB0",
-                    "element": "band"
-                  },
-                  {
-                    "name": "Night Ink",
-                    "hex": "#0F1A22",
-                    "element": "cover"
-                  }
-                ]
-              },
-              {
-                "id": "pt9b",
-                "img": "/static/galleries/persona/pt9b.webp",
-                "label": "Headphones",
-                "tags": [
-                  "inner",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Mist Sand",
-                    "hex": "#D2CDB8",
-                    "element": "cups"
-                  },
-                  {
-                    "name": "Sea Teal",
-                    "hex": "#3E8E8A",
-                    "element": "band"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "cable"
-                  }
-                ]
-              },
-              {
-                "id": "pt9c",
-                "img": "/static/galleries/persona/pt9c.webp",
-                "label": "Running shoes",
-                "tags": [
-                  "drive",
-                  "bold"
-                ],
-                "colors": [
-                  {
-                    "name": "Bright Sand",
-                    "hex": "#EAD5A4",
-                    "element": "upper"
-                  },
-                  {
-                    "name": "Dune Sand",
-                    "hex": "#C8A97E",
-                    "element": "sole"
-                  },
-                  {
-                    "name": "Deep Navy",
-                    "hex": "#12202C",
-                    "element": "shadow"
-                  }
-                ]
-              },
-              {
-                "id": "pt9d",
-                "img": "/static/galleries/persona/pt9d.webp",
-                "label": "A camera",
-                "tags": [
-                  "wave",
-                  "outer"
-                ],
-                "colors": [
-                  {
-                    "name": "Foam Sand",
-                    "hex": "#DED8C0",
-                    "element": "body"
-                  },
-                  {
-                    "name": "Bright Teal",
-                    "hex": "#4EDDC4",
-                    "element": "lens ring"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#16202A",
-                    "element": "grip"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "weather",
-        "question": "Your inner weather lately?",
-        "format": "grid4",
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "wt10a",
-                "img": "/static/galleries/persona/wt10a.webp",
-                "label": "Clear sky",
-                "tags": [
-                  "outer",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Bright Sand",
-                    "hex": "#E6DCBE",
-                    "element": "zenith"
-                  },
-                  {
-                    "name": "Signal Teal",
-                    "hex": "#4EBCB0",
-                    "element": "mid sky"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#16202A",
-                    "element": "ground"
-                  }
-                ]
-              },
-              {
-                "id": "wt10b",
-                "img": "/static/galleries/persona/wt10b.webp",
-                "label": "Gathering storm",
-                "tags": [
-                  "drive",
-                  "outer"
-                ],
-                "colors": [
-                  {
-                    "name": "Warm Sand",
-                    "hex": "#DCC298",
-                    "element": "gap"
-                  },
-                  {
-                    "name": "Amber Sand",
-                    "hex": "#B08C5E",
-                    "element": "cloud edge"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "cloud base"
-                  }
-                ]
-              },
-              {
-                "id": "wt10c",
-                "img": "/static/galleries/persona/wt10c.webp",
-                "label": "Low fog",
-                "tags": [
-                  "inner",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Mist Sand",
-                    "hex": "#CFC9B4",
-                    "element": "upper"
-                  },
-                  {
-                    "name": "Deep Teal",
-                    "hex": "#2A7078",
-                    "element": "mid"
-                  },
-                  {
-                    "name": "Night Ink",
-                    "hex": "#0F1A22",
-                    "element": "lower"
-                  }
-                ]
-              },
-              {
-                "id": "wt10d",
-                "img": "/static/galleries/persona/wt10d.webp",
-                "label": "Steady rain",
-                "tags": [
-                  "wave",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Foam Sand",
-                    "hex": "#D8D4BE",
-                    "element": "upper"
-                  },
-                  {
-                    "name": "Sea Teal",
-                    "hex": "#3E8E8A",
-                    "element": "mid"
-                  },
-                  {
-                    "name": "Deep Navy",
-                    "hex": "#12202C",
-                    "element": "lower"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "rhythm",
-        "question": "Your sharpest hour?",
-        "format": "pair",
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "pr11a",
-                "img": "/static/galleries/persona/pr11a.webp",
-                "label": "First light, at the desk",
-                "tags": [
-                  "anchor",
-                  "bold"
-                ],
-                "colors": [
-                  {
-                    "name": "Dawn Sand",
-                    "hex": "#E8D4A6",
-                    "element": "window"
-                  },
-                  {
-                    "name": "Dune Sand",
-                    "hex": "#C8A97E",
-                    "element": "desk"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#16202A",
-                    "element": "room"
-                  }
-                ]
-              },
-              {
-                "id": "pr11b",
-                "img": "/static/galleries/persona/pr11b.webp",
-                "label": "Midnight, under the lamp",
-                "tags": [
-                  "prism",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Lamp Sand",
-                    "hex": "#E0CB9E",
-                    "element": "lamp pool"
-                  },
-                  {
-                    "name": "Deep Teal",
-                    "hex": "#2A7078",
-                    "element": "papers"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "room"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "drain",
-        "question": "Which of these drains you most?",
-        "format": "grid4",
-        "scoring": "inverse",
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "dn12a",
-                "img": "/static/galleries/persona/dn12a.webp",
-                "label": "A room of small talk",
-                "tags": [
-                  "outer",
-                  "bold"
-                ],
-                "colors": [
-                  {
-                    "name": "Flat Sand",
-                    "hex": "#D6D2C2",
-                    "element": "ceiling"
-                  },
-                  {
-                    "name": "Grey Teal",
-                    "hex": "#7C9498",
-                    "element": "room"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#2A3540",
-                    "element": "floor"
-                  }
-                ]
-              },
-              {
-                "id": "dn12b",
-                "img": "/static/galleries/persona/dn12b.webp",
-                "label": "An open-ended wait",
-                "tags": [
-                  "anchor",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Flat Sand",
-                    "hex": "#D2CEBE",
-                    "element": "wall"
-                  },
-                  {
-                    "name": "Grey Teal",
-                    "hex": "#7C9498",
-                    "element": "seats"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#2A3540",
-                    "element": "floor"
-                  }
-                ]
-              },
-              {
-                "id": "dn12c",
-                "img": "/static/galleries/persona/dn12c.webp",
-                "label": "Somebody else's crisis",
-                "tags": [
-                  "wave",
-                  "outer"
-                ],
-                "colors": [
-                  {
-                    "name": "Flat Sand",
-                    "hex": "#CFCBBC",
-                    "element": "upper"
-                  },
-                  {
-                    "name": "Grey Teal",
-                    "hex": "#7C9498",
-                    "element": "mid"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#2A3540",
-                    "element": "lower"
-                  }
-                ]
-              },
-              {
-                "id": "dn12d",
-                "img": "/static/galleries/persona/dn12d.webp",
-                "label": "A day with no plan",
-                "tags": [
-                  "prism",
-                  "inner",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Flat Sand",
-                    "hex": "#D4D0C0",
-                    "element": "upper"
-                  },
-                  {
-                    "name": "Grey Teal",
-                    "hex": "#7C9498",
-                    "element": "mid"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#2A3540",
-                    "element": "lower"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "sanctuary",
-        "question": "After a hard day, you reset by…",
-        "format": "pair",
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "ps13a",
-                "img": "/static/galleries/persona/ps13a.webp",
-                "label": "Outside, moving, with people",
-                "tags": [
-                  "outer",
-                  "bold"
-                ],
-                "colors": [
-                  {
-                    "name": "Bright Sand",
-                    "hex": "#EAD5A6",
-                    "element": "streetlight"
-                  },
-                  {
-                    "name": "Dune Sand",
-                    "hex": "#C8A97E",
-                    "element": "crowd"
-                  },
-                  {
-                    "name": "Deep Navy",
-                    "hex": "#12202C",
-                    "element": "road"
-                  }
-                ]
-              },
-              {
-                "id": "ps13b",
-                "img": "/static/galleries/persona/ps13b.webp",
-                "label": "Blanket, book, quiet",
-                "tags": [
-                  "inner",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Warm Sand",
-                    "hex": "#DCC7A0",
-                    "element": "blanket"
-                  },
-                  {
-                    "name": "Sea Teal",
-                    "hex": "#3E8E8A",
-                    "element": "book"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "room"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "decision",
-        "question": "When life forks, you follow:",
-        "format": "grid4",
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "fk14a",
-                "img": "/static/galleries/persona/fk14a.webp",
-                "label": "Heart first",
-                "tags": [
-                  "wave",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Warm Sand",
-                    "hex": "#DCC5A0",
-                    "element": "core"
-                  },
-                  {
-                    "name": "Sea Teal",
-                    "hex": "#3E8E8A",
-                    "element": "surround"
-                  },
-                  {
-                    "name": "Night Ink",
-                    "hex": "#0F1A22",
-                    "element": "field"
-                  }
-                ]
-              },
-              {
-                "id": "fk14b",
-                "img": "/static/galleries/persona/fk14b.webp",
-                "label": "Head first",
-                "tags": [
-                  "prism",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Bright Sand",
-                    "hex": "#E6DCBC",
-                    "element": "core"
-                  },
-                  {
-                    "name": "Signal Teal",
-                    "hex": "#4EBCB0",
-                    "element": "surround"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#16202A",
-                    "element": "field"
-                  }
-                ]
-              },
-              {
-                "id": "fk14c",
-                "img": "/static/galleries/persona/fk14c.webp",
-                "label": "Gut first",
-                "tags": [
-                  "drive",
-                  "outer"
-                ],
-                "colors": [
-                  {
-                    "name": "Bright Sand",
-                    "hex": "#EAD3A0",
-                    "element": "core"
-                  },
-                  {
-                    "name": "Amber Sand",
-                    "hex": "#B08C5E",
-                    "element": "surround"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "field"
-                  }
-                ]
-              },
-              {
-                "id": "fk14d",
-                "img": "/static/galleries/persona/fk14d.webp",
-                "label": "Time first",
-                "tags": [
-                  "anchor",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Pale Sand",
-                    "hex": "#D8CFB2",
-                    "element": "core"
-                  },
-                  {
-                    "name": "Deep Teal",
-                    "hex": "#2A7078",
-                    "element": "surround"
-                  },
-                  {
-                    "name": "Deep Navy",
-                    "hex": "#12202C",
-                    "element": "field"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "tide",
-        "question": "Deadline pressure hits. You…",
-        "format": "pair",
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "pi15a",
-                "img": "/static/galleries/persona/pi15a.webp",
-                "label": "Speed up, go all in",
-                "tags": [
-                  "drive",
-                  "bold"
-                ],
-                "colors": [
-                  {
-                    "name": "Bright Sand",
-                    "hex": "#EAD3A0",
-                    "element": "screen glow"
-                  },
-                  {
-                    "name": "Dune Sand",
-                    "hex": "#C8A97E",
-                    "element": "desk"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "room"
-                  }
-                ]
-              },
-              {
-                "id": "pi15b",
-                "img": "/static/galleries/persona/pi15b.webp",
-                "label": "Slow down, make a list",
-                "tags": [
-                  "anchor",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Pale Sand",
-                    "hex": "#DFD3B4",
-                    "element": "paper"
-                  },
-                  {
-                    "name": "Signal Teal",
-                    "hex": "#4EBCB0",
-                    "element": "pen"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#16202A",
-                    "element": "desk"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "door",
-        "question": "A free Saturday appears. First instinct?",
-        "format": "grid4",
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "pd16a",
-                "img": "/static/galleries/persona/pd16a.webp",
-                "label": "Road trip",
-                "tags": [
-                  "drive",
-                  "outer"
-                ],
-                "colors": [
-                  {
-                    "name": "Dawn Sand",
-                    "hex": "#E8D4A6",
-                    "element": "horizon"
-                  },
-                  {
-                    "name": "Dune Sand",
-                    "hex": "#C8A97E",
-                    "element": "road"
-                  },
-                  {
-                    "name": "Deep Navy",
-                    "hex": "#12202C",
-                    "element": "verge"
-                  }
-                ]
-              },
-              {
-                "id": "pd16b",
-                "img": "/static/galleries/persona/pd16b.webp",
-                "label": "Build or fix something",
-                "tags": [
-                  "anchor",
-                  "inner"
-                ],
-                "colors": [
-                  {
-                    "name": "Warm Sand",
-                    "hex": "#D9C39B",
-                    "element": "workbench"
-                  },
-                  {
-                    "name": "Amber Sand",
-                    "hex": "#B08C5E",
-                    "element": "tools"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "shadow"
-                  }
-                ]
-              },
-              {
-                "id": "pd16c",
-                "img": "/static/galleries/persona/pd16c.webp",
-                "label": "Gather your people",
-                "tags": [
-                  "wave",
-                  "outer"
-                ],
-                "colors": [
-                  {
-                    "name": "Foam Sand",
-                    "hex": "#E0D9C0",
-                    "element": "table"
-                  },
-                  {
-                    "name": "Bright Teal",
-                    "hex": "#4EDDC4",
-                    "element": "glasses"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#16202A",
-                    "element": "room"
-                  }
-                ]
-              },
-              {
-                "id": "pd16d",
-                "img": "/static/galleries/persona/pd16d.webp",
-                "label": "Museum, bookshop, deep dive",
-                "tags": [
-                  "prism",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Mist Sand",
-                    "hex": "#CEC9B2",
-                    "element": "high windows"
-                  },
-                  {
-                    "name": "Deep Teal",
-                    "hex": "#2A7078",
-                    "element": "cases"
-                  },
-                  {
-                    "name": "Night Ink",
-                    "hex": "#0F1A22",
-                    "element": "floor"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "essence",
-        "question": "People come to you for…",
-        "format": "grid4",
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "pe17a",
-                "img": "/static/galleries/persona/pe17a.webp",
-                "label": "A push",
-                "tags": [
-                  "drive",
-                  "outer"
-                ],
-                "colors": [
-                  {
-                    "name": "Bright Sand",
-                    "hex": "#EAD5A4",
-                    "element": "light"
-                  },
-                  {
-                    "name": "Amber Sand",
-                    "hex": "#B08C5E",
-                    "element": "hand"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "ground"
-                  }
-                ]
-              },
-              {
-                "id": "pe17b",
-                "img": "/static/galleries/persona/pe17b.webp",
-                "label": "Steadiness",
-                "tags": [
-                  "anchor",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Pale Sand",
-                    "hex": "#D8CDB0",
-                    "element": "stone"
-                  },
-                  {
-                    "name": "Sea Teal",
-                    "hex": "#3E8E8A",
-                    "element": "grain"
-                  },
-                  {
-                    "name": "Slate Navy",
-                    "hex": "#16202A",
-                    "element": "shadow"
-                  }
-                ]
-              },
-              {
-                "id": "pe17c",
-                "img": "/static/galleries/persona/pe17c.webp",
-                "label": "Comfort",
-                "tags": [
-                  "wave",
-                  "calm",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Warm Sand",
-                    "hex": "#DCC7A0",
-                    "element": "cloth"
-                  },
-                  {
-                    "name": "Signal Teal",
-                    "hex": "#4EBCB0",
-                    "element": "cup"
-                  },
-                  {
-                    "name": "Deep Navy",
-                    "hex": "#12202C",
-                    "element": "table"
-                  }
-                ]
-              },
-              {
-                "id": "pe17d",
-                "img": "/static/galleries/persona/pe17d.webp",
-                "label": "Answers",
-                "tags": [
-                  "prism",
-                  "deep"
-                ],
-                "colors": [
-                  {
-                    "name": "Bright Sand",
-                    "hex": "#E6DCBC",
-                    "element": "page"
-                  },
-                  {
-                    "name": "Deep Teal",
-                    "hex": "#2A7078",
-                    "element": "diagram"
-                  },
-                  {
-                    "name": "Night Ink",
-                    "hex": "#0F1A22",
-                    "element": "desk"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "seal",
-        "question": "Ten years from now, the win is…",
-        "format": "pair",
-        "pairs": [
-          {
-            "id": "p1",
-            "images": [
-              {
-                "id": "pz18a",
-                "img": "/static/galleries/persona/pz18a.webp",
-                "label": "A life full of stories",
-                "tags": [
-                  "outer",
-                  "bold"
-                ],
-                "colors": [
-                  {
-                    "name": "Dawn Sand",
-                    "hex": "#EAD6A8",
-                    "element": "far light"
-                  },
-                  {
-                    "name": "Dune Sand",
-                    "hex": "#C8A97E",
-                    "element": "road"
-                  },
-                  {
-                    "name": "Deep Navy",
-                    "hex": "#12202C",
-                    "element": "distance"
-                  }
-                ]
-              },
-              {
-                "id": "pz18b",
-                "img": "/static/galleries/persona/pz18b.webp",
-                "label": "A life that feels like peace",
-                "tags": [
-                  "inner",
-                  "calm"
-                ],
-                "colors": [
-                  {
-                    "name": "Pale Sand",
-                    "hex": "#DED2B4",
-                    "element": "window"
-                  },
-                  {
-                    "name": "Sea Teal",
-                    "hex": "#3E8E8A",
-                    "element": "sill"
-                  },
-                  {
-                    "name": "Ink Navy",
-                    "hex": "#101820",
-                    "element": "room"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
+       }
+      ]
+     }
     ]
-  },
-  "interstitials": [
-    {
-      "after_step": 4,
-      "template": "confirm",
-      "kicker": "Signal recorded",
-      "line": "Two personal signals in.",
-      "sub": "Your profile is narrowing.",
-      "cta": "Continue analysis",
-      "auto_advance_ms": 2000,
-      "echo_steps": [
-        "hook",
-        "animal",
-        "seeking",
-        "bond"
-      ],
-      "personal": {
-        "step": "animal",
-        "lines": {
-          "animal_owl": {
-            "line": "An Owl, watching first.",
-            "sub": "That narrows it fast."
-          },
-          "animal_fox": {
-            "line": "A Fox, and already round the side.",
-            "sub": "That narrows it fast."
-          },
-          "animal_wolf": {
-            "line": "A Wolf, and never only for yourself.",
-            "sub": "That narrows it fast."
-          },
-          "animal_bear": {
-            "line": "A Bear, taking up the room you take up.",
-            "sub": "That narrows it fast."
-          },
-          "animal_stag": {
-            "line": "A Stag, holding the ground you stand on.",
-            "sub": "That narrows it fast."
-          },
-          "animal_raven": {
-            "line": "A Raven, drawn to what nobody names.",
-            "sub": "That narrows it fast."
-          },
-          "animal_lynx": {
-            "line": "A Lynx, seeing far more than you say.",
-            "sub": "That narrows it fast."
-          },
-          "animal_otter": {
-            "line": "An Otter, and not solemn about any of it.",
-            "sub": "That narrows it fast."
-          },
-          "animal_hawk": {
-            "line": "A Hawk, deciding from height.",
-            "sub": "That narrows it fast."
-          },
-          "animal_tortoise": {
-            "line": "A Tortoise, arriving anyway.",
-            "sub": "That narrows it fast."
-          },
-          "animal_horse": {
-            "line": "A Horse, built to go.",
-            "sub": "That narrows it fast."
-          },
-          "animal_cat": {
-            "line": "A Cat, in the seat with the best angle.",
-            "sub": "That narrows it fast."
-          }
-        }
-      }
-    },
-    {
-      "after_step": 9,
-      "template": "almost",
-      "kicker": "Pattern detected",
-      "line": "Profile {pct}% calibrated.",
-      "cta": "Continue analysis",
-      "auto_advance_ms": 2000,
-      "echo_steps": [
-        "energy",
-        "environment",
-        "palette",
-        "moment",
-        "talisman"
-      ],
-      "personal": {
-        "axis": "axis",
-        "lines": {
-          "drive": {
-            "line": "Drive keeps winning.",
-            "sub": "If it holds, your profile changes."
-          },
-          "anchor": {
-            "line": "Anchor keeps winning.",
-            "sub": "If it holds, your profile changes."
-          },
-          "wave": {
-            "line": "Wave keeps winning.",
-            "sub": "If it holds, your profile changes."
-          },
-          "prism": {
-            "line": "Prism keeps winning.",
-            "sub": "If it holds, your profile changes."
-          }
-        }
-      }
-    },
-    {
-      "after_step": 14,
-      "template": "confirm",
-      "kicker": "Deep layer",
-      "line": "Deep layer mapped.",
-      "sub": "Four signals left.",
-      "cta": "Continue analysis",
-      "auto_advance_ms": 2000,
-      "echo_steps": [
-        "weather",
-        "rhythm",
-        "drain",
-        "sanctuary",
-        "decision"
-      ],
-      "personal": {
-        "step": "decision",
-        "lines": {
-          "fk14a": {
-            "line": "You choose with your heart first.",
-            "sub": "Few admit that."
-          },
-          "fk14b": {
-            "line": "You choose with your head first.",
-            "sub": "The heart still votes."
-          },
-          "fk14c": {
-            "line": "Gut first.",
-            "sub": "Your fastest signal is usually your truest."
-          },
-          "fk14d": {
-            "line": "You let time decide.",
-            "sub": "Patience is a strategy, not a delay."
-          }
-        }
-      }
-    },
-    {
-      "after_step": 18,
-      "template": "almost",
-      "kicker": "Calibrating",
-      "line": "All 18 signals in.",
-      "sub": "Most blends are common — let's see yours.",
-      "cta": "Continue analysis",
-      "auto_advance_ms": 2400,
-      "echo_steps": [
-        "tide",
-        "door",
-        "essence",
-        "seal"
-      ]
-    }
-  ],
-  "interstitial_working": [
-    "Reading your choices…",
-    "Weighing them against the four axes…",
-    "Preparing what's next…"
-  ],
-  "preview_gallery": [
-    {
-      "id": "pv6a",
-      "img": "/static/galleries/persona/pv6a.webp",
-      "tags": [
-        "outer",
-        "bold"
-      ]
-    },
-    {
-      "id": "pv6b",
-      "img": "/static/galleries/persona/pv6b.webp",
-      "tags": [
-        "anchor",
-        "inner"
-      ]
-    },
-    {
-      "id": "pv6c",
-      "img": "/static/galleries/persona/pv6c.webp",
-      "tags": [
-        "wave",
-        "calm"
-      ]
-    },
-    {
-      "id": "pv6d",
-      "img": "/static/galleries/persona/pv6d.webp",
-      "tags": [
-        "prism",
-        "deep"
-      ]
-    },
-    {
-      "id": "pv6e",
-      "img": "/static/galleries/persona/pv6e.webp",
-      "tags": [
-        "wave",
-        "outer",
-        "deep"
-      ]
-    },
-    {
-      "id": "pv6f",
-      "img": "/static/galleries/persona/pv6f.webp",
-      "tags": [
-        "prism",
-        "inner"
-      ]
-    },
-    {
-      "id": "pl7a",
-      "img": "/static/galleries/persona/pl7a.webp",
-      "tags": [
-        "drive",
-        "deep"
-      ]
-    },
-    {
-      "id": "pl7b",
-      "img": "/static/galleries/persona/pl7b.webp",
-      "tags": [
-        "anchor",
-        "inner"
-      ]
-    },
-    {
-      "id": "pl7c",
-      "img": "/static/galleries/persona/pl7c.webp",
-      "tags": [
-        "prism",
-        "inner"
-      ]
-    },
-    {
-      "id": "pl7d",
-      "img": "/static/galleries/persona/pl7d.webp",
-      "tags": [
-        "wave",
-        "inner",
-        "deep"
-      ]
-    },
-    {
-      "id": "pl7e",
-      "img": "/static/galleries/persona/pl7e.webp",
-      "tags": [
-        "prism",
-        "deep"
-      ]
-    },
-    {
-      "id": "pl7f",
-      "img": "/static/galleries/persona/pl7f.webp",
-      "tags": [
-        "drive",
-        "outer"
-      ]
-    },
-    {
-      "id": "pe17a",
-      "img": "/static/galleries/persona/pe17a.webp",
-      "tags": [
-        "drive",
-        "outer"
-      ]
-    },
-    {
-      "id": "pe17b",
-      "img": "/static/galleries/persona/pe17b.webp",
-      "tags": [
-        "anchor",
-        "deep"
-      ]
-    },
-    {
-      "id": "pe17c",
-      "img": "/static/galleries/persona/pe17c.webp",
-      "tags": [
-        "wave",
-        "calm",
-        "deep"
-      ]
-    },
-    {
-      "id": "pe17d",
-      "img": "/static/galleries/persona/pe17d.webp",
-      "tags": [
-        "prism",
-        "deep"
-      ]
-    }
-  ],
-  "style_elements": {
-    "title": "Your Signals",
-    "subline": "Recognized from your choices — read in full in your profile.",
-    "items": [
-      {
-        "id": "flare",
-        "label": "Flare",
-        "spec": "Drive — the tag that starts things",
-        "image": "pl7a",
-        "img": "/static/galleries/persona/pl7a.webp",
+   },
+   {
+    "id": "seeking",
+    "question": "What pulled you here today?",
+    "format": "grid4",
+    "pin_first": true,
+    "pairs": [
+     {
+      "id": "p1",
+      "images": [
+       {
+        "id": "seeking_a_spark",
+        "img": "/static/galleries/persona/seeking_a_spark.webp",
+        "label": "A spark",
+        "form": "A sharp bright tip rising off a low base, the whole form narrowing to the one lit point where it is about to catch.",
         "tags": [
-          "drive",
-          "deep"
+         "drive",
+         "outer",
+         "purpose_career"
+        ],
+        "colors": [
+         {
+          "name": "Ochre",
+          "hex": "#C98A3E",
+          "element": "base"
+         },
+         {
+          "name": "Signal Teal",
+          "hex": "#4EDDC4",
+          "element": "tip"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
         ]
-      },
-      {
-        "id": "stone",
-        "label": "Stone",
-        "spec": "Anchor — the tag that holds them",
-        "image": "pl7b",
-        "img": "/static/galleries/persona/pl7b.webp",
+       },
+       {
+        "id": "seeking_solid_ground",
+        "img": "/static/galleries/persona/seeking_solid_ground.webp",
+        "label": "Solid ground",
+        "form": "A wide rooted base flaring where it meets the ground, carrying its mass squarely, planted and immovable.",
         "tags": [
-          "anchor",
-          "inner"
+         "anchor",
+         "calm",
+         "purpose_peace"
+        ],
+        "colors": [
+         {
+          "name": "Terracotta",
+          "hex": "#B4643C",
+          "element": "base"
+         },
+         {
+          "name": "Sand",
+          "hex": "#D9BE95",
+          "element": "upper mass"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
         ]
-      },
-      {
-        "id": "current",
-        "label": "Current",
-        "spec": "Wave — the tag that reads the room",
-        "image": "pl7d",
-        "img": "/static/galleries/persona/pl7d.webp",
+       },
+       {
+        "id": "seeking_a_warm_current",
+        "img": "/static/galleries/persona/seeking_a_warm_current.webp",
+        "label": "A warm current",
+        "form": "A soft wave drawn through a narrow gap between two forms, warming as it passes and touching both sides on the way.",
         "tags": [
-          "wave",
-          "inner",
-          "deep"
+         "wave",
+         "inner",
+         "purpose_love"
+        ],
+        "colors": [
+         {
+          "name": "Amber",
+          "hex": "#E0A24E",
+          "element": "current"
+         },
+         {
+          "name": "Signal Teal",
+          "hex": "#4EDDC4",
+          "element": "the gap"
+         },
+         {
+          "name": "Pale Sand",
+          "hex": "#E8D5B5",
+          "element": "sweep"
+         }
         ]
-      },
-      {
-        "id": "lens",
-        "label": "Lens",
-        "spec": "Prism — the tag that takes them apart",
-        "image": "pl7c",
-        "img": "/static/galleries/persona/pl7c.webp",
+       },
+       {
+        "id": "seeking_the_way_through",
+        "img": "/static/galleries/persona/seeking_the_way_through.webp",
+        "label": "The way through",
+        "form": "A lit opening cut in a thick wall, the light falling forward through it onto the ground beyond.",
         "tags": [
-          "prism",
-          "inner"
+         "prism",
+         "inner",
+         "purpose_path"
+        ],
+        "colors": [
+         {
+          "name": "Warm Grey",
+          "hex": "#A89684",
+          "element": "wall"
+         },
+         {
+          "name": "Signal Teal",
+          "hex": "#4EDDC4",
+          "element": "opening"
+         },
+         {
+          "name": "Lit Amber",
+          "hex": "#F2C070",
+          "element": "light beyond"
+         }
         ]
-      },
-      {
-        "id": "notebook",
-        "label": "Notebook and pen",
-        "spec": "What you carry — thinking, on paper",
-        "image": "pt9a",
-        "img": "/static/galleries/persona/pt9a.webp",
-        "tags": [
-          "prism",
-          "deep"
-        ]
-      },
-      {
-        "id": "headphones",
-        "label": "Headphones",
-        "spec": "What you carry — a door you can close",
-        "image": "pt9b",
-        "img": "/static/galleries/persona/pt9b.webp",
-        "tags": [
-          "inner",
-          "calm"
-        ]
-      },
-      {
-        "id": "shoes",
-        "label": "Running shoes",
-        "spec": "What you carry — motion, kept ready",
-        "image": "pt9c",
-        "img": "/static/galleries/persona/pt9c.webp",
-        "tags": [
-          "drive",
-          "bold"
-        ]
-      },
-      {
-        "id": "camera",
-        "label": "Camera",
-        "spec": "What you carry — attention, pointed outward",
-        "image": "pt9d",
-        "img": "/static/galleries/persona/pt9d.webp",
-        "tags": [
-          "wave",
-          "outer"
-        ]
-      },
-      {
-        "id": "clear-sky",
-        "label": "Clear sky",
-        "spec": "Open mood — settled, and looking outward",
-        "image": "wt10a",
-        "img": "/static/galleries/persona/wt10a.webp",
-        "tags": [
-          "outer",
-          "calm"
-        ]
-      },
-      {
-        "id": "low-fog",
-        "label": "Low fog",
-        "spec": "Closed mood — inward, and slow to lift",
-        "image": "wt10c",
-        "img": "/static/galleries/persona/wt10c.webp",
-        "tags": [
-          "inner",
-          "deep"
-        ]
-      },
-      {
-        "id": "studio",
-        "label": "A busy studio",
-        "spec": "Where you think — company, and noise you choose",
-        "image": "pv6a",
-        "img": "/static/galleries/persona/pv6a.webp",
-        "tags": [
-          "outer",
-          "bold"
-        ]
-      },
-      {
-        "id": "night-desk",
-        "label": "A night desk",
-        "spec": "Where you think — one lamp, and no interruptions",
-        "image": "pv6f",
-        "img": "/static/galleries/persona/pv6f.webp",
-        "tags": [
-          "prism",
-          "inner"
-        ]
-      }
+       }
+      ]
+     }
     ]
-  },
-  "styles": [
-    {
-      "id": "igniter",
-      "name": "The Igniter",
-      "tags": [
-        "drive",
-        "outer",
-        "bold"
-      ],
-      "blurb": "You start things. The room knows what you think before you have finished deciding it, and most of what you have built began as a sentence you said out loud too early.",
-      "reveals": {
-        "palette": {
-          "colors": [
-            {
-              "name": "Flare Coral",
-              "rgb": [
-                240,
-                138,
-                85
-              ]
-            },
-            {
-              "name": "Ember Rust",
-              "rgb": [
-                181,
-                83,
-                44
-              ]
-            },
-            {
-              "name": "Signal Amber",
-              "rgb": [
-                240,
-                180,
-                90
-              ]
-            },
-            {
-              "name": "Cinder Ink",
-              "rgb": [
-                28,
-                23,
-                20
-              ]
-            }
-          ],
-          "line": "Flare coral is your everyday register, signal amber is what you reach for when you want the room to turn, and cinder ink is the weight that keeps the other two from burning out by Thursday.",
-          "talismans": [
-            "A brass key, in the coat you actually wear",
-            "A folding knife — carried, not shown",
-            "One notebook small enough to finish"
-          ],
-          "lucky_days": "Tuesday and Saturday — the first for starting things, the second for finishing them."
-        },
-        "mistakes": {
-          "setup": "That one is the easiest of the five to live with. The other four cut deeper, and the one costing you most right now is",
-          "trigger": "the speed you decide at, not the decision,"
-        },
-        "dna": {
-          "setup": "Drive and outward pull read as the same thing from outside and work against each other inside, and the split shows",
-          "trigger": "in the choices you made fastest,"
-        },
-        "materials": {
-          "setup": "You are read as certain long before you feel it, and the person who lasts with you is the one who",
-          "trigger": "waits out your first week,"
-        },
-        "splurge": {
-          "setup": "Your working energy is not flat and was never meant to be, and the month it turns is",
-          "trigger": "the one straight after you get bored,"
-        },
-        "shopping": {
-          "setup": "Two windows in the next twelve months carry most of your momentum, and the first opens",
-          "trigger": "earlier than you would plan for,"
-        },
-        "mistake_one": {
-          "title": "You mistake speed for certainty",
-          "body": "Your momentum reads to you as evidence — the decision came fast, so it feels like it came from somewhere deep. Sometimes it came from nothing but the discomfort of sitting still, and the two are identical from the inside.",
-          "fix": "Sleep one night on any decision you could explain in under ten seconds."
-        }
-      }
-    },
-    {
-      "id": "keeper",
-      "name": "The Keeper",
-      "tags": [
-        "anchor",
-        "inner",
-        "calm"
-      ],
-      "blurb": "You hold. People bring you the thing they cannot put down, and you take it without comment — which is why almost nobody has ever asked what you are carrying.",
-      "reveals": {
-        "palette": {
-          "colors": [
-            {
-              "name": "Moss Sage",
-              "rgb": [
-                162,
-                184,
-                144
-              ]
-            },
-            {
-              "name": "Quarry Grey",
-              "rgb": [
-                138,
-                144,
-                136
-              ]
-            },
-            {
-              "name": "Field Olive",
-              "rgb": [
-                110,
-                122,
-                78
-              ]
-            },
-            {
-              "name": "Bedrock Ink",
-              "rgb": [
-                22,
-                28,
-                24
-              ]
-            }
-          ],
-          "line": "Moss sage is where you are most yourself, quarry grey is what you wear when you would rather not be read, and field olive is the one that makes a room feel like it has been there a while.",
-          "talismans": [
-            "A river stone, in the pocket you use least",
-            "A wooden handle worn smooth by one hand",
-            "A key to a door you no longer need to open"
-          ],
-          "lucky_days": "Sunday and Wednesday — the first for deciding, the second for saying it."
-        },
-        "mistakes": {
-          "setup": "That one is the easiest of the five to admit to. The other four cost more, and the one running your week right now is",
-          "trigger": "the weight you agreed to carry silently,"
-        },
-        "dna": {
-          "setup": "Steadiness and privacy look like one trait from outside and are two inside, and the seam between them shows",
-          "trigger": "in the questions you took longest on,"
-        },
-        "materials": {
-          "setup": "You are the safest person most people know, and the one who lasts with you is the one who",
-          "trigger": "asks a second time,"
-        },
-        "splurge": {
-          "setup": "Your working energy runs long rather than hot, and the month it pays best is",
-          "trigger": "later than the calendar suggests,"
-        },
-        "shopping": {
-          "setup": "Most of your next twelve months is steady and two stretches are not, and the first of them lands",
-          "trigger": "just after you have taken something else on,"
-        },
-        "mistake_one": {
-          "title": "You call it patience when it is postponement",
-          "body": "Waiting is a real strategy and you are genuinely good at it, which is exactly why it hides the other thing — the conversation you have been not-having for months looks identical, from the outside, to one you are wisely timing.",
-          "fix": "Name a date for the thing you are waiting on. If you cannot, you are not waiting."
-        }
-      }
-    },
-    {
-      "id": "feeler",
-      "name": "The Feeler",
-      "tags": [
-        "wave",
-        "outer",
-        "deep"
-      ],
-      "blurb": "You read rooms before you read people, and people before they have said anything. It is the most useful thing about you and it is not free.",
-      "reveals": {
-        "palette": {
-          "colors": [
-            {
-              "name": "Bright Teal",
-              "rgb": [
-                78,
-                221,
-                196
-              ]
-            },
-            {
-              "name": "Deep Teal",
-              "rgb": [
-                42,
-                112,
-                120
-              ]
-            },
-            {
-              "name": "Riffle Pearl",
-              "rgb": [
-                196,
-                220,
-                216
-              ]
-            },
-            {
-              "name": "Trench Ink",
-              "rgb": [
-                15,
-                26,
-                32
-              ]
-            }
-          ],
-          "line": "Bright teal is the one people notice, deep teal is where you actually live, and riffle pearl is what keeps the other two from reading as cold.",
-          "talismans": [
-            "A feather kept flat between two pages",
-            "A shell small enough to close a hand around",
-            "One ring you only take off to swim"
-          ],
-          "lucky_days": "Monday and Friday — the first for listening, the second for saying what you heard."
-        },
-        "mistakes": {
-          "setup": "That one is the easiest of the five to laugh about. The other four sit lower, and the one taking the most from you now is",
-          "trigger": "the mood you picked up and kept,"
-        },
-        "dna": {
-          "setup": "Depth and openness pull in opposite directions and you run both at once, and where they meet shows",
-          "trigger": "in the pictures you chose without thinking,"
-        },
-        "materials": {
-          "setup": "You know how somebody feels before they do, and the one who lasts with you is the one who",
-          "trigger": "says the thing plainly,"
-        },
-        "splurge": {
-          "setup": "Your working energy moves in tides rather than hours, and the month it comes back in is",
-          "trigger": "the one you would have written off,"
-        },
-        "shopping": {
-          "setup": "Your next twelve months has two high stretches and one flat one, and the flat one arrives",
-          "trigger": "right after the busiest thing you agree to,"
-        },
-        "mistake_one": {
-          "title": "You take on the room's weather as your own",
-          "body": "You walk into a tense room and come out tense, and by the evening it has stopped being the room's and become yours. Nobody handed it to you; you picked it up on the way past, which is why you cannot find where it came from.",
-          "fix": "After any hard room, name out loud whose feeling it was. Out loud — thinking it does not work."
-        }
-      }
-    },
-    {
-      "id": "thinker",
-      "name": "The Thinker",
-      "tags": [
-        "prism",
-        "inner",
-        "deep"
-      ],
-      "blurb": "You take things apart to understand them, including yourself, and you are the only person you have never quite finished with.",
-      "reveals": {
-        "palette": {
-          "colors": [
-            {
-              "name": "Lens Violet",
-              "rgb": [
-                138,
-                122,
-                196
-              ]
-            },
-            {
-              "name": "Paper Linen",
-              "rgb": [
-                226,
-                220,
-                206
-              ]
-            },
-            {
-              "name": "Brass Gold",
-              "rgb": [
-                200,
-                164,
-                98
-              ]
-            },
-            {
-              "name": "Ink Black",
-              "rgb": [
-                17,
-                24,
-                32
-              ]
-            }
-          ],
-          "line": "Lens violet is the one that makes people ask what you do, paper linen is where you think best, and brass gold is the warmth that stops the other two reading as cold.",
-          "talismans": [
-            "A compass that does not need to be accurate",
-            "One good pen, refilled rather than replaced",
-            "A magnifier, in a drawer you open weekly"
-          ],
-          "lucky_days": "Thursday and Sunday — the first for deciding, the second for changing your mind."
-        },
-        "mistakes": {
-          "setup": "That one is the easiest of the five to explain away. The other four are harder, and the one running you this month is",
-          "trigger": "the answer you already have and keep testing,"
-        },
-        "dna": {
-          "setup": "Distance and depth look like one habit and are two, and the join between them shows",
-          "trigger": "in the questions you answered instantly,"
-        },
-        "materials": {
-          "setup": "You are read as cool long before you feel it, and the one who lasts with you is the one who",
-          "trigger": "keeps asking after you go quiet,"
-        },
-        "splurge": {
-          "setup": "Your working energy pays in the months you are left alone, and the first of those is",
-          "trigger": "not the one you have blocked out,"
-        },
-        "shopping": {
-          "setup": "Two windows in your next twelve months are worth more than the other ten, and the first opens",
-          "trigger": "while you are still preparing for it,"
-        },
-        "mistake_one": {
-          "title": "You research the thing instead of doing it",
-          "body": "Understanding a problem feels near-identical to solving it, and you are good enough at the first that you can stay there for months. The tell is that you can describe every option and have not started any.",
-          "fix": "When you catch yourself on the third source, stop and do the smallest version of the thing instead."
-        }
-      }
-    }
-  ],
-  "analyzing": {
-    "duration_ms": 2500,
-    "text": "Reading your signals",
-    "messages": [
-      "Reading your 18 signals…",
-      "Weighing your 18 signals against the four axes…",
-      "Isolating your leading axis…"
-    ]
-  },
-  "analyzing_echo": true,
-  "report": {
-    "generating_messages": [
-      "Our AI is weighing your 18 signals against the four axes…",
-      "Searching for the combinations that fit YOU…",
-      "Cross-referencing your axis and energy picks…",
-      "Almost there — writing your profile…"
-    ],
-    "sections": [
-      {
-        "id": "palette",
-        "title": "Your Colours & Three Things to Carry",
-        "enabled": true,
-        "preview": [
-          "Each one is given with its exact code and the two shades it should never sit beside, because the same colour reads differently under warm light than it does under cold.",
-          "The profile names the three objects worth carrying, where to keep each of them, and the two days your decisions land best."
+   },
+   {
+    "id": "battery",
+    "question": "Where does your battery fill?",
+    "format": "grid4",
+    "pairs": [
+     {
+      "id": "p1",
+      "images": [
+       {
+        "id": "battery_in_the_cluster",
+        "img": "/static/galleries/persona/battery_in_the_cluster.webp",
+        "label": "In the cluster",
+        "form": "Rounded forms pressed together, sides flattening slightly where they touch, every gap closed between them.",
+        "tags": [
+         "outer",
+         "wave",
+         "bold"
         ],
-        "reveal": {
-          "mode": "visible"
-        }
-      },
-      {
-        "id": "mistakes",
-        "title": "5 Hidden Strengths & Blind Spots",
-        "teaser_line": "Four more, and the costliest one is last.",
-        "enabled": true,
-        "preview": [
-          "It reads as obvious written down, and it still shapes more of your week than anything else on this list.",
-          "The remaining four are ranked by how much of your energy each one is quietly costing you."
+        "colors": [
+         {
+          "name": "Ochre",
+          "hex": "#C98A3E",
+          "element": "cluster"
+         },
+         {
+          "name": "Amber",
+          "hex": "#E0A24E",
+          "element": "contacts"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "battery_one_on_one",
+        "img": "/static/galleries/persona/battery_one_on_one.webp",
+        "label": "One-on-one",
+        "form": "Two forms leaning into each other, meeting along one long edge and holding there, with open ground either side.",
+        "tags": [
+         "wave",
+         "inner",
+         "deep"
         ],
-        "reveal": {
-          "mode": "locked"
-        }
-      },
-      {
-        "id": "dna",
-        "title": "Your Mind Blueprint",
-        "teaser_line": "How your {palette} splits between your two strongest axes.",
-        "enabled": true,
-        "preview": [
-          "Three scales, read off your own taps, and one place where they pull hard against each other.",
-          "It names your axis, your energy and your tone, and says which of the three you lead with when you are under pressure."
+        "colors": [
+         {
+          "name": "Terracotta",
+          "hex": "#B4643C",
+          "element": "forms"
+         },
+         {
+          "name": "Signal Teal",
+          "hex": "#4EDDC4",
+          "element": "meeting edge"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "battery_out_in_the_open",
+        "img": "/static/galleries/persona/battery_out_in_the_open.webp",
+        "label": "Out in the open",
+        "form": "A lone form standing clear with air on every side of it, nothing touching it and nothing in the way.",
+        "tags": [
+         "outer",
+         "bold"
         ],
-        "reveal": {
-          "mode": "locked"
-        }
-      },
-      {
-        "id": "materials",
-        "title": "How You Connect",
-        "teaser_line": "Why one kind of person keeps finding you.",
-        "enabled": true,
-        "preview": [
-          "It is the pattern underneath the people you keep choosing, rather than a list of types to avoid.",
-          "The profile names the two profiles you work with easily, the one that costs you, and what to say in the first month."
+        "colors": [
+         {
+          "name": "Sand",
+          "hex": "#D9BE95",
+          "element": "form"
+         },
+         {
+          "name": "Pale Sand",
+          "hex": "#E8D5B5",
+          "element": "open ground"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "battery_in_your_shell",
+        "img": "/static/galleries/persona/battery_in_your_shell.webp",
+        "label": "In your shell",
+        "form": "A form curled snugly into a sheltering hollow, tucked so close that the hollow's curve and its own meet along their whole length.",
+        "tags": [
+         "inner",
+         "anchor"
         ],
-        "reveal": {
-          "mode": "locked"
-        }
-      },
-      {
-        "id": "splurge",
-        "title": "Work & Money Path",
-        "teaser_line": "Where your {carry} energy earns — and what to stop taking on.",
-        "enabled": true,
-        "preview": [
-          "Your working rhythm is not flat and never was, and the shape of it is far more useful than an average.",
-          "The profile marks the months your energy pays best and names the one kind of work to stop accepting."
-        ],
-        "reveal": {
-          "mode": "locked"
-        }
-      },
-      {
-        "id": "shopping",
-        "title": "Your 12-Month Energy Map",
-        "teaser_line": "Three strong months. One quiet one.",
-        "enabled": true,
-        "preview": [
-          "Twelve months, marked for the stretches where your energy is behind you and the two where it plainly is not.",
-          "Every window comes with what it is good for, so the quiet months stop reading as failure."
-        ],
-        "reveal": {
-          "mode": "locked"
-        }
-      }
-    ],
-    "mistake_one": {
-      "title": "Hidden Strength #1 of 5",
-      "locked_note": "Strengths 2–5 — inside your full profile"
-    },
-    "also": {
-      "title": "Also in your profile",
-      "rows": [
-        {
-          "section": "dna",
-          "hook": "How your {palette} choices split between your two strongest axes."
-        },
-        {
-          "section": "splurge",
-          "hook": "Where your {carry} energy earns — and the one kind of work to stop taking."
-        },
-        {
-          "section": "shopping",
-          "hook": "The two months your {animal} energy runs with you, and the one to stay quiet through."
-        },
-        {
-          "title": "Your Exact Colour Codes",
-          "hook": "The code for every colour above, where to use it, and the one shade to keep away from it."
-        }
+        "colors": [
+         {
+          "name": "Deep Terracotta",
+          "hex": "#8E4A2C",
+          "element": "hollow"
+         },
+         {
+          "name": "Ochre",
+          "hex": "#C98A3E",
+          "element": "curled form"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       }
       ]
-    },
-    "visuals": {
-      "taps": true,
-      "hero": {
-        "glyph_step": "animal",
-        "band_step": "environment"
-      },
-      "section_steps": {
-        "palette": "palette",
-        "mistakes": "weather",
-        "dna": "essence",
-        "materials": "sanctuary",
-        "splurge": "rhythm",
-        "shopping": "moment"
-      }
-    },
-    "hook_slots": {
-      "animal": {
-        "step": "animal",
-        "fallback": "animal"
-      },
-      "palette": {
-        "step": "palette",
-        "fallback": "moodboard"
-      },
-      "weather": {
-        "step": "weather",
-        "fallback": "weather"
-      },
-      "carry": {
-        "step": "talisman",
-        "fallback": "everyday carry"
-      }
+     }
+    ]
+   },
+   {
+    "id": "chapter",
+    "question": "Which chapter are you in?",
+    "format": "grid4",
+    "pairs": [
+     {
+      "id": "p1",
+      "images": [
+       {
+        "id": "chapter_climbing",
+        "img": "/static/galleries/persona/chapter_climbing.webp",
+        "label": "Climbing",
+        "form": "A form part-way up a rising slope, tilted forward into the climb with clear ground above it still to cover.",
+        "tags": [
+         "drive",
+         "outer"
+        ],
+        "colors": [
+         {
+          "name": "Ochre",
+          "hex": "#C98A3E",
+          "element": "form"
+         },
+         {
+          "name": "Sand",
+          "hex": "#D9BE95",
+          "element": "slope"
+         },
+         {
+          "name": "Signal Teal",
+          "hex": "#4EDDC4",
+          "element": "point of contact"
+         }
+        ]
+       },
+       {
+        "id": "chapter_opening",
+        "img": "/static/galleries/persona/chapter_opening.webp",
+        "label": "Opening",
+        "form": "A closed form unfurling outward, its folds parting to show an inner surface that has not been out before.",
+        "tags": [
+         "wave",
+         "outer"
+        ],
+        "colors": [
+         {
+          "name": "Terracotta",
+          "hex": "#B4643C",
+          "element": "outer folds"
+         },
+         {
+          "name": "Lit Amber",
+          "hex": "#F2C070",
+          "element": "inner surface"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "chapter_shedding",
+        "img": "/static/galleries/persona/chapter_shedding.webp",
+        "label": "Shedding",
+        "form": "A form shaking off old outer layers, cracked plates falling away from a smoother shape underneath.",
+        "tags": [
+         "prism",
+         "bold"
+        ],
+        "colors": [
+         {
+          "name": "Warm Grey",
+          "hex": "#A89684",
+          "element": "old layers"
+         },
+         {
+          "name": "Amber",
+          "hex": "#E0A24E",
+          "element": "shape beneath"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "chapter_rooting",
+        "img": "/static/galleries/persona/chapter_rooting.webp",
+        "label": "Rooting",
+        "form": "A form settled low and gathering, widening downward into the ground rather than reaching up out of it.",
+        "tags": [
+         "anchor",
+         "inner",
+         "calm"
+        ],
+        "colors": [
+         {
+          "name": "Deep Terracotta",
+          "hex": "#8E4A2C",
+          "element": "form"
+         },
+         {
+          "name": "Sand",
+          "hex": "#D9BE95",
+          "element": "spread base"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "pressure",
+    "question": "Pressure hits. Your shape:",
+    "format": "pair",
+    "pairs": [
+     {
+      "id": "p1",
+      "images": [
+       {
+        "id": "pressure_coil_tighter",
+        "img": "/static/galleries/persona/pressure_coil_tighter.webp",
+        "label": "Coil tighter",
+        "form": "A coil compressed to its limit, every turn shut against the next, storing the load rather than letting any of it out.",
+        "tags": [
+         "drive",
+         "bold"
+        ],
+        "colors": [
+         {
+          "name": "Deep Terracotta",
+          "hex": "#8E4A2C",
+          "element": "coil"
+         },
+         {
+          "name": "Signal Teal",
+          "hex": "#4EDDC4",
+          "element": "innermost turn"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "pressure_spread_wider",
+        "img": "/static/galleries/persona/pressure_spread_wider.webp",
+        "label": "Spread wider",
+        "form": "A form flattened outward under the same load, taking the weight across a wider base and absorbing it.",
+        "tags": [
+         "anchor",
+         "calm"
+        ],
+        "colors": [
+         {
+          "name": "Sand",
+          "hex": "#D9BE95",
+          "element": "form"
+         },
+         {
+          "name": "Warm Grey",
+          "hex": "#A89684",
+          "element": "load"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "drain",
+    "question": "Which shape drains you most?",
+    "format": "grid4",
+    "scoring": "inverse",
+    "pairs": [
+     {
+      "id": "p1",
+      "images": [
+       {
+        "id": "drain_the_squeeze",
+        "img": "/static/galleries/persona/drain_the_squeeze.webp",
+        "label": "The squeeze",
+        "form": "A form pressed hard from both sides at once, bulging where it has nowhere left to give.",
+        "tags": [
+         "outer",
+         "bold"
+        ],
+        "colors": [
+         {
+          "name": "Drained Grey",
+          "hex": "#8C8074",
+          "element": "form"
+         },
+         {
+          "name": "Ash",
+          "hex": "#6E655C",
+          "element": "presses"
+         },
+         {
+          "name": "Pale Sand",
+          "hex": "#E8D5B5",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "drain_the_loop",
+        "img": "/static/galleries/persona/drain_the_loop.webp",
+        "label": "The loop",
+        "form": "A form ringed by identical copies of itself, each ring exactly like the last, closing it in on every side.",
+        "tags": [
+         "anchor",
+         "calm"
+        ],
+        "colors": [
+         {
+          "name": "Warm Grey",
+          "hex": "#A89684",
+          "element": "rings"
+         },
+         {
+          "name": "Drained Grey",
+          "hex": "#8C8074",
+          "element": "form"
+         },
+         {
+          "name": "Pale Sand",
+          "hex": "#E8D5B5",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "drain_the_noise",
+        "img": "/static/galleries/persona/drain_the_noise.webp",
+        "label": "The noise",
+        "form": "A form bombarded by a swarm of small particles striking it from all directions, pitting its surface.",
+        "tags": [
+         "wave",
+         "outer"
+        ],
+        "colors": [
+         {
+          "name": "Drained Grey",
+          "hex": "#8C8074",
+          "element": "form"
+         },
+         {
+          "name": "Ash",
+          "hex": "#6E655C",
+          "element": "particles"
+         },
+         {
+          "name": "Pale Sand",
+          "hex": "#E8D5B5",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "drain_the_wait",
+        "img": "/static/galleries/persona/drain_the_wait.webp",
+        "label": "The wait",
+        "form": "A form suspended over empty ground with nothing beneath it, hanging there with nothing to settle onto.",
+        "tags": [
+         "prism",
+         "inner",
+         "deep"
+        ],
+        "colors": [
+         {
+          "name": "Ash",
+          "hex": "#6E655C",
+          "element": "form"
+         },
+         {
+          "name": "Drained Grey",
+          "hex": "#8C8074",
+          "element": "emptiness"
+         },
+         {
+          "name": "Pale Sand",
+          "hex": "#E8D5B5",
+          "element": "sweep"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "hour",
+    "question": "Your sharpest hour?",
+    "format": "pair",
+    "pairs": [
+     {
+      "id": "p1",
+      "images": [
+       {
+        "id": "hour_first_light",
+        "img": "/static/galleries/persona/hour_first_light.webp",
+        "label": "First light",
+        "form": "A form rising toward the light, its upper surface already warm where the day has reached it first.",
+        "tags": [
+         "outer",
+         "bold"
+        ],
+        "colors": [
+         {
+          "name": "Lit Amber",
+          "hex": "#F2C070",
+          "element": "lit surface"
+         },
+         {
+          "name": "Terracotta",
+          "hex": "#B4643C",
+          "element": "form"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "hour_after_dark",
+        "img": "/static/galleries/persona/hour_after_dark.webp",
+        "label": "After dark",
+        "form": "A form with a glowing core held inside a deeper tone, giving its own light because there is none falling on it.",
+        "tags": [
+         "inner",
+         "deep"
+        ],
+        "colors": [
+         {
+          "name": "Warm Umbra",
+          "hex": "#241A10",
+          "element": "ground"
+         },
+         {
+          "name": "Signal Teal",
+          "hex": "#4EDDC4",
+          "element": "core"
+         },
+         {
+          "name": "Deep Terracotta",
+          "hex": "#8E4A2C",
+          "element": "form"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "forks",
+    "question": "When it forks, you follow:",
+    "format": "grid4",
+    "pairs": [
+     {
+      "id": "p1",
+      "images": [
+       {
+        "id": "forks_the_pull",
+        "img": "/static/galleries/persona/forks_the_pull.webp",
+        "label": "The pull",
+        "form": "A form leaning hard toward one side, drawn far enough off centre that the lean is the whole shape.",
+        "tags": [
+         "wave",
+         "deep"
+        ],
+        "colors": [
+         {
+          "name": "Terracotta",
+          "hex": "#B4643C",
+          "element": "form"
+         },
+         {
+          "name": "Signal Teal",
+          "hex": "#4EDDC4",
+          "element": "leading edge"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "forks_the_plan",
+        "img": "/static/galleries/persona/forks_the_plan.webp",
+        "label": "The plan",
+        "form": "A stepped, ordered form rising in even increments, each level squared to the one below it.",
+        "tags": [
+         "prism",
+         "calm"
+        ],
+        "colors": [
+         {
+          "name": "Sand",
+          "hex": "#D9BE95",
+          "element": "steps"
+         },
+         {
+          "name": "Warm Grey",
+          "hex": "#A89684",
+          "element": "shadow"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "forks_the_gut",
+        "img": "/static/galleries/persona/forks_the_gut.webp",
+        "label": "The gut",
+        "form": "A form twisted from its own centre outward, the turn starting deep inside it and working out to the surface.",
+        "tags": [
+         "drive",
+         "bold"
+        ],
+        "colors": [
+         {
+          "name": "Deep Terracotta",
+          "hex": "#8E4A2C",
+          "element": "form"
+         },
+         {
+          "name": "Signal Teal",
+          "hex": "#4EDDC4",
+          "element": "centre of the twist"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "forks_the_pause",
+        "img": "/static/galleries/persona/forks_the_pause.webp",
+        "label": "The pause",
+        "form": "A still form standing between two diverging paths, settled on neither, waiting where they part.",
+        "tags": [
+         "anchor",
+         "inner"
+        ],
+        "colors": [
+         {
+          "name": "Warm Grey",
+          "hex": "#A89684",
+          "element": "form"
+         },
+         {
+          "name": "Sand",
+          "hex": "#D9BE95",
+          "element": "paths"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "reset",
+    "question": "After a hard day, you reset by:",
+    "format": "grid4",
+    "pairs": [
+     {
+      "id": "p1",
+      "images": [
+       {
+        "id": "reset_melt",
+        "img": "/static/galleries/persona/reset_melt.webp",
+        "label": "Melt",
+        "form": "A form softening and spreading where it stands, its edges going slack and running gently outward.",
+        "tags": [
+         "anchor",
+         "calm"
+        ],
+        "colors": [
+         {
+          "name": "Amber",
+          "hex": "#E0A24E",
+          "element": "form"
+         },
+         {
+          "name": "Sand",
+          "hex": "#D9BE95",
+          "element": "spread"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "reset_switch_off",
+        "img": "/static/galleries/persona/reset_switch_off.webp",
+        "label": "Switch off",
+        "form": "A sealed smooth form with no opening anywhere on it, closed over and giving nothing away.",
+        "tags": [
+         "prism",
+         "inner"
+        ],
+        "colors": [
+         {
+          "name": "Warm Grey",
+          "hex": "#A89684",
+          "element": "form"
+         },
+         {
+          "name": "Drained Grey",
+          "hex": "#8C8074",
+          "element": "shadow"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "reset_shake_it_off",
+        "img": "/static/galleries/persona/reset_shake_it_off.webp",
+        "label": "Shake it off",
+        "form": "A form throwing off fragments in every direction, shedding what it was carrying in one motion.",
+        "tags": [
+         "drive",
+         "bold"
+        ],
+        "colors": [
+         {
+          "name": "Terracotta",
+          "hex": "#B4643C",
+          "element": "form"
+         },
+         {
+          "name": "Ochre",
+          "hex": "#C98A3E",
+          "element": "fragments"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "reset_plug_in",
+        "img": "/static/galleries/persona/reset_plug_in.webp",
+        "label": "Plug in",
+        "form": "A form set close beside a glowing source, its near side already taking the light and warming with it.",
+        "tags": [
+         "wave",
+         "outer"
+        ],
+        "colors": [
+         {
+          "name": "Ochre",
+          "hex": "#C98A3E",
+          "element": "form"
+         },
+         {
+          "name": "Signal Teal",
+          "hex": "#4EDDC4",
+          "element": "source"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "leanedon",
+    "question": "People lean on you for:",
+    "format": "grid4",
+    "pairs": [
+     {
+      "id": "p1",
+      "images": [
+       {
+        "id": "leanedon_the_push",
+        "img": "/static/galleries/persona/leanedon_the_push.webp",
+        "label": "The push",
+        "form": "A form driving another one forward, its weight behind the second and the ground marked where both have moved.",
+        "tags": [
+         "drive",
+         "outer"
+        ],
+        "colors": [
+         {
+          "name": "Terracotta",
+          "hex": "#B4643C",
+          "element": "pushing form"
+         },
+         {
+          "name": "Sand",
+          "hex": "#D9BE95",
+          "element": "moved form"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "leanedon_the_hold",
+        "img": "/static/galleries/persona/leanedon_the_hold.webp",
+        "label": "The hold",
+        "form": "A form bent under a heavy sphere sunk into its upper surface, the deformation visible all around where it takes the weight.",
+        "tags": [
+         "anchor",
+         "calm"
+        ],
+        "colors": [
+         {
+          "name": "Sand",
+          "hex": "#D9BE95",
+          "element": "bearing form"
+         },
+         {
+          "name": "Warm Grey",
+          "hex": "#A89684",
+          "element": "sphere"
+         },
+         {
+          "name": "Signal Teal",
+          "hex": "#4EDDC4",
+          "element": "the contact"
+         }
+        ]
+       },
+       {
+        "id": "leanedon_the_soft_place",
+        "img": "/static/galleries/persona/leanedon_the_soft_place.webp",
+        "label": "The soft place",
+        "form": "A concave form opening upward, hollowed to receive whatever is set down in it and shaped by what it has held.",
+        "tags": [
+         "wave",
+         "deep"
+        ],
+        "colors": [
+         {
+          "name": "Amber",
+          "hex": "#E0A24E",
+          "element": "hollow"
+         },
+         {
+          "name": "Pale Sand",
+          "hex": "#E8D5B5",
+          "element": "inner face"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "leanedon_the_answer",
+        "img": "/static/galleries/persona/leanedon_the_answer.webp",
+        "label": "The answer",
+        "form": "A closed form with a single teal keyhole seam cut into it, the one opening in an otherwise solid shape.",
+        "tags": [
+         "prism",
+         "inner"
+        ],
+        "colors": [
+         {
+          "name": "Deep Terracotta",
+          "hex": "#8E4A2C",
+          "element": "form"
+         },
+         {
+          "name": "Signal Teal",
+          "hex": "#4EDDC4",
+          "element": "keyhole seam"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "runs",
+    "question": "Your engine runs:",
+    "format": "pair",
+    "pairs": [
+     {
+      "id": "p1",
+      "images": [
+       {
+        "id": "runs_hot",
+        "img": "/static/galleries/persona/runs_hot.webp",
+        "label": "Hot",
+        "form": "A taut form held under tension in a heated amber tone, the colour itself running warm right through it.",
+        "tags": [
+         "bold",
+         "outer"
+        ],
+        "colors": [
+         {
+          "name": "Lit Amber",
+          "hex": "#F2C070",
+          "element": "form"
+         },
+         {
+          "name": "Terracotta",
+          "hex": "#B4643C",
+          "element": "deep tone"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "runs_cool",
+        "img": "/static/galleries/persona/runs_cool.webp",
+        "label": "Cool",
+        "form": "A smooth even form in a cool grey-blue tone, unhurried, holding its temperature whatever is happening around it.",
+        "tags": [
+         "calm",
+         "inner"
+        ],
+        "colors": [
+         {
+          "name": "Cool Grey-Blue",
+          "hex": "#8C9AA0",
+          "element": "form"
+         },
+         {
+          "name": "Pale Sand",
+          "hex": "#E8D5B5",
+          "element": "sweep"
+         },
+         {
+          "name": "Warm Grey",
+          "hex": "#A89684",
+          "element": "shadow"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "walls",
+    "question": "Your walls are:",
+    "format": "grid4",
+    "pairs": [
+     {
+      "id": "p1",
+      "images": [
+       {
+        "id": "walls_high",
+        "img": "/static/galleries/persona/walls_high.webp",
+        "label": "High",
+        "form": "A solid unbroken enclosure standing right around a form, closed the whole way with no way in.",
+        "tags": [
+         "inner",
+         "deep"
+        ],
+        "colors": [
+         {
+          "name": "Warm Grey",
+          "hex": "#A89684",
+          "element": "enclosure"
+         },
+         {
+          "name": "Deep Terracotta",
+          "hex": "#8E4A2C",
+          "element": "form within"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "walls_half_open",
+        "img": "/static/galleries/persona/walls_half_open.webp",
+        "label": "Half-open",
+        "form": "A wall with one clear gap left in it, wide enough to pass through and left that way on purpose.",
+        "tags": [
+         "wave",
+         "calm"
+        ],
+        "colors": [
+         {
+          "name": "Sand",
+          "hex": "#D9BE95",
+          "element": "wall"
+         },
+         {
+          "name": "Lit Amber",
+          "hex": "#F2C070",
+          "element": "the gap"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "walls_down",
+        "img": "/static/galleries/persona/walls_down.webp",
+        "label": "Down",
+        "form": "An unfolded open form laid flat, its sides dropped outward and its whole inner surface facing up.",
+        "tags": [
+         "outer",
+         "bold"
+        ],
+        "colors": [
+         {
+          "name": "Ochre",
+          "hex": "#C98A3E",
+          "element": "unfolded form"
+         },
+         {
+          "name": "Pale Sand",
+          "hex": "#E8D5B5",
+          "element": "inner face"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "walls_selective",
+        "img": "/static/galleries/persona/walls_selective.webp",
+        "label": "Selective",
+        "form": "A door set into a wall with a teal edge running its whole outline, shut now and clearly made to open.",
+        "tags": [
+         "prism",
+         "inner"
+        ],
+        "colors": [
+         {
+          "name": "Terracotta",
+          "hex": "#B4643C",
+          "element": "wall"
+         },
+         {
+          "name": "Signal Teal",
+          "hex": "#4EDDC4",
+          "element": "door edge"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "tenyears",
+    "question": "Ten years out, the win is:",
+    "format": "pair",
+    "pairs": [
+     {
+      "id": "p1",
+      "images": [
+       {
+        "id": "tenyears_lit_up_win",
+        "img": "/static/galleries/persona/tenyears_lit_up_win.webp",
+        "label": "Lit up",
+        "form": "The glowing cracked form, its teal core showing through the surface — still giving light off, and more of it than it started with.",
+        "tags": [
+         "bold",
+         "outer",
+         "prism"
+        ],
+        "colors": [
+         {
+          "name": "Deep Terracotta",
+          "hex": "#8E4A2C",
+          "element": "shell"
+         },
+         {
+          "name": "Signal Teal",
+          "hex": "#4EDDC4",
+          "element": "core"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       },
+       {
+        "id": "tenyears_at_peace",
+        "img": "/static/galleries/persona/tenyears_at_peace.webp",
+        "label": "At peace",
+        "form": "The settled soft form in a warm tone, spread and easy on its base, with nothing left in it that needs bracing.",
+        "tags": [
+         "calm",
+         "inner"
+        ],
+        "colors": [
+         {
+          "name": "Amber",
+          "hex": "#E0A24E",
+          "element": "form"
+         },
+         {
+          "name": "Sand",
+          "hex": "#D9BE95",
+          "element": "base"
+         },
+         {
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "interstitials": [
+  {
+   "after_step": 3,
+   "template": "confirm",
+   "kicker": "Shape recorded",
+   "line": "Three shapes in.",
+   "sub": "Your profile is narrowing.",
+   "cta": "Continue analysis",
+   "auto_advance_ms": 2000,
+   "echo_steps": [
+    "now",
+    "seeking",
+    "battery"
+   ],
+   "personal": {
+    "step": "now",
+    "lines": {
+     "now_wound_up": {
+      "line": "Wound up, and holding it.",
+      "sub": "That narrows it fast."
+     },
+     "now_settled": {
+      "line": "Settled, and in no hurry to move.",
+      "sub": "That narrows it fast."
+     },
+     "now_scattered": {
+      "line": "Scattered, and still one thing.",
+      "sub": "That narrows it fast."
+     },
+     "now_lit_up": {
+      "line": "Lit up, from the inside.",
+      "sub": "That narrows it fast."
+     }
     }
+   }
   },
-  "pricing": {
-    "amount_cents": 300,
-    "currency": "usd",
-    "cta": "Unlock my full profile"
-  },
-  "checkout": {
-    "kicker": "Your profile is ready",
-    "product_name": "Your Mind Profile Report",
-    "product_image": "/static/brand/icon-512.png",
-    "single_page": true,
-    "express": true,
-    "withdrawal_consent": false,
-    "commerce": {
-      "anchor_head": "A {price} profile instead of a $25 paperback",
-      "anchor_head_accent": "$25",
-      "price_anchor": "instead of a $25 paperback about somebody else",
-      "price_anchor_accent": "$25",
-      "price_note": "one-time",
-      "badges": [
-        "One-time",
-        "No subscription, ever"
-      ],
-      "price_suffix": "one-time · no subscription",
-      "trust": [
-        "Secure via Stripe",
-        "PDF to your email"
-      ],
-      "mid_line": "Your complete profile, for less than two coffees.",
-      "mid_line_accent": "two coffees",
-      "mid_button": "See what's inside ↓",
-      "sticky_label": "Unlock full profile — {price}"
-    },
-    "title": "Your {style} Profile",
-    "proof_line": "Built from your 18 choices",
-    "manifest": [
-      "Your colours with exact codes, plus three things to carry",
-      "5 hidden strengths and blind spots — with what to do about each",
-      "Your blueprint: axis, energy and tone, scored",
-      "How you connect: the pattern under who you choose",
-      "Work & money: the months your energy pays best",
-      "Your 12-month energy map, marked window by window"
-    ],
-    "manifest_hero": "strengths",
-    "manifest_head": "What's inside — {n} sections, yours forever",
-    "anchor_head": "A {price} read on the energy you spend every day",
-    "anchor": "A paperback about somebody else costs $25. Your complete profile — {price}, once.",
-    "reframe": "Less than two coffees. Yours forever.",
-    "price_suffix": "one-time",
-    "cta_label": "Open my full profile — {price}",
-    "consent_prechecked": true,
-    "trust": [
-      "Secure payment via Stripe",
-      "Instant delivery",
-      "PDF copy to your email"
-    ],
-    "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right."
-  },
-  "result": {
-    "mistakes_teaser": "You've seen strength #1. The other four run deeper — one explains the {weather} you named.",
-    "value_banner": "Five strengths, a read on how you connect and a twelve-month energy map — all of it built from your own 18 signals, yours to keep."
-  },
-  "result_copy": {
-    "kicker": "YOUR MIND PROFILE",
-    "blend_note": "rare blend",
-    "taps_caption": "Read from your taps:",
-    "balance_title": "Your axis balance",
-    "head_title": "Your shape",
-    "head_caption": "Four axes, scored off your own taps and drawn to the strongest of them. The bead on the arc is your outer-to-inner lean.",
-    "strength_lead": "Your {carry} and the {weather} you've been under put this one first.",
-    "offer_sub": "Your complete profile — once, forever.",
-    "locked_note": "Locked",
-    "delivered_note": "A PDF of this profile is in your inbox. This page stays at the link you were sent back to.",
-    "purpose_map": {
-      "purpose_love": {
-        "emphasized_section": "materials",
-        "offer_sub": "How you connect is inside."
-      },
-      "purpose_career": {
-        "emphasized_section": "splurge",
-        "offer_sub": "Your working months are inside."
-      },
-      "purpose_peace": {
-        "emphasized_section": "mistakes",
-        "offer_sub": "Your calm has a pattern. It's inside."
-      },
-      "purpose_path": {
-        "emphasized_section": "shopping",
-        "offer_sub": "Your year, mapped window by window — inside."
-      }
-    },
-    "profile": {
-      "subtypes": {
-        "igniter": {
-          "anchor": {
-            "outer": "The Open Flame",
-            "inner": "The Coiled Spring"
-          },
-          "wave": {
-            "outer": "The Steady Spark",
-            "inner": "The Patient Ember"
-          },
-          "prism": {
-            "outer": "The Signal Fire",
-            "inner": "The Slow Burn"
-          }
-        },
-        "keeper": {
-          "drive": {
-            "outer": "The Standing Stone",
-            "inner": "The Quiet Fortress"
-          },
-          "wave": {
-            "outer": "The Harbor Wall",
-            "inner": "The Still Foundation"
-          },
-          "prism": {
-            "outer": "The Old Oak",
-            "inner": "The Deep Root"
-          }
-        },
-        "feeler": {
-          "drive": {
-            "outer": "The Rising Tide",
-            "inner": "The Hidden Spring"
-          },
-          "anchor": {
-            "outer": "The Warm Shore",
-            "inner": "The Gentle Stream"
-          },
-          "prism": {
-            "outer": "The Open Sea",
-            "inner": "The Deep Current"
-          }
-        },
-        "thinker": {
-          "drive": {
-            "outer": "The Bright Beacon",
-            "inner": "The Sharp Compass"
-          },
-          "anchor": {
-            "outer": "The Clear Lens",
-            "inner": "The Quiet Cartographer"
-          },
-          "wave": {
-            "outer": "The Far Lighthouse",
-            "inner": "The Night Astronomer"
-          }
-        }
-      },
-      "animal_cross": {
-        "Owl": {
-          "drive": "An Owl that leads with drive is uncommon — the watching is still the first thing you do, and it is over much faster than anyone expects.",
-          "anchor": "An Owl that leads with anchor is a genuine cross — you watch, and then you stay, and both halves are unusual on their own.",
-          "wave": "An Owl that leads with wave is rare — what you are reading is the mood of the room rather than its facts, and you are almost never wrong about it.",
-          "prism": "An Owl that leads with prism runs true — you would rather understand a thing than be early to it, and you are usually both."
-        },
-        "Fox": {
-          "drive": "A Fox that leads with drive runs true — you find the gap and you are already through it while the room is still describing the wall.",
-          "anchor": "A Fox that leads with anchor is a genuine cross — the quickness is all still there and it now has somewhere to put things, which is why yours actually accumulate.",
-          "wave": "A Fox that leads with wave is uncommon — the cleverness goes into people rather than problems, and it reads as charm from the outside.",
-          "prism": "A Fox that leads with prism is uncommon — you solve things sideways, and the answer usually arrives before you can explain the route."
-        },
-        "Wolf": {
-          "drive": "A Wolf that leads with drive is uncommon — the loyalty is the same and it moves first, which is how you end up leading things you never asked for.",
-          "anchor": "A Wolf that leads with anchor is a genuine cross — you are the one who stays, and the group works out much later that this was the whole structure.",
-          "wave": "A Wolf that leads with wave runs true — you belong to your people before you belong to yourself, and you feel a rift in the room days before it opens.",
-          "prism": "A Wolf that leads with prism is rare — you watch your own pack the way an outsider would, and you love them no less for it."
-        },
-        "Bear": {
-          "drive": "A Bear that leads with drive is a genuine cross — the size is real and it moves, and people do not get more than one warning.",
-          "anchor": "A Bear that leads with anchor runs true — you take up the space you take up, and what is behind you is safe by the simple fact of being behind you.",
-          "wave": "A Bear that leads with wave is uncommon — the protection is emotional rather than physical, and you know who in the room needs it.",
-          "prism": "A Bear that leads with prism is rare — the strength is in what you have thought through, and you are far harder to argue with than to move."
-        },
-        "Stag": {
-          "drive": "A Stag that leads with drive is uncommon — the bearing is the same and it goes forward, which is a different animal entirely once it does.",
-          "anchor": "A Stag that leads with anchor runs true — you hold your ground by standing on it, and the standing is most of what you are known for.",
-          "wave": "A Stag that leads with wave is a genuine cross — the dignity is a way of protecting something soft, and the people who see that stay.",
-          "prism": "A Stag that leads with prism is uncommon — you keep the high ground because the view from it is better, not because it is higher."
-        },
-        "Raven": {
-          "drive": "A Raven that leads with drive is uncommon — the curiosity has an engine under it, and what you pick up tends to get used.",
-          "anchor": "A Raven that leads with anchor is rare — you collect and you keep, and the collection turns out to have been a plan the whole time.",
-          "wave": "A Raven that leads with wave runs true — you are drawn to the thing everyone is avoiding, and you are the one who finally names it.",
-          "prism": "A Raven that leads with prism is a genuine cross — you take the dark thing apart to see how it works, which is why it stops frightening you first."
-        },
-        "Lynx": {
-          "drive": "A Lynx that leads with drive is a genuine cross — the patience is real and it ends abruptly, and the timing is the whole skill.",
-          "anchor": "A Lynx that leads with anchor is uncommon — you wait where you are rather than circling, and that is a harder kind of waiting.",
-          "wave": "A Lynx that leads with wave is rare — you feel the shift in a room before it shows, and you have never been able to say how.",
-          "prism": "A Lynx that leads with prism runs true — you see far more than you say, and what you do say has usually been checked twice."
-        },
-        "Otter": {
-          "drive": "An Otter that leads with drive is uncommon — the play has a purpose behind it, and you get further having fun than most people do working.",
-          "anchor": "An Otter that leads with anchor is a genuine cross — you are the lightest person in a serious room and the last one to leave it.",
-          "wave": "An Otter that leads with wave runs true — you move with what is happening rather than against it, and you make everything around you easier by being in it.",
-          "prism": "An Otter that leads with prism is uncommon — the lightness is a working method, and you solve things by refusing to be solemn about them."
-        },
-        "Hawk": {
-          "drive": "A Hawk that leads with drive runs true — you see it, you commit, and the descent is the only part anyone witnesses.",
-          "anchor": "A Hawk that leads with anchor is a genuine cross — the eye is the same and the patience is new, which makes you far more dangerous to a bad plan.",
-          "wave": "A Hawk that leads with wave is rare — the height you keep is a way of feeling the whole field at once rather than a way of staying out of it.",
-          "prism": "A Hawk that leads with prism is uncommon — you climb for the view, and the decision is made long before the dive."
-        },
-        "Tortoise": {
-          "drive": "A Tortoise that leads with drive is rare — the pace is a choice rather than a limit, and the day it changes people get it wrong entirely.",
-          "anchor": "A Tortoise that leads with anchor runs true — you arrive, always, and the arriving is worth more than any of the speed around you.",
-          "wave": "A Tortoise that leads with wave is uncommon — the shell is there because you feel everything, not because you feel nothing.",
-          "prism": "A Tortoise that leads with prism is a genuine cross — you are slow because you are checking, and you are checking because you intend to be right."
-        },
-        "Horse": {
-          "drive": "A Horse that leads with drive runs true — you were built to go, and standing still is the only thing you are genuinely bad at.",
-          "anchor": "A Horse that leads with anchor is a genuine cross — all that power, pointed at one field, which is why what you build tends to last.",
-          "wave": "A Horse that leads with wave is uncommon — you read the person holding the rein before you read the road.",
-          "prism": "A Horse that leads with prism is rare — you want to know where the road goes before you take it, and you take it anyway."
-        },
-        "Cat": {
-          "drive": "A Cat that leads with drive is uncommon — the self-possession is the same and it now wants things, which makes you very hard to divert.",
-          "anchor": "A Cat that leads with anchor is a genuine cross — you keep your own counsel and your own address, and both are non-negotiable.",
-          "wave": "A Cat that leads with wave is rare — you know exactly how the room feels and you have decided it is not your problem, except when it is.",
-          "prism": "A Cat that leads with prism runs true — you observe from the one seat with the best angle, and you were there before anybody noticed you come in."
-        }
-      },
-      "cards": [
-        {
-          "id": "materials",
-          "key": "Close ties",
-          "icon": "heart",
-          "promise": "which two profiles fit you easily — and the one that quietly costs you",
-          "upgrade": {
-            "purpose_love": "the read you came for — the two profiles that fit you, and the one that drains you"
-          }
-        },
-        {
-          "id": "mistakes",
-          "key": "Blind spots",
-          "icon": "eye",
-          "promise": "what naming {weather} gave away — strengths #2–5, the costliest last"
-        },
-        {
-          "id": "shopping",
-          "key": "Your year",
-          "icon": "calendar",
-          "promise": "{first} → {last} — your 3 strongest months, and the 1 to stay quiet in"
-        },
-        {
-          "id": "splurge",
-          "key": "Work",
-          "icon": "coin",
-          "promise": "where your energy earns — and where it quietly leaks"
-        },
-        {
-          "id": "palette",
-          "key": "Your colours",
-          "icon": "palette",
-          "promise": "your 4, with exact codes + three things to carry"
-        },
-        {
-          "id": "dna",
-          "key": "Blueprint",
-          "icon": "map",
-          "promise": "how {axis} leads you and {second} feeds it"
-        }
-      ],
-      "scales": [
-        {
-          "id": "tone",
-          "left": "Bold",
-          "right": "Calm"
-        },
-        {
-          "id": "energy",
-          "left": "Outer",
-          "right": "Inner"
-        },
-        {
-          "id": "depth",
-          "left": "Light",
-          "right": "Deep"
-        }
-      ],
-      "rarity": {
-        "igniter": {
-          "anchor": {
-            "outer": 10,
-            "inner": 40
-          },
-          "wave": {
-            "outer": 20,
-            "inner": 40
-          },
-          "prism": {
-            "outer": 12,
-            "inner": 40
-          }
-        },
-        "keeper": {
-          "drive": {
-            "outer": 40,
-            "inner": 15
-          },
-          "wave": {
-            "outer": 40,
-            "inner": 15
-          },
-          "prism": {
-            "outer": 40,
-            "inner": 15
-          }
-        },
-        "feeler": {
-          "drive": {
-            "outer": 12,
-            "inner": 40
-          },
-          "anchor": {
-            "outer": 15,
-            "inner": 40
-          },
-          "prism": {
-            "outer": 15,
-            "inner": 40
-          }
-        },
-        "thinker": {
-          "drive": {
-            "outer": 40,
-            "inner": 12
-          },
-          "anchor": {
-            "outer": 40,
-            "inner": 15
-          },
-          "wave": {
-            "outer": 40,
-            "inner": 25
-          }
-        }
-      },
-      "formula": "{animal} · {axis}-led, {second} undercurrent · {energy}",
-      "rarity_line": "About 1 in {n} profiles land this blend",
-      "bridge": "Your profile answers, specifically for {subtype_article} {subtype_bare}:",
-      "offer_head": "The full {subtype_bare} profile — 6 chapters",
-      "split_caption": "{drive}% Drive · {anchor}% Anchor · {wave}% Wave · {prism}% Prism"
+  {
+   "after_step": 7,
+   "template": "almost",
+   "kicker": "Pattern detected",
+   "line": "Profile {pct}% calibrated.",
+   "cta": "Continue analysis",
+   "auto_advance_ms": 2000,
+   "echo_steps": [
+    "chapter",
+    "pressure",
+    "drain",
+    "hour"
+   ],
+   "personal": {
+    "step": "chapter",
+    "lines": {
+     "chapter_climbing": {
+      "line": "Climbing, with ground still above you.",
+      "sub": "That fits what came before."
+     },
+     "chapter_opening": {
+      "line": "Opening, and showing a side that was in.",
+      "sub": "That fits what came before."
+     },
+     "chapter_shedding": {
+      "line": "Shedding, and lighter for it.",
+      "sub": "That fits what came before."
+     },
+     "chapter_rooting": {
+      "line": "Rooting, and going down before up.",
+      "sub": "That fits what came before."
+     }
     }
+   }
+  },
+  {
+   "after_step": 10,
+   "template": "confirm",
+   "kicker": "Deep layer",
+   "line": "Deep layer mapped.",
+   "sub": "Four signals left.",
+   "cta": "Continue analysis",
+   "auto_advance_ms": 2000,
+   "echo_steps": [
+    "forks",
+    "reset",
+    "leanedon"
+   ],
+   "personal": {
+    "step": "forks",
+    "lines": {
+     "forks_the_pull": {
+      "line": "You follow the pull.",
+      "sub": "That one tells us most."
+     },
+     "forks_the_plan": {
+      "line": "You follow the plan.",
+      "sub": "That one tells us most."
+     },
+     "forks_the_gut": {
+      "line": "You follow the gut.",
+      "sub": "That one tells us most."
+     },
+     "forks_the_pause": {
+      "line": "You follow the pause.",
+      "sub": "That one tells us most."
+     }
+    }
+   }
+  },
+  {
+   "after_step": 13,
+   "template": "almost",
+   "kicker": "Calibrating",
+   "line": "All 18 signals in.",
+   "sub": "Most blends are common — let's see yours.",
+   "cta": "Continue analysis",
+   "auto_advance_ms": 2400,
+   "echo_steps": [
+    "runs",
+    "walls",
+    "tenyears"
+   ]
   }
+ ],
+ "interstitial_working": [
+  "Reading the shapes you picked…",
+  "Weighing them against the four traits…",
+  "Preparing what's next…"
+ ],
+ "preview_gallery": [
+  {
+   "id": "now_wound_up",
+   "img": "/static/galleries/persona/now_wound_up.webp",
+   "tags": [
+    "drive",
+    "bold"
+   ]
+  },
+  {
+   "id": "now_settled",
+   "img": "/static/galleries/persona/now_settled.webp",
+   "tags": [
+    "anchor",
+    "calm"
+   ]
+  },
+  {
+   "id": "now_scattered",
+   "img": "/static/galleries/persona/now_scattered.webp",
+   "tags": [
+    "wave",
+    "outer"
+   ]
+  },
+  {
+   "id": "now_lit_up",
+   "img": "/static/galleries/persona/now_lit_up.webp",
+   "tags": [
+    "prism",
+    "deep"
+   ]
+  },
+  {
+   "id": "seeking_a_spark",
+   "img": "/static/galleries/persona/seeking_a_spark.webp",
+   "tags": [
+    "drive",
+    "outer"
+   ]
+  },
+  {
+   "id": "seeking_solid_ground",
+   "img": "/static/galleries/persona/seeking_solid_ground.webp",
+   "tags": [
+    "anchor",
+    "calm"
+   ]
+  },
+  {
+   "id": "battery_in_the_cluster",
+   "img": "/static/galleries/persona/battery_in_the_cluster.webp",
+   "tags": [
+    "outer",
+    "wave",
+    "bold"
+   ]
+  },
+  {
+   "id": "battery_in_your_shell",
+   "img": "/static/galleries/persona/battery_in_your_shell.webp",
+   "tags": [
+    "inner",
+    "anchor"
+   ]
+  },
+  {
+   "id": "chapter_climbing",
+   "img": "/static/galleries/persona/chapter_climbing.webp",
+   "tags": [
+    "drive",
+    "outer"
+   ]
+  },
+  {
+   "id": "chapter_rooting",
+   "img": "/static/galleries/persona/chapter_rooting.webp",
+   "tags": [
+    "anchor",
+    "inner",
+    "calm"
+   ]
+  },
+  {
+   "id": "forks_the_gut",
+   "img": "/static/galleries/persona/forks_the_gut.webp",
+   "tags": [
+    "drive",
+    "bold"
+   ]
+  },
+  {
+   "id": "forks_the_plan",
+   "img": "/static/galleries/persona/forks_the_plan.webp",
+   "tags": [
+    "prism",
+    "calm"
+   ]
+  },
+  {
+   "id": "leanedon_the_hold",
+   "img": "/static/galleries/persona/leanedon_the_hold.webp",
+   "tags": [
+    "anchor",
+    "calm"
+   ]
+  },
+  {
+   "id": "leanedon_the_answer",
+   "img": "/static/galleries/persona/leanedon_the_answer.webp",
+   "tags": [
+    "prism",
+    "inner"
+   ]
+  },
+  {
+   "id": "tenyears_lit_up_win",
+   "img": "/static/galleries/persona/tenyears_lit_up_win.webp",
+   "tags": [
+    "bold",
+    "outer",
+    "prism"
+   ]
+  },
+  {
+   "id": "tenyears_at_peace",
+   "img": "/static/galleries/persona/tenyears_at_peace.webp",
+   "tags": [
+    "calm",
+    "inner"
+   ]
+  }
+ ],
+ "style_elements": {
+  "title": "Your Shapes",
+  "subline": "Recognized from your picks — read in full in your profile.",
+  "items": [
+   {
+    "id": "now_wound_up",
+    "label": "Wound up",
+    "spec": "Momentum — the trait that starts things",
+    "image": "now_wound_up",
+    "img": "/static/galleries/persona/now_wound_up.webp",
+    "tags": [
+     "drive",
+     "bold"
+    ]
+   },
+   {
+    "id": "chapter_climbing",
+    "label": "Climbing",
+    "spec": "Momentum — the trait that starts things",
+    "image": "chapter_climbing",
+    "img": "/static/galleries/persona/chapter_climbing.webp",
+    "tags": [
+     "drive",
+     "outer"
+    ]
+   },
+   {
+    "id": "forks_the_gut",
+    "label": "The gut",
+    "spec": "Momentum — the trait that starts things",
+    "image": "forks_the_gut",
+    "img": "/static/galleries/persona/forks_the_gut.webp",
+    "tags": [
+     "drive",
+     "bold"
+    ]
+   },
+   {
+    "id": "seeking_solid_ground",
+    "label": "Solid ground",
+    "spec": "Steadiness — the trait that holds them",
+    "image": "seeking_solid_ground",
+    "img": "/static/galleries/persona/seeking_solid_ground.webp",
+    "tags": [
+     "anchor",
+     "calm"
+    ]
+   },
+   {
+    "id": "chapter_rooting",
+    "label": "Rooting",
+    "spec": "Steadiness — the trait that holds them",
+    "image": "chapter_rooting",
+    "img": "/static/galleries/persona/chapter_rooting.webp",
+    "tags": [
+     "anchor",
+     "inner",
+     "calm"
+    ]
+   },
+   {
+    "id": "leanedon_the_hold",
+    "label": "The hold",
+    "spec": "Steadiness — the trait that holds them",
+    "image": "leanedon_the_hold",
+    "img": "/static/galleries/persona/leanedon_the_hold.webp",
+    "tags": [
+     "anchor",
+     "calm"
+    ]
+   },
+   {
+    "id": "battery_one_on_one",
+    "label": "One-on-one",
+    "spec": "Connection — the trait that reads the room",
+    "image": "battery_one_on_one",
+    "img": "/static/galleries/persona/battery_one_on_one.webp",
+    "tags": [
+     "wave",
+     "inner",
+     "deep"
+    ]
+   },
+   {
+    "id": "leanedon_the_soft_place",
+    "label": "The soft place",
+    "spec": "Connection — the trait that reads the room",
+    "image": "leanedon_the_soft_place",
+    "img": "/static/galleries/persona/leanedon_the_soft_place.webp",
+    "tags": [
+     "wave",
+     "deep"
+    ]
+   },
+   {
+    "id": "walls_half_open",
+    "label": "Half-open",
+    "spec": "Connection — the trait that reads the room",
+    "image": "walls_half_open",
+    "img": "/static/galleries/persona/walls_half_open.webp",
+    "tags": [
+     "wave",
+     "calm"
+    ]
+   },
+   {
+    "id": "now_lit_up",
+    "label": "Lit up",
+    "spec": "Curiosity — the trait that opens it up",
+    "image": "now_lit_up",
+    "img": "/static/galleries/persona/now_lit_up.webp",
+    "tags": [
+     "prism",
+     "deep"
+    ]
+   },
+   {
+    "id": "forks_the_plan",
+    "label": "The plan",
+    "spec": "Curiosity — the trait that opens it up",
+    "image": "forks_the_plan",
+    "img": "/static/galleries/persona/forks_the_plan.webp",
+    "tags": [
+     "prism",
+     "calm"
+    ]
+   },
+   {
+    "id": "leanedon_the_answer",
+    "label": "The answer",
+    "spec": "Curiosity — the trait that opens it up",
+    "image": "leanedon_the_answer",
+    "img": "/static/galleries/persona/leanedon_the_answer.webp",
+    "tags": [
+     "prism",
+     "inner"
+    ]
+   }
+  ]
+ },
+ "styles": [
+  {
+   "id": "igniter",
+   "name": "The Igniter",
+   "tags": [
+    "drive"
+   ],
+   "blurb": "You start things. The room knows what you think before you have finished deciding it, and most of what you have built began as a sentence you said out loud too early.",
+   "reveals": {
+    "palette": {
+     "colors": [
+      {
+       "name": "Flare Coral",
+       "rgb": [
+        240,
+        138,
+        85
+       ]
+      },
+      {
+       "name": "Ember Rust",
+       "rgb": [
+        181,
+        83,
+        44
+       ]
+      },
+      {
+       "name": "Signal Amber",
+       "rgb": [
+        240,
+        180,
+        90
+       ]
+      },
+      {
+       "name": "Cinder Ink",
+       "rgb": [
+        28,
+        23,
+        20
+       ]
+      }
+     ],
+     "line": "Flare coral is your everyday register, signal amber is what you reach for when you want the room to turn, and cinder ink is the weight that keeps the other two from burning out by Thursday.",
+     "talismans": [
+      "A brass key, in the coat you actually wear",
+      "A folding knife — carried, not shown",
+      "One notebook small enough to finish"
+     ],
+     "lucky_days": "Tuesday and Saturday — the first for starting things, the second for finishing them."
+    },
+    "mistakes": {
+     "setup": "That one is the easiest of the five to live with. The other four cut deeper, and the one costing you most right now is",
+     "trigger": "the speed you decide at, not the decision,"
+    },
+    "dna": {
+     "setup": "Drive and outward pull read as the same thing from outside and work against each other inside, and the split shows",
+     "trigger": "in the choices you made fastest,"
+    },
+    "materials": {
+     "setup": "You are read as certain long before you feel it, and the person who lasts with you is the one who",
+     "trigger": "waits out your first week,"
+    },
+    "splurge": {
+     "setup": "Your working energy is not flat and was never meant to be, and the month it turns is",
+     "trigger": "the one straight after you get bored,"
+    },
+    "shopping": {
+     "setup": "Two windows in the next twelve months carry most of your momentum, and the first opens",
+     "trigger": "earlier than you would plan for,"
+    },
+    "mistake_one": {
+     "title": "You mistake speed for certainty",
+     "body": "Your momentum reads to you as evidence — the decision came fast, so it feels like it came from somewhere deep. Sometimes it came from nothing but the discomfort of sitting still, and the two are identical from the inside.",
+     "fix": "Sleep one night on any decision you could explain in under ten seconds."
+    }
+   }
+  },
+  {
+   "id": "keeper",
+   "name": "The Keeper",
+   "tags": [
+    "anchor"
+   ],
+   "blurb": "You hold. Other people plan around you being where you were, and the things you carry are mostly things nobody has thought to thank you for.",
+   "reveals": {
+    "palette": {
+     "colors": [
+      {
+       "name": "Moss Sage",
+       "rgb": [
+        162,
+        184,
+        144
+       ]
+      },
+      {
+       "name": "Quarry Grey",
+       "rgb": [
+        138,
+        144,
+        136
+       ]
+      },
+      {
+       "name": "Field Olive",
+       "rgb": [
+        110,
+        122,
+        78
+       ]
+      },
+      {
+       "name": "Bedrock Ink",
+       "rgb": [
+        22,
+        28,
+        24
+       ]
+      }
+     ],
+     "line": "Moss sage is where you are most yourself, quarry grey is what you wear when you would rather not be read, and field olive is the one that makes a room feel like it has been there a while.",
+     "talismans": [
+      "A river stone, in the pocket you use least",
+      "A wooden handle worn smooth by one hand",
+      "A key to a door you no longer need to open"
+     ],
+     "lucky_days": "Sunday and Wednesday — the first for deciding, the second for saying it."
+    },
+    "mistakes": {
+     "setup": "That one is the easiest of the five to admit to. The other four cost more, and the one running your week right now is",
+     "trigger": "the weight you agreed to carry silently,"
+    },
+    "dna": {
+     "setup": "Steadiness and privacy look like one trait from outside and are two inside, and the seam between them shows",
+     "trigger": "in the questions you took longest on,"
+    },
+    "materials": {
+     "setup": "You are the safest person most people know, and the one who lasts with you is the one who",
+     "trigger": "asks a second time,"
+    },
+    "splurge": {
+     "setup": "Your working energy runs long rather than hot, and the month it pays best is",
+     "trigger": "later than the calendar suggests,"
+    },
+    "shopping": {
+     "setup": "Most of your next twelve months is steady and two stretches are not, and the first of them lands",
+     "trigger": "just after you have taken something else on,"
+    },
+    "mistake_one": {
+     "title": "You call it patience when it is postponement",
+     "body": "Waiting is a real strategy and you are genuinely good at it, which is exactly why it hides the other thing — the conversation you have been not-having for months looks identical, from the outside, to one you are wisely timing.",
+     "fix": "Name a date for the thing you are waiting on. If you cannot, you are not waiting."
+    }
+   }
+  },
+  {
+   "id": "feeler",
+   "name": "The Feeler",
+   "tags": [
+    "wave"
+   ],
+   "blurb": "You read the room before anybody speaks in it. What you know about the people around you arrived without being told, and you have been acting on it for years.",
+   "reveals": {
+    "palette": {
+     "colors": [
+      {
+       "name": "Bright Teal",
+       "rgb": [
+        78,
+        221,
+        196
+       ]
+      },
+      {
+       "name": "Deep Teal",
+       "rgb": [
+        42,
+        112,
+        120
+       ]
+      },
+      {
+       "name": "Riffle Pearl",
+       "rgb": [
+        196,
+        220,
+        216
+       ]
+      },
+      {
+       "name": "Trench Ink",
+       "rgb": [
+        15,
+        26,
+        32
+       ]
+      }
+     ],
+     "line": "Bright teal is the one people notice, deep teal is where you actually live, and riffle pearl is what keeps the other two from reading as cold.",
+     "talismans": [
+      "A feather kept flat between two pages",
+      "A shell small enough to close a hand around",
+      "One ring you only take off to swim"
+     ],
+     "lucky_days": "Monday and Friday — the first for listening, the second for saying what you heard."
+    },
+    "mistakes": {
+     "setup": "That one is the easiest of the five to laugh about. The other four sit lower, and the one taking the most from you now is",
+     "trigger": "the mood you picked up and kept,"
+    },
+    "dna": {
+     "setup": "Depth and openness pull in opposite directions and you run both at once, and where they meet shows",
+     "trigger": "in the pictures you chose without thinking,"
+    },
+    "materials": {
+     "setup": "You know how somebody feels before they do, and the one who lasts with you is the one who",
+     "trigger": "says the thing plainly,"
+    },
+    "splurge": {
+     "setup": "Your working energy moves in tides rather than hours, and the month it comes back in is",
+     "trigger": "the one you would have written off,"
+    },
+    "shopping": {
+     "setup": "Your next twelve months has two high stretches and one flat one, and the flat one arrives",
+     "trigger": "right after the busiest thing you agree to,"
+    },
+    "mistake_one": {
+     "title": "You take on the room's weather as your own",
+     "body": "You walk into a tense room and come out tense, and by the evening it has stopped being the room's and become yours. Nobody handed it to you; you picked it up on the way past, which is why you cannot find where it came from.",
+     "fix": "After any hard room, name out loud whose feeling it was. Out loud — thinking it does not work."
+    }
+   }
+  },
+  {
+   "id": "thinker",
+   "name": "The Thinker",
+   "tags": [
+    "prism"
+   ],
+   "blurb": "You want to see the shape of it. You will sit with a question longer than is comfortable rather than take the answer that arrived first.",
+   "reveals": {
+    "palette": {
+     "colors": [
+      {
+       "name": "Lens Violet",
+       "rgb": [
+        138,
+        122,
+        196
+       ]
+      },
+      {
+       "name": "Paper Linen",
+       "rgb": [
+        226,
+        220,
+        206
+       ]
+      },
+      {
+       "name": "Brass Gold",
+       "rgb": [
+        200,
+        164,
+        98
+       ]
+      },
+      {
+       "name": "Ink Black",
+       "rgb": [
+        17,
+        24,
+        32
+       ]
+      }
+     ],
+     "line": "Lens violet is the one that makes people ask what you do, paper linen is where you think best, and brass gold is the warmth that stops the other two reading as cold.",
+     "talismans": [
+      "A compass that does not need to be accurate",
+      "One good pen, refilled rather than replaced",
+      "A magnifier, in a drawer you open weekly"
+     ],
+     "lucky_days": "Thursday and Sunday — the first for deciding, the second for changing your mind."
+    },
+    "mistakes": {
+     "setup": "That one is the easiest of the five to explain away. The other four are harder, and the one running you this month is",
+     "trigger": "the answer you already have and keep testing,"
+    },
+    "dna": {
+     "setup": "Distance and depth look like one habit and are two, and the join between them shows",
+     "trigger": "in the questions you answered instantly,"
+    },
+    "materials": {
+     "setup": "You are read as cool long before you feel it, and the one who lasts with you is the one who",
+     "trigger": "keeps asking after you go quiet,"
+    },
+    "splurge": {
+     "setup": "Your working energy pays in the months you are left alone, and the first of those is",
+     "trigger": "not the one you have blocked out,"
+    },
+    "shopping": {
+     "setup": "Two windows in your next twelve months are worth more than the other ten, and the first opens",
+     "trigger": "while you are still preparing for it,"
+    },
+    "mistake_one": {
+     "title": "You research the thing instead of doing it",
+     "body": "Understanding a problem feels near-identical to solving it, and you are good enough at the first that you can stay there for months. The tell is that you can describe every option and have not started any.",
+     "fix": "When you catch yourself on the third source, stop and do the smallest version of the thing instead."
+    }
+   }
+  }
+ ],
+ "analyzing": {
+  "duration_ms": 2500,
+  "text": "Reading your shapes",
+  "messages": [
+   "Reading the shapes you picked…",
+   "Weighing them against the four traits…",
+   "Finding what they unlock…"
+  ]
+ },
+ "analyzing_echo": true,
+ "report": {
+  "generating_messages": [
+   "Our AI is weighing your 18 signals against the four axes…",
+   "Searching for the combinations that fit YOU…",
+   "Cross-referencing your axis and energy picks…",
+   "Almost there — writing your profile…"
+  ],
+  "sections": [
+   {
+    "id": "palette",
+    "title": "Your Colours & Three Things to Carry",
+    "enabled": true,
+    "preview": [
+     "Each one is given with its exact code and the two shades it should never sit beside, because the same colour reads differently under warm light than it does under cold.",
+     "The profile names the three objects worth carrying, where to keep each of them, and the two days your decisions land best."
+    ],
+    "reveal": {
+     "mode": "visible"
+    }
+   },
+   {
+    "id": "mistakes",
+    "title": "5 Hidden Strengths & Blind Spots",
+    "teaser_line": "Four more, and the costliest one is last.",
+    "enabled": true,
+    "preview": [
+     "It reads as obvious written down, and it still shapes more of your week than anything else on this list.",
+     "The remaining four are ranked by how much of your energy each one is quietly costing you."
+    ],
+    "reveal": {
+     "mode": "locked"
+    }
+   },
+   {
+    "id": "dna",
+    "title": "Your Mind Blueprint",
+    "teaser_line": "How your {palette} splits between your two strongest axes.",
+    "enabled": true,
+    "preview": [
+     "Three scales, read off your own taps, and one place where they pull hard against each other.",
+     "It names your axis, your energy and your tone, and says which of the three you lead with when you are under pressure."
+    ],
+    "reveal": {
+     "mode": "locked"
+    }
+   },
+   {
+    "id": "materials",
+    "title": "How You Connect",
+    "teaser_line": "Why one kind of person keeps finding you.",
+    "enabled": true,
+    "preview": [
+     "It is the pattern underneath the people you keep choosing, rather than a list of types to avoid.",
+     "The profile names the two profiles you work with easily, the one that costs you, and what to say in the first month."
+    ],
+    "reveal": {
+     "mode": "locked"
+    }
+   },
+   {
+    "id": "splurge",
+    "title": "Work & Money Path",
+    "teaser_line": "Where your {carry} energy earns — and what to stop taking on.",
+    "enabled": true,
+    "preview": [
+     "Your working rhythm is not flat and never was, and the shape of it is far more useful than an average.",
+     "The profile marks the months your energy pays best and names the one kind of work to stop accepting."
+    ],
+    "reveal": {
+     "mode": "locked"
+    }
+   },
+   {
+    "id": "shopping",
+    "title": "Your 12-Month Energy Map",
+    "teaser_line": "Three strong months. One quiet one.",
+    "enabled": true,
+    "preview": [
+     "Twelve months, marked for the stretches where your energy is behind you and the two where it plainly is not.",
+     "Every window comes with what it is good for, so the quiet months stop reading as failure."
+    ],
+    "reveal": {
+     "mode": "locked"
+    }
+   }
+  ],
+  "mistake_one": {
+   "title": "Hidden Strength #1 of 5",
+   "locked_note": "Strengths 2–5 — inside your full profile"
+  },
+  "also": {
+   "title": "Also in your profile",
+   "rows": [
+    {
+     "section": "dna",
+     "hook": "How your {palette} choices split between your two strongest axes."
+    },
+    {
+     "section": "splurge",
+     "hook": "Where your {carry} energy earns — and the one kind of work to stop taking."
+    },
+    {
+     "section": "shopping",
+     "hook": "The two months your {animal} energy runs with you, and the one to stay quiet through."
+    },
+    {
+     "title": "Your Exact Colour Codes",
+     "hook": "The code for every colour above, where to use it, and the one shade to keep away from it."
+    }
+   ]
+  },
+  "visuals": {
+   "taps": true,
+   "hero": {
+    "glyph_step": "now",
+    "band_step": "chapter"
+   },
+   "section_steps": {
+    "palette": "runs",
+    "mistakes": "drain",
+    "dna": "leanedon",
+    "materials": "battery",
+    "splurge": "forks",
+    "shopping": "chapter"
+   }
+  },
+  "hook_slots": {
+   "animal": {
+    "step": "now",
+    "fallback": "shape"
+   },
+   "palette": {
+    "step": "runs",
+    "fallback": "register"
+   },
+   "weather": {
+    "step": "drain",
+    "fallback": "drain"
+   },
+   "carry": {
+    "step": "leanedon",
+    "fallback": "what people lean on"
+   }
+  }
+ },
+ "pricing": {
+  "amount_cents": 300,
+  "currency": "usd",
+  "cta": "Unlock my full profile"
+ },
+ "checkout": {
+  "kicker": "Your profile is ready",
+  "product_name": "Your Mind Profile Report",
+  "product_image": "/static/brand/icon-512.png",
+  "single_page": true,
+  "express": true,
+  "withdrawal_consent": false,
+  "commerce": {
+   "anchor_head": "A {price} profile instead of a $25 paperback",
+   "anchor_head_accent": "$25",
+   "price_anchor": "instead of a $25 paperback about somebody else",
+   "price_anchor_accent": "$25",
+   "price_note": "one-time",
+   "badges": [
+    "One-time",
+    "No subscription, ever"
+   ],
+   "price_suffix": "one-time · no subscription",
+   "trust": [
+    "Secure via Stripe",
+    "PDF to your email"
+   ],
+   "mid_line": "Your complete profile, for less than two coffees.",
+   "mid_line_accent": "two coffees",
+   "mid_button": "See what's inside ↓",
+   "sticky_label": "Unlock full profile — {price}"
+  },
+  "title": "Your {style} Profile",
+  "proof_line": "Built from your 13 picks",
+  "manifest": [
+   "Your colours with exact codes, plus three things to carry",
+   "5 hidden strengths and blind spots — with what to do about each",
+   "Your blueprint: axis, energy and tone, scored",
+   "How you connect: the pattern under who you choose",
+   "Work & money: the months your energy pays best",
+   "Your 12-month energy map, marked window by window"
+  ],
+  "manifest_hero": "strengths",
+  "manifest_head": "What's inside — {n} sections, yours forever",
+  "anchor_head": "A {price} read on the energy you spend every day",
+  "anchor": "A paperback about somebody else costs $25. Your complete profile — {price}, once.",
+  "reframe": "Less than two coffees. Yours forever.",
+  "price_suffix": "one-time",
+  "cta_label": "Open my full profile — {price}",
+  "consent_prechecked": true,
+  "trust": [
+   "Secure payment via Stripe",
+   "Instant delivery",
+   "PDF copy to your email"
+  ],
+  "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right."
+ },
+ "result": {
+  "mistakes_teaser": "You've seen strength #1. The other four run deeper — one explains the {weather} you named.",
+  "value_banner": "Five strengths, a read on how you connect and a twelve-month energy map — all of it built from your own 18 signals, yours to keep."
+ },
+ "result_copy": {
+  "kicker": "YOUR SHAPE",
+  "blend_note": "rare blend",
+  "taps_caption": "Read from your shapes:",
+  "balance_title": "Your four traits",
+  "head_title": "Your shape",
+  "head_caption": "Four traits, scored off your own picks and pressed into the clay.",
+  "strength_lead": "Your {carry} and the {weather} you've been under put this one first.",
+  "offer_sub": "Your complete profile — once, forever.",
+  "locked_note": "Locked",
+  "delivered_note": "A PDF of this profile is in your inbox. This page stays at the link you were sent back to.",
+  "purpose_map": {
+   "purpose_love": {
+    "emphasized_section": "materials",
+    "offer_sub": "How you connect is inside."
+   },
+   "purpose_career": {
+    "emphasized_section": "splurge",
+    "offer_sub": "Your working months are inside."
+   },
+   "purpose_peace": {
+    "emphasized_section": "mistakes",
+    "offer_sub": "Your calm has a pattern. It's inside."
+   },
+   "purpose_path": {
+    "emphasized_section": "shopping",
+    "offer_sub": "Your year, mapped window by window — inside."
+   }
+  },
+  "profile": {
+   "subtypes": {
+    "igniter": {
+     "outer": "The Open Flame",
+     "inner": "The Slow Burn"
+    },
+    "keeper": {
+     "outer": "The Standing Stone",
+     "inner": "The Deep Root"
+    },
+    "feeler": {
+     "outer": "The Rising Tide",
+     "inner": "The Deep Current"
+    },
+    "thinker": {
+     "outer": "The Bright Beacon",
+     "inner": "The Quiet Cartographer"
+    }
+   },
+   "cards": [
+    {
+     "id": "materials",
+     "key": "Close ties",
+     "icon": "heart",
+     "promise": "which two profiles fit you easily — and the one that quietly costs you",
+     "upgrade": {
+      "purpose_love": "the read you came for — the two profiles that fit you, and the one that drains you"
+     }
+    },
+    {
+     "id": "mistakes",
+     "key": "Blind spots",
+     "icon": "eye",
+     "promise": "what naming {weather} gave away — strengths #2–5, the costliest last"
+    },
+    {
+     "id": "shopping",
+     "key": "Your year",
+     "icon": "calendar",
+     "promise": "{first} → {last} — your 3 strongest months, and the 1 to stay quiet in"
+    },
+    {
+     "id": "splurge",
+     "key": "Work",
+     "icon": "coin",
+     "promise": "where your energy earns — and where it quietly leaks"
+    },
+    {
+     "id": "palette",
+     "key": "Your colours",
+     "icon": "palette",
+     "promise": "your 4, with exact codes + three things to carry"
+    },
+    {
+     "id": "dna",
+     "key": "Blueprint",
+     "icon": "map",
+     "promise": "how {axis} leads you and {second} feeds it"
+    }
+   ],
+   "scales": [
+    {
+     "id": "energy",
+     "left": "Outer",
+     "right": "Inner"
+    },
+    {
+     "id": "tone",
+     "left": "Bold",
+     "right": "Calm"
+    },
+    {
+     "id": "depth",
+     "left": "Light",
+     "right": "Deep"
+    }
+   ],
+   "rarity": {
+    "igniter": {
+     "outer": 6,
+     "inner": 8
+    },
+    "keeper": {
+     "outer": 11,
+     "inner": 6
+    },
+    "feeler": {
+     "outer": 8,
+     "inner": 9
+    },
+    "thinker": {
+     "outer": 13,
+     "inner": 8
+    }
+   },
+   "formula": "{axis}-led · {energy} · {second} undercurrent",
+   "rarity_line": "1 of 8 · rarer than {rarer}% of profiles",
+   "bridge": "Your profile answers, specifically for {subtype_article} {subtype_bare}:",
+   "offer_head": "The full {subtype_bare} profile — 6 chapters",
+   "split_caption": "{drive}% Momentum · {anchor}% Steadiness · {wave}% Connection · {prism}% Curiosity",
+   "essence": {
+    "igniter": {
+     "outer": "You light the room, and you do it out loud.",
+     "inner": "You burn steady, and mostly where nobody sees it."
+    },
+    "keeper": {
+     "outer": "You are the thing other people brace against.",
+     "inner": "You hold underneath, well below the surface."
+    },
+    "feeler": {
+     "outer": "You come in like weather, and the room changes.",
+     "inner": "You run deep and warm, and only where it counts."
+    },
+    "thinker": {
+     "outer": "You throw light far enough for others to steer by.",
+     "inner": "You map the ground quietly, long before anyone asks."
+    }
+   },
+   "rarer_than": {
+    "igniter": {
+     "outer": 84,
+     "inner": 88
+    },
+    "keeper": {
+     "outer": 90,
+     "inner": 82
+    },
+    "feeler": {
+     "outer": 87,
+     "inner": 89
+    },
+    "thinker": {
+     "outer": 92,
+     "inner": 87
+    }
+   },
+   "traits": [
+    {
+     "tag": "drive",
+     "name": "Momentum"
+    },
+    {
+     "tag": "anchor",
+     "name": "Steadiness"
+    },
+    {
+     "tag": "wave",
+     "name": "Connection"
+    },
+    {
+     "tag": "prism",
+     "name": "Curiosity"
+    }
+   ]
+  }
+ }
 }
