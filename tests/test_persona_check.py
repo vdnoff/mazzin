@@ -720,6 +720,79 @@ check("the four-up fills its zone",
 check("  and nothing is letterboxed any more",
       not re.search(r"body\.theme-persona[^{]*\.card-img \{"
                     r"[^}]*object-fit: contain;", mazzin, re.S))
+# And cover crops nothing, because the zone it fills is the render's own
+# shape. `aspect-ratio` applies to the box `box-sizing` names, so content-box
+# is what makes it exact: the content box — the area object-fit works inside —
+# is 3:4, and the bar's reserve is added outside it. With border-box the ratio
+# would land on the padded box and the zone would be 26px short of 3:4, which
+# is most of the trim back again.
+check("  the four-up's image zone is the render's own aspect",
+      re.search(r"body\.theme-persona \.cards\.is-grid4 \.card-img \{"
+                r"[^}]*box-sizing: content-box;[^}]*aspect-ratio: 3 / 4;",
+                mazzin, re.S) is not None)
+check("    which is the box object-fit measures, not the padded one",
+      "box-sizing: content-box;" in mazzin)
+check("    and the tile and its row size to it",
+      re.search(r"body\.theme-persona \.cards\.is-grid4 \.card \{"
+                r"[^}]*height: auto;", mazzin, re.S) is not None
+      and re.search(r"body\.theme-persona \.cards\.is-grid4 \{"
+                    r"[^}]*grid-auto-rows: auto;[^}]*align-items: start;",
+                    mazzin, re.S) is not None)
+
+
+def clay_reaches(card_id):
+    """How far in from the nearer side this render's clay reaches, in %.
+
+    Clay is a run of pixels differing from that row's own backdrop, which the
+    sculpt renders make easy: the backdrop is a smooth horizontal band and the
+    form is not.
+    """
+    from PIL import Image
+
+    img = Image.open(os.path.join(GALLERY, card_id + ".webp")).convert("RGB")
+    width, height = img.size
+    px = img.load()
+    edges = []
+    for side in (0, 1):
+        deepest = width / 2.0
+        for y in range(0, height, 3):
+            ref = [sum(px[(i if not side else width - 1 - i), y][c]
+                       for i in range(4)) / 4 for c in range(3)]
+            run = 0
+            for x in range(0, width // 2):
+                col = px[(x if not side else width - 1 - x), y]
+                if sum((col[c] - ref[c]) ** 2
+                       for c in range(3)) ** 0.5 > 40:
+                    run += 1
+                    if run >= 4:
+                        deepest = min(deepest, x)
+                        break
+                else:
+                    run = 0
+        edges.append(100.0 * deepest / width)
+    return min(edges)
+
+
+# The four-up's crop, derived from the declared geometry rather than assumed:
+# a zone of the render's own aspect means cover scales to fit exactly and
+# removes nothing. If that rule is ever loosened this becomes non-zero and the
+# cards below start failing, which is the point of computing it.
+GRID4_CROP_PER_SIDE = 0.0
+grid4_cards = sorted({i["id"] for st in steps if st["format"] == "grid4"
+                      for i in st["pairs"][0]["images"]})
+check("the four-up crops nothing per side, by construction",
+      GRID4_CROP_PER_SIDE == 0.0)
+losers = [c for c in grid4_cards if clay_reaches(c) < GRID4_CROP_PER_SIDE]
+check("  so no four-up card loses clay at any width",
+      not losers, str(losers[:4]))
+check("  across all thirty-six of them", len(grid4_cards) == 36,
+      str(len(grid4_cards)))
+# The detector has to be able to find clay, or the check above is a tautology.
+# It was 8.3% per side before the cap, and 27 of the 36 lost real artwork.
+would_lose = [c for c in grid4_cards if clay_reaches(c) < 8.3]
+check("  and the check would have caught the crop this replaced",
+      len(would_lose) >= 20, "%d of %d at the old 8.3%%"
+      % (len(would_lose), len(grid4_cards)))
 check("the two-up fills its zone instead",
       re.search(r"body\.theme-persona \.cards:not\(\.is-grid4\) "
                 r"\.card-img \{[^}]*object-fit: cover;", mazzin, re.S)
