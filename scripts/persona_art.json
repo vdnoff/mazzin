@@ -153,6 +153,15 @@
       "sha256": "d0b518b8e3eee3983387752d480933c3039790283fdd0d45971eafd50605feee",
       "size": "800x800"
     },
+    "hour_after_dark": {
+      "bytes": 16626,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 123.7 sd 70.3 sat 129.2",
+      "recipe_sha": "6f110adde84d1ddb175bf58c86570e48e87147e94abe22a550bc640ba7828b9d",
+      "sha256": "e0f8bb8977f395f11c8b0058ecccce144413d8cf71f6a1f491dba776097e2335",
+      "size": "600x800"
+    },
     "hour_first_light": {
       "bytes": 18260,
       "cost_usd": 0.063,
