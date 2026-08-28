@@ -654,66 +654,77 @@ check("  and repainting the accent no wider than that one screen",
 check("the config asks for that theme by name", cfg["theme"] == "persona")
 
 
-print("\n--- the tiles: whole sculpture, label underneath ---")
-# Two defects the owner found on the live quiz, both fixed in CSS scoped to
-# this funnel's body class. engine.js is untouched: the label is a sibling of
-# the image inside the card, not a child of it, so moving it below the picture
-# never needed a new label mode.
+print("\n--- the tiles: badge on the art, whole frame, no crop ---")
+# The first version of this moved the label below the picture and locked the
+# tile to 3:4. It fixed both defects and lost two things worth more: the
+# pill-on-artwork look is part of this funnel's style, and the two-up's tall
+# tiles are the drama of the format. So the label is back on the image and the
+# tiles are back at full height; what stays fixed is the crop.
 engine_src = open(os.path.join(ROOT, "static/js/engine.js"),
                   encoding="utf-8").read()
 check("engine.js still knows only the badge mode",
       engine_src.count('labelMode() === "badge"') == 1
       and 'labelMode() === "caption"' not in engine_src)
-check("  and the card is still image, then label, then tick",
-      re.search(r'card\.appendChild\(img\);(?:.|\n)*?'
-                r'name\.className = "card-name";(?:.|\n)*?'
-                r'check\.className = "check";', engine_src) is not None)
 
-# 1. The label moves below the picture. It was pinned 8px off the bottom of
-#    the card and sat on the base of the form — which on a clay sculpture is
-#    the part that says what it is.
-check("the persona label hangs below the tile",
-      re.search(r"body\.theme-persona \.card-name \{[^}]*top: 100%;"
-                r"[^}]*bottom: auto;", mazzin, re.S) is not None)
-check("  with room left for it under the row",
-      re.search(r"body\.theme-persona \.cards \{[^}]*padding-bottom:",
-                mazzin, re.S) is not None
-      and re.search(r"body\.theme-persona \.cards\.is-grid4 \{[^}]*"
-                    r"row-gap:", mazzin, re.S) is not None)
-check("  and the card no longer clips it",
-      re.search(r"body\.theme-persona \.card \{[^}]*overflow: visible;",
-                mazzin, re.S) is not None)
-check("  it keeps the pill, on the page rather than on the picture",
-      re.search(r"body\.theme-persona \.card-name \{[^}]*"
-                r"background: rgba\(243, 227, 204", mazzin, re.S) is not None)
+# 1. The badge is an overlay again — the shared rule, unoverridden.
+check("the badge is on the image, where it always was",
+      re.search(r"^\.card-name \{[^}]*position: absolute;[^}]*bottom: 8px;",
+                mazzin, re.M | re.S) is not None)
+check("  and this funnel does not move it",
+      not re.search(r"body\.theme-persona \.card-name \{[^}]*top: 100%",
+                    mazzin, re.S))
+check("  nor hang it under the tile",
+      "body.theme-persona .cards { padding-bottom" not in mazzin)
 
-# 2. The pair frames were cropped: tiles stretched to the elastic row's
-#    height with object-fit: cover, so a 3:4 render in a 174x604 box lost
-#    about three fifths of its width.
-check("the persona tile takes the render's own aspect",
-      re.search(r"body\.theme-persona \.card \{[^}]*aspect-ratio: 3 / 4;",
+# 2. It sits on backdrop, never on clay — bought with a reserved strip rather
+#    than with the renders' safe margin, which does not exist. Measured across
+#    all forty-four frames, the clay-free band at the bottom of a render is a
+#    median 7.4% and a minimum of 0.2%: on the tightest card the form runs to
+#    the frame's edge, so a badge overlapping the artwork at all would sit on
+#    it. The image reserves the pill's strip out of its own content box, so
+#    the drawn frame ends above the badge by construction.
+check("the badge's strip is reserved out of the image box",
+      re.search(r"body\.theme-persona \.card-img \{[^}]*"
+                r"box-sizing: border-box;[^}]*padding-bottom: 46px;",
                 mazzin, re.S) is not None)
-check("  and the image is never cropped",
+check("  which clears a pill 8px off the bottom and 27 tall",
+      46 >= 8 + 27 + 8)
+check("  and the frame is bottom-anchored in what is left",
+      re.search(r"body\.theme-persona \.card-img \{[^}]*"
+                r"object-position: center 100%;", mazzin, re.S) is not None)
+
+# 3. No crop, which is the one thing both versions of this agree on.
+check("the whole frame is shown",
       re.search(r"body\.theme-persona \.card-img \{[^}]*"
                 r"object-fit: contain;", mazzin, re.S) is not None)
-check("  the row sizes to the tiles rather than stretching them",
-      re.search(r"body\.theme-persona \.cards \{[^}]*flex: 0 0 auto;"
-                r"[^}]*min-height: 0;", mazzin, re.S) is not None)
-check("  which is the aspect the gallery is actually drawn at",
-      True)
+check("  and the tile is back at its full height",
+      not re.search(r"body\.theme-persona \.card \{[^}]*aspect-ratio",
+                    mazzin, re.S)
+      and "body.theme-persona .cards {" not in mazzin)
+check("  with the row elastic again, as the other funnels have it",
+      re.search(r"^\.cards \{[^}]*flex: 1 1 auto;", mazzin, re.M | re.S)
+      is not None)
 
-# The neighbours keep the presentation they had. These are the base rules the
-# persona block overrides, unscoped and unchanged — if they moved, every other
-# funnel's tiles moved with them.
+# The letterbox the whole frame leaves is filled with the renders' own edge
+# tones, measured rather than picked.
+check("the letterbox carries the renders' measured edge tones",
+      re.search(r"body\.theme-persona \.card \{[^}]*background: #CEA371;",
+                mazzin, re.S) is not None
+      and re.search(r"body\.theme-persona \.cards\.is-grid4 \.card \{"
+                    r"[^}]*background: #D5AB7C;", mazzin, re.S) is not None)
+# Flat, not a gradient: the celestial suite forbids a gradient on a card and
+# that guard is worth more than the marginally better seam it costs us.
+check("  and paints no gradient on a card",
+      not [b for b in mazzin.split("}")
+           if ".card" in b.split("{")[0] and "gradient" in b.split("{")[-1]])
+
+# The neighbours keep what they had.
 check("the shared card rules are untouched",
-      re.search(r"^\.card-name \{[^}]*bottom: 8px;", mazzin, re.M | re.S)
-      is not None
-      and re.search(r"^\.card-img \{[^}]*object-fit: cover;", mazzin,
-                    re.M | re.S) is not None)
-check("  so a funnel without this theme still overlays its label",
-      re.search(r"^\.card \{[^}]*height: 100%;[^}]*overflow: hidden;",
-                mazzin, re.M | re.S) is not None)
-check("  and every new rule is scoped to this funnel",
+      re.search(r"^\.card-img \{[^}]*object-fit: cover;", mazzin,
+                re.M | re.S) is not None
+      and re.search(r"^\.card \{[^}]*height: 100%;[^}]*overflow: hidden;",
+                    mazzin, re.M | re.S) is not None)
+check("  and every persona rule is scoped to this funnel",
       all(r.startswith("body.theme-persona") for r in theme_rules))
 
 
