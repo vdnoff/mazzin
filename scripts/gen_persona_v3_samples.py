@@ -488,64 +488,83 @@ SCULPT_NEGATIVE_OVERRIDES = {"p_head_base": SCULPT_HEAD_NEGATIVE}
 #
 # The owner's verdict on the first totem was "too plain" — it read as a vase.
 # That is the right verdict and the diagnosis is structural: the sculpt prefix
-# is written for quiz cards, which have to be legible at tile size on a light
-# ground and must not shout, and a totem is the opposite object. It is the
-# last thing the product shows, it is what the reader is being told they are,
-# and it has to look like something behind glass.
+# is written for quiz cards, which have to be legible at tile size and must
+# not shout, and a totem is the opposite object. It is the last thing the
+# product shows, it is what the reader is being told they are, and it has to
+# look like something behind glass.
 #
-# So this is an additional block rather than an edit to the prefix. Quiz cards
-# keep the light warm backdrop they were designed for; totems get the result
-# page's world — dusk, one hard light, deep shadow — and three demands the
-# cards do not carry.
+# --- what six draws taught us about how to ask for that ---------------------
 #
-# Applied to totem ids only. `TOTEM_IDS` is the whole coupling, and v3-B's
-# eight inherit it by being named here.
+# The first version of this block asked for the museum directly: a dark
+# dusk-warm backdrop, a single spotlight, deep shadow, "alone in the dark".
+# Three draws came back at luma 20-25 — darker than the umbra backdrop's own
+# colour — as a glow floating in blackness with no clay left in it.
+#
+# So the language was softened to a dimmed sweep, a gallery at closing time
+# rather than night, with the clay explicitly still lit and the failure named
+# outright. Three more draws came back with the same signature: luma 25-30,
+# sat 233-247, the same glow in the same blackness.
+#
+# Six draws is enough. Any request for a darker ground, however carefully
+# worded, lands on the same prior — the model has a strong idea of what a
+# dramatically lit dark object looks like and it is a light source in a void.
+# The block cannot win that argument, so it stops having it.
+#
+# Totems now render on exactly the same light warm sweep as every other sculpt
+# frame. Nothing here asks for darkness at all.
+#
+# THE DUSK BELONGS TO THE RESULT PAGE, NOT TO THE RENDER. That is not a
+# consolation, it is where it was always going to work better: the page draws
+# the totem on a pedestal card with a spotlight gradient over it, on the deep
+# warm umbra ground the whole result page sits on. The museum is built in CSS,
+# around a well-lit render, and it is already built. A render that arrives
+# pre-darkened would be dark twice and legible neither time.
+#
+# v3-B: do not reintroduce a dark backdrop here. It has been tried twice and
+# the failure mode is identical both times.
+#
+# --- so where does the drama come from -------------------------------------
+#
+# From the form and from the light inside it, which is what the set had all
+# along. `sculpt_i_lit_up` is the proof: a teal core glowing out through fine
+# cracks and seams, on the ordinary bright backdrop, and it rendered
+# correctly. That is the recipe every totem now carries, word for word in its
+# essentials — because it is the one phrasing of inner light in this file
+# that is known to survive contact with the model.
 TOTEM_STYLE = (
-    "This frame is a totem: the culmination piece, not a quiz card. Three "
-    "things are required of it and none of them is optional. "
-    # 1 — inner light. The cracked-egg formula: matter, a visible event, and
-    # light escaping from inside it. A teal-painted surface is the failure
-    # this is written against, because painted teal reads as decoration and
-    # the whole rule of the set is that teal marks where the meaning is.
+    "This frame is a totem: the culmination piece, not a quiz card. It is "
+    "shot on exactly the same light warm backdrop as every other frame in "
+    "this set — the same plain seamless warm monochrome studio sweep, the "
+    "same bright even light. Nothing about this frame is dark. "
+    # 1 — inner light, in the words that are known to work. This is
+    # `sculpt_i_lit_up`'s own language, which rendered correctly on the
+    # bright backdrop; the failures came from what used to sit around it.
     "INNER LIGHT, MANDATORY: the form is lit from within and the light gets "
-    "out — a bright electric teal glow emitted from inside the volume, "
-    "escaping through cracks, seams, a split or an opening, or showing as a "
-    "molten core through a fissure in the clay. The light spills onto the "
-    "surrounding clay as a soft glow bloom and throws its own colour into the "
-    "shadow. This is emitted light, never a teal-painted surface and never a "
-    "teal object sitting next to the form. "
-    # 2 — presentation. The quiz's cream sweep is what makes a totem read as
-    # a vase on a shelf; this is the museum case.
-    #
-    # Softened after the first three draws came back at luma 20-25 — darker
-    # than the umbra backdrop's own colour, which means the model read "dark
-    # dusk-warm backdrop in deep umbra" plus "alone in the dark" as night and
-    # returned a glow floating in blackness with no clay left in it. The
-    # intent was always a dimmed studio sweep rather than a dark place, so
-    # that is what it now asks for: the same seamless sweep every other frame
-    # is shot against, turned down, keeping its own warm colour with the
-    # spotlight pooling on it — and the clay lit and readable as clay, with
-    # the glow adding to that light rather than replacing it.
-    "DRAMATIC PRESENTATION: the same plain seamless sweep the other frames "
-    "are shot against, dimmed to a deep warm dusk — the light of a gallery "
-    "at closing time, not night. Markedly darker than the light backdrop the "
-    "quiz cards are shot against, the world of the result page rather than "
-    "the quiz, but never black: the sweep keeps its own warm colour and "
-    "stays visible behind the form. One single dramatic spotlight from above "
-    "and to one side falls across the form and pools on the sweep behind it, "
-    "a pronounced bright rim light traces the contour, and a deep soft "
-    "shadow gathers beneath. The clay itself stays clearly lit and clearly "
-    "readable as clay — warm terracotta and ochre, its surface and its "
-    "handmade marks still visible in the light — and the inner glow adds to "
-    "that light instead of replacing it. Museum-piece lighting: the object "
-    "is spotlit against a dim warm sweep, never a glowing shape floating in "
-    "blackness. "
-    # 3 — exclusivity. Restating the pose-verb rule at the top of its range,
-    # because a totem that stands still is a vase however it is lit.
-    "EXCLUSIVITY: a rare collectible artifact, poster composition, centred "
-    "and reverent. The form is dynamic and caught mid-gesture — the "
-    "pose-verb rule applies doubly here, and a static symmetrical object is "
-    "the failure this frame is most likely to come back as."
+    "out. A bright electric teal core glows out through a network of fine "
+    "cracks and seams running across the surface, or through a split or an "
+    "opening in the volume, with the light spilling from inside the form "
+    "rather than falling on it, and a soft teal glow bloom on the clay "
+    "immediately around each crack. Warm terracotta and ochre shell against "
+    "that glow. This is emitted light, never a teal-painted surface and "
+    "never a teal object sitting next to the form. The clay stays fully lit "
+    "and fully readable as clay — its surface, its handmade marks, its warm "
+    "colour — and the glow is the detail inside it, not the light source for "
+    "the picture. "
+    # 2 — the presentation that is left once darkness is off the table: a
+    # bright rim on the contour and the reverent poster framing. Both work on
+    # a light ground; neither of them was ever the thing that failed.
+    "PRESENTATION: a pronounced bright rim light tracing the whole contour so "
+    "the form separates crisply from the sweep, a defined soft contact shadow "
+    "anchoring it, and a reverent centred poster composition with generous "
+    "space around it. The object is presented, not photographed in passing. "
+    # 3 — exclusivity, restated as a thing the form does rather than a thing
+    # the lighting does to it.
+    "EXCLUSIVITY THROUGH FORM AND DETAIL, NOT THROUGH DARKNESS: a rare "
+    "collectible artifact — finer, more deliberate and more intricate than a "
+    "quiz card, worth looking at closely. The form is dynamic and caught "
+    "mid-gesture: the pose-verb rule applies doubly here, and a static "
+    "symmetrical object is the failure this frame is most likely to come "
+    "back as."
 )
 
 # Which frames the block is applied to. Exactly the totems: a quiz card handed
@@ -937,43 +956,24 @@ MIN_SATURATION_BY_STYLE = {
 
 # --- the totem band ----------------------------------------------------------
 #
-# A totem is not a quiz card and cannot be measured like one. Three draws under
-# the totem block came back at luma 20-25 against a floor of 90 and were all
-# rejected — which is the floor working exactly as designed and measuring the
-# wrong thing, because the block deliberately asks for a dark room and the quiz
-# floor exists to catch a frame that came back dark by accident.
+# One bound, not two, and the history is why.
 #
-# So the numbers below are reasoned from what a correct totem is made of
-# rather than from the failures. PIL's "L" is 601-2 luma and its HSV "S" is
-# (max-min)/max, and against those:
+# The totem block used to ask for a dark backdrop, so totems needed a
+# dark-tolerant luma floor: three draws at luma 20-25 were rejected by the
+# quiz floor of 90, which was the floor measuring the wrong kind of frame.
+# That floor is gone with the demand that created it. A totem is shot on the
+# same bright sweep as every other sculpt frame now, so it is exposed like one
+# and is judged like one — and a totem that comes back dark is once again a
+# defect rather than a house style, which is exactly what the quiz floor is
+# good at catching.
 #
-#   the umbra backdrop  #241A10  is luma  27.8, sat 141.7
-#   lit terracotta      #B4643C  is luma 119.4, sat 170.0
-#   a teal core         #4EDDC4  is luma 175.4, sat 165.0
-#
-# A frame that is backdrop, a lit clay form and a glowing core — in the
-# proportions the safe-area rule allows, which is a form filling something
-# like a quarter to a third of the frame — lands between luma 50 and 95, and
-# sits around sat 140-150 whichever way the mix goes.
-#
-# Two things follow, and they are the two bounds.
-
-# Below this the frame has gone blacker than its own backdrop colour, which
-# means there is no lit form in it: a glow floating in the dark, which is the
-# failure the block's own language is written against. Pure umbra with nothing
-# on it measures 27.8, and the darkest composition that still reads as a lit
-# object measures about 50, so the line goes between them with room on both
-# sides. It is emphatically not the quiz floor lowered — a quiz card at 38
-# would be a broken quiz card.
-TOTEM_MIN_MEAN_LUMA = 38.0
-
-# And an upper bound on colour, which no other frame class has. Saturation
-# rises both when the teal goes neon and when the frame goes near-black — a
-# dark warm pixel is nearly pure hue — so one number catches the two ways this
-# block fails. Correct renders measure 140-150 and a teal-heavy one might
-# reach 200; the owner's read on the rejected draws was that 240 and above is
-# the teal drowning the clay. The line sits just under that, which leaves
-# every correct render a wide margin and still catches the neon.
+# What survives is the colour ceiling, because the failure it catches never
+# depended on the backdrop. Saturation runs high both when the teal goes neon
+# and when a frame goes near-black — a dark warm pixel is nearly pure hue — so
+# this one number covers both, and the six failed draws measured 233-247 on
+# it. Correct renders measure 140-150 and a teal-heavy one might reach 200;
+# the ceiling sits just under the reading the owner called neon, which leaves
+# every correct render a wide margin.
 TOTEM_MAX_SATURATION = 235.0
 
 
@@ -1001,11 +1001,11 @@ def floor_for(style=DEFAULT_STYLE, base_id=None):
     """The band this frame is judged against, as a dict.
 
     Keyed by frame class rather than by style, because the thing that decides
-    what a correct exposure looks like is what the frame is FOR. Every quiz
-    card in every style is a subject on a light ground and shares one band.
-    A totem is a lit object in a dark room and needs its own — and it is the
-    only frame class that does, which is why this is a branch and not a table
-    with one row per id.
+    what a correct render looks like is what the frame is FOR. Every frame in
+    every style is now a subject on a light ground and shares the exposure
+    band; the totems differ in one thing only, a ceiling on colour, because
+    the way they fail is the teal drowning the clay rather than anything
+    about how bright they are.
     """
     band = {
         "min_luma": MIN_MEAN_LUMA,
@@ -1015,7 +1015,6 @@ def floor_for(style=DEFAULT_STYLE, base_id=None):
         "max_sat": None,
     }
     if style == "sculpt" and base_id in TOTEM_IDS:
-        band["min_luma"] = TOTEM_MIN_MEAN_LUMA
         band["max_sat"] = TOTEM_MAX_SATURATION
     return band
 
