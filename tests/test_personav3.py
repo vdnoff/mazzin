@@ -807,55 +807,69 @@ print("\n--- the totem block: a culmination frame, not a quiz card ---")
 totem_low = v3.TOTEM_STYLE.lower()
 check("inner light is mandatory and named as such",
       "inner light, mandatory" in totem_low)
-check("  the glow is emitted from inside the volume",
-      "lit from within" in totem_low
-      and "emitted from inside the volume" in totem_low)
-check("  escaping through cracks, seams or an opening",
-      all(w in totem_low for w in ["cracks", "seams", "opening",
-                                   "molten core"]))
-check("  with a bloom on the surrounding clay",
-      "soft glow bloom" in totem_low)
-# The failure it is written against: teal as paint rather than as light.
-check("  and a painted teal surface is refused by name",
-      "never a teal-painted surface" in totem_low)
+# Not new language: this is `sculpt_i_lit_up`'s own, which is the one phrasing
+# of inner light in this file known to have rendered correctly — and it did it
+# on the bright backdrop, which is the whole reason it is the recipe now.
+lit_up = dict(v3.SCULPT_SAMPLES)["i_lit_up"].lower()
+for phrase in ["cracks and seams", "spilling from inside",
+               "rather than falling on it", "terracotta"]:
+    check("  carries lit_up's '%s'" % phrase,
+          phrase in totem_low and phrase in lit_up)
+check("  a teal core glowing out through the surface",
+      "bright electric teal core glows out through a network of fine cracks"
+      in totem_low)
+check("  through a split or an opening where there are no cracks",
+      "a split or an opening in the volume" in totem_low)
+check("  with a bloom on the clay around each crack",
+      "soft teal glow bloom on the clay immediately around each crack"
+      in totem_low)
+check("  and a painted teal surface refused by name",
+      "never a teal-painted surface" in totem_low
+      and "never a teal object sitting next to the form" in totem_low)
+# The failure the six draws actually were: the glow became the picture.
+check("  the glow is a detail in lit clay, not the light source",
+      "the clay stays fully lit and fully readable as clay" in totem_low
+      and "not the light source for the picture" in totem_low)
 
-check("the presentation is dramatic and dark",
-      "dramatic presentation" in totem_low
-      and "dimmed to a deep warm dusk" in totem_low)
-check("  visibly darker than the quiz cards' own backdrop",
-      "markedly darker than the light backdrop" in totem_low)
-# The correction the first three draws forced. "Deep umbra ... alone in the
-# dark" read as night and returned a glow floating in blackness with no clay
-# in it, at luma 20-25 — darker than the backdrop's own colour. The block now
-# says room, and the two phrases that produced night are gone.
-check("  but a dimmed sweep, not night and not a place",
-      "gallery at closing time, not night" in totem_low
-      and "the same plain seamless sweep" in totem_low
-      and "never black: the sweep keeps its own warm colour" in totem_low)
-check("  and the phrasing that over-darkened it is gone",
-      "alone in the dark" not in totem_low
-      and "deep umbra" not in totem_low)
-check("  the clay stays lit and readable as clay",
-      "stays clearly lit and clearly readable as clay" in totem_low
-      and "handmade marks" in totem_low)
-check("  the glow adds to that light rather than replacing it",
-      "adds to that light instead of replacing it" in totem_low)
-check("  and the failure is named outright",
-      "never a glowing shape floating in blackness" in totem_low)
-# It asks for a dimmed backdrop, never for a place. The figure ban forbids
-# environments in every sculpt frame and the totem block is held to it too.
-check("  without asking for an environment to put it in",
-      not re.search(r"\b(rooms?|interiors?|walls?|floors?)\b", totem_low))
-check("  one spotlight, a rim light, a deep shadow",
-      "single dramatic spotlight" in totem_low
-      and "pronounced bright rim light" in totem_low
-      and "deep soft shadow" in totem_low)
-check("  museum-piece lighting, said plainly",
-      "museum-piece lighting" in totem_low)
+check("the totem is shot on the same light backdrop as every other frame",
+      "same light warm backdrop as every other frame" in totem_low
+      and "same plain seamless warm monochrome studio sweep" in totem_low
+      and "same bright even light" in totem_low)
+check("  and says outright that nothing here is dark",
+      "nothing about this frame is dark" in totem_low)
+# The words that produced blackness, twice. None of them may come back.
+DARKNESS = ["dusk", "dim ", "dimmed", "deep umbra", "night", "blackness",
+            "spotlight", "closing time", "alone in the dark", "shadowy",
+            "low-key", "darker than"]
+back = [w for w in DARKNESS if w in totem_low]
+check("  no request for a darker ground survives anywhere in the block",
+      not back, str(back))
+check("  the only mentions of dark are the two refusals",
+      [m.start() for m in re.finditer("dark", totem_low)]
+      == [totem_low.index("frame is dark") + len("frame is "),
+          totem_low.index("not through darkness") + len("not through ")],
+      str(re.findall(r".{22}dark.{10}", totem_low)))
+check("  and the pedestal that carries the dusk is on the result page",
+      ".pr-totem-light" in open(
+          os.path.join(REPO, "static/css/result_persona.css"),
+          encoding="utf-8").read())
+# The comment is the guard against v3-B trying it a third time.
+check("  with the reason written down where the next draw will read it",
+      "THE DUSK BELONGS TO THE RESULT PAGE" in source
+      and "do not reintroduce a dark backdrop here" in source)
+
+check("the presentation that survived is rim light and poster framing",
+      "presentation:" in totem_low
+      and "pronounced bright rim light tracing the whole contour" in totem_low
+      and "defined soft contact shadow" in totem_low
+      and "reverent centred poster composition" in totem_low)
+
 check("exclusivity is asked for, not implied",
-      "exclusivity" in totem_low
-      and "rare collectible artifact" in totem_low
-      and "poster composition" in totem_low)
+      "exclusivity through form and detail, not through darkness" in totem_low
+      and "rare collectible artifact" in totem_low)
+check("  and it comes from the form being finer, not from the light",
+      "finer, more deliberate and more intricate than a quiz card"
+      in totem_low)
 check("  and the pose-verb rule is restated at the top of its range",
       "pose-verb rule applies doubly" in totem_low
       and "static symmetrical object is the failure" in totem_low)
@@ -887,41 +901,40 @@ check("style_for stacks only for totems",
       and v3.style_for("s_morning_run", "vector") == v3.VECTOR_STYLE)
 
 
-print("\n--- the totem is measured on its own band ---")
-# The quiz floor and the totem block cannot both be right about the same
-# frame: the block asks for a dark room and the floor exists to catch a frame
-# that came back dark by accident. Three draws proved it — luma 20-25 against
-# a floor of 90, all rejected. So the band is per frame class, and the totem's
-# numbers are reasoned from what a correct totem is made of.
-#
-# Against PIL's own measures, umbra #241A10 is luma 27.8 / sat 141.7, lit
-# terracotta #B4643C is luma 119.4 / sat 170.0, and a teal core #4EDDC4 is
-# luma 175.4 / sat 165.0. A backdrop, a lit form and a core in the proportions
-# the safe area allows land between luma 50 and 95 at sat 140-150.
-check("the totem luma floor sits between bare umbra and a lit form",
-      27.8 < v3.TOTEM_MIN_MEAN_LUMA < 49.7,
-      "%.1f" % v3.TOTEM_MIN_MEAN_LUMA)
-check("  and is pinned where it was reasoned to",
-      v3.TOTEM_MIN_MEAN_LUMA == 38.0, "%.1f" % v3.TOTEM_MIN_MEAN_LUMA)
-check("the totem saturation ceiling is pinned below the neon reading",
-      v3.TOTEM_MAX_SATURATION == 235.0, "%.1f" % v3.TOTEM_MAX_SATURATION)
-check("  with the correct range well under it",
-      v3.TOTEM_MAX_SATURATION > 200)
+print("\n--- the totem band: one bound, and why only one ---")
+# The dark-tolerant luma floor is gone with the demand that created it. A
+# totem is shot on the same bright sweep as every other frame now, so it is
+# exposed like one and judged like one — and a totem that comes back dark is
+# a defect again rather than a house style, which is what the quiz floor is
+# good at catching. Reintroducing that floor would mean the dark backdrop had
+# come back, so its absence is pinned.
+check("the dark-tolerant luma floor is gone",
+      not hasattr(v3, "TOTEM_MIN_MEAN_LUMA"))
+check("  and a totem is exposed like every other frame",
+      v3.floor_for("sculpt", "p_totem_open_flame")["min_luma"]
+      == v3.floor_for("sculpt", "i_wound_up")["min_luma"] == 90.0)
+
+# What survives is the colour ceiling, because the failure it catches never
+# depended on the backdrop: saturation runs high both when the teal goes neon
+# and when a frame goes near-black, and the six failed draws measured 233-247.
+check("the colour ceiling survives", v3.TOTEM_MAX_SATURATION == 235.0,
+      "%.1f" % v3.TOTEM_MAX_SATURATION)
+check("  above every correct reading and under the neon one",
+      200 < v3.TOTEM_MAX_SATURATION < 240)
 
 quiz_band = v3.floor_for("sculpt", "i_wound_up")
 totem_band = v3.floor_for("sculpt", "p_totem_open_flame")
-check("the quiz-card band is untouched",
-      quiz_band["min_luma"] == 90.0 and quiz_band["max_luma"] == 245.0
-      and quiz_band["min_sd"] == 10.0 and quiz_band["max_sat"] is None,
-      str(quiz_band))
+check("the two bands now differ in exactly one number",
+      {k for k in quiz_band if quiz_band[k] != totem_band[k]} == {"max_sat"},
+      str({k: (quiz_band[k], totem_band[k]) for k in quiz_band
+           if quiz_band[k] != totem_band[k]}))
+check("  and the quiz band is what it always was",
+      quiz_band == {"min_luma": 90.0, "max_luma": 245.0, "min_sd": 10.0,
+                    "min_sat": 10.0, "max_sat": None}, str(quiz_band))
 check("  in every style", all(
     v3.floor_for(st)["min_luma"] == 90.0
     and v3.floor_for(st)["max_sat"] is None for st in v3.STYLES))
-check("the totem band is dark-tolerant and colour-capped",
-      totem_band["min_luma"] == v3.TOTEM_MIN_MEAN_LUMA
-      and totem_band["max_sat"] == v3.TOTEM_MAX_SATURATION,
-      str(totem_band))
-check("  and only the totem gets it",
+check("  only the totem carries a ceiling",
       [b for b in SCULPT_WANT + SCULPT_PREVIEW_WANT
        if v3.floor_for("sculpt", b)["max_sat"] is not None]
       == sorted(v3.TOTEM_IDS),
@@ -932,33 +945,23 @@ check("  the same ids the style block applies to",
           f["base_id"] for f in sculpt_plan
           if v3.TOTEM_STYLE in f["prompt"]))
 
-# Both bounds, proved against the numbers a real render produces.
+# Both bounds still bite, and now they are the quiz floor and the ceiling.
 TOTEM = "p_totem_open_flame"
-DUSK = (73.9, 46.0, 147.8)        # the mid-dusk composite: backdrop/form/core
-check("a correct dusk totem passes", v3.sanity(DUSK, "sculpt", TOTEM)[0],
-      v3.sanity(DUSK, "sculpt", TOTEM)[1])
-check("  the darkest composition that still reads as a lit object passes",
-      v3.sanity((49.7, 40.0, 150.7), "sculpt", TOTEM)[0])
-check("  the brightest one does too",
-      v3.sanity((94.3, 52.0, 137.7), "sculpt", TOTEM)[0])
-# The lower bound: what the three rejected draws actually measured.
-check("a near-black totem is rejected",
-      not v3.sanity((22.0, 44.0, 210.0), "sculpt", TOTEM)[0])
-check("  and so is a frame of bare backdrop with no lit form",
-      not v3.sanity((27.8, 30.0, 141.7), "sculpt", TOTEM)[0])
-# The upper bound: teal gone neon, which the quiz floor has no opinion on.
-check("a neon-saturated totem is rejected",
-      not v3.sanity((70.0, 45.0, 243.0), "sculpt", TOTEM)[0])
-check("  even at a perfectly good exposure",
-      not v3.sanity((80.0, 50.0, 240.0), "sculpt", TOTEM)[0])
-check("  while the same saturation on a quiz card is nobody's business",
-      v3.sanity((150.0, 40.0, 243.0), "sculpt", "i_wound_up")[0])
-# And the quiz cards are judged exactly as before.
-check("a dusk exposure on a quiz card is still rejected",
-      not v3.sanity(DUSK, "sculpt", "i_wound_up")[0])
-check("  and on a vector card", not v3.sanity(DUSK, "vector")[0])
+BRIGHT = (168.0, 46.0, 152.0)     # lit clay on the warm sweep, teal core
+check("a bright totem on the warm sweep passes",
+      v3.sanity(BRIGHT, "sculpt", TOTEM)[0],
+      v3.sanity(BRIGHT, "sculpt", TOTEM)[1])
+check("  a dark one is rejected again, like any other frame",
+      not v3.sanity((28.0, 40.0, 150.0), "sculpt", TOTEM)[0])
+check("  and the readings the six failed draws produced are rejected",
+      not v3.sanity((25.0, 44.0, 233.0), "sculpt", TOTEM)[0]
+      and not v3.sanity((30.0, 46.0, 247.0), "sculpt", TOTEM)[0])
+check("a neon totem is rejected on colour alone",
+      not v3.sanity((170.0, 45.0, 243.0), "sculpt", TOTEM)[0])
+check("  which the quiz band would have passed",
+      v3.sanity((170.0, 45.0, 243.0), "sculpt", "i_wound_up")[0])
 check("sanity still defaults to the quiz band",
-      v3.sanity(DUSK) == v3.sanity(DUSK, "vector", None))
+      v3.sanity(BRIGHT) == v3.sanity(BRIGHT, "vector", None))
 check("an unmeasurable totem is still kept",
       v3.sanity(None, "sculpt", TOTEM)[0])
 
@@ -1169,9 +1172,9 @@ else:
     check("  warm saturated art clears the floor", ok, note)
 
     # The totem band, on rendered frames rather than on tuples. The bands
-    # above are equal-area, which overweights whatever is brightest; a totem
-    # is mostly backdrop with a form in it, so these are built to the
-    # proportions the safe-area rule actually leaves.
+    # above are equal-area, which overweights whatever is brightest; these are
+    # built to the proportions a totem actually has — mostly the warm sweep,
+    # with the form and its glowing cracks in the middle of it.
     def composite(parts):
         """parts = [(area share, (r, g, b))], top to bottom."""
         w, h = 1024, 1536
@@ -1191,35 +1194,33 @@ else:
         _, frame = v3.to_webp(composite(parts), v3.FRAME)
         return v3.sanity(v3.measure(frame), "sculpt", base_id)
 
-    DUSK_PARTS = [(.60, (90, 66, 48)), (.35, (180, 100, 60)),
-                  (.05, (242, 192, 112))]
-    DARKEST_OK = [(.72, (36, 26, 16)), (.23, (142, 74, 44)),
-                  (.05, (78, 221, 196))]
-    ok, note = judged(DUSK_PARTS)
-    check("  a rendered dusk totem passes its own band", ok, note)
-    ok, note = judged(DARKEST_OK)
-    check("  and so does the darkest one that still reads as lit", ok, note)
-    # The lower bound, against what the rejected draws actually looked like.
+    # What the block now asks for: the warm sweep, a lit terracotta form, and
+    # teal showing through the cracks in it.
+    LIT_TOTEM = [(.58, (243, 227, 204)), (.36, (180, 100, 60)),
+                 (.06, (78, 221, 196))]
+    ok, note = judged(LIT_TOTEM)
+    check("  a lit totem on the warm sweep passes", ok, note)
+    check("    and it is judged on the same exposure as a quiz card",
+          judged(LIT_TOTEM, "i_wound_up")[0])
+    # The dark render, which is what six draws produced. It is a defect again.
     ok, note = judged([(.80, (10, 8, 6)), (.16, (18, 16, 12)),
                        (.04, (78, 221, 196))])
     check("  a glow floating in blackness is rejected", not ok, note)
-    ok, note = judged([(1.0, (36, 26, 16))])
-    check("  and a frame of bare backdrop with no form is too", not ok, note)
-    # The upper bound, isolated: well exposed and still wrong, which the luma
+    ok, note = judged([(.72, (36, 26, 16)), (.23, (142, 74, 44)),
+                       (.05, (78, 221, 196))])
+    check("    and so is the dusk exposure the old band used to allow",
+          not ok, note)
+    # The ceiling, isolated: well exposed and still wrong, which the exposure
     # bound on its own would have waved through.
-    ok, note = judged([(.40, (0, 200, 172)), (.35, (122, 46, 0)),
-                       (.25, (46, 20, 0))])
+    NEON = [(.40, (0, 200, 172)), (.35, (255, 106, 0)), (.25, (255, 200, 0))]
+    ok, note = judged(NEON)
     check("  a well-exposed neon frame is rejected on colour alone",
           not ok, note)
     check("    and it really was well exposed",
-          v3.measure(v3.to_webp(composite(
-              [(.40, (0, 200, 172)), (.35, (122, 46, 0)),
-               (.25, (46, 20, 0))]), v3.FRAME)[1])[0]
-          > v3.TOTEM_MIN_MEAN_LUMA)
-    # And the quiz band is untouched by any of it.
-    ok, note = judged(DUSK_PARTS, "i_wound_up")
-    check("  the same dusk frame is still rejected as a quiz card",
-          not ok, note)
+          v3.measure(v3.to_webp(composite(NEON), v3.FRAME)[1])[0]
+          > v3.floor_for("sculpt", TOTEM_ID)["min_luma"])
+    check("    while the quiz band has no opinion on it",
+          judged(NEON, "i_wound_up")[0])
 
     dark = render(1024, 1536, [(12, 16, 22), (16, 24, 32),
                                (10, 14, 20), (14, 20, 28)])
