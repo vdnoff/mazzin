@@ -798,6 +798,74 @@ check("  no other frame claims the head negative",
       list(v3.SCULPT_NEGATIVE_OVERRIDES) == ["p_head_base"])
 
 
+print("\n--- the totem block: a culmination frame, not a quiz card ---")
+# The first totem came back reading as a vase, and the diagnosis was
+# structural: the sculpt prefix is written for quiz cards — legible at tile
+# size on a light ground, and quiet — which is the opposite of what the last
+# frame in the product has to be. So the block stacks on top rather than
+# replacing, and it applies to totems and nothing else.
+totem_low = v3.TOTEM_STYLE.lower()
+check("inner light is mandatory and named as such",
+      "inner light, mandatory" in totem_low)
+check("  the glow is emitted from inside the volume",
+      "lit from within" in totem_low
+      and "emitted from inside the volume" in totem_low)
+check("  escaping through cracks, seams or an opening",
+      all(w in totem_low for w in ["cracks", "seams", "opening",
+                                   "molten core"]))
+check("  with a bloom on the surrounding clay",
+      "soft glow bloom" in totem_low)
+# The failure it is written against: teal as paint rather than as light.
+check("  and a painted teal surface is refused by name",
+      "never a teal-painted surface" in totem_low)
+
+check("the presentation is dramatic and dark",
+      "dramatic presentation" in totem_low
+      and "dark dusk-warm backdrop" in totem_low
+      and "deep umbra" in totem_low)
+check("  visibly darker than the quiz cards' own backdrop",
+      "markedly darker than the light backdrop" in totem_low)
+check("  one spotlight, a rim light, a deep shadow",
+      "single dramatic spotlight" in totem_low
+      and "pronounced bright rim light" in totem_low
+      and "deep soft shadow" in totem_low)
+check("  museum-piece lighting, said plainly",
+      "museum-piece lighting" in totem_low)
+check("exclusivity is asked for, not implied",
+      "exclusivity" in totem_low
+      and "rare collectible artifact" in totem_low
+      and "poster composition" in totem_low)
+check("  and the pose-verb rule is restated at the top of its range",
+      "pose-verb rule applies doubly" in totem_low
+      and "static symmetrical object is the failure" in totem_low)
+
+# The coupling, both ways. A totem that lost the block would come back plain;
+# a quiz card that gained it would come back dark and unreadable at tile size.
+check("the block is applied to the totem",
+      v3.TOTEM_STYLE in sculpt_by_id["sculpt_p_totem_open_flame"])
+check("  and to no other frame in the style",
+      [f["base_id"] for f in sculpt_plan if v3.TOTEM_STYLE in f["prompt"]]
+      == sorted(v3.TOTEM_IDS),
+      str([f["base_id"] for f in sculpt_plan
+           if v3.TOTEM_STYLE in f["prompt"]]))
+check("  the quiz cards keep the light warm backdrop",
+      all("warm monochrome" in sculpt_by_id["sculpt_" + b].lower()
+          and v3.TOTEM_STYLE not in sculpt_by_id["sculpt_" + b]
+          for b in SCULPT_WANT))
+# Stacked, not swapped: a totem is a sculpt frame first.
+check("a totem still carries the whole sculpt prefix",
+      sculpt_by_id["sculpt_p_totem_open_flame"].startswith(v3.SCULPT_STYLE))
+check("  and still carries the safe-area rule once",
+      sculpt_by_id["sculpt_p_totem_open_flame"].count(v3.SAFE_AREA) == 1)
+check("  and the handmade marks it inherits",
+      "finger impressions" in
+      sculpt_by_id["sculpt_p_totem_open_flame"].lower())
+check("style_for stacks only for totems",
+      v3.style_for("p_totem_open_flame", "sculpt") != v3.SCULPT_STYLE
+      and v3.style_for("i_wound_up", "sculpt") == v3.SCULPT_STYLE
+      and v3.style_for("s_morning_run", "vector") == v3.VECTOR_STYLE)
+
+
 print("\n--- the three preview slots the funnel rewrite needs ---")
 preview_by_id = {f["base_id"]: f["prompt"].lower() for f in preview_plan}
 check("the totem is matter, a visible event and inner light",

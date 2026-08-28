@@ -2430,7 +2430,7 @@
     }
    },
    "formula": "{axis}-led · {energy} · {second} undercurrent",
-   "rarity_line": "1 of 8 · rarer than {rarer}% of profiles",
+   "rarity_line": "Rarer than {rarer}% of profiles",
    "bridge": "Your profile answers, specifically for {subtype_article} {subtype_bare}:",
    "offer_head": "The full {subtype_bare} profile — 6 chapters",
    "split_caption": "{drive}% Momentum · {anchor}% Steadiness · {wave}% Connection · {prism}% Curiosity",
@@ -2487,7 +2487,193 @@
      "tag": "prism",
      "name": "Curiosity"
     }
+   ],
+   "share": {
+    "button": "Share your shape",
+    "title": "I'm {subtype}. Which shape are you?",
+    "text": "13 taps, no typing. Find the shape that's yours.",
+    "url_base": "/persona/s/",
+    "copied": "Link copied",
+    "failed": "Could not share"
+   }
+  }
+ },
+ "share_cards": [
+  {
+   "id": "igniter_outer",
+   "img": "/static/galleries/persona/share_igniter_outer.webp",
+   "persona": "The Open Flame",
+   "colors": [
+    {
+     "name": "Lit Amber",
+     "hex": "#F2C070",
+     "element": "core"
+    },
+    {
+     "name": "Terracotta",
+     "hex": "#B4643C",
+     "element": "form"
+    },
+    {
+     "name": "Warm Umbra",
+     "hex": "#241A10",
+     "element": "ground"
+    }
+   ]
+  },
+  {
+   "id": "igniter_inner",
+   "img": "/static/galleries/persona/share_igniter_inner.webp",
+   "persona": "The Slow Burn",
+   "colors": [
+    {
+     "name": "Amber",
+     "hex": "#E0A24E",
+     "element": "core"
+    },
+    {
+     "name": "Deep Terracotta",
+     "hex": "#8E4A2C",
+     "element": "form"
+    },
+    {
+     "name": "Warm Umbra",
+     "hex": "#241A10",
+     "element": "ground"
+    }
+   ]
+  },
+  {
+   "id": "keeper_outer",
+   "img": "/static/galleries/persona/share_keeper_outer.webp",
+   "persona": "The Standing Stone",
+   "colors": [
+    {
+     "name": "Pale Sand",
+     "hex": "#E8D5B5",
+     "element": "core"
+    },
+    {
+     "name": "Sand",
+     "hex": "#D9BE95",
+     "element": "form"
+    },
+    {
+     "name": "Warm Umbra",
+     "hex": "#241A10",
+     "element": "ground"
+    }
+   ]
+  },
+  {
+   "id": "keeper_inner",
+   "img": "/static/galleries/persona/share_keeper_inner.webp",
+   "persona": "The Deep Root",
+   "colors": [
+    {
+     "name": "Sand",
+     "hex": "#D9BE95",
+     "element": "core"
+    },
+    {
+     "name": "Warm Grey",
+     "hex": "#A89684",
+     "element": "form"
+    },
+    {
+     "name": "Warm Umbra",
+     "hex": "#241A10",
+     "element": "ground"
+    }
+   ]
+  },
+  {
+   "id": "feeler_outer",
+   "img": "/static/galleries/persona/share_feeler_outer.webp",
+   "persona": "The Rising Tide",
+   "colors": [
+    {
+     "name": "Signal Teal",
+     "hex": "#4EDDC4",
+     "element": "core"
+    },
+    {
+     "name": "Deep Teal",
+     "hex": "#0F6F62",
+     "element": "form"
+    },
+    {
+     "name": "Warm Umbra",
+     "hex": "#241A10",
+     "element": "ground"
+    }
+   ]
+  },
+  {
+   "id": "feeler_inner",
+   "img": "/static/galleries/persona/share_feeler_inner.webp",
+   "persona": "The Deep Current",
+   "colors": [
+    {
+     "name": "Deep Teal",
+     "hex": "#0F6F62",
+     "element": "core"
+    },
+    {
+     "name": "Terracotta",
+     "hex": "#B4643C",
+     "element": "form"
+    },
+    {
+     "name": "Warm Umbra",
+     "hex": "#241A10",
+     "element": "ground"
+    }
+   ]
+  },
+  {
+   "id": "thinker_outer",
+   "img": "/static/galleries/persona/share_thinker_outer.webp",
+   "persona": "The Bright Beacon",
+   "colors": [
+    {
+     "name": "Cream Sweep",
+     "hex": "#F3E3CC",
+     "element": "core"
+    },
+    {
+     "name": "Ochre",
+     "hex": "#C98A3E",
+     "element": "form"
+    },
+    {
+     "name": "Warm Umbra",
+     "hex": "#241A10",
+     "element": "ground"
+    }
+   ]
+  },
+  {
+   "id": "thinker_inner",
+   "img": "/static/galleries/persona/share_thinker_inner.webp",
+   "persona": "The Quiet Cartographer",
+   "colors": [
+    {
+     "name": "Ochre",
+     "hex": "#C98A3E",
+     "element": "core"
+    },
+    {
+     "name": "Deep Teal",
+     "hex": "#0F6F62",
+     "element": "form"
+    },
+    {
+     "name": "Warm Umbra",
+     "hex": "#241A10",
+     "element": "ground"
+    }
    ]
   }
- }
+ ]
 }

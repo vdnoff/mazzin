@@ -781,16 +781,32 @@ check("the derived value is two keys and no more",
 check("  and neither of them is the User-Agent itself",
       not any("Mozilla" in str(v) or "FBAV" in str(v) for v in d.values()), d)
 
-print("\n--- engine/allowlist agreement ---")
+print("\n--- client/allowlist agreement ---")
 import re as _re
 engine = open(os.path.join(ROOT, "static/js/engine.js")).read()
-emitted = set(_re.findall(r'\btrack\("([a-z_]+)"', engine))
+# Every file that can reach `/api/track`, not only engine.js.
+#
+# It was engine.js alone until a result module needed an event of its own —
+# the persona share button, which fires where the reader actually is rather
+# than through a hook back in the engine. The pair of checks below is about
+# the allowlist and the client agreeing, and "the client" is now more than one
+# file: scanning only the engine would read a module's event as a dead name in
+# the allowlist and fail for it.
+clients = [engine]
+for _name in sorted(os.listdir(os.path.join(ROOT, "static/js"))):
+    if _name.startswith("result_") and _name.endswith(".js"):
+        clients.append(open(os.path.join(ROOT, "static/js", _name)).read())
+emitted = set()
+for _src in clients:
+    emitted |= set(_re.findall(r'\btrack\("([a-z_]+)"', _src))
 check("every emitted event is allowed",
       emitted <= tracking.ALLOWED_EVENTS,
       str(sorted(emitted - tracking.ALLOWED_EVENTS)))
 check("every allowed event is emitted",
       tracking.ALLOWED_EVENTS <= emitted,
       str(sorted(tracking.ALLOWED_EVENTS - emitted)))
+check("  and the scan read more than the engine",
+      len(clients) > 1, str(len(clients)))
 check("paywall_view is the only event sent with a payload",
       len(_re.findall(r'track\("paywall_view", null, \{ src:', engine)) == 1)
 # The src field, both directions, the same way the event names are checked

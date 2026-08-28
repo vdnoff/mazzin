@@ -636,40 +636,52 @@ body:has(.result-module) {
   color: var(--pr-faint);
 }
 
-/* the free strength */
-.pr-lead {
-  margin: 8px 0 0;
+/* --- b4) the share control --------------------------------------------------
+
+   Under the narrative and above the trait bars, on the free page only. It is
+   the one control on this page that is not the pay button, so it is
+   deliberately quieter than one: a teal outline on the slab rather than a
+   teal fill, which reads as an offer rather than as a second thing competing
+   for the tap that matters. */
+.pr-share {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 14px 0 0;
+}
+
+.pr-share-btn {
+  flex: none;
+  padding: 10px 18px;
+  border: 1px solid var(--pr-teal);
+  border-radius: 999px;
+  font: inherit;
   font-size: 14px;
-  line-height: 1.45;
-  font-style: italic;
-  color: var(--pr-teal);
-}
-
-.pr-strength-title {
-  margin: 10px 0 0;
-  font-size: 16px;
   font-weight: 700;
-  color: var(--pr-text);
+  letter-spacing: 0.01em;
+  color: var(--pr-teal);
+  background: var(--pr-teal-soft);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.pr-strength-body,
-.pr-strength-fix {
-  margin: 7px 0 0;
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--pr-muted);
+.pr-share-btn:active { transform: translateY(1px); }
+
+/* The clipboard path's only feedback, and empty until there is something to
+   say. `role="status"` is on the node rather than announced by a script, so
+   the text landing in it is what a screen reader hears — which is the whole
+   message on the desktop path, where nothing else visibly happens. */
+.pr-share-toast {
+  font-size: 13px;
+  color: var(--pr-faint);
+  opacity: 0;
+  transition: opacity 160ms ease-out;
 }
 
-.pr-strength-fix { color: var(--pr-teal); }
+.pr-share-toast.is-on { opacity: 1; }
 
-/* --- d2) the free strength, and the six questions ---------------------------- */
-
-/* The one open node, out of the list. Same mark and same type as it has
-   inside the path; what it loses is the thread, which cannot run between one
-   point and itself. */
-.pr-free { margin: 26px 0 0; padding: 0; list-style: none; }
-
-.pr-free .pr-node { padding-bottom: 0; }
+/* --- d2) the six questions --------------------------------------------------- */
 
 .pr-bridge {
   margin: 26px 0 0;

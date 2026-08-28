@@ -118,6 +118,40 @@ for _rule, _file in PAGES.items():
     )
 
 
+# The share loop's landing page. A reader hands somebody their persona, that
+# link unfurls into a card, and whoever taps it arrives in the funnel carrying
+# `subid=share-<id>` — an attribution column engine.js already reads and
+# tracking.py already stores, so the round trip is countable with no schema
+# change and nothing new on the write path.
+#
+# Routing and nothing else, which is what keeps this file's job intact. The
+# pages are files under static/pages/persona_share/, written from the config
+# by scripts/gen_persona_share_pages.py and served without anything being
+# rendered here; the only work done per request is checking that the slug is
+# one the config actually declares, so an unknown one is a 404 rather than a
+# page about a persona that does not exist.
+#
+# Registered before /<slug> for readability rather than necessity: this rule
+# has three segments and that one has one, so they cannot collide.
+PERSONA_SHARE_DIR = os.path.join(config.STATIC_DIR, "pages", "persona_share")
+
+
+@app.get("/persona/s/<persona>")
+def persona_share(persona):
+    try:
+        cards = config.load_funnel("persona").get("share_cards") or []
+    except (KeyError, ValueError, OSError):
+        return "", 404
+    if persona not in {c.get("id") for c in cards if isinstance(c, dict)}:
+        return "", 404
+    resp = send_from_directory(PERSONA_SHARE_DIR, persona + ".html")
+    # Nothing on this page is per-reader, so the edge can hold it for as long
+    # as the legal pages: the only thing that changes it is a redeploy.
+    resp.headers["Cache-Control"] = (
+        "public, max-age=%d" % config.PAGE_HTML_MAX_AGE)
+    return resp
+
+
 @app.get("/<slug>")
 def funnel_page(slug):
     # A `-test` twin is a live funnel's shape on Stripe test keys, and it sits

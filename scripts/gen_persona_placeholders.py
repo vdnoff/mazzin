@@ -28,7 +28,8 @@ Written into static/galleries/persona/:
     <image id>.webp   600x800, one per persona-owned image still missing
     og.webp           1200x630, the share card — this funnel has its own
     head_base.webp    800x800, the clay head the result page inlays on
-    totem_<persona>.webp  600x800, one per persona, eight of them
+    totem_<persona>.webp   600x800, one per persona, eight of them
+    share_<persona>.webp   1200x630, the card a shared link previews as
 """
 import json
 import os
@@ -59,6 +60,9 @@ HEAD = (800, 800)
 HEAD_COLORS = ["#E8D5B5", "#C98A3E", "#B4643C", "#8E4A2C"]
 
 TOTEM = (600, 800)
+
+# The share card, at the aspect every social preview crops to.
+SHARE = (1200, 630)
 # Warmed toward what each persona is: flame amber, stone sand, tide teal,
 # beacon ochre, each dropping into the umbra the result page sits on.
 TOTEM_COLORS = {
@@ -150,6 +154,14 @@ def main():
     extras = [("head_base", HEAD, HEAD_COLORS)]
     extras += [("totem_" + key, TOTEM, stops)
                for key, stops in sorted(TOTEM_COLORS.items())]
+    # And the share cards, which are the one set drawn from the config rather
+    # than from a table here: `share_cards` declares them, the share pages
+    # point at them as og:image, and tracking.py checks a share tap against
+    # the same list. Landscape, because that is the shape every social card
+    # preview crops to.
+    extras += [("share_" + card["id"], SHARE,
+                [c["hex"] for c in card["colors"]])
+               for card in (cfg.get("share_cards") or [])]
     made = 0
     for name, size, stops in extras:
         if not os.path.exists(os.path.join(OUT, name + ".webp")):
