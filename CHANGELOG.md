@@ -444,3 +444,6 @@ bottom.
 
 ## 2026-08-28 — claude/persona-tile-presentation
 - persona: labels below tiles + uncropped pair frames
+
+## 2026-08-28 — claude/persona-tile-presentation
+- persona: full-width label bar + tall pair art
