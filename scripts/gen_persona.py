@@ -66,6 +66,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 
@@ -154,10 +155,28 @@ TOTEM_FORMS = {
 }
 
 
+# An element the config already wrote an article onto — "the gap", "the
+# contact" — must not get a second one. Three cards carried one and the prompt
+# read "in the the gap", which is a small thing that a model is entitled to
+# read as emphasis or as a typo, and either way it is not what the frame meant
+# to say.
+#
+# Fixed here rather than in the three config strings, because "the gap" is the
+# natural English name for that element and the next person to write one will
+# reach for the same wording. The generator is what should be robust to it.
+ARTICLED = re.compile(r"^(the|a|an)\s", re.I)
+
+
+def colour_phrase(colour):
+    """One colour, as the prompt should say it."""
+    element = colour["element"]
+    lead = "in " if ARTICLED.match(element) else "in the "
+    return "%s (%s) %s%s" % (colour["name"], colour["hex"], lead, element)
+
+
 def rgb_words(colors):
     """The frame's own three colours, as the prompt should say them."""
-    return ", ".join("%s (%s) in the %s" % (c["name"], c["hex"], c["element"])
-                     for c in colors)
+    return ", ".join(colour_phrase(c) for c in colors)
 
 
 def quiz_prompt(item):
@@ -418,51 +437,93 @@ def encode(img):
 
 
 def cranial_zone(path, cells=40):
-    """Where the smooth empty field sits in the head render, in percentages.
+    """Where the smooth empty field sits in the head render, in PLATE space.
 
     result_persona.css positions the radar inlay against this frame with four
     hardcoded numbers, and those numbers were written against a mockup rather
-    than against the render. This measures the render instead: the largest
-    rectangle of low-variance cells in the upper half of the frame, which on a
-    head whose cranium was asked for as "one smooth unbroken surface" is the
-    cranium.
+    than against the render. This measures the render instead.
+
+    Two things make that less obvious than it sounds.
+
+    The background is smooth too. A first version of this looked for the
+    largest low-variance square anywhere and confidently returned the
+    top-left corner of the sweep, which is not a cranium, and reported a
+    26-point drift that did not exist. So background cells are excluded
+    first, by colour: the sweep is whatever the frame's own border is made
+    of, and a cell close to it is not part of the head.
+
+    And the plate is square while the render is 3:4. `.pr-head-plate` sets
+    `aspect-ratio: 1 / 1` and the image is `object-fit: cover`, so the
+    browser scales to width and crops equally off the top and bottom — a
+    quarter of the height on a 600x800 frame. The CSS percentages are
+    percentages of what survives that crop, so this reports in the same space
+    rather than in the render's, which are not the same numbers and would
+    otherwise be compared as if they were.
 
     Reported, never applied. A generator that silently moved the stylesheet's
-    numbers would be a generator that can reposition the reader's own diagram
-    without anybody deciding to.
+    numbers could reposition the reader's own diagram without anybody
+    deciding to.
     """
     from PIL import Image, ImageStat
 
     img = Image.open(path)
     img.load()
-    img = img.convert("L")
-    w, h = img.size
-    cw, ch = w / float(cells), h / float(cells)
-    smooth = [[False] * cells for _ in range(cells)]
+    rgb = img.convert("RGB")
+    w, h = rgb.size
+
+    # `object-fit: cover` into a square: scale to the shorter side and crop
+    # the longer one equally at both ends.
+    side = min(w, h)
+    off_x, off_y = (w - side) // 2, (h - side) // 2
+    rgb = rgb.crop((off_x, off_y, off_x + side, off_y + side))
+    grey = rgb.convert("L")
+
+    step = side / float(cells)
+
+    def box(gx, gy):
+        return (int(gx * step), int(gy * step),
+                int((gx + 1) * step), int((gy + 1) * step))
+
+    # The sweep, taken from the border of what is actually displayed.
+    border = []
+    for i in range(cells):
+        for gx, gy in ((i, 0), (i, cells - 1), (0, i), (cells - 1, i)):
+            border.append(ImageStat.Stat(rgb.crop(box(gx, gy))).mean)
+    sweep = [sum(c[i] for c in border) / len(border) for i in range(3)]
+
+    good = [[False] * cells for _ in range(cells)]
     for gy in range(cells):
         for gx in range(cells):
-            box = (int(gx * cw), int(gy * ch),
-                   int((gx + 1) * cw), int((gy + 1) * ch))
-            sd = ImageStat.Stat(img.crop(box)).stddev[0]
-            smooth[gy][gx] = sd < 6.0
+            cell = box(gx, gy)
+            if ImageStat.Stat(grey.crop(cell)).stddev[0] >= 6.0:
+                continue
+            mean = ImageStat.Stat(rgb.crop(cell)).mean
+            far = sum((mean[i] - sweep[i]) ** 2 for i in range(3)) ** 0.5
+            good[gy][gx] = far > 24.0
 
+    # Largest all-good square, by the usual dynamic-programming scan, with the
+    # search held to the upper part of the plate. Without that it finds the
+    # cheek or the neck, which are just as smooth and just as much not the
+    # cranium — a cranium is by definition the top of a head, and saying so is
+    # cheaper and more honest than a shape model.
+    ceiling = int(cells * 0.62)
+    size = [[0] * cells for _ in range(cells)]
     best = None
-    for top in range(cells // 2):
-        for left in range(cells):
-            for size in range(4, cells - max(top, left) + 1):
-                rows = smooth[top:top + size]
-                if len(rows) < size:
-                    break
-                if not all(all(r[left:left + size]) and
-                           len(r[left:left + size]) == size for r in rows):
-                    break
-                if best is None or size > best[2]:
-                    best = (top, left, size)
-    if not best:
+    for gy in range(ceiling):
+        for gx in range(cells):
+            if not good[gy][gx]:
+                continue
+            size[gy][gx] = (1 if gy == 0 or gx == 0 else
+                            1 + min(size[gy - 1][gx], size[gy][gx - 1],
+                                    size[gy - 1][gx - 1]))
+            if best is None or size[gy][gx] > best[2]:
+                best = (gy, gx, size[gy][gx])
+    if not best or best[2] < 4:
         return None
-    top, left, size = best
-    return {"top": 100.0 * top / cells, "left": 100.0 * left / cells,
-            "width": 100.0 * size / cells, "height": 100.0 * size / cells}
+    bottom, right, n = best
+    return {"top": 100.0 * (bottom - n + 1) / cells,
+            "left": 100.0 * (right - n + 1) / cells,
+            "width": 100.0 * n / cells, "height": 100.0 * n / cells}
 
 
 CSS_INLAY = {"top": 13.0, "left": 26.0, "width": 48.0, "height": 48.0}

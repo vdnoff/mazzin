@@ -1410,32 +1410,51 @@ def refuse(*a, **kw):
 v3.generate = refuse
 v3._post_generation = refuse
 
+
+def sample_dir_state():
+    """What is in the sample directory, as name -> size.
+
+    "Wrote nothing" used to be tested as "the directory does not exist",
+    which was true while no sample had ever been committed and stopped being
+    true the moment the approved renders landed in the repo. What the checks
+    below actually mean is that a dry run leaves the directory exactly as it
+    found it, so that is what is compared.
+    """
+    if not os.path.isdir(v3.OUT):
+        return {}
+    return {f: os.path.getsize(os.path.join(v3.OUT, f))
+            for f in sorted(os.listdir(v3.OUT))}
+
+
+SAMPLES_BEFORE = sample_dir_state()
+
 buf = io.StringIO()
 with contextlib.redirect_stdout(buf):
-    code = v3.main(["--dry-run"])
+    code = v3.main(["--dry-run", "--force"])
 dry = buf.getvalue()
 check("--dry-run exits 0", code == 0, str(code))
 check("  prints all eight prompts",
       all(i in dry for i in WANT) and dry.count("via 1024x1536") == 8)
 check("  and totals the cost it would have spent", "estimated" in dry)
 check("  and says it wrote nothing", "nothing written" in dry)
-check("  and wrote nothing", not os.path.exists(v3.OUT))
+check("  and wrote nothing", sample_dir_state() == SAMPLES_BEFORE)
 
 buf = io.StringIO()
 with contextlib.redirect_stdout(buf):
     code = v3.main([])
 check("no key: exits 1 without drawing", code == 1, str(code))
 check("  and says so", "OPENAI_API_KEY is not set" in buf.getvalue())
-check("  and still wrote nothing", not os.path.exists(v3.OUT))
+check("  and still wrote nothing",
+      sample_dir_state() == SAMPLES_BEFORE)
 
 buf = io.StringIO()
 with contextlib.redirect_stdout(buf):
-    code = v3.main(["--only", "s_nope", "--dry-run"])
+    code = v3.main(["--only", "s_nope", "--dry-run", "--force"])
 check("an unknown id is refused, not silently skipped", code == 2, str(code))
 
 buf = io.StringIO()
 with contextlib.redirect_stdout(buf):
-    code = v3.main(["--only", "s_weather_fog", "--dry-run"])
+    code = v3.main(["--only", "s_weather_fog", "--dry-run", "--force"])
 one = buf.getvalue()
 check("--only draws the named sample alone",
       code == 0 and one.count("via 1024x1536") == 1
@@ -1446,12 +1465,19 @@ print("\n--- --style routes the run ---")
 
 
 def run(argv):
+    """A sampler invocation, captured.
+
+    Every caller passes --force with --dry-run. These check what the sampler
+    would assemble and send, and the skip-what-exists rule would otherwise
+    empty the plan now that the approved renders are committed — leaving the
+    checks passing against nothing.
+    """
     out = io.StringIO()
     with contextlib.redirect_stdout(out):
         rc = v3.main(argv)
     return rc, out.getvalue()
 
-code, out = run(["--style", "clay", "--dry-run"])
+code, out = run(["--style", "clay", "--dry-run", "--force"])
 check("--style clay exits 0", code == 0, str(code))
 check("  draws all eight clay ids",
       all(("clay_" + i) in out for i in WANT)
@@ -1459,25 +1485,27 @@ check("  draws all eight clay ids",
 check("  says which style it is running", "clay style" in out)
 check("  prints the clay prefix, not the vector one",
       v3.CLAY_STYLE in out and v3.VECTOR_STYLE not in out)
-check("  and wrote nothing", not os.path.exists(v3.OUT))
+check("  and wrote nothing", sample_dir_state() == SAMPLES_BEFORE)
 
-code, out = run(["--dry-run"])
+code, out = run(["--dry-run", "--force"])
 check("no --style is still the vector set",
       code == 0 and "vector style" in out
       and v3.VECTOR_STYLE in out and v3.CLAY_STYLE not in out)
 
 # The prefix is bookkeeping for a shared directory; nobody reviewing clay
 # thinks of the fog card as anything but the fog card, so both spellings work.
-code, bare = run(["--style", "clay", "--only", "s_weather_fog", "--dry-run"])
+code, bare = run(["--style", "clay", "--only", "s_weather_fog",
+     "--dry-run", "--force"])
 check("--only takes the bare scene id under --style clay",
       code == 0 and bare.count("via 1024x1536") == 1
       and "clay_s_weather_fog" in bare)
 code, pref = run(["--style", "clay", "--only", "clay_s_weather_fog",
-                  "--dry-run"])
+                  "--dry-run", "--force"])
 check("  and the prefixed id names the same frame",
       code == 0 and pref == bare)
 
-code, out = run(["--style", "clay", "--only", "s_nope", "--dry-run"])
+code, out = run(["--style", "clay", "--only", "s_nope", "--dry-run",
+     "--force"])
 check("an unknown id under clay is refused", code == 2, str(code))
 check("  and the message names the style it was refused for",
       "clay" in out and "s_nope" in out)
@@ -1485,10 +1513,10 @@ check("  and the message names the style it was refused for",
 # A vector-only id must not resolve under clay, or a typo would draw the wrong
 # set. The vector ids have no prefix, so `clay_s_morning_run` is the one that
 # cannot exist in the vector plan.
-code, out = run(["--only", "clay_s_morning_run", "--dry-run"])
+code, out = run(["--only", "clay_s_morning_run", "--dry-run", "--force"])
 check("a clay id is not accepted by the vector run", code == 2, str(code))
 
-code, out = run(["--style", "sculpt", "--dry-run"])
+code, out = run(["--style", "sculpt", "--dry-run", "--force"])
 check("--style sculpt exits 0", code == 0, str(code))
 check("  draws all eleven sculpt ids",
       all(("sculpt_" + i) in out
@@ -1498,19 +1526,20 @@ check("  says which style it is running", "sculpt style" in out)
 check("  prints the sculpt prefix and no other",
       v3.SCULPT_STYLE in out
       and v3.VECTOR_STYLE not in out and v3.CLAY_STYLE not in out)
-check("  and wrote nothing", not os.path.exists(v3.OUT))
+check("  and wrote nothing", sample_dir_state() == SAMPLES_BEFORE)
 
-code, bare = run(["--style", "sculpt", "--only", "i_lit_up", "--dry-run"])
+code, bare = run(["--style", "sculpt", "--only", "i_lit_up", "--dry-run",
+     "--force"])
 check("--only takes the bare idiom id under --style sculpt",
       code == 0 and bare.count("via 1024x1536") == 1
       and "sculpt_i_lit_up" in bare)
 code, pref = run(["--style", "sculpt", "--only", "sculpt_i_lit_up",
-                  "--dry-run"])
+                  "--dry-run", "--force"])
 check("  and the prefixed id names the same frame",
       code == 0 and pref == bare)
 
 code, out = run(["--style", "sculpt", "--only", "clay_s_weather_fog",
-                 "--dry-run"])
+                 "--dry-run", "--force"])
 check("another style's id is refused by a sculpt run", code == 2, str(code))
 check("  and the message names the style it was refused for",
       "sculpt" in out and "clay_s_weather_fog" in out)
@@ -1518,14 +1547,15 @@ check("  and the message names the style it was refused for",
 # The shared ids are the sharpest case: they are real ids in two other styles
 # and mean nothing here, so a sculpt run must refuse them rather than draw
 # something adjacent.
-code, out = run(["--style", "sculpt", "--only", "s_weather_fog", "--dry-run"])
+code, out = run(["--style", "sculpt", "--only", "s_weather_fog",
+     "--dry-run", "--force"])
 check("  and a shared id means nothing to sculpt now", code == 2, str(code))
 
 # argparse rejects a style that does not exist, before any planning happens.
 try:
     with contextlib.redirect_stdout(io.StringIO()), \
             contextlib.redirect_stderr(io.StringIO()):
-        v3.main(["--style", "marble", "--dry-run"])
+        v3.main(["--style", "marble", "--dry-run", "--force"])
     refused = False
 except SystemExit as exc:
     refused = exc.code != 0
