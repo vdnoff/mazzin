@@ -229,6 +229,39 @@ CLAY_NEGATIVE = (
     "dim, murky, drab or low-key palette, no clutter, no busy background."
 )
 
+# --- what the v1 sculpt review changed --------------------------------------
+#
+# The owner reviewed eight sculpt frames, kept the direction and rejected the
+# execution on three counts, all of them prompt problems rather than render
+# problems:
+#
+#   Zero meaning. Every form came back static, symmetric and rounded, so all
+#   eight read "calm" and the set said nothing. "Abstract sculptural form" on
+#   its own reliably returns a symmetrical object sitting still, so v2 asks
+#   for a gesture per composition and names a static balanced still-life as a
+#   failure of the brief.
+#
+#   Machine-smooth. The handmade quality of the reference was gone. v1 asked
+#   for "a subtle fingerprint-and-tool surface texture", and subtle is exactly
+#   what it got — invisible at tile size. v2 names the marks as things pushed
+#   into the surface and says outright that they must be visible.
+#
+#   Weak figure-ground. A pale form on a pale sweep does not separate in a
+#   thumbnail. v2 pushes the backdrop two steps deeper and less saturated than
+#   the sculpture tones, and adds a rim light and a contact shadow.
+#
+# A fourth change follows from the first. If every form is doing something,
+# the rounded-only vocabulary has to give, because a form under pressure is
+# not a round form. So angular, pinched, wedged and cracked become available
+# to a strained composition and stay out of a calm one. The scenes decide, and
+# exactly one of the eight is strained.
+#
+# The floors did not move. A deeper backdrop lowers mean luma and saturation,
+# so both were re-checked against what v2 asks for: the muted drain frame is
+# the darkest and least colourful of the eight and still sits far above the
+# floor, because "two steps deeper" from a warm sweep is not a dark ground —
+# the prefix still refuses one.
+
 # The sculpt prefix — the direction the owner locked, and the one that breaks
 # the pattern the other two share.
 #
@@ -251,22 +284,54 @@ CLAY_NEGATIVE = (
 SCULPT_STYLE = (
     "Premium 3D clay sculpture still-life render. A single abstract "
     "sculptural composition, photographed as a product still-life. "
-    "Matte clay and plasticine material with a subtle fingerprint-and-tool "
-    "surface texture, soft organic rounded volumes with softly bevelled "
-    "edges. "
-    "Studio product lighting from one direction, with one soft shadow "
-    "falling consistently across the whole set. "
-    "Warm monochrome backdrop — peach, cream and soft terracotta tones, a "
-    "plain seamless studio sweep — never a clinical pure white, never a "
-    "shadowed or low-key ground, with generous negative space around the "
+    # 2 — handmade authenticity. First in the prefix because it is the note
+    # the v1 renders missed hardest: they came back machine-smooth, and a
+    # perfectly even volume reads as a 3D asset rather than as clay.
+    "Freshly hand-sculpted matte clay and plasticine, and it must visibly "
+    "look it: soft finger impressions and press marks pushed into the "
+    "surface, gentle pinch ridges along the edges, slightly uneven planes "
+    "and imperfect edges, and a faint asymmetry to every volume that no "
+    "machine would leave. Unglazed, visibly a little rough. Never "
+    "machine-smooth, never CAD-perfect, never glossy, never a polished "
+    "product render — the surface should read as clay worked by touch "
+    "moments ago. "
+    # 1 — the pose verb. Stated as a requirement with a named failure mode,
+    # because "abstract sculptural form" on its own reliably returns a
+    # symmetrical object sitting still, which is what made all eight v1
+    # frames read the same.
+    "Every composition shows its form DOING something: one clear physical "
+    "gesture — launching, slumping, leaning, huddling, wilting, reaching — "
+    "readable in the silhouette alone at phone-tile size. Asymmetry and "
+    "implied motion are required. A static, balanced, evenly rounded "
+    "still-life is a failure of this brief, unless the composition's "
+    "meaning is itself stillness. "
+    # 3 — tension vocabulary, as a rule rather than a blanket. The scenes
+    # decide; the prefix only says the two registers exist.
+    "Form language follows feeling: soft, rounded, swelling volumes where "
+    "the composition is warm or calm; angular, pinched, wedged, cracked or "
+    "jagged elements where it is strained or under pressure. Matte clay "
+    "throughout, either way. "
+    # 4 — contrast, so the form separates at tile size, and intrigue, so it
+    # is worth stopping on.
+    "Studio product lighting from one direction: a subtle rim light picking "
+    "out the contour, and a defined soft contact shadow anchoring the form "
+    "to the ground beneath it, so the sculpture separates cleanly from its "
+    "background at thumbnail size. The backdrop is a plain seamless warm "
+    "monochrome studio sweep, two steps deeper and less saturated than the "
+    "sculpture tones themselves — never a clinical pure white, never a "
+    "shadowed or low-key ground — with generous negative space around the "
     "form. "
     "One to three warm sculpture tones per composition — terracotta, ochre, "
-    "sand, warm grey — with electric teal (#4EDDC4) as an accent material on "
-    "exactly one element of the form, the thread that runs through the set. "
+    "sand, warm grey — with electric teal (#4EDDC4) as an accent material "
+    "on exactly one element of the form, the thread that runs through the "
+    "set. "
     "Pure form only: the meaning is carried by shape, volume, weight and "
-    "gesture, never by depicting anything. Its outline alone reads as one "
-    "bold shape in half a second at phone-tile size."
+    "gesture, never by depicting anything. Each composition is an enigmatic "
+    "object — evocative, open to interpretation, a shape that makes the "
+    "viewer pause and read themselves into it. Vary the silhouettes "
+    "strongly from one composition to the next, so no two read alike."
 )
+
 
 # The negatives carry the ban a second time, in the blunter register a
 # negative list is read in. "No people" is not enough on its own — a model
@@ -292,57 +357,70 @@ SCULPT_NEGATIVE = (
 # stored energy, so the runner becomes a coil under tension. Nothing here
 # names an object from the world except as pure geometry.
 SCULPT_SCENES = {
+    # Every one leads with its gesture, because the verb is the thing that
+    # was missing: v1 described what each form WAS and got eight objects
+    # sitting still. Each also owns a distinct silhouette class — vertical
+    # spiral, low slab, nested curves, cluster, drooping-over-a-wedge, flat
+    # spread, horizontal drift, tall arc — so the set varies at tile size.
     "s_morning_run": (
-        "A taut upward-launching coil spring of matte terracotta clay, wound "
-        "tight at the base and released into a long rising sweep, energy "
-        "frozen at the top of its leap. The very tip of the coil is electric "
-        "teal. Light, springing, about to go."
+        "A tight coil of terracotta clay caught mid-launch: wound close at "
+        "the base and released upward, tilted forward off the vertical and "
+        "lifting clear of the ground with open air beneath its lowest turn, "
+        "the whole form straining up and away. Its leading tip is electric "
+        "teal. Off-balance, asymmetric, unmistakably going somewhere."
     ),
     "s_morning_slow": (
-        "A single smooth settled monolith of warm sand-toned clay, a heavy "
-        "rounded slab resting fully on its base with softly worn edges, "
-        "entirely at rest and going nowhere. One narrow electric teal seam "
-        "runs across it. Still, warm, unhurried."
+        "A soft ochre clay mass settled and gone slack: low and wide, spread "
+        "by its own weight, its edges slumping gently outward where it has "
+        "relaxed down onto the surface beneath it. One shallow electric "
+        "teal seam runs through the spread. Heavy, restful, unhurried — at "
+        "ease rather than rigid, and clearly not going to move."
     ),
     "s_battery_home": (
-        "One soft rounded ochre form nested inside a larger sheltering "
-        "hollow of terracotta clay that curves protectively around it "
-        "without enclosing it. The inner form carries a soft electric teal "
-        "glaze. Solitude as comfort — held, not trapped."
+        "A small rounded form curled snugly into a sheltering hollow of "
+        "terracotta clay, tucked in so close that the hollow's inner curve "
+        "and the curled form's outer curve meet along their whole length. A "
+        "soft electric teal glaze sits on the inner form. Held rather than "
+        "enclosed: solitude as comfort, a perfect fit."
     ),
     "s_battery_people": (
-        "A warm cluster of four or five rounded clay forms of slightly "
-        "different heights leaning inward against one another, their curved "
-        "sides touching, weight shared between them. One form is electric "
-        "teal. Companionable, close, unmistakably a group."
+        "Four rounded sand and ochre clay forms of different heights leaning "
+        "hard into one another, pressing warm where their sides meet and "
+        "flattening slightly at each contact, with one small electric teal "
+        "form nestled low in the middle of the huddle. Weight shared, every "
+        "gap closed, the whole cluster tipped together off any single axis."
     ),
     "s_drain_meeting": (
-        "One soft rounded clay form pressed flat and spreading sideways "
-        "under a heavy vertical stack of identical hard rings bearing down "
-        "on it, each ring exactly like the last. A thin electric teal line "
-        "marks the compressed form. Weight and monotony, in pure form."
+        "A soft muted grey-brown clay form wilting: half-deflated and "
+        "sagging, drooping over the sharp edge of a dull, heavy, wedge-shaped "
+        "slab, its lower end hanging limp toward the ground. The slab is "
+        "angular and hard-cornered where the form is spent and soft; a "
+        "hairline crack runs along its top. A thin electric teal line traces "
+        "the drooping edge. Drained, sagging, going nowhere."
     ),
     "s_bag_notebook": (
-        "An object-totem: a crisp folded wave of sand-toned clay, creased "
-        "once down its centre and opening upward like a spread, with a slim "
-        "electric teal cylinder resting across the fold. Presented straight "
-        "on, hero-object scale, nothing else in the composition."
+        "An open wave-spread of sand-toned clay, creased once down its "
+        "centre and opening upward, with a slim electric teal cylinder "
+        "resting across it at an angle — tilted as though just set down a "
+        "moment ago and not yet straightened. Hero-object scale, nothing "
+        "else in the composition, the tilt breaking the symmetry."
     ),
     "s_weather_fog": (
-        "A low soft drifting mass of pale cream clay, rolled thin and "
-        "spreading horizontally, settling over a few small rounded ochre "
-        "mounds that show through it. One thin electric teal band runs low "
-        "through the drift. Calm and soft, quietly hopeful, never gloomy."
+        "A low soft mass of pale cream clay drifting sideways over a few "
+        "small rounded ochre mounds, stretched thin in the direction it is "
+        "travelling, one trailing edge pulling away behind it and thinning "
+        "to nothing. A narrow electric teal band runs low through the "
+        "drift. Quiet and moving, calm rather than gloomy."
     ),
     "s_character_cartographer": (
-        "An emblem-totem: one smooth polished sphere of warm clay seated in "
-        "a shallow rounded cradle, perched on a broad unrolling wave of "
-        "sand-toned clay that curls open beneath it like a chart unfurling. "
-        "An electric teal inlay is set into the sphere. Composed as a "
-        "collectible emblem — centred, symmetrical, poster-like, evenly lit, "
-        "with the quiet authority of a maker's mark, at the scale and "
-        "consistency where eight of these side by side would obviously "
-        "belong to one set."
+        "A tall poised arc of warm sand-toned clay rising and curving over "
+        "at its top, raising a small glowing sphere aloft at the far end of "
+        "its reach — the gesture of seeking, of lighting the way ahead. The "
+        "sphere carries an electric teal inlay and throws a soft warm glow "
+        "back down the arc. Upright, watchful, asymmetric, and composed as "
+        "an emblem: centred, poster-like, evenly lit, with the quiet "
+        "authority of a maker's mark, at the scale and consistency where "
+        "eight of these side by side would obviously belong to one set."
     ),
 }
 
