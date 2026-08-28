@@ -432,3 +432,6 @@ bottom.
 
 ## 2026-08-28 — claude/persona-v3a1-share
 - persona: trait-framing copy + share voice
+
+## 2026-08-28 — claude/persona-v3b-gallery
+- persona v3-B: production gallery generator
