@@ -526,7 +526,11 @@ def cranial_zone(path, cells=40):
             "width": 100.0 * n / cells, "height": 100.0 * n / cells}
 
 
-CSS_INLAY = {"top": 13.0, "left": 26.0, "width": 48.0, "height": 48.0}
+# What result_persona.css claims, so --check-head can compare. These are the
+# measurement this tool took, adopted after the first render made it checkable:
+# the old top 13% / left 26% / 48% was written against a mockup and put the box
+# over the ear with its left edge off the brow.
+CSS_INLAY = {"top": 5.0, "left": 45.0, "width": 22.5, "height": 22.5}
 
 
 # --- the manifest ------------------------------------------------------------

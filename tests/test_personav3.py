@@ -963,8 +963,11 @@ check("  the only mentions of dark are the two refusals",
           totem_low.index("never through darkness")
           + len("never through ")],
       str(re.findall(r".{22}dark.{10}", totem_low)))
+# The pedestal is shared by the totem and the head now — they stand side by
+# side at the top of the card — so the class it is painted with is
+# `.pr-stand-light` rather than the totem's own.
 check("  and the pedestal that carries the dusk is on the result page",
-      ".pr-totem-light" in open(
+      ".pr-stand-light" in open(
           os.path.join(REPO, "static/css/result_persona.css"),
           encoding="utf-8").read())
 # The comment is the guard against v3-B trying it a third time.
