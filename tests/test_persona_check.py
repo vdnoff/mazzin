@@ -115,6 +115,56 @@ check("badge labels are still on — the label is half the meaning now",
       cfg["swipe"]["label_mode"] == "badge", cfg["swipe"]["label_mode"])
 
 
+print("\n--- the hook line ---")
+# The accent is not markup: engine.js finds the fragment inside the sentence
+# by substring and lifts it into a span, and when it cannot find it the line
+# renders plain with no error anywhere. So a copy edit that leaves the accent
+# behind costs the headline its emphasis silently. The hook has now been
+# rewritten once with the accent pointing at "13 taps" while the sentence
+# stopped counting taps, which is precisely the failure this pins.
+check("the hook has a subtext and an accent",
+      bool(cfg["swipe"].get("subtext"))
+      and bool(cfg["swipe"].get("subtext_accent")))
+check("  and the accent is a fragment of the line it accents",
+      cfg["swipe"]["subtext_accent"] in cfg["swipe"]["subtext"],
+      "%r not in %r" % (cfg["swipe"].get("subtext_accent"),
+                        cfg["swipe"].get("subtext")))
+# The repositioning itself: the hook stopped selling the tap count and
+# started making a claim about what the shapes do.
+check("  the hook claims the shapes read the reader",
+      "read you" in cfg["swipe"]["subtext"]
+      and "already forming" in cfg["swipe"]["subtext"],
+      cfg["swipe"]["subtext"])
+check("  and no longer counts the taps",
+      "tap" not in cfg["swipe"]["subtext"].lower(),
+      cfg["swipe"]["subtext"])
+
+# The two questions were reframed the same way: a trait rather than a mood,
+# a standing pull rather than today's errand. Both readings turn on a
+# time-anchoring word, so that is what is checked.
+MOMENT = re.compile(r"\b(right now|today|tonight|this week|at the moment|"
+                    r"lately)\b")
+momentary = [s["id"] for s in steps if MOMENT.search(s["question"].lower())]
+check("no question anchors itself to a moment", not momentary,
+      str(momentary))
+check("  step one asks which shape fits, not which shape you are",
+      by_step["now"]["question"] == "Which shape fits you best?",
+      by_step["now"]["question"])
+check("  and step two asks what pulls, not what pulled",
+      by_step["seeking"]["question"] == "What pulls you most?",
+      by_step["seeking"]["question"])
+
+# The beats between steps quote the walk back at the reader, so a question
+# rewritten there and not here would put two voices on one funnel.
+mid_copy = " ".join(strings(cfg["interstitials"])
+                    + cfg["interstitial_working"]
+                    + strings(cfg["analyzing"])).lower()
+stale = [w for w in ("pulled you here", "13 taps", "right now,")
+         if w in mid_copy]
+check("no interstitial or analysing line carries the old phrasing",
+      not stale, str(stale))
+
+
 print("\n--- the walk: thirteen steps, two formats ---")
 check("only pair and grid4",
       {s["format"] for s in steps} == {"pair", "grid4"},

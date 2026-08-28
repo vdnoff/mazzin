@@ -13,15 +13,15 @@
  "swipe": {
   "pairs_count": 13,
   "headline": "Shapes that unlock what's underneath",
-  "subtext": "13 taps. No typing. Pick the shape that feels like you.",
-  "subtext_accent": "13 taps",
+  "subtext": "Shapes designed to read you. Your profile is already forming.",
+  "subtext_accent": "read you",
   "hint": "Pick the shape that feels like you",
   "label_mode": "badge",
   "analyzing_fade_to": "#241A10",
   "steps": [
    {
     "id": "now",
-    "question": "Which shape is you, right now?",
+    "question": "Which shape fits you best?",
     "format": "grid4",
     "pairs": [
      {
@@ -141,7 +141,7 @@
    },
    {
     "id": "seeking",
-    "question": "What pulled you here today?",
+    "question": "What pulls you most?",
     "format": "grid4",
     "pin_first": true,
     "pairs": [
