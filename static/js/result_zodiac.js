@@ -835,6 +835,22 @@
     return "";
   }
 
+  // "Aug 31", in the offer's own timezone rather than the reader's.
+  //
+  // The date is what the offer says, so it has to read the same in Auckland
+  // as in Los Angeles — formatting the instant locally would show one of them
+  // the day before. A month name and a number, in English, because that is
+  // what every other word on this card is.
+  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  function saleEnds(value) {
+    var parts = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value || ""));
+    if (!parts) return "";
+    var month = MONTHS[parseInt(parts[2], 10) - 1];
+    return month ? month + " " + parseInt(parts[3], 10) : "";
+  }
+
   // --- e) the offer ----------------------------------------------------------
 
   // engine.js has already built and wired all of this. What happens here is
@@ -878,11 +894,37 @@
     }
     card.appendChild(anchor);
 
+    // The price. `ctx.price` is already whatever the checkout is about to
+    // charge — engine.js resolves the sale before it fills a single {price}
+    // — so the hero number needs no arithmetic here. What a sale adds is the
+    // comparison beside it: the regular price, struck, and one line naming
+    // the offer.
+    //
+    // `ctx.sale` is null unless a sale is genuinely running, and it is null
+    // for a block whose claimed regular price is not this funnel's own. So
+    // there is no state in which this draws a struck-through figure that is
+    // not the price this product sells at the rest of the year.
     var price = elm("p", "zr-price");
     price.appendChild(elm("span", "zr-price-now", ctx.price));
+    if (ctx.sale && ctx.priceRegular) {
+      var was = elm("span", "zr-price-was", ctx.priceRegular);
+      // Said as well as struck: a line through a number is a visual
+      // convention a screen reader does not read out.
+      was.setAttribute("aria-label", "Regular price " + ctx.priceRegular);
+      price.appendChild(was);
+    }
     var note = ctx.commerce.price_note || "";
     if (note) price.appendChild(elm("span", "zr-price-note", note));
     card.appendChild(price);
+    if (ctx.sale && ctx.sale.label) {
+      // The label and the date the offer ends, and nothing else. No clock
+      // counting down, no number of copies left: this page has one honest
+      // thing to say about the offer, which is what it is and when it stops.
+      var ends = saleEnds(ctx.sale.ends);
+      card.appendChild(elm("p", "zr-sale",
+                           ends ? ctx.sale.label + " · ends " + ends
+                                : ctx.sale.label));
+    }
 
     // The two questions a reader asks a $3 button, answered where they are
     // asked rather than in a run-on line at the bottom of the card.

@@ -2641,6 +2641,10 @@
       strengthCopy: (cfg.report && cfg.report.mistake_one) || {},
       sections: sections,
       price: formatPriceShort(),
+      // Both figures and the block behind them, so a module can draw the
+      // comparison without recomputing which of the two is live.
+      sale: saleOf(),
+      priceRegular: formatPrice(cfg.pricing.amount_cents),
       withPrice: withPrice,
       // The offer, as this file built it. `nodes` are real, live and already
       // listening — the consent box gates the button, the button takes the
@@ -4597,14 +4601,51 @@
   // right on its own line and wrong in "This report costs ___", so copy that
   // names the price interpolates this instead of spelling a number out —
   // config never carries an amount, only the slot one goes in.
-  function formatPriceShort() {
-    var cents = cfg.pricing.amount_cents;
+  // The sale a funnel is running, or null — the same four rules payments.py
+  // applies, because the button has to name the number the server will
+  // charge. This side is display only: it decides what the reader is told,
+  // never what they are billed, and a client whose clock disagrees with the
+  // server's still pays whatever the server computed.
+  //
+  // The regular-price check is here for the same reason it is there: a block
+  // claiming a regular price this funnel does not charge would put a
+  // struck-through figure on the card that nobody has ever paid, so it does
+  // not run.
+  function saleOf() {
+    var sale = cfg && cfg.sale;
+    if (!sale || typeof sale !== "object" || sale.active !== true) return null;
+    var regular = (cfg.pricing || {}).amount_cents;
+    var price = sale.price_cents;
+    if (typeof price !== "number" || price % 1 !== 0 || price <= 0) return null;
+    if (typeof regular !== "number" || price >= regular) return null;
+    if (sale.regular_price_cents !== regular) return null;
+    var ends = Date.parse(sale.ends);
+    if (!ends || Date.now() >= ends) return null;
+    return sale;
+  }
+
+  // What this funnel costs right now. Every `{price}` on every screen comes
+  // through here, so the pay button, the sticky bar and the anchor line all
+  // say the figure the checkout is about to take.
+  function priceCents() {
+    var sale = saleOf();
+    return sale ? sale.price_cents : cfg.pricing.amount_cents;
+  }
+
+  // One formatter, so the struck-through price and the live one are written
+  // the same way — RON before the number, a dollar sign in front of it, and
+  // whatever a funnel's own `price_format` says.
+  function formatPrice(cents) {
     var cur = (cfg.pricing.currency || "usd").toUpperCase();
     var own = priceFormat();
     if (own) return own.replace("{amount}", priceAmount(cents, true));
     var amount = cents % 100 === 0 ? String(cents / 100)
                                    : (cents / 100).toFixed(2);
     return SYMBOLS[cur] ? SYMBOLS[cur] + amount : amount + " " + cur;
+  }
+
+  function formatPriceShort() {
+    return formatPrice(priceCents());
   }
 
   function withPrice(text) {
