@@ -528,43 +528,97 @@ SCULPT_NEGATIVE_OVERRIDES = {"p_head_base": SCULPT_HEAD_NEGATIVE}
 # From the form and from the light inside it, which is what the set had all
 # along. `sculpt_i_lit_up` is the proof: a teal core glowing out through fine
 # cracks and seams, on the ordinary bright backdrop, and it rendered
-# correctly. That is the recipe every totem now carries, word for word in its
-# essentials — because it is the one phrasing of inner light in this file
-# that is known to survive contact with the model.
+# correctly. That is the recipe every totem carries, and it is the one
+# phrasing of inner light in this file known to survive contact with the
+# model.
+#
+# --- and draw seven, which passed the floors and failed the owner ----------
+#
+# "Not inspiring enough to share." The recipe worked — bright, lit, correctly
+# exposed — and produced a tidy object with a glowing detail on it, which is
+# not a culmination piece. Three things were missing and all three are asked
+# for below, in the owner's own order.
+#
+# The glow was a detail rather than the event: it sat at the tip, and a lit
+# tip on a plain form is a nice object. It now runs the whole form as veins
+# and fissures, and the frame reads as a lantern.
+#
+# The form was as simple as a quiz card, which is exactly what a quiz card is
+# supposed to be and exactly what the last frame in the product must not be.
+# The totem now asks for layered volumes, undercuts, ridges and folds — with
+# the distinction from the sculpt negatives' "no busy texture, no clutter"
+# named explicitly, because intricate and busy are opposites here and the
+# negative list has to keep meaning what it says.
+#
+# And there was no magic in it at all. Totems, and only totems, may now carry
+# a few glowing particles drifting off the fissures and a faint haze around
+# the brightest glow. It is fenced hard — no lightning, no scattered
+# sparkles, no fantasy kitsch, and the matte clay still reading underneath —
+# because this is the direction that turns cheap fastest, and a quiz card
+# that ever inherited it would stop being a quiz card.
 TOTEM_STYLE = (
     "This frame is a totem: the culmination piece, not a quiz card. It is "
     "shot on exactly the same light warm backdrop as every other frame in "
     "this set — the same plain seamless warm monochrome studio sweep, the "
     "same bright even light. Nothing about this frame is dark. "
-    # 1 — inner light, in the words that are known to work. This is
-    # `sculpt_i_lit_up`'s own language, which rendered correctly on the
-    # bright backdrop; the failures came from what used to sit around it.
-    "INNER LIGHT, MANDATORY: the form is lit from within and the light gets "
-    "out. A bright electric teal core glows out through a network of fine "
-    "cracks and seams running across the surface, or through a split or an "
-    "opening in the volume, with the light spilling from inside the form "
-    "rather than falling on it, and a soft teal glow bloom on the clay "
-    "immediately around each crack. Warm terracotta and ochre shell against "
-    "that glow. This is emitted light, never a teal-painted surface and "
-    "never a teal object sitting next to the form. The clay stays fully lit "
-    "and fully readable as clay — its surface, its handmade marks, its warm "
-    "colour — and the glow is the detail inside it, not the light source for "
-    "the picture. "
-    # 2 — the presentation that is left once darkness is off the table: a
-    # bright rim on the contour and the reverent poster framing. Both work on
-    # a light ground; neither of them was ever the thing that failed.
-    "PRESENTATION: a pronounced bright rim light tracing the whole contour so "
-    "the form separates crisply from the sweep, a defined soft contact shadow "
-    "anchoring it, and a reverent centred poster composition with generous "
-    "space around it. The object is presented, not photographed in passing. "
-    # 3 — exclusivity, restated as a thing the form does rather than a thing
-    # the lighting does to it.
-    "EXCLUSIVITY THROUGH FORM AND DETAIL, NOT THROUGH DARKNESS: a rare "
-    "collectible artifact — finer, more deliberate and more intricate than a "
-    "quiz card, worth looking at closely. The form is dynamic and caught "
-    "mid-gesture: the pose-verb rule applies doubly here, and a static "
-    "symmetrical object is the failure this frame is most likely to come "
-    "back as."
+    # 1 — light. Draw seven passed the floors and the owner's verdict was
+    # "not inspiring enough to share": the glow was a detail on a tidy
+    # object. So the glow becomes the event. Whole form rather than the tip,
+    # which is the specific thing that came back too small to carry a frame.
+    # The base prefix restricts teal to "exactly one element of the form",
+    # which is right for a quiz card and is very likely why draw seven's glow
+    # came back as a lit tip: the block was asking for more light while the
+    # prefix above it was asking for one spot of it. The override has to be
+    # explicit, because the two are read in the same breath.
+    "OVERRIDING THE ONE-ELEMENT TEAL RULE ABOVE: that rule is for quiz "
+    "cards. On a totem the teal is not one accent on one element — it runs "
+    "throughout the piece as light. "
+    "INNER LIGHT IS THE EVENT, NOT A DETAIL: a molten electric teal core "
+    "burns inside the form and its light is the subject of the picture. "
+    "Luminous veins and fine fissures wind across the whole form from base "
+    "to tip — not one lit point, not only the tip — and light spills out of "
+    "every one of them. A strong soft bloom washes the clay around each "
+    "vein, the glow gathers and brightens where veins run close together, "
+    "and a subtle teal reflection lies on the sweep where the form meets "
+    "it. The whole piece reads as a lantern lit from within. The light "
+    "still comes from inside the volume rather than falling on it: emitted "
+    "light, never a teal-painted surface and never a teal object sitting "
+    "next to the form. Warm terracotta and ochre clay against that glow, "
+    "still fully readable as clay. "
+    # 2 — complexity. The totem has to look expensive beside a quiz card,
+    # and the quiz cards are deliberately plain, so the difference is the
+    # frame's whole argument for existing.
+    "SCULPTURAL COMPLEXITY, FAR BEYOND A QUIZ CARD: layered twisting "
+    "volumes that turn over and past one another, carved undercuts, flowing "
+    "ridges and folds, and deliberate fine detail across the whole surface "
+    "— a master sculptor's centrepiece beside the plain single forms of the "
+    "quiz cards. That difference should be obvious at a glance and it is "
+    "the point of the frame. Intricate but never busy: every ridge, fold "
+    "and undercut is a deliberate carved decision, never noise, never "
+    "scattered clutter, never surface fuzz. The silhouette stays governed "
+    "by the pose-verb rule — dynamic, asymmetric, caught mid-gesture, and "
+    "readable as one shape at phone-tile size — while the surface inside it "
+    "is rich. "
+    # 3 — magic. Granted to totems and to nothing else, and fenced, because
+    # this is the direction that turns kitsch fastest.
+    "A LITTLE MAGIC, FOR TOTEMS ONLY: a few tiny soft glowing teal "
+    "particles drift upward from the fissures, and a faint luminous haze "
+    "hangs close around the brightest part of the glow. Restrained and "
+    "premium — a handful of embers rising off a lit object, nothing more. "
+    "No lightning, no bolts, no sparkles scattered across the frame, no "
+    "magic effects, no fantasy kitsch. The matte clay and its handmade "
+    "finger marks still read clearly underneath all of it. "
+    # 4 — presentation, unchanged and still working.
+    "PRESENTATION: a pronounced bright rim light tracing the whole contour "
+    "so the form separates crisply from the sweep, a defined soft contact "
+    "shadow anchoring it, and a reverent centred poster composition with "
+    "generous space around it. The object is presented, not photographed in "
+    "passing. "
+    # 5 — exclusivity, and the failure that keeps coming back.
+    "EXCLUSIVITY THROUGH FORM, LIGHT AND DETAIL, NEVER THROUGH DARKNESS: a "
+    "rare collectible artifact, worth stopping on and worth sending to "
+    "somebody. A static symmetrical object is the failure this frame is "
+    "most likely to come back as."
 )
 
 # Which frames the block is applied to. Exactly the totems: a quiz card handed
