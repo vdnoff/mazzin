@@ -435,3 +435,6 @@ bottom.
 
 ## 2026-08-28 — claude/persona-v3b-gallery
 - persona v3-B: production gallery generator
+
+## 2026-08-28 — claude/persona-afterdark-fix
+- persona: afterdark relight + dark-backdrop pin + article fix
