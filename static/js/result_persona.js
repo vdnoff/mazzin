@@ -398,6 +398,11 @@
     return badge;
   }
 
+  // The pedestal treatment, worn by both halves of the pair at the top of the
+  // card: a spotlight above, the object, a shadow pooling under it. Shared so
+  // the totem and the head read as two objects lit in one room rather than as
+  // a picture beside a diagram.
+  //
   // The totem on its pedestal, under a spotlight. The persona's own form,
   // lit the way the sculptures in the quiz were lit, so the reading opens on
   // the same gallery the quiz was walked through — at dusk rather than in
@@ -406,23 +411,28 @@
   // The image is a slot: a placeholder until v3-B renders the eight. It is
   // built from the persona rather than chosen, so a missing file is a missing
   // render and never a missing branch.
-  function pedestal(data) {
-    var stand = elm("figure", "pr-totem");
-    var light = elm("span", "pr-totem-light");
+  function stand(variant, node) {
+    var figure = elm("figure", "pr-stand " + variant);
+    var light = elm("span", "pr-stand-light");
     light.setAttribute("aria-hidden", "true");
-    stand.appendChild(light);
-    if (data && data.totem) {
-      var img = document.createElement("img");
-      img.className = "pr-totem-art";
-      img.src = data.totem;
-      img.alt = "";
-      img.decoding = "async";
-      stand.appendChild(img);
-    }
-    var plinth = elm("span", "pr-totem-plinth");
+    figure.appendChild(light);
+    if (node) figure.appendChild(node);
+    var plinth = elm("span", "pr-stand-plinth");
     plinth.setAttribute("aria-hidden", "true");
-    stand.appendChild(plinth);
-    return stand;
+    figure.appendChild(plinth);
+    return figure;
+  }
+
+  function pedestal(data) {
+    var art = null;
+    if (data && data.totem) {
+      art = document.createElement("img");
+      art.className = "pr-totem-art";
+      art.src = data.totem;
+      art.alt = "";
+      art.decoding = "async";
+    }
+    return stand("is-totem", art);
   }
 
   // The narrative, with the reader's own picks set in italics.
@@ -581,12 +591,15 @@
 
   function richHero(badge, data, copy, opts) {
     var card = elm("section", "pr-hero is-rich");
-    // v3 order: the totem first and large, then who that makes them, then the
-    // measure, then the sentence built from their own picks. The badge the
-    // callers still pass is the frame they opened the quiz on; it rides in
-    // the identity row rather than leading the card, because the totem is now
-    // the picture of them and the pick is the evidence for it.
-    card.appendChild(pedestal(data));
+    // The order: the pair first — the persona's totem and the reader's own
+    // head, side by side — then the head's own caption, then who all that
+    // makes them, the measure, and the sentence built from their own picks.
+    // The badge the callers still pass is the frame they opened the quiz on;
+    // it no longer leads the card, because the pair is the picture of them
+    // and the pick is the evidence for it.
+    card.appendChild(headPair(data));
+    var caption = headCaption(copy || {}, data);
+    if (caption) card.appendChild(caption);
 
     var id = elm("div", "pr-hero-id");
     id.appendChild(elm("h1", "pr-subtype", data.subtype));
@@ -607,15 +620,6 @@
     }
     var bars = traitBars(data);
     if (bars) card.appendChild(bars);
-    // The drawing, directly under the name and the rarity and above the three
-    // scales. It was the last thing on the page, below six locked cards, and
-    // it is the one part of the card that is a picture of the reader rather
-    // than a row of numbers — so it opens the card and the scales read as its
-    // detail. Inside `richHero` rather than at either call site because both
-    // the free page and the delivered one draw this card, and a reposition
-    // applied in one place is a reposition that drifts.
-    var drawing = headBlock(copy || {}, data);
-    if (drawing) card.appendChild(drawing);
     return card;
   }
 
@@ -655,10 +659,17 @@
   var HEAD_R = 96;
   var LEAN_ARC = "M 24 44 Q 120 -6 216 44";
 
-  // The clay the grooves are pressed into, and the glaze poured in them.
-  var GROOVE = "#7A5334";
-  var GROOVE_SOFT = "#8E6742";
-  var GLAZE = "#4EDDC4";
+  // The inlay's ink, and it is one colour: the deep warm near-black the result
+  // page is built on.
+  //
+  // It was teal, on the reasoning that teal is the brand thread and a glaze
+  // poured into a groove is what the mark is. On the render it is illegible —
+  // a mid-value teal wash over mid-value terracotta, at the size the crown
+  // allows, reads as a smudge. Dark ink on warm clay is the contrast the
+  // material actually offers, and the render's own teal collar carries the
+  // brand a few centimetres below without anything here having to.
+  var INK = "#241A10";
+  var INK_SOFT = "#3A2A1B";
 
   // Which way each trait points out of the centre, and the glyph the legend
   // gives it. Up is the trait that starts things and down is the one that
@@ -723,14 +734,13 @@
       }).join(", ") + " out of 100"
     });
 
-    // The grid, as grooves pressed into the clay. Warm and darker than the
-    // surface rather than a lighter ruled line: a groove in clay reads as a
-    // shadow, and a light stroke would sit on top of the head like ink.
+    // The grid, as grooves pressed into the clay: darker than the surface
+    // rather than lighter, because a groove in clay reads as a shadow.
     [HEAD_R / 3, HEAD_R * 2 / 3, HEAD_R].forEach(function (r) {
       svg.appendChild(svgEl("circle", {
         cx: HEAD_CX, cy: HEAD_CY, r: r.toFixed(1),
-        fill: "none", stroke: GROOVE, "stroke-width": 1.5,
-        "stroke-opacity": 0.55
+        fill: "none", stroke: INK, "stroke-width": 1.2,
+        "stroke-opacity": 0.5
       }));
     });
     [[HEAD_CX, HEAD_CY - HEAD_R, HEAD_CX, HEAD_CY + HEAD_R],
@@ -738,13 +748,13 @@
       .forEach(function (line) {
         svg.appendChild(svgEl("line", {
           x1: line[0], y1: line[1], x2: line[2], y2: line[3],
-          stroke: GROOVE, "stroke-width": 1.5, "stroke-opacity": 0.55
+          stroke: INK, "stroke-width": 1.2, "stroke-opacity": 0.5
         }));
       });
 
-    // The reader's own shape, as glaze poured into the field. Heavier fill
-    // than v1's outline-on-ink: on clay the colour is the mark, and a thin
-    // stroke would read as drawn on rather than run in.
+    // The reader's own shape, cut deeper than the grid it sits on: a heavier
+    // stroke and a wash of the same ink, so the polygon reads as the mark and
+    // the rings read as the ruler under it.
     var points = HEAD_AXES.map(function (row) {
       var r = HEAD_R * (values[row.tag] || 0) / 100;
       return { x: HEAD_CX + row.dx * r, y: HEAD_CY + row.dy * r };
@@ -753,12 +763,12 @@
       points: points.map(function (p) {
         return p.x.toFixed(1) + "," + p.y.toFixed(1);
       }).join(" "),
-      fill: GLAZE, "fill-opacity": 0.42,
-      stroke: GLAZE, "stroke-width": 2.5, "stroke-linejoin": "round"
+      fill: INK, "fill-opacity": 0.28,
+      stroke: INK, "stroke-width": 2.2, "stroke-linejoin": "round"
     }));
     points.forEach(function (p) {
       svg.appendChild(svgEl("circle", {
-        cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: 4, fill: GLAZE
+        cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: 4, fill: INK
       }));
     });
 
@@ -766,12 +776,12 @@
     // which way the reader's charge runs is a single number and deserves a
     // single mark, not a fifth bar.
     svg.appendChild(svgEl("path", {
-      d: LEAN_ARC, fill: "none", stroke: GROOVE_SOFT, "stroke-width": 1.2,
+      d: LEAN_ARC, fill: "none", stroke: INK_SOFT, "stroke-width": 1.2,
       "stroke-dasharray": "3 5"
     }));
     var bead = leanPoint(leanAt(data) / 100);
     svg.appendChild(svgEl("circle", {
-      cx: bead.x.toFixed(1), cy: bead.y.toFixed(1), r: 5, fill: GLAZE
+      cx: bead.x.toFixed(1), cy: bead.y.toFixed(1), r: 5, fill: INK
     }));
     return svg;
   }
@@ -795,15 +805,11 @@
     return list;
   }
 
-  function headBlock(copy, data) {
+  // The base and the inlay in one positioned box. The image carries the head;
+  // the stylesheet puts the overlay on the cranium; neither knows anything
+  // about the other beyond the box they share.
+  function headPlate(data) {
     if (!data || !(data.split || []).length) return null;
-    var block = elm("section", "pr-head");
-    if (copy.head_title) {
-      block.appendChild(elm("p", "pr-head-title", copy.head_title));
-    }
-    // The base and the inlay in one positioned box. The image carries the
-    // head; the stylesheet puts the overlay on the cranium; neither knows
-    // anything about the other beyond the box they share.
     var plate = elm("div", "pr-head-plate");
     var base = document.createElement("img");
     base.className = "pr-head-base";
@@ -814,12 +820,40 @@
     var field = elm("div", "pr-head-inlay");
     field.appendChild(headSvg(data));
     plate.appendChild(field);
-    block.appendChild(plate);
+    return plate;
+  }
+
+  // The head's caption block, which is where its numbers live now.
+  //
+  // The inlay carries no text — it is a mark pressed into the crown, and at
+  // the size the crown allows there is no room for any — so the four traits
+  // are read underneath it instead. That is the same legend as before, in the
+  // same rows; what changed is that it is a caption under a pair rather than
+  // the tail of a diagram at the end of the page.
+  function headCaption(copy, data) {
+    if (!data || !(data.split || []).length) return null;
+    var block = elm("section", "pr-head");
+    if (copy.head_title) {
+      block.appendChild(elm("p", "pr-head-title", copy.head_title));
+    }
     block.appendChild(headLegend(data));
     if (copy.head_caption) {
       block.appendChild(elm("p", "pr-head-caption", copy.head_caption));
     }
     return block;
+  }
+
+  // The pair: the persona's totem and the reader's own head, side by side and
+  // matched in height, on one lit shelf. They were a picture at the top and a
+  // diagram at the bottom, with six locked cards between them, which made the
+  // head read as an appendix to the offer rather than as the other half of
+  // what the profile is.
+  function headPair(data) {
+    var plate = headPlate(data);
+    var row = elm("div", "pr-pair");
+    row.appendChild(pedestal(data));
+    if (plate) row.appendChild(stand("is-head", plate));
+    return row;
   }
 
   // --- c) read from your taps ------------------------------------------------

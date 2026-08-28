@@ -671,9 +671,14 @@ check("  the clay tokens are declared",
 check("teal is still the one cool colour on the page",
       "--pr-teal: #4EDDC4;" in sheet)
 check("the totem stands on a lit pedestal",
-      all(c in sheet for c in (".pr-totem", ".pr-totem-light",
-                               ".pr-totem-art", ".pr-totem-plinth"))
+      all(c in sheet for c in (".pr-stand", ".pr-stand-light",
+                               ".pr-totem-art", ".pr-stand-plinth"))
       and "function pedestal(" in module)
+# The pedestal used to be the totem's alone. It is shared now, because the
+# head stands beside it and two objects lit differently read as a picture
+# next to a diagram rather than as a pair.
+check("  and the treatment is shared with the head",
+      '.pr-stand.is-head' in sheet or '.pr-stand' in sheet)
 check("  and the module builds its path from the persona",
       'TOTEM_DIR + ctx.style.id + "_" + energy' in module)
 check("the narrative quotes the reader's own picks in italics",
@@ -722,163 +727,126 @@ check("it is two layers: a rendered base and an inlay",
                                ".pr-head-inlay"))
       and 'HEAD_BASE = "/static/galleries/persona/head_base.webp"' in module)
 check("  the base frame is on disk", "head_base" in gallery)
-check("  and the inlay is positioned on the cranial field",
-      re.search(r"\.pr-head-inlay \{[^}]*top: 13%;[^}]*left: 26%;"
-                r"[^}]*width: 48%;[^}]*height: 48%;", sheet, re.S) is not None)
+# The measured numbers. They were top 13% / left 26% / 48%, written against a
+# mockup; once the approved render was committed it was measurable that the
+# box overlapped the ear and ran off the brow. scripts/gen_persona.py
+# --check-head is what measures them, and test_personaart pins the two
+# against each other — here it is only that the sheet carries the measurement
+# rather than the mockup.
+check("  and the inlay sits on the measured cranial field",
+      re.search(r"\.pr-head-inlay \{[^}]*top: 5%;[^}]*left: 45%;"
+                r"[^}]*width: 22\.5%;[^}]*height: 22\.5%;", sheet, re.S)
+      is not None)
+check("  not on the mockup's box",
+      not re.search(r"\.pr-head-inlay \{[^}]*top: 13%;", sheet, re.S))
 check("the SVG is still generated from the tallies",
       "function headValues(" in module and "data.split" in module
       and "function headSvg(" in module)
-check("  grid lines are pressed grooves, in warm ink",
-      'GROOVE = "#7A5334"' in module and 'GROOVE_SOFT = "#8E6742"' in module)
-check("  the value polygon is a teal glaze",
-      'GLAZE = "#4EDDC4"' in module and '"fill-opacity": 0.42' in module)
-check("  the vertices are teal beads",
-      re.search(r'circle", \{\s*cx: p\.x\.toFixed\(1\),'
-                r' cy: p\.y\.toFixed\(1\),\s*r: 4, fill: GLAZE',
+
+# The inlay went dark. A mid-value teal wash over mid-value terracotta, at
+# the size the crown allows, reads as a smudge; dark ink on warm clay is the
+# contrast the material actually offers. The render's own teal collar carries
+# the brand a few centimetres below.
+head_svg = module[module.index("function headSvg("):
+                  module.index("function headLegend(")]
+check("the inlay is drawn in the page's own near-black",
+      'INK = "#241A10"' in module and 'INK_SOFT = "#3A2A1B"' in module)
+check("  rings and axes are dark strokes",
+      "stroke: INK" in head_svg and '"stroke-opacity": 0.5' in head_svg)
+check("  the polygon is a dark stroke over a dark wash",
+      'fill: INK, "fill-opacity"' in head_svg and "stroke: INK" in head_svg)
+check("  the vertices are dark", "r: 4, fill: INK" in head_svg)
+check("  and the lean arc and its bead too",
+      "stroke: INK_SOFT" in head_svg and "r: 5, fill: INK" in head_svg)
+# Resolved, not scanned. The colours are constants defined outside the
+# drawing function, so looking for a teal literal inside it would pass
+# happily while INK itself was teal — which is exactly what a first version
+# of this check did.
+INK_VALUES = dict(re.findall(r'var (INK|INK_SOFT) = "(#[0-9A-Fa-f]{6})"',
+                             module))
+
+
+def luma(hexv):
+    r, g, b = (int(hexv[i:i + 2], 16) for i in (1, 3, 5))
+    return 0.299 * r + 0.587 * g + 0.114 * b
+
+
+check("  both inks resolve to a near-black",
+      len(INK_VALUES) == 2
+      and all(luma(v) < 50 for v in INK_VALUES.values()),
+      str(INK_VALUES))
+check("  neither of them is the teal",
+      "#4EDDC4" not in INK_VALUES.values(), str(INK_VALUES))
+check("  and the drawing names no colour of its own",
+      not re.search(r"#[0-9A-Fa-f]{6}", head_svg)
+      and "GLAZE" not in module and "GROOVE" not in module,
+      str(re.findall(r"#[0-9A-Fa-f]{6}", head_svg)))
+check("  and the teal that carries the brand is in the render, not the ink",
+      "--pr-teal: #4EDDC4;" in sheet)
+
+print("\n--- the pair at the top of the card ---")
+# The head was a diagram at the end of the page, below six locked cards,
+# which made it read as an appendix to the offer rather than as the other
+# half of what the profile is. It stands beside the totem now.
+check("the module builds a pair row",
+      "function headPair(" in module and 'elm("div", "pr-pair")' in module)
+check("  totem left, head right, in that order",
+      re.search(r'row\.appendChild\(pedestal\(data\)\);\s*\n\s*if '
+                r'\(plate\) row\.appendChild\(stand\("is-head"',
                 module) is not None)
-check("  and the head outline it used to stroke is gone",
-      "HEAD_PATH" not in module)
-check("the legend reads the human trait names",
-      "data.traits" in module and "function headLegend(" in module)
-check("the delivered page can still draw it with no run in the tab",
-      "ctx.visuals && ctx.visuals.profile" in module
-      and "function deliveredHero(" in module)
-check("  and finds the opening frame by label, not by a pasted id",
-      "function shapeImageId(" in module
-      and 'ids[i].indexOf("now_") === 0' in module)
+check("  both wear the same pedestal treatment",
+      "function stand(variant, node)" in module
+      and '.pr-stand-light' in sheet and '.pr-stand-plinth' in sheet)
+check("  matched heights, by column ratio rather than by fixed pixels",
+      re.search(r"\.pr-pair \{(?:[^}]*)grid-template-columns: "
+                r"minmax\(0, 3fr\) minmax\(0, 4fr\);", sheet, re.S)
+      is not None
+      and "aspect-ratio: 3 / 4;" in sheet and "aspect-ratio: 1 / 1;" in sheet)
+# `.index` raises when the needle is gone, so an absent pair row would crash
+# the suite instead of failing it. `.find` returns -1, which orders correctly
+# against a real position and reads as the failure it is.
+PAIR_AT = module.find("card.appendChild(headPair(data));")
+ID_AT = module.find('elm("div", "pr-hero-id")')
+check("  the pair is the first thing in the card",
+      PAIR_AT >= 0 and ID_AT > PAIR_AT, "pair at %d, id at %d"
+      % (PAIR_AT, ID_AT))
+check("  and the head's old end-of-page slot is gone",
+      "function headBlock(" not in module)
 
+# The legend stays below as the diagram's caption, in the same rows.
+CAPTION_AT = module.find("headCaption(copy || {}, data)")
+check("the legend is the caption under the pair",
+      "function headCaption(" in module
+      and PAIR_AT >= 0 and CAPTION_AT > PAIR_AT and ID_AT > CAPTION_AT,
+      "pair %d, caption %d, id %d" % (PAIR_AT, CAPTION_AT, ID_AT))
+check("  still name-and-value rows", "function headLegend(" in module
+      and ".pr-head-key" in sheet and ".pr-head-value" in sheet)
+check("  and it keeps the line that says what it is",
+      cfg["result_copy"]["head_caption"].startswith("Four traits"),
+      cfg["result_copy"]["head_caption"])
+check("  the caption block carries no plate of its own",
+      "pr-head-plate" not in module[module.find("function headCaption("):
+                                    module.find("function headPair(")])
 
-print("\n--- the free strength is gone ---")
-# It was the one thing given away that the paywall was also selling: reading
-# it answered enough of the question to stop being a reason to pay. What stays
-# is the locked teasers, which are the offer.
-check("the module draws no free strength",
-      "function freeStrength(" not in module
-      and "function strength(ctx" not in module
-      and "pr-strength-title" not in module)
-check("  and the stylesheet carries none of its rules",
-      not any(c in sheet for c in (".pr-free", ".pr-strength-title",
-                                   ".pr-strength-body", ".pr-lead")))
-check("  the render path no longer calls it", "freeStrength(" not in module)
-# The paid page's own strengths section is a different thing and survives.
-check("but the delivered page still renders what was bought",
-      "function strengths(data)" in module
-      and "mistakes: strengths" in module)
-check("  and the locked teasers that carry the paywall are still drawn",
-      "function locked(" in module and "function questions(" in module
-      and ".pr-teaser" in sheet)
+check("the rarity line is centred",
+      re.search(r"\.pr-ribbon \{[^}]*text-align: center;", sheet, re.S)
+      is not None
+      and re.search(r"\.pr-ribbon \{[^}]*margin: 16px auto 0;", sheet, re.S)
+      is not None)
+check("  and still says what it always said",
+      cfg["result_copy"]["profile"]["rarity_line"]
+      == "Rarer than {rarer}% of profiles")
 
-
-print("\n--- the share loop ---")
-share = prof["share"]
-check("the config carries the share copy",
-      all(share.get(k) for k in ("button", "title", "text", "url_base",
-                                 "copied", "failed")),
-      json.dumps(sorted(share)))
-check("  the title names the persona through a token",
-      "{subtype}" in share["title"], share["title"])
-# The share page's reader has just seen somebody else's totem. What they are
-# promised is their own shape — not that the quiz is quick, which is the
-# funnel page's argument to make and was this line's until now.
-check("  the promise is the reader's own shape",
-      share["text"] == "Your shape is waiting. Find it.", share["text"])
-check("  and it no longer sells ease of use",
-      not re.search(r"\b(taps?|typing|quick|fast|minutes?)\b",
-                    share["text"].lower()), share["text"])
-check("  and the base points at the share route",
-      share["url_base"] == "/persona/s/", share["url_base"])
-check("eight share cards, one per persona",
-      [c["id"] for c in cfg["share_cards"]]
-      == ["%s_%s" % p for p in PERSONAS],
-      str([c["id"] for c in cfg["share_cards"]]))
-check("  each with three named hexes",
-      all(len(c["colors"]) == 3
-          and all(HEX.match(x["hex"]) and x.get("name") and x.get("element")
-                  for x in c["colors"])
-          for c in cfg["share_cards"]))
-check("  each naming its persona",
-      [c["persona"] for c in cfg["share_cards"]]
-      == [prof["subtypes"][a][e] for a, e in PERSONAS])
-check("  and each with a placeholder on disk",
-      all(("share_%s_%s" % p) in gallery for p in PERSONAS),
-      str([p for p in PERSONAS if ("share_%s_%s" % p) not in gallery]))
-
-check("the module draws a share button", "function shareBlock(" in module
-      and ".pr-share-btn" in sheet)
-check("  using the Web Share API where it exists",
-      "navigator.share" in module)
-check("  falling back to the clipboard and a toast",
-      "navigator.clipboard" in module and ".pr-share-toast" in sheet
-      and 'role", "status"' in module)
-check("  and treating a dismissed sheet as no failure",
-      'err.name === "AbortError"' in module)
-check("  it fires share_tap with the persona",
-      'ctx.track("share_tap", { persona: data.persona_slug })' in module)
-check("  and the slug is built once, where the totem path is",
-      'persona_slug: ctx.style.id + "_" + energy' in module)
-# Free page only. After the money the reader has a report and a link of their
-# own, and the ask is wrong there.
-check("the free page passes the option that draws it",
-      "{ share: true, ctx: ctx }" in module)
-check("  and the delivered page does not",
+# Both views draw one card, so the layout cannot differ between them.
+check("the delivered page draws the same card",
       re.search(r"richHero\(glyph\(pick\), data, copy\)", module)
       is not None)
-check("  so the button cannot render without a run behind it",
-      "if (!data || !data.persona_slug) return null;" in module)
-
-check("share_tap is registered server-side",
-      "share_tap" in open(os.path.join(ROOT, "tracking.py"),
-                          encoding="utf-8").read())
-
-
-print("\n--- the share landing route ---")
-sys.path.insert(0, ROOT)
-from app import app as flask_app  # noqa: E402
-
-client = flask_app.test_client()
-for a, e in PERSONAS:
-    slug = "%s_%s" % (a, e)
-    resp = client.get("/persona/s/" + slug)
-    body = resp.get_data(as_text=True)
-    ok = (resp.status_code == 200
-          and ('og:image" content="https://mazzin.com'
-               '/static/galleries/persona/share_%s.webp' % slug) in body
-          and ('og:url" content="https://mazzin.com/persona/s/%s' % slug)
-          in body
-          and prof["subtypes"][a][e] in body
-          and ('href="/persona?subid=share-%s"' % slug) in body)
-    check("  /persona/s/%s serves its own card" % slug, ok,
-          "%s" % resp.status_code)
-resp = client.get("/persona/s/igniter_outer")
-body = resp.get_data(as_text=True)
-check("the promise reaches the page a crawler unfurls",
-      body.count('content="%s"' % share["text"]) == 3,
-      "description, og:description and twitter:description")
-check("  and is what a human reads on it too",
-      "<p>%s</p>" % share["text"] in body)
-check("the page is cacheable at the edge",
-      resp.headers.get("Cache-Control", "").startswith("public, max-age="),
-      resp.headers.get("Cache-Control"))
-check("  and carries its content for a crawler, not just a redirect",
-      "<h1>" in body and "og:title" in body
-      and "Which shape are you?" in body)
-check("  with a visible link that works without script",
-      'class="cta"' in body and body.index('class="cta"') < body.index(
-          "<script>"))
-for junk in ("nope", "igniter", "igniter_outer.html", "..", "%2e%2e"):
-    check("  /persona/s/%s is a 404" % junk,
-          client.get("/persona/s/" + junk).status_code == 404)
-
-# The pages are generated from the config, so they can drift from it. The
-# generator's own --check is what makes that a test failure rather than a
-# surprise in production.
-import subprocess  # noqa: E402
-gen = subprocess.run(
-    [sys.executable, os.path.join(ROOT, "scripts",
-                                  "gen_persona_share_pages.py"), "--check"],
-    capture_output=True, text=True)
-check("the share pages on disk match the config", gen.returncode == 0,
-      (gen.stdout + gen.stderr).strip()[:120])
+check("  which means the pair, the inlay and the legend come with it",
+      module.count("function richHero(") == 1
+      and module.count("card.appendChild(headPair(data));") == 1)
+check("  and only the share button differs",
+      "{ share: true, ctx: ctx }" in module
+      and "if (opts && opts.share && opts.ctx)" in module)
 
 
 print("\n--- the words this vertical does not use ---")

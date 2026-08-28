@@ -405,13 +405,14 @@ print("    %d frames, %d still placeholder-sized" % (len(gallery), len(tiny)))
 print("\n--- the cranial zone, which is measured and never moved ---")
 check("the generator can measure it", callable(gen.cranial_zone))
 check("  and knows what the stylesheet claims",
-      gen.CSS_INLAY == {"top": 13.0, "left": 26.0,
-                        "width": 48.0, "height": 48.0})
+      gen.CSS_INLAY == {"top": 5.0, "left": 45.0,
+                        "width": 22.5, "height": 22.5}, str(gen.CSS_INLAY))
 sheet = open(os.path.join(REPO, "static/css/result_persona.css"),
              encoding="utf-8").read()
 check("  which is what the stylesheet actually says",
-      re.search(r"\.pr-head-inlay \{[^}]*top: 13%;[^}]*left: 26%;"
-                r"[^}]*width: 48%;[^}]*height: 48%;", sheet, re.S) is not None)
+      re.search(r"\.pr-head-inlay \{[^}]*top: 5%;[^}]*left: 45%;"
+                r"[^}]*width: 22\.5%;[^}]*height: 22\.5%;", sheet, re.S)
+      is not None)
 # It names the stylesheet rule in a docstring, which is how it explains
 # itself, and that is fine. What it must never do is write one: a generator
 # that could silently move the reader's own diagram is what this guards
@@ -452,25 +453,16 @@ if os.path.exists(head_path) and os.path.getsize(head_path) > 6 * 1024:
     check("  a smooth cranial field is found in the render", bool(found))
     if found:
         drift = max(abs(found[k] - gen.CSS_INLAY[k]) for k in gen.CSS_INLAY)
+        # Asserted now, not reported. The stylesheet used to carry numbers
+        # written against a mockup and this printed the gap; the numbers are
+        # the measurement itself now, so the two agreeing is a property worth
+        # holding — and the day the head is redrawn with the crown somewhere
+        # else, this is what says so instead of the page quietly drawing a
+        # radar on an ear.
         print("    css   : %s" % gen.CSS_INLAY)
         print("    render: %s" % {k: round(v, 1) for k, v in found.items()})
-        # Measured and reported, not asserted. The two do not currently agree
-        # — the stylesheet's box overlaps the ear and hangs off the brow — and
-        # what the numbers should become is a design decision about the inlay,
-        # not a value this suite gets to pick. Asserting the current CSS would
-        # be asserting something known to be wrong; asserting the measurement
-        # would freeze whatever the detector happens to return. So it prints,
-        # and the note carries it out of the run.
-        if drift > 6:
-            notes.append(
-                "the .pr-head-inlay box (top %(top).0f%% left %(left).0f%% "
-                "%(width).0f%%) does not sit on this render's smooth cranial "
-                "field" % gen.CSS_INLAY
-                + " (top %(top).1f%% left %(left).1f%% %(width).1f%%)"
-                % found
-                + " — worst drift %.1f points; the box overlaps the ear and "
-                  "its left edge runs off the brow. result_persona.css is "
-                  "edited by hand and was out of scope here." % drift)
+        check("  the stylesheet's inlay sits on the render's cranial field",
+              drift <= 3.0, "worst drift %.1f points" % drift)
 else:
     notes.append("head_base.webp is still the v3-A placeholder, so the "
                  ".pr-head-inlay percentages could not be checked against a "

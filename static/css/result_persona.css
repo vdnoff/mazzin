@@ -142,48 +142,73 @@ body:has(.result-module) {
 
 .pr-hero.is-rich { padding: 20px 18px 22px; text-align: left; }
 
-/* The totem on its pedestal, under a spotlight. The first thing on the page
-   and the largest: it is the picture of the reader, and everything under it
-   is the reading of it. The light is a soft cone from above rather than a
-   glow around the art, so the form reads as an object standing in the room
-   the quiz was walked through. */
-.pr-totem {
+/* The pair at the top of the card: the persona's totem and the reader's own
+   head, side by side, matched in height and lit the same way.
+
+   Matched heights is what makes them a pair rather than a picture next to a
+   diagram, and it is the only reason this is a grid rather than two blocks:
+   the totem render is 3:4 and the head plate is square, so the column widths
+   have to be in that ratio for the two objects to stand the same height. */
+.pr-pair {
+  display: grid;
+  /* 3:4 exactly, because that is the totem render's aspect and the head plate
+     is square: at these column widths the two objects come out the same
+     height with no fixed pixel anywhere, at any screen width. Caps live on
+     the row rather than on either child — a max-height on the art or a
+     max-width on the plate would hold one column and not the other, and the
+     heights would stop matching the moment either bound bit. */
+  /* minmax(0, ...) because a grid item's implicit `min-width: auto` is its
+     content's intrinsic width, and the totem render is 600px wide: without it
+     the first column refuses to shrink below that and the ratio — and with it
+     the matched heights — is lost at every phone width. */
+  grid-template-columns: minmax(0, 3fr) minmax(0, 4fr);
+  align-items: end;
+  gap: 14px;
+  max-width: 420px;
+  margin: 0 auto 16px;
+}
+
+/* One pedestal treatment, worn by both. A soft cone from above rather than a
+   glow around the art, so each reads as an object standing in the room the
+   quiz was walked through — at dusk, which is where the analysing fade has
+   just left the page. */
+.pr-stand {
   position: relative;
-  margin: 0 0 18px;
-  padding: 18px 0 0;
+  margin: 0;
+  padding: 14px 0 0;
   text-align: center;
 }
 
-.pr-totem-light {
+.pr-stand-light {
   position: absolute;
-  inset: 0 0 22px;
+  inset: 0 0 18px;
   border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
   background: radial-gradient(70% 58% at 50% 12%,
     rgba(242, 192, 112, 0.20) 0%, rgba(242, 192, 112, 0) 72%);
   pointer-events: none;
 }
 
-.pr-totem-art {
+/* The shadow each one casts: one warm ellipse, darker than the slab, read as
+   the shadow the spotlight makes rather than as a shape of its own. */
+.pr-stand-plinth {
   position: relative;
   display: block;
-  width: 148px;
-  height: 197px;
-  margin: 0 auto;
-  border-radius: 14px;
-  object-fit: cover;
-}
-
-/* The plinth the form stands on: one warm ellipse, darker than the slab, read
-   as the shadow the spotlight casts rather than as a shape of its own. */
-.pr-totem-plinth {
-  position: relative;
-  display: block;
-  width: 168px;
-  height: 14px;
-  margin: -4px auto 0;
+  width: 82%;
+  height: 12px;
+  margin: -3px auto 0;
   border-radius: 50%;
   background: radial-gradient(closest-side,
     rgba(20, 13, 7, 0.55) 0%, rgba(20, 13, 7, 0) 100%);
+}
+
+.pr-totem-art {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  object-fit: cover;
+  aspect-ratio: 3 / 4;
 }
 
 .pr-hero-id { min-width: 0; text-align: center; }
@@ -213,8 +238,10 @@ body:has(.result-module) {
    on it is the page's own ground, so the chip reads as umbra showing through
    the teal rather than as a second dark colour. */
 .pr-ribbon {
-  display: inline-block;
-  margin: 16px 0 0;
+  display: block;
+  width: fit-content;
+  margin: 16px auto 0;
+  text-align: center;
   padding: 6px 12px;
   border: 1px solid rgba(78, 221, 196, 0.45);
   border-radius: 999px;
@@ -338,14 +365,13 @@ body:has(.result-module) {
 }
 
 /* The two layers, in one box that owns the aspect. The plate is square
-   because the render is, and everything inside it is positioned in percent of
-   that square — so the inlay stays on the cranium at every width without a
-   media query, and moves with the art if v3-B reframes it. */
+   because the render is displayed square — `object-fit: cover` crops a
+   quarter off a 3:4 frame — and everything inside it is positioned in percent
+   of that square, so the inlay stays on the cranium at every width without a
+   media query. */
 .pr-head-plate {
   position: relative;
   width: 100%;
-  max-width: 320px;
-  margin: 0 auto;
   aspect-ratio: 1 / 1;
 }
 
@@ -353,19 +379,31 @@ body:has(.result-module) {
   display: block;
   width: 100%;
   height: 100%;
-  border-radius: 16px;
+  border-radius: 14px;
   object-fit: cover;
 }
 
-/* The cranial field. These four numbers are the whole coupling between this
-   sheet and the render: the smooth empty zone the head prompt asks for, as a
-   share of the frame. If v3-B moves the crown, this is what moves with it. */
+/* The cranial field, and these four numbers are the whole coupling between
+   this sheet and the render.
+
+   They were top 13% / left 26% / 48% — written against a mockup rather than
+   against art, and once the approved render was committed it was measurable
+   that they were wrong: that box overlapped the ear and its left edge ran off
+   the brow onto the sweep. These are the measurement, taken from the render
+   itself by `gen_persona.py --check-head`, which finds the largest smooth
+   non-background square in the upper part of the plate. The suite pins them
+   against that detector with a tolerance, so the day the head is redrawn the
+   two stop agreeing and say so.
+
+   Small, because the crown is small. The inlay is a mark pressed into the
+   head at this size and carries no text at all; the four numbers it stands
+   for are read in the legend underneath it. */
 .pr-head-inlay {
   position: absolute;
-  top: 13%;
-  left: 26%;
-  width: 48%;
-  height: 48%;
+  top: 5%;
+  left: 45%;
+  width: 22.5%;
+  height: 22.5%;
 }
 
 .pr-head-svg {
@@ -421,34 +459,27 @@ body:has(.result-module) {
   color: var(--pr-faint);
 }
 
-/* The head sits inside the profile card, under the trait bars, so it loses
+/* The head's caption sits directly under the pair it captions, so it loses
    the chrome it needed as a panel of its own: a bordered box inside a
-   bordered box reads as a mistake. What it keeps is the rule above it, which
-   is what makes it a band of the card rather than something floating in it.
+   bordered box reads as a mistake. What it keeps is the rule under it, which
+   is what separates the caption from the name below.
 
    The standalone rule above is deliberately left in place. This file and
    result_persona.js sit behind a CDN and can be a version apart; an older
    module that still appends the head at the top level should get the panel it
    was drawn for rather than an unstyled block. */
 .pr-hero .pr-head {
-  margin: 18px 0 0;
-  padding: 16px 0 0;
+  margin: 0 0 18px;
+  padding: 0 0 16px;
   border: 0;
-  border-top: 1px solid var(--pr-line);
+  border-bottom: 1px solid var(--pr-line);
   border-radius: 0;
   background: none;
 }
 
-.pr-hero .pr-head-legend { margin-top: 12px; }
+.pr-hero .pr-head-legend { margin-top: 0; }
 
-.pr-hero .pr-head-caption { margin-bottom: 2px; }
-
-/* The head is the last band of the card in v3, so nothing follows it to be
-   separated from. The trait bars above it take the rule instead. */
-.pr-hero .pr-traits + .pr-head {
-  margin-top: 18px;
-  padding-top: 16px;
-}
+.pr-hero .pr-head-caption { margin-bottom: 0; }
 
 /* --- c) read from your taps -------------------------------------------------- */
 
