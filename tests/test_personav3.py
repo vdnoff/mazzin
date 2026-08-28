@@ -1,21 +1,32 @@
 #!/usr/bin/env python3
 """Checks over scripts/gen_persona_v3_samples.py — the v3 style sampler.
 
-Two candidate styles now: the flat-vector set the owner first reviewed, and
-the soft-3D clay direction they picked out of that review. They share the
-eight scenes, the geometry, the crop and the safe-area rule, and differ in
-their prefix, their negatives and their id prefix — so most of what is
-asserted below is asserted twice, once per style, and the interesting checks
-are the ones about the seam between them:
+Three candidate styles now: the flat-vector set the owner reviewed first, the
+soft-3D clay direction picked out of that review, and the abstract sculptural
+forms locked after both were rejected. They share the geometry, the crop, the
+safe-area rule and the id set, and differ in their prefix, their negatives,
+their id prefix and — for sculpt — their scenes. So most of what is asserted
+below is asserted three times, and the interesting checks are the seams:
 
-  - the vector prompts are frozen against a digest, because those eight frames
-    are on disk and were reviewed as they stand;
+  - the vector and clay prompts are each frozen against a digest, because
+    those sixteen frames are on disk and were reviewed as they stand. sculpt
+    is deliberately NOT pinned: it has not been reviewed yet, and freezing a
+    set before anybody has looked at it only makes the next revision noisy;
   - clay does not inherit the vector ban on "3D render", which is the exact
     thing it is asking for;
-  - clay ids carry a prefix so both sets share one directory without
-    collision, and vector ids carry none, because renaming the reviewed set
-    would orphan it;
-  - clay's colour floor is its own lower number, not the vector floor moved.
+  - sculpt inverts what the other two are careful to allow. vector and clay
+    go out of their way to permit a face at two dots and a line; sculpt bans
+    figures, faces and scenes outright, and carries its own scene table
+    because a scene about four friends at a kitchen table is not something a
+    pure-form style can be talked into with a note;
+  - the figure ban is checked on the positive half of a prompt only. The
+    negatives necessarily say "no faces", and a whole-prompt search would
+    flag the refusal as if it were a request;
+  - each style's ids carry a prefix so all three sets share one directory
+    without collision — except vector, which carries none, because renaming
+    the first reviewed set would orphan it;
+  - clay and sculpt each get their own lower colour floor, not the vector
+    floor moved.
 
 The sampler is a proposal, not a surface. It draws eight frames in the bright
 quiz style the owner asked to see before any config rewrite, writes them to a
@@ -154,7 +165,7 @@ check("composes for a vertical card", "vertical card" in rule)
 # written against belongs to the pipeline, not to the material.
 check("it lives in one shared constant",
       source.count("Composition for a vertical card") == 1)
-check("  and both styles get that same constant, verbatim",
+check("  and every style gets that same constant, verbatim",
       all(v3.SAFE_AREA in f["prompt"]
           for st in v3.STYLES for f in v3.samples(st)))
 for st in sorted(v3.STYLES):
@@ -184,7 +195,7 @@ check("faces are not banned outright",
       "no human faces" not in joined and "no faces" not in joined)
 
 
-print("\n--- the flat-vector set is frozen ---")
+print("\n--- the reviewed sets are frozen ---")
 # The eight vector frames were reviewed as they stand and are on disk. A
 # change to their prompt text would make the committed set and the script
 # disagree about what the set is, silently — the files would still be there
@@ -200,6 +211,16 @@ joined = "\n\x00\n".join(vector[k] for k in sorted(vector))
 actual = hashlib.sha256(joined.encode("utf-8")).hexdigest()
 check("all eight vector prompts are byte-for-byte what was reviewed",
       actual == VECTOR_DIGEST, actual)
+
+# Clay is frozen on the same terms and for the same reason: it was reviewed as
+# it stands, and a third style is not licence to move it.
+CLAY_DIGEST = ("8ec87ff3216e5dfd12a4306a05485e6f93f"
+               "00abf5c95b0c28d800f422e90fb61")
+clay_frozen = {f["id"]: f["prompt"] for f in v3.samples("clay")}
+clay_joined = "\n\x00\n".join(clay_frozen[k] for k in sorted(clay_frozen))
+clay_actual = hashlib.sha256(clay_joined.encode("utf-8")).hexdigest()
+check("all eight clay prompts are byte-for-byte what was reviewed",
+      clay_actual == CLAY_DIGEST, clay_actual)
 check("  and the default style is still vector",
       v3.DEFAULT_STYLE == "vector"
       and [f["id"] for f in v3.samples()] == WANT)
@@ -208,7 +229,8 @@ check("  so the vector ids carry no prefix",
 
 
 print("\n--- the clay batch ---")
-check("both styles exist and no more", sorted(v3.STYLES) == ["clay", "vector"],
+check("all three styles exist and no more",
+      sorted(v3.STYLES) == ["clay", "sculpt", "vector"],
       str(sorted(v3.STYLES)))
 
 clay_plan = v3.samples("clay")
@@ -382,6 +404,152 @@ check("an unmeasurable frame is kept, not dropped",
       unmeasured_ok and "unmeasured" in unmeasured_note)
 
 
+print("\n--- the sculpt batch ---")
+sculpt_plan = v3.samples("sculpt")
+sculpt_ids = [f["id"] for f in sculpt_plan]
+check("eight sculpt samples", len(sculpt_plan) == 8, str(len(sculpt_plan)))
+check("the same eight ids, in the same order",
+      [f["base_id"] for f in sculpt_plan] == WANT, str(sculpt_ids))
+check("every sculpt id carries the sculpt_ prefix",
+      sculpt_ids == ["sculpt_" + i for i in WANT], str(sculpt_ids))
+check("  so nothing collides with either set already on disk",
+      not (set(sculpt_ids) & set(vector)) and
+      not (set(sculpt_ids) & set(clay_by_id)))
+check("  and all three sets share one directory and one geometry",
+      all(f["size"] == v3.FRAME and f["api_size"] == v3.API_PORTRAIT
+          for f in sculpt_plan))
+
+sculpt_by_id = {f["id"]: f["prompt"] for f in sculpt_plan}
+
+# sculpt is the one style that replaces the shared scene rather than adding to
+# it, so the pin is on its own eight rather than on the shared subjects. Each
+# is pinned to the form it is supposed to be, because a form language is
+# exactly the kind of text that drifts into decoration unnoticed.
+SCULPT_FORM = {
+    "s_morning_run": ["coil", "spring", "launching"],
+    "s_morning_slow": ["monolith", "at rest"],
+    "s_battery_home": ["nested", "hollow"],
+    "s_battery_people": ["cluster", "leaning"],
+    "s_drain_meeting": ["pressed flat", "stack", "rings"],
+    "s_bag_notebook": ["folded wave", "cylinder", "totem"],
+    "s_weather_fog": ["drifting", "mounds"],
+    "s_character_cartographer": ["sphere", "wave", "inlay", "emblem"],
+}
+for base_id, words in SCULPT_FORM.items():
+    text = sculpt_by_id["sculpt_" + base_id].lower()
+    missing = [w for w in words if w not in text]
+    check("  sculpt_%s is the form it was asked for" % base_id, not missing,
+          str(missing))
+check("  the totem carries the teal inlay that decides the emblem system",
+      "teal inlay" in sculpt_by_id["sculpt_s_character_cartographer"].lower())
+check("  and reads as one of a set of eight",
+      "eight of these"
+      in sculpt_by_id["sculpt_s_character_cartographer"].lower())
+
+
+print("\n--- the sculpt prompts carry the sculpt identity ---")
+for sample_id, text in sculpt_by_id.items():
+    check("  %s opens on the sculpt prefix" % sample_id,
+          text.startswith(v3.SCULPT_STYLE))
+    check("  %s carries the safe-area rule, once" % sample_id,
+          text.count(v3.SAFE_AREA) == 1)
+    check("  %s ends on the sculpt negatives" % sample_id,
+          text.endswith(v3.SCULPT_NEGATIVE))
+    check("  %s asks for the teal accent thread" % sample_id,
+          "#4EDDC4" in text)
+    check("  %s wears no other style's prefix" % sample_id,
+          v3.VECTOR_STYLE not in text and v3.CLAY_STYLE not in text)
+
+sculpt_low = v3.SCULPT_STYLE.lower()
+for word in ["clay sculpture", "still-life", "matte clay", "plasticine",
+             "fingerprint-and-tool", "rounded volumes", "bevelled",
+             "studio product lighting", "one soft shadow",
+             "warm monochrome backdrop", "terracotta", "ochre", "sand",
+             "warm grey", "negative space", "phone-tile"]:
+    check("  sculpt style says '%s'" % word, word in sculpt_low)
+check("  it refuses a clinical white ground", "pure white" in sculpt_low)
+check("  it asks for one to three warm tones per composition",
+      "one to three warm sculpture tones" in sculpt_low)
+check("  it puts the teal on exactly one element",
+      "on exactly one element" in sculpt_low)
+check("  and it says the meaning is carried by form, not by depiction",
+      "the meaning is carried by shape" in sculpt_low
+      and "never by depicting anything" in sculpt_low)
+
+
+print("\n--- the figure ban, which is the reversal this style is ---")
+# vector and clay go out of their way to PERMIT a face at two dots and a line.
+# sculpt bans it outright, and that inversion is the direction — so it is
+# asserted rather than assumed.
+#
+# Checked on the positive half only. The negatives necessarily say the words
+# ("no human figures", "no faces"), and a whole-prompt search would flag the
+# refusal as if it were a request. What must be clean is the text that ASKS
+# for something: the prefix, the safe-area rule and the scene.
+FIGURE = re.compile(
+    r"\b(humans?|figures?|persons?|people|faces?|facial|eyes?|characters?|"
+    r"creatures?|animals?|scenes?|rooms?|interiors?|furniture|tables?|"
+    r"chairs?|couch|friends?|runner|silhouettes?|hands?|body|bodies|"
+    r"portraits?|buildings?|notebooks?|mugs?|lamps?|cats?|clocks?)\b")
+
+for sample_id, text in sculpt_by_id.items():
+    positive = "\n".join(text.split("\n")[:3]).lower()
+    hits = sorted(set(FIGURE.findall(positive)))
+    check("  %s asks for no figure, no scene, no prop" % sample_id,
+          not hits, str(hits))
+
+check("the safe-area rule itself is figure-free, so it is safe to share",
+      not FIGURE.search(v3.SAFE_AREA.lower()))
+
+neg_low = v3.SCULPT_NEGATIVE.lower()
+for word in ["no human figures", "no people", "no busts", "no mannequins",
+             "no hands", "no faces of any kind", "no eyes", "no characters",
+             "no scenes", "no environments", "no rooms", "no furniture",
+             "no buildings", "no text", "no letters", "no logos"]:
+    check("  sculpt negatives refuse '%s'" % word, word in neg_low)
+check("  and the ban is stated positively in the prefix too",
+      "pure form only" in sculpt_low)
+
+# The other two say the opposite, and still do.
+check("vector still permits a character", "welcome" in v3.VECTOR_STYLE.lower())
+check("clay still permits a character",
+      "moulded in clay" in v3.CLAY_STYLE.lower())
+check("  so the three negative lists are three different texts",
+      len({v3.VECTOR_NEGATIVE, v3.CLAY_NEGATIVE, v3.SCULPT_NEGATIVE}) == 3)
+
+
+print("\n--- and no dark-identity vocabulary in the sculpt set ---")
+for sample_id, text in sculpt_by_id.items():
+    hit = [w for w in DARK if w in text.lower()]
+    check("  %s carries none of it" % sample_id, not hit, str(hit))
+# "readable as a silhouette" would be the natural way to ask for outline
+# legibility, and it collides with the dark gallery's own word for a person
+# drawn as a flat shape. The prefix asks for the same thing without the token,
+# which keeps DARK strict across all three styles instead of carving out an
+# exception for the one style that bans figures hardest.
+check("outline legibility is asked for without the word 'silhouette'",
+      "silhouette" not in sculpt_low
+      and "outline alone reads as one bold shape" in sculpt_low)
+
+
+print("\n--- sculpt replaces the scene, it does not decorate it ---")
+check("sculpt is the only style with its own scene table",
+      [st for st in sorted(v3.STYLES) if "scenes" in v3.STYLES[st]]
+      == ["sculpt"])
+check("  it covers every shared id and adds none",
+      sorted(v3.SCULPT_SCENES) == sorted(WANT), str(sorted(v3.SCULPT_SCENES)))
+check("  a replacement wins over a note",
+      v3.scene_for("s_morning_run", "SHARED", "sculpt")
+      == v3.SCULPT_SCENES["s_morning_run"])
+check("  and the shared scene text never reaches a sculpt prompt",
+      all(shared not in sculpt_by_id["sculpt_" + base_id]
+          for base_id, shared in v3.SAMPLES))
+check("  while clay still appends to the shared scene",
+      v3.scene_for("s_morning_run", "SHARED", "clay").startswith("SHARED "))
+check("  and vector still draws it as written",
+      v3.scene_for("s_morning_run", "SHARED", "vector") == "SHARED")
+
+
 print("\n--- clay gets its own colour floor, and only that ---")
 # Matte clay lit in a studio is a less saturated picture than flat vector art
 # on the same ground: a highlight washes toward white and a shade toward grey,
@@ -419,6 +587,45 @@ check("  because a greyscale frame is nowhere near the clay floor",
 check("clay keeps an unmeasurable frame", v3.sanity(None, "clay")[0])
 check("sanity still defaults to the vector floor",
       v3.sanity(PALE_CLAY) == v3.sanity(PALE_CLAY, "vector"))
+
+
+print("\n--- sculpt's floor, pinned ---")
+check("sculpt's colour floor is pinned at 10.0",
+      v3.SCULPT_MIN_SATURATION == 10.0, "%.1f" % v3.SCULPT_MIN_SATURATION)
+check("  below vector's, because a warm monochrome sweep is not flat art",
+      v3.SCULPT_MIN_SATURATION < v3.MIN_SATURATION)
+check("  and routed by the table, not by a branch",
+      v3.min_saturation("sculpt") == v3.SCULPT_MIN_SATURATION
+      and v3.MIN_SATURATION_BY_STYLE["sculpt"] == v3.SCULPT_MIN_SATURATION)
+check("  every style is in the table",
+      sorted(v3.MIN_SATURATION_BY_STYLE) == sorted(v3.STYLES),
+      str(sorted(v3.MIN_SATURATION_BY_STYLE)))
+# A style that forgets to add itself gets the strict floor, so the failure is
+# a rejected frame and a look at the table, not a silently unchecked batch.
+check("  and an unlisted style falls back to the strict one",
+      v3.min_saturation("marble") == v3.MIN_SATURATION)
+
+# The pale end of the sculpt set is the fog drift: cream clay over ochre
+# mounds, mostly backdrop. It has to clear the floor.
+PALE_SCULPT = (206.0, 24.0, 13.0)
+check("a pale warm-monochrome render passes as sculpt",
+      v3.sanity(PALE_SCULPT, "sculpt")[0])
+check("  and would have been rejected as vector",
+      not v3.sanity(PALE_SCULPT, "vector")[0])
+# Terracotta and ochre read muted to the eye but are not low numbers, since
+# saturation here is (max-min)/max and a warm tone spreads the channels wide.
+check("a terracotta-on-peach render passes comfortably",
+      v3.sanity((188.0, 42.0, 68.0), "sculpt")[0])
+
+check("sculpt still rejects near-black",
+      not v3.sanity((28.0, 30.0, 40.0), "sculpt")[0])
+check("sculpt still rejects blank white",
+      not v3.sanity((252.0, 2.0, 1.0), "sculpt")[0])
+check("sculpt still rejects a flat wash",
+      not v3.sanity((225.0, 3.0, 20.0), "sculpt")[0])
+check("sculpt still rejects a colourless render",
+      not v3.sanity((180.0, 50.0, 4.0), "sculpt")[0])
+check("sculpt keeps an unmeasurable frame", v3.sanity(None, "sculpt")[0])
 
 
 print("\n--- the crop and the measurement, when Pillow is here ---")
@@ -572,6 +779,32 @@ check("  and the message names the style it was refused for",
 # cannot exist in the vector plan.
 code, out = run(["--only", "clay_s_morning_run", "--dry-run"])
 check("a clay id is not accepted by the vector run", code == 2, str(code))
+
+code, out = run(["--style", "sculpt", "--dry-run"])
+check("--style sculpt exits 0", code == 0, str(code))
+check("  draws all eight sculpt ids",
+      all(("sculpt_" + i) in out for i in WANT)
+      and out.count("via 1024x1536") == 8)
+check("  says which style it is running", "sculpt style" in out)
+check("  prints the sculpt prefix and no other",
+      v3.SCULPT_STYLE in out
+      and v3.VECTOR_STYLE not in out and v3.CLAY_STYLE not in out)
+check("  and wrote nothing", not os.path.exists(v3.OUT))
+
+code, bare = run(["--style", "sculpt", "--only", "s_weather_fog", "--dry-run"])
+check("--only takes the bare scene id under --style sculpt",
+      code == 0 and bare.count("via 1024x1536") == 1
+      and "sculpt_s_weather_fog" in bare)
+code, pref = run(["--style", "sculpt", "--only", "sculpt_s_weather_fog",
+                  "--dry-run"])
+check("  and the prefixed id names the same frame",
+      code == 0 and pref == bare)
+
+code, out = run(["--style", "sculpt", "--only", "clay_s_weather_fog",
+                 "--dry-run"])
+check("another style's id is refused by a sculpt run", code == 2, str(code))
+check("  and the message names the style it was refused for",
+      "sculpt" in out and "clay_s_weather_fog" in out)
 
 # argparse rejects a style that does not exist, before any planning happens.
 try:
