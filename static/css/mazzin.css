@@ -227,6 +227,105 @@ body.theme-persona #mid-cta {
   background: linear-gradient(180deg, #14907F 0%, #0F6F62 100%);
 }
 
+/* --- persona tile presentation ---------------------------------------------
+
+   Two defects the owner found on the live quiz, both presentation and both
+   fixed here rather than in engine.js, because the DOM already allows it: the
+   label is a sibling of the image inside the card, not a child of it, so
+   moving it out from over the picture is a matter of where it is placed.
+
+   1. The label covered the sculpture. `.card-name` is a pill pinned 8px off
+      the bottom of the card, which was the right answer for a photograph of a
+      kitchen and the wrong one for a clay form whose base is the part that
+      says what it is — "Rooting" sat on the mound, "The loop" on the ring. It
+      drops below the picture instead. Absolutely positioned at `top: 100%`
+      rather than put into the flow, so the selection ring and the tick stay
+      exactly where they are — both are `inset: 0` and bottom-corner on the
+      card, and a caption in the flow would have grown the card under them and
+      moved the confirmation off the artwork.
+
+   2. The pair frames were cropped, badly. The tiles are stretched to the
+      elastic row's height and the image is `object-fit: cover`, so a 3:4
+      render in a 174x604 box lost about three fifths of its width. The tile
+      takes the render's own aspect now, and `contain` is the belt to that
+      pair of braces: whatever the box ends up, the whole frame is inside it.
+
+   The cost of honouring 3:4 on a two-up is that two portrait tiles side by
+   side are limited by width, not height — at 390px they come out about
+   172x229 with room to spare above and below — so the row centres them
+   rather than stretching them back. That is the trade the owner asked for:
+   the whole sculpture, smaller, over most of the sculpture, larger.
+
+   Every rule is scoped to this funnel's own body class. The pair and grid
+   geometry the other funnels use is untouched. */
+/* The row stops being the elastic one. It was built to stretch into whatever
+   the column had spare, which is right when the tiles fill it and wrong the
+   moment they have a fixed aspect: a two-up at 390px is 232px tall however
+   much room is going, and stretching the row around it just parked 250px of
+   nothing between the question and the pictures. It takes its content's
+   height now and the slack falls below the hint, where it reads as margin. */
+body.theme-persona .cards {
+  flex: 0 0 auto;
+  align-items: start;
+  min-height: 0;
+  max-height: none;
+}
+
+body.theme-persona .card {
+  height: auto;
+  aspect-ratio: 3 / 4;
+  /* The caption hangs below the card, so the card may not clip it. The
+     rounding the overflow used to do moves onto the image itself. */
+  overflow: visible;
+  background: none;
+  box-shadow: none;
+}
+
+body.theme-persona .card-img {
+  border-radius: inherit;
+  /* Never crop. The aspect above means there is normally nothing to letterbox
+     — this is what holds when a frame is redrawn at some other shape. */
+  object-fit: contain;
+  background: #F3E3CC;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* The caption strip: the same pill, on the page rather than on the picture. */
+body.theme-persona .card-name {
+  top: 100%;
+  bottom: auto;
+  margin-top: 8px;
+  max-width: 100%;
+  color: #2B1E12;
+  background: rgba(243, 227, 204, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(122, 101, 82, 0.22);
+}
+
+/* Room for it. On the two-up the captions hang under one row; on the four-up
+   they hang under two, so the row gap has to clear a caption as well as
+   separate the cells. */
+body.theme-persona .cards { padding-bottom: 34px; }
+
+body.theme-persona .cards.is-grid4 {
+  grid-auto-rows: auto;
+  row-gap: 44px;
+}
+
+/* At the narrow end the four-up has two rows of caption to place and a CTA
+   below it, so the pill loses a little height rather than the page losing the
+   button. It never goes back over the picture. */
+@media (max-height: 750px), (max-width: 365px) {
+  body.theme-persona .card-name {
+    margin-top: 6px;
+    padding: 4px 9px;
+    font-size: 13px;
+  }
+
+  body.theme-persona .cards { padding-bottom: 28px; }
+
+  body.theme-persona .cards.is-grid4 { row-gap: 36px; }
+}
+
 /* The arrival. The quiz is a light page and the reading is a dark one, and
    without this the change happens in a single frame at the moment the result
    lands — which reads as a different site rather than as a door opening. The
