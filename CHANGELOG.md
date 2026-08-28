@@ -423,3 +423,6 @@ bottom.
 
 ## 2026-08-28 — claude/persona-v3a1-share
 - persona: totem floor class + dusk language fix
+
+## 2026-08-28 — claude/persona-v3a1-share
+- persona: totem light recipe — lit_up formula on warm sweep
