@@ -408,3 +408,6 @@ bottom.
 
 ## 2026-08-28 — claude/persona-v3-sculpt-samples
 - persona v3: sculptural forms sampler
+
+## 2026-08-28 — claude/persona-v3-sculpt-v2
+- persona v3 sculpt v2: pose-verbs, handmade marks, contrast
