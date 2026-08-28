@@ -321,6 +321,86 @@ def beat(beats, after):
     return None
 
 
+# The browser, so the sale section can open a page per clock. An init script
+# cannot be taken off a page once it is on, and engine.js reads the clock as
+# it renders, so each side of the boundary needs a page of its own.
+BROWSER = [None]
+
+
+def fresh(iso):
+    page = BROWSER[0].new_page(viewport={"width": 390, "height": 844})
+    page.add_init_script(clock(iso))
+    return page
+
+
+def clock(iso):
+    """A page whose Date is pinned, so both sides of the sale are reachable.
+
+    An init script rather than an evaluate: engine.js reads the clock while it
+    renders, so the stub has to be in place before the first line of it runs.
+    """
+    return ("(() => { const AT = Date.parse(%r); const Real = Date;"
+            " class Stub extends Real {"
+            "   constructor(...a) { super(...(a.length ? a : [AT])); }"
+            "   static now() { return AT; } }"
+            " window.Date = Stub; })();" % iso)
+
+
+OFFER = """() => {
+  const o = document.querySelector('.zr-offer');
+  if (!o) return null;
+  const t = s => { const n = o.querySelector(s);
+                   return n ? n.textContent : null; };
+  return {
+    now: t('.zr-price-now'), was: t('.zr-price-was'), sale: t('.zr-sale'),
+    note: t('.zr-price-note'), anchor: t('.zr-anchor'),
+    sub: t('.zr-offer-sub'),
+    badges: [...o.querySelectorAll('.zr-badge')].map(n => n.textContent),
+    button: (document.getElementById('pay-button') || {}).textContent,
+    strike: (() => { const n = o.querySelector('.zr-price-was');
+      return n ? getComputedStyle(n).textDecorationLine : null; })(),
+    label: (() => { const n = o.querySelector('.zr-price-was');
+      return n ? n.getAttribute('aria-label') : null; })(),
+    residue: o.textContent.toLowerCase()};
+}"""
+
+
+def offer_at(slug, iso):
+    """Walk a funnel to its offer card on a page whose clock says `iso`."""
+    page = fresh(iso)
+    try:
+        return _offer_walk(page, slug)
+    finally:
+        page.close()
+
+
+def _offer_walk(page, slug):
+    page.goto("http://127.0.0.1:%d/%s" % (PORT, slug))
+    page.wait_for_selector("#cards .card", timeout=20000)
+    page.wait_for_timeout(300)
+    for _ in range(40):
+        module = page.locator("#result-module")
+        if module.count() and not module.is_hidden():
+            break
+        cards = page.locator("#cards .card")
+        if not cards.count():
+            page.wait_for_timeout(300)
+            continue
+        try:
+            cards.first.click(timeout=4000)
+        except PageError:
+            page.wait_for_timeout(400)
+            continue
+        page.wait_for_timeout(HOLD_MS + SETTLE_MS)
+        for _ in range(300):
+            if not mid_visible(page):
+                break
+            page.wait_for_timeout(20)
+        page.wait_for_timeout(150)
+    page.wait_for_timeout(3200)
+    return page.evaluate(OFFER)
+
+
 def start(page, slug):
     page.goto("http://127.0.0.1:%d/%s" % (PORT, slug))
     page.wait_for_selector("#cards .card", timeout=20000)
@@ -1030,6 +1110,85 @@ def rest_of_run(page):
           [len(b["echo"]) for b in bare] == [4, 5],
           str([b["echo"] for b in bare]))
 
+    print("\n--- the summer sale, on both sides of the last second ---")
+    # The offer's own instant: 23:59:59 in UTC-12 is 11:59:59Z on the 1st, and
+    # that second is already outside it. One page a second before, one on it.
+    DURING = "2026-09-01T11:59:58Z"
+    AFTER = "2026-09-01T11:59:59Z"
+    sale = json.load(open(os.path.join(ROOT, "funnels/zodiac30.json"),
+                          encoding="utf-8"))["sale"]
+    live = offer_at("zodiac30", DURING)
+    check("the card is reached with the sale running", live is not None)
+    if live:
+        check("  two dollars is the hero", live["now"] == "$2", live["now"])
+        check("  three is beside it", live["was"] == "$3", live["was"])
+        check("    and it is the price this funnel actually charges",
+              live["was"] == "$%d" % (sale["regular_price_cents"] // 100)
+              == "$3", live["was"])
+        check("    struck through, not merely small",
+              live["strike"] == "line-through", live["strike"])
+        check("    and said, for a reader who cannot see a line",
+              live["label"] == "Regular price $3", live["label"])
+        check("  one line names the offer and the day it stops",
+              live["sale"] == "Summer Sale · ends Aug 31", live["sale"])
+        check("  the button names the two dollars it will take",
+              live["button"] == "Open my full profile — $2", live["button"])
+        check("  the badges are the ones that were always there",
+              live["badges"] == ["One-time", "No subscription, ever"],
+              str(live["badges"]))
+        check("  the anchor still names the session it undercuts",
+              live["anchor"] == "instead of a $75 private session",
+              live["anchor"])
+        check("  the purpose line is untouched",
+              live["sub"] == "Your compatibility read is inside.", live["sub"])
+        check("  and the note beside the price is unchanged",
+              live["note"] == "one-time", live["note"])
+        check("  nothing on the card counts down or runs out",
+              not re.search(r"hurry|spots|seats|in stock|selling fast|"
+                            r"almost gone|act now|countdown|expires in|"
+                            r"\d+\s*(?:left|remaining)",
+                            live["residue"]), live["residue"][:120])
+
+    over = offer_at("zodiac30", AFTER)
+    check("the card is reached once the sale is over", over is not None)
+    if over:
+        check("  three dollars is the hero again", over["now"] == "$3",
+              over["now"])
+        check("  with nothing struck through beside it",
+              over["was"] is None, over["was"])
+        check("  and no line about an offer", over["sale"] is None,
+              over["sale"])
+        check("  the button names three", over["button"]
+              == "Open my full profile — $3", over["button"])
+        check("  not a word of the sale is left on the card",
+              "summer sale" not in over["residue"]
+              and "$2" not in over["residue"], over["residue"][:120])
+        check("  and everything else is exactly what it was",
+              [over["badges"], over["anchor"], over["sub"], over["note"]]
+              == [["One-time", "No subscription, ever"],
+                  "instead of a $75 private session",
+                  "Your compatibility read is inside.", "one-time"],
+              str([over["badges"], over["anchor"], over["sub"],
+                   over["note"]]))
+    # The funnels that are not on offer, on the same build and the same clock.
+    for slug, want in (("zodiac", "$3"), ("kitchen", "$3")):
+        other = offer_at(slug, DURING)
+        if slug == "kitchen":
+            # kitchen draws no module; its price lives on its own paywall.
+            check("  kitchen is priced by its own config, sale or no sale",
+                  other is None or other.get("was") is None)
+            continue
+        check("  %s is reached" % slug, other is not None)
+        if other:
+            check("    priced at %s while the other funnel is on offer" % want,
+                  other["now"] == want, other["now"])
+            check("    with nothing struck through",
+                  other["was"] is None and other["sale"] is None,
+                  "%s / %s" % (other["was"], other["sale"]))
+            check("    and its button naming the same number",
+                  other["button"] == "Open my full profile — %s" % want,
+                  other["button"])
+
     print("\n--- kitchen is untouched ---")
     start(page, "kitchen")
     check("an interstitial is reached", to_interstitial(page, limit=8))
@@ -1070,6 +1229,7 @@ def main():
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(executable_path=CHROME)
+            BROWSER[0] = browser
             page = browser.new_page(viewport={"width": 390, "height": 844})
             run(page)
             browser.close()

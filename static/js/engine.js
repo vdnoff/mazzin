@@ -2644,7 +2644,7 @@
       // Both figures and the block behind them, so a module can draw the
       // comparison without recomputing which of the two is live.
       sale: saleOf(),
-      priceRegular: formatPrice(cfg.pricing.amount_cents),
+      priceRegular: formatPriceShort(cfg.pricing.amount_cents),
       withPrice: withPrice,
       // The offer, as this file built it. `nodes` are real, live and already
       // listening — the consent box gates the button, the button takes the
@@ -4562,7 +4562,10 @@
   // --- paywall -------------------------------------------------------------
 
   function formatPrice() {
-    var cents = cfg.pricing.amount_cents;
+    // The same effective price the short form writes. Both of them name what
+    // the checkout is about to take, or the two-screen paywall would print
+    // one figure while the button beside it charged another.
+    var cents = priceCents();
     var cur = (cfg.pricing.currency || "usd").toUpperCase();
     var own = priceFormat();
     if (own) return own.replace("{amount}", priceAmount(cents, false));
@@ -4632,20 +4635,20 @@
     return sale ? sale.price_cents : cfg.pricing.amount_cents;
   }
 
-  // One formatter, so the struck-through price and the live one are written
-  // the same way — RON before the number, a dollar sign in front of it, and
-  // whatever a funnel's own `price_format` says.
-  function formatPrice(cents) {
+  // Unchanged but for the default: called with nothing it writes what the
+  // checkout is about to charge, which is every caller there has ever been.
+  // The regular price is written by passing it in, so the struck-through
+  // figure on a sale card goes through this same body — the symbol table, a
+  // funnel's own `price_format`, the RON decimal mark — rather than through a
+  // second formatter that would drift from it.
+  function formatPriceShort(cents) {
+    if (typeof cents !== "number") cents = priceCents();
     var cur = (cfg.pricing.currency || "usd").toUpperCase();
     var own = priceFormat();
     if (own) return own.replace("{amount}", priceAmount(cents, true));
     var amount = cents % 100 === 0 ? String(cents / 100)
                                    : (cents / 100).toFixed(2);
     return SYMBOLS[cur] ? SYMBOLS[cur] + amount : amount + " " + cur;
-  }
-
-  function formatPriceShort() {
-    return formatPrice(priceCents());
   }
 
   function withPrice(text) {
