@@ -411,3 +411,6 @@ bottom.
 
 ## 2026-08-28 — claude/persona-v3-sculpt-v2
 - persona v3 sculpt v2: pose-verbs, handmade marks, contrast
+
+## 2026-08-28 — claude/persona-v3-sculpt-idioms
+- persona v3 sculpt v3: embodied-idiom forms
