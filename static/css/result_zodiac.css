@@ -615,6 +615,30 @@ body:has(.result-module) {
   color: var(--zr-gold);
 }
 
+/* The regular price, beside the one they are being offered. Small, muted and
+   struck: it is the reference the discount is measured against, not a second
+   thing to read. `line-through` rather than a drawn rule, so it scales with
+   the type and is one property rather than a pseudo-element to keep aligned. */
+.zr-price-was {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--zr-faint);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+/* One line under the price: what the offer is, and the day it stops. Gold,
+   because it is the only thing on this card that is true today and not next
+   month, and centred with the figure it belongs to. */
+.zr-sale {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--zr-gold);
+}
+
 .zr-price-note {
   font-size: 14px;
   font-weight: 600;

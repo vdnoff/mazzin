@@ -157,6 +157,12 @@ def comparable(config):
     # ron", together with the assertion that the English three are still at
     # 300 usd. Everything outside `pricing` stays compared, number for number.
     out["pricing"] = "priced"
+    # And `sale`, for the same reason one step further out: whether a funnel
+    # is running an offer this week is a commercial decision taken per funnel,
+    # not a property of the translation. The English thirty is on one and this
+    # one is not, and neither fact says anything about whether the two configs
+    # are the same shape. Asserted on its own account below.
+    out.pop("sale", None)
     copy = dict(config["result_copy"])
     for key in ADDED:
         copy.pop(key, None)
@@ -177,6 +183,13 @@ check("  and `pricing` is the only block they disagree on",
       cfg["pricing"] != twin["pricing"]
       and shape(comparable(cfg)) == shape(comparable(twin)),
       "%s vs %s" % (cfg["pricing"], twin["pricing"]))
+import payments  # noqa: E402
+
+check("  this funnel runs no sale of its own",
+      "sale" not in cfg, str(cfg.get("sale")))
+check("    so it charges its regular price, whatever the English one is doing",
+      payments._effective_price(cfg) == (cfg["pricing"]["amount_cents"], None),
+      str(payments._effective_price(cfg)))
 check("    a different currency, not just a different number",
       cfg["pricing"]["currency"] != twin["pricing"]["currency"]
       and cfg["pricing"]["amount_cents"] != twin["pricing"]["amount_cents"],
@@ -427,6 +440,19 @@ check("both engine.js formatters read the funnel's own format",
       str([fn for fn in ("formatPrice", "formatPriceShort")
            if "priceFormat()" not in js_body(fn)
            or "priceAmount(cents," not in js_body(fn)]))
+# The short form takes an amount now, so a sale card can write the regular
+# price through this same body rather than through a second formatter that
+# would drift from it. Called with nothing — which is every caller that
+# existed before — it writes the price the checkout is about to take.
+check("  the short one defaults to the effective price",
+      'if (typeof cents !== "number") cents = priceCents();'
+      in js_body("formatPriceShort")
+      and "var cents = priceCents();" in js_body("formatPrice"))
+check("  and there is exactly one function of each name",
+      ENGINE_JS.count("  function formatPrice(") == 1
+      and ENGINE_JS.count("  function formatPriceShort(") == 1,
+      "%d / %d" % (ENGINE_JS.count("  function formatPrice("),
+                   ENGINE_JS.count("  function formatPriceShort(")))
 check("  the short one drops the minor units on a round amount, as before",
       "cents % 100 === 0" in js_body("formatPriceShort")
       and "cents % 100 === 0" in js_body("priceAmount"))

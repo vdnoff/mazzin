@@ -160,7 +160,11 @@ def strings(node):
     return []
 
 
-TWELVES = [t for t in strings(cfg) if re.search(r"\b12\b", t)]
+# The sale's `ends` is a timestamp, not a sentence: its UTC-12 offset is a
+# timezone, and no reader is ever shown the string. Every other string in the
+# config is copy and is scanned.
+TWELVES = [t for t in strings(cfg) if re.search(r"\b12\b", t)
+           and t != (cfg.get("sale") or {}).get("ends")]
 check("the only twelve left in the copy is the year map",
       all("12-month" in t.lower() for t in TWELVES), str(TWELVES))
 check("  and the map itself still runs twelve months",
@@ -1203,6 +1207,211 @@ priced = [t for t in re.findall(r'"([^"]*\$[^"]*)"',
           if shown in t]
 check("  and no copy states it — every mention is the {price} token",
       not priced, str(priced))
+
+print("\n--- the summer sale ---")
+import datetime  # noqa: E402
+
+import payments  # noqa: E402
+import reports  # noqa: E402
+
+UTC = datetime.timezone.utc
+sale = cfg.get("sale") or {}
+REGULAR = cfg["pricing"]["amount_cents"]
+check("the funnel carries a sale block", isinstance(sale, dict) and sale,
+      str(sale))
+check("  it is on", sale.get("active") is True, str(sale.get("active")))
+check("  at two dollars", sale.get("price_cents") == 200,
+      str(sale.get("price_cents")))
+# The one that stops a false discount. A struck-through figure is a claim
+# about what this product costs when it is not on sale, so the block's idea
+# of the regular price has to BE the funnel's price — not a rounder number
+# that would make the saving look bigger.
+check("  against the price this funnel actually charges",
+      sale.get("regular_price_cents") == REGULAR == 300,
+      "%s vs %s" % (sale.get("regular_price_cents"), REGULAR))
+check("  which is the same three dollars the twin charges",
+      REGULAR == twin["pricing"]["amount_cents"])
+check("  labelled, and ending on a date", bool(sale.get("label"))
+      and bool(sale.get("ends")), str(sale))
+check("  the end is written with a timezone",
+      payments._sale_ends(sale.get("ends")) is not None, str(sale.get("ends")))
+check("  and it is the last hour of the last zone to reach the 31st",
+      payments._sale_ends(sale["ends"])
+      == datetime.datetime(2026, 8, 31, 23, 59, 59,
+                           tzinfo=datetime.timezone(
+                               datetime.timedelta(hours=-12))),
+      str(payments._sale_ends(sale["ends"])))
+check("the block carries these five keys and no others",
+      sorted(sale) == ["active", "ends", "label", "price_cents",
+                       "regular_price_cents"], str(sorted(sale)))
+# Nothing that counts down, nothing that runs out. The only two true things
+# this offer can say are what it is and when it stops.
+# Scarcity, not counting: the walk's own "Three signals left" is a true tally
+# of a run and stays. What may not appear is a claim about how much of the
+# product is available or how long the reader has to decide — and it is
+# scanned over what the offer says, which is the sale block and the card
+# around it, rather than over every sentence in the funnel.
+URGENCY = re.compile(r"\b(hurry|spots?|seats?|in stock|selling fast|"
+                     r"almost gone|act now|countdown|expires in|"
+                     r"while stocks|don't miss|\d+\s*(?:left|remaining))\b",
+                     re.I)
+OFFER_COPY = ([sale["label"]]
+              + [cfg["checkout"]["cta_label"], cfg["checkout"]["reframe"]]
+              + list(strings(cfg["checkout"]["commerce"]))
+              + [r["offer_sub"] for r in
+                 (cfg["result_copy"].get("purpose_map") or {}).values()])
+check("  the label says nothing about scarcity",
+      not URGENCY.search(sale["label"]), sale["label"])
+check("  and nothing on the offer card does either",
+      not [t for t in OFFER_COPY if URGENCY.search(t)],
+      str([t for t in OFFER_COPY if URGENCY.search(t)]))
+check("  nothing counts down to it",
+      not [t for t in strings(cfg) if re.search(r"\bcountdown\b|"
+                                                r"\bexpires? in\b|"
+                                                r"\bhours? left\b", t, re.I)])
+result_js = open(os.path.join(ROOT, cfg["result_module"].lstrip("/")),
+                 encoding="utf-8").read()
+check("  and the module draws no timer of its own",
+      "setInterval" not in result_js
+      and "countdown" not in result_js.lower())
+check("  the label passes the Terms scan",
+      reports._banned_hit(sale["label"], reports.ZODIAC_BANNED) is None)
+
+print("\n--- and it is the clock that ends it, not a deploy ---")
+# The first instant the offer is over, read off the config rather than
+# restated: 23:59:59 in UTC-12 is 11:59:59Z the next day, and `>=` means that
+# second is already outside it.
+BOUNDARY = payments._sale_ends(sale["ends"]).astimezone(UTC)
+SECOND = datetime.timedelta(seconds=1)
+check("  which lands at noon UTC on the first",
+      BOUNDARY == datetime.datetime(2026, 9, 1, 11, 59, 59, tzinfo=UTC),
+      str(BOUNDARY))
+for label, when, want in (
+        ("a month before", BOUNDARY - datetime.timedelta(days=30), 200),
+        ("one second before it ends", BOUNDARY - SECOND, 200),
+        ("the second it ends", BOUNDARY, 300),
+        ("a day after", BOUNDARY + datetime.timedelta(days=1), 300)):
+    got = payments._effective_price(cfg, when)[0]
+    check("  %-26s charges %d" % (label, want), got == want, str(got))
+check("  and the sale object comes back only while it is running",
+      (payments._effective_price(cfg, BOUNDARY - SECOND)[1] is sale)
+      and payments._effective_price(cfg, BOUNDARY)[1] is None)
+# Every way a block can be wrong ends at the regular price rather than at a
+# guess. The third one is the guard above, from the other side.
+BROKEN = [
+    ("inactive", {"active": False}),
+    ("no active key", {"active": None}),
+    ("claiming a regular price the funnel does not charge",
+     {"regular_price_cents": 500}),
+    ("claiming a lower regular price than it charges",
+     {"regular_price_cents": 100}),
+    ("priced at the regular price", {"price_cents": REGULAR}),
+    ("priced above it", {"price_cents": REGULAR + 100}),
+    ("priced at nothing", {"price_cents": 0}),
+    ("priced with a bool", {"price_cents": True}),
+    ("priced with a float", {"price_cents": 2.5}),
+    ("ending in words", {"ends": "soon"}),
+    ("ending without a timezone", {"ends": "2026-08-31T23:59:59"}),
+    ("not ending at all", {"ends": None}),
+]
+for label, patch in BROKEN:
+    broken = json.loads(json.dumps(cfg))
+    for key, value in patch.items():
+        if value is None:
+            broken["sale"].pop(key, None)
+        else:
+            broken["sale"][key] = value
+    got = payments._effective_price(broken, BOUNDARY - SECOND)
+    check("  a sale %-46s charges the regular price" % label,
+          got == (REGULAR, None), str(got))
+for label, block_ in (("no block at all", None), ("a string", "yes"),
+                      ("a list", [])):
+    broken = json.loads(json.dumps(cfg))
+    if block_ is None:
+        broken.pop("sale")
+    else:
+        broken["sale"] = block_
+    check("  a funnel with %-42s charges the regular price" % label,
+          payments._effective_price(broken)[0] == REGULAR)
+
+print("\n--- no other funnel is on offer ---")
+for slug in ("zodiac", "zodiac-ro", "zodiac-ro-test", "kitchen",
+             "kitchen-visualizer", "persona"):
+    other = json.load(open(os.path.join(ROOT, "funnels/%s.json" % slug),
+                           encoding="utf-8"))
+    check("  %-18s carries no sale block" % slug, "sale" not in other,
+          str(other.get("sale")))
+    check("    and prices at its own %s, whatever the clock says"
+          % other["pricing"]["amount_cents"],
+          payments._effective_price(other, BOUNDARY - SECOND)
+          == payments._effective_price(other, BOUNDARY)
+          == (other["pricing"]["amount_cents"], None),
+          str(payments._effective_price(other)))
+
+print("\n--- what the client is told, and what it cannot decide ---")
+check("engine.js resolves the sale before it fills a price",
+      "function saleOf(" in engine and "function priceCents(" in engine)
+# Both formatters, named. The long one is the two-screen paywall's line and
+# the short one writes every {price} token there is — including the pay
+# button — so a regression in either is a page quoting one number over a
+# checkout taking another.
+check("  both of its formatters read the effective price",
+      "var cents = priceCents();" in engine
+      and 'if (typeof cents !== "number") cents = priceCents();' in engine)
+check("  and neither reads the regular price directly any more",
+      "cfg.pricing.amount_cents" not in re.search(
+          r"function formatPrice\(\)\s*\{(.*?)\n  \}",
+          engine, re.S).group(1)
+      and "cfg.pricing.amount_cents" not in re.search(
+          r"function formatPriceShort\([^)]*\)\s*\{(.*?)\n  \}",
+          engine, re.S).group(1))
+# One of each name. `formatPrice` already existed, and a second declaration
+# of it would hoist over the first and silently take the paywall's long-form
+# line with it.
+check("  there is exactly one function of each name",
+      engine.count("  function formatPrice(") == 1
+      and engine.count("  function formatPriceShort(") == 1,
+      "%d / %d" % (engine.count("  function formatPrice("),
+                   engine.count("  function formatPriceShort(")))
+sale_js = re.search(r"function saleOf\([^)]*\)\s*\{(.*?)\n  \}",
+                    engine, re.S).group(1)
+check("  by the same four rules the server applies",
+      "sale.active !== true" in sale_js
+      and "price >= regular" in sale_js
+      and "sale.regular_price_cents !== regular" in sale_js
+      and "Date.now() >= ends" in sale_js, sale_js[:200])
+check("  including the one that refuses a false regular price",
+      "sale.regular_price_cents !== regular" in sale_js)
+check("every {price} on every screen comes through it",
+      "String(text || \"\").replace(/\\{price\\}/g, formatPriceShort())"
+      in engine)
+check("  so the pay button names the number the checkout will take",
+      "{price}" in cfg["checkout"]["cta_label"]
+      and "{price}" in cfg["checkout"]["commerce"]["sticky_label"])
+# The client is told the price. It is never asked.
+order_src = re.search(r"def _validated_order\(body\):(.*?)\ndef ",
+                      open(os.path.join(ROOT, "payments.py"),
+                           encoding="utf-8").read(), re.S).group(1)
+check("the server reads no price off the request",
+      "_effective_price(cfg)" in order_src
+      and 'body.get("amount' not in order_src
+      and 'body.get("price' not in order_src)
+check("  and the amount that reaches Stripe is the order's",
+      '"unit_amount": amount_cents,' in open(
+          os.path.join(ROOT, "payments.py"), encoding="utf-8").read())
+check("the line item names the offer that priced it",
+      '_text((order.get("sale") or {}).get("label"))' in open(
+          os.path.join(ROOT, "payments.py"), encoding="utf-8").read())
+# The Meta value is derived from what Stripe says was charged, so it follows
+# the sale without a line of this change reaching it.
+pay_src = open(os.path.join(ROOT, "payments.py"), encoding="utf-8").read()
+check("the Purchase value is derived from the amount actually charged",
+      'amount_cents = session.get("amount_total")' in pay_src
+      and 'amount_cents = intent.get("amount_received")' in pay_src
+      and 'float(decimal.Decimal(amount_cents)' in pay_src)
+check("  and no price is written into the code anywhere",
+      not re.search(r"amount_cents\s*=\s*\d+", pay_src),
+      str(re.findall(r"amount_cents\s*=\s*\d+", pay_src)))
 
 print("\n--- scoring ---")
 

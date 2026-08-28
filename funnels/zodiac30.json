@@ -2982,6 +2982,13 @@
     "currency": "usd",
     "cta": "Unlock my full profile"
   },
+  "sale": {
+    "active": true,
+    "price_cents": 200,
+    "regular_price_cents": 300,
+    "label": "Summer Sale",
+    "ends": "2026-08-31T23:59:59-12:00"
+  },
   "checkout": {
     "kicker": "Your profile is ready",
     "product_name": "Your Cosmic Profile Report",

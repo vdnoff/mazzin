@@ -24,6 +24,7 @@ is used wherever a fractional amount is actually computed.
 No email address, address or raw request body is ever written to a log line.
 """
 
+import datetime
 import decimal
 import hashlib
 import ipaddress
@@ -719,6 +720,86 @@ class OrderError(Exception):
         self.status = status
 
 
+# --- a sale, while one is running ------------------------------------------
+#
+# The whole of it: a funnel may carry a `sale` block, and while that block is
+# live the amount charged is the one it names. There is no second place this
+# is decided. The client is told what the price is by the same block, but it
+# is told rather than asked — every amount that reaches Stripe is computed
+# here, from the config on this disk, against this machine's clock.
+
+
+def _now():
+    """Now, as an aware UTC datetime. One function so a test owns the clock."""
+    return datetime.datetime.now(datetime.timezone.utc)
+
+
+def _sale_ends(value):
+    """The end of a sale as an aware datetime, or None if it is not one.
+
+    An unparseable or naive `ends` is not a sale that runs forever — it is a
+    misconfigured block, and the safe reading of one is that there is no sale.
+    """
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        when = datetime.datetime.fromisoformat(value.strip())
+    except ValueError:
+        return None
+    return when if when.tzinfo is not None else None
+
+
+def _sale(cfg, now=None):
+    """The live sale on a funnel, or None. Never raises.
+
+    Four things have to hold, and the third is the one that matters most:
+
+    - the block says it is active;
+    - its price is a positive integer under the regular one;
+    - **its `regular_price_cents` is the price this funnel actually charges.**
+      A struck-through figure is a claim about what this product costs when it
+      is not on sale, and a sale block naming a number the funnel has never
+      charged would put a false one on the page. So the two have to agree, and
+      a block that disagrees does not run at all rather than running with a
+      number nobody can stand behind;
+    - it has not ended.
+    """
+    sale = (cfg or {}).get("sale")
+    if not isinstance(sale, dict) or sale.get("active") is not True:
+        return None
+
+    regular = ((cfg or {}).get("pricing") or {}).get("amount_cents")
+    price = sale.get("price_cents")
+    claimed = sale.get("regular_price_cents")
+    if not isinstance(price, int) or isinstance(price, bool) or price <= 0:
+        return None
+    if not isinstance(regular, int) or price >= regular:
+        return None
+    if claimed != regular:
+        log.error("funnel sale claims a regular price of %r while the funnel "
+                  "charges %r — refusing to run it", claimed, regular)
+        return None
+
+    ends = _sale_ends(sale.get("ends"))
+    if ends is None or (now or _now()) >= ends:
+        return None
+    return sale
+
+
+def _effective_price(cfg, now=None):
+    """`(amount_cents, sale)` for a funnel right now.
+
+    The regular price and None when nothing is running, which is every funnel
+    that carries no block and every funnel whose block has expired. Nothing
+    has to be deployed for a sale to end: it ends on the clock.
+    """
+    pricing = (cfg or {}).get("pricing") or {}
+    sale = _sale(cfg, now)
+    if sale is None:
+        return pricing.get("amount_cents"), None
+    return sale["price_cents"], sale
+
+
 def _validated_order(body):
     """Everything a payment needs, taken from a request and re-derived here.
 
@@ -754,7 +835,9 @@ def _validated_order(body):
         raise OrderError(400)
 
     pricing = cfg.get("pricing") or {}
-    amount_cents = pricing.get("amount_cents")
+    # The one place an amount is decided. A body that arrived carrying a price
+    # would still be ignored: nothing below reads one.
+    amount_cents, sale = _effective_price(cfg)
     currency = pricing.get("currency")
     if not isinstance(amount_cents, int) or amount_cents <= 0 or not currency:
         log.error("funnel %s has no usable price", slug)
@@ -780,6 +863,9 @@ def _validated_order(body):
         "result_style": result_style,
         "amount_cents": amount_cents,
         "currency": currency,
+        # Carried so the Stripe line item can say so. Nothing downstream reads
+        # it to decide an amount — that was decided above.
+        "sale": sale,
         # Steer the report copy only — never the price, never whether we
         # fulfil.
         "tag_scores": _tag_scores_metadata(
@@ -842,6 +928,12 @@ def checkout():
     title = (cfg.get("meta") or {}).get("title") or slug
     product_name = (_text(checkout_cfg.get("product_name"))
                     or "%s — Full Style Report" % title)
+    # And when they are buying it on offer, the receipt says which offer. The
+    # label comes out of the same block the price did, so a receipt cannot
+    # name a sale that did not set the amount beside it.
+    sale_label = _text((order.get("sale") or {}).get("label"))
+    if sale_label:
+        product_name = "%s — %s" % (product_name, sale_label)
     product_data = {"name": product_name}
     images = _product_images(checkout_cfg)
     if images:
