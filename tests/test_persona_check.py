@@ -313,6 +313,53 @@ check("the drain cards are the least saturated in the walk",
       "%.0f vs %.0f" % (max(drain_sat), max(now_sat)))
 
 
+print("\n--- no card demands a frame its own floor refuses ---")
+# hour_after_dark failed 3/3 at luma 34-43. It had Warm Umbra in the GROUND
+# and a description whose whole point was that no light falls on it — the
+# card demanded a dark frame by construction and the quiz floor refuses one
+# by construction. Same conflict the totems had, same resolution: the
+# darkness moves into the form and the backdrop stays lit.
+after_dark = by_id["hour_after_dark"]
+check("after dark is a dark form on a light sweep",
+      "deep dark-toned clay form" in after_dark["form"]
+      and "bright warm sweep" in after_dark["form"],
+      after_dark["form"][:70])
+check("  it keeps its own-light meaning",
+      "gives its own light instead of taking any" in after_dark["form"])
+check("  and says outright that the backdrop stays lit",
+      "the sweep behind it stays fully lit" in after_dark["form"])
+check("  it no longer asks for an unlit frame",
+      "none falling on it" not in after_dark["form"])
+check("  the deep tone is on the form, the teal is the core",
+      [(c["hex"], c["element"]) for c in after_dark["colors"]]
+      == [("#4A2E1E", "form"), ("#4EDDC4", "core"), ("#F3E3CC", "sweep")],
+      str([(c["hex"], c["element"]) for c in after_dark["colors"]]))
+# The generalisation, so the next card written this way is caught here rather
+# than after three draws: nothing may put the darkest tone in the backdrop.
+GROUND = {"ground", "backdrop", "field", "sweep"}
+
+
+def lightness(hexv):
+    r, g, b = (int(hexv[i:i + 2], 16) for i in (1, 3, 5))
+    return 0.299 * r + 0.587 * g + 0.114 * b
+
+
+dark_ground = [(i["id"], c["hex"], c["element"]) for i in images
+               for c in i["colors"]
+               if c["element"] in GROUND and lightness(c["hex"]) < 90]
+check("no card puts a near-dark tone in its own backdrop", not dark_ground,
+      str(dark_ground[:3]))
+check("  and the warm umbra is off the quiz palette entirely",
+      "#241A10" not in {c["hex"] for i in images for c in i["colors"]})
+check("  though it is still the ground the share cards sit on",
+      "#241A10" in {c["hex"] for cd in cfg["share_cards"]
+                    for c in cd["colors"]})
+# The sibling has to stay the bright half of the pair, or the step stops
+# asking anything.
+check("first light is still the lit one",
+      "rising toward the light" in by_id["hour_first_light"]["form"])
+
+
 print("\n--- the gallery on disk ---")
 gallery = {f[:-len(".webp")] for f in os.listdir(GALLERY)
            if f.endswith(".webp")}

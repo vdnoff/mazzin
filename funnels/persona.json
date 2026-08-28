@@ -734,16 +734,16 @@
         "id": "hour_after_dark",
         "img": "/static/galleries/persona/hour_after_dark.webp",
         "label": "After dark",
-        "form": "A form with a glowing core held inside a deeper tone, giving its own light because there is none falling on it.",
+        "form": "A deep dark-toned clay form standing on the bright warm sweep, its surface a near-black brown, with a bright electric teal core glowing out through fine cracks and seams across it. It gives its own light instead of taking any, and the sweep behind it stays fully lit.",
         "tags": [
          "inner",
          "deep"
         ],
         "colors": [
          {
-          "name": "Warm Umbra",
-          "hex": "#241A10",
-          "element": "ground"
+          "name": "Night Clay",
+          "hex": "#4A2E1E",
+          "element": "form"
          },
          {
           "name": "Signal Teal",
@@ -751,9 +751,9 @@
           "element": "core"
          },
          {
-          "name": "Deep Terracotta",
-          "hex": "#8E4A2C",
-          "element": "form"
+          "name": "Cream Sweep",
+          "hex": "#F3E3CC",
+          "element": "sweep"
          }
         ]
        }
