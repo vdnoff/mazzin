@@ -1,16 +1,35 @@
 #!/usr/bin/env python3
-"""Draw eight sample frames in the persona v3 quiz style, for owner review.
+"""Draw eight sample frames in a candidate persona v3 quiz style, to review.
 
 Console use only, run by hand against a key. Nothing imports this, no route
 reaches it, and no config references what it writes:
 
     pip install pillow
     export OPENAI_API_KEY=sk-...
-    cd ~/mazzin && python3 scripts/gen_persona_v3_samples.py
+    cd ~/mazzin && python3 scripts/gen_persona_v3_samples.py --style clay
 
     python3 scripts/gen_persona_v3_samples.py --dry-run          # prompts only
+    python3 scripts/gen_persona_v3_samples.py --style clay --dry-run
     python3 scripts/gen_persona_v3_samples.py --only s_bag_notebook --force
-    python3 scripts/gen_persona_v3_samples.py --force            # redraw all
+    python3 scripts/gen_persona_v3_samples.py --style clay --force
+
+--- two styles, one directory ----------------------------------------------
+
+`--style vector` is the flat-vector set the owner first reviewed; `--style
+clay` is the soft-3D clay direction they picked out of that review. Both
+write into the same directory, the clay ids carrying a `clay_` prefix, so the
+two sets sit side by side on the phone and the comparison is one scroll rather
+than two runs of memory. Nothing overwrites anything: `s_morning_run` and
+`clay_s_morning_run` are the same scene drawn two ways.
+
+The eight scenes, the geometry, the retry, the crop and the cost log are
+shared. What a style owns is its prefix, its negatives and its id prefix —
+because those are the three things that actually differ, and a second copy of
+the scene list is a second thing to keep in step.
+
+The flat-vector prompts are frozen. They were reviewed as they stand, so a
+change to them would silently invalidate the set already on disk; the suite
+pins all eight against a digest and fails if this file moves one byte of them.
 
 --- why this is a separate script ------------------------------------------
 
@@ -48,6 +67,10 @@ comes back as a non-picture — near-black, blown-out or blank white, and
 greyscale with no colour in it — and passes everything else. The owner review
 is the real gate, and a floor that second-guesses the thing being reviewed
 would be filtering the evidence.
+
+The floor is shared by both styles but for one number: matte clay on a cream
+ground is a softer, less saturated picture than flat vector art on the same
+ground, so clay gets a lower colour floor. See CLAY_MIN_SATURATION.
 """
 import argparse
 import base64
@@ -87,19 +110,23 @@ PRICE = {
 
 # --- the v3 quiz identity ----------------------------------------------------
 #
-# Bright, warm, friendly. The one thread it keeps from the dark result page is
-# the electric teal, which is what stops the two halves of the product from
-# looking like two products: the quiz is cream and coral with teal running
-# through it, the result page is teal light on ink, and the teal is the hinge.
+# Bright, warm, friendly, in two candidate materials. The one thread both keep
+# from the dark result page is the electric teal, which is what stops the two
+# halves of the product from looking like two products: the quiz is cream and
+# coral with teal running through it, the result page is teal light on ink,
+# and the teal is the hinge.
 #
-# Faces are the deliberate reversal. The live gallery bans them outright and
-# draws people as flat silhouettes, which is correct for a symbolic ink frame
-# and is half of why the quiz reads as sombre — a silhouette is a person with
-# the warmth taken out. v3 lets characters have a face as long as it stays at
-# two dots and a line, which is likeable at tile size and still nobody in
-# particular.
+# Faces are the deliberate reversal, in both styles. The live gallery bans
+# them outright and draws people as flat silhouettes, which is correct for a
+# symbolic ink frame and is half of why the quiz reads as sombre — a
+# silhouette is a person with the warmth taken out. v3 lets characters have a
+# face as long as it stays at two dots and a line, which is likeable at tile
+# size and still nobody in particular.
 
-STYLE = (
+# The flat-vector prefix, exactly as the owner reviewed it. Frozen: the eight
+# frames on disk were drawn from this text, so editing it makes the committed
+# set and the script disagree about what the set is. The suite pins it.
+VECTOR_STYLE = (
     "Flat modern vector-style illustration, warm and optimistic. "
     "Light warm background: soft cream and pale warm tones fill the frame — "
     "never a clinical pure white, never a shadowed or low-key ground. "
@@ -136,8 +163,8 @@ SAFE_AREA = (
 # The negatives, written to stay clear of the dark gallery's own vocabulary.
 # "No ink-navy ground" would steer as well as anything here and would also put
 # the phrase the v3 prompts are defined by NOT containing into every one of
-# them, which makes the direction unassertable.
-NEGATIVE = (
+# them, which makes the direction unassertable. Frozen with the prefix above.
+VECTOR_NEGATIVE = (
     "No text, no letters, no numbers, no words, no logos, no watermarks, no "
     "user-interface elements, no buttons. "
     "No photorealism, no 3D render, no realistic detailed faces, no "
@@ -146,6 +173,66 @@ NEGATIVE = (
     "dim, murky, drab or low-key palette, no heavy grain, no clutter, no "
     "busy background."
 )
+
+# The clay prefix — the direction the owner picked out of the vector review.
+#
+# The hard part of this brief is what "clay" summons if left alone. Ask a model
+# for clay and it reaches for claymation: Aardman, stop-motion, thumbprints in
+# plasticine, a nursery. That is a children's-television look and it would read
+# as cheaper than the flat vector set, not more premium. So the material is
+# named positively — matte, finely textured, studio-lit, rendered — and the
+# claymation reading is refused explicitly in the negatives rather than left to
+# chance.
+CLAY_STYLE = (
+    "Soft 3D clay-render illustration in a premium modern app aesthetic, warm "
+    "and optimistic. Rendered, not sculpted by hand: the polished soft-3D "
+    "look of contemporary product and app illustration. "
+    "Matte clay-like materials with a subtle fine surface texture, rounded "
+    "simplified forms with softly bevelled edges, warm studio lighting with "
+    "soft diffused shadows and a gentle shallow depth-of-field feel. "
+    "Clean light-warm background: soft cream and pale peach tones fill the "
+    "frame — never a clinical pure white, never a shadowed or low-key ground. "
+    "Warm friendly palette — soft coral, amber, sunny yellow, leaf green — "
+    "with electric teal (#4EDDC4) appearing in every frame as a recurring "
+    "accent material: one moulded object, one garment or one soft glow. "
+    "One clear subject per frame, bold and simple enough to read in half a "
+    "second at phone-tile size. "
+    "Stylized human figures moulded in clay, with minimal faces — two small "
+    "dot eyes and one simple understated feature — friendly but composed, "
+    "never realistic and never childish."
+)
+
+# What clay must NOT inherit from the vector set is its "no 3D render" line:
+# clay IS a 3D render, and banning one in the same prompt that asks for one is
+# how a set comes back flat and confused. Everything else the vector negatives
+# refuse — text, dark palettes, real faces — still holds, so the two lists are
+# close but not the same, and neither is derived from the other.
+CLAY_NEGATIVE = (
+    "No text, no letters, no numbers, no words, no logos, no watermarks, no "
+    "user-interface elements, no buttons. "
+    "Not claymation, not stop-motion, not plasticine, not Aardman, not "
+    "handmade-looking: no visible fingerprints, thumbprints, tool marks or "
+    "seams in the clay, nothing lumpy, nothing childish, nothing toy-like or "
+    "nursery-like. "
+    "No photorealism, no realistic skin or hair, no realistic detailed faces, "
+    "no portrait-photograph likeness, no uncanny human anatomy. "
+    "Never a night scene, never a black or midnight-blue background, never a "
+    "dim, murky, drab or low-key palette, no clutter, no busy background."
+)
+
+# The registry, and the whole of what a style owns: a prefix, its negatives,
+# and the prefix its ids carry so two sets share one directory without
+# colliding. The scenes, the geometry, the crop, the retry and the safe-area
+# rule are shared, because a second copy of any of those is a second thing to
+# keep in step across a redraw.
+STYLES = {
+    "vector": {"style": VECTOR_STYLE, "negative": VECTOR_NEGATIVE,
+               "prefix": ""},
+    "clay": {"style": CLAY_STYLE, "negative": CLAY_NEGATIVE,
+             "prefix": "clay_"},
+}
+DEFAULT_STYLE = "vector"
+
 
 # --- the eight samples -------------------------------------------------------
 #
@@ -235,16 +322,78 @@ SAMPLES = [
 ]
 
 
-def prompt_for(scene):
-    """The four blocks every sample is built from, in the same order."""
-    return "\n".join([STYLE, SAFE_AREA, scene, NEGATIVE])
+# One scene wants a sentence in clay that it does not want in vector.
+#
+# The character portrait is the frame that decides the eight-personas asset,
+# and "collectible figure" is a clay idea specifically: it is what makes a
+# moulded figure read as one of a set rather than as a person in a picture.
+# Said to a flat-vector render it would just ask for a sticker. So it is a
+# per-style note on the one scene that needs it, rather than a second copy of
+# the scene or a sentence bolted onto all sixteen prompts.
+# Two of them also want a correction rather than an addition. The scene text
+# is shared and the vector prompts are frozen, so `a few simple flat
+# buildings` and `several near-identical flat figures` — written when flat was
+# the material — cannot be reworded without moving the set already on disk.
+# Left alone in a clay prompt they contradict the prefix in the same breath it
+# asks for moulded, rounded, dimensional forms, and a model handed both tends
+# to split the difference into relief cut-outs. So clay overrules them where
+# they appear, in the scene's own slot, close enough to the wording it is
+# answering to actually win.
+STYLE_SCENE_NOTES = {
+    "clay": {
+        "s_morning_run": (
+            "The buildings and the tree are moulded clay forms — rounded, "
+            "dimensional and softly lit, never flat graphic cut-outs."
+        ),
+        "s_drain_meeting": (
+            "Every figure is a rounded moulded clay character with real "
+            "volume and a soft shadow, never a flat graphic shape."
+        ),
+        "s_character_cartographer": (
+            "Give the figure the feel of a premium collectible character "
+            "figure: a single moulded character presented straight on, "
+            "poster-like and evenly lit, at the scale and consistency where "
+            "eight of these side by side would obviously belong to one set."
+        ),
+    },
+}
 
 
-def samples():
+def scene_for(base_id, scene, style=DEFAULT_STYLE):
+    """The scene text, plus whatever this style adds to it."""
+    note = STYLE_SCENE_NOTES.get(style, {}).get(base_id)
+    return scene + " " + note if note else scene
+
+
+def prompt_for(scene, style=DEFAULT_STYLE):
+    """The four blocks every sample is built from, in the same order.
+
+    The safe-area rule sits in the same slot for both styles and is the same
+    text in both, because the crop it is written against is a property of the
+    pipeline rather than of the material — the render is 2:3, this script
+    centre-crops it to 3:4 and the tile crops again, whichever way the picture
+    was drawn.
+    """
+    spec = STYLES[style]
+    return "\n".join([spec["style"], SAFE_AREA, scene, spec["negative"]])
+
+
+def sample_id_for(base_id, style=DEFAULT_STYLE):
+    """The id a scene is filed under in this style.
+
+    The vector set carries no prefix: it is on disk under these names already
+    and reviewed under them, and renaming it to `vector_s_morning_run` to make
+    the scheme tidy would orphan eight files somebody has already looked at.
+    """
+    return STYLES[style]["prefix"] + base_id
+
+
+def samples(style=DEFAULT_STYLE):
     """The batch, in the order it is drawn and reviewed."""
-    return [{"id": sample_id, "size": FRAME, "api_size": API_PORTRAIT,
-             "prompt": prompt_for(scene)}
-            for sample_id, scene in SAMPLES]
+    return [{"id": sample_id_for(base_id, style), "base_id": base_id,
+             "style": style, "size": FRAME, "api_size": API_PORTRAIT,
+             "prompt": prompt_for(scene_for(base_id, scene, style), style)}
+            for base_id, scene in SAMPLES]
 
 
 # --- the call ----------------------------------------------------------------
@@ -328,6 +477,23 @@ MIN_STDDEV = 10.0
 # enough that the palest frame in the batch (the fog card) clears it.
 MIN_SATURATION = 15.0
 
+# Clay sits lower, and gets its own number rather than dragging the vector
+# floor down with it. Matte clay lit in a studio is a desaturated material by
+# construction — the highlight on a coral form is a wash toward white and the
+# shade is a wash toward grey, where flat vector art holds one saturated fill
+# edge to edge. On the palest scene in the batch, the fog card, a clay render
+# is mostly near-neutral mist over a cream ground and can plausibly land in
+# the low teens, which the vector floor would reject for being exactly what
+# was asked for.
+#
+# It is set by reasoning about the material rather than by measuring a batch,
+# so it is a starting number: if a clay run rejects a frame that looks right
+# in the log's `sat` reading, this is the line to move. What it must keep
+# catching is a colourless render, and those come back near zero — a true
+# greyscale frame is nowhere near 10, so the margin below is intact even
+# though the margin above got thinner.
+CLAY_MIN_SATURATION = 10.0
+
 
 def measure(img):
     """`(mean_luma, stddev, mean_saturation)` for a frame, or None.
@@ -344,7 +510,12 @@ def measure(img):
         return None
 
 
-def sanity(stats):
+def min_saturation(style=DEFAULT_STYLE):
+    """The colour floor this style is judged against."""
+    return CLAY_MIN_SATURATION if style == "clay" else MIN_SATURATION
+
+
+def sanity(stats, style=DEFAULT_STYLE):
     """`(ok, note)` for a measured frame. Never raises.
 
     Loose on purpose: it rejects near-black, blank and colourless renders and
@@ -357,7 +528,7 @@ def sanity(stats):
         return True, "unmeasured"
     mean, sd, sat = stats
     ok = (MIN_MEAN_LUMA <= mean <= MAX_MEAN_LUMA
-          and sd >= MIN_STDDEV and sat >= MIN_SATURATION)
+          and sd >= MIN_STDDEV and sat >= min_saturation(style))
     return ok, "luma %.1f sd %.1f sat %.1f" % (mean, sd, sat)
 
 
@@ -394,10 +565,15 @@ def to_webp(raw, size):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--style", default=DEFAULT_STYLE,
+                    choices=sorted(STYLES),
+                    help="which candidate style to draw (default: %s)"
+                         % DEFAULT_STYLE)
     ap.add_argument("--dry-run", action="store_true",
                     help="print the plan and every prompt, call nothing")
     ap.add_argument("--only", default="",
-                    help="comma-separated sample ids to consider")
+                    help="comma-separated sample ids to consider, with or "
+                         "without this style's id prefix")
     ap.add_argument("--force", action="store_true",
                     help="redraw samples whose file is already on disk")
     ap.add_argument("--price", type=float, default=None,
@@ -406,15 +582,28 @@ def main(argv=None):
                     help="redraws allowed when a sample fails the floor")
     args = ap.parse_args(argv)
 
-    plan = samples()
-    known = set(f["id"] for f in plan)
+    plan = samples(args.style)
     if args.only:
-        names = [n.strip() for n in args.only.split(",") if n.strip()]
-        unknown = [n for n in names if n not in known]
+        # Both spellings resolve, because the prefix is bookkeeping for the
+        # shared directory and nobody reviewing clay thinks of the fog card as
+        # anything but the fog card. `--style clay --only s_weather_fog` and
+        # `--only clay_s_weather_fog` name the same frame; a name that is
+        # neither is an error rather than an empty run.
+        wanted, unknown = set(), []
+        for raw in (n.strip() for n in args.only.split(",")):
+            if not raw:
+                continue
+            for frame in plan:
+                if raw in (frame["id"], frame["base_id"]):
+                    wanted.add(frame["id"])
+                    break
+            else:
+                unknown.append(raw)
         if unknown:
-            print("unknown sample id(s): %s" % ", ".join(unknown))
+            print("unknown sample id(s) for style %s: %s"
+                  % (args.style, ", ".join(unknown)))
             return 2
-        plan = [f for f in plan if f["id"] in set(names)]
+        plan = [f for f in plan if f["id"] in wanted]
 
     if not args.force:
         plan = [f for f in plan
@@ -424,8 +613,8 @@ def main(argv=None):
     if price is None:
         price = PRICE.get((IMAGE_QUALITY, API_PORTRAIT), 0.0)
 
-    print("%s, quality %s, %d sample(s) to draw, ~$%.2f estimated"
-          % (MODEL, IMAGE_QUALITY, len(plan), len(plan) * price))
+    print("%s style, %s, quality %s, %d sample(s) to draw, ~$%.2f estimated"
+          % (args.style, MODEL, IMAGE_QUALITY, len(plan), len(plan) * price))
 
     if args.dry_run:
         for frame in plan:
@@ -439,8 +628,8 @@ def main(argv=None):
     key = os.getenv("OPENAI_API_KEY", "")
     if not key:
         print("OPENAI_API_KEY is not set — nothing was called or written.")
-        print("Run:  OPENAI_API_KEY=sk-... "
-              "python3 scripts/gen_persona_v3_samples.py")
+        print("Run:  OPENAI_API_KEY=sk-... python3 "
+              "scripts/gen_persona_v3_samples.py --style %s" % args.style)
         return 1
 
     os.makedirs(OUT, exist_ok=True)
@@ -456,7 +645,7 @@ def main(argv=None):
                 break
             spent += price
             data, img = to_webp(raw, frame["size"])
-            ok, note = sanity(measure(img))
+            ok, note = sanity(measure(img), frame["style"])
             if ok:
                 path = os.path.join(OUT, sample_id + ".webp")
                 with open(path, "wb") as fh:
