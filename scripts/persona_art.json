@@ -1,5 +1,555 @@
 {
-  "frames": {},
+  "frames": {
+    "battery_in_the_cluster": {
+      "bytes": 18536,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 126.8 sd 44.1 sat 192.4",
+      "recipe_sha": "8eef046bf74dbe0c9bd7199f82877643ab0be3c6d8093d24a876b86589833921",
+      "sha256": "3e9c48a777dd16d46a53574a6142098adb6a48b4d3f0bba88f70ec6d1cdca63d",
+      "size": "600x800"
+    },
+    "battery_in_your_shell": {
+      "bytes": 17332,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 125.7 sd 56.0 sat 167.3",
+      "recipe_sha": "e58d8757e9ad522156c71c973a4b68ea875e8da083687cfd8dcb6471381adafe",
+      "sha256": "a71bbf5c4a53f004e24aad27ea89ffad5ff557486314ab51766ece9baca9ae81",
+      "size": "600x800"
+    },
+    "battery_one_on_one": {
+      "bytes": 13750,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 156.4 sd 52.6 sat 146.6",
+      "recipe_sha": "35b683cda820989874fa7a5a2d4850841d19977933cb425db4bd6037a5f62bdd",
+      "sha256": "5d0fc527a6101958c219d5a98446c2664560da80cec9a0f1fc7e1b8749f64d91",
+      "size": "600x800"
+    },
+    "battery_out_in_the_open": {
+      "bytes": 15802,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 172.5 sd 40.1 sat 115.8",
+      "recipe_sha": "94e09f938cb9a23b4eec65b99d4ebf5aa68e73d78c3ff20fcc7e736f3dbb72a4",
+      "sha256": "c9c7ac56c3a6e17bb3553b709cc7109dd868fea670ec6ef1411c07ab70ee8fc4",
+      "size": "600x800"
+    },
+    "chapter_climbing": {
+      "bytes": 16222,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 109.1 sd 33.8 sat 218.3",
+      "recipe_sha": "6841d57a5e47cd14aea763ae29519f5169ad92f20feaf3b7a1178b9cf88f42ff",
+      "sha256": "ff1200e45059f006d2de43000bfa0c2d234dba8fcf339015c22191e8a4fb29e4",
+      "size": "600x800"
+    },
+    "chapter_opening": {
+      "bytes": 21738,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 139.3 sd 48.4 sat 174.2",
+      "recipe_sha": "e986837cbf418161cce5c06016be301fbaa51eb279bddeed3bcea90309e13a6d",
+      "sha256": "8a8a8c8cbd076815c91589d781a884c2161a7c5bbc928bd3b22ac6e37d380119",
+      "size": "600x800"
+    },
+    "chapter_rooting": {
+      "bytes": 15428,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 148.9 sd 66.4 sat 148.1",
+      "recipe_sha": "701b8884310c0ea940e5cee69e7c0dfcbb6c6ed9c2bb1dd2a3df229c1c42050a",
+      "sha256": "4db28265dc3b85237fdd67ba7301373b94a022f02c46b8028a6c8303194483ea",
+      "size": "600x800"
+    },
+    "chapter_shedding": {
+      "bytes": 17150,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 153.6 sd 48.4 sat 119.1",
+      "recipe_sha": "31483f9e7319fab530cf4414e6e80e7e6800de802fe1c8096ee550c286f84322",
+      "sha256": "9421013ea6adb739945832199d7d1d581099d3bb6c1c138a2f10ba0c09a6fb2b",
+      "size": "600x800"
+    },
+    "drain_the_loop": {
+      "bytes": 16694,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 136.4 sd 52.4 sat 114.3",
+      "recipe_sha": "57e980339a4842506f18ab2bf2c75721e001ec78986ed02a717bfc3814243a3a",
+      "sha256": "d24eb852da2ca3db4d117830316f6cfc8414e6b7060b5113bc6e9f79134409cc",
+      "size": "600x800"
+    },
+    "drain_the_noise": {
+      "bytes": 21522,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 143.2 sd 38.5 sat 99.7",
+      "recipe_sha": "490d0e00e07f9b0433288477e42f78efd8d56d0abb59fab258036f796c3fcf54",
+      "sha256": "b9f39c9771bfc7e18e9fc65bf6a6efcf10f8368522d8f99c587df3c3bfde2482",
+      "size": "600x800"
+    },
+    "drain_the_squeeze": {
+      "bytes": 18464,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 126.6 sd 47.4 sat 82.4",
+      "recipe_sha": "122a62d394dc7d362acafef0c9f0b625eca0bab4b01631000c4ab766ff3626a8",
+      "sha256": "a960e57146006e5923b4599f61a070c4e5e2a0ff640b2bb63eb1a61f9a7668f0",
+      "size": "600x800"
+    },
+    "drain_the_wait": {
+      "bytes": 11040,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 135.8 sd 42.9 sat 94.3",
+      "recipe_sha": "6fd55ca62e53399ba2ef359985997415c247d779ab93f3223a12fbc6f345c8ef",
+      "sha256": "1cf69556d6e29d0968bf07a446f1da1240b4f09b4ad10a6afff62f0582f891a7",
+      "size": "600x800"
+    },
+    "forks_the_gut": {
+      "bytes": 14902,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 143.5 sd 44.4 sat 157.1",
+      "recipe_sha": "6953ae470a6bbbe5abc8d8401f408f4e54cb7bfe5f9d44155cb411b857621a35",
+      "sha256": "2f0c687a9cf55ae447566414d5a87d110fd272a3ba17f90415a322e8517c2009",
+      "size": "600x800"
+    },
+    "forks_the_pause": {
+      "bytes": 15712,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 159.1 sd 47.7 sat 107.7",
+      "recipe_sha": "a9a92a520c31d49d681ee20877a49e2d68d3156345dbb043158d705e224d7536",
+      "sha256": "add43a664fc0b5f41bd27de444f20ff22ae24072b50cf2f089fe115267373158",
+      "size": "600x800"
+    },
+    "forks_the_plan": {
+      "bytes": 13288,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 175.4 sd 30.3 sat 135.9",
+      "recipe_sha": "0605877105f93568049ab50a8b109f296423175103fe6ed21395ebb3b69acce2",
+      "sha256": "23bb7cc0cbfacb52a3305afb6cf3239f76a78167c81cb2f37d63f729faaa4197",
+      "size": "600x800"
+    },
+    "forks_the_pull": {
+      "bytes": 16982,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 146.5 sd 35.9 sat 163.6",
+      "recipe_sha": "8b1b679a2084a3a25b321ef1f819120126970e9bda86546e86572d43c0ce50d4",
+      "sha256": "8a4d7be1ac1b1aea6e05a5125884958243074d1d679afff4e19a5a41ab49644e",
+      "size": "600x800"
+    },
+    "head_base": {
+      "bytes": 12510,
+      "cost_usd": 0.0,
+      "kind": "promote",
+      "note": "promoted from sculpt_p_head_base",
+      "recipe_sha": "f28613e1354a1e4708a3e4503d1fee1b6ce6b7f34cea3a08c2113175cdcb1e27",
+      "sha256": "d0b518b8e3eee3983387752d480933c3039790283fdd0d45971eafd50605feee",
+      "size": "800x800"
+    },
+    "hour_first_light": {
+      "bytes": 18260,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 151.4 sd 52.9 sat 166.5",
+      "recipe_sha": "46e81c3ece510a45f7a0f1f831b5eca5b9a4c02c681b3fb6bacfee60146a962d",
+      "sha256": "7957a6062e2d4babf96a6a1dbf8d0817a230a9b822e9d5e3d3d33d9ae34f0817",
+      "size": "600x800"
+    },
+    "leanedon_the_answer": {
+      "bytes": 15540,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 140.1 sd 60.1 sat 145.7",
+      "recipe_sha": "ba9ae355477e649183a55472c4d1d5db4af36763969aa3fa97836717b794116e",
+      "sha256": "8dca7365e11eefbc5b7c7ea954ca50cb752a873d1595913cc018d71c11937f1b",
+      "size": "600x800"
+    },
+    "leanedon_the_hold": {
+      "bytes": 14682,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 140.7 sd 42.3 sat 145.2",
+      "recipe_sha": "fe80cfb70ba5c957814ae0d9b9902ac61ba1061c2aa69b29d6a165cb3d9b6dbf",
+      "sha256": "37cd8639321557e0fe7319a1e07b246ff60881ecc92fdef584d490c9faa56cb7",
+      "size": "600x800"
+    },
+    "leanedon_the_push": {
+      "bytes": 21898,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 138.5 sd 47.5 sat 165.0",
+      "recipe_sha": "99223b39cf45877f0e6b231bf2dd88b45508b9a958bb23151c6a4ac724214aab",
+      "sha256": "43f2c582937e0968e8b57b8204e5ed4267cc5e84b90ce72b6a376507f0670741",
+      "size": "600x800"
+    },
+    "leanedon_the_soft_place": {
+      "bytes": 16612,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 157.6 sd 38.6 sat 146.1",
+      "recipe_sha": "686ef23390bb89c482795f65fc75b7042444ac78fc23852e3f0ffbfdc004ac42",
+      "sha256": "120a4873f2dc1c7da1a6427a6b701225cc64722bfaa4a27b7917920ab4cc092a",
+      "size": "600x800"
+    },
+    "now_lit_up": {
+      "bytes": 15928,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 131.2 sd 50.7 sat 164.8",
+      "recipe_sha": "e509badd4685b7427ce06a1e8bc447320ea445e49cc3f79dbca6fec93c37a2d9",
+      "sha256": "4e9d97aac1c3d5fa101f7aada40b07e14a6bab3951c8988593e9f30e0887ebd5",
+      "size": "600x800"
+    },
+    "now_scattered": {
+      "bytes": 19034,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 162.7 sd 49.9 sat 154.6",
+      "recipe_sha": "f3a1c89e5c07e3729a55219aba347ec77e34ef61568427e2e4e85330cc919b38",
+      "sha256": "6e0380f788eb9b43bc36b4b1915910ec6ea2d646ac261f6489e1ba1ff344e515",
+      "size": "600x800"
+    },
+    "now_settled": {
+      "bytes": 11382,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 143.9 sd 42.3 sat 146.1",
+      "recipe_sha": "01a0b88d8cc294f8665f5b4b0f9f7ca6fd3f9fce913462530ff6ac564dfbd828",
+      "sha256": "9e863f2f4a1c4182bd3d6d929138a3e94d9d012396dad2b02de5b745f9649e51",
+      "size": "600x800"
+    },
+    "now_wound_up": {
+      "bytes": 18698,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 132.1 sd 42.7 sat 187.5",
+      "recipe_sha": "c05f94243ff7839720eea76ebd1c0fb88b5432b33e99d897e2d30b229ed75dfc",
+      "sha256": "f2088a4119744de97cafdd2c8347824528cc8dc4f24e671944c258e2014a8827",
+      "size": "600x800"
+    },
+    "og": {
+      "bytes": 22558,
+      "cost_usd": 0.0,
+      "kind": "og",
+      "note": "composited from 4 shapes",
+      "recipe_sha": "0357b95723cd0da8555c826f77bbac0e207d6f246b18436a85e9f400ae61c027",
+      "sha256": "a5948e601b4eb43c9a0789cbcf18c99a05e7e0d31bb3e05cc036811206de165c",
+      "size": "1200x630"
+    },
+    "pressure_coil_tighter": {
+      "bytes": 17300,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 112.2 sd 54.5 sat 176.7",
+      "recipe_sha": "8fc91bbe0a1d58a91a81ad492e6dc64a4c58bb66669b3dfd590e6c243f5fa66a",
+      "sha256": "81ec924665e633074ba5be0638ecd90e05b0a6e20959fdea506af9aa2f8bbf03",
+      "size": "600x800"
+    },
+    "pressure_spread_wider": {
+      "bytes": 16806,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 152.1 sd 43.5 sat 117.7",
+      "recipe_sha": "a4ab4817f36341488df7d4138e6c909781ffa18dd4d4608921b0a99f9856efae",
+      "sha256": "3f4a6a8f2aa2ca5b5d207ee714bd58d0bd443cedfdfe60b8dcf50a9519c45492",
+      "size": "600x800"
+    },
+    "reset_melt": {
+      "bytes": 8928,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 169.0 sd 37.4 sat 159.8",
+      "recipe_sha": "634ff89c256404612f2a289b2235c227789f0f223766b2d1b4e62febcf4565ea",
+      "sha256": "7e3e29225250ff27d3a7cb6b348bcb3e879073077b9775cee6dc6ec345234b13",
+      "size": "600x800"
+    },
+    "reset_plug_in": {
+      "bytes": 11026,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 139.8 sd 41.2 sat 163.0",
+      "recipe_sha": "be637b30f87fd722bd9fa27f4bbf8d51f63123dcb75426b8a1c747a79e4cfd48",
+      "sha256": "e938efebf3c615d395996120cb13af0b6fd42d16efc26a88d732cb887fb31e16",
+      "size": "600x800"
+    },
+    "reset_shake_it_off": {
+      "bytes": 19510,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 170.0 sd 47.8 sat 141.1",
+      "recipe_sha": "44411a2c891a1e2ad635b9c715ca707e2d5d864e830efcd5618620bbe6c297fc",
+      "sha256": "d7a3a5f0d3911e98e427149ff7101db4220c64826bb1d3deee4cb26526ed0aa2",
+      "size": "600x800"
+    },
+    "reset_switch_off": {
+      "bytes": 12708,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 148.5 sd 42.4 sat 90.7",
+      "recipe_sha": "83e1aae846cde6f5aac5520a1787e7227a0e2916baa894cb1c6cb16f2f6c437e",
+      "sha256": "2bcf6bcbb362fc5a28f0ae05184f5b46df8f90502593f79ca2baa198ce8f6e4e",
+      "size": "600x800"
+    },
+    "runs_cool": {
+      "bytes": 11632,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 138.6 sd 49.6 sat 65.1",
+      "recipe_sha": "80fa4a00afa20c547c3eb1634a091fe3eefd5598c62d888cc713d7cb0cd6e617",
+      "sha256": "d088175ff121bee3eb86dd0c074679fee16ffa67ed4bccdf8fc9bd6da6bf90d1",
+      "size": "600x800"
+    },
+    "runs_hot": {
+      "bytes": 10976,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 168.6 sd 33.7 sat 151.9",
+      "recipe_sha": "8647c004cb04b8625b30dcc81451617a75f76bb93bd362e3f32a41340446d7e5",
+      "sha256": "226f56cd146a8574653cdc26cb6a6982bc7e6cdedc19663032ae3f05dbd8eef9",
+      "size": "600x800"
+    },
+    "seeking_a_spark": {
+      "bytes": 13020,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 155.4 sd 35.4 sat 141.6",
+      "recipe_sha": "f3cb59ad4a7cc6e46494a9bd58a8460527f3b5e0d9af6ad2c90dffef71ed8e48",
+      "sha256": "7e4f3a5f4b0cb48298834483bd17c9bcd1feb94266d669f773f19970bee15c7d",
+      "size": "600x800"
+    },
+    "seeking_a_warm_current": {
+      "bytes": 13564,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 141.3 sd 37.7 sat 175.9",
+      "recipe_sha": "80bfdc280dd791d9e0ae824d7f358af45dd434f445bd3549972d7a4568ddb9c8",
+      "sha256": "b70c1d50ebe30ce676b6deaff9fbd179254bed9562a2e9c32aaf8c75d43202f5",
+      "size": "600x800"
+    },
+    "seeking_solid_ground": {
+      "bytes": 13692,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 148.4 sd 37.6 sat 129.5",
+      "recipe_sha": "597ca848e8d624208ba5addbde947039740cc7c10f7fb67036466157e0a0b26c",
+      "sha256": "13c3d351054b3db382e7dab448f8a8e34acbd173697d84fd9c3540942155c838",
+      "size": "600x800"
+    },
+    "seeking_the_way_through": {
+      "bytes": 15970,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 113.7 sd 37.4 sat 108.5",
+      "recipe_sha": "18e29ee37fa5fe18c39fa50dd7235de990e516e2cd1f0865b6d7b31aa2344bea",
+      "sha256": "a03e8099d8d470288202185a9800f29921db4c43d701e813e03fa49a041d7a24",
+      "size": "600x800"
+    },
+    "share_feeler_inner": {
+      "bytes": 11864,
+      "cost_usd": 0.0,
+      "kind": "share",
+      "note": "composited from totem_feeler_inner",
+      "recipe_sha": "c38bf385cd562499b8c922b1a38d1b6428601115039e890f06b4cf720dacb993",
+      "sha256": "db797c65c408d259cedc13d39bf072c26c963807b9235c2bf4b3fcfc2510ca04",
+      "size": "1200x630"
+    },
+    "share_feeler_outer": {
+      "bytes": 14834,
+      "cost_usd": 0.0,
+      "kind": "share",
+      "note": "composited from totem_feeler_outer",
+      "recipe_sha": "8d77b82a42fc3983176a342a601a121e99dabbcf6ecb76e0ea3af801165ce1cc",
+      "sha256": "e0c116009dad8d697bd0f376df6ac692ae56c82142ca7939fd8173255f81a435",
+      "size": "1200x630"
+    },
+    "share_igniter_inner": {
+      "bytes": 15994,
+      "cost_usd": 0.0,
+      "kind": "share",
+      "note": "composited from totem_igniter_inner",
+      "recipe_sha": "b53fbbd6d3a0cc0e7a7ca5dfa06e701a7997d509662b2ed742454e48e1fd9f9e",
+      "sha256": "e3c03dea7017ecc582180d6f3cdb960c91d33eed8fcc3df236293676bb639def",
+      "size": "1200x630"
+    },
+    "share_igniter_outer": {
+      "bytes": 14252,
+      "cost_usd": 0.0,
+      "kind": "share",
+      "note": "composited from totem_igniter_outer",
+      "recipe_sha": "05ff70366489c988c0fb32bba4059626adf3394ebf69b0fc8633691dfd7528f2",
+      "sha256": "1e63608c425595a678ec89eea4f6896f38908dbf1b046b5e9b175e3f3cb878d4",
+      "size": "1200x630"
+    },
+    "share_keeper_inner": {
+      "bytes": 16710,
+      "cost_usd": 0.0,
+      "kind": "share",
+      "note": "composited from totem_keeper_inner",
+      "recipe_sha": "bd10195875d38d87e0c76c461c213a553dc37c33631359915267f761f08651e6",
+      "sha256": "e1c7e59959cea8cb881146e7e645e58a22e25785c3d0a946cf4cb04b6743617a",
+      "size": "1200x630"
+    },
+    "share_keeper_outer": {
+      "bytes": 16146,
+      "cost_usd": 0.0,
+      "kind": "share",
+      "note": "composited from totem_keeper_outer",
+      "recipe_sha": "feab1d1a7a4589912e9ad5f8a6f7b64bd206a5ebf6def9b02b85147063365a82",
+      "sha256": "323535a72b810437e18712d3aed49fe47bae4315088663252b9021cd204a9c8c",
+      "size": "1200x630"
+    },
+    "share_thinker_inner": {
+      "bytes": 15080,
+      "cost_usd": 0.0,
+      "kind": "share",
+      "note": "composited from totem_thinker_inner",
+      "recipe_sha": "85708cc4258ece860591f12b0cdf5d535ddb21fa1d1f9c3644912e1f7ff5bbda",
+      "sha256": "44a1950167ff696b5e4ade1ea14e42f24c00cea1900b23097253f8b70280b253",
+      "size": "1200x630"
+    },
+    "share_thinker_outer": {
+      "bytes": 16300,
+      "cost_usd": 0.0,
+      "kind": "share",
+      "note": "composited from totem_thinker_outer",
+      "recipe_sha": "7afc7c9a3e75b7035bc09ce5833f559d9e6d376d9bf1f32dc34508d8917341ea",
+      "sha256": "2c8b2cdf2bf413829723b5429ab7bf1f5a47b1416b2d47c3c7893b3c913322da",
+      "size": "1200x630"
+    },
+    "tenyears_at_peace": {
+      "bytes": 11518,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 140.7 sd 35.2 sat 185.1",
+      "recipe_sha": "3574956012e434c7df5799f5346376fd98137a3b9866321e98075003ceaacac0",
+      "sha256": "400d2156ab00cb359bd52e2e051ace6979def00196b96deb60996d20daa38b9c",
+      "size": "600x800"
+    },
+    "tenyears_lit_up_win": {
+      "bytes": 13354,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 119.5 sd 41.7 sat 183.4",
+      "recipe_sha": "1fe950735cae936241da8f4867bc27fa36454b841fca124998837db24af1464b",
+      "sha256": "cf353421ece65be141a5b9fc865ad1b4451d38f43714ebd6bf2e1e1f39e21999",
+      "size": "600x800"
+    },
+    "totem_feeler_inner": {
+      "bytes": 7602,
+      "cost_usd": 0.063,
+      "kind": "totem",
+      "note": "luma 92.0 sd 18.3 sat 219.0",
+      "recipe_sha": "660d96a2b17fcd1cdebb6c0caeba159bf8ca54140d72f4259cfdf66e4a6eee92",
+      "sha256": "5a0d4ae5eee8c30b09276155886bc7af3f802727f2ef740c04d0ca0d83dde369",
+      "size": "600x800"
+    },
+    "totem_feeler_outer": {
+      "bytes": 16874,
+      "cost_usd": 0.063,
+      "kind": "totem",
+      "note": "luma 96.6 sd 24.7 sat 199.0",
+      "recipe_sha": "d6c0f4170eba783c5428eb388b6bfd87ec62a5d2db9df444f25c8e988c248446",
+      "sha256": "b5f15c5bc216cf5343eb860dff08aee775ca13ea710fb85f5cd5ed14d4871d2b",
+      "size": "600x800"
+    },
+    "totem_igniter_inner": {
+      "bytes": 19616,
+      "cost_usd": 0.063,
+      "kind": "totem",
+      "note": "luma 112.4 sd 30.8 sat 178.4",
+      "recipe_sha": "2e3e56fc560172ae410745d3fd4386dc7c2e3dcd6933f76f53478f780f456322",
+      "sha256": "8854fa4ee2301a7cf5ed5100032f65568e6f8118b53a81982a93561edc98d5a7",
+      "size": "600x800"
+    },
+    "totem_igniter_outer": {
+      "bytes": 14844,
+      "cost_usd": 0.0,
+      "kind": "promote",
+      "note": "promoted from sculpt_p_totem_open_flame",
+      "recipe_sha": "613c3bdfe121462797493953bfa8a547ffaa0abcb68a50f88e378f5a7ceda09e",
+      "sha256": "e453416495ae8121ec05085e63b52634c9f71ab9fababbfeaa0a601ff6f36d6f",
+      "size": "600x800"
+    },
+    "totem_keeper_inner": {
+      "bytes": 21634,
+      "cost_usd": 0.063,
+      "kind": "totem",
+      "note": "luma 101.4 sd 29.0 sat 182.8",
+      "recipe_sha": "0d75690f6f480d2b6565145e23245589b4b496d36018104f9ceea534564660aa",
+      "sha256": "628673a661bc2709c0c67249f3c66d8b51acab4f0b8b8abd0ec9edd4feaca135",
+      "size": "600x800"
+    },
+    "totem_keeper_outer": {
+      "bytes": 21364,
+      "cost_usd": 0.063,
+      "kind": "totem",
+      "note": "luma 102.5 sd 32.5 sat 197.5",
+      "recipe_sha": "bde97965db17f6f6a15ed4e50608ef1a89598c37cc763a12f550551ced3b89e8",
+      "sha256": "51f019b2cecfa6784a14646db94839ab5101781a72885cb4f6b75211d921691c",
+      "size": "600x800"
+    },
+    "totem_thinker_inner": {
+      "bytes": 14462,
+      "cost_usd": 0.063,
+      "kind": "totem",
+      "note": "luma 117.2 sd 35.9 sat 179.4",
+      "recipe_sha": "b5d6d56ee366bba02da35a83d0704bf5336bb1e6d38dde7c2d4989a22a46d04f",
+      "sha256": "094b465801744667b2baa0ff5c16696bf50d08bd0fab711323094498795ccb9d",
+      "size": "600x800"
+    },
+    "totem_thinker_outer": {
+      "bytes": 18480,
+      "cost_usd": 0.063,
+      "kind": "totem",
+      "note": "luma 94.2 sd 26.8 sat 204.2",
+      "recipe_sha": "bfacf43f9334a91874d82986475f6a0144d5b098973b71fcb943fcfa0733d157",
+      "sha256": "f0af1e83f374f23b2a5a50c9de07a8fcd3c3152e7157f96e42905698b0571491",
+      "size": "600x800"
+    },
+    "walls_down": {
+      "bytes": 12736,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 181.5 sd 45.9 sat 122.4",
+      "recipe_sha": "b6eca7779b1e5b2296b05843c75aa9ea8a658354d937480a994d660e04175211",
+      "sha256": "67cb68519d0856da1a78b69173ec4195ccf4828ae1e1dc68bf22f7265f876710",
+      "size": "600x800"
+    },
+    "walls_half_open": {
+      "bytes": 18094,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 168.2 sd 37.5 sat 127.7",
+      "recipe_sha": "f1f814d29ecee8f46080a683a9b671657f8a8fb058a2a52e3425227152432140",
+      "sha256": "2dbbe07e325b32763ccc18dbc0d86db2ac604beca161973e2247f6374540957b",
+      "size": "600x800"
+    },
+    "walls_high": {
+      "bytes": 20370,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 127.0 sd 50.6 sat 125.0",
+      "recipe_sha": "ecea30c24ed79447a09eae02bbdc9956668caeffaf12aef91521e0dfa9212e5f",
+      "sha256": "f927bc9caabf1eef31d1550640593e8055c9ef37a10edb8b8b5ca2808ef148b1",
+      "size": "600x800"
+    },
+    "walls_selective": {
+      "bytes": 16656,
+      "cost_usd": 0.063,
+      "kind": "quiz",
+      "note": "luma 130.3 sd 38.0 sat 166.2",
+      "recipe_sha": "f76bd5c26398f2aa5a1ba5b5522dd981712a9d9df74bf35399c87d8609120a8b",
+      "sha256": "17ef7c48989d6f9612e2a7ccd5e3b764abc4f09185ad40b4a1701fce27d0f7ed",
+      "size": "600x800"
+    }
+  },
   "model": "gpt-image-1",
   "note": "What gen_persona.py has really drawn, promoted or composited. A rerun skips an id whose file still hashes to what is recorded here, so a hand-edited frame is left alone, not painted over.",
   "quality": "medium",
