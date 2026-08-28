@@ -104,6 +104,13 @@ v3 = load(SCRIPT, "gen_persona_v3_samples")
 check("imports with no key and no Pillow", True)
 
 source = open(SCRIPT, encoding="utf-8").read()
+# The style text and the drawing mechanics moved into a module both
+# generators import, so a check about "is this stated once" now has two files
+# to look at — and the property it is really asserting got stronger, because
+# once now means once across the codebase rather than once in this file.
+STYLE_MODULE = os.path.join(REPO, "scripts", "persona_style.py")
+style_src = open(STYLE_MODULE, encoding="utf-8").read()
+both_src = source + style_src
 check("it is a console script, run by hand",
       "__main__" in source and "argparse" in source)
 check("  and it does not import gen_persona",
@@ -180,7 +187,11 @@ check("composes for a vertical card", "vertical card" in rule)
 # seventy-frame redraw is where a copy of this rule drifts, and the crop it is
 # written against belongs to the pipeline, not to the material.
 check("it lives in one shared constant",
-      source.count("Composition for a vertical card") == 1)
+      both_src.count("Composition for a vertical card") == 1
+      and style_src.count("Composition for a vertical card") == 1,
+      "%d in the module, %d in the sampler"
+      % (style_src.count("Composition for a vertical card"),
+         source.count("Composition for a vertical card")))
 check("  and every style gets that same constant, verbatim",
       all(v3.SAFE_AREA in f["prompt"]
           for st in v3.STYLES for f in v3.samples(st)))
@@ -395,20 +406,34 @@ check("an unknown style raises, it does not silently fall back to vector",
 print("\n--- the sanity floor is v3's, not the ink gallery's ---")
 gen = load(os.path.join(REPO, "scripts", "gen_persona.py"), "gen_persona")
 
+# The ink gallery's own gate capped mean luma at 150, so that a frame which
+# "came back bright" was rejected as having dropped the dark identity. Every
+# correct v3 frame is bright, so pointed at this art it would have rejected
+# the whole set for succeeding.
+#
+# That gate is history rather than a live comparison now: gen_persona.py is
+# the v3 production generator and the ink one it replaced is gone. The number
+# is written out here because the reasoning is what the floors below are for,
+# and a check that loaded the old constant would now be checking nothing.
+INK_GATE_MAX_LUMA = 150.0
 BRIGHT = (195.0, 55.0, 70.0)          # what a correct v3 frame looks like
-check("the ink gate would reject a correct v3 frame",
-      BRIGHT[0] > gen.MAX_MEAN_LUMA,
-      "%.1f vs %.1f" % (BRIGHT[0], gen.MAX_MEAN_LUMA))
-# Not reused, and the docstring says why at length — so this looks at the
-# code rather than at the prose: no ink gate on the module, and a ceiling of
-# its own that sits well above the one that would have rejected the batch.
-check("  so the sampler does not carry it",
-      not hasattr(v3, "legibility") and not hasattr(v3, "MIN_LIT"))
-check("  and its own ceiling clears the whole bright range",
-      v3.MAX_MEAN_LUMA > gen.MAX_MEAN_LUMA and v3.MAX_MEAN_LUMA >= 240.0,
+check("the ink gate would have rejected a correct v3 frame",
+      BRIGHT[0] > INK_GATE_MAX_LUMA,
+      "%.1f vs %.1f" % (BRIGHT[0], INK_GATE_MAX_LUMA))
+check("  and nothing in the codebase still carries it",
+      not hasattr(v3, "legibility") and not hasattr(v3, "MIN_LIT")
+      and not hasattr(gen, "legibility")
+      and "MAX_MEAN_LUMA = 150" not in source)
+check("  v3's own ceiling clears the whole bright range",
+      v3.MAX_MEAN_LUMA > INK_GATE_MAX_LUMA and v3.MAX_MEAN_LUMA >= 240.0,
       "%.1f" % v3.MAX_MEAN_LUMA)
 check("  with a floor the ink gallery would fail",
       v3.MIN_MEAN_LUMA >= 90.0, "%.1f" % v3.MIN_MEAN_LUMA)
+# The production generator is on the same floors now, from the same module,
+# which is the point of there being a module.
+check("  and the production generator judges on those same floors",
+      gen.persona_style.QUIZ_BAND == v3.persona_style.QUIZ_BAND
+      and gen.persona_style.TOTEM_BAND["max_sat"] == 235.0)
 
 ok, note = v3.sanity(BRIGHT)
 check("bright warm art passes", ok, note)
@@ -1370,7 +1395,9 @@ check("every sample renders portrait",
 check("a medium portrait draw has a price to log",
       v3.PRICE[("medium", v3.API_PORTRAIT)] > 0)
 check("the call retries, like the live generator",
-      "def generate(" in source and "retriable" in source)
+      "def generate(" in style_src and "retriable" in style_src)
+check("  and the sampler no longer carries its own copy of it",
+      "def generate(" not in source and "def _post_generation(" not in source)
 
 
 print("\n--- the run calls nothing it should not ---")
