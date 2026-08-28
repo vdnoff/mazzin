@@ -130,10 +130,13 @@ check("  and the accent is a fragment of the line it accents",
       "%r not in %r" % (cfg["swipe"].get("subtext_accent"),
                         cfg["swipe"].get("subtext")))
 # The repositioning itself: the hook stopped selling the tap count and
-# started making a claim about what the shapes do.
+# started making a claim about what the shapes do. It is one sentence now —
+# the second, "Your profile is already forming", went in review.
 check("  the hook claims the shapes read the reader",
-      "read you" in cfg["swipe"]["subtext"]
-      and "already forming" in cfg["swipe"]["subtext"],
+      cfg["swipe"]["subtext"] == "Shapes designed to read you.",
+      cfg["swipe"]["subtext"])
+check("  in one sentence",
+      cfg["swipe"]["subtext"].count(".") == 1,
       cfg["swipe"]["subtext"])
 check("  and no longer counts the taps",
       "tap" not in cfg["swipe"]["subtext"].lower(),
@@ -668,7 +671,7 @@ check("engine.js still knows only the badge mode",
       and 'labelMode() === "caption"' not in engine_src)
 
 check("one variable sets the bar height and the image's reserve",
-      re.search(r"body\.theme-persona \.card \{[^}]*--tile-bar: 34px;",
+      re.search(r"body\.theme-persona \.card \{[^}]*--tile-bar: 26px;",
                 mazzin, re.S) is not None
       and re.search(r"body\.theme-persona \.card-img \{[^}]*"
                     r"box-sizing: border-box;[^}]*"
@@ -704,9 +707,19 @@ check("  and it borrows the tile's own corners rather than carrying any",
                     re.M | re.S) is not None)
 
 # The four-up shows the whole frame; the two-up fills from tall art.
-check("the four-up shows the whole frame",
+# Both formats fill their zone now: `contain` left thin bands down the sides
+# of the four-up and they were rejected on sight. Which edge that costs is the
+# opposite of the obvious guess — the zone is NARROWER in aspect than the
+# frame, so cover fills the height and trims the sides.
+check("the four-up fills its zone",
       re.search(r"body\.theme-persona \.cards\.is-grid4 \.card-img \{"
-                r"[^}]*object-fit: contain;", mazzin, re.S) is not None)
+                r"[^}]*object-fit: cover;", mazzin, re.S) is not None
+      and re.search(r"body\.theme-persona \.cards\.is-grid4 \.card-img \{"
+                    r"[^}]*object-position: center center;", mazzin, re.S)
+      is not None)
+check("  and nothing is letterboxed any more",
+      not re.search(r"body\.theme-persona[^{]*\.card-img \{"
+                    r"[^}]*object-fit: contain;", mazzin, re.S))
 check("the two-up fills its zone instead",
       re.search(r"body\.theme-persona \.cards:not\(\.is-grid4\) "
                 r"\.card-img \{[^}]*object-fit: cover;", mazzin, re.S)

@@ -253,7 +253,10 @@ body.theme-persona #mid-cta {
    differently on the two formats, so borrowing that is both simpler and
    automatically right. */
 body.theme-persona .card {
-  --tile-bar: 34px;
+  /* One line of type with four or five pixels of air each side of it. The
+     first bar was 34 — the same line with twice that padding — and read as a
+     panel rather than as a caption. */
+  --tile-bar: 26px;
   /* Behind the picture, showing only where the frame does not reach: the
      median of the renders' own top edges, measured across all forty-four. */
   background: #CEA371;
@@ -270,12 +273,18 @@ body.theme-persona .card-img {
   padding-bottom: var(--tile-bar);
 }
 
-/* The four-up shows the whole frame. Its image zone is about 174x246 against
-   a 3:4 render — close enough that `contain` costs a few pixels of band and
-   crops nothing. */
+/* Both formats fill their zone. `contain` left thin bands down the sides of
+   the four-up and they were rejected on sight, so the picture covers instead.
+   
+   Which edge that costs is worth stating, because it is the opposite of what
+   you would guess: the four-up's zone is about 174x254, an aspect of 0.685
+   against the render's 0.75, so the zone is NARROWER than the frame and cover
+   fills the height and trims the SIDES — about four percent off each — not
+   the top and bottom. Measured against the painted pixels of all forty-four
+   renders, no card loses clay to it. */
 body.theme-persona .cards.is-grid4 .card-img {
-  object-fit: contain;
-  object-position: center 100%;
+  object-fit: cover;
+  object-position: center center;
 }
 
 /* The two-up fills instead. Its zone is 174x570, an aspect of 0.305, and no
