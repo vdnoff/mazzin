@@ -417,3 +417,6 @@ bottom.
 
 ## 2026-08-28 — claude/persona-v3a
 - persona v3-A: shapes concept — config, gallery-at-dusk result, tests
+
+## 2026-08-28 — claude/persona-v3a1-share
+- persona v3-A.1: result cleanup, share loop, totem rule, copy fixes
