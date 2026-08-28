@@ -438,3 +438,6 @@ bottom.
 
 ## 2026-08-28 — claude/persona-afterdark-fix
 - persona: afterdark relight + dark-backdrop pin + article fix
+
+## 2026-08-28 — claude/persona-afterdark-fix
+- persona: afterdark card + result polish — inlay on cranium, dark ink, totem+head pair, centered rarity
