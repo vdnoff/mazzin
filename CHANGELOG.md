@@ -402,3 +402,6 @@ bottom.
 
 ## 2026-08-28 — claude/persona-v3-style-samples-spnzz9
 - persona v3: bright quiz-art style sampler
+
+## 2026-08-28 — claude/persona-v3-clay-samples
+- persona v3: clay style sampler variant
