@@ -2309,35 +2309,6 @@ PERSONA_BANNED = ZODIAC_BANNED + tuple(
 # same validators — what changes is what the section is about and the voice it
 # is asked for in.
 _PERSONA_SHAPES = {
-    "palette": '''"palette": {
-  "intro": "1-2 sentences on what these four colours do for this person — where each one belongs in an ordinary week (max %(intro)d chars)",
-  "colors": [
-    {"name": "COPY THE FIRST NAME FROM THE LIST ABOVE, EXACTLY",
-     "hex": "COPY ITS CODE FROM THE LIST ABOVE, EXACTLY",
-     "role": "what this colour is FOR - the kind of day or moment to reach for it (max %(role)d chars)",
-     "finish": "when to use it: a day of the week, a time of day, or a kind of occasion (max %(finish)d chars)",
-     "where": "how to carry it - worn, kept in a pocket, on a desk, in a room they spend time in (max %(where)d chars)"},
-    {"name": "the second name from the list, exactly", "hex": "its code, exactly",
-     "role": "...", "finish": "...", "where": "..."},
-    {"name": "the third name from the list, exactly", "hex": "its code, exactly",
-     "role": "...", "finish": "...", "where": "..."},
-    {"name": "the fourth name from the list, exactly", "hex": "its code, exactly",
-     "role": "...", "finish": "...", "where": "..."}
-  ],
-  "closing_rule": "one sentence naming three things worth carrying — an object, a habit and a phrase — and when each is worth reaching for (max %(closing_rule)d chars)"
-}
-
-THE COLOURS ARE NOT YOURS TO CHOOSE. Four of them are given above, with their
-codes. Reproduce all four, in that order, with the name and the code exactly
-as written - character for character. Invent no colour, rename none, and write
-no code that is not on that list.
-
-What you write is what each one is FOR. This is not a paint chart and not a
-clothing catalogue: never the words "matte", "satin", "eggshell", "gloss",
-"sheen", "swatch" or "paint", no garment descriptions, no decorating. Write
-about momentum, steadiness, being seen, being left alone - the days a colour
-is worth reaching for and the days it is not.''',
-
     "mistakes": '''"mistakes": {
   "items": [
     {"title": "the hidden strength, as a short phrase (max %(title)d chars)",
@@ -2389,44 +2360,15 @@ second is what to do about it, and it is the half the reader came for — a
 pairing described and not answered is half a chapter. Name the thing to do
 specifically enough to do it this month.''',
 
-    "splurge": '''"splurge": {
-  "splurge": {"item": "the kind of work or working environment this person's energy pays best in, as a short phrase (max %(item)d chars)",
-              "why": "TWO PARTS IN ONE PARAGRAPH. First: why their energy earns here and what it looks like day to day. Then THREE CONCRETE MOVES, in the same paragraph — three things to actually do, each one naming a place to work, a time of day or week, or an action (max %(why)d chars)"},
-  "saves": [
-    {"item": "a kind of work to stop accepting, as a short phrase (max %(item)d chars)",
-     "why": "what it costs them specifically, then one line on how to decline it — the sentence to say, or the condition to put on it (max %(why)d chars)"},
-    {"item": "a second one", "why": "same two parts"},
-    {"item": "a third one", "why": "same two parts"}
-  ],
-  "split_note": "THE LEAK, AND HOW TO PLUG IT: the single biggest drain on this reader's working energy, named outright, and then the one change that stops it. 2-3 sentences (max %(split_note)d chars)"
-}
-
-The three top-level keys are `splurge`, `saves` and `split_note`, spelled
-exactly so and nothing else. `splurge` is a single object with `item` and
-`why`; `saves` is a list of three objects with the same two keys;
-`split_note` is one string. Do not send `item` or `why` at the top level, and
-do not rename `split_note`.
-
-`item` is a short phrase — a job shape, not a sentence. One place their
-energy earns and three to stop spending it on. This is the shape of the work,
-never money to put anywhere: no markets, no figures, and no advice about
-where to place anything. The three moves are behaviour and energy — where to
-be, when to work, what to say yes to — and never a thing to buy, hold or put
-money into.
-
-The second half of every field is the half the reader came for. A place named
-and not acted on, a cost named and not declined, a leak named and not
-plugged: each of those is a chapter that stops one sentence early.''',
-
     "dna": '''"dna": {
   "narrative": [
-    "a paragraph on how this person's axis, energy and tone actually combine — the blueprint, in their own nouns, naming at least one of the shapes they chose (max %(narrative)d chars)",
-    "a second paragraph on the one place those three pull against each other, and what that tension produces (max %(narrative)d chars)"
+    "WHY THEY DRAIN WHERE OTHERS CHARGE: a paragraph naming the exact conditions that empty this person — the kind of room, the kind of demand, the hour of the day — built from the shapes they chose for pressure, drain and battery, and quoting at least one of them by the words on it (max %(narrative)d chars)",
+    "a second paragraph on what fills them back up, in the same concrete terms: what recovery actually looks like for THEM rather than what rest looks like in general (max %(narrative)d chars)"
   ],
   "implications": [
-    "one sentence naming something concrete this means for how they decide (max %(implications)d chars)",
-    "one sentence on what it means for how they rest (max %(implications)d chars)",
-    "one sentence on what it means for how other people read them (max %(implications)d chars)"
+    "one sentence naming the single situation to stop accepting (max %(implications)d chars)",
+    "one sentence on the recovery that works for them and looks like laziness to somebody else (max %(implications)d chars)",
+    "one sentence on the early sign they are running empty, before they notice it themselves (max %(implications)d chars)"
   ]
 }
 
@@ -2435,11 +2377,15 @@ not objects. Two paragraphs and three implications. Each paragraph is its own
 entry in the list and carries its own limit; do not run them together into
 one long string.
 
-This is the section that has to sound like it was written about this reader
-and nobody else, and the shapes they chose are how you do that: quote one of
-them back by the words on it. Not "you are decisive" but the thing they
-actually reached for.''',
+This is the section the reader bought first and its promise is exact: why
+they drain where other people charge. Answer that question, in their own
+conditions. Never a general theory of energy, never a kind of person, and
+never a word that sorts people into types — the subject is what happens to
+THIS reader in a Tuesday afternoon they would recognise.
 
+The shapes they chose are how you make it theirs: quote one back by the words
+on it. Not "you find noise difficult" but the thing they actually reached
+for.''',
     "shopping": '''"shopping": {
   "items": [
     {"name": "COPY THE 1st LABEL FROM THE LIST ABOVE, EXACTLY (max %(name)d chars)", "priority_note": "what this month's energy is good for (max %(priority_note)d chars — one or two sentences)"},
@@ -2483,20 +2429,6 @@ PERSONA_SPEC = dict((section_id, _zodiac_spec(text, section_id))
 # same structure, same voice — and banned-clean, because the fallback is
 # exactly the path where nothing is checking.
 PERSONA_STUBS = {
-    "palette": {
-        "intro": "A {name} runs on one colour you live in, one you reach for "
-                 "when a room needs to turn, and one carrying the weight so "
-                 "the other two do not burn out by Thursday.",
-        # Filled from the style's own four colours at build time. The model is
-        # forbidden to invent a colour here, and the fallback must not be
-        # allowed to either — the page that took the money showed four
-        # swatches by name.
-        "colors": FROM_CONFIG,
-        "closing_rule": "Carry one object, one habit and one sentence: the "
-                        "object on the days you need proof, the habit on the "
-                        "days you need momentum, the sentence on the days "
-                        "somebody asks for more than you have.",
-    },
     "mistakes": {
         "items": [
             {"title": "You read your own certainty as evidence",
@@ -2566,56 +2498,23 @@ PERSONA_STUBS = {
         "rule": "In the first month, ask what they do when they are tired — "
                 "the answer tells you more than what they want.",
     },
-    "splurge": {
-        "splurge": {
-            "item": "work with a visible edge and a short feedback loop",
-            "why": "Your energy earns where the result shows up soon enough "
-                   "to correct — you are good at reading a thing early and "
-                   "worse at waiting six months to find out. Put the hardest "
-                   "task in the first two hours of the day, keep one "
-                   "afternoon a week with nothing scheduled in it, and say "
-                   "yes to the work where somebody will tell you plainly "
-                   "whether it landed.",
-        },
-        "saves": [
-            {"item": "work that pays in access rather than in outcome",
-             "why": "It costs the hours and returns a room you were already "
-                    "going to be in. Decline it by asking what the deliverable "
-                    "is, and let the absence of an answer be the answer."},
-            {"item": "the standing meeting you are in to be reachable",
-             "why": "It fragments the two hours you are actually good in. Ask "
-                    "for the notes instead, and offer fifteen minutes "
-                    "afterwards to whoever needs you."},
-            {"item": "rescuing a project nobody has admitted is failing",
-             "why": "You will be the one who noticed and therefore the one "
-                    "who owns it. Put a condition on it: name what changes, "
-                    "and take it only if that change happens first."},
-        ],
-        "split_note": "The biggest drain on your working energy is the "
-                      "half-finished thing you have not declared dead. It "
-                      "costs nothing to keep and takes a share of every week "
-                      "regardless. Pick one this month, say out loud that it "
-                      "is over, and take the afternoon back.",
-    },
     "dna": {
         "narrative": [
-            "Your axis sets what you reach for, your energy sets how much of "
-            "it happens where other people can see, and your tone sets how "
-            "it sounds when it arrives. Those three are usually mistaken for "
-            "one thing — a personality — and they are three separate "
-            "settings that happen to be yours.",
-            "The place they pull against each other is between what you "
-            "reach for and how much of it you let be seen. The tension is "
-            "not a fault to correct: it is what makes you accurate, because "
-            "it means nothing goes out until you have decided it is worth "
-            "the room it takes.",
+            "You drain in rooms that ask you to be available rather than "
+            "useful — the long meeting with no decision in it, the afternoon "
+            "of small interruptions, the conversation that circles. None of "
+            "those look like work and all of them cost you the same as work "
+            "does.",
+            "What fills you back up is finishing something small enough to "
+            "finish. Not rest in the sense of stopping: an hour with one "
+            "task and a door shut, and the thing done at the end of it.",
         ],
         "implications": [
-            "You decide faster than you explain, so the explanation is the "
-            "part to write down.",
-            "You rest by finishing something small rather than by stopping.",
-            "People read you as more certain than you feel, which is why the "
-            "doubt has to be said out loud to exist at all.",
+            "Stop accepting the meeting you are in to be reachable.",
+            "Your recovery looks like tidying the edges of something already "
+            "running, and it reads as procrastination to everyone watching.",
+            "The early sign is that you start reading the same sentence "
+            "twice — long before you feel tired.",
         ],
     },
     "shopping": {
@@ -2661,11 +2560,20 @@ PERSONA_PROFILE = {
     # work no buyer should pay for in latency. warm_cache.py fills these.
     # The same split zodiac uses, for the same reasons: these three are true
     # of the shape rather than of the run.
-    "cached": ("palette", "mistakes", "splurge"),
-    # Run-driven: the blueprint quotes the shapes they actually chose, the
-    # pairings are read off their own row, and the year map starts in the
-    # month they bought in. Caching these per persona would be eight rows of
-    # something that is supposed to be about one reader.
+    # The one section that is true of the shape rather than of the run: the
+    # hidden strengths belong to the archetype, so every buyer of a persona
+    # gets the same five and none of them should pay for it in latency.
+    #
+    # It used to be three. The colours and the work section were the other
+    # two, and both are gone — they were the zodiac product's vocabulary
+    # wearing this one's name, and neither was on the card the reader buys
+    # from. What is left is four sections, one per promise on that card.
+    "cached": ("mistakes",),
+    # Run-driven, all three. The drain section quotes the shapes they chose
+    # for pressure and battery, the pairings are read off their own row, and
+    # the year map starts in the month they bought in. Caching any of these
+    # per persona would be eight rows of something meant to be about one
+    # reader.
     "personal": ("dna", "materials", "shopping"),
     "banned": PERSONA_BANNED,
     "verify": None,         # filled below, once ZODIAC_VERIFY is defined
@@ -6287,6 +6195,29 @@ PERSONA_PDF_CSS = ZODIAC_PDF_CSS + """
 .head-value { margin-left: 4px; color: #F2E6D4; }
 
 .cover-essence { margin: 4px 0 0; font-size: 10pt; color: #C9BBA8; }
+
+/* The frames, whole. The shared sheet draws a section's photograph as a
+   full-width 34mm band and the contact sheet as a square, both filled with
+   `object-fit: cover` — which is a third of a 3:4 sculpture thrown away on
+   every page. These are the same slots at the frames' own shape, so the
+   picture is scaled to fit rather than trimmed to fill.
+
+   `contain` alone would not have been enough: the print copies under
+   static/img/print were pre-cropped before the PDF ever saw them, so
+   scripts/gen_print_variants.py writes this funnel's at 3:4 as well. */
+.tap img {
+  width: 52.5mm;
+  height: 70mm;
+  margin: 0 auto;
+  object-fit: contain;
+  background: #CEA371;
+}
+.tapcell img {
+  width: 26.8mm;
+  height: 35.7mm;
+  object-fit: contain;
+  background: #CEA371;
+}
 """
 
 PERSONA_PROFILE["pdf_css"] = PERSONA_PDF_CSS
@@ -6690,7 +6621,8 @@ PERSONA_HEAD_BASE = "galleries/persona/head_base.webp"
 # Where the inlay sits on the head, as a share of the plate. Measured against
 # the render rather than guessed, and the same four numbers the stylesheet
 # carries — see CSS_INLAY in scripts/gen_persona.py, which checks them.
-PERSONA_INLAY_BOX = {"top": 5.0, "left": 45.0, "width": 22.5, "height": 22.5}
+PERSONA_INLAY_BOX = {"top": 0.8, "left": 15.3, "width": 68.0,
+                     "height": 68.0}
 
 # North is drive, east is prism, south is anchor, west is wave — the same four
 # points, in the same order, as the drawing on the page.
