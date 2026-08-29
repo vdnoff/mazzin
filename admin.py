@@ -944,7 +944,7 @@ def _recent_starts(slug, now):
     try:
         counts = analytics.event_counts(
             slug, now - LIVE_TRAFFIC_WINDOW, now, events=("funnel_start",))
-    except Exception:                             # noqa: BLE001 - page still renders
+    except Exception:                  # noqa: BLE001 - the page still renders
         log.exception("admin: recent traffic lookup failed for %s", slug)
         return 0
     return counts.get("funnel_start", 0)

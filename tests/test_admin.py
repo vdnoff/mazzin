@@ -134,25 +134,50 @@ class Rig:
         """)
         self.statements = []
         self.writes = []
+        # Flipped on only around the one route that is allowed to write. Off,
+        # any write at all fails the suite where it happens rather than at the
+        # end, so the traceback names the route that did it.
+        self.writes_allowed = False
+        self.overrides = {}
 
     # -- what analytics.py calls
     def query_all(self, sql, params=None):
         self.statements.append(sql)
+        # The override table has no sqlite twin: it is a dict here, because
+        # what this suite needs from it is a thing it can toggle mid-test.
+        if "funnel_mode_overrides" in sql:
+            return list(self.overrides.values())
         cur = self.conn.execute(sql.replace("%s", "?"), tuple(params or ()))
         return [dict(row) for row in cur.fetchall()]
 
     def query_one(self, sql, params=None):
+        if "funnel_mode_overrides" in sql:
+            self.statements.append(sql)
+            return self.overrides.get(params[0])
         rows = self.query_all(sql, params)
         return rows[0] if rows else None
 
     def execute(self, sql, params=None):
         self.writes.append(sql)
-        raise AssertionError("the admin dashboard called database.execute")
+        if not self.writes_allowed:
+            raise AssertionError("a read-only admin route called "
+                                 "database.execute")
+        if "funnel_mode_overrides" in sql:
+            self.apply_override(sql, params)
+        return 1
 
     def execute_rowcount(self, sql, params=None):
         self.writes.append(sql)
         raise AssertionError(
             "the admin dashboard called database.execute_rowcount")
+
+    def apply_override(self, sql, params):
+        if sql.strip().upper().startswith("INSERT"):
+            self.overrides[params[0]] = {
+                "funnel": params[0], "mode": params[1],
+                "changed_at": None, "changed_by": params[2]}
+        else:
+            self.overrides.pop(params[0], None)
 
     # -- seeding
     def event(self, funnel, session_id, event, when, subid=None, step=None,
@@ -268,6 +293,14 @@ config.ADMIN_USER = USERNAME
 config.ADMIN_PASSWORD_HASH = PASSWORD_HASH
 config.ADMIN_COOKIE_SECURE = False      # the test client speaks http
 admin.configure(app)
+
+# Both key trios, so the mode switch's safety rail is satisfied and the toggle
+# under test is the toggle rather than the refusal. The refusal has its own
+# check below, and test_stripemode.py owns the rest of that behaviour.
+for _name in ("STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET",
+              "STRIPE_PUBLISHABLE_KEY", "STRIPE_TEST_SECRET_KEY",
+              "STRIPE_TEST_WEBHOOK_SECRET", "STRIPE_TEST_PUBLISHABLE_KEY"):
+    setattr(config, _name, "notreal_" + _name.lower())
 
 PAGE_ROUTES = ["/admin", "/admin/", "/admin/funnel/kitchen"]
 API_ROUTES = ["/admin/api/overview", "/admin/api/funnels",
@@ -715,33 +748,119 @@ check("and the drop-off bars", "class=\"fill\"" in body)
 
 # --- 3. it never writes -----------------------------------------------------
 
-print("\n--- read-only ---")
+print("\n--- the mode switch is behind the same door ---")
+admin.reset_rate_limit()
+with app.test_client() as stranger:
+    response = stranger.get("/admin/modes")
+    eq("logged out, the page redirects to login", response.status_code, 302)
+    check("...to the login page",
+          "/admin/login" in response.headers.get("Location", ""))
+    eq("logged out, the write is refused too",
+       stranger.post("/admin/modes", data={"funnel": "kitchen",
+                                           "action": "set",
+                                           "mode": "test"}).status_code, 302)
+eq("nothing was written by a logged-out caller", rig.overrides, {})
+
+modes_body = client.get("/admin/modes").get_data(as_text=True)
+eq("logged in, the page answers",
+   client.get("/admin/modes").status_code, 200)
+check("it lists every funnel",
+      all(slug in modes_body for slug in
+          ("kitchen", "persona", "zodiac30", "zodiac-ro")))
+check("the dashboard links to it",
+      "/admin/modes" in client.get("/admin").get_data(as_text=True))
+modes_csrf = re.search(r'name="csrf" value="([^"]+)"', modes_body).group(1)
+eq("a post with no csrf token is refused",
+   client.post("/admin/modes", data={"funnel": "kitchen", "action": "set",
+                                     "mode": "test"}).status_code, 400)
+eq("and nothing was written", rig.overrides, {})
+
+
+print("\n--- read-only, and the one route that is not ---")
+# Everything above this line was a GET. Nothing in it may have written.
 eq("nothing reached the write helpers", rig.writes, [])
 check("something was actually asked", len(rig.statements) > 20,
       len(rig.statements))
-offenders = []
-for statement in rig.statements:
-    head = statement.strip().lower()
-    if not head.startswith("select"):
-        offenders.append(statement.strip()[:60])
-        continue
-    words = re.findall(r"[a-z_]+", head)
-    for word in WRITE_WORDS:
-        if word in words:
-            offenders.append(statement.strip()[:60])
-            break
-eq("every statement the dashboard issued was a SELECT", offenders, [])
 
-# And the guarantee is worth something only if the spy would have caught a
-# write, so prove the spy works.
+
+def select_offenders(statements):
+    """Statements that are not a plain SELECT."""
+    out = []
+    for statement in statements:
+        head = statement.strip().lower()
+        if not head.startswith("select"):
+            out.append(statement.strip()[:60])
+            continue
+        words = re.findall(r"[a-z_]+", head)
+        for word in WRITE_WORDS:
+            if word in words:
+                out.append(statement.strip()[:60])
+                break
+    return out
+
+
+eq("every statement the dashboard issued was a SELECT",
+   select_offenders(rig.statements), [])
+
+# The carve-out, stated rather than assumed: exactly one endpoint may write,
+# and this is the list the guarantee is written against.
+eq("exactly one admin endpoint is allowed to write",
+   sorted(admin.WRITE_ENDPOINTS), ["admin.modes_post"])
+writers = sorted(rule.endpoint for rule in app.url_map.iter_rules()
+                 if rule.endpoint.startswith("admin.")
+                 and "POST" in (rule.methods or set()))
+eq("and the only admin POSTs are login, logout and that one",
+   writers, ["admin.login_post", "admin.logout", "admin.modes_post"])
+
+# Now the exception itself. The spy stops being a landmine for exactly the
+# span of one request, and what that request writes is read back out.
+rig.statements = []
+rig.writes = []
+rig.writes_allowed = True
+toggle = client.post("/admin/modes", data={
+    "csrf": modes_csrf, "funnel": "kitchen", "action": "set", "mode": "test"})
+rig.writes_allowed = False
+eq("the toggle redirects", toggle.status_code, 302)
+eq("it wrote exactly once", len(rig.writes), 1)
+check("and what it wrote was an override row",
+      "funnel_mode_overrides" in rig.writes[0], rig.writes[0][:60])
+eq("the row names the funnel and the mode",
+   (rig.overrides["kitchen"]["funnel"], rig.overrides["kitchen"]["mode"]),
+   ("kitchen", "test"))
+eq("changed_by is the admin who was logged in",
+   rig.overrides["kitchen"]["changed_by"], USERNAME)
+check("the page now shows the funnel in test",
+      ">TEST<" in client.get("/admin/modes").get_data(as_text=True))
+
+rig.writes = []
+rig.writes_allowed = True
+client.post("/admin/modes", data={"csrf": modes_csrf, "funnel": "kitchen",
+                                  "action": "clear"})
+rig.writes_allowed = False
+eq("clearing writes once too", len(rig.writes), 1)
+eq("and the override is gone", rig.overrides, {})
+
+# A switch the keys cannot support must not write at all — not a row that
+# claims a mode the funnel cannot transact in.
+held = config.STRIPE_TEST_WEBHOOK_SECRET
+config.STRIPE_TEST_WEBHOOK_SECRET = ""
+rig.writes = []
+refused = client.post("/admin/modes", data={
+    "csrf": modes_csrf, "funnel": "kitchen", "action": "set", "mode": "test"})
+eq("a switch into a mode with a missing key redirects",
+   refused.status_code, 302)
+eq("and writes nothing at all", rig.writes, [])
+eq("and leaves no override behind", rig.overrides, {})
+config.STRIPE_TEST_WEBHOOK_SECRET = held
+
+# The guarantee is worth something only if the spy would have caught a write,
+# so prove the spy works.
 tripped = False
 try:
-    database.execute("INSERT INTO events (funnel) VALUES ('x')")
+    database.execute("INSERT INTO events (funnel) VALUES (\'x\')")
 except AssertionError:
     tripped = True
-check("the spy would have caught a write", tripped)
-eq("...and recorded it", len(rig.writes), 1)
-rig.writes.clear()
+check("the spy catches a write from anywhere else", tripped)
 
 
 print()
