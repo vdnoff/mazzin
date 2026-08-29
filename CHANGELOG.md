@@ -480,3 +480,6 @@ bottom.
 
 ## 2026-08-29 — claude/persona-report-v3
 - persona report v3: media objects, mechanics months, mail fix
+
+## 2026-08-29 — claude/minimal-template-polish
+- zodiac30: minimal template polish
