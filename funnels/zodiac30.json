@@ -3346,7 +3346,30 @@
       "rarity_line": "About 1 in {n} readings land this blend",
       "bridge": "Your reading answers, specifically for {subtype_article} {subtype_bare}:",
       "offer_head": "The full {subtype_bare} reading — 6 chapters",
-      "split_caption": "{fire}% Fire · {earth}% Earth · {air}% Air · {water}% Water"
+      "split_caption": "{fire}% Fire · {earth}% Earth · {air}% Air · {water}% Water",
+      "rarity_minimal": {
+        "line": "Your zodiac blend is rare.",
+        "sub": "{pct}% of readings come out differently. Your full reading explains why."
+      },
+      "checklist": [
+        {
+          "id": "materials",
+          "line": "your two magnetic signs — and the one that drains you"
+        },
+        {
+          "id": "splurge",
+          "line": "where your energy earns"
+        },
+        {
+          "id": "shopping",
+          "line": "{first} → {last}"
+        },
+        {
+          "id": "mistakes",
+          "line": "strengths #2–5"
+        }
+      ],
+      "checklist_tail": "+ Power colors & your full blueprint"
     }
   }
 }

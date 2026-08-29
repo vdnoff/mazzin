@@ -181,6 +181,25 @@ body:has(.result-module) {
   text-align: center;
 }
 
+/* The stacked form, for the arm that gives the rarity its own screen. Two
+   lines rather than a figure: the claim is the blend being rare, and the
+   share is what that means — a 44px number with no unit reads as a score. */
+.zr-rarity-line {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--zr-text);
+}
+
+.zr-rarity-sub {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--zr-muted);
+}
+
 .zr-rarity-lead,
 .zr-rarity-tail {
   display: block;
@@ -610,6 +629,55 @@ body:has(.result-module) {
 /* What the six chapters add up to, named as the thing they were just told
    they are. Above the anchor rather than instead of it: the anchor is the
    price argument and this is the product. */
+/* What is in the report, above the price. Tight on purpose: it is a list to
+   scan, not to read, and every row is one line at this width. A tick, never
+   a padlock — the cards above the offer wear those, and a lock over the
+   price is the page arguing with its own button. */
+.zr-checklist {
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.zr-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.zr-check:first-child { margin-top: 0; }
+
+.zr-check-mark {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 2px;
+  color: var(--zr-gold);
+}
+
+.zr-check-mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.zr-check-line {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--zr-muted);
+}
+
+.zr-check-key {
+  font-weight: 700;
+  color: var(--zr-text);
+}
+
 .zr-offer-head {
   margin: 0 0 8px;
   font-family: var(--font-display, inherit);
