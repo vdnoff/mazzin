@@ -743,15 +743,30 @@
 
   function richHero(badge, data, copy, opts) {
     var card = elm("section", "pr-hero is-rich");
-    // The order: the pair first — the persona's totem and the reader's own
-    // head, side by side — then the head's own caption, then who all that
-    // makes them, the measure, and the sentence built from their own picks.
-    // The badge the callers still pass is the frame they opened the quiz on;
-    // it no longer leads the card, because the pair is the picture of them
-    // and the pick is the evidence for it.
-    card.appendChild(headPair(data));
-    var caption = headCaption(copy || {}, data);
-    if (caption) card.appendChild(caption);
+    // The order: the picture of them first, then who that makes them, the
+    // measure, and the sentence built from their own picks. The badge the
+    // callers still pass is the frame they opened the quiz on; it no longer
+    // leads the card, because the picture is the picture of them and the
+    // pick is the evidence for it.
+    //
+    // Which picture depends on which side of the money this is. Before it,
+    // the totem stands alone on its pedestal: the clay head, the radar
+    // pressed into its crown and the legend under it are the reveal the
+    // report is selling, and a page that gives the reveal away is selling
+    // nothing. After it, the pair — the totem and the reader's own head,
+    // matched in height, with the legend beneath — is the first thing the
+    // buyer opens on, above every section.
+    //
+    // reports.py stores the block both sides read. Until it did, this branch
+    // had nowhere to get a head from on the delivered page, which is why the
+    // head lived on the free page for as long as it did.
+    if (opts && opts.head) {
+      card.appendChild(headPair(data));
+      var caption = headCaption(copy || {}, data);
+      if (caption) card.appendChild(caption);
+    } else {
+      card.appendChild(soloTotem(data));
+    }
 
     var id = elm("div", "pr-hero-id");
     id.appendChild(elm("h1", "pr-subtype", data.subtype));
@@ -1006,6 +1021,17 @@
     row.appendChild(pedestal(data));
     if (plate) row.appendChild(stand("is-head", plate));
     return row;
+  }
+
+  // The totem alone, centred under its own spotlight — the presentation this
+  // page carried before the head arrived beside it, and the one it goes back
+  // to now the head is what the report sells. Same pedestal treatment as the
+  // pair's, so the two are the same object in the same room and only the
+  // company changes.
+  function soloTotem(data) {
+    var wrap = elm("div", "pr-solo");
+    wrap.appendChild(pedestal(data));
+    return wrap;
   }
 
   // --- c) read from your taps ------------------------------------------------
@@ -1689,7 +1715,7 @@
     // were sent to and still have bookmarked.
     var data = (ctx.visuals && ctx.visuals.profile) || null;
     if (data && data.subtype) {
-      var rich = richHero(glyph(pick), data, copy);
+      var rich = richHero(glyph(pick), data, copy, { head: true });
       // The place they chose, which the paid card has always carried and the
       // free one never did. Appended here rather than inside `richHero` for
       // exactly that reason: there is no band before the money.

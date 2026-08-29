@@ -168,6 +168,26 @@ body:has(.result-module) {
   margin: 0 auto 16px;
 }
 
+/* The totem standing on its own, which is what the free page shows: the head
+   beside it is what the report is selling. Same pedestal, same light — only
+   the column it stands in is narrower, and centred.
+
+   The figures are the ones this page carried before the pair: art 148px wide,
+   which at the totem render's 3:4 stands it 197px tall, on a 168px shadow
+   that reaches a little wider than the art the way a cast shadow does. */
+.pr-solo {
+  width: 168px;
+  margin: 0 auto 18px;
+}
+
+.pr-solo .pr-stand { padding: 18px 0 0; }
+
+.pr-solo .pr-stand-light { inset: 0 0 22px; }
+
+.pr-solo .pr-totem-art { width: 148px; margin: 0 auto; }
+
+.pr-solo .pr-stand-plinth { width: 100%; height: 14px; }
+
 /* One pedestal treatment, worn by both. A soft cone from above rather than a
    glow around the art, so each reads as an object standing in the room the
    quiz was walked through — at dusk, which is where the analysing fade has
