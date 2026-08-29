@@ -477,3 +477,6 @@ bottom.
 
 ## 2026-08-29 — claude/persona-report-v2
 - persona report v2 + zodiac30 template A/B
+
+## 2026-08-29 — claude/persona-report-v3
+- persona report v3: media objects, mechanics months, mail fix
