@@ -462,3 +462,6 @@ bottom.
 
 ## 2026-08-29 — claude/admin-dashboard-v1
 - admin: read-only funnel dashboard, A/B readout, single-account login
+
+## 2026-08-29 — claude/admin-dashboard-v1-o96mi5
+- admin dashboard v1: funnel stats + A/B readout + login
