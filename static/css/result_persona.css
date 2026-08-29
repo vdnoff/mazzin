@@ -562,13 +562,16 @@ body:has(.result-module) {
    thing they picked. `contain` letterboxes instead, on a ground toned to the
    renders' own backdrop so the bars read as the frame's edge rather than as
    a gap. */
+/* The sheet's cells are covered edge to edge. Whole frames are what the
+   section's own picture is for; thirteen letterboxed thumbnails read as a
+   grid that failed to load rather than as the reader's run. */
 .pr-tap img {
   display: block;
   width: 100%;
   aspect-ratio: 1 / 1;
   border-radius: 6px;
-  object-fit: contain;
-  background: var(--pr-frame, #CEA371);
+  object-fit: cover;
+  object-position: center center;
   border: 1px solid rgba(78, 221, 196, 0.18);
 }
 
@@ -1153,29 +1156,40 @@ body:has(.result-module) {
    the way the cards were: rounded, on a hairline of the same teal the nodes
    are marked in. Modest on purpose — the frame is evidence beside the
    sentence, not an illustration the sentence hangs off. */
+/* A media object, not a shrine. The picture used to be a full-width box with
+   a small portrait floating in the middle of it and sixty percent of the box
+   empty; now it is a fixed modest column with the section's opening text
+   running beside it. The frame is still whole — the width is fixed and the
+   height follows the render's own 3:4. */
 .pr-shot {
-  margin: 12px 0 0;
+  float: left;
+  width: 108px;
+  margin: 2px 14px 6px 0;
   border: 1px solid rgba(78, 221, 196, 0.28);
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
   background: var(--pr-slab);
 }
+
+/* The text beside it stops wrapping at the end of the section rather than
+   running under the next one. */
+.pr-node-body::after { content: ""; display: block; clear: both; }
 
 /* Whole, for the same reason as the contact sheet above. */
 .pr-shot img {
   display: block;
   width: 100%;
-  height: 132px;
+  height: 144px;
   object-fit: contain;
   background: var(--pr-frame, #CEA371);
 }
 
+/* Normal case, because it is a sentence rather than a label: the small caps
+   made "the squeeze" read as THE SQUEEZE, which is an internal code. */
 .pr-shot-cap {
-  padding: 7px 12px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  padding: 6px 8px;
+  font-size: 10px;
+  line-height: 1.3;
   color: var(--pr-faint);
   border-top: 1px solid var(--pr-line);
 }
@@ -1281,9 +1295,19 @@ body:has(.result-module) {
                  line-height: 1.35; color: var(--pr-text); }
 
 /* how you connect */
+/* A table, not four essays: a name, a verdict, one line. The prompt asks for
+   a single sentence per pairing now, and this is the shape that reads. */
 .pr-verdicts { margin: 14px 0 0; padding: 0; list-style: none; }
 
-.pr-verdict { margin: 0 0 16px; }
+.pr-verdict {
+  margin: 0;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--pr-line);
+}
+
+.pr-verdict:last-child { border-bottom: 0; }
+
+.pr-verdict .pr-body { margin: 3px 0 0; font-size: 13.5px; line-height: 1.5; }
 
 .pr-verdict-head { margin: 0; display: flex; gap: 8px; align-items: center;
                    flex-wrap: wrap; }
@@ -1338,31 +1362,84 @@ body:has(.result-module) {
 .pr-save-item { font-weight: 700; color: var(--pr-text); }
 
 /* the year */
-.pr-months { margin: 14px 0 0; padding: 0; list-style: none;
-             counter-reset: pr-month; }
-
-.pr-month {
+/* A rail down the year rather than a numbered list. Twelve numbered
+   paragraphs read as an essay in twelve parts; a rail reads as a year, and
+   the three months worth acting in are visible without reading all of it. */
+.pr-months {
   position: relative;
-  margin: 0 0 12px;
-  padding-left: 26px;
-  counter-increment: pr-month;
+  margin: 14px 0 0;
+  padding: 2px 0 2px 22px;
+  list-style: none;
 }
 
-.pr-month::before {
-  content: counter(pr-month);
+/* The rail itself, stopping at the last node rather than running past it. */
+.pr-months::before {
+  content: "";
   position: absolute;
-  left: 0;
-  top: 1px;
-  font-family: var(--font-display, inherit);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--pr-teal);
+  left: 5px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: var(--pr-line);
 }
 
-.pr-month-name { display: block; font-size: 15px; font-weight: 700;
-                 color: var(--pr-text); }
-.pr-month-note { display: block; margin-top: 2px; font-size: 14px;
-                 line-height: 1.55; color: var(--pr-muted); }
+.pr-month { position: relative; margin: 0 0 11px; }
+
+/* The node. A marked month gets a filled, larger one — which is the whole
+   point of the rail: three months are worth acting in and the eye should
+   find them without reading twelve paragraphs. */
+.pr-month::before {
+  content: "";
+  position: absolute;
+  left: -21px;
+  top: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pr-slab-2);
+  border: 1px solid var(--pr-line);
+}
+
+.pr-month.is-strong::before {
+  background: var(--pr-teal);
+  border-color: var(--pr-teal);
+  width: 9px;
+  height: 9px;
+  left: -22px;
+  top: 5px;
+}
+
+.pr-month.is-quiet::before {
+  background: var(--pr-slab);
+  border-color: var(--pr-teal);
+  width: 9px;
+  height: 9px;
+  left: -22px;
+  top: 5px;
+}
+
+.pr-month-head {
+  margin: 0;
+  display: flex;
+  gap: 7px;
+  align-items: baseline;
+}
+
+.pr-month-name { font-size: 14px; font-weight: 700; color: var(--pr-text); }
+
+.pr-month-chip {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: var(--pr-teal);
+  background: var(--pr-teal-soft);
+}
+
+.pr-month-note { display: block; margin-top: 1px; font-size: 13.5px;
+                 line-height: 1.5; color: var(--pr-muted); }
 
 /* what stands where the offer was */
 .pr-footnote {

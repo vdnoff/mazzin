@@ -335,6 +335,123 @@ check("  and never naming a paywall variant",
               for v in CFG["paywall_variants"]))
 
 
+print("\n--- twelve months of mechanics, not mood ---")
+year = reports._PERSONA_SHAPES["shopping"]
+check("the prompt asks for three strong months and one quiet one",
+      'exactly three months open their note with' in year.lower()
+      and "Quiet month:" in year)
+check("  each strong month carrying one concrete action",
+      "CONCRETE ACTION" in year and "put in a calendar" in year)
+check("  the quiet one saying what to protect", "what to PROTECT" in year)
+check("  and the other eight still saying what they are for",
+      "The other eight" in year)
+check("it shows the register rather than describing it",
+      year.count("BAD ") >= 3 and year.count("GOOD ") >= 3)
+MOOD = ("warmth", "current", "season", "cycle", "the universe", "flow")
+check("  and names the words it will not accept",
+      all(word in year for word in MOOD), str([w for w in MOOD
+                                               if w not in year]))
+check("  including the two lines the owner quoted back",
+      "Warmth runs close to the surface" in year
+      and "closes on a warm current" in year)
+
+print("\n--- the pairings read as a table ---")
+pairs = reports._PERSONA_SHAPES["materials"]
+check("every verdict line is one sentence",
+      "ONE LINE." in pairs and "Not a paragraph" in pairs)
+check("  and the section says so outright", "Four essays" in pairs)
+check("  with one closing paragraph, named",
+      "THE FIRST MONTH:" in pairs and "the only paragraph here" in pairs)
+
+print("\n--- the mail is this funnel's own ---")
+# The leak: `_email_opening` branched on three copy objects and let everything
+# else fall through to kitchen's line, so a persona buyer was told they had
+# dodged the mistakes that cost renovators $4,000.
+opening = reports._email_opening(content)
+check("the opening speaks about shapes, not kitchens",
+      "renovator" not in opening.lower() and "$4,000" not in opening,
+      opening)
+check("  and names what was actually bought",
+      "shapes you chose" in opening, opening)
+copy = reports._email_copy(content)
+check("the subject is the funnel's voice",
+      "what's underneath" in copy["subject"].lower(), copy["subject"])
+check("  the body names the four promises",
+      all(word in copy["body"].lower()
+          for word in ("drain", "steadies", "strength", "twelve months")))
+check("  and no paywall variant name reaches the mail",
+      not any((v.get("name") or "").lower() in json.dumps(copy).lower()
+              for v in CFG["paywall_variants"]))
+
+# Every registered product gets its own branch, so nothing else can fall
+# through to kitchen's sentence the way persona did.
+KITCHEN_LINE = "renovator"
+for slug, name in (("persona", "COPY_PERSONA"), ("zodiac30", "COPY_ZODIAC"),
+                   ("zodiac-ro", "COPY_ZODIAC_RO")):
+    obj = getattr(reports, name)
+    body = {"funnel": slug, "style_name": "X", "visuals": {}, "sections": []}
+    line = reports._email_opening(body)
+    check("  %s never gets kitchen's line" % slug,
+          KITCHEN_LINE not in line.lower(), line[:60])
+
+print("\n--- the print copies are whole and none of them collapsed ---")
+import glob
+PERSONA_PREFIXES = ("battery_", "chapter_", "drain_", "forks_", "hour_",
+                    "leanedon_", "now_", "pressure_", "reset_", "runs_",
+                    "seeking_", "tenyears_", "walls_")
+variants = [f for f in glob.glob(os.path.join(REPO, "static/img/print/*.jpg"))
+            if os.path.basename(f).startswith(PERSONA_PREFIXES)]
+def shapes_of(paths):
+    from PIL import Image as I
+    out = []
+    for path in paths:
+        with I.open(path) as im:
+            out.append(im.size)
+    return out
+
+
+check("every frame this funnel can print has a copy",
+      len(variants) == 44, str(len(variants)))
+# The floor is per box, because the defect was a wrong box rather than a
+# small file. `chapter_*` came back at 4.6 KB when the cover's 900x154 band
+# overwrote the section's own slot — a 3:4 sculpture letterboxed into a band
+# is a stamp — while a 200x200 sheet cell of a spark on a plain sweep is
+# legitimately 4 KB and always was. An absolute floor fails the second to
+# catch the first.
+from PIL import Image as _Image
+FLOOR = {(300, 400): 8 * 1024, (280, 280): 5 * 1024, (200, 200): 3 * 1024}
+small = []
+for f in variants:
+    with _Image.open(f) as im:
+        size = im.size
+    want = FLOOR.get(size)
+    if want and os.path.getsize(f) < want:
+        small.append((os.path.basename(f), size, os.path.getsize(f)))
+check("  none is thin for the box it was written at", not small, str(small[:3]))
+check("  and every box is one this funnel actually draws",
+      set(FLOOR) >= {s for s in shapes_of(variants)},
+      str(sorted(set(shapes_of(variants)) - set(FLOOR))))
+from PIL import Image
+shapes = {}
+for f in variants:
+    with Image.open(f) as im:
+        shapes.setdefault(im.size, []).append(os.path.basename(f))
+check("  none is a band", not [s for s in shapes if s[0] > s[1] * 2],
+      str([s for s in shapes if s[0] > s[1] * 2]))
+check("  the section slots are portrait at the frames' own aspect",
+      (300, 400) in shapes, str(sorted(shapes)))
+check("  and the twelve-month section's picture is one of them",
+      any(n.startswith("chapter_") for n in shapes.get((300, 400), [])),
+      str(shapes.get((300, 400), [])[:2]))
+
+print("\n--- nothing needs re-warming ---")
+changed = {"shopping", "materials"}
+check("the prompts that changed are all written per purchase",
+      not (changed & set(profile["cached"])),
+      str(sorted(changed & set(profile["cached"]))))
+check("  so the one cached section is untouched",
+      profile["cached"] == ("mistakes",))
+
 print("\n--- the neighbours ---")
 check("zodiac still reads its own vocabulary",
       reports._profile("zodiac") is reports.ZODIAC_PROFILE

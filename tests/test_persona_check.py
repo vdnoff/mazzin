@@ -1325,22 +1325,82 @@ check("  and the sheet is two rows for a thirteen-step run",
 check("the line above the totem is the one the owner asked for",
       cfg["result_copy"]["kicker"] == "The inner shape of your mind")
 
-print("\n--- the sculptures are shown whole ---")
-check("the contact sheet contains rather than crops",
-      re.search(r"\.pr-tap img \{[^}]*object-fit: contain;", sheet, re.S)
-      is not None)
-check("  on a ground toned to the renders' own backdrop",
-      re.search(r"\.pr-tap img \{[^}]*background: var\(--pr-frame",
-                sheet, re.S) is not None
-      and "--pr-frame:" in sheet)
-check("  and so does the section photograph",
+print("\n--- whole where it is looked at, covered where it is scanned ---")
+# Two slots, two answers, and they are not in tension. The section's picture
+# is one frame the reader looks at, so it is shown entire on a toned ground.
+# The contact sheet is thirteen at a glance, and thirteen letterboxed
+# thumbnails read as a grid that failed rather than as somebody's run.
+check("the section photograph is shown entire",
       re.search(r"\.pr-shot img \{[^}]*object-fit: contain;", sheet, re.S)
       is not None)
-check("nowhere in this funnel's own frames is cover still used",
-      not re.search(r"\.pr-(tap|shot) img \{[^}]*object-fit: cover;",
-                    sheet, re.S))
-check("the funnel asks for whole frames in print too",
+check("  on a ground toned to the renders' own backdrop",
+      re.search(r"\.pr-shot img \{[^}]*background: var\(--pr-frame",
+                sheet, re.S) is not None
+      and "--pr-frame:" in sheet)
+check("the sheet's cells are covered instead",
+      re.search(r"\.pr-tap img \{[^}]*object-fit: cover;", sheet, re.S)
+      is not None)
+check("  which is a choice, not a leftover: it says where from",
+      re.search(r"\.pr-tap img \{[^}]*object-position: center center;",
+                sheet, re.S) is not None)
+check("the funnel still asks for whole frames in print",
       cfg["report"].get("print_whole") is True)
+
+print("\n--- the section picture is a media object ---")
+check("it is a fixed modest column the text runs beside",
+      re.search(r"\.pr-shot \{[^}]*float: left;[^}]*width: (\d+)px", sheet, re.S)
+      is not None
+      and int(re.search(r"\.pr-shot \{[^}]*width: (\d+)px", sheet, re.S)
+              .group(1)) <= 140)
+check("  the frame inside it is still whole",
+      re.search(r"\.pr-shot img \{[^}]*object-fit: contain;", sheet, re.S)
+      is not None)
+check("  and the wrap stops at the end of the section",
+      ".pr-node-body::after" in sheet and "clear: both" in sheet)
+check("no section draws a full-width picture box any more",
+      not re.search(r"\.pr-shot \{[^}]*width: 100%", sheet, re.S))
+
+print("\n--- the contact sheet's cells are covered ---")
+check("the cells are filled edge to edge",
+      re.search(r"\.pr-tap img \{[^}]*object-fit: cover;", sheet, re.S)
+      is not None)
+check("  from the middle of the frame",
+      re.search(r"\.pr-tap img \{[^}]*object-position: center center;",
+                sheet, re.S) is not None)
+check("  with no letterbox ground left behind them",
+      not re.search(r"\.pr-tap img \{[^}]*background: var\(--pr-frame",
+                    sheet, re.S))
+
+print("\n--- the caption is the reader's own words ---")
+check("it says which pick put the picture there",
+      'You chose: \\u201c" + pick.label.toLowerCase()' in module)
+check("  in the case they read it in",
+      not re.search(r"\.pr-shot-cap \{[^}]*text-transform: uppercase",
+                    sheet, re.S))
+check("  and nothing else captions a section picture",
+      module.count("pr-shot-cap") == 1)
+
+print("\n--- the rhythm break ---")
+check("the pairings read as a table: a row, a rule, a line",
+      re.search(r"\.pr-verdict \{[^}]*border-bottom: 1px solid", sheet, re.S)
+      is not None
+      and ".pr-verdict:last-child" in sheet)
+check("  each row still carrying its verdict chip",
+      ".pr-tag.is-works" in sheet and ".pr-tag.is-avoid" in sheet)
+check("the year is a rail rather than a numbered list",
+      ".pr-months::before" in sheet
+      and not re.search(r"\.pr-month::before \{[^}]*counter\(", sheet, re.S))
+check("  with a node per month", re.search(r"\.pr-month::before \{[^}]*"
+                                           r"border-radius: 50%", sheet, re.S)
+      is not None)
+check("  and the months worth acting in marked on it",
+      ".pr-month.is-strong::before" in sheet
+      and ".pr-month.is-quiet::before" in sheet)
+check("  which the module tags from the section's own two marks",
+      'prefix: "Strongest month:"' in module
+      and 'prefix: "Quiet month:"' in module)
+check("  taking the mark off the front of the line it prefixed",
+      "note.slice(mark.prefix.length)" in module)
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for f in fails:

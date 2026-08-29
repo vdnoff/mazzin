@@ -2337,12 +2337,12 @@ deleted without losing a fact about this reader, delete it.''',
   "pairs": [
     {"combo": "COPY THE FIRST PAIRING FROM THE LIST ABOVE, EXACTLY (max %(combo)d chars)",
      "verdict": "COPY ITS VERDICT FROM THE LIST ABOVE - the word works or the word avoid",
-     "why": "TWO PARTS IN ONE PARAGRAPH. First: what that pairing is like to be inside, expanding the line given above without contradicting it. Then, in the same paragraph: HOW TO PLAY IT — the one thing that actually works with this profile, written as something to do rather than something to know (max %(why)d chars)"},
-    {"combo": "the second pairing from the list, exactly", "verdict": "its verdict, exactly", "why": "same two parts"},
-    {"combo": "the third pairing from the list, exactly", "verdict": "its verdict, exactly", "why": "same shape, but the second part is HOW TO PROTECT THEIR ENERGY: the specific boundary that makes this one survivable, written as something to do"},
-    {"combo": "the fourth pairing from the list, exactly", "verdict": "its verdict, exactly", "why": "same two parts"}
+     "why": "ONE LINE. What this pairing is like and the one thing to do about it, in a single sentence a reader can act on. Not a paragraph, not two sentences joined by a semicolon (max %(why)d chars)"},
+    {"combo": "the second pairing from the list, exactly", "verdict": "its verdict, exactly", "why": "one line"},
+    {"combo": "the third pairing from the list, exactly", "verdict": "its verdict, exactly", "why": "one line"},
+    {"combo": "the fourth pairing from the list, exactly", "verdict": "its verdict, exactly", "why": "one line"}
   ],
-  "rule": "one sentence on what to say, or ask for, in the first month with somebody (max %(rule)d chars)"
+  "rule": "THE FIRST MONTH: 2-3 sentences on what to say, ask for, or watch for in the first month with somebody new — the paragraph this section closes on (max %(rule)d chars)"
 }
 
 THE PAIRINGS ARE NOT YOURS TO CHOOSE. Four of them are given above, each with
@@ -2350,16 +2350,14 @@ its verdict and a line saying what it is. Reproduce all four, in that order,
 with the `combo` and the `verdict` exactly as written. Invent no pairing, and
 never change a verdict.
 
-What you write is the `why`. Take the given line as true and say what it is
-like to be inside, then what to do about it. `verdict` is the word "works" or
-the word "avoid" and nothing else. "avoid" means the pairing is expensive to
-be in, never that a person is bad.
+`verdict` is the word "works" or the word "avoid" and nothing else. "avoid"
+means the pairing is expensive to be in, never that a person is bad.
 
-Every `why` carries both halves. The first half is what it is like; the
-second is what to do about it, and it is the half the reader came for — a
-pairing described and not answered is half a chapter. Name the thing to do
-specifically enough to do it this month.''',
-
+This section is read as a table: a name, a verdict, and one line. Four essays
+is what it used to be and it is not what it is now — every `why` is a single
+sentence carrying both halves, what it is like AND what to do, and the doing
+is the half the reader came for. The paragraph at the end is `rule`, and it
+is the only paragraph here.''',
     "dna": '''"dna": {
   "narrative": [
     "WHY THEY DRAIN WHERE OTHERS CHARGE: a paragraph naming the exact conditions that empty this person — the kind of room, the kind of demand, the hour of the day — built from the shapes they chose for pressure, drain and battery, and quoting at least one of them by the words on it (max %(narrative)d chars)",
@@ -2388,7 +2386,7 @@ on it. Not "you find noise difficult" but the thing they actually reached
 for.''',
     "shopping": '''"shopping": {
   "items": [
-    {"name": "COPY THE 1st LABEL FROM THE LIST ABOVE, EXACTLY (max %(name)d chars)", "priority_note": "what this month's energy is good for (max %(priority_note)d chars — one or two sentences)"},
+    {"name": "COPY THE 1st LABEL FROM THE LIST ABOVE, EXACTLY (max %(name)d chars)", "priority_note": "what to DO in this month (max %(priority_note)d chars)"},
     {"name": "COPY THE 2nd, EXACTLY", "priority_note": "..."},
     {"name": "COPY THE 3rd, EXACTLY", "priority_note": "..."},
     {"name": "the 4th", "priority_note": "..."},
@@ -2409,15 +2407,41 @@ in the order the list above gives them, every one an object with `name` and
 `priority_note`. `skip` is an empty list — send it, and put nothing in it.
 
 `name` is the label from the list and nothing else — the month and the year,
-exactly as written there. This map starts from the month they are in, not
-from January, so the first item is the month they are living through right
-now and four of the twelve are in next year.
+exactly as written there. The map starts from the month they are in, not from
+January, so four of the twelve are in next year.
 
-Mark exactly three months by opening their note with "Strongest month:" and
-exactly one by opening its note with "Quiet month:". The quiet one is for
-recovery rather than for starting things, and its note says what it is good
-for instead. Themes only — what a month is good for, never what is going to
-happen in it.''',
+WHAT EACH MONTH SAYS. Exactly three months open their note with
+"Strongest month:" and exactly one opens with "Quiet month:".
+
+- The three strongest: one CONCRETE ACTION each, in work or in how they
+  spend their energy. A thing to start, ask for, ship, decline or book. Name
+  it specifically enough to put in a calendar.
+- The one quiet month: what to PROTECT — the thing to guard rather than the
+  thing to start.
+- The other eight: one or two lines each, and each one still says what the
+  month is FOR. Shorter than the strong ones, never vaguer.
+
+THIS IS MECHANICS, NOT MOOD. Every line is anchored to how this person is
+built — their axis and their rhythm, the shapes they chose, the way they
+drain and recover. Not to a season, not to a feeling, and not to what the
+year "brings".
+
+The register, exactly:
+
+  BAD  "Warmth runs close to the surface this month."
+  BAD  "The year closes on a warm current."
+  BAD  "A month for reflection and gentle progress."
+  GOOD "Strongest month: pitch the thing you have been drafting — you decide
+        fastest in the first two hours and this is the month to spend them."
+  GOOD "Quiet month: protect the standing block on your calendar. This is
+        where the last three months get consolidated, not where you add."
+  GOOD "Say no to the second project. Your drive runs ahead of your anchor
+        here and the cost lands in the month after."
+
+Never "energy" as a noun on its own, never "warmth", "current", "flow",
+"season", "cycle", "the universe", "brings", "invites", "opens". If a
+sentence would survive being moved to another reader, it is the wrong
+sentence.''',
 }
 
 PERSONA_SPEC = dict((section_id, _zodiac_spec(text, section_id))
@@ -6205,17 +6229,37 @@ PERSONA_PDF_CSS = ZODIAC_PDF_CSS + """
    `contain` alone would not have been enough: the print copies under
    static/img/print were pre-cropped before the PDF ever saw them, so
    scripts/gen_print_variants.py writes this funnel's at 3:4 as well. */
+/* A media object: a fixed modest column with the section's opening text
+   running beside it. It was a full-width box with a portrait floating in the
+   middle and most of the box empty. */
+.tap {
+  float: left;
+  width: 30mm;
+  margin: 0 5mm 2mm 0;
+}
 .tap img {
-  width: 52.5mm;
-  height: 70mm;
-  margin: 0 auto;
+  width: 30mm;
+  height: 40mm;
   object-fit: contain;
   background: #CEA371;
 }
+/* Normal case: the label is the reader's own words, not a code. */
+.tap figcaption {
+  font-size: 6.5pt;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.3;
+}
+/* The text stops wrapping at the end of its own section. */
+.section-body::after { content: ""; display: block; clear: both; }
+
+/* The contact sheet is covered edge to edge. Bands inside a grid of thirteen
+   squares read as a broken sheet; whole frames are what the section slot
+   above is for. */
 .tapcell img {
   width: 26.8mm;
-  height: 35.7mm;
-  object-fit: contain;
+  height: 26.8mm;
+  object-fit: cover;
   background: #CEA371;
 }
 """
@@ -7150,9 +7194,11 @@ COPY_ZODIAC_RO = {
 # like this". Neutral on purpose — a buyer who saw one frame and received a
 # mail naming the other would notice, and would be right to.
 COPY_PERSONA = {
-    "headline": "Your profile is ready.",
-    "subject": "Your %s profile — Mazzin",
-    "body": "Your complete %s profile is attached.",
+    "headline": "What's underneath is ready.",
+    "subject": "%s — what's underneath your shapes",
+    "body": "Your full profile as %s is attached: why you drain where "
+            "others charge, who steadies you, the strength nobody has named, "
+            "and the next twelve months.",
     "keep": "It stays available at that link, and the PDF is yours to keep.",
 }
 
@@ -7245,11 +7291,26 @@ def _email_opening(content):
             return ("You just spent %s on a read of the energy you have been "
                     "running on all along." % html.escape(price))
         return ("A read of the energy you have been running on all along.")
+    if copy is COPY_PERSONA:
+        if price:
+            return ("You just spent %s on the read underneath the shapes you "
+                    "chose." % html.escape(price))
+        return "The read underneath the shapes you chose."
     if copy is COPY_VISUALIZER:
         if price:
             return ("Your own kitchen, redrawn in the style your choices "
                     "pointed at — for %s." % html.escape(price))
         return "Your own kitchen, redrawn in the style your choices pointed at."
+    # Kitchen's line, and the fall-through for anything that reads as kitchen.
+    #
+    # It is a fall-through rather than a fourth branch because kitchen is what
+    # an unregistered funnel is — see `_profile`. That is fine for a kitchen
+    # clone and wrong for a product with its own voice: persona reached here
+    # for one release and told its buyers they had dodged the mistakes that
+    # cost renovators $4,000, which is a sentence about a kitchen sent to
+    # somebody who bought a reading of themselves. Every registered product
+    # gets a branch above this line, and tests/test_personareport.py holds
+    # each funnel to its own.
     if price:
         return ("You just spent %s to dodge the mistakes that cost renovators "
                 "$4,000+." % html.escape(price))

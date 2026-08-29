@@ -65,9 +65,16 @@ GRID = (200, 200)
 # different shape. These are the same slots at the frames' own aspect, and
 # they are only ever used by a funnel that asks for whole frames — every other
 # funnel's boxes, bytes and ceilings are exactly what they were.
-TAP_WHOLE = (420, 560)
-GRID_WHOLE = (200, 267)
-WHOLE_BOX = {TAP: TAP_WHOLE, GRID: GRID_WHOLE}
+# The section image is a media object beside the opening text now — a modest
+# fixed width rather than a band across the column — so its print copy is a
+# small portrait rather than a large one.
+TAP_WHOLE = (300, 400)
+
+# The contact sheet is NOT in here on purpose. Its cells are covered edge to
+# edge by their frames: a letterboxed thumbnail puts bands inside a grid of
+# thirteen squares, which reads as a broken sheet rather than as whole
+# pictures. Whole frames are what the section slot is for.
+WHOLE_BOX = {TAP: TAP_WHOLE}
 
 # A report that draws one picture per section carries eight of them.
 CEILING = {TAP: 30 * 1024, BAND: 34 * 1024, GLYPH: 22 * 1024,
@@ -78,6 +85,25 @@ CEILING = {TAP: 30 * 1024, BAND: 34 * 1024, GLYPH: 22 * 1024,
 # flat gradient do not compress alike.
 MAX_BYTES = 60 * 1024
 QUALITY = (86, 80, 74, 68, 62, 55)
+
+
+def claim(out, image_id, box):
+    """Keep the box that serves every slot this frame appears in.
+
+    A frame can be drawn in more than one place, and these assignments used to
+    be last-write-wins. On persona the four `chapter_*` frames are both the
+    12-month section's picture and the cover's horizon, and the horizon was
+    claimed second — so they were written at the band's 900x154 and the
+    section drew a 4.7 KB sliver where a portrait belonged.
+
+    The rule the contact sheet below already followed, applied to all of them:
+    a frame drawn large somewhere must not be shrunk for somewhere else. Area
+    decides, so the copy on disk can satisfy the biggest slot and every
+    smaller one scales down from it.
+    """
+    have = out.get(image_id)
+    if have is None or box[0] * box[1] > have[0] * have[1]:
+        out[image_id] = box
 
 
 def wanted(cfg):
@@ -107,12 +133,12 @@ def wanted(cfg):
     # print copy.
     for step_id in (visuals.get("section_steps") or {}).values():
         for image_id in ids_on(step_id):
-            out[image_id] = TAP
+            claim(out, image_id, TAP)
     hero = visuals.get("hero") or {}
     for image_id in ids_on(hero.get("band_step")):
-        out[image_id] = BAND
+        claim(out, image_id, BAND)
     for image_id in ids_on(hero.get("glyph_step")):
-        out[image_id] = GLYPH
+        claim(out, image_id, GLYPH)
     # The contact sheet is the reader's whole run, so on a funnel that draws
     # one every frame on every step can end up in a PDF and every one of them
     # needs a print copy. `setdefault`, never over: a frame the document also
@@ -225,10 +251,14 @@ def main(argv=None):
             missing += 1
             continue
         box = todo[image_id]
-        if whole:
-            box = WHOLE_BOX.get(box, box)
+        # Whole frames are a property of the SLOT, not of the funnel: the
+        # section image is shown entire and the contact sheet's cells are
+        # covered edge to edge, in the same document.
+        entire = whole and box in WHOLE_BOX
+        if entire:
+            box = WHOLE_BOX[box]
         with Image.open(src) as image:
-            out = crop_to(image.convert("RGB"), box, whole=whole)
+            out = crop_to(image.convert("RGB"), box, whole=entire)
         path = os.path.join(OUT, image_id + ".jpg")
         quality, size = write(path, out, CEILING.get(todo[image_id],
                                                      MAX_BYTES))
