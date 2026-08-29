@@ -1478,6 +1478,27 @@
 
     var data = profileOf(ctx, axes, top);
 
+    // Chosen before the offer is drawn, so the card and the button it
+    // contains argue the same offer. `null` on a funnel that declares no
+    // variants, which is every funnel but this one and zodiac30.
+    var variant = assignedVariant(ctx.cfg);
+    // Reported here, before a single node is built.
+    //
+    // It used to be the last statement in this function, and that cost the
+    // A/B its numbers: `renderCommerce` runs before any module does, so the
+    // nodes engine.js watches for `paywall_view` exist whatever happens
+    // next, and `mod.render` is called inside a try/catch that falls back to
+    // engine's own page. A throw anywhere below — in the hero, the taps, the
+    // arm's own builders, the offer — lost this event while `paywall_view`
+    // went on firing, with `errors=0` in the browser because the catch
+    // swallowed it.
+    //
+    // Worse, the arms run different builders, so a fault on one path lost
+    // that arm disproportionately and biased the split without touching
+    // assignment. Assignment is a pure function of the session id and needs
+    // nothing that can throw, so the report goes with it.
+    reportVariant(ctx, variant);
+
     root.innerHTML = "";
     root.appendChild(kicker(copy));
     // The rich card, or the plain one, when a config carries no table to draw
@@ -1507,13 +1528,8 @@
     } else {
       root.appendChild(path(ctx, copy, axes));
     }
-    // Chosen before the offer is drawn, so the card and the button it
-    // contains argue the same offer. `null` on a funnel that declares no
-    // variants, which is every funnel but this one and zodiac30.
-    var variant = assignedVariant(ctx.cfg);
     root.appendChild(offer(ctx, copy, data, variant));
     applyVariantCta(ctx, variant);
-    reportVariant(ctx, variant);
 
     // The container engine.js moved the offer rows into is empty now and its
     // own border would draw a line under nothing.
