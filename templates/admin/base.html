@@ -1,0 +1,135 @@
+{#
+  The admin shell. Deliberately not a file under static/: everything there is
+  served by the web server and cached by the CDN with no worker in the loop,
+  which is what makes the funnel fast and what would make this page public.
+
+  The CSS is inline for the same reason and one more — it is four screens of
+  rules, it changes with the markup it styles, and a second request for it on
+  a phone on a train is a second request nobody needs.
+#}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{% block title %}Mazzin admin{% endblock %}</title>
+<style>
+  :root {
+    --ink: #16181d;
+    --muted: #6b7280;
+    --line: #e4e6eb;
+    --bg: #f7f8fa;
+    --card: #ffffff;
+    --accent: #1f4fd8;
+    --good: #157347;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  a { color: var(--accent); }
+  header.bar {
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+    padding: 14px 16px; background: var(--card);
+    border-bottom: 1px solid var(--line);
+  }
+  header.bar h1 { font-size: 17px; margin: 0; letter-spacing: .01em; }
+  header.bar .spacer { flex: 1 1 auto; }
+  header.bar form { margin: 0; }
+  main { padding: 14px 16px 48px; }
+  h2 { font-size: 15px; margin: 26px 0 8px; }
+  h2:first-of-type { margin-top: 6px; }
+  p.note { color: var(--muted); font-size: 12.5px; margin: 4px 0 12px; }
+
+  /* The range selector. Wraps to two rows on a narrow phone rather than
+     scrolling sideways. */
+  nav.ranges { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 12px; }
+  nav.ranges a, nav.ranges button {
+    display: inline-block; padding: 6px 11px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--card);
+    color: var(--ink); text-decoration: none; font-size: 13px;
+  }
+  nav.ranges a.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  form.custom { display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+                margin: 0 0 14px; font-size: 13px; color: var(--muted); }
+  form.custom input[type=date] {
+    font: inherit; padding: 5px 7px; border: 1px solid var(--line);
+    border-radius: 6px; background: var(--card); color: var(--ink);
+  }
+  form.custom button {
+    font: inherit; padding: 6px 12px; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--ink); background: var(--ink); color: #fff;
+  }
+
+  /* Tables over widgets. A table that does not fit scrolls inside its own
+     box — the page itself never scrolls sideways on a phone. */
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch;
+            background: var(--card); border: 1px solid var(--line);
+            border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  th, td { padding: 8px 10px; text-align: right; white-space: nowrap;
+           border-bottom: 1px solid var(--line); font-size: 13.5px; }
+  th { font-weight: 600; color: var(--muted); font-size: 12px;
+       text-transform: uppercase; letter-spacing: .04em; }
+  th:first-child, td:first-child { text-align: left; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tr.totals td { font-weight: 700; border-top: 2px solid var(--line); }
+
+  /* Ten columns do not fit across a phone and none of them is optional — the
+     revenue and the conversion rate are the two the owner opened this for, and
+     they are the last two across. So the table scrolls inside its box and the
+     funnel name is pinned to the left edge while it does: without that, the
+     numbers you scrolled to belong to a row you can no longer identify. */
+  th:first-child, td:first-child {
+    position: sticky; left: 0; z-index: 1; background: var(--card);
+    box-shadow: 1px 0 0 var(--line);
+  }
+  tr.totals td:first-child { background: var(--card); }
+  @media (max-width: 620px) {
+    th, td { padding: 7px 7px; font-size: 12.5px; }
+    th { font-size: 10.5px; letter-spacing: .02em; }
+  }
+  td.zero { color: #b6bac2; }
+  td.money { font-weight: 600; }
+  .tag { display: inline-block; font-size: 10.5px; letter-spacing: .05em;
+         text-transform: uppercase; padding: 2px 6px; border-radius: 4px;
+         background: #eef1f6; color: var(--muted); margin-left: 6px; }
+  .tag.on { background: #e4f2e9; color: var(--good); }
+  .tag.off { background: #f3e6e6; color: #9b3232; }
+
+  /* The drop-off chart: a bar drawn in the cell behind the number, so the
+     shape reads at a glance and the exact figure is still there to read. */
+  td.bar { position: relative; min-width: 46%; }
+  td.bar span.fill { position: absolute; left: 0; top: 3px; bottom: 3px;
+                     background: #dde5fa; border-radius: 0 3px 3px 0; }
+  td.bar span.value { position: relative; }
+  footer { color: var(--muted); font-size: 12px; padding: 0 16px 30px; }
+</style>
+</head>
+<body>
+<header class="bar">
+  <h1><a href="{{ url_for('admin.index') }}" style="text-decoration:none;color:inherit">Mazzin admin</a></h1>
+  {% block subtitle %}{% endblock %}
+  <span class="spacer"></span>
+  <form method="post" action="{{ url_for('admin.logout') }}">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button type="submit" style="font:inherit;font-size:13px;background:none;
+      border:1px solid var(--line);border-radius:999px;padding:5px 11px;
+      cursor:pointer;color:var(--muted)">Log out</button>
+  </form>
+</header>
+<main>
+{% block body %}{% endblock %}
+</main>
+<footer>
+  Read-only. Counts are unique sessions; revenue is the paid rows of the
+  purchases table.
+</footer>
+</body>
+</html>

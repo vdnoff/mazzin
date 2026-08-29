@@ -13,6 +13,7 @@ from flask import Flask, jsonify, request, send_from_directory
 import config
 import database
 import visualizer
+from admin import bp as admin_bp
 from payments import bp as payments_bp
 from tracking import bp as tracking_bp
 from visualizer import bp as visualizer_bp
@@ -43,6 +44,7 @@ app.config["MAX_CONTENT_LENGTH"] = config.VISUALIZER_MAX_BYTES + 512 * 1024
 app.register_blueprint(tracking_bp)
 app.register_blueprint(payments_bp)
 app.register_blueprint(visualizer_bp)
+app.register_blueprint(admin_bp)
 
 
 @app.errorhandler(413)

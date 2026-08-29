@@ -1,0 +1,16 @@
+{# The range selector, shared by both pages. Every link keeps the page it is
+   on and changes only the window. #}
+<nav class="ranges">
+  {% for key, label in [('today', 'Today'), ('7d', '7 days'), ('30d', '30 days')] %}
+    <a href="{{ url_for(request.endpoint, range=key, **(request.view_args or {})) }}"
+       class="{{ 'on' if window.range == key else '' }}">{{ label }}</a>
+  {% endfor %}
+  {% if window.range == 'custom' %}<a class="on">{{ window.label }}</a>{% endif %}
+</nav>
+<form class="custom" method="get" action="">
+  <input type="hidden" name="range" value="custom">
+  <label>from <input type="date" name="from" value="{{ window['from'] }}"></label>
+  <label>to <input type="date" name="to" value="{{ window.to }}"></label>
+  <button type="submit">Apply</button>
+  <span>showing {{ window.label }}</span>
+</form>

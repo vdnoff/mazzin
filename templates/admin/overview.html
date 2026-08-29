@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Mazzin admin — overview{% endblock %}
+{% block body %}
+{% include "_ranges.html" %}
+
+<div class="scroll">
+<table>
+  <thead>
+    <tr>
+      <th>Funnel</th>
+      <th>Starts</th>
+      <th>Result</th>
+      <th>Paywall</th>
+      <th>Pay tap</th>
+      <th>Sales</th>
+      <th>Revenue</th>
+      <th>Conv %</th>
+      <th>Res %</th>
+      <th>Pay %</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for row in funnels %}
+    <tr>
+      <td>
+        <a href="{{ url_for('admin.funnel', slug=row.slug, **range_query) }}">{{ row.slug }}</a>
+        {% if row.test_mode %}<span class="tag">test</span>{% endif %}
+        {% if row.has_variants %}<span class="tag">a/b</span>{% endif %}
+      </td>
+      <td class="{{ 'zero' if not row.funnel_start }}">{{ row.funnel_start }}</td>
+      <td class="{{ 'zero' if not row.result_view }}">{{ row.result_view }}</td>
+      <td class="{{ 'zero' if not row.paywall_view }}">{{ row.paywall_view }}</td>
+      <td class="{{ 'zero' if not row.pay_tap }}">{{ row.pay_tap }}</td>
+      <td class="{{ 'zero' if not row.purchases }}">{{ row.purchases }}</td>
+      <td class="money {{ 'zero' if not row.revenue }}">{{ row.revenue_display }}</td>
+      <td>{{ '%.2f'|format(row.conversion) }}%</td>
+      <td>{{ '%.1f'|format(row.result_rate) }}%</td>
+      <td>{{ '%.1f'|format(row.pay_rate) }}%</td>
+    </tr>
+  {% endfor %}
+    <tr class="totals">
+      <td>All funnels</td>
+      <td>{{ totals.funnel_start }}</td>
+      <td>{{ totals.result_view }}</td>
+      <td>{{ totals.paywall_view }}</td>
+      <td>{{ totals.pay_tap }}</td>
+      <td>{{ totals.purchases }}</td>
+      <td class="money">{{ totals.revenue_display }}</td>
+      <td>{{ '%.2f'|format(totals.conversion) }}%</td>
+      <td>{{ '%.1f'|format(totals.result_rate) }}%</td>
+      <td>{{ '%.1f'|format(totals.pay_rate) }}%</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p class="note">
+  Conv % is sales over starts. Result % is how many who started saw a result.
+  Pay % is how many who saw the offer tapped to pay. Revenue is summed per
+  currency and never converted between them.
+</p>
+{% endblock %}

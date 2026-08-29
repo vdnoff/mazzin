@@ -246,3 +246,46 @@ def load_funnel(slug):
         raise KeyError(slug)
     with open(path, "r", encoding="utf-8") as fh:
         return json.load(fh)
+
+
+# --- Admin dashboard ------------------------------------------------------
+# One account, and it lives in .env — never in the database, never in git.
+# A password in a table is a password a SQL bug can read and a mysqldump can
+# carry off the server; a password in git is a password forever.
+#
+# Both empty is the shipped state and it is not an error: /admin answers 503
+# and says what is missing. That is deliberately not an open dashboard and
+# deliberately not a crash — a server that will not boot because nobody has
+# set up the admin login yet would take the funnels down with it.
+#
+# ADMIN_PASSWORD_HASH is a hash, never a password. Generate one with
+# `python3 scripts/admin_password.py`, which prints the line to paste.
+ADMIN_USER = os.getenv("ADMIN_USER", "")
+ADMIN_PASSWORD_HASH = os.getenv("ADMIN_PASSWORD_HASH", "")
+
+# What signs the admin session cookie. Optional: left empty, the key is
+# derived from the password hash instead, which is better than a random one
+# per process — several workers serve this app and a per-process key would log
+# the owner out on every other request — and has the useful property that
+# changing the password ends every session that was open under the old one.
+#
+# Set it to rotate sessions without changing the password.
+ADMIN_SECRET_KEY = os.getenv("ADMIN_SECRET_KEY", "")
+
+# How long a login lasts before it has to be done again.
+ADMIN_SESSION_MAX_AGE_S = int(os.getenv("ADMIN_SESSION_MAX_AGE_S",
+                                        str(12 * 3600)))
+
+# The cookie is Secure by default, which means the browser will not send it
+# over plain HTTP. Turn it off only to run the dashboard against a local
+# server on http://localhost; on the real site this stays on.
+ADMIN_COOKIE_SECURE = os.getenv("ADMIN_COOKIE_SECURE", "1") == "1"
+
+# Failed logins, per window, before the door stops answering. Two buckets are
+# counted: one per client address and one global. The per-address bucket is
+# the useful one and it is keyed on a header a client can set, so the global
+# bucket is what remains true when somebody rotates it.
+ADMIN_LOGIN_MAX_ATTEMPTS = int(os.getenv("ADMIN_LOGIN_MAX_ATTEMPTS", "5"))
+ADMIN_LOGIN_MAX_ATTEMPTS_GLOBAL = int(
+    os.getenv("ADMIN_LOGIN_MAX_ATTEMPTS_GLOBAL", "30"))
+ADMIN_LOGIN_WINDOW_S = int(os.getenv("ADMIN_LOGIN_WINDOW_S", "900"))

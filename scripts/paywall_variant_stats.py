@@ -33,79 +33,41 @@ noise, and the default hides rows too thin to mean anything.
 Reads only. No writes, no model calls, nothing that touches a purchase.
 """
 import argparse
+import datetime
 import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import database        # noqa: E402
+import analytics      # noqa: E402
 
-# One row per session: the arm it was assigned, and the subid it arrived on.
-# `MIN(created_at)` collapses a session that somehow reported twice — a reload
-# on a cached page, an engine a version apart — to the assignment it saw first,
-# so a session counts once in exactly one arm.
+# The query itself moved to analytics.py when the admin dashboard grew an A/B
+# panel over the same numbers. It is imported rather than copied for one
+# reason: two readouts of the same test that can disagree are worse than one
+# readout, and the only way they can disagree is by drifting apart on the SQL.
 #
-# The subid comes off the assignment row rather than off the purchase, because
-# it is the attribution the reader was actually acquired on; a purchase row
-# carries its own copy and they are the same value.
-STATS_SQL = """
-SELECT
-  a.variant                                   AS variant,
-  COALESCE(a.subid, '(none)')                 AS subid,
-  COUNT(*)                                    AS shown,
-  SUM(CASE WHEN v.session_id IS NOT NULL THEN 1 ELSE 0 END) AS reached,
-  SUM(CASE WHEN p.session_id IS NOT NULL THEN 1 ELSE 0 END) AS paid
-FROM (
-  SELECT
-    e.session_id,
-    JSON_UNQUOTE(JSON_EXTRACT(e.extra, '$.variant')) AS variant,
-    MIN(e.subid)                                     AS subid
-  FROM events e
-  WHERE e.funnel = %s
-    AND e.event = 'paywall_variant'
-    AND e.extra IS NOT NULL
-    AND JSON_EXTRACT(e.extra, '$.variant') IS NOT NULL
-    {window}
-  GROUP BY e.session_id, variant
-) a
-LEFT JOIN (
-  SELECT DISTINCT session_id FROM events
-  WHERE funnel = %s AND event = 'paywall_view'
-) v ON v.session_id = a.session_id
-LEFT JOIN (
-  SELECT DISTINCT session_id FROM purchases
-  WHERE funnel = %s AND status = 'paid'
-) p ON p.session_id = a.session_id
-GROUP BY variant, subid
-ORDER BY variant, shown DESC
-"""
-
-WINDOW = "AND e.created_at >= NOW() - INTERVAL %s DAY"
+# Nothing about this script's output changed with the move. The one difference
+# under it is where the window's clock comes from: the range used to be
+# `NOW() - INTERVAL N DAY`, measured by the database, and is now measured here
+# and passed as a timestamp. Same window on a server whose clock agrees with
+# its database, which is every server this runs on.
 
 
 def rows_for(funnel, days):
-    sql = STATS_SQL.format(window=WINDOW if days else "")
-    params = [funnel]
+    """The stats rows for a funnel, optionally limited to the last N days."""
+    start = None
     if days:
-        params.append(days)
-    params += [funnel, funnel]
-    return database.query_all(sql, tuple(params)) or []
+        start = datetime.datetime.now() - datetime.timedelta(days=days)
+    return analytics.variant_rows(funnel, start=start)
 
 
 def rate(paid, shown):
-    return (100.0 * paid / shown) if shown else 0.0
+    return analytics.rate(paid, shown)
 
 
 def fold(rows):
     """Collapse the subid dimension, for the headline number per arm."""
-    out = {}
-    for row in rows:
-        cell = out.setdefault(row["variant"],
-                              {"variant": row["variant"], "subid": "(all)",
-                               "shown": 0, "reached": 0, "paid": 0})
-        for key in ("shown", "reached", "paid"):
-            cell[key] += int(row[key] or 0)
-    return sorted(out.values(), key=lambda c: -c["shown"])
+    return analytics.fold_variants(rows)
 
 
 def show(rows, floor):
