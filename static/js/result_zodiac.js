@@ -1240,6 +1240,22 @@
     // Only an arm that names a template takes the other one.
     var variant = assignedVariant(ctx.cfg);
     var template = (variant && variant.template) || "";
+    // Reported here, before a single node is built.
+    //
+    // It used to be the last statement in this function, and that cost the
+    // A/B its numbers: `renderCommerce` runs before any module does, so the
+    // nodes engine.js watches for `paywall_view` exist whatever happens
+    // next, and `mod.render` is called inside a try/catch that falls back to
+    // engine's own page. A throw anywhere below — in the hero, the taps, the
+    // arm's own builders, the offer — lost this event while `paywall_view`
+    // went on firing, with `errors=0` in the browser because the catch
+    // swallowed it.
+    //
+    // Worse, the arms run different builders, so a fault on one path lost
+    // that arm disproportionately and biased the split without touching
+    // assignment. Assignment is a pure function of the session id and needs
+    // nothing that can throw, so the report goes with it.
+    reportVariant(ctx, variant);
 
     root.innerHTML = "";
     root.appendChild(kicker(copy));
@@ -1274,7 +1290,6 @@
       root.appendChild(path(ctx, copy, elements));
     }
     root.appendChild(offer(ctx, copy, data, template));
-    reportVariant(ctx, variant);
 
     // The container engine.js moved the offer rows into is empty now and its
     // own border would draw a line under nothing.
