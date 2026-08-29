@@ -468,3 +468,6 @@ bottom.
 
 ## 2026-08-29 — claude/stripe-mode-switch
 - admin: per-funnel Stripe mode switch (override table + /admin/modes)
+
+## 2026-08-29 — claude/stripe-mode-switch
+- admin: stripe mode switch per funnel
