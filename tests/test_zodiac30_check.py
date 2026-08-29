@@ -92,13 +92,19 @@ for key in SAME:
 def _no_rarity(copy):
     out = {k: v for k, v in copy.items() if k != "profile"}
     if "profile" in copy:
+        # `rarity` is measured per funnel and pinned on its own account
+        # below. The three minimal-arm keys are dropped for a different
+        # reason: they are copy for a layout only this funnel has an arm to
+        # draw, so their absence on the twin is not a shape the two configs
+        # disagree on. Their being absent there is asserted separately.
         out["profile"] = {k: v for k, v in copy["profile"].items()
-                          if k != "rarity"}
+                          if k not in ("rarity", "rarity_minimal",
+                                       "checklist", "checklist_tail")}
     return out
 
 
 mine_copy = {k: v for k, v in cfg["result_copy"].items() if k != "purpose_map"}
-check("  result_copy    is the twin's, but for the purpose block",
+check("  result_copy    is the twin's, but for the arm-only copy",
       _no_rarity(mine_copy) == _no_rarity(twin["result_copy"]),
       str(sorted(set(mine_copy) ^ set(twin["result_copy"]))))
 check("    and the rarity is measured on this funnel's own walk",
@@ -1207,6 +1213,123 @@ priced = [t for t in re.findall(r'"([^"]*\$[^"]*)"',
           if shown in t]
 check("  and no copy states it — every mention is the {price} token",
       not priced, str(priced))
+
+print("\n--- the minimal arm's own copy ---")
+PROFILE = cfg["result_copy"]["profile"]
+RARE = PROFILE.get("rarity_minimal") or {}
+ROWS = PROFILE.get("checklist") or []
+TAIL = PROFILE.get("checklist_tail") or ""
+CARDS = {c["id"]: c for c in PROFILE["cards"]}
+check("the rarity has a two-line form", bool(RARE.get("line"))
+      and bool(RARE.get("sub")), str(sorted(RARE)))
+check("  and it carries those two keys and no others",
+      sorted(RARE) == ["line", "sub"], str(sorted(RARE)))
+check("  the share is a slot, not a figure",
+      "{pct}" in RARE["sub"] and not re.search(r"\d", RARE["line"]),
+      RARE["sub"])
+# The one number on that line is computed from the rarity table at render.
+# A percentage written into the config would be a second number to keep in
+# step with the first, and the stale one would be the one on the page.
+stated = re.findall(r"[^{]\d+\s*%", json.dumps(PROFILE, ensure_ascii=False))
+check("  no percentage is written into the profile copy anywhere",
+      not stated, str(stated[:4]))
+check("  and no other statistic is either",
+      not re.search(r"\b\d+\s*(?:in|of|out of)\s*\d+\b",
+                    json.dumps(
+                        {k: v for k, v in PROFILE.items()
+                         if k not in ("rarity",)}, ensure_ascii=False)),
+      "")
+
+check("the checklist has one row per chapter it names",
+      len(ROWS) == 4 and all(r.get("id") in CARDS and r.get("line")
+                             for r in ROWS),
+      str([r.get("id") for r in ROWS]))
+check("  in the order the brief asked for",
+      [r["id"] for r in ROWS] == ["materials", "splurge", "shopping",
+                                  "mistakes"],
+      str([r["id"] for r in ROWS]))
+check("  the two chapters with no row of their own are the tail's",
+      sorted(set(CARDS) - {r["id"] for r in ROWS}) == ["dna", "palette"],
+      str(sorted(set(CARDS) - {r["id"] for r in ROWS})))
+check("  which names them both",
+      CARDS["palette"]["key"].lower() in TAIL.lower()
+      and CARDS["dna"]["key"].lower() in TAIL.lower(), TAIL)
+check("  every row is one short line",
+      all(len(r["line"]) <= 60 and "\n" not in r["line"] for r in ROWS),
+      str([len(r["line"]) for r in ROWS]))
+check("  the year row fills from the computed months",
+      [r for r in ROWS if r["id"] == "shopping"][0]["line"]
+      == "{first} → {last}",
+      str([r["line"] for r in ROWS if r["id"] == "shopping"]))
+check("  and no row invents a token nothing fills",
+      set(re.findall(r"\{(\w+)\}",
+                     " ".join([r["line"] for r in ROWS] + [TAIL])))
+      <= {"first", "last"},
+      str(sorted(set(re.findall(r"\{(\w+)\}",
+                                " ".join([r["line"] for r in ROWS]))))))
+
+# The claim that matters: this list promises nothing the funnel does not
+# already promise. Every content word of every row has to appear in the copy
+# the question cards are built from — so a row cannot quietly add a chapter,
+# a number or a guarantee that the report never offered.
+SOURCE = " ".join(
+    [c.get("key", "") for c in PROFILE["cards"]]
+    + [c.get("promise", "") for c in PROFILE["cards"]]
+    + [v for c in PROFILE["cards"]
+       for v in (c.get("upgrade") or {}).values()]
+    + [PROFILE.get("offer_head", "")]).lower()
+
+
+def content(text):
+    return {w for w in re.findall(r"[a-z]{4,}", text.lower())}
+
+
+for row in ROWS:
+    extra = content(row["line"]) - content(SOURCE)
+    check("  %-10s promises nothing new" % row["id"], not extra, str(extra))
+check("  and neither does the tail", not content(TAIL) - content(SOURCE),
+      str(content(TAIL) - content(SOURCE)))
+
+NEW_COPY = [RARE["line"], RARE["sub"], TAIL] + [r["line"] for r in ROWS]
+for text in NEW_COPY:
+    hit = reports._banned_hit(text, reports.ZODIAC_BANNED)
+    check("  %-46s passes the Terms check" % ('"%s"' % text[:44]),
+          hit is None, hit)
+# The copy is the minimal arm's. Nothing else has an arm to read it.
+for slug in ("zodiac", "zodiac-ro", "kitchen", "persona"):
+    other = json.load(open(os.path.join(ROOT, "funnels/%s.json" % slug),
+                           encoding="utf-8"))
+    block_ = (other.get("result_copy") or {}).get("profile") or {}
+    check("  %-12s carries none of it" % slug,
+          not {"rarity_minimal", "checklist", "checklist_tail"} & set(block_),
+          str(sorted({"rarity_minimal", "checklist",
+                      "checklist_tail"} & set(block_))))
+
+print("\n--- and the module draws it only for that arm ---")
+minimal_js = open(os.path.join(ROOT, cfg["result_module"].lstrip("/")),
+                  encoding="utf-8").read()
+check("the element tiles are gone from the minimal branch",
+      "var bars = balance(ctx, copy, elements);" not in minimal_js)
+check("  but balance still exists for the funnels that draw it",
+      "function balance(ctx, copy, elements)" in minimal_js
+      and "list.appendChild(balance(ctx, copy, elements));" in minimal_js)
+check("the checklist is drawn behind the template flag",
+      'if (data && template === "minimal") {\n      var list = checklist('
+      in minimal_js)
+check("  and the offer is handed the arm to check",
+      "offer(ctx, copy, data, template)" in minimal_js
+      and "function offer(ctx, copy, data, template)" in minimal_js)
+check("  its rows wear a tick, and the lock stays on the question cards",
+      "drawn(ICONS.check)" in minimal_js
+      and "drawn([LOCK_PATH])" in minimal_js
+      and "LOCK_PATH" not in re.search(
+          r"function checkRow\([^)]*\)\s*\{(.*?)\n  \}",
+          minimal_js, re.S).group(1))
+check("the two-line rarity is behind the config carrying it",
+      "var own = (table || {}).rarity_minimal;" in minimal_js
+      and "if (own && own.line && pct) {" in minimal_js)
+check("  and falls through to the single line when it does not",
+      'var wrap = elm("div", "zr-rarity");' in minimal_js)
 
 print("\n--- the summer sale ---")
 import datetime  # noqa: E402
