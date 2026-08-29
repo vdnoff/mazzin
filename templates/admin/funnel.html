@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}Mazzin admin — {{ funnel.slug }}{% endblock %}
+{% block subtitle %}
+  <span style="color:var(--muted);font-size:13px">{{ funnel.slug }} — {{ funnel.title }}
+  {% if funnel.test_mode %}<span class="tag">test</span>{% endif %}</span>
+{% endblock %}
+{% block body %}
+{% include "_ranges.html" %}
+
+<h2>Headline</h2>
+<div class="scroll">
+<table>
+  <thead>
+    <tr><th>Starts</th><th>Result</th><th>Paywall</th><th>Pay tap</th>
+        {% if share_tap is not none %}<th>Shares</th>{% endif %}
+        <th>Sales</th><th>Revenue</th><th>Conv %</th><th>Result %</th><th>Pay %</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>{{ events.funnel_start }}</td>
+      <td>{{ events.result_view }}</td>
+      <td>{{ events.paywall_view }}</td>
+      <td>{{ events.pay_tap }}</td>
+      {% if share_tap is not none %}<td>{{ share_tap }}</td>{% endif %}
+      <td>{{ purchases }}</td>
+      <td class="money">{{ revenue_display }}</td>
+      <td>{{ '%.2f'|format(conversion) }}%</td>
+      <td>{{ '%.1f'|format(result_rate) }}%</td>
+      <td>{{ '%.1f'|format(pay_rate) }}%</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Swipe drop-off</h2>
+<p class="note">Sessions that recorded each swipe. The bar is against the
+  best-attended step; “of starts” is against everybody who began.</p>
+<div class="scroll">
+<table>
+  <thead><tr><th>Step</th><th>Sessions</th><th>Of starts</th></tr></thead>
+  <tbody>
+  {% for step in steps %}
+    <tr>
+      <td>{{ step.step }}</td>
+      <td class="bar {{ 'zero' if not step.sessions }}">
+        <span class="fill" style="width: {{ '%.1f'|format(step.of_first) }}%"></span>
+        <span class="value">{{ step.sessions }}</span>
+      </td>
+      <td>{{ '%.1f'|format(step.of_start) }}%</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="3">This funnel declares no swipe steps.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h2>By subid</h2>
+<p class="note">Top campaigns by starts; the rest are summed into
+  <code>(other)</code>. A sale whose session began before this window shows as
+  <code>(unattributed)</code> rather than being dropped.</p>
+<div class="scroll">
+<table>
+  <thead>
+    <tr><th>Subid</th><th>Starts</th><th>Result</th><th>Paywall</th>
+        <th>Pay tap</th>
+        {% if share_tap is not none %}<th>Shares</th>{% endif %}
+        <th>Sales</th><th>Revenue</th><th>Conv %</th></tr>
+  </thead>
+  <tbody>
+  {% for row in subids %}
+    <tr>
+      <td>{{ row.subid }}</td>
+      <td class="{{ 'zero' if not row.funnel_start }}">{{ row.funnel_start }}</td>
+      <td class="{{ 'zero' if not row.result_view }}">{{ row.result_view }}</td>
+      <td class="{{ 'zero' if not row.paywall_view }}">{{ row.paywall_view }}</td>
+      <td class="{{ 'zero' if not row.pay_tap }}">{{ row.pay_tap }}</td>
+      {% if share_tap is not none %}
+        <td class="{{ 'zero' if not row.share_tap }}">{{ row.share_tap }}</td>
+      {% endif %}
+      <td class="{{ 'zero' if not row.purchases }}">{{ row.purchases }}</td>
+      <td class="money {{ 'zero' if not row.revenue }}">{{ row.revenue_display }}</td>
+      <td>{{ '%.2f'|format(row.conversion) }}%</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="9">Nothing in this window.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% if variants %}
+<h2>Paywall A/B</h2>
+<p class="note">
+  What the config has live right now, and what the arms have done. An arm
+  switched off keeps the numbers it earned — it is marked off rather than
+  hidden. <code>shown</code> is sessions assigned, <code>reached</code> is
+  those who actually saw the offer, <code>rate</code> is paid over shown.
+</p>
+<div class="scroll">
+<table>
+  <thead>
+    <tr><th>Variant</th><th>Live</th><th>Weight</th><th>Share</th>
+        <th>Shown</th><th>Reached</th><th>Paid</th><th>Rate</th></tr>
+  </thead>
+  <tbody>
+  {% for row in variants.overall %}
+    <tr>
+      <td>{{ row.variant }}
+        {% if not row.declared %}<span class="tag off">removed</span>{% endif %}
+      </td>
+      <td>{% if row.enabled %}<span class="tag on">on</span>
+          {% else %}<span class="tag off">off</span>{% endif %}</td>
+      <td>{{ row.weight }}</td>
+      <td>{{ '%.0f'|format(row.share) }}%</td>
+      <td class="{{ 'zero' if not row.shown }}">{{ row.shown }}</td>
+      <td class="{{ 'zero' if not row.reached }}">{{ row.reached }}</td>
+      <td class="{{ 'zero' if not row.paid }}">{{ row.paid }}</td>
+      <td>{{ '%.2f'|format(row.rate) }}%</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h2>A/B by subid</h2>
+<div class="scroll">
+<table>
+  <thead>
+    <tr><th>Variant</th><th>Subid</th><th>Shown</th><th>Reached</th>
+        <th>Paid</th><th>Rate</th></tr>
+  </thead>
+  <tbody>
+  {% for row in variants.by_subid %}
+    <tr>
+      <td>{{ row.variant }}</td>
+      <td>{{ row.subid }}</td>
+      <td>{{ row.shown }}</td>
+      <td>{{ row.reached }}</td>
+      <td>{{ row.paid }}</td>
+      <td>{{ '%.2f'|format(row.rate) }}%</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="6">No arm has been assigned in this window.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}

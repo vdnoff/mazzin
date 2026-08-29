@@ -459,3 +459,6 @@ bottom.
 
 ## 2026-08-29 — claude/persona-result-product
 - persona: paywall A/B variants + session-join attribution
+
+## 2026-08-29 — claude/admin-dashboard-v1
+- admin: read-only funnel dashboard, A/B readout, single-account login
