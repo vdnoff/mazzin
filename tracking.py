@@ -91,6 +91,13 @@ ALLOWED_EVENTS = {
     # an ordinary `funnel_start`, through the attribution columns that already
     # exist, so this event and that one are the two ends of the same number.
     "share_tap",
+    # Which arm of a paywall test this session was shown, written once when
+    # the offer is drawn. It is the only row that says so: the events after
+    # it carry no variant of their own and do not need to, because they carry
+    # the session id and this one does too. Splitting conversion by variant is
+    # a join, which is what keeps a new arm a config edit instead of a
+    # migration.
+    "paywall_variant",
 }
 
 # How many cells one swipe step can have drawn. This is engine.js's GRID_SIZE
@@ -386,8 +393,18 @@ def _funnel_index(slug):
         if isinstance(card, dict) and isinstance(card.get("id"), str):
             shares.add(card["id"])
 
+    # Every variant the config declares, enabled or not. A disabled variant
+    # is still a legal thing for an event to name: a session assigned to it
+    # before it was turned off can have its arm reported on the same page
+    # load that the flag flipped under, and dropping that row would be
+    # dropping the truth about a reader who really was shown it.
+    variants = set()
+    for variant in (cfg.get("paywall_variants") or []):
+        if isinstance(variant, dict) and isinstance(variant.get("id"), str):
+            variants.add(variant["id"])
+
     index = {"pairs": frozenset(pairs), "images": frozenset(images),
-             "shares": frozenset(shares)}
+             "shares": frozenset(shares), "variants": frozenset(variants)}
     _INDEX[slug] = (stamp, index)
     return index
 
@@ -404,6 +421,13 @@ SHARE_EXTRA_KEYS = frozenset(("persona",))
 # field is to be grouped by — one typo in a client that ships to everybody
 # would otherwise become a category nobody notices is missing.
 PAYWALL_VIEW_KEYS = frozenset(("src",))
+
+# What a paywall variant says: which arm of the test this session was shown.
+# One key, one row per session, and every later event on that session — the
+# paywall view, the pay tap, and the purchase the webhook writes — already
+# carries the same `session_id`. That is why this can be one small event
+# rather than a column added to all of them.
+VARIANT_EXTRA_KEYS = frozenset(("variant",))
 # `teaser_cta` is the button under the visualizer's two panels — their kitchen
 # beside their kitchen behind a lock. It gets a word of its own rather than
 # borrowing `mid_cta`: the two sit on different funnels, in front of different
@@ -447,14 +471,34 @@ def _clean_share_tap(funnel, value):
     return {"persona": persona}
 
 
+def _clean_paywall_variant(funnel, value):
+    """`{"variant": "<variant id>"}`, checked against the config.
+
+    The same rule as a share tap: the id either is one of the variants this
+    funnel declares or it is not, and nothing here knows what any of them are
+    called. A funnel that declares no variants can produce no valid event of
+    this kind, which is what makes the column a closed set worth grouping by
+    — and grouping by it is the whole reason the event exists.
+    """
+    if set(value) != VARIANT_EXTRA_KEYS:
+        raise ValueError("extra")
+    index = _funnel_index(funnel)
+    if index is None:
+        raise ValueError("extra")
+    variant = value["variant"]
+    if not isinstance(variant, str) or variant not in index["variants"]:
+        raise ValueError("extra")
+    return {"variant": variant}
+
+
 def _clean_extra(funnel, event, value):
     """The event payload, rebuilt from validated parts. Raises on junk.
 
-    Five events carry one: a swipe says which pair it drew and which image was
+    Six events carry one: a swipe says which pair it drew and which image was
     tapped, a paywall view says how the reader got to the offer, a pay tap says
     which of the two buttons took it, a visualizer upload says which side of
-    the money it happened on, and a share tap says which card was handed
-    over. Every string is checked against something this module can
+    the money it happened on, a share tap says which card was handed over, and
+    a paywall variant says which arm of the offer test was drawn. Every string is checked against something this module can
     enumerate — ids this funnel could actually have shown, or one of the
     closed sets above — and the value stored is assembled here rather than
     passed through, so nothing reaches the events column that did not come
@@ -480,6 +524,8 @@ def _clean_extra(funnel, event, value):
         return _clean_pay_ready(value)
     if event == "share_tap":
         return _clean_share_tap(funnel, value)
+    if event == "paywall_variant":
+        return _clean_paywall_variant(funnel, value)
     if event != "swipe":
         raise ValueError("extra")
     if set(value) != SWIPE_EXTRA_KEYS:

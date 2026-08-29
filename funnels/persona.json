@@ -2135,7 +2135,7 @@
    {
     "id": "dna",
     "title": "Your Mind Blueprint",
-    "teaser_line": "How your {palette} splits between your two strongest axes.",
+    "teaser_line": "How your {palette} splits between your two strongest axes — and where that drains you.",
     "enabled": true,
     "preview": [
      "Three scales, read off your own taps, and one place where they pull hard against each other.",
@@ -2148,7 +2148,7 @@
    {
     "id": "materials",
     "title": "How You Connect",
-    "teaser_line": "Why one kind of person keeps finding you.",
+    "teaser_line": "Who steadies you, who quietly costs you, and why one kind keeps finding you.",
     "enabled": true,
     "preview": [
      "It is the pattern underneath the people you keep choosing, rather than a list of types to avoid.",
@@ -2279,12 +2279,12 @@
   "title": "Your {style} Profile",
   "proof_line": "Built from your 13 picks",
   "manifest": [
+   "Why you drain where others charge",
+   "Who steadies you, who costs you — pairing by pairing",
+   "The strength you're sitting on without knowing",
+   "Your next 12 months, mapped to how you actually move",
    "Your colours with exact codes, plus three things to carry",
-   "5 hidden strengths and blind spots — with what to do about each",
-   "Your blueprint: axis, energy and tone, scored",
-   "How you connect: the pattern under who you choose",
-   "Work & money: the months your energy pays best",
-   "Your 12-month energy map, marked window by window"
+   "Yours to keep — full profile + PDF"
   ],
   "manifest_hero": "strengths",
   "manifest_head": "What's inside — {n} sections, yours forever",
@@ -2301,6 +2301,38 @@
   ],
   "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right."
  },
+ "paywall_variants": [
+  {
+   "id": "why",
+   "enabled": true,
+   "weight": 1,
+   "name": "Why You're Like This",
+   "frame": "The full read on how you're built — and how to use it.",
+   "benefits": [
+    "Why you drain where others charge",
+    "Who steadies you, who costs you — pairing by pairing",
+    "The strength you're sitting on without knowing",
+    "Your next 12 months, mapped to how you actually move",
+    "Yours to keep — full profile + PDF"
+   ],
+   "cta_text": "Tell me why I'm like this — {price}"
+  },
+  {
+   "id": "advantage",
+   "enabled": true,
+   "weight": 1,
+   "name": "Your Unfair Advantage",
+   "frame": "You're built with one. Most people never find theirs.",
+   "benefits": [
+    "The strength you're sitting on without knowing it",
+    "Why you drain where others charge — and how to stop",
+    "Who multiplies you, who quietly costs you",
+    "Your next 12 months, played to how you actually move",
+    "Yours to keep — full profile + PDF"
+   ],
+   "cta_text": "Show me my advantage — {price}"
+  }
+ ],
  "result": {
   "mistakes_teaser": "You've seen strength #1. The other four run deeper — one explains the {weather} you named.",
   "value_banner": "Five strengths, a read on how you connect and a twelve-month energy map — all of it built from your own 18 signals, yours to keep."
