@@ -36,7 +36,7 @@ import urllib.parse
 
 import pymysql.err
 import stripe
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, g, has_request_context, jsonify, request
 
 import config
 import database
@@ -60,7 +60,176 @@ LIVE, TEST = "live", "test"
 
 
 def _stripe_mode(cfg):
+    """The mode a funnel's *config* asks for. Not the answer on its own.
+
+    Kept as its own function because it is a different question from the one
+    below: this is what the file in `funnels/` says, and `effective_mode` is
+    what the funnel actually transacts on. The admin page shows both columns
+    precisely so the difference is visible, and nothing that starts a payment
+    calls this one directly.
+    """
     return TEST if (cfg or {}).get("stripe_mode") == TEST else LIVE
+
+
+# --- the effective mode ----------------------------------------------------
+#
+# One function decides which Stripe account a funnel transacts on, and every
+# path that needs to know calls it: the hosted checkout, the payment intent,
+# and the charge lookup on the webhook. There is deliberately no second way to
+# arrive at the answer — a funnel that is live at checkout and test at the
+# webhook would take a real card and then fail to record the purchase, and the
+# only defence against that is that there is nowhere else to ask.
+#
+# An override row beats the config. That is the whole feature: flipping a
+# funnel to test to walk it on a 4242 card, or back to live afterwards, without
+# a deploy and without editing a config the CDN has cached.
+
+MODE_OVERRIDE_SELECT = (
+    "SELECT mode FROM funnel_mode_overrides WHERE funnel = %s")
+
+# The table is one row per overridden funnel; no row is the normal state and
+# means "whatever the config says".
+MODE_OVERRIDE_ALL = (
+    "SELECT funnel, mode, changed_at, changed_by FROM funnel_mode_overrides")
+
+MODE_OVERRIDE_UPSERT = (
+    "INSERT INTO funnel_mode_overrides (funnel, mode, changed_by) "
+    "VALUES (%s, %s, %s) "
+    "ON DUPLICATE KEY UPDATE mode = VALUES(mode), "
+    "changed_by = VALUES(changed_by)")
+
+MODE_OVERRIDE_DELETE = (
+    "DELETE FROM funnel_mode_overrides WHERE funnel = %s")
+
+# Said once per process, not once per checkout. A missing table is a migration
+# somebody has not run yet, and a line about it on every payment would bury the
+# log it belongs in.
+_override_unavailable = [False]
+
+
+def _override_unavailable_once(exc):
+    if _override_unavailable[0]:
+        return
+    _override_unavailable[0] = True
+    log.warning(
+        "funnel_mode_overrides could not be read (%s) — every funnel is using "
+        "the mode its config names. Apply the migration in "
+        "schema_migrations.sql.", type(exc).__name__)
+
+
+def _read_override(slug):
+    """The override row's mode for `slug`, or None. Never raises.
+
+    A missing table, or a database that is not answering, degrades to None —
+    which is "no override", which is exactly today's behaviour. Checkout is
+    not a place to discover that a migration has not been applied: the funnel
+    keeps selling on the mode its config names and the log says why.
+    """
+    try:
+        row = database.query_one(MODE_OVERRIDE_SELECT, (slug,))
+    except Exception as exc:                      # noqa: BLE001 - logged once
+        _override_unavailable_once(exc)
+        return None
+    mode = (row or {}).get("mode")
+    return mode if mode in (LIVE, TEST) else None
+
+
+def mode_override(slug):
+    """`_read_override`, memoised for the life of one request and no longer.
+
+    Per request rather than per process, and that is the point rather than an
+    optimisation left half-done: a toggle has to take effect on the very next
+    checkout. A TTL cache would mean an owner flipping a funnel to test,
+    walking it on a card, and being charged for real because a worker was still
+    holding the old answer for another forty seconds.
+
+    Within one request the answer cannot change, and the checkout path asks
+    twice, so this saves the second round trip without ever outliving the
+    request that made it.
+    """
+    if not slug:
+        return None
+    if not has_request_context():
+        # A console script, or a background thread. Nothing to memoise onto,
+        # and nothing that needs it.
+        return _read_override(slug)
+    cache = getattr(g, "_stripe_mode_overrides", None)
+    if cache is None:
+        cache = {}
+        g._stripe_mode_overrides = cache
+    if slug not in cache:
+        cache[slug] = _read_override(slug)
+    return cache[slug]
+
+
+def _forget_override(slug):
+    """Drop `slug` from this request's memo.
+
+    Called by both writers. Without it the memo outlives the thing it is
+    memoising: a request that writes an override and then asks for the mode
+    gets the answer from before its own write. The next request is fine either
+    way — the memo dies with the request — which is what makes this the kind of
+    bug that ships, so the invalidation lives with the write rather than with
+    the caller who has to remember.
+    """
+    if not has_request_context():
+        return
+    cache = getattr(g, "_stripe_mode_overrides", None)
+    if cache:
+        cache.pop(slug, None)
+
+
+def effective_mode(slug, cfg=None):
+    """Which Stripe key set `slug` transacts on, right now.
+
+    The override if there is one, the config otherwise. `cfg` is accepted only
+    to save a re-read by a caller that already has it; it is never the whole
+    answer and passing it does not skip the override.
+    """
+    override = mode_override(slug)
+    if override:
+        return override
+    if cfg is None and slug:
+        try:
+            cfg = config.load_funnel(slug)
+        except (KeyError, ValueError, OSError):
+            cfg = None
+    return _stripe_mode(cfg)
+
+
+def all_overrides():
+    """`{funnel: row}` for every override there is. `{}` when the table is not.
+
+    For the admin page, which wants the whole table in one query rather than a
+    round trip per funnel.
+    """
+    try:
+        rows = database.query_all(MODE_OVERRIDE_ALL) or []
+    except Exception as exc:                      # noqa: BLE001 - logged once
+        _override_unavailable_once(exc)
+        return {}
+    return {row["funnel"]: row for row in rows
+            if row.get("mode") in (LIVE, TEST)}
+
+
+def set_override(slug, mode, changed_by):
+    """Pin `slug` to `mode`. Raises if the table is not there to write to.
+
+    The one write in this feature, and it is not silent: the caller logs the
+    transition and the row carries who asked for it. Unlike the read, a failure
+    here is not degraded away — an owner who pressed a button and was told
+    nothing would believe a funnel had switched when it had not.
+    """
+    if mode not in (LIVE, TEST):
+        raise ValueError("mode")
+    database.execute(MODE_OVERRIDE_UPSERT, (slug, mode, changed_by))
+    _forget_override(slug)
+
+
+def clear_override(slug):
+    """Drop `slug`'s override, so it falls back to whatever its config says."""
+    database.execute(MODE_OVERRIDE_DELETE, (slug,))
+    _forget_override(slug)
 
 
 def _stripe_secret(mode):
@@ -847,11 +1016,11 @@ def _validated_order(body):
     # fallback when it asks for one that is not configured. Quietly billing a
     # test funnel against the live key would be the single worst outcome here,
     # so the missing-key branch stops instead of guessing.
-    mode = _stripe_mode(cfg)
+    mode = effective_mode(slug, cfg)
     secret = _stripe_secret(mode)
     if not secret:
         log.error(
-            "funnel %s wants stripe_mode=%s but %s is not configured — "
+            "funnel %s is in stripe mode=%s but %s is not configured — "
             "refusing payment", slug, mode,
             "STRIPE_TEST_SECRET_KEY" if mode == TEST else "STRIPE_SECRET_KEY")
         raise OrderError(502)
@@ -1009,7 +1178,7 @@ def payment_intent():
     publishable = _stripe_publishable(mode)
     if not publishable:
         log.error(
-            "funnel %s wants stripe_mode=%s but %s is not configured — "
+            "funnel %s is in stripe mode=%s but %s is not configured — "
             "refusing payment intent", slug, mode,
             "STRIPE_TEST_PUBLISHABLE_KEY" if mode == TEST
             else "STRIPE_PUBLISHABLE_KEY")
@@ -1122,7 +1291,7 @@ def _as_plain_dict(obj):
     return value if isinstance(value, dict) else {}
 
 
-def _billing_details(intent, cfg):
+def _billing_details(intent, slug):
     """Who paid, off the charge behind an intent. `{}` when it cannot be read.
 
     A PaymentIntent does not carry an email of its own — it is on the charge,
@@ -1152,8 +1321,10 @@ def _billing_details(intent, cfg):
         return {}
 
     # Only reached when the event carried an id rather than the object. The
-    # mode's own key, for the same reason every other call names one.
-    secret = _stripe_secret(_stripe_mode(cfg))
+    # mode's own key, for the same reason every other call names one — and the
+    # *effective* mode, so a funnel somebody toggled is looked up against the
+    # account its charge actually lives on.
+    secret = _stripe_secret(effective_mode(slug))
     if not secret:
         return {}
     try:
@@ -1171,7 +1342,7 @@ def _billing_details(intent, cfg):
     return charge_data.get("billing_details") or {}
 
 
-def _from_payment_intent(intent, cfg):
+def _from_payment_intent(intent, slug):
     """The paid facts, off a PaymentIntent. None when nothing was received.
 
     `amount_received` and not `amount`: the first is what was actually taken,
@@ -1182,7 +1353,7 @@ def _from_payment_intent(intent, cfg):
     if not isinstance(amount_cents, int) or amount_cents <= 0:
         return None
 
-    billing = _billing_details(intent, cfg)
+    billing = _billing_details(intent, slug)
     return {
         "amount_cents": amount_cents,
         "currency": (intent.get("currency") or "usd")[:3],
@@ -1282,10 +1453,17 @@ def stripe_webhook():
     signature = request.headers.get("Stripe-Signature", "")
 
     # One endpoint, two Stripe accounts' worth of signatures: the live one and,
-    # where it is configured, the test one a `stripe_mode: test` funnel
-    # transacts on. Live is tried first because it is the one that carries
-    # money and the one almost every event comes from; a test secret that is
-    # not set simply is not tried.
+    # where it is configured, the test one a funnel in test mode transacts on.
+    # Live is tried first because it is the one that carries money and the one
+    # almost every event comes from; a test secret that is not set simply is
+    # not tried.
+    #
+    # This cannot be narrowed to the funnel's effective mode, and the ordering
+    # is not an oversight: which funnel an event belongs to is in its metadata,
+    # the metadata is in the payload, and reading the payload before verifying
+    # its signature is the one thing a webhook must never do. So both secrets
+    # are tried here and the funnel's mode is checked against the winner below,
+    # once the payload can be trusted.
     secrets = [(LIVE, config.STRIPE_WEBHOOK_SECRET),
                (TEST, config.STRIPE_TEST_WEBHOOK_SECRET)]
     secrets = [(mode, key) for mode, key in secrets if key]
@@ -1345,11 +1523,21 @@ def stripe_webhook():
         log.warning("webhook %s has unusable metadata — skipped", event.get("id"))
         return jsonify({"status": "skipped"}), 200
 
+    # Which secret verified this, against the mode the funnel is in now. They
+    # disagree honestly all the time — a payment made before a toggle arrives
+    # after it, and Stripe retries for days — so this never refuses the event.
+    # It is a line to read when a funnel was flipped and the sales stopped: it
+    # says which account the traffic is still coming from.
+    signed_expected = effective_mode(slug)
+    if signed != signed_expected:
+        log.info("webhook %s for funnel %s was signed %s but the funnel is "
+                 "in mode %s", event.get("id"), slug, signed, signed_expected)
+
     # The two objects that mean "this was paid for" describe the same facts
     # under different names, so they are read into one shape here and
     # everything below this line is written once.
     if kind == "payment_intent.succeeded":
-        paid = _from_payment_intent(obj, config.load_funnel(slug))
+        paid = _from_payment_intent(obj, slug)
     else:
         paid = _from_checkout_session(obj)
 

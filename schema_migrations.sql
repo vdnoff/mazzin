@@ -88,3 +88,33 @@ CREATE TABLE checkout_context (
   client_ua VARCHAR(400) NULL,
   INDEX idx_context_created (created_at)
 );
+
+-- 2026-08-29 — per-funnel Stripe mode override
+--
+-- MUST BE APPLIED BY HAND BEFORE THE DEPLOY THAT SHIPS IT.
+--
+-- Until it is, there are no overrides and every funnel transacts on exactly
+-- the mode its config names — which is what it does today. payments.py treats
+-- a missing table as "no rows", logs one line about it and carries on, so a
+-- deploy that lands ahead of the migration does not take checkout down. It
+-- does mean the admin toggle page will refuse to save anything, and say why.
+--
+-- One row per funnel, and only for a funnel somebody has actually overridden:
+-- the absence of a row is the normal state and means "use the config".
+--
+-- The mode is an ENUM rather than a VARCHAR because there are two of them and
+-- there will always be two: they are the two Stripe key sets, not a taxonomy.
+-- A typo in an UPDATE is then an error rather than a funnel that quietly
+-- transacts on neither.
+--
+-- `changed_by` is a label for a human reading the row later — 'admin-page',
+-- or whatever a console does. It is deliberately not a user id, an email or an
+-- address: this table records which switch was flipped, not who was holding
+-- the phone.
+CREATE TABLE funnel_mode_overrides (
+  funnel VARCHAR(32) NOT NULL PRIMARY KEY,
+  mode ENUM('live','test') NOT NULL,
+  changed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+              ON UPDATE CURRENT_TIMESTAMP,
+  changed_by VARCHAR(64) NULL
+);

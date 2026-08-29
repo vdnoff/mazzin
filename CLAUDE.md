@@ -24,10 +24,10 @@ free style result, sees a partially-locked report, hits a paywall.
 | `config.py` | Env vars, paths, `load_funnel()`, slug validation | DB, Stripe calls |
 | `database.py` | MySQL (PyMySQL) connections, `execute` / `execute_rowcount` / `query_all` / `query_one` | Query construction for callers, ORM anything |
 | `tracking.py` | `POST /api/track` — validate + one INSERT | Reads, joins, anything slow |
-| `payments.py` | `POST /api/checkout`, `POST /api/stripe/webhook`, `GET /api/report` | Trusting a client-supplied amount, report copy |
+| `payments.py` | `POST /api/checkout`, `POST /api/stripe/webhook`, `GET /api/report`, `effective_mode()` and the mode-override table | Trusting a client-supplied amount, report copy, deciding a mode anywhere but `effective_mode()` |
 | `reports.py` | `generate_report()` — builds and stores report content | HTTP routes, Stripe calls |
 | `visualizer.py` | `/api/visualizer/*` — photo intake, EXIF stripping, the image-edit call, generation credits | Running on an unpaid purchase, writing under `static/`, putting a photo in a log line |
-| `admin.py` | `/admin` + `/admin/api/*` — login, session, rate limit, page rendering | Writing anything, holding SQL of its own |
+| `admin.py` | `/admin` + `/admin/api/*` — login, session, rate limit, page rendering, the Stripe mode switch | Holding SQL of its own; writing anything but a mode override |
 | `analytics.py` | Read-only aggregate SQL over `events` / `purchases`, shared by the dashboard and the console scripts | Any statement that is not a SELECT |
 | `templates/admin/` | The dashboard's markup and its inline CSS | Living under `static/`, where it would be public |
 | `schema.sql` | Table definitions (from scratch) | Being edited after a migration ships |
@@ -45,27 +45,35 @@ free style result, sees a partially-locked report, hits a paywall.
    hand-editing `static/funnels/`.
 3. **Money is `decimal.Decimal` in Python and integer cents in MySQL.**
    Never `float`, never store a formatted string.
-4. **The Stripe webhook is the source of truth for purchases.** A client-side
+4. **A funnel's Stripe mode is whatever `payments.effective_mode()` says.**
+   An override row beats the config; nothing else decides, and nothing caches
+   the answer past the request that asked. A funnel that is live at checkout
+   and test at the webhook takes a real card and never records the sale.
+5. **The Stripe webhook is the source of truth for purchases.** A client-side
    "payment succeeded" is a hint, not a fact. `purchase` is never an accepted
    value on `/api/track`.
-5. **Purchase rows are never deleted.** Correct with a status change, not a
+6. **Purchase rows are never deleted.** Correct with a status change, not a
    `DELETE`.
-6. **No PII in logs.** No emails, no session payloads, no raw request bodies.
+7. **No PII in logs.** No emails, no session payloads, no raw request bodies.
    `/api/track` returns a bare 400 on bad input and logs nothing about it.
-7. **Mobile portrait only.** Desktop layout is not a goal.
-8. **`schema.sql` is history, not a worksheet.** Schema changes go into
+8. **Mobile portrait only.** Desktop layout is not a goal.
+9. **`schema.sql` is history, not a worksheet.** Schema changes go into
    `schema_migrations.sql` as appended `ALTER` statements and are applied by
    hand on the server.
-9. **The admin dashboard is read-only and never lives in `static/`.**
-   Its pages are rendered behind the session check and answered
-   `private, no-store`; its credentials are a username and a password *hash*
-   in `.env`, never in the database and never in git. Missing credentials are
-   a 503, not an open door.
-10. **Uploaded photographs never touch `static/`.** They are somebody's home.
+10. **The admin dashboard reads, with exactly one exception, and never lives
+   in `static/`.** Its pages are rendered behind the session check and
+   answered `private, no-store`; its credentials are a username and a password
+   *hash* in `.env`, never in the database and never in git. Missing
+   credentials are a 503, not an open door. The one write is
+   `POST /admin/modes`, which sets or clears a funnel's Stripe mode override
+   and nothing else — it is named in `admin.WRITE_ENDPOINTS`, it holds no SQL
+   of its own, and the suite asserts that every other admin route issues
+   nothing but SELECTs.
+11. **Uploaded photographs never touch `static/`.** They are somebody's home.
     They live under `VISUALIZER_DIR`, are stripped of every EXIF tag on the way
     in, and are readable only through `/api/visualizer/image`, which checks the
     purchase token and answers `private, no-store`.
-11. **A generation is only ever spent on a paid purchase.** The credit is
+12. **A generation is only ever spent on a paid purchase.** The credit is
     claimed by a conditional `UPDATE`, not by reading a count and then writing
     one, and it is given back when no image was produced.
 
