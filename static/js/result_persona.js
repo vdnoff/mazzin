@@ -776,17 +776,28 @@
     if (data.formula) id.appendChild(elm("p", "pr-formula", data.formula));
     card.appendChild(id);
 
-    if (data.rarity_line) {
+    // The free page draws a leaner card and lays the rest out itself: the
+    // measure and the rarity are the two things it wants between the picture
+    // and the offer, in that order and at that weight, and the paragraph
+    // woven from their picks is gone. The delivered page is unchanged — it
+    // keeps the rarity here, the narrative under it, and the bars at the
+    // bottom, which is the document the buyer opened on.
+    var lean = !!(opts && opts.lean);
+    if (!lean && data.rarity_line) {
       card.appendChild(elm("p", "pr-ribbon", data.rarity_line));
     }
-    var story = narrativeBlock(data.narrative);
-    if (story) card.appendChild(story);
+    if (!lean) {
+      var story = narrativeBlock(data.narrative);
+      if (story) card.appendChild(story);
+    }
     if (opts && opts.share && opts.ctx) {
       var handout = shareBlock(opts.ctx, data, copy || {});
       if (handout) card.appendChild(handout);
     }
-    var bars = traitBars(data);
-    if (bars) card.appendChild(bars);
+    if (!lean) {
+      var bars = traitBars(data);
+      if (bars) card.appendChild(bars);
+    }
     return card;
   }
 
@@ -1031,6 +1042,32 @@
   function soloTotem(data) {
     var wrap = elm("div", "pr-solo");
     wrap.appendChild(pedestal(data));
+    return wrap;
+  }
+
+  // The rarity, at the size a claim like that deserves.
+  //
+  // It was a ribbon under the name — one muted line among several, which is
+  // where a sentence about how unusual somebody is goes to be skimmed. On
+  // this page it is the last thing before the offer and the loudest thing
+  // after the picture, because it is the argument: this is who you are, and
+  // almost nobody else is.
+  function rarityBadge(data) {
+    if (!data || !data.rarity_line) return null;
+    var wrap = elm("div", "pr-rarity");
+    var line = data.rarity_line;
+    // The number is the point of the sentence, so it is set apart from it
+    // rather than left to carry the same weight as "profiles".
+    var found = /(\d+(?:\.\d+)?%)/.exec(line);
+    if (found) {
+      var cut = line.split(found[1]);
+      wrap.appendChild(elm("span", "pr-rarity-lead", cut[0].trim()));
+      wrap.appendChild(elm("strong", "pr-rarity-figure", found[1]));
+      var tail = cut.slice(1).join(found[1]).trim();
+      if (tail) wrap.appendChild(elm("span", "pr-rarity-tail", tail));
+    } else {
+      wrap.appendChild(elm("span", "pr-rarity-lead", line));
+    }
     return wrap;
   }
 
@@ -1297,47 +1334,6 @@
       .trim();
   }
 
-  function questionCard(ctx, card, data, tag, first) {
-    var item = elm("li", "pr-card" + (first ? " is-lead" : ""));
-    var icon = elm("span", "pr-card-icon");
-    icon.setAttribute("aria-hidden", "true");
-    icon.appendChild(drawn(ICONS[card.icon] || ICONS.map));
-    item.appendChild(icon);
-
-    var line = elm("p", "pr-card-line");
-    line.appendChild(elm("strong", "pr-card-key", (card.key || "") + ":"));
-    line.appendChild(document.createTextNode(
-      " " + promise(ctx, card, data, tag)));
-    item.appendChild(line);
-
-    var lock = elm("span", "pr-card-lock");
-    lock.setAttribute("aria-hidden", "true");
-    lock.appendChild(drawn([LOCK_PATH]));
-    item.appendChild(lock);
-    return item;
-  }
-
-  function questions(ctx, data) {
-    var table = profileBlock(ctx) || {};
-    var want = emphasised(purposeRule(ctx));
-    var tag = purposeTagOf(ctx);
-    var list = elm("ul", "pr-cards");
-    // The chapter they said they came for is the first thing they meet, and
-    // it is the one card wearing the stronger border. Only the first match
-    // moves.
-    firstly((table.cards || []).slice(), want).forEach(function (card) {
-      list.appendChild(questionCard(ctx, card, data, tag,
-                                    !!want && card.id === want));
-    });
-    return list;
-  }
-
-  function bridge(ctx, data) {
-    var table = profileBlock(ctx) || {};
-    var line = fill(table.bridge || "", data.words || {});
-    return line ? elm("p", "pr-bridge", line) : null;
-  }
-
   // Which keyword stands over a section, for the delivered page.
   function keywordOf(ctx, section_id) {
     var cards = (profileBlock(ctx) || {}).cards || [];
@@ -1489,14 +1485,25 @@
     // branch is the whole body rather than one node.
     root.appendChild(data
       ? richHero(glyph(ctx.picks.now), data, copy,
-                 { share: true, ctx: ctx })
+                 { share: true, ctx: ctx, lean: true })
       : hero(ctx, copy, axes, top));
+    // The order this page argues in: the picture of them, the evidence it was
+    // read from, the measure, how rare that is, and then the offer. Nothing
+    // between the rarity and the button.
+    //
+    // Two things used to sit in here and are gone. The card list — "your
+    // profile answers, specifically for X" — was six locked bullets doing the
+    // offer's job twice over, badly, above the offer itself. And the sentence
+    // built from their picks said in prose what the contact sheet under the
+    // totem says in pictures, on a page whose whole job is to get from the
+    // picture to the price.
     var strip = taps(ctx, copy);
     if (strip) root.appendChild(strip);
     if (data) {
-      var line = bridge(ctx, data);
-      if (line) root.appendChild(line);
-      root.appendChild(questions(ctx, data));
+      var bars = traitBars(data);
+      if (bars) root.appendChild(bars);
+      var rare = rarityBadge(data);
+      if (rare) root.appendChild(rare);
     } else {
       root.appendChild(path(ctx, copy, axes));
     }

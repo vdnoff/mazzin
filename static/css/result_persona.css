@@ -68,11 +68,17 @@ body:has(.result-module) {
 
 /* --- a) kicker -------------------------------------------------------------- */
 
+/* A line rather than a label. It used to read "YOUR SHAPE" — a tracked
+   all-caps tag, which is the right setting for two words and the wrong one
+   for a sentence. This one is a sentence, and it is the first thing said
+   above the picture, so it is set as one. */
 .pr-kicker {
-  margin: 0 0 16px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.22em;
+  margin: 0 0 14px;
+  font-family: var(--font-display, inherit);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
   text-align: center;
   color: var(--pr-teal);
 }
@@ -180,7 +186,7 @@ body:has(.result-module) {
    which at the totem render's 3:4 stands it 197px tall, on a 168px shadow
    that reaches a little wider than the art the way a cast shadow does. */
 .pr-solo {
-  width: 168px;
+  width: 236px;
   margin: 0 auto 18px;
 }
 
@@ -188,7 +194,7 @@ body:has(.result-module) {
 
 .pr-solo .pr-stand-light { inset: 0 0 22px; }
 
-.pr-solo .pr-totem-art { width: 148px; margin: 0 auto; }
+.pr-solo .pr-totem-art { width: 208px; margin: 0 auto; }
 
 .pr-solo .pr-stand-plinth { width: 100%; height: 14px; }
 
@@ -310,13 +316,15 @@ body:has(.result-module) {
 /* Four bars, one per trait. A clay track with a teal fill: the same two
    materials the head below is made of, so the numbers and the drawing read as
    one instrument rather than as a chart beside a picture. */
-.pr-traits { margin: 20px 0 0; }
+/* The measure, between the contact sheet and the rarity. Compact on purpose:
+   four rows the eye takes in at once, on the way to the number under them. */
+.pr-traits { margin: 16px 0 0; }
 
 .pr-trait {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 0 0 10px;
+  gap: 9px;
+  margin: 0 0 7px;
 }
 
 .pr-trait:last-child { margin-bottom: 0; }
@@ -333,7 +341,7 @@ body:has(.result-module) {
 .pr-trait-track {
   position: relative;
   flex: 1 1 auto;
-  height: 9px;
+  height: 7px;
   border-radius: 999px;
   background: rgba(180, 100, 60, 0.30);
   overflow: hidden;
@@ -517,12 +525,15 @@ body:has(.result-module) {
 
 .pr-taps { margin: 24px 0 6px; }
 
+/* A label, not a heading. It names what the row under it is and then gets
+   out of the way — the picture above it and the measure below it are what
+   this part of the page is for. */
 .pr-taps-caption {
-  margin: 0 0 10px;
-  font-size: 12px;
-  line-height: 1.45;
+  margin: 0 0 7px;
+  font-size: 10px;
+  line-height: 1.4;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--pr-faint);
 }
@@ -533,8 +544,11 @@ body:has(.result-module) {
    one object with a count — rather than as eighteen separate pictures. */
 .pr-taps-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 5px;
+  /* Seven, so a thirteen-step run reads as two rows rather than two and a
+     stub. The count is the funnel's, not a constant: at six the last row was
+     one square wide and read as a mistake. */
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -556,6 +570,46 @@ body:has(.result-module) {
   object-fit: contain;
   background: var(--pr-frame, #CEA371);
   border: 1px solid rgba(78, 221, 196, 0.18);
+}
+
+/* The rarity badge: the loudest thing on the page after the picture.
+
+   It was a small teal pill under the name, which is where a claim like this
+   goes to be skimmed past. Here it is the last thing before the offer, and
+   it is built to be read from across the room — the number set apart from
+   the sentence it sits in, because the number is the argument. */
+.pr-rarity {
+  margin: 22px auto 4px;
+  padding: 16px 18px 15px;
+  max-width: 300px;
+  border: 1px solid rgba(78, 221, 196, 0.42);
+  border-radius: 18px;
+  background:
+    radial-gradient(120% 140% at 50% 0%,
+      rgba(78, 221, 196, 0.16) 0%, rgba(78, 221, 196, 0) 70%),
+    var(--pr-slab);
+  text-align: center;
+}
+
+.pr-rarity-lead,
+.pr-rarity-tail {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--pr-muted);
+}
+
+.pr-rarity-figure {
+  display: block;
+  margin: 4px 0 2px;
+  font-family: var(--font-display, inherit);
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--pr-teal);
 }
 
 /* --- d) the node path -------------------------------------------------------- */
@@ -750,83 +804,6 @@ body:has(.result-module) {
 }
 
 .pr-share-toast.is-on { opacity: 1; }
-
-/* --- d2) the six questions --------------------------------------------------- */
-
-.pr-bridge {
-  margin: 26px 0 0;
-  font-size: 14px;
-  line-height: 1.5;
-  font-weight: 600;
-  color: var(--pr-teal);
-}
-
-.pr-cards { margin: 12px 0 0; padding: 0; list-style: none; }
-
-.pr-card {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 11px;
-  margin: 0 0 9px;
-  padding: 13px 40px 13px 13px;
-  border: 1px solid var(--pr-line);
-  border-radius: 14px;
-  background: var(--pr-slab);
-}
-
-.pr-card:last-child { margin-bottom: 0; }
-
-/* The chapter they said they came for. One step up, and no further: a
-   brighter edge and a lit icon, on the card that is already first. */
-.pr-card.is-lead {
-  border-color: rgba(78, 221, 196, 0.55);
-  background: linear-gradient(180deg, var(--pr-slab-2) 0%,
-                              var(--pr-slab) 100%);
-}
-
-.pr-card-icon { flex: none; width: 20px; height: 20px; margin-top: 1px; }
-
-.pr-card-icon svg {
-  display: block;
-  width: 20px;
-  height: 20px;
-  fill: none;
-  stroke: var(--pr-teal);
-  stroke-width: 1.3;
-  opacity: 0.85;
-}
-
-.pr-card.is-lead .pr-card-icon svg { opacity: 1; stroke-width: 1.5; }
-
-.pr-card-line {
-  margin: 0;
-  min-width: 0;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.45;
-  color: var(--pr-text);
-}
-
-.pr-card-key { font-weight: 700; color: var(--pr-teal); }
-
-.pr-card-lock {
-  position: absolute;
-  right: 13px;
-  top: 14px;
-  display: block;
-  width: 14px;
-  height: 14px;
-}
-
-.pr-card-lock svg {
-  display: block;
-  width: 14px;
-  height: 14px;
-  fill: none;
-  stroke: var(--pr-faint);
-  stroke-width: 1.5;
-}
 
 /* --- e) the offer ------------------------------------------------------------ */
 

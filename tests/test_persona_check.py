@@ -859,18 +859,20 @@ check("it is two layers: a rendered base and an inlay",
                                ".pr-head-inlay"))
       and 'HEAD_BASE = "/static/galleries/persona/head_base.webp"' in module)
 check("  the base frame is on disk", "head_base" in gallery)
-# The measured numbers. They were top 13% / left 26% / 48%, written against a
-# mockup; once the approved render was committed it was measurable that the
-# box overlapped the ear and ran off the brow. scripts/gen_persona.py
-# --check-head is what measures them, and test_personaart pins the two
-# against each other — here it is only that the sheet carries the measurement
-# rather than the mockup.
-check("  and the inlay sits on the measured cranial field",
-      re.search(r"\.pr-head-inlay \{[^}]*top: 5%;[^}]*left: 45%;"
-                r"[^}]*width: 22\.5%;[^}]*height: 22\.5%;", sheet, re.S)
+# The measured numbers, and the third set of them. They were a mockup's box
+# first, then the smooth field on the crown; they are the head itself now,
+# because the radar is the head's defining feature rather than a mark on top
+# of it. scripts/gen_persona.py --check-head measures the head's extent and
+# reports the box it wants; test_personaart pins the two against each other.
+check("  and the inlay spans the measured head",
+      re.search(r"\.pr-head-inlay \{[^}]*top: 0\.8%;[^}]*left: 15\.3%;"
+                r"[^}]*width: 68(?:\.0)?%;[^}]*height: 68(?:\.0)?%;", sheet, re.S)
       is not None)
-check("  not on the mockup's box",
-      not re.search(r"\.pr-head-inlay \{[^}]*top: 13%;", sheet, re.S))
+check("  not the crown patch it replaced",
+      not re.search(r"\.pr-head-inlay \{[^}]*width: 22\.5%;", sheet, re.S))
+check("  and it is big enough to be the thing you look at",
+      float(re.search(r"\.pr-head-inlay \{[^}]*width: ([\d.]+)%",
+                      sheet, re.S).group(1)) >= 60)
 check("the SVG is still generated from the tallies",
       "function headValues(" in module and "data.split" in module
       and "function headSvg(" in module)
@@ -981,7 +983,8 @@ check("  the delivered page asks for the head",
                 module) is not None)
 check("  the free page does not",
       re.search(r"richHero\(glyph\(ctx\.picks\.now\), data, copy,\s*"
-                r"\{ share: true, ctx: ctx \}\)", module) is not None)
+                r"\{ share: true, ctx: ctx, lean: true \}\)", module)
+      is not None)
 check("  so the pair is drawn only under that flag",
       module.count("card.appendChild(headPair(data));") == 1
       and re.search(r"if \(opts && opts\.head\) \{\s*"
@@ -990,9 +993,10 @@ check("  so the pair is drawn only under that flag",
 check("  and the totem stands alone on the other branch",
       "card.appendChild(soloTotem(data));" in module
       and module.count("function soloTotem(") == 1)
-check("  and only the share button differs besides",
-      "{ share: true, ctx: ctx }" in module
-      and "if (opts && opts.share && opts.ctx)" in module)
+check("  and only the share button and the lean layout differ besides",
+      "{ share: true, ctx: ctx, lean: true }" in module
+      and "if (opts && opts.share && opts.ctx)" in module
+      and "var lean = !!(opts && opts.lean);" in module)
 check("the solo totem stands on the same pedestal as the pair's",
       ".pr-solo .pr-stand" in sheet and ".pr-solo .pr-totem-art" in sheet
       and re.search(r"\.pr-solo \{[^}]*margin: 0 auto", sheet, re.S)
@@ -1226,11 +1230,28 @@ check("  and only the persona module writes that key",
               os.path.join(ROOT, "static/js", name), encoding="utf-8").read())
       == 1)
 
-check("the locked teasers promise what the offer promises",
-      all(any(word in " ".join(sec.get("teaser_line", "")
-                               for sec in cfg["report"]["sections"]).lower()
-              for word in words)
-          for words in (("drain",), ("costs you",))))
+# The sections ARE the offer now: one per bullet on the card, in the order
+# the card lists them. Pinned against the config's own benefits rather than
+# against a word list here, so a bullet rewritten without its section — or a
+# section added without its bullet — fails rather than drifts.
+SECTION_ORDER = ["dna", "materials", "mistakes", "shopping"]
+check("the report is the four sections the paywall sells",
+      [sec["id"] for sec in cfg["report"]["sections"]] == SECTION_ORDER,
+      str([sec["id"] for sec in cfg["report"]["sections"]]))
+check("  and nothing the paywall does not",
+      not any(sec["id"] in ("palette", "splurge")
+              for sec in cfg["report"]["sections"]))
+for variant in cfg["paywall_variants"]:
+    check("  %s promises one thing per section, plus the keepsake"
+          % variant["id"],
+          len(variant["benefits"]) == len(SECTION_ORDER) + 1,
+          str(len(variant["benefits"])))
+check("  every section has a teaser of its own",
+      all((sec.get("teaser_line") or "").strip()
+          for sec in cfg["report"]["sections"]))
+check("  and the delivered page can still name each one",
+      sorted(c["id"] for c in cfg["result_copy"]["profile"]["cards"])
+      == sorted(SECTION_ORDER))
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for f in fails:
