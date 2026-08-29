@@ -453,3 +453,6 @@ bottom.
 
 ## 2026-08-28 — claude/persona-tile-presentation
 - persona: 3:4 grid4 cap zero-crop + tight bar + one-line hook
+
+## 2026-08-29 — claude/persona-tile-presentation
+- persona: grid overlap fix + realistic-viewport tiles suite
