@@ -160,8 +160,14 @@ def stub_report():
         pair = step["pairs"][0]
         choices.append(pair["images"][0]["id"])
     style_id = CFG["styles"][0]["id"]
-    content = reports.start_report(1, "persona", style_id,
-                                   {"drive": 7, "wave": 5}, choices=choices)
+    # The same scores a real run produces, so `_persona_profile` resolves a
+    # persona rather than returning None and sending the page to the plain
+    # card. A stub that skipped this would be testing the fallback.
+    scores = dict((tag, 9) for tag in (CFG["styles"][0].get("tags") or []))
+    scores.update({"outer": 8, "inner": 3, "bold": 5, "calm": 3, "deep": 4,
+                   "drive": 7, "anchor": 4, "wave": 5, "prism": 2})
+    content = reports.start_report(1, "persona", style_id, scores,
+                                   choices=choices)
     content["version"] = "llm-2"
     return content
 
@@ -338,15 +344,14 @@ def run_free(page, sid):
     check("the button's visible text is this arm's call to action",
           label == want, "%r, wanted %r" % (label, want))
 
-    print("\n--- the rest of the card is untouched ---")
-    # The offer changed; nothing above it did. These are here so a variant
-    # that quietly ate part of the page fails rather than ships.
-    check("the totem and the head still stand together",
-          page.locator(".pr-pair").count() == 1)
-    check("  the clay head with them", page.locator(".pr-head-plate").count() == 1)
-    check("  its radar inlay", page.locator(".pr-head-inlay").count() == 1)
-    check("  the trait legend", page.locator(".pr-head-legend").count() == 1)
-    check("  the four bars", page.locator(".pr-trait").count() >= 4,
+    print("\n--- what the free page gives away ---")
+    # The head and the radar pressed into it are the reveal the report sells,
+    # so the free page must not carry them. Everything that teases stays.
+    check("the totem stands alone", page.locator(".pr-solo").count() == 1)
+    check("  no clay head", page.locator(".pr-head-plate").count() == 0)
+    check("  no radar inlay", page.locator(".pr-head-inlay").count() == 0)
+    check("  no trait legend", page.locator(".pr-head-legend").count() == 0)
+    check("  but the four bars stay", page.locator(".pr-trait").count() >= 4,
           str(page.locator(".pr-trait").count()))
     check("  and the share button where it was",
           page.locator(".pr-share").count() >= 1)
@@ -381,19 +386,30 @@ def run_delivered(page, shown, sid):
               return r ? [...r.querySelectorAll('section, h1')]
                 .slice(0, 4).map(n => n.className || n.tagName).join(' | ')
                 : 'none'; }"""))
-    # What the buyer opens today is the plain card: `_profile_for` in
-    # reports.py builds a profile block for zodiac funnels only — its
-    # vocabulary is fire/earth/air/water and sun/moon, and persona's axes are
-    # drive/anchor/wave/prism — so a persona purchase stores no
-    # `visuals.profile` and `deliveredHero` falls through to the card every
-    # persona buyer has always been sent to. Pinned as the current truth, and
-    # it is the thing a follow-up allowed into reports.py has to change.
-    check("the delivered page draws the plain card, as it always has",
-          page.locator(".pr-hero").count() == 1
-          and page.locator(".pr-animal").count() == 1)
-    check("  because no profile block is stored for this funnel",
-          page.locator(".pr-head-plate").count() == 0
-          and page.locator(".pr-pair").count() == 0)
+    # The reveal, on the page that paid for it. This is drawn from the block
+    # reports.py stores at purchase — `_persona_profile` — so a delivered page
+    # without a head means the block was not written, not that the module
+    # forgot to draw it.
+    check("the head is the first thing in it",
+          page.locator(".pr-head-plate").count() == 1)
+    check("  with its radar inlay",
+          page.locator(".pr-head-inlay").count() == 1)
+    check("  and the trait legend under it",
+          page.locator(".pr-head-legend").count() == 1)
+    check("  the totem beside it, not alone",
+          page.locator(".pr-pair").count() == 1
+          and page.locator(".pr-solo").count() == 0)
+    check("  and it is the rich card, not the plain fallback",
+          page.locator(".pr-hero.is-rich").count() == 1
+          and page.locator(".pr-animal").count() == 0)
+    order = page.evaluate("""() => {
+      const h = document.querySelector('.pr-head-plate');
+      const s = document.querySelector('.pr-path');
+      if (!h || !s) return null;
+      return h.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING
+        ? 'head first' : 'sections first';
+    }""")
+    check("  above every section", order == "head first", str(order))
 
     check("there is no offer on it", page.locator(".pr-offer").count() == 0)
     check("  and so no second button to disagree with the first",

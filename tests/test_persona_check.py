@@ -32,6 +32,17 @@ import sys
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 sys.path.insert(0, REPO)
+
+import database                                            # noqa: E402
+
+# No suite talks to a database. reports.py is imported for the banned list it
+# enforces, and importing it must not open a connection.
+database.execute = lambda *a, **kw: None
+database.query_all = lambda *a, **kw: []
+database.query_one = lambda *a, **kw: None
+
+import reports                                             # noqa: E402
+
 ROOT = REPO
 GALLERY = os.path.join(ROOT, "static/galleries/persona")
 
@@ -958,41 +969,72 @@ check("  and still says what it always said",
       cfg["result_copy"]["profile"]["rarity_line"]
       == "Rarer than {rarer}% of profiles")
 
-# Both views draw one card, so the layout cannot differ between them.
-check("the delivered page draws the same card",
-      re.search(r"richHero\(glyph\(pick\), data, copy\)", module)
+# Both views draw one card, from one function, so the layout cannot drift
+# between them. What differs is the picture at the top of it, and that is the
+# product decision: the clay head and the radar pressed into it are what the
+# report sells, so the free page shows the totem alone and the delivered page
+# shows the pair.
+check("one card function serves both views",
+      module.count("function richHero(") == 1)
+check("  the delivered page asks for the head",
+      re.search(r"richHero\(glyph\(pick\), data, copy, \{ head: true \}\)",
+                module) is not None)
+check("  the free page does not",
+      re.search(r"richHero\(glyph\(ctx\.picks\.now\), data, copy,\s*"
+                r"\{ share: true, ctx: ctx \}\)", module) is not None)
+check("  so the pair is drawn only under that flag",
+      module.count("card.appendChild(headPair(data));") == 1
+      and re.search(r"if \(opts && opts\.head\) \{\s*"
+                    r"card\.appendChild\(headPair\(data\)\);", module)
       is not None)
-check("  which means the pair, the inlay and the legend come with it",
-      module.count("function richHero(") == 1
-      and module.count("card.appendChild(headPair(data));") == 1)
-check("  and only the share button differs",
+check("  and the totem stands alone on the other branch",
+      "card.appendChild(soloTotem(data));" in module
+      and module.count("function soloTotem(") == 1)
+check("  and only the share button differs besides",
       "{ share: true, ctx: ctx }" in module
       and "if (opts && opts.share && opts.ctx)" in module)
+check("the solo totem stands on the same pedestal as the pair's",
+      ".pr-solo .pr-stand" in sheet and ".pr-solo .pr-totem-art" in sheet
+      and re.search(r"\.pr-solo \{[^}]*margin: 0 auto", sheet, re.S)
+      is not None)
+check("  and the head, inlay and legend are all still built",
+      all(("function %s(" % name) in module
+          for name in ("headSvg", "headLegend", "headPlate", "headCaption",
+                       "headPair")))
+check("  with the four bars still on the free card",
+      module.count("function traitBars(") == 1
+      and "var bars = traitBars(data);" in module)
 
 
 print("\n--- the words this vertical does not use ---")
-BANNED = [
-    "psychic", "prediction", "predictions", "predict", "fortune",
-    "your future will", "clairvoyant", "horoscope", "prophecy", "prophecies",
-    "destined to", "fated to", "symptom", "symptoms",
-    "medication", "prescription", "financial advice",
-    "diagnosis", "diagnose", "disorder", "iq", "therapy", "therapist",
-    "clinical", "psychometric", "scientifically proven",
-    "scientifically validated",
-    "mbti", "enneagram", "disc profile", "big five", "16personalities",
-    "introvert", "extrovert",
-]
-WORDY = re.compile(r"[a-z0-9]")
-
-
+# The words this funnel refuses, read from the profile that enforces them
+# rather than kept in a second list here.
+#
+# They were two lists for as long as reports.py had no persona profile: this
+# one policed the config's own strings and nothing policed what a model wrote.
+# Now that PERSONA_BANNED exists and is enforced on every generated section,
+# a copy of it here would be the thing that drifts — a word added there and
+# forgotten here reads as this funnel having stopped banning it.
+#
+# The patterns are compiled regexes; the scan below wants plain words, so the
+# few that carry alternation or a boundary trick are listed as what they
+# match. Everything else comes straight off the profile.
+# The scan runs the profile's own patterns rather than a copy of its words.
+#
+# A copy was what this was, and it drifted the moment reports.py grew a
+# persona profile: a word added there and forgotten here reads as this funnel
+# having stopped banning it. Extracting the words back out of the patterns is
+# no better — half of them carry alternation (`\bdiagnos(?:e|es|is)\w*\b`)
+# and an extractor that misses those quietly weakens the check it is supposed
+# to be tightening.
+#
+# So the patterns are used as patterns. They already carry their own word
+# boundaries, which is what the hand-rolled matcher below them was for.
 def banned_hit(text):
-    low_text = (text or "").lower()
-    for word in BANNED:
-        for found in re.finditer(re.escape(word), low_text):
-            before = low_text[found.start() - 1] if found.start() else " "
-            after = low_text[found.end():found.end() + 1] or " "
-            if not WORDY.match(before) and not WORDY.match(after):
-                return word
+    for pattern in reports.PERSONA_BANNED:
+        found = pattern.search(text or "")
+        if found:
+            return found.group(0).lower()
     return None
 
 
@@ -1002,7 +1044,7 @@ check("no on-screen string says a banned word", not dirty, str(dirty[:4]))
 check("  and the scan actually read the whole config",
       len(SCANNED) > 600, str(len(SCANNED)))
 check("  the scanner catches one when there is one",
-      banned_hit("a clinical diagnosis") == "diagnosis"
+      banned_hit("a clinical diagnosis") is not None
       and banned_hit("your MBTI type") == "mbti"
       and banned_hit("a unique iq") == "iq"
       and banned_hit("uniquely") is None)

@@ -2221,8 +2221,469 @@ ZODIAC_RO_PROFILE = {
 # two funnels warm their own rows off the same archetypes:
 #
 #     python3 scripts/warm_cache.py zodiac30 --copy-from zodiac
+# --- the persona product ----------------------------------------------------
+#
+# Same machinery, a different reading. This funnel sells "shapes that unlock
+# what's underneath": thirteen pairs of forms, an archetype won on tags, and a
+# name on the other side of it. Nothing about it is astrological and nothing
+# about it is clinical, and those are the two directions it can drift in — so
+# the voice says so, the banned list enforces it, and the shapes below are
+# written about temperament rather than about stars or about tests.
+#
+# The section ids are the ones every funnel here uses, which is why the
+# validators, the renderer and the PDF need no persona branch: what changes is
+# what each section is about.
+
+PERSONA_SYSTEM = """You write profile reports for people who have just paid \
+for one.
+
+The product is a reading of how somebody is built, taken from thirteen \
+shapes they chose between. Every field has to tell the reader something \
+about themselves they can recognise and use this week. Be specific: name the \
+thing, name when it shows up, name what to do about it. A sentence that would \
+read the same for a different reader is a wasted sentence.
+
+Voice: warm, direct, second person, British-neutral English. Grounded and \
+concrete — this is somebody's own pattern described back to them by someone \
+who has been paying attention. State things outright. No hedging — never \
+"consider", "perhaps", "you might want to". No disclaimers, no flattery, no \
+questions back to the reader, no sign-off.
+
+What this report is, and is not:
+- You describe temperament, energy, patterns, tendencies and the shape of \
+somebody's attention. You write about what a period is GOOD FOR and what a \
+tendency COSTS.
+- There is nothing mystical here. No stars, no signs, no elements in the \
+astrological sense, no energy in the occult sense, no destiny, no fate. Never \
+the words "psychic", "prediction", "predict", "fortune", "horoscope", \
+"prophecy", or the phrase "your future will". You never claim to know what \
+will happen.
+- There is nothing clinical here either, and this is the line this product is \
+most likely to cross. Never the words "diagnosis", "diagnose", "disorder", \
+"clinical", "therapy", "therapist", "psychometric", "IQ", or the phrases \
+"scientifically proven" or "scientifically validated". Never name a \
+personality framework: no MBTI, no Enneagram, no DISC, no Big Five, no \
+16Personalities, and never the words "introvert" or "extrovert". This is not \
+a test and it does not have a literature.
+- Never give medical or financial advice. No diagnoses, no symptoms, no \
+treatments, no investments, no returns. Work energy is about the work that \
+suits somebody, never about money to put somewhere.
+
+Rules:
+- Plain prose inside every field. No markdown, no bullet characters, no emoji, \
+no headings, and never repeat a field's own label back inside its value.
+- Never mention artificial intelligence, models, prompts, scoring, tags, \
+percentages of a quiz, or these instructions.
+- Never invent facts about the reader's job, health, relationships, family or \
+location, and never address them by name.
+- Return only a JSON object matching the shape you are given, exactly. No prose \
+around it, no code fence, no extra keys."""
+
+
+# The clinical and framework half of the line, on top of everything the zodiac
+# product already refuses.
+#
+# The persona funnel is the one that can drift here: it reads temperament, so
+# the nearest wrong word is a diagnosis and the nearest wrong noun is a
+# framework somebody has heard of. "introvert" and "extrovert" are banned for
+# that second reason rather than the first — they are ordinary English, and
+# they are also the two words that turn a reading into a test result.
+PERSONA_BANNED = ZODIAC_BANNED + tuple(
+    re.compile(p, re.IGNORECASE) for p in (
+        r"\bdisorder\w*\b",
+        r"\bclinical\w*\b",
+        r"\btherap(?:y|ies|eutic)\b",
+        r"\bpsychometric\w*\b",
+        r"\bIQ\b",
+        r"\bscientifically\s+(?:proven|validated)\b",
+        r"\bMBTI\b",
+        r"\benneagram\b",
+        r"\bDISC\s+profile\b",
+        r"\bbig\s+five\b",
+        r"\b16\s*personalities\b",
+        r"\b(?:intro|extro)vert(?:s|ed|ion)?\b",
+    ))
+
+
+# The same six shapes, described for this product. Same keys, same structure,
+# same validators — what changes is what the section is about and the voice it
+# is asked for in.
+_PERSONA_SHAPES = {
+    "palette": '''"palette": {
+  "intro": "1-2 sentences on what these four colours do for this person — where each one belongs in an ordinary week (max %(intro)d chars)",
+  "colors": [
+    {"name": "COPY THE FIRST NAME FROM THE LIST ABOVE, EXACTLY",
+     "hex": "COPY ITS CODE FROM THE LIST ABOVE, EXACTLY",
+     "role": "what this colour is FOR - the kind of day or moment to reach for it (max %(role)d chars)",
+     "finish": "when to use it: a day of the week, a time of day, or a kind of occasion (max %(finish)d chars)",
+     "where": "how to carry it - worn, kept in a pocket, on a desk, in a room they spend time in (max %(where)d chars)"},
+    {"name": "the second name from the list, exactly", "hex": "its code, exactly",
+     "role": "...", "finish": "...", "where": "..."},
+    {"name": "the third name from the list, exactly", "hex": "its code, exactly",
+     "role": "...", "finish": "...", "where": "..."},
+    {"name": "the fourth name from the list, exactly", "hex": "its code, exactly",
+     "role": "...", "finish": "...", "where": "..."}
+  ],
+  "closing_rule": "one sentence naming three things worth carrying — an object, a habit and a phrase — and when each is worth reaching for (max %(closing_rule)d chars)"
+}
+
+THE COLOURS ARE NOT YOURS TO CHOOSE. Four of them are given above, with their
+codes. Reproduce all four, in that order, with the name and the code exactly
+as written - character for character. Invent no colour, rename none, and write
+no code that is not on that list.
+
+What you write is what each one is FOR. This is not a paint chart and not a
+clothing catalogue: never the words "matte", "satin", "eggshell", "gloss",
+"sheen", "swatch" or "paint", no garment descriptions, no decorating. Write
+about momentum, steadiness, being seen, being left alone - the days a colour
+is worth reaching for and the days it is not.''',
+
+    "mistakes": '''"mistakes": {
+  "items": [
+    {"title": "the hidden strength, as a short phrase (max %(title)d chars)",
+     "body": "EXACTLY TWO SENTENCES and no more. The first says what the strength is and how it shows up in an ordinary week. The second says what it costs — the blind spot on its other side. No third sentence, and do not join two of them with a semicolon to get around that (max %(body)d chars)",
+     "fix": "ONE imperative sentence starting with a verb — the thing to do differently this week. A second is allowed only if it is short (max %(fix)d chars)"},
+    {"title": "the second one", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the third one", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the fourth one", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the fifth one", "body": "two sentences", "fix": "one sentence"}
+  ]
+}
+
+Exactly five, under the single key `items`, each an object with `title`,
+`body` and `fix` spelled exactly so. Every strength carries its own blind
+spot inside the same body — a strength with no cost is flattery. `fix` is how
+to spend the strength on purpose, never a warning.
+
+All five are the same shape and the same length: two sentences and one. This
+is read on a phone by somebody scrolling, and five paragraphs is an essay
+where the product is five hits. Cut every clause that is scene-setting, every
+"which is why", and every restatement of the title. If a sentence could be
+deleted without losing a fact about this reader, delete it.''',
+
+    "materials": '''"materials": {
+  "intro": "THEIR PATTERN WITH OTHER PEOPLE: 2-3 sentences on who this reader is repeatedly drawn to, what it costs them, and how it follows from the name they were given on the page they paid from. Use that name once, in the middle of a sentence rather than as a label (max %(intro)d chars)",
+  "pairs": [
+    {"combo": "COPY THE FIRST PAIRING FROM THE LIST ABOVE, EXACTLY (max %(combo)d chars)",
+     "verdict": "COPY ITS VERDICT FROM THE LIST ABOVE - the word works or the word avoid",
+     "why": "TWO PARTS IN ONE PARAGRAPH. First: what that pairing is like to be inside, expanding the line given above without contradicting it. Then, in the same paragraph: HOW TO PLAY IT — the one thing that actually works with this profile, written as something to do rather than something to know (max %(why)d chars)"},
+    {"combo": "the second pairing from the list, exactly", "verdict": "its verdict, exactly", "why": "same two parts"},
+    {"combo": "the third pairing from the list, exactly", "verdict": "its verdict, exactly", "why": "same shape, but the second part is HOW TO PROTECT THEIR ENERGY: the specific boundary that makes this one survivable, written as something to do"},
+    {"combo": "the fourth pairing from the list, exactly", "verdict": "its verdict, exactly", "why": "same two parts"}
+  ],
+  "rule": "one sentence on what to say, or ask for, in the first month with somebody (max %(rule)d chars)"
+}
+
+THE PAIRINGS ARE NOT YOURS TO CHOOSE. Four of them are given above, each with
+its verdict and a line saying what it is. Reproduce all four, in that order,
+with the `combo` and the `verdict` exactly as written. Invent no pairing, and
+never change a verdict.
+
+What you write is the `why`. Take the given line as true and say what it is
+like to be inside, then what to do about it. `verdict` is the word "works" or
+the word "avoid" and nothing else. "avoid" means the pairing is expensive to
+be in, never that a person is bad.
+
+Every `why` carries both halves. The first half is what it is like; the
+second is what to do about it, and it is the half the reader came for — a
+pairing described and not answered is half a chapter. Name the thing to do
+specifically enough to do it this month.''',
+
+    "splurge": '''"splurge": {
+  "splurge": {"item": "the kind of work or working environment this person's energy pays best in, as a short phrase (max %(item)d chars)",
+              "why": "TWO PARTS IN ONE PARAGRAPH. First: why their energy earns here and what it looks like day to day. Then THREE CONCRETE MOVES, in the same paragraph — three things to actually do, each one naming a place to work, a time of day or week, or an action (max %(why)d chars)"},
+  "saves": [
+    {"item": "a kind of work to stop accepting, as a short phrase (max %(item)d chars)",
+     "why": "what it costs them specifically, then one line on how to decline it — the sentence to say, or the condition to put on it (max %(why)d chars)"},
+    {"item": "a second one", "why": "same two parts"},
+    {"item": "a third one", "why": "same two parts"}
+  ],
+  "split_note": "THE LEAK, AND HOW TO PLUG IT: the single biggest drain on this reader's working energy, named outright, and then the one change that stops it. 2-3 sentences (max %(split_note)d chars)"
+}
+
+The three top-level keys are `splurge`, `saves` and `split_note`, spelled
+exactly so and nothing else. `splurge` is a single object with `item` and
+`why`; `saves` is a list of three objects with the same two keys;
+`split_note` is one string. Do not send `item` or `why` at the top level, and
+do not rename `split_note`.
+
+`item` is a short phrase — a job shape, not a sentence. One place their
+energy earns and three to stop spending it on. This is the shape of the work,
+never money to put anywhere: no markets, no figures, and no advice about
+where to place anything. The three moves are behaviour and energy — where to
+be, when to work, what to say yes to — and never a thing to buy, hold or put
+money into.
+
+The second half of every field is the half the reader came for. A place named
+and not acted on, a cost named and not declined, a leak named and not
+plugged: each of those is a chapter that stops one sentence early.''',
+
+    "dna": '''"dna": {
+  "narrative": [
+    "a paragraph on how this person's axis, energy and tone actually combine — the blueprint, in their own nouns, naming at least one of the shapes they chose (max %(narrative)d chars)",
+    "a second paragraph on the one place those three pull against each other, and what that tension produces (max %(narrative)d chars)"
+  ],
+  "implications": [
+    "one sentence naming something concrete this means for how they decide (max %(implications)d chars)",
+    "one sentence on what it means for how they rest (max %(implications)d chars)",
+    "one sentence on what it means for how other people read them (max %(implications)d chars)"
+  ]
+}
+
+Two keys only, `narrative` and `implications`, each a list of plain strings —
+not objects. Two paragraphs and three implications. Each paragraph is its own
+entry in the list and carries its own limit; do not run them together into
+one long string.
+
+This is the section that has to sound like it was written about this reader
+and nobody else, and the shapes they chose are how you do that: quote one of
+them back by the words on it. Not "you are decisive" but the thing they
+actually reached for.''',
+
+    "shopping": '''"shopping": {
+  "items": [
+    {"name": "COPY THE 1st LABEL FROM THE LIST ABOVE, EXACTLY (max %(name)d chars)", "priority_note": "what this month's energy is good for (max %(priority_note)d chars — one or two sentences)"},
+    {"name": "COPY THE 2nd, EXACTLY", "priority_note": "..."},
+    {"name": "COPY THE 3rd, EXACTLY", "priority_note": "..."},
+    {"name": "the 4th", "priority_note": "..."},
+    {"name": "the 5th", "priority_note": "..."},
+    {"name": "the 6th", "priority_note": "..."},
+    {"name": "the 7th", "priority_note": "..."},
+    {"name": "the 8th", "priority_note": "..."},
+    {"name": "the 9th", "priority_note": "..."},
+    {"name": "the 10th", "priority_note": "..."},
+    {"name": "the 11th", "priority_note": "..."},
+    {"name": "the 12th", "priority_note": "..."}
+  ],
+  "skip": []
+}
+
+Two keys, `items` and `skip`, spelled exactly so. Twelve items under `items`,
+in the order the list above gives them, every one an object with `name` and
+`priority_note`. `skip` is an empty list — send it, and put nothing in it.
+
+`name` is the label from the list and nothing else — the month and the year,
+exactly as written there. This map starts from the month they are in, not
+from January, so the first item is the month they are living through right
+now and four of the twelve are in next year.
+
+Mark exactly three months by opening their note with "Strongest month:" and
+exactly one by opening its note with "Quiet month:". The quiet one is for
+recovery rather than for starting things, and its note says what it is good
+for instead. Themes only — what a month is good for, never what is going to
+happen in it.''',
+}
+
+PERSONA_SPEC = dict((section_id, _zodiac_spec(text, section_id))
+                    for section_id, text in _PERSONA_SHAPES.items())
+
+
+# What a reader gets when there is no key, and it is not allowed to be a
+# different product from the one that arrives when there is. Same lengths,
+# same structure, same voice — and banned-clean, because the fallback is
+# exactly the path where nothing is checking.
+PERSONA_STUBS = {
+    "palette": {
+        "intro": "A {name} runs on one colour you live in, one you reach for "
+                 "when a room needs to turn, and one carrying the weight so "
+                 "the other two do not burn out by Thursday.",
+        # Filled from the style's own four colours at build time. The model is
+        # forbidden to invent a colour here, and the fallback must not be
+        # allowed to either — the page that took the money showed four
+        # swatches by name.
+        "colors": FROM_CONFIG,
+        "closing_rule": "Carry one object, one habit and one sentence: the "
+                        "object on the days you need proof, the habit on the "
+                        "days you need momentum, the sentence on the days "
+                        "somebody asks for more than you have.",
+    },
+    "mistakes": {
+        "items": [
+            {"title": "You read your own certainty as evidence",
+             "body": "You decide quickly and you trust the speed of it. A "
+                     "decision made out of restlessness feels identical, "
+                     "from the inside, to one made out of conviction.",
+             "fix": "Sleep one night on any decision you could explain in "
+                    "ten seconds."},
+            {"title": "You hold the useful thing until the moment is clean",
+             "body": "You notice more than the people around you and you say "
+                     "less of it. The read is usually right and it usually "
+                     "arrives late, by which point the situation has "
+                     "resolved without you in it.",
+             "fix": "Set a ceiling of three days between noticing something "
+                    "and naming it, clumsy wording included."},
+            {"title": "You absorb the cost rather than name it",
+             "body": "You take the extra hour and the awkward conversation, "
+                     "and you take them quietly enough that nobody learns "
+                     "they were extra. Over a few years the baseline moves.",
+             "fix": "Say what it took, once, at the moment it happens, "
+                    "without asking for anything back."},
+            {"title": "You leave at the point it stops being interesting",
+             "body": "You see the shape of a thing early, which is the hard "
+                     "part. Once the shape is clear the rest reads as admin, "
+                     "and the value gets collected by whoever stayed.",
+             "fix": "Name the last ten percent before you start, and put a "
+                    "date on it."},
+            {"title": "You mistake being needed for being close",
+             "body": "You are the one people bring the difficult thing to, "
+                     "and you are good at it. Being useful to somebody is a "
+                     "different arrangement from being known by them, and "
+                     "the first can run for years without the second.",
+             "fix": "Tell one person something you have not solved yet."},
+        ],
+    },
+    "materials": {
+        "intro": "A {name} is drawn to people who move at a different speed "
+                 "— steadier or faster, rarely the same — and the pull is "
+                 "real rather than a mistake. What it costs is that the "
+                 "difference has to be talked about, and it usually is not "
+                 "until it has already cost something.",
+        "pairs": [
+            {"combo": "{name} + a steadier profile",
+             "verdict": "works",
+             "why": "They hold the ground while you cover distance, and "
+                    "neither of you has to argue for the arrangement. Say "
+                    "out loud, early, which decisions you want them to slow "
+                    "down and which you want left alone."},
+            {"combo": "{name} + a profile that reads the room the way you do",
+             "verdict": "works",
+             "why": "You are understood without the preamble, which is rest "
+                    "rather than romance. Give it something to do together "
+                    "or the understanding turns into commentary."},
+            {"combo": "{name} + a profile that needs constant motion",
+             "verdict": "avoid",
+             "why": "Two engines and no keel: it is exhilarating for a "
+                    "season and expensive after it. Put one fixed thing in "
+                    "the week that neither of you is allowed to move, and "
+                    "protect it before anything else."},
+            {"combo": "{name} + a profile that withholds to stay safe",
+             "verdict": "avoid",
+             "why": "You will read the silence as a puzzle and spend "
+                    "yourself solving it. Ask once, plainly, and take the "
+                    "answer you are given rather than the one you can "
+                    "reconstruct."},
+        ],
+        "rule": "In the first month, ask what they do when they are tired — "
+                "the answer tells you more than what they want.",
+    },
+    "splurge": {
+        "splurge": {
+            "item": "work with a visible edge and a short feedback loop",
+            "why": "Your energy earns where the result shows up soon enough "
+                   "to correct — you are good at reading a thing early and "
+                   "worse at waiting six months to find out. Put the hardest "
+                   "task in the first two hours of the day, keep one "
+                   "afternoon a week with nothing scheduled in it, and say "
+                   "yes to the work where somebody will tell you plainly "
+                   "whether it landed.",
+        },
+        "saves": [
+            {"item": "work that pays in access rather than in outcome",
+             "why": "It costs the hours and returns a room you were already "
+                    "going to be in. Decline it by asking what the deliverable "
+                    "is, and let the absence of an answer be the answer."},
+            {"item": "the standing meeting you are in to be reachable",
+             "why": "It fragments the two hours you are actually good in. Ask "
+                    "for the notes instead, and offer fifteen minutes "
+                    "afterwards to whoever needs you."},
+            {"item": "rescuing a project nobody has admitted is failing",
+             "why": "You will be the one who noticed and therefore the one "
+                    "who owns it. Put a condition on it: name what changes, "
+                    "and take it only if that change happens first."},
+        ],
+        "split_note": "The biggest drain on your working energy is the "
+                      "half-finished thing you have not declared dead. It "
+                      "costs nothing to keep and takes a share of every week "
+                      "regardless. Pick one this month, say out loud that it "
+                      "is over, and take the afternoon back.",
+    },
+    "dna": {
+        "narrative": [
+            "Your axis sets what you reach for, your energy sets how much of "
+            "it happens where other people can see, and your tone sets how "
+            "it sounds when it arrives. Those three are usually mistaken for "
+            "one thing — a personality — and they are three separate "
+            "settings that happen to be yours.",
+            "The place they pull against each other is between what you "
+            "reach for and how much of it you let be seen. The tension is "
+            "not a fault to correct: it is what makes you accurate, because "
+            "it means nothing goes out until you have decided it is worth "
+            "the room it takes.",
+        ],
+        "implications": [
+            "You decide faster than you explain, so the explanation is the "
+            "part to write down.",
+            "You rest by finishing something small rather than by stopping.",
+            "People read you as more certain than you feel, which is why the "
+            "doubt has to be said out loud to exist at all.",
+        ],
+    },
+    "shopping": {
+        # The twelve carry positions rather than month names; the labels go on
+        # at build time, from the same twelve the generated one is held to.
+        "items": [
+            {"name": "", "priority_note": "Strongest month: the one to start "
+                                          "the thing you have been circling."},
+            {"name": "", "priority_note": "Good for finishing what the last "
+                                          "month started."},
+            {"name": "", "priority_note": "Good for the conversation you have "
+                                          "been drafting and not sending."},
+            {"name": "", "priority_note": "Quiet month: recovery rather than "
+                                          "starting. Good for tidying the "
+                                          "edges of things already running."},
+            {"name": "", "priority_note": "Good for saying yes to one thing "
+                                          "outside your usual shape."},
+            {"name": "", "priority_note": "Strongest month: the one to ask "
+                                          "for something."},
+            {"name": "", "priority_note": "Good for consolidating rather than "
+                                          "adding."},
+            {"name": "", "priority_note": "Good for the admin you have been "
+                                          "treating as optional."},
+            {"name": "", "priority_note": "Good for reconnecting with the "
+                                          "person you meant to call."},
+            {"name": "", "priority_note": "Strongest month: the one where "
+                                          "effort compounds fastest."},
+            {"name": "", "priority_note": "Good for deciding what next year "
+                                          "does not include."},
+            {"name": "", "priority_note": "Good for closing the year with one "
+                                          "thing declared finished."},
+        ],
+        "skip": [],
+    },
+}
+
+
+PERSONA_PROFILE = {
+    "system": PERSONA_SYSTEM,
+    "spec": PERSONA_SPEC,
+    "stubs": PERSONA_STUBS,
+    # Archetype-driven, so identical for everyone who lands on a persona and
+    # work no buyer should pay for in latency. warm_cache.py fills these.
+    # The same split zodiac uses, for the same reasons: these three are true
+    # of the shape rather than of the run.
+    "cached": ("palette", "mistakes", "splurge"),
+    # Run-driven: the blueprint quotes the shapes they actually chose, the
+    # pairings are read off their own row, and the year map starts in the
+    # month they bought in. Caching these per persona would be eight rows of
+    # something that is supposed to be about one reader.
+    "personal": ("dna", "materials", "shopping"),
+    "banned": PERSONA_BANNED,
+    "verify": None,         # filled below, once ZODIAC_VERIFY is defined
+    "retry_detail": True,
+    "pdf_lead": "Your mind profile report",
+    "pdf_css": None,        # filled below, once PERSONA_PDF_CSS is defined
+    "pdf_logo": "brand/logo-dark.svg",
+    "pdf_note": ("Keep this — your profile also stays available at the link "
+                 "you were sent back to after checkout."),
+    "pdf_cover": None,      # filled below, once _persona_cover is defined
+    "pdf_node": True,
+    "delivery_note": True,
+}
+
+
 PROFILES = {"zodiac": ZODIAC_PROFILE, "zodiac30": ZODIAC_PROFILE,
-            "zodiac-ro": ZODIAC_RO_PROFILE}
+            "zodiac-ro": ZODIAC_RO_PROFILE,
+            "persona": PERSONA_PROFILE}
 
 
 def _prompt_budget(profile):
@@ -2366,6 +2827,10 @@ ZODIAC_VERIFY = {
 
 ZODIAC_PROFILE["verify"] = ZODIAC_VERIFY
 ZODIAC_RO_PROFILE["verify"] = ZODIAC_VERIFY
+# The same two checks, and they are the same checks for the same reason: the
+# persona palette is also four colours the reader was shown by name before
+# they paid, and it is also not a paint chart.
+PERSONA_PROFILE["verify"] = ZODIAC_VERIFY
 
 
 def _verify_for(profile, style, months=None):
@@ -3038,7 +3503,7 @@ def _months_for(profile, today=None):
     """
     if profile is ZODIAC_RO_PROFILE:
         return _year_labels_ro(today)
-    if _is_zodiac(profile):
+    if _is_zodiac(profile) or profile is PERSONA_PROFILE:
         return _year_labels(today)
     return None
 
@@ -3475,9 +3940,337 @@ def _reader_profile(cfg, style, tag_scores, sign, cusp=False,
     }
 
 
+# --- the persona reader's own card ------------------------------------------
+#
+# The same idea as `_reader_profile` above and none of the same words. That
+# one is built on the zodiac vocabulary — fire/earth/air/water, sun/moon —
+# and returns None the moment it is handed a run that has none of those tags,
+# which is every persona run there has ever been. So the delivered persona
+# page had nothing to draw and fell back to the plain card: the head, the
+# inlay and the legend existed, on the free page, where they were being given
+# away.
+#
+# What is built here is the block the free page already computes in the
+# browser, computed again on the server where the browser cannot help — the
+# delivered page is opened from a link in a mail, in a tab that never ran the
+# quiz, and the PDF is drawn on a machine that never had one either.
+#
+# It has to agree with `profileOf` in static/js/result_persona.js field for
+# field, because both of them feed the same `richHero`. Where that file makes
+# a choice — the runner-up excluding the archetype's own axis, a dead-level
+# energy falling to the archetype's own, largest-remainder percentages — this
+# makes the same one, and the suite walks all eight personas to prove the two
+# agree rather than trusting that they do.
+
+PERSONA_AXES = ("drive", "anchor", "wave", "prism")
+PERSONA_ENERGIES = ("outer", "inner")
+
+# The tone axis as this funnel tags it. There is no `light` tag: `deep` is the
+# one word the vocabulary spends on what sits under the surface and bold and
+# calm are what it spends on everything above, so the light-to-deep scale
+# reads deep against the sum of the other two.
+PERSONA_TONES = ("bold", "calm", "deep")
+
+PERSONA_AXIS_LABEL = {"drive": "Drive", "anchor": "Anchor",
+                      "wave": "Wave", "prism": "Prism"}
+
+# The gallery's own families, so a bar and its frames are the same colour.
+PERSONA_AXIS_INK = {"drive": "#F0845A", "anchor": "#9BB08A",
+                    "wave": "#4EDDC4", "prism": "#A98CE8"}
+
+PERSONA_ENERGY_LABEL = {"outer": "Outer", "inner": "Inner"}
+
+# The three steps the reading quotes back. The claim the funnel makes is that
+# the shapes unlock something, so the paragraph has to name what they actually
+# reached for — the shape they opened on, the chapter they said they are in,
+# and the fork they follow.
+PERSONA_NARRATIVE_STEPS = ("now", "chapter", "forks")
+
+PERSONA_TOTEM_DIR = "/static/galleries/persona/totem_"
+
+
+def _persona_split(tag_scores):
+    """The four axes as whole percents that add to a hundred.
+
+    `_split` above does this for the zodiac elements and is keyed on them; the
+    arithmetic is the same and the tags are not. Largest remainder, ties to
+    the declared order, so the caption a reader can add up themselves does.
+    """
+    scores = _scored(tag_scores, PERSONA_AXES)
+    raw = [scores[tag] for tag in PERSONA_AXES]
+    total = sum(raw)
+    if not total:
+        pcts = [int(round(100.0 / len(raw)))] * len(raw)
+    else:
+        exact = [100.0 * value / total for value in raw]
+        pcts = [int(math.floor(value)) for value in exact]
+        owed = 100 - sum(pcts)
+        order = sorted(range(len(exact)), key=lambda i: (-(exact[i] % 1), i))
+        for i in order[:max(0, owed)]:
+            pcts[i] += 1
+    return [{"tag": tag, "name": PERSONA_AXIS_LABEL[tag], "pct": pcts[i],
+             "color": PERSONA_AXIS_INK[tag]}
+            for i, tag in enumerate(PERSONA_AXES)]
+
+
+def _persona_traits(table, split):
+    """The four bars, named the way this funnel's own table names them."""
+    names = {}
+    for row in (table.get("traits") or []):
+        if isinstance(row, dict) and row.get("tag"):
+            names[row["tag"]] = row.get("name") or row["tag"]
+    return [{"tag": cell["tag"],
+             "name": names.get(cell["tag"])
+             or PERSONA_AXIS_LABEL.get(cell["tag"], cell["tag"]),
+             "pct": cell["pct"]}
+            for cell in split]
+
+
+def _persona_picks(cfg, choices):
+    """The labels this run actually tapped, by step id.
+
+    The server has image ids where the browser had the images, so the labels
+    are looked back up through the config the same way `imageById` does.
+    """
+    if not choices:
+        return {}
+    taken = set(choices)
+    out = {}
+    for step in ((cfg.get("swipe") or {}).get("steps") or []):
+        if not isinstance(step, dict):
+            continue
+        # The same fallback the rest of this module uses for a step that
+        # carries its images directly rather than in pairs.
+        pairs = step.get("pairs") or [{"images": step.get("images") or []}]
+        for pair in pairs:
+            for item in (pair.get("images") or []):
+                if (isinstance(item, dict) and item.get("id") in taken
+                        and item.get("label")):
+                    out[step.get("id")] = item["label"]
+    return out
+
+
+def _persona_narrative(cfg, choices, name):
+    """The paragraph, woven from what they actually picked.
+
+    Parts rather than a string, because the labels are set in italics and a
+    string would have to be parsed back apart to do it — the same list of
+    `{"text": ...}` / `{"em": ...}` the browser builds, so one renderer draws
+    either.
+    """
+    picks = _persona_picks(cfg, choices)
+    got = [picks[step] for step in PERSONA_NARRATIVE_STEPS if picks.get(step)]
+    if not got:
+        return None
+    parts = [{"text": "You opened on "}, {"em": got[0].lower()}]
+    if len(got) > 1:
+        parts.append({"text": ", said the chapter you are in is "})
+        parts.append({"em": got[1].lower()})
+    if len(got) > 2:
+        parts.append({"text": ", and when it forks you follow "})
+        parts.append({"em": got[2].lower()})
+    parts.append({"text": ". That is %s, and the rest of this page is what "
+                          "those three unlock." % name})
+    return parts
+
+
+def _persona_profile(cfg, style, tag_scores, choices, today=None):
+    """The whole hero card for one persona run, or None.
+
+    None on a funnel with no tables, a run with no tallies, and any
+    combination the tables do not name — all of which leave the report exactly
+    as it was.
+    """
+    table = _profile_table(cfg)
+    if not table or not table.get("subtypes") or not tag_scores:
+        return None
+
+    style_id = (style or {}).get("id") or ""
+    tags = (style or {}).get("tags") or []
+    scores = _scored(tag_scores, PERSONA_AXES)
+
+    # The axis the hero names is the archetype's own, not the highest scorer.
+    # An archetype is won on its tags, so a reader can out-score their own
+    # axis and still be what they are; the bars below still show all four.
+    primary = next((tag for tag in PERSONA_AXES if tag in tags), None)
+    if not primary:
+        return None
+    rest = [tag for tag in PERSONA_AXES if tag != primary]
+    second = max(rest, key=lambda tag: (scores[tag], -rest.index(tag)))
+
+    energies = _scored(tag_scores, PERSONA_ENERGIES)
+    if energies["outer"] > energies["inner"]:
+        energy = "outer"
+    elif energies["inner"] > energies["outer"]:
+        energy = "inner"
+    else:
+        # Dead level: the archetype's own energy carries it, because the name
+        # beside it says both and a tie broken by list order can print an
+        # energy the archetype does not hold.
+        energy = next((tag for tag in PERSONA_ENERGIES if tag in tags),
+                      PERSONA_ENERGIES[0])
+
+    name = (table["subtypes"].get(style_id) or {}).get(energy)
+    if not name:
+        return None
+    bare = re.sub(r"^The\s+", "", name)
+    essence = ((table.get("essence") or {}).get(style_id) or {}).get(energy, "")
+    rarity = ((table.get("rarity") or {}).get(style_id) or {}).get(energy) or 0
+    rarer = (((table.get("rarer_than") or {}).get(style_id) or {})
+             .get(energy) or 0)
+
+    split = _persona_split(tag_scores)
+    tone = _scored(tag_scores, PERSONA_TONES)
+    at = {
+        "energy": _between(energies["outer"], energies["inner"]),
+        "tone": _between(tone["bold"], tone["calm"]),
+        "depth": _between(tone["bold"] + tone["calm"], tone["deep"]),
+    }
+
+    year = _year_labels(today)
+    words = {
+        "first": year[0],
+        "last": year[-1],
+        "subtype": name,
+        "subtype_bare": bare,
+        "subtype_article": "an" if bare[:1].upper() in "AEIOU" else "a",
+        "axis": PERSONA_AXIS_LABEL.get(primary, primary),
+        "second": PERSONA_AXIS_LABEL.get(second, second),
+        "energy": PERSONA_ENERGY_LABEL.get(energy, energy),
+        "n": str(rarity),
+        "rarer": str(rarer),
+    }
+    for cell in split:
+        words[cell["tag"]] = str(cell["pct"])
+
+    return {
+        "archetype": style_id,
+        "primary": primary,
+        "second": second,
+        "energy": energy,
+        "subtype": name,
+        "subtype_bare": bare,
+        "essence": essence,
+        "rarity": rarity,
+        "rarer": rarer,
+        "totem": "%s%s_%s.webp" % (PERSONA_TOTEM_DIR, style_id, energy),
+        # The persona as one string, which is what the share card, the share
+        # page and the share event are all keyed by.
+        "persona_slug": "%s_%s" % (style_id, energy),
+        "narrative": _persona_narrative(cfg, choices, name),
+        "traits": _persona_traits(table, split),
+        "words": words,
+        # The formula loses its leading separator rather than printing one
+        # when a run never reached the opening step.
+        "formula": re.sub(r"^\s*\u00b7\s*", "",
+                          _fill_tokens(table.get("formula"), words)),
+        "rarity_line": (_fill_tokens(table.get("rarity_line"), words)
+                        if rarer else ""),
+        "split": split,
+        "split_caption": _fill_tokens(table.get("split_caption"), words),
+        "scales": [{"id": row.get("id"), "left": row.get("left"),
+                    "right": row.get("right"),
+                    "at": at.get(row.get("id"), 50)}
+                   for row in (table.get("scales") or [])],
+    }
+
+
+def _persona_pairings(cfg, card):
+    """The buyer's own row of the pairings table, or None.
+
+    Read off the config rather than left to the model. The paywall promises
+    which profiles fit and which one costs, by name, and a model asked for
+    four pairings without being told which four will happily supply four —
+    different ones for every buyer of the same persona.
+    """
+    table = (cfg or {}).get("pairings") or {}
+    row = table.get((card or {}).get("persona_slug") or "")
+    if not isinstance(row, dict):
+        return None
+    names = _profile_table(cfg) or {}
+    subtypes = names.get("subtypes") or {}
+    out = []
+    for slug, verdict in row.items():
+        if not isinstance(verdict, dict):
+            continue
+        archetype, _, energy = slug.rpartition("_")
+        name = (subtypes.get(archetype) or {}).get(energy) or slug
+        out.append({"slug": slug, "name": name,
+                    "verdict": verdict.get("verdict") or "",
+                    "line": verdict.get("line") or ""})
+    return out or None
+
+
+def _persona_pairs_block(cfg, card):
+    """Four pairings, stated, with the reader's own name leading each.
+
+    Two that work and two that cost, which is the shape the section is
+    validated against and the promise the card on the paywall made. Chosen
+    here rather than by the model: the table is the product's own judgement
+    and the model's job is to say what being inside one is like.
+    """
+    rows = _persona_pairings(cfg, card)
+    if not rows:
+        return None
+    mine = (card or {}).get("subtype") or ""
+    works = [r for r in rows if r["verdict"] == "works" and r["slug"]
+             != (card or {}).get("persona_slug")]
+    avoid = [r for r in rows if r["verdict"] == "avoid" and r["slug"]
+             != (card or {}).get("persona_slug")]
+    picked = works[:2] + avoid[:2]
+    if len(picked) < 4:
+        return None
+    return (
+        "REQUIRED — these are this reader's four pairings, in this order, "
+        "with the verdict each one carries. They are the only four this "
+        "section may contain:\n"
+        + "\n".join(
+            '  %d. combo: "%s + %s"  verdict: %s  what it is: %s'
+            % (i + 1, mine, row["name"], row["verdict"], row["line"])
+            for i, row in enumerate(picked))
+        + "\nCopy each `combo` and each `verdict` exactly. Write the `why` "
+          "yourself: take the line above as true, say what that pairing is "
+          "like to be inside, and then what to do about it.")
+
+
+def _persona_picks_block(cfg, choices):
+    """The shapes this reader actually chose, as the evidence to quote back.
+
+    The claim the funnel makes is that the shapes unlock something, so a
+    report that never names one has not paid the claim off. Given as labels
+    rather than as ids: the label is the word that was on the card they
+    tapped.
+    """
+    picks = _persona_picks(cfg, choices)
+    if not picks:
+        return None
+    steps = ((cfg.get("swipe") or {}).get("steps") or [])
+    lines = []
+    for step in steps:
+        label = picks.get(step.get("id"))
+        if not label:
+            continue
+        question = step.get("caption") or step.get("question") or ""
+        lines.append("- %s%s" % (label, "  (%s)" % question if question else ""))
+    if not lines:
+        return None
+    return ("THE SHAPES THIS PERSON CHOSE. These are their own words back at "
+            "them, and the reason they believe this report is about them:\n"
+            + "\n".join(lines)
+            + "\nQuote at least one of them, by the words on it, somewhere in "
+              "this section. Not a paraphrase — the label itself.")
+
+
 def _profile_for(cfg, funnel_slug, style, tag_scores, choices):
-    """The stored block for a purchase, or None. Zodiac funnels only."""
+    """The stored block for a purchase, or None.
+
+    Two vocabularies, one slot. Zodiac runs are read on elements and signs;
+    persona runs are read on axes and energies and have no sign at all. Both
+    end up in `visuals.profile` and both are drawn by the same card.
+    """
     profile = _profile(funnel_slug)
+    if profile is PERSONA_PROFILE:
+        return _persona_profile(cfg, style, tag_scores, choices)
     if not _is_zodiac(profile):
         return None
     read = _sign(cfg, choices) if choices else None
@@ -3611,16 +4404,22 @@ def _subtype_block(profile):
         if row.get("left") and row.get("right"))
     split = ", ".join("%s %d%%" % (cell["name"], cell["pct"])
                       for cell in (profile.get("split") or []))
+    # Two vocabularies reach this block. The zodiac card leads on an element
+    # and the persona card leads on an axis; everything else about the
+    # sentence is the same, so the noun follows the card rather than the
+    # block having to be written twice.
+    words = profile.get("words") or {}
+    lead = words.get("element") or words.get("axis") or ""
+    measured = "elements" if words.get("element") else "axes"
     lines = [
         "This reader has been given a name for what they are, on the page "
         "they paid from, and it is the name this report is written to: %s."
         % profile["subtype"],
         "What it is made of: %s-led with a %s undercurrent, %s energy."
-        % (profile["words"]["element"], profile["words"]["second"],
-           profile["words"]["energy"]),
+        % (lead, words.get("second", ""), words.get("energy", "")),
     ]
     if split:
-        lines.append("Their four elements measured: %s." % split)
+        lines.append("Their four %s measured: %s." % (measured, split))
     if scales:
         lines.append("Where they sit on the three scales the page showed "
                      "them: %s." % scales)
@@ -3631,10 +4430,9 @@ def _subtype_block(profile):
         "the undercurrent do real work: %s leading with %s underneath is a "
         "different person from %s leading alone, and the advice should show "
         "it. Never mention scales, percentages, positions or a quiz."
-        % (profile["words"]["subtype_article"] + " " +
+        % (words.get("subtype_article", "a") + " " +
            profile["subtype_bare"],
-           profile["words"]["element"], profile["words"]["second"],
-           profile["words"]["element"]))
+           lead, words.get("second", ""), lead))
     return "\n".join(lines)
 
 
@@ -3689,13 +4487,19 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
     """
     profile = _profile(funnel_slug)
     zodiac = _is_zodiac(profile)
+    persona = profile is PERSONA_PROFILE
 
     parts = [_style_block(style, name)]
     parts.append(_leaning_block(tag_scores))
 
     extra = None
     if cfg is not None and choices:
-        if zodiac:
+        if persona:
+            # The shapes they chose, as labels. Kitchen's colour-family block
+            # is about photographs of rooms and the zodiac one is about a
+            # sign; this funnel's evidence is the words on the cards.
+            extra = _persona_picks_block(cfg, choices)
+        elif zodiac:
             # The zodiac palette is a wardrobe rather than a paint schedule,
             # so the colour-family block kitchen builds for it does not apply.
             extra = _zodiac_choice_block(cfg, choices, tag_scores)
@@ -3709,7 +4513,7 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
     # the twelve labels are built here and handed over as the only twelve the
     # section may use. `months` is passed in rather than computed here so the
     # prompt and the check that polices it cannot read different clocks.
-    if zodiac and section_id == "shopping":
+    if (zodiac or persona) and section_id == "shopping":
         year = _year_block(months)
         if year:
             parts.append(year)
@@ -3780,6 +4584,24 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
                   "them where they belong together, and you may add to them, "
                   "but nothing on the list may be missing.")
 
+    if persona and cfg is not None:
+        card = _profile_for(cfg, funnel_slug, style, tag_scores, choices)
+        # The pairings the reader was promised, from the table rather than
+        # from the model. Personal section, so this is where it belongs.
+        if section_id == "materials":
+            pairs = _persona_pairs_block(cfg, card)
+            if pairs:
+                parts.append(pairs)
+        # The name they were sold under, on the sections written for them.
+        if section_id in (profile.get("personal") or ()):
+            subtype = _subtype_block(card)
+            if subtype:
+                parts.append(subtype)
+            purpose = _purpose_block(cfg, choices, section_id) if choices \
+                else None
+            if purpose:
+                parts.append(purpose)
+
     parts.append(_sections_block((section_id,), profile["spec"]))
     return "\n\n".join(parts)
 
@@ -3808,11 +4630,12 @@ def _cached_prompt(style, name, ids=None, funnel_slug=None):
     # personalised and the requirement lives there; here it is cached, and it
     # can be, because the strength belongs to the archetype rather than to the
     # reader. Either way item 1 has to be the one already on screen.
-    if _is_zodiac(profile) and "palette" in ids:
+    if (_is_zodiac(profile) or profile is PERSONA_PROFILE) and "palette" in ids:
         required = _palette_required(style)
         if required:
             parts.append(required)
-    if _is_zodiac(profile) and "mistakes" in ids:
+    if (_is_zodiac(profile) or profile is PERSONA_PROFILE) \
+            and "mistakes" in ids:
         first = _mistake_one(style)
         if first:
             parts.append(
@@ -5438,6 +6261,36 @@ figure figcaption { background: #141B3C; }
 ZODIAC_PROFILE["pdf_css"] = ZODIAC_PDF_CSS
 ZODIAC_RO_PROFILE["pdf_css"] = ZODIAC_PDF_CSS
 
+# The persona document is the same dark paper — it was sold on a dusk page and
+# the file has to open as that document — with the cover's own furniture added
+# on top: the totem and the head side by side, the legend under them, and the
+# essence line the zodiac cover has no equivalent of.
+PERSONA_PDF_CSS = ZODIAC_PDF_CSS + """
+.cover-pair { width: 100%; border-collapse: collapse; margin: 0 0 10px; }
+.cover-pair td { vertical-align: bottom; padding: 0 6px; }
+.cover-totem { width: 43%; }
+.cover-head { width: 57%; }
+.cover-totem-art { display: block; width: 100%; border-radius: 10px; }
+
+/* The plate is the photograph; the inlay is positioned on its crown by the
+   same four numbers the page uses, as a share of the plate rather than in
+   pixels, so the mark lands in the same place at any print size. */
+.head-plate { position: relative; display: block; width: 100%; }
+.head-base { display: block; width: 100%; border-radius: 10px; }
+.head-inlay { position: absolute; }
+.head-svg { display: block; width: 100%; height: 100%; }
+
+.head-legend { margin: 2px 0 10px; text-align: center; }
+.head-key { display: inline-block; margin: 0 7px; font-size: 8.5pt;
+            color: #C9BBA8; }
+.head-arrow { font-style: normal; margin-right: 3px; opacity: 0.75; }
+.head-value { margin-left: 4px; color: #F2E6D4; }
+
+.cover-essence { margin: 4px 0 0; font-size: 10pt; color: #C9BBA8; }
+"""
+
+PERSONA_PROFILE["pdf_css"] = PERSONA_PDF_CSS
+
 
 PDF_FACES = """
 @font-face { font-family: "Mazzin Sans"; src: url("fonts/inter-latin-var.woff2"); }
@@ -5503,6 +6356,21 @@ def _print_src(image_id, item):
         return rel
     src = item.get("img") or ""
     return src[len("/static/"):] if src.startswith("/static/") else src
+
+
+def _pdf_asset(rel):
+    """A static file's path for the PDF, or "" when it is not on disk.
+
+    Relative for the same reason `_print_src` is: build_pdf renders with
+    base_url=STATIC_DIR, and an absolute URL would make the file depend on
+    the site being up when it is opened. Checked rather than assumed — a
+    missing image is a broken box on a paid document, and returning nothing
+    prints the page without it instead.
+    """
+    rel = (rel or "").lstrip("/")
+    if not rel:
+        return ""
+    return rel if os.path.isfile(os.path.join(config.STATIC_DIR, rel)) else ""
 
 
 def _pdf_image(image_id, cls, caption=None):
@@ -5796,6 +6664,199 @@ def _zodiac_cover(content, profile, cfg):
 
 ZODIAC_PROFILE["pdf_cover"] = _zodiac_cover
 ZODIAC_RO_PROFILE["pdf_cover"] = _zodiac_cover
+
+# --- the persona cover, and the head on it ----------------------------------
+#
+# The reveal the reader bought is a photographed clay head with a radar
+# pressed into its crown, and it has to survive the trip to paper: a PDF that
+# printed the name and dropped the drawing would be selling one thing on
+# screen and delivering another in the file.
+#
+# The drawing is reproduced rather than screenshotted. `headSvg` in
+# static/js/result_persona.js writes its paint as presentation attributes for
+# exactly this reason — there is no stylesheet of that page's here — so the
+# same geometry, the same inks and the same numbers come out as a string of
+# SVG that any renderer can take.
+
+PERSONA_INLAY_SIZE = 240
+PERSONA_HEAD_CX = 120
+PERSONA_HEAD_CY = 120
+PERSONA_HEAD_R = 96
+PERSONA_LEAN_ARC = "M 24 44 Q 120 -6 216 44"
+PERSONA_INK = "#241A10"
+PERSONA_INK_SOFT = "#3A2A1B"
+PERSONA_HEAD_BASE = "galleries/persona/head_base.webp"
+
+# Where the inlay sits on the head, as a share of the plate. Measured against
+# the render rather than guessed, and the same four numbers the stylesheet
+# carries — see CSS_INLAY in scripts/gen_persona.py, which checks them.
+PERSONA_INLAY_BOX = {"top": 5.0, "left": 45.0, "width": 22.5, "height": 22.5}
+
+# North is drive, east is prism, south is anchor, west is wave — the same four
+# points, in the same order, as the drawing on the page.
+PERSONA_HEAD_AXES = (("drive", 0, -1), ("prism", 1, 0),
+                     ("anchor", 0, 1), ("wave", -1, 0))
+
+
+def _persona_head_values(card):
+    """The four traits as 0-100, scaled so the strongest reaches the rim.
+
+    Shares of a hundred would put every polygon inside the middle ring and
+    every reader's shape would look like everybody else's. The shape is the
+    subject; the numbers are printed underneath it either way.
+    """
+    by = {}
+    for cell in (card.get("split") or []):
+        by[cell.get("tag")] = max(0, cell.get("pct") or 0)
+    top = max([by.get(tag, 0) for tag in PERSONA_AXES] or [0])
+    return dict((tag, int(round(100.0 * by.get(tag, 0) / top)) if top else 0)
+                for tag in PERSONA_AXES)
+
+
+def _persona_lean_at(card):
+    for row in (card.get("scales") or []):
+        if row.get("id") == "energy":
+            return max(0, min(100, row.get("at", 50)))
+    return 50
+
+
+def _persona_lean_point(t):
+    """A point on the crown's arc, at t along it. The same quadratic."""
+    u = 1.0 - t
+    return (u * u * 24 + 2 * u * t * 120 + t * t * 216,
+            u * u * 44 + 2 * u * t * -6 + t * t * 44)
+
+
+def _persona_head_svg(card):
+    """The inlay, as a standalone SVG string. Empty when there is nothing."""
+    values = _persona_head_values(card)
+    if not any(values.values()):
+        return ""
+    parts = ['<svg viewBox="0 0 %d %d" xmlns="http://www.w3.org/2000/svg" '
+             'class="head-svg">' % (PERSONA_INLAY_SIZE, PERSONA_INLAY_SIZE)]
+    # The grid, as grooves pressed into the clay: darker than the surface
+    # rather than lighter, because a groove in clay reads as a shadow.
+    for r in (PERSONA_HEAD_R / 3.0, PERSONA_HEAD_R * 2 / 3.0, PERSONA_HEAD_R):
+        parts.append('<circle cx="%d" cy="%d" r="%.1f" fill="none" '
+                     'stroke="%s" stroke-width="1.2" stroke-opacity="0.5"/>'
+                     % (PERSONA_HEAD_CX, PERSONA_HEAD_CY, r, PERSONA_INK))
+    for x1, y1, x2, y2 in (
+            (PERSONA_HEAD_CX, PERSONA_HEAD_CY - PERSONA_HEAD_R,
+             PERSONA_HEAD_CX, PERSONA_HEAD_CY + PERSONA_HEAD_R),
+            (PERSONA_HEAD_CX - PERSONA_HEAD_R, PERSONA_HEAD_CY,
+             PERSONA_HEAD_CX + PERSONA_HEAD_R, PERSONA_HEAD_CY)):
+        parts.append('<line x1="%d" y1="%d" x2="%d" y2="%d" stroke="%s" '
+                     'stroke-width="1.2" stroke-opacity="0.5"/>'
+                     % (x1, y1, x2, y2, PERSONA_INK))
+
+    # The reader's own shape, cut deeper than the grid it sits on.
+    points = []
+    for tag, dx, dy in PERSONA_HEAD_AXES:
+        r = PERSONA_HEAD_R * (values.get(tag) or 0) / 100.0
+        points.append((PERSONA_HEAD_CX + dx * r, PERSONA_HEAD_CY + dy * r))
+    parts.append('<polygon points="%s" fill="%s" fill-opacity="0.28" '
+                 'stroke="%s" stroke-width="2.2" stroke-linejoin="round"/>'
+                 % (" ".join("%.1f,%.1f" % p for p in points),
+                    PERSONA_INK, PERSONA_INK))
+    for x, y in points:
+        parts.append('<circle cx="%.1f" cy="%.1f" r="4" fill="%s"/>'
+                     % (x, y, PERSONA_INK))
+
+    # The lean, over the crown: one dashed groove with a bead on it. Which way
+    # the charge runs is a single number and deserves a single mark.
+    parts.append('<path d="%s" fill="none" stroke="%s" stroke-width="1.2" '
+                 'stroke-dasharray="3 5"/>'
+                 % (PERSONA_LEAN_ARC, PERSONA_INK_SOFT))
+    bead = _persona_lean_point(_persona_lean_at(card) / 100.0)
+    parts.append('<circle cx="%.1f" cy="%.1f" r="5" fill="%s"/>'
+                 % (bead[0], bead[1], PERSONA_INK))
+    parts.append("</svg>")
+    return "".join(parts)
+
+
+def _persona_head_plate(card):
+    """The clay head with its inlay on the crown, or "" without a base."""
+    inlay = _persona_head_svg(card)
+    if not inlay:
+        return ""
+    base = _pdf_asset(PERSONA_HEAD_BASE)
+    if not base:
+        return ""
+    return (
+        '<div class="head-plate">'
+        '<img class="head-base" src="%s" alt="">'
+        '<div class="head-inlay" style="top:%.1f%%;left:%.1f%%;'
+        'width:%.1f%%;height:%.1f%%">%s</div>'
+        "</div>"
+        % (base, PERSONA_INLAY_BOX["top"], PERSONA_INLAY_BOX["left"],
+           PERSONA_INLAY_BOX["width"], PERSONA_INLAY_BOX["height"], inlay))
+
+
+def _persona_legend(card):
+    """The four traits read out under the head, in the drawing's own order."""
+    names = dict((cell.get("tag"), cell.get("name"))
+                 for cell in (card.get("traits") or []))
+    values = _persona_head_values(card)
+    arrows = {"drive": "&#8593;", "prism": "&#8594;",
+              "anchor": "&#8595;", "wave": "&#8592;"}
+    cells = "".join(
+        '<span class="head-key"><i class="head-arrow">%s</i>%s'
+        '<b class="head-value">%d</b></span>'
+        % (arrows.get(tag, ""),
+           _e(names.get(tag) or PERSONA_AXIS_LABEL.get(tag, tag)),
+           values.get(tag, 0))
+        for tag, _dx, _dy in PERSONA_HEAD_AXES)
+    return '<div class="head-legend">%s</div>' % cells
+
+
+def _persona_cover(content, profile, cfg):
+    """The persona cover: the delivered page's hero card, on paper.
+
+    The same order the page has it in — the totem and the head side by side,
+    the legend under them, then the name, the formula, the rarity and the
+    four traits. Somebody who paid on that page and then opens this file
+    should recognise it as the same document.
+
+    Without a stored card there is nothing to draw and the ordinary cover is
+    used instead, which is the cover every report before this one got.
+    """
+    card = _pdf_visuals().get("profile") or {}
+    if not card.get("subtype"):
+        return None
+    totem = _pdf_asset((card.get("totem") or "").lstrip("/")
+                       .replace("static/", "", 1))
+    plate = _persona_head_plate(card)
+    return [
+        '<section class="cover">',
+        '<img class="cover-logo" src="%s" alt="Mazzin">'
+        % _e(profile.get("pdf_logo") or "brand/logo.svg"),
+        '<p class="cover-kicker">%s</p>'
+        % _e(((cfg or {}).get("result_copy") or {}).get("kicker")
+             or profile["pdf_lead"]),
+        '<div class="cover-card rich">',
+        '<table class="cover-pair"><tr>',
+        ('<td class="cover-totem">'
+         '<img class="cover-totem-art" src="%s" alt=""></td>' % totem)
+        if totem else "",
+        ('<td class="cover-head">%s</td>' % plate) if plate else "",
+        "</tr></table>",
+        _persona_legend(card) if plate else "",
+        '<h1 class="cover-subtype">%s</h1>' % _e(card.get("subtype")),
+        ('<p class="cover-essence">%s</p>' % _e(card["essence"]))
+        if card.get("essence") else "",
+        ('<p class="cover-formula">%s</p>' % _e(card["formula"]))
+        if card.get("formula") else "",
+        ('<p class="cover-ribbon">%s</p>' % _e(card["rarity_line"]))
+        if card.get("rarity_line") else "",
+        '<div class="cover-split">%s</div>' % _cover_split(card),
+        "</div>",
+        '<p class="cover-note">%s</p>' % _e(profile.get("pdf_note") or ""),
+        "</section>",
+    ]
+
+
+PERSONA_PROFILE["pdf_cover"] = _persona_cover
+
 
 
 def _pdf_taps(cfg):
@@ -6151,8 +7212,22 @@ COPY_ZODIAC_RO = {
     "keep_no_link": "PDF-ul e al tău, pe termen nelimitat.",
 }
 
+# The persona mail. One product with one name: the paywall's variants are
+# wrappers on the offer and the thing that arrives is the same profile
+# whichever wrapper sold it, so nothing here says "advantage" or "why you're
+# like this". Neutral on purpose — a buyer who saw one frame and received a
+# mail naming the other would notice, and would be right to.
+COPY_PERSONA = {
+    "headline": "Your profile is ready.",
+    "subject": "Your %s profile — Mazzin",
+    "body": "Your complete %s profile is attached.",
+    "keep": "It stays available at that link, and the PDF is yours to keep.",
+}
+
 ZODIAC_PROFILE["mail"] = COPY_ZODIAC
 ZODIAC_RO_PROFILE["mail"] = COPY_ZODIAC_RO
+PERSONA_PROFILE["mail"] = COPY_PERSONA
+PERSONA_PROFILE["mail_link"] = ZODIAC_EMAIL_LINK
 
 
 def _email_copy(content):
@@ -6320,6 +7395,14 @@ def send_report_email(purchase_id, email, content, checkout_session=None):
     profile = _profile(funnel)
     words = _words(profile)
     name = content.get("style_name") or words["mail_style"]
+    # The persona product names the reader by what they came out as rather
+    # than by the archetype behind it — "Your Open Flame profile", which is
+    # the name on the page they paid from. Bare, because the article is
+    # already in the sentence: "Your The Open Flame profile" is what the
+    # archetype name gives you.
+    if profile is PERSONA_PROFILE:
+        card = (content.get("visuals") or {}).get("profile") or {}
+        name = card.get("subtype_bare") or re.sub(r"^The\s+", "", name)
     copy = _email_copy(content)
     token = _result_token(purchase_id, checkout_session)
 
@@ -6332,7 +7415,10 @@ def send_report_email(purchase_id, email, content, checkout_session=None):
     # Which mail this funnel sends. The link block is part of the template
     # rather than a string appended to it — a table row cannot be dropped into
     # a div — so it is chosen here alongside it.
-    dark = _is_zodiac(profile)
+    # The dark mail, for the products sold on a dark page. A buyer who paid on
+    # a dusk result and opened a pale envelope has been handed a different
+    # document from the one they bought.
+    dark = _is_zodiac(profile) or profile is PERSONA_PROFILE
     link_template = (profile.get("mail_link") or ZODIAC_EMAIL_LINK) if dark \
         else EMAIL_LINK_BLOCK
 

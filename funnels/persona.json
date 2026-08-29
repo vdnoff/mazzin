@@ -2333,6 +2333,280 @@
    "cta_text": "Show me my advantage — {price}"
   }
  ],
+ "pairings": {
+  "igniter_outer": {
+   "igniter_outer": {
+    "verdict": "avoid",
+    "line": "Every habit you have, doubled and out loud."
+   },
+   "igniter_inner": {
+    "verdict": "avoid",
+    "line": "Two engines, one of them quiet. The quiet one runs longer."
+   },
+   "keeper_outer": {
+    "verdict": "avoid",
+    "line": "Motion against ground, both of you loud about it."
+   },
+   "keeper_inner": {
+    "verdict": "works",
+    "line": "One moves, one holds. The oldest working arrangement there is."
+   },
+   "feeler_outer": {
+    "verdict": "avoid",
+    "line": "Fast and warm, and hard to steer. Wonderful, then costly."
+   },
+   "feeler_inner": {
+    "verdict": "works",
+    "line": "Fast and warm, with somebody steady enough to read the weather."
+   },
+   "thinker_outer": {
+    "verdict": "avoid",
+    "line": "Momentum and analysis, both arguing out loud. Sharp, and tiring."
+   },
+   "thinker_inner": {
+    "verdict": "works",
+    "line": "Momentum with a map. It works while neither waits for the other."
+   }
+  },
+  "igniter_inner": {
+   "igniter_outer": {
+    "verdict": "avoid",
+    "line": "Two engines, one of them quiet. The quiet one runs longer."
+   },
+   "igniter_inner": {
+    "verdict": "avoid",
+    "line": "The same slow heat twice, and no one to open a window."
+   },
+   "keeper_outer": {
+    "verdict": "works",
+    "line": "One moves, one holds. The oldest working arrangement there is."
+   },
+   "keeper_inner": {
+    "verdict": "avoid",
+    "line": "Motion against ground, and neither of you says which it is."
+   },
+   "feeler_outer": {
+    "verdict": "works",
+    "line": "Fast and warm, with somebody steady enough to read the weather."
+   },
+   "feeler_inner": {
+    "verdict": "avoid",
+    "line": "Heat under the surface on both sides. Nothing vents."
+   },
+   "thinker_outer": {
+    "verdict": "works",
+    "line": "Momentum with a map. It works while neither waits for the other."
+   },
+   "thinker_inner": {
+    "verdict": "avoid",
+    "line": "A plan and an engine, both silent. Plenty happens, none of it shared."
+   }
+  },
+  "keeper_outer": {
+   "igniter_outer": {
+    "verdict": "avoid",
+    "line": "Motion against ground, both of you loud about it."
+   },
+   "igniter_inner": {
+    "verdict": "works",
+    "line": "One moves, one holds. The oldest working arrangement there is."
+   },
+   "keeper_outer": {
+    "verdict": "avoid",
+    "line": "Two of you holding the same ground. Nothing moves, including you."
+   },
+   "keeper_inner": {
+    "verdict": "avoid",
+    "line": "Two stones, one facing out. Steady, and the view never changes."
+   },
+   "feeler_outer": {
+    "verdict": "avoid",
+    "line": "Warm and solid, and both of you performing the steadiness."
+   },
+   "feeler_inner": {
+    "verdict": "works",
+    "line": "Ground under feeling. Safe, and worth saying when it stops being."
+   },
+   "thinker_outer": {
+    "verdict": "avoid",
+    "line": "Two people certain in public. Very little gets revised."
+   },
+   "thinker_inner": {
+    "verdict": "works",
+    "line": "Solid and considered. Nothing starts without a reason, and it lasts."
+   }
+  },
+  "keeper_inner": {
+   "igniter_outer": {
+    "verdict": "works",
+    "line": "One moves, one holds. The oldest working arrangement there is."
+   },
+   "igniter_inner": {
+    "verdict": "avoid",
+    "line": "Motion against ground, and neither of you says which it is."
+   },
+   "keeper_outer": {
+    "verdict": "avoid",
+    "line": "Two stones, one facing out. Steady, and the view never changes."
+   },
+   "keeper_inner": {
+    "verdict": "avoid",
+    "line": "The same depth twice. Safe, and completely still."
+   },
+   "feeler_outer": {
+    "verdict": "works",
+    "line": "Ground under feeling. Safe, and worth saying when it stops being."
+   },
+   "feeler_inner": {
+    "verdict": "avoid",
+    "line": "Safe and slow to admit anything is wrong, on both sides."
+   },
+   "thinker_outer": {
+    "verdict": "works",
+    "line": "Solid and considered. Nothing starts without a reason, and it lasts."
+   },
+   "thinker_inner": {
+    "verdict": "avoid",
+    "line": "Reasoned and rooted, and nothing begins at all."
+   }
+  },
+  "feeler_outer": {
+   "igniter_outer": {
+    "verdict": "avoid",
+    "line": "Fast and warm, and hard to steer. Wonderful, then costly."
+   },
+   "igniter_inner": {
+    "verdict": "works",
+    "line": "Fast and warm, with somebody steady enough to read the weather."
+   },
+   "keeper_outer": {
+    "verdict": "avoid",
+    "line": "Warm and solid, and both of you performing the steadiness."
+   },
+   "keeper_inner": {
+    "verdict": "works",
+    "line": "Ground under feeling. Safe, and worth saying when it stops being."
+   },
+   "feeler_outer": {
+    "verdict": "avoid",
+    "line": "The same weather on both sides, and no shore to break on."
+   },
+   "feeler_inner": {
+    "verdict": "avoid",
+    "line": "Two tides on different clocks. Warm, and rarely in the same room."
+   },
+   "thinker_outer": {
+    "verdict": "avoid",
+    "line": "Feeling and analysis, competing for the same air."
+   },
+   "thinker_inner": {
+    "verdict": "works",
+    "line": "One feels the room, one explains it, and both are right."
+   }
+  },
+  "feeler_inner": {
+   "igniter_outer": {
+    "verdict": "works",
+    "line": "Fast and warm, with somebody steady enough to read the weather."
+   },
+   "igniter_inner": {
+    "verdict": "avoid",
+    "line": "Heat under the surface on both sides. Nothing vents."
+   },
+   "keeper_outer": {
+    "verdict": "works",
+    "line": "Ground under feeling. Safe, and worth saying when it stops being."
+   },
+   "keeper_inner": {
+    "verdict": "avoid",
+    "line": "Safe and slow to admit anything is wrong, on both sides."
+   },
+   "feeler_outer": {
+    "verdict": "avoid",
+    "line": "Two tides on different clocks. Warm, and rarely in the same room."
+   },
+   "feeler_inner": {
+    "verdict": "avoid",
+    "line": "Understood entirely, and neither of you says it."
+   },
+   "thinker_outer": {
+    "verdict": "works",
+    "line": "One feels the room, one explains it, and both are right."
+   },
+   "thinker_inner": {
+    "verdict": "avoid",
+    "line": "Feeling and analysis, both kept private. Deep, and slow to arrive."
+   }
+  },
+  "thinker_outer": {
+   "igniter_outer": {
+    "verdict": "avoid",
+    "line": "Momentum and analysis, both arguing out loud. Sharp, and tiring."
+   },
+   "igniter_inner": {
+    "verdict": "works",
+    "line": "Momentum with a map. It works while neither waits for the other."
+   },
+   "keeper_outer": {
+    "verdict": "avoid",
+    "line": "Two people certain in public. Very little gets revised."
+   },
+   "keeper_inner": {
+    "verdict": "works",
+    "line": "Solid and considered. Nothing starts without a reason, and it lasts."
+   },
+   "feeler_outer": {
+    "verdict": "avoid",
+    "line": "Feeling and analysis, competing for the same air."
+   },
+   "feeler_inner": {
+    "verdict": "works",
+    "line": "One feels the room, one explains it, and both are right."
+   },
+   "thinker_outer": {
+    "verdict": "avoid",
+    "line": "The same map read twice, aloud, by both of you."
+   },
+   "thinker_inner": {
+    "verdict": "avoid",
+    "line": "Two maps, one read aloud. Clear, and short on anyone walking it."
+   }
+  },
+  "thinker_inner": {
+   "igniter_outer": {
+    "verdict": "works",
+    "line": "Momentum with a map. It works while neither waits for the other."
+   },
+   "igniter_inner": {
+    "verdict": "avoid",
+    "line": "A plan and an engine, both silent. Plenty happens, none of it shared."
+   },
+   "keeper_outer": {
+    "verdict": "works",
+    "line": "Solid and considered. Nothing starts without a reason, and it lasts."
+   },
+   "keeper_inner": {
+    "verdict": "avoid",
+    "line": "Reasoned and rooted, and nothing begins at all."
+   },
+   "feeler_outer": {
+    "verdict": "works",
+    "line": "One feels the room, one explains it, and both are right."
+   },
+   "feeler_inner": {
+    "verdict": "avoid",
+    "line": "Feeling and analysis, both kept private. Deep, and slow to arrive."
+   },
+   "thinker_outer": {
+    "verdict": "avoid",
+    "line": "Two maps, one read aloud. Clear, and short on anyone walking it."
+   },
+   "thinker_inner": {
+    "verdict": "avoid",
+    "line": "Every angle covered, and nobody walks the ground."
+   }
+  }
+ },
  "result": {
   "mistakes_teaser": "You've seen strength #1. The other four run deeper — one explains the {weather} you named.",
   "value_banner": "Five strengths, a read on how you connect and a twelve-month energy map — all of it built from your own 18 signals, yours to keep."
