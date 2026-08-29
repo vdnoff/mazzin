@@ -1508,8 +1508,8 @@
       root.appendChild(path(ctx, copy, axes));
     }
     // Chosen before the offer is drawn, so the card and the button it
-    // contains argue the same offer. `null` on a funnel with no variants,
-    // which every funnel but this one is today.
+    // contains argue the same offer. `null` on a funnel that declares no
+    // variants, which is every funnel but this one and zodiac30.
     var variant = assignedVariant(ctx.cfg);
     root.appendChild(offer(ctx, copy, data, variant));
     applyVariantCta(ctx, variant);

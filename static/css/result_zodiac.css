@@ -166,6 +166,42 @@ body:has(.result-module) {
    a measured number — scripts/gen_profile_rarity.py plays the funnel a couple
    of hundred thousand times to get it — so it is allowed to look like a
    claim. */
+/* The rarity, for the arm that gives it its own weight. Unused by the control
+   arm, which keeps the ribbon inside the hero card exactly as it was. */
+.zr-rarity {
+  margin: 22px auto 4px;
+  padding: 16px 18px 15px;
+  max-width: 300px;
+  border: 1px solid rgba(232, 200, 120, 0.42);
+  border-radius: 18px;
+  background:
+    radial-gradient(120% 140% at 50% 0%,
+      rgba(232, 200, 120, 0.14) 0%, rgba(232, 200, 120, 0) 70%),
+    rgba(18, 22, 46, 0.72);
+  text-align: center;
+}
+
+.zr-rarity-lead,
+.zr-rarity-tail {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #B8C0E0;
+}
+
+.zr-rarity-figure {
+  display: block;
+  margin: 4px 0 2px;
+  font-family: var(--font-display, inherit);
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: #E8C878;
+}
+
 .zr-ribbon {
   display: inline-block;
   margin: 16px 0 0;

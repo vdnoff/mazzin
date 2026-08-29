@@ -1080,9 +1080,19 @@ check("the twins' own result module is not this one",
 OWN = re.compile(r"\bpersona\b|result_persona|galleries/persona")
 engine = open(os.path.join(ROOT, "static/js/engine.js"),
               encoding="utf-8").read()
-check("  and result_zodiac.js knows nothing about persona",
-      not OWN.search(open(os.path.join(ROOT, "static/js/result_zodiac.js"),
-                          encoding="utf-8").read()))
+# Code, not prose. The zodiac module carries a byte-identical copy of the
+# variant mechanism and says so in a comment naming the file it came from,
+# which is the sentence a maintainer needs to keep the two in step. What it
+# must not do is *depend* on this funnel — draw its classes, read its
+# gallery, load its module — and that is a claim about code.
+_zodiac_src = open(os.path.join(ROOT, "static/js/result_zodiac.js"),
+                   encoding="utf-8").read()
+_zodiac_code = re.sub(r"//[^\n]*", "",
+                      re.sub(r"/\*.*?\*/", "", _zodiac_src, flags=re.S))
+check("  and result_zodiac.js depends on nothing of persona's",
+      not OWN.search(_zodiac_code), str(OWN.findall(_zodiac_code)[:3]))
+check("  naming it only where it says where the shared mechanism came from",
+      _zodiac_src.count("result_persona.js") <= 1)
 check("engine.js knows nothing about persona either — it is all config",
       not OWN.search(engine), str(OWN.findall(engine)[:3]))
 # app.py used to name this funnel nowhere at all, which was the proof the
@@ -1196,10 +1206,20 @@ check("  and not from the delivered page",
       "reportVariant" not in module[module.find("function delivered(root"):])
 
 # Nothing else on the platform grew a variants key or lost its paywall.
-check("no neighbour funnel was given variants",
-      not any(json.load(open(os.path.join(ROOT, "funnels", s + ".json"),
-                             encoding="utf-8")).get("paywall_variants")
-              for s in NEIGHBOUR_SLUGS))
+# zodiac30 adopted the mechanism for a layout test, which is what it was
+# built funnel-agnostic for. Everything else still declares none, and that is
+# the claim worth keeping: a funnel gets variants by asking for them.
+VARIANT_FUNNELS = {"zodiac30"}
+check("only the funnel that asked for them has variants",
+      set(s for s in NEIGHBOUR_SLUGS
+          if json.load(open(os.path.join(ROOT, "funnels", s + ".json"),
+                            encoding="utf-8")).get("paywall_variants"))
+      == VARIANT_FUNNELS)
+check("  and its arms are a layout test, not this funnel's offer copy",
+      all(set(v) <= {"id", "enabled", "weight", "name", "template"}
+          for v in json.load(open(os.path.join(ROOT,
+                                               "funnels/zodiac30.json"),
+                                  encoding="utf-8"))["paywall_variants"]))
 check("  and each still carries its own single call to action",
       all(json.load(open(os.path.join(ROOT, "funnels", s + ".json"),
                          encoding="utf-8"))
@@ -1252,6 +1272,75 @@ check("  every section has a teaser of its own",
 check("  and the delivered page can still name each one",
       sorted(c["id"] for c in cfg["result_copy"]["profile"]["cards"])
       == sorted(SECTION_ORDER))
+
+print("\n--- the page the reader lands on ---")
+# The order the page argues in, read off the module rather than off a
+# screenshot: picture, evidence, measure, rarity, price.
+body = module[module.index("  function render(root, ctx)"):
+              module.index("  // --- the delivered report")]
+ZONES = ["richHero", "taps(ctx, copy)", "traitBars(data)", "rarityBadge(data)",
+         "offer(ctx, copy, data, variant)"]
+at = [body.find(z) for z in ZONES]
+check("the free page runs picture, evidence, measure, rarity, price",
+      all(x > 0 for x in at) and at == sorted(at), str(at))
+# Scoped to the branch that draws the rich page. The `else` beside it is the
+# plain fallback for a config with no table, and a scan that ran across both
+# would read that branch's own node as something wedged in between.
+rich = body[body.index("if (data) {"):body.index("    } else {")]
+check("  the rarity is the last thing that branch draws",
+      rich.rindex("appendChild(rare)")
+      == max(m.start() for m in re.finditer(r"appendChild\(", rich)))
+check("  and the offer comes straight after it",
+      body.index("rarityBadge(data)") < body.index("offer(ctx, copy, data,"))
+check("  the bullet zone is gone from the module",
+      "function questions(" not in module
+      and "function questionCard(" not in module)
+check("  and the paragraph woven from their picks with it",
+      "function bridge(" not in module
+      and "narrativeBlock(data.narrative)" not in body)
+check("  the stylesheet paints neither any more",
+      not any(cls in sheet for cls in (".pr-cards", ".pr-card-icon",
+                                       ".pr-bridge", ".pr-card-key")))
+check("  but the narrative is still built, for the delivered page",
+      "function narrativeBlock(" in module
+      and "narrativeBlock(data.narrative)" in module)
+check("the rarity is the loudest thing after the picture",
+      re.search(r"\.pr-rarity-figure \{[^}]*font-size: (\d+)px", sheet, re.S)
+      is not None
+      and int(re.search(r"\.pr-rarity-figure \{[^}]*font-size: (\d+)px",
+                        sheet, re.S).group(1)) >= 36)
+check("  and the totem earns more room than it had",
+      re.search(r"\.pr-solo \.pr-totem-art \{ width: (\d+)px", sheet)
+      is not None
+      and int(re.search(r"\.pr-solo \.pr-totem-art \{ width: (\d+)px",
+                        sheet).group(1)) >= 200)
+check("  the contact-sheet label stepped back",
+      re.search(r"\.pr-taps-caption \{[^}]*font-size: (\d+)px", sheet, re.S)
+      is not None
+      and int(re.search(r"\.pr-taps-caption \{[^}]*font-size: (\d+)px",
+                        sheet, re.S).group(1)) <= 11)
+check("  and the sheet is two rows for a thirteen-step run",
+      re.search(r"\.pr-taps-grid \{[^}]*repeat\(7, 1fr\)", sheet, re.S)
+      is not None)
+check("the line above the totem is the one the owner asked for",
+      cfg["result_copy"]["kicker"] == "The inner shape of your mind")
+
+print("\n--- the sculptures are shown whole ---")
+check("the contact sheet contains rather than crops",
+      re.search(r"\.pr-tap img \{[^}]*object-fit: contain;", sheet, re.S)
+      is not None)
+check("  on a ground toned to the renders' own backdrop",
+      re.search(r"\.pr-tap img \{[^}]*background: var\(--pr-frame",
+                sheet, re.S) is not None
+      and "--pr-frame:" in sheet)
+check("  and so does the section photograph",
+      re.search(r"\.pr-shot img \{[^}]*object-fit: contain;", sheet, re.S)
+      is not None)
+check("nowhere in this funnel's own frames is cover still used",
+      not re.search(r"\.pr-(tap|shot) img \{[^}]*object-fit: cover;",
+                    sheet, re.S))
+check("the funnel asks for whole frames in print too",
+      cfg["report"].get("print_whole") is True)
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for f in fails:
