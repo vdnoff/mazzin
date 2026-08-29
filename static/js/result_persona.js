@@ -377,6 +377,158 @@
     };
   }
 
+  // --- paywall variants ------------------------------------------------------
+  //
+  // Nothing in this section knows what funnel it is in. A variant is
+  // `{ id, enabled, weight, name, frame, benefits, cta_text }` and the config
+  // is a list of them; adding one, or turning one off, is an edit to that
+  // list and nothing else. That is the operational requirement and it is why
+  // there is no table of ids here, no per-variant branch, and no persona word
+  // anywhere in the mechanism — zodiac30 is meant to adopt this shape as it
+  // stands.
+
+  // engine.js's own session key. Read, never written: the id already exists
+  // by the time a result page renders, it is the id every event on this
+  // session carries, and assignment has to agree with what the events say.
+  var SESSION_KEY = "mazzin_sid";
+
+  function variantWeight(variant) {
+    var weight = typeof variant.weight === "number" ? variant.weight : 1;
+    return weight > 0 ? weight : 0;
+  }
+
+  // Enabled, and worth assigning. A variant left in the config with
+  // `enabled: false` is excluded here and therefore cannot be assigned, drawn
+  // or reported; so is one weighted to zero, which is the same intent
+  // written differently.
+  function variantPool(cfg) {
+    return ((cfg && cfg.paywall_variants) || []).filter(function (variant) {
+      return variant && variant.id
+        && variant.enabled !== false && variantWeight(variant) > 0;
+    });
+  }
+
+  function sessionKey() {
+    try {
+      return window.sessionStorage.getItem(SESSION_KEY) || "";
+    } catch (e) {
+      // Private mode, or storage the browser will not hand over. Everyone in
+      // that state lands on the same variant rather than on a random one:
+      // a coin flipped per page load would show a reader one frame on the
+      // free page and the other on the delivered one.
+      return "";
+    }
+  }
+
+  // FNV-1a, 32-bit. Any stable hash would do; what matters is that it reads
+  // the session id and nothing else. Assignment must never depend on the URL
+  // or on a campaign parameter — a variant that rotates with `subid` cannot
+  // be added or retired without touching the ad account's final URLs, and
+  // the whole point of the config list is that it can.
+  function hashOf(text) {
+    var hash = 0x811c9dc5;
+    for (var i = 0; i < text.length; i++) {
+      hash ^= text.charCodeAt(i);
+      hash = (hash + ((hash << 1) + (hash << 4) + (hash << 7)
+                      + (hash << 8) + (hash << 24))) >>> 0;
+    }
+    return hash >>> 0;
+  }
+
+  // The same session gets the same variant every time this is called — on
+  // reload, and on the delivered page — because the only input is an id that
+  // does not change. Weights renormalise by construction: the point is taken
+  // over the live total, so disabling a variant hands its share to the
+  // others without anybody restating the remaining weights.
+  function assignedVariant(cfg) {
+    var pool = variantPool(cfg);
+    if (!pool.length) return null;
+    // One enabled variant is not a test, and must not be treated as one: it
+    // renders unconditionally, whatever it weighs and whatever the hash says.
+    if (pool.length === 1) return pool[0];
+    var total = 0;
+    var i;
+    for (i = 0; i < pool.length; i++) total += variantWeight(pool[i]);
+    if (total <= 0) return pool[0];
+    var point = (hashOf(sessionKey()) % 100000) / 100000 * total;
+    var seen = 0;
+    for (i = 0; i < pool.length; i++) {
+      seen += variantWeight(pool[i]);
+      if (point < seen) return pool[i];
+    }
+    return pool[pool.length - 1];
+  }
+
+  // One event, once, when the offer is drawn: which variant this session was
+  // shown. Everything downstream — paywall_view, pay_tap, and the purchase
+  // the webhook writes — already carries `session_id`, and both tables index
+  // it, so conversion splits by variant on a join rather than on a column
+  // added to every event. That is what keeps this a config change and not a
+  // schema change.
+  //
+  // It is not fired on the delivered page. That page is past the money, its
+  // assignment is recomputed from the same session id for display only, and
+  // a second row would double-count the arm.
+  var variantReported = false;
+
+  function reportVariant(ctx, variant) {
+    if (!variant || variantReported) return;
+    variantReported = true;
+    try {
+      // The name is written out rather than held in a constant: the
+      // suite pairs tracking.py's allowlist against the literals the client
+      // actually emits, and an event that only exists as an identifier reads
+      // there as a dead name in the allowlist.
+      ctx.track("paywall_variant", { variant: variant.id });
+    } catch (e) { /* an arm is not worth losing the page to */ }
+  }
+
+  // The offer's own copy: what it is called, the line under it, and what is
+  // in it. The benefits sit above the button, which is the house rule and
+  // also the only order that reads — a list of what you get, then the price,
+  // then the button that takes the money.
+  function variantBlock(variant) {
+    if (!variant) return null;
+    var block = elm("section", "pr-variant");
+    block.setAttribute("data-variant", variant.id);
+    if (variant.name) block.appendChild(elm("h2", "pr-variant-name", variant.name));
+    if (variant.frame) block.appendChild(elm("p", "pr-variant-frame", variant.frame));
+    var lines = variant.benefits || [];
+    if (lines.length) {
+      var list = elm("ul", "pr-variant-benefits");
+      lines.forEach(function (line) {
+        list.appendChild(elm("li", "pr-variant-benefit", line));
+      });
+      block.appendChild(list);
+    }
+    return block;
+  }
+
+  // The button's label belongs to engine.js: it writes `payButton.textContent`
+  // from `cfg.checkout.cta_label` in `updatePayButton`, and it rewrites it
+  // every time the consent box changes and again on redirect. So the variant
+  // does not write the button — it writes what engine.js reads, and then asks
+  // engine.js to read it.
+  //
+  // The asking is the part that matters. `renderCommerce` runs before a
+  // module renders, so by the time this file has chosen a variant engine.js
+  // has already labelled the button once, from the config's own default. A
+  // `change` on the consent box is engine.js's own path back to
+  // `updatePayButton`; dispatching one alters no state — the box keeps
+  // whatever it was — and costs one relabel.
+  //
+  // If that ordering ever changes, the button keeps the funnel's default
+  // label while the card above it argues a different offer. That is a
+  // silently wrong page rather than a broken one, which is why the suite
+  // asserts the rendered button's visible text rather than this assignment.
+  function applyVariantCta(ctx, variant) {
+    if (!variant || !variant.cta_text) return;
+    ctx.cfg.checkout.cta_label = variant.cta_text;
+    var consent = ctx.nodes && ctx.nodes.consent;
+    var box = consent && consent.querySelector("input[type=checkbox]");
+    if (box) box.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
   // --- a) the kicker ---------------------------------------------------------
 
   function kicker(copy) {
@@ -1176,7 +1328,7 @@
   // links are moved into this card, which is why the withdrawal waiver still
   // gates the same button it always did and no payment code lives in here.
 
-  function offer(ctx, copy, data) {
+  function offer(ctx, copy, data, variant) {
     var card = elm("section", "pr-offer");
     var nodes = ctx.nodes;
 
@@ -1228,6 +1380,12 @@
     var rule = purposeRule(ctx);
     card.appendChild(elm("p", "pr-offer-sub",
                          (rule && rule.offer_sub) || copy.offer_sub || ""));
+
+    // What this offer is called and what is in it, above the button that
+    // buys it. A funnel carrying no variants draws nothing here and the card
+    // is the card it always was.
+    var frame = variantBlock(variant);
+    if (frame) card.appendChild(frame);
 
     // Live nodes, not copies of them. The consent box is placed only where a
     // funnel asks for one: `withdrawal_consent: false` takes it off the page
@@ -1316,7 +1474,13 @@
     } else {
       root.appendChild(path(ctx, copy, axes));
     }
-    root.appendChild(offer(ctx, copy, data));
+    // Chosen before the offer is drawn, so the card and the button it
+    // contains argue the same offer. `null` on a funnel with no variants,
+    // which every funnel but this one is today.
+    var variant = assignedVariant(ctx.cfg);
+    root.appendChild(offer(ctx, copy, data, variant));
+    applyVariantCta(ctx, variant);
+    reportVariant(ctx, variant);
 
     // The container engine.js moved the offer rows into is empty now and its
     // own border would draw a line under nothing.

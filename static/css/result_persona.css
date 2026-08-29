@@ -878,6 +878,71 @@ body:has(.result-module) {
   color: var(--pr-muted);
 }
 
+/* The offer's own frame: what it is called, the line under it, and the list
+   of what is in it. It sits between the price and the button, which is the
+   house order — what you get, what it costs, the button — and the reason the
+   benefits are above the button rather than under it.
+
+   Nothing here is variant-specific. Two frames with different words wear the
+   same block, and a third added to the config tomorrow wears it too. */
+.pr-variant {
+  margin: 0 0 18px;
+  padding: 16px 16px 14px;
+  border: 1px solid var(--pr-line, rgba(242, 192, 112, 0.22));
+  border-radius: 14px;
+  background: rgba(36, 26, 16, 0.38);
+  text-align: left;
+}
+
+.pr-variant-name {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--pr-text);
+}
+
+.pr-variant-frame {
+  margin: 7px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--pr-muted);
+}
+
+.pr-variant-benefits {
+  margin: 13px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The tick is drawn rather than written: a list marker that is part of the
+   text gets read out twice by a screen reader and copied along with the line
+   when somebody selects it. */
+.pr-variant-benefit {
+  position: relative;
+  margin: 0 0 9px;
+  padding-left: 24px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--pr-text);
+}
+
+.pr-variant-benefit:last-child { margin-bottom: 0; }
+
+.pr-variant-benefit::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 4px;
+  width: 9px;
+  height: 5px;
+  border-left: 2px solid var(--pr-teal);
+  border-bottom: 2px solid var(--pr-teal);
+  transform: rotate(-45deg);
+}
+
 /* engine.js's own consent box and pay button, restyled where they now sit.
    Same elements, same listeners — this is paint, not plumbing. */
 .pr-offer .withdrawal {

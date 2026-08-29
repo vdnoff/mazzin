@@ -1075,6 +1075,121 @@ check("every neighbour funnel still loads and keeps its own slug",
           for s in NEIGHBOUR_SLUGS),
       str(NEIGHBOUR_SLUGS))
 
+print("\n--- paywall variants ---")
+variants = cfg.get("paywall_variants") or []
+VARIANT_KEYS = {"id", "enabled", "weight", "name", "frame", "benefits",
+                "cta_text"}
+check("the config carries a list of variants", len(variants) == 2,
+      str(len(variants)))
+check("  each with the whole shape and nothing extra",
+      all(set(v) == VARIANT_KEYS for v in variants),
+      str([sorted(set(v) ^ VARIANT_KEYS) for v in variants]))
+check("  both launch arms enabled, evenly weighted",
+      all(v["enabled"] is True and v["weight"] == 1 for v in variants))
+check("  named as the brief names them",
+      [v["id"] for v in variants] == ["why", "advantage"],
+      str([v["id"] for v in variants]))
+check("  each with five benefits and a priced call to action",
+      all(len(v["benefits"]) == 5 and "{price}" in v["cta_text"]
+          for v in variants))
+check("  and a name and a frame to argue it",
+      all(v["name"] and v["frame"] for v in variants))
+
+# The mechanism has to be adoptable by another funnel as it stands, which
+# means it cannot know this one's name. The check is on the mechanism's own
+# functions, not on the whole file: the persona module is full of persona.
+MECHANISM = ("variantWeight", "variantPool", "sessionKey", "hashOf",
+             "assignedVariant", "variantBlock", "applyVariantCta",
+             "reportVariant")
+start = min(module.find("function %s(" % name) for name in MECHANISM)
+end = max(module.find("function %s(" % name) for name in MECHANISM)
+end = module.find("\n  // ---", end)
+mechanism = module[start:end]
+# Code, not prose. The comments in here name `subid` and the URL precisely to
+# say that assignment must not read either, and a scan that cannot tell a
+# rule from its explanation would fail on the explanation and pass on a file
+# that had quietly deleted it.
+mechanism = re.sub(r"//[^\n]*", "", re.sub(r"/\*.*?\*/", "", mechanism,
+                                           flags=re.S))
+check("no funnel knows its own name in the mechanism",
+      not re.search(r"persona|zodiac|kitchen", mechanism, re.I),
+      str(re.findall(r"persona|zodiac|kitchen", mechanism, re.I)[:3]))
+check("  it reads the variant list off the config, by the shared key",
+      "cfg.paywall_variants" in mechanism)
+check("  and takes weight and enabled as the config states them",
+      "variant.enabled !== false" in mechanism
+      and "typeof variant.weight" in mechanism)
+
+# The hard requirement: a new arm, or a retired one, is a config edit.
+check("assignment never reads the URL or a campaign parameter",
+      not re.search(r"location|search|URLSearchParams|subid|utm_",
+                    mechanism))
+check("  it reads the session id the events already carry",
+      "mazzin_sid" in module and "sessionStorage" in mechanism)
+
+check("the offer draws the variant above the button",
+      re.search(r"var frame = variantBlock\(variant\);\s*"
+                r"if \(frame\) card\.appendChild\(frame\);", module, re.S)
+      is not None)
+pay_at = module.find("nodes.payButton, nodes.payError]")
+frame_at = module.find("if (frame) card.appendChild(frame);")
+check("  which is above where the pay button is placed",
+      -1 < frame_at < pay_at, "%d vs %d" % (frame_at, pay_at))
+
+check("the label engine.js reads is the one the variant argues",
+      "ctx.cfg.checkout.cta_label = variant.cta_text;" in module)
+check("  and engine.js is asked to read it again after it is written",
+      re.search(r"cta_label = variant\.cta_text;[^}]*"
+                r"dispatchEvent\(new Event\(\"change\"", module, re.S)
+      is not None)
+
+check("the arm is reported once, with the id in the payload",
+      'ctx.track("paywall_variant", { variant: variant.id });' in module
+      and "if (!variant || variantReported) return;" in module)
+check("  and not from the delivered page",
+      "reportVariant" not in module[module.find("function delivered(root"):])
+
+# Nothing else on the platform grew a variants key or lost its paywall.
+check("no neighbour funnel was given variants",
+      not any(json.load(open(os.path.join(ROOT, "funnels", s + ".json"),
+                             encoding="utf-8")).get("paywall_variants")
+              for s in NEIGHBOUR_SLUGS))
+check("  and each still carries its own single call to action",
+      all(json.load(open(os.path.join(ROOT, "funnels", s + ".json"),
+                         encoding="utf-8"))
+          .get("checkout", {}).get("cta_label")
+          or json.load(open(os.path.join(ROOT, "funnels", s + ".json"),
+                            encoding="utf-8"))
+          .get("pricing", {}).get("cta")
+          for s in NEIGHBOUR_SLUGS))
+
+# The spot value. Only this funnel's module writes `cta_label`, and it writes
+# it into the config object engine.js was handed for this page — so a funnel
+# that never loads result_persona.js cannot have its button relabelled by any
+# of this. Pinned by value as well as by argument, because "no other funnel is
+# affected" is the kind of claim that is true right up until it is not.
+NEIGHBOUR_CTA = {
+    "zodiac30": "Open my full profile — {price}",
+    "zodiac": "Open my full profile — {price}",
+    "kitchen": "Get my report for {price}",
+}
+check("the neighbours' call to action is exactly what it was",
+      all(json.load(open(os.path.join(ROOT, "funnels", slug + ".json"),
+                         encoding="utf-8"))["checkout"]["cta_label"] == want
+          for slug, want in NEIGHBOUR_CTA.items()))
+check("  and only the persona module writes that key",
+      sum(1 for name in os.listdir(os.path.join(ROOT, "static/js"))
+          if name.endswith(".js")
+          and "checkout.cta_label =" in open(
+              os.path.join(ROOT, "static/js", name), encoding="utf-8").read())
+      == 1)
+
+check("the locked teasers promise what the offer promises",
+      all(any(word in " ".join(sec.get("teaser_line", "")
+                               for sec in cfg["report"]["sections"]).lower()
+              for word in words)
+          for words in (("drain",), ("costs you",))))
+
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for f in fails:
     print("  FAIL " + f)
