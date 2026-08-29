@@ -1631,12 +1631,38 @@
     return frag;
   }
 
+  // The two marks the year map carries, written by the section itself. They
+  // are the same two strings the prompt asks for and the check polices, so
+  // they are matched here rather than guessed at.
+  var MONTH_MARKS = [
+    { prefix: "Strongest month:", cls: "is-strong", chip: "Strongest" },
+    { prefix: "Quiet month:", cls: "is-quiet", chip: "Quiet" }
+  ];
+
   function months(data) {
     var list = elm("ol", "pr-months");
     (data.items || []).forEach(function (item) {
       var row = elm("li", "pr-month");
-      row.appendChild(elm("span", "pr-month-name", item.name || ""));
-      row.appendChild(elm("span", "pr-month-note", item.priority_note || ""));
+      var note = item.priority_note || "";
+      // A marked month is a node on the rail rather than a sentence that
+      // happens to start with a label: the mark becomes a chip beside the
+      // month and comes off the front of the line it was prefixing.
+      var mark = null;
+      for (var i = 0; i < MONTH_MARKS.length; i++) {
+        if (note.indexOf(MONTH_MARKS[i].prefix) === 0) {
+          mark = MONTH_MARKS[i];
+          note = note.slice(mark.prefix.length).replace(/^\s+/, "");
+          break;
+        }
+      }
+      if (mark) row.className = "pr-month " + mark.cls;
+      var head = elm("p", "pr-month-head");
+      head.appendChild(elm("span", "pr-month-name", item.name || ""));
+      if (mark) {
+        head.appendChild(elm("span", "pr-month-chip", mark.chip));
+      }
+      row.appendChild(head);
+      row.appendChild(elm("span", "pr-month-note", note));
       list.appendChild(row);
     });
     var frag = document.createDocumentFragment();
@@ -1676,8 +1702,14 @@
     img.loading = "lazy";
     img.decoding = "async";
     frame.appendChild(img);
+    // The caption says whose choice put this picture here, in the words that
+    // were on the card they tapped. It used to be the bare label in small
+    // caps — "THE SQUEEZE" — which reads as an internal code stamped on the
+    // page rather than as a sentence about the reader.
     if (pick.label) {
-      frame.appendChild(elm("figcaption", "pr-shot-cap", pick.label));
+      frame.appendChild(elm("figcaption", "pr-shot-cap",
+                            "You chose: \u201c" + pick.label.toLowerCase()
+                            + "\u201d"));
     }
     return frame;
   }
