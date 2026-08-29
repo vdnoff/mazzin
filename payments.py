@@ -162,6 +162,23 @@ def mode_override(slug):
     return cache[slug]
 
 
+def _forget_override(slug):
+    """Drop `slug` from this request's memo.
+
+    Called by both writers. Without it the memo outlives the thing it is
+    memoising: a request that writes an override and then asks for the mode
+    gets the answer from before its own write. The next request is fine either
+    way — the memo dies with the request — which is what makes this the kind of
+    bug that ships, so the invalidation lives with the write rather than with
+    the caller who has to remember.
+    """
+    if not has_request_context():
+        return
+    cache = getattr(g, "_stripe_mode_overrides", None)
+    if cache:
+        cache.pop(slug, None)
+
+
 def effective_mode(slug, cfg=None):
     """Which Stripe key set `slug` transacts on, right now.
 
@@ -206,11 +223,13 @@ def set_override(slug, mode, changed_by):
     if mode not in (LIVE, TEST):
         raise ValueError("mode")
     database.execute(MODE_OVERRIDE_UPSERT, (slug, mode, changed_by))
+    _forget_override(slug)
 
 
 def clear_override(slug):
     """Drop `slug`'s override, so it falls back to whatever its config says."""
     database.execute(MODE_OVERRIDE_DELETE, (slug,))
+    _forget_override(slug)
 
 
 def _stripe_secret(mode):

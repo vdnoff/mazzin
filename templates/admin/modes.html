@@ -1,0 +1,174 @@
+{#
+  The Stripe mode switch. Dark, deliberately: this is the page you open at
+  eleven at night to find out why nothing has sold since four, and the thing
+  it has to say first is which funnels are taking money and which are not.
+
+  Standalone rather than extending base.html — it is the one page here that
+  writes, and the dark ground is the point: the dashboard is a thing you read,
+  this is a thing you operate, and they should not be mistakable for each other
+  at a glance on a phone.
+
+  No JS. Every control is a form post, and every post names the mode it wants
+  rather than "the other one" — so a reloaded tab re-asks for the state it
+  already asked for instead of flipping the funnel back.
+#}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Stripe modes</title>
+<style>
+  :root {
+    --bg: #101216; --card: #181b21; --line: #272b33;
+    --ink: #e7e9ee; --muted: #939aa8;
+    --live: #48c17c; --live-bg: #16301f;
+    --test: #e0a03a; --test-bg: #33260f;
+    --alarm: #ff5f56; --alarm-bg: #331413;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  header { padding: 16px; border-bottom: 1px solid var(--line); }
+  h1 { font-size: 16px; margin: 0 0 3px; }
+  header p { margin: 0; color: var(--muted); font-size: 12.5px; }
+  main { padding: 14px 16px 48px; }
+
+  .banner {
+    border-radius: 10px; padding: 11px 13px; margin: 0 0 14px;
+    font-size: 13.5px; border: 1px solid var(--line); background: var(--card);
+  }
+  .banner.good { border-color: #2b5c3e; background: var(--live-bg); }
+  .banner.bad  { border-color: #6b2b28; background: var(--alarm-bg); }
+  .banner.alarm {
+    border-color: var(--alarm); background: var(--alarm-bg);
+    color: #ffd9d6; font-weight: 600;
+  }
+  .banner.alarm ul { margin: 6px 0 0; padding-left: 18px; font-weight: 400; }
+
+  .row {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px 13px; margin: 0 0 10px;
+  }
+  .row.danger { border-color: var(--alarm); }
+  .row h2 { font-size: 14.5px; margin: 0 0 2px; font-weight: 600; }
+  .row .sub { color: var(--muted); font-size: 12px; margin: 0 0 10px; }
+  .facts { display: flex; gap: 16px; flex-wrap: wrap; margin: 0 0 11px; }
+  .fact { font-size: 12px; color: var(--muted); }
+  .fact b { display: block; font-size: 10.5px; text-transform: uppercase;
+            letter-spacing: .06em; margin: 0 0 3px; color: #6f7684; }
+
+  .badge {
+    display: inline-block; padding: 3px 9px; border-radius: 999px;
+    font-size: 11.5px; font-weight: 700; letter-spacing: .07em;
+  }
+  .badge.live { background: var(--live-bg); color: var(--live);
+                border: 1px solid #2b5c3e; }
+  .badge.test { background: var(--test-bg); color: var(--test);
+                border: 1px solid #5c451a; }
+  .plain { color: var(--ink); font-size: 12.5px; }
+
+  form.act { display: inline; margin: 0; }
+  button {
+    font: inherit; font-size: 13px; padding: 8px 13px; border-radius: 8px;
+    cursor: pointer; border: 1px solid var(--line); background: #23272f;
+    color: var(--ink); margin: 0 6px 0 0;
+  }
+  button.to-test { border-color: #5c451a; color: var(--test); }
+  button.to-live { border-color: #2b5c3e; color: var(--live); }
+  footer { color: var(--muted); font-size: 12px; padding: 0 16px 30px; }
+  code { background: #23272f; border-radius: 4px; padding: 1px 5px;
+         font-size: 12px; }
+  a.back { color: var(--muted); text-decoration: none; font-size: 12.5px;
+           font-weight: 400; margin-left: 8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Stripe modes <a class="back" href="{{ url_for('admin.index') }}">← dashboard</a></h1>
+  <p>Which key set each funnel is transacting on, right now — {{ now }}.
+     A change takes effect on the next checkout.</p>
+</header>
+<main>
+
+{% if alarms %}
+  <div class="banner alarm">
+    TEST MODE + LIVE TRAFFIC — buyers cannot pay!
+    <ul>
+      {% for row in alarms %}
+        <li>{{ row.slug }} is in test mode and {{ row.recent_starts }}
+            session{{ '' if row.recent_starts == 1 else 's' }} started it in
+            the last 24 hours.</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+{% if message %}
+  <div class="banner {{ level }}">{{ message }}</div>
+{% endif %}
+
+{% for row in rows %}
+  <div class="row {{ 'danger' if row.danger else '' }}">
+    <h2>{{ row.slug }}
+      <span class="badge {{ row.effective }}">{{ row.effective|upper }}</span>
+    </h2>
+    <p class="sub">{{ row.title }}</p>
+    <div class="facts">
+      <div class="fact"><b>config says</b>
+        <span class="plain">{{ row.config_mode }}</span></div>
+      <div class="fact"><b>override</b>
+        <span class="plain">
+          {%- if row.overridden %}{{ row.effective }}
+            {%- if row.changed_by %} · {{ row.changed_by }}{% endif -%}
+          {%- else %}none{% endif -%}
+        </span></div>
+      <div class="fact"><b>starts / 24h</b>
+        <span class="plain">{{ row.recent_starts }}</span></div>
+    </div>
+
+    {% if row.effective == 'live' %}
+      <form class="act" method="post" action="{{ url_for('admin.modes') }}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="funnel" value="{{ row.slug }}">
+        <input type="hidden" name="action" value="set">
+        <input type="hidden" name="mode" value="test">
+        <button class="to-test" type="submit">Switch to TEST</button>
+      </form>
+    {% else %}
+      <form class="act" method="post" action="{{ url_for('admin.modes') }}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="funnel" value="{{ row.slug }}">
+        <input type="hidden" name="action" value="set">
+        <input type="hidden" name="mode" value="live">
+        <button class="to-live" type="submit">Switch to LIVE</button>
+      </form>
+    {% endif %}
+
+    {% if row.overridden %}
+      <form class="act" method="post" action="{{ url_for('admin.modes') }}">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="funnel" value="{{ row.slug }}">
+        <input type="hidden" name="action" value="clear">
+        <button type="submit">Clear override → config ({{ row.config_mode }})</button>
+      </form>
+    {% endif %}
+  </div>
+{% else %}
+  <div class="banner">No funnels found.</div>
+{% endfor %}
+
+</main>
+<footer>
+  An override beats the funnel's config file. Clearing one hands the funnel
+  back to whatever <code>stripe_mode</code> its config names. Switching to a
+  mode whose keys are not in <code>.env</code> is refused rather than half-done.
+</footer>
+</body>
+</html>

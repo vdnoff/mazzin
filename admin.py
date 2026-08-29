@@ -37,6 +37,7 @@ from flask import (Blueprint, jsonify, redirect, render_template, request,
 
 import analytics
 import config
+import payments
 
 log = logging.getLogger(__name__)
 
@@ -48,6 +49,11 @@ bp = Blueprint("admin", __name__, url_prefix="/admin",
 # pattern-matched: a new route is private until somebody writes it down here,
 # which is the right way round for the default to fail.
 PUBLIC_ENDPOINTS = frozenset(("admin.login", "admin.login_post"))
+
+# The one endpoint in this blueprint that writes. Everything else here reads,
+# and the suite asserts it statement by statement — so the exception is named
+# here rather than left as a thing the tests happen not to catch.
+WRITE_ENDPOINTS = frozenset(("admin.modes_post",))
 
 
 # --- passwords -------------------------------------------------------------
@@ -868,3 +874,204 @@ def api_variants(slug):
     payload = variants(slug, window)
     payload["range"] = _range_json(window)
     return jsonify(payload)
+
+
+# --- the Stripe mode switch ------------------------------------------------
+#
+# The one page in this blueprint that writes, and what it writes is the most
+# consequential switch on the site: a funnel in test mode takes no money from
+# anybody. So everything here is built around making the current state
+# impossible to misread and the dangerous state impossible to sit in unnoticed.
+#
+# It is behind the dashboard's own session, like every other page here. There
+# is no second credential and no second door: one admin login, one place to be
+# logged in, and one set of rate-limited attempts guarding it.
+
+# How far back the page looks for traffic when deciding whether a funnel in
+# test mode is a live problem. A day covers an overnight ad run, which is
+# exactly the case this banner exists for.
+LIVE_TRAFFIC_WINDOW = datetime.timedelta(hours=24)
+
+# `changed_by` is the admin who was logged in, truncated to the column. It goes
+# in the row and deliberately not in the log line: a row in a table somebody
+# has to query is a record, and a username in an application log is the thing
+# the no-PII rule is about.
+CHANGED_BY_MAX = 64
+
+
+def _changed_by():
+    return (config.ADMIN_USER or "admin")[:CHANGED_BY_MAX]
+
+# The keys a mode needs before a funnel may be put into it. All three, because
+# two out of three is the half-configured state this refuses to create: a
+# secret with no webhook secret takes money and never records the purchase, and
+# a secret with no publishable key cannot confirm a payment in the page.
+MODE_KEYS = {
+    "live": (("STRIPE_SECRET_KEY", "STRIPE_SECRET_KEY"),
+             ("STRIPE_WEBHOOK_SECRET", "STRIPE_WEBHOOK_SECRET"),
+             ("STRIPE_PUBLISHABLE_KEY", "STRIPE_PUBLISHABLE_KEY")),
+    "test": (("STRIPE_TEST_SECRET_KEY", "STRIPE_TEST_SECRET_KEY"),
+             ("STRIPE_TEST_WEBHOOK_SECRET", "STRIPE_TEST_WEBHOOK_SECRET"),
+             ("STRIPE_TEST_PUBLISHABLE_KEY", "STRIPE_TEST_PUBLISHABLE_KEY")),
+}
+
+MESSAGES = {
+    "ok": "%s is now in %s mode.",
+    "cleared": "%s is back on whatever its config says.",
+    "keys": "%s was not switched: %s mode is missing %s in .env. "
+            "A funnel half-switched into a mode it has no keys for cannot "
+            "take a payment at all.",
+    "table": "Nothing was saved: the funnel_mode_overrides table is not there "
+             "yet. Apply the migration in schema_migrations.sql on the "
+             "server, then try again.",
+    "bad": "That request did not name a funnel and a mode this page knows.",
+}
+
+
+def _missing_keys(mode):
+    """Which of a mode's three keys are not set. Empty when it is ready."""
+    return [name for name, attr in MODE_KEYS[mode]
+            if not getattr(config, attr, "")]
+
+
+def _recent_starts(slug, now):
+    """Sessions that began this funnel in the last day. 0 if unknowable.
+
+    A database that will not answer must not turn the warning banner into a
+    stack trace — the page's job in that moment is still to show which funnel
+    is in which mode.
+    """
+    try:
+        counts = analytics.event_counts(
+            slug, now - LIVE_TRAFFIC_WINDOW, now, events=("funnel_start",))
+    except Exception:                             # noqa: BLE001 - page still renders
+        log.exception("admin: recent traffic lookup failed for %s", slug)
+        return 0
+    return counts.get("funnel_start", 0)
+
+
+def _mode_rows(now):
+    """One row per funnel: what the config says, what it is actually doing."""
+    overrides = payments.all_overrides()
+    rows = []
+    for slug in analytics.funnel_slugs():
+        meta = analytics.funnel_meta(slug)
+        override = overrides.get(slug)
+        config_mode = payments.TEST if meta["test_mode"] else payments.LIVE
+        effective = (override or {}).get("mode") or config_mode
+        starts = _recent_starts(slug, now)
+        rows.append({
+            "slug": slug,
+            "title": meta["title"],
+            "config_mode": config_mode,
+            "effective": effective,
+            "overridden": override is not None,
+            "changed_at": (override or {}).get("changed_at"),
+            "changed_by": (override or {}).get("changed_by"),
+            "recent_starts": starts,
+            # The state this page exists to make impossible to miss: readers
+            # are arriving and none of them can pay.
+            "danger": effective == payments.TEST and starts > 0,
+        })
+    return rows
+
+
+def _modes_page(status=200, message=None, level="info"):
+    now = datetime.datetime.now()
+    rows = _mode_rows(now)
+    return render_template(
+        "modes.html",
+        rows=rows,
+        csrf=csrf_token(),
+        message=message,
+        level=level,
+        alarms=[row for row in rows if row["danger"]],
+        now=now.strftime("%Y-%m-%d %H:%M"),
+    ), status
+
+
+@bp.get("/modes")
+def modes():
+    code = request.args.get("msg") or ""
+    funnel = request.args.get("f") or ""
+    message, level = None, "info"
+    if code == "ok":
+        message = MESSAGES["ok"] % (funnel, request.args.get("m") or "")
+        level = "good"
+    elif code == "cleared":
+        message = MESSAGES["cleared"] % funnel
+        level = "good"
+    elif code == "keys":
+        message = MESSAGES["keys"] % (funnel, request.args.get("m") or "",
+                                      request.args.get("k") or "a key")
+        level = "bad"
+    elif code in ("table", "bad"):
+        message = MESSAGES[code]
+        level = "bad"
+    return _modes_page(message=message, level=level)
+
+
+@bp.post("/modes")
+def modes_post():
+    # The session cookie alone is not authority to flip a funnel into test
+    # mode: a cross-site form would send it for free. The dashboard already
+    # issues a token for exactly this and both other forms here carry it.
+    if not _csrf_ok(request.form):
+        return render_template(
+            "unconfigured.html",
+            message="That form expired — reload the page and try again."), 400
+
+    slug = request.form.get("funnel") or ""
+    action = request.form.get("action") or ""
+    mode = request.form.get("mode") or ""
+
+    if slug not in analytics.funnel_slugs():
+        return redirect(url_for("admin.modes", msg="bad"))
+
+    before = payments.effective_mode(slug)
+
+    if action == "clear":
+        try:
+            payments.clear_override(slug)
+        except Exception:                         # noqa: BLE001 - reported
+            log.exception("admin: clearing the mode override for %s failed",
+                          slug)
+            return redirect(url_for("admin.modes", msg="table"))
+        after = payments.effective_mode(slug)
+        _log_switch(slug, before, after, "cleared")
+        return redirect(url_for("admin.modes", msg="cleared", f=slug))
+
+    if action != "set" or mode not in (payments.LIVE, payments.TEST):
+        return redirect(url_for("admin.modes", msg="bad"))
+
+    # Never a silent half-switched state. A funnel put into a mode whose keys
+    # are not in .env refuses every checkout with a 502 — which reads, from
+    # outside, exactly like the site being broken.
+    missing = _missing_keys(mode)
+    if missing:
+        log.warning("admin: refused to put %s into %s mode — missing %s",
+                    slug, mode, ", ".join(missing))
+        return redirect(url_for("admin.modes", msg="keys", f=slug, m=mode,
+                                k=", ".join(missing)))
+
+    try:
+        payments.set_override(slug, mode, _changed_by())
+    except Exception:                             # noqa: BLE001 - reported
+        log.exception("admin: writing the mode override for %s failed", slug)
+        return redirect(url_for("admin.modes", msg="table"))
+
+    _log_switch(slug, before, mode, "set")
+    return redirect(url_for("admin.modes", msg="ok", f=slug, m=mode))
+
+
+def _log_switch(slug, before, after, how):
+    """One line per switch: the funnel, the transition, the time.
+
+    Not the username. That is on the row, where somebody investigating goes
+    looking for it; the application log is read by more things and by more
+    people, and the house rule about what goes in it has no exception for
+    this page.
+    """
+    log.warning("stripe mode %s: funnel=%s %s->%s at=%s",
+                how, slug, before, after,
+                datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
