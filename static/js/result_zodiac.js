@@ -436,8 +436,12 @@
     return wrap;
   }
 
-  function richHero(ctx, badge, data) {
+  function richHero(ctx, badge, data, opts) {
     var card = elm("section", "zr-hero is-rich");
+    // The minimal arm pulls the rarity out of this card and gives it its own
+    // weight further down the page. Without the flag nothing here changes,
+    // which is the whole contract: the control arm is this page as it was.
+    var lean = !!(opts && opts.lean);
     var head = elm("div", "zr-hero-top");
     head.appendChild(badge);
     var id = elm("div", "zr-hero-id");
@@ -446,7 +450,7 @@
     head.appendChild(id);
     card.appendChild(head);
 
-    if (data.rarity_line) {
+    if (!lean && data.rarity_line) {
       card.appendChild(elm("p", "zr-ribbon", data.rarity_line));
     }
     if ((data.scales || []).length) {
@@ -462,6 +466,26 @@
       card.appendChild(elm("p", "zr-crossline", data.cross_line));
     }
     return card;
+  }
+
+  // The rarity, at the size the claim deserves, for the arm that asks for it.
+  // Same idea as the persona page's: the number is the argument, so it is set
+  // apart from the sentence it sits in rather than left inside a pill.
+  function rarityBadge(data) {
+    if (!data || !data.rarity_line) return null;
+    var wrap = elm("div", "zr-rarity");
+    var line = data.rarity_line;
+    var found = /(\d+(?:\.\d+)?%)/.exec(line);
+    if (found) {
+      var cut = line.split(found[1]);
+      wrap.appendChild(elm("span", "zr-rarity-lead", cut[0].trim()));
+      wrap.appendChild(elm("strong", "zr-rarity-figure", found[1]));
+      var tail = cut.slice(1).join(found[1]).trim();
+      if (tail) wrap.appendChild(elm("span", "zr-rarity-tail", tail));
+    } else {
+      wrap.appendChild(elm("span", "zr-rarity-lead", line));
+    }
+    return wrap;
   }
 
   // --- c) read from your taps ------------------------------------------------
@@ -995,6 +1019,117 @@
 
   // --- render ----------------------------------------------------------------
 
+  // --- paywall variants ------------------------------------------------------
+  //
+  // The same mechanism result_persona.js carries, character for character.
+  // It is a copy rather than an import because engine.js loads exactly one
+  // module per funnel — `loadAsset(cfg.result_module)` — so there is nowhere
+  // a shared file could be required from without changing the shell every
+  // funnel loads, and this funnel takes real money. tests/test_variants.py
+  // holds the two copies byte-identical, which is the price of not touching
+  // engine.js to save a duplication.
+  //
+  // Nothing here knows what funnel it is in. A variant is
+  // `{ id, enabled, weight, ... }` and a variant may also carry `template`,
+  // which is what this funnel's second arm uses: same offer, same copy, a
+  // different way of laying the page out.
+
+  // engine.js's own session key. Read, never written: the id already exists
+  // by the time a result page renders, it is the id every event on this
+  // session carries, and assignment has to agree with what the events say.
+  var SESSION_KEY = "mazzin_sid";
+
+  function variantWeight(variant) {
+    var weight = typeof variant.weight === "number" ? variant.weight : 1;
+    return weight > 0 ? weight : 0;
+  }
+
+  // Enabled, and worth assigning. A variant left in the config with
+  // `enabled: false` is excluded here and therefore cannot be assigned, drawn
+  // or reported; so is one weighted to zero, which is the same intent
+  // written differently.
+  function variantPool(cfg) {
+    return ((cfg && cfg.paywall_variants) || []).filter(function (variant) {
+      return variant && variant.id
+        && variant.enabled !== false && variantWeight(variant) > 0;
+    });
+  }
+
+  function sessionKey() {
+    try {
+      return window.sessionStorage.getItem(SESSION_KEY) || "";
+    } catch (e) {
+      // Private mode, or storage the browser will not hand over. Everyone in
+      // that state lands on the same variant rather than on a random one:
+      // a coin flipped per page load would show a reader one frame on the
+      // free page and the other on the delivered one.
+      return "";
+    }
+  }
+
+  // FNV-1a, 32-bit. Any stable hash would do; what matters is that it reads
+  // the session id and nothing else. Assignment must never depend on the URL
+  // or on a campaign parameter — a variant that rotates with `subid` cannot
+  // be added or retired without touching the ad account's final URLs, and
+  // the whole point of the config list is that it can.
+  function hashOf(text) {
+    var hash = 0x811c9dc5;
+    for (var i = 0; i < text.length; i++) {
+      hash ^= text.charCodeAt(i);
+      hash = (hash + ((hash << 1) + (hash << 4) + (hash << 7)
+                      + (hash << 8) + (hash << 24))) >>> 0;
+    }
+    return hash >>> 0;
+  }
+
+  // The same session gets the same variant every time this is called — on
+  // reload, and on the delivered page — because the only input is an id that
+  // does not change. Weights renormalise by construction: the point is taken
+  // over the live total, so disabling a variant hands its share to the
+  // others without anybody restating the remaining weights.
+  function assignedVariant(cfg) {
+    var pool = variantPool(cfg);
+    if (!pool.length) return null;
+    // One enabled variant is not a test, and must not be treated as one: it
+    // renders unconditionally, whatever it weighs and whatever the hash says.
+    if (pool.length === 1) return pool[0];
+    var total = 0;
+    var i;
+    for (i = 0; i < pool.length; i++) total += variantWeight(pool[i]);
+    if (total <= 0) return pool[0];
+    var point = (hashOf(sessionKey()) % 100000) / 100000 * total;
+    var seen = 0;
+    for (i = 0; i < pool.length; i++) {
+      seen += variantWeight(pool[i]);
+      if (point < seen) return pool[i];
+    }
+    return pool[pool.length - 1];
+  }
+
+  // One event, once, when the offer is drawn: which variant this session was
+  // shown. Everything downstream — paywall_view, pay_tap, and the purchase
+  // the webhook writes — already carries `session_id`, and both tables index
+  // it, so conversion splits by variant on a join rather than on a column
+  // added to every event. That is what keeps this a config change and not a
+  // schema change.
+  //
+  // It is not fired on the delivered page. That page is past the money, its
+  // assignment is recomputed from the same session id for display only, and
+  // a second row would double-count the arm.
+  var variantReported = false;
+
+  function reportVariant(ctx, variant) {
+    if (!variant || variantReported) return;
+    variantReported = true;
+    try {
+      // The name is written out rather than held in a constant: the
+      // suite pairs tracking.py's allowlist against the literals the client
+      // actually emits, and an event that only exists as an identifier reads
+      // there as a dead name in the allowlist.
+      ctx.track("paywall_variant", { variant: variant.id });
+    } catch (e) { /* an arm is not worth losing the page to */ }
+  }
+
   function render(root, ctx) {
     var copy = (ctx.cfg && ctx.cfg.result_copy) || {};
     var elements = ctx.tally(ELEMENTS);
@@ -1013,17 +1148,33 @@
 
     var data = profileOf(ctx, elements, top);
 
+    // Which way this page is laid out. `null` on a funnel that declares no
+    // variants, and the control arm carries no template — so both of those
+    // take the branch below exactly as it has always been, node for node.
+    // Only an arm that names a template takes the other one.
+    var variant = assignedVariant(ctx.cfg);
+    var template = (variant && variant.template) || "";
+
     root.innerHTML = "";
     root.appendChild(kicker(copy));
     // The rich card, or the one this page drew before there was a table to
     // draw it from. Below the hero the two pages differ entirely, which is
     // why the branch is the whole body rather than one node.
     root.appendChild(data
-      ? richHero(ctx, glyph(ctx.picks.sign), data)
+      ? richHero(ctx, glyph(ctx.picks.sign), data,
+                 { lean: template === "minimal" })
       : hero(ctx, copy, elements, top));
     var strip = taps(ctx, copy);
     if (strip) root.appendChild(strip);
-    if (data) {
+    if (data && template === "minimal") {
+      // The short way down the page: the picture, the evidence it was read
+      // from, the measure, how rare that is, and then the price. No locked
+      // bullets doing the offer's job above the offer, and no bridge line.
+      var bars = balance(ctx, copy, elements);
+      if (bars) root.appendChild(bars);
+      var rare = rarityBadge(data);
+      if (rare) root.appendChild(rare);
+    } else if (data) {
       var free = freeStrength(ctx, copy);
       if (free) root.appendChild(free);
       var line = bridge(ctx, data);
@@ -1033,6 +1184,7 @@
       root.appendChild(path(ctx, copy, elements));
     }
     root.appendChild(offer(ctx, copy, data));
+    reportVariant(ctx, variant);
 
     // The container engine.js moved the offer rows into is empty now and its
     // own border would draw a line under nothing.

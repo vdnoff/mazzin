@@ -82,15 +82,28 @@ print("--- the profile a purchase stores ---")
 profile = reports._profile("persona")
 check("persona is registered", profile is reports.PERSONA_PROFILE)
 check("  with its own voice", profile["system"] is reports.PERSONA_SYSTEM)
-check("  and its own shapes", set(profile["spec"]) == {
-    "palette", "mistakes", "materials", "splurge", "dna", "shopping"})
-check("  on the section ids every funnel here uses",
-      set(profile["spec"]) == set(reports.ZODIAC_PROFILE["spec"]))
-check("  the cached trio is the archetype's, the personal trio the run's",
-      profile["cached"] == ("palette", "mistakes", "splurge")
+# Four sections, one per promise on the card the reader buys from. The two
+# that are gone were the zodiac product's — colours and the work section —
+# and neither was ever on that card.
+BENEFIT_SECTIONS = {"dna", "materials", "mistakes", "shopping"}
+check("  and its own shapes", set(profile["spec"]) == BENEFIT_SECTIONS,
+      str(sorted(profile["spec"])))
+check("  which are a subset of the ids every funnel here uses",
+      set(profile["spec"]) < set(reports.ZODIAC_PROFILE["spec"]))
+check("  so the validators, the renderer and the PDF need no persona branch",
+      all(sid in reports.SPEC or sid in reports.ZODIAC_PROFILE["spec"]
+          for sid in profile["spec"]))
+check("  the cached section is the archetype's, the rest are the run's",
+      profile["cached"] == ("mistakes",)
       and profile["personal"] == ("dna", "materials", "shopping"))
 check("  and no section is in both",
       not set(profile["cached"]) & set(profile["personal"]))
+check("  every section is either cached or personal",
+      set(profile["cached"]) | set(profile["personal"]) == BENEFIT_SECTIONS)
+check("  and zodiac keeps all six of its own",
+      len(reports.ZODIAC_PROFILE["spec"]) == 6
+      and reports.ZODIAC_PROFILE["cached"] == ("palette", "mistakes",
+                                               "splurge"))
 
 cards = list(every_persona())
 check("all eight personas resolve a card",

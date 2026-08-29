@@ -2108,34 +2108,9 @@
   ],
   "sections": [
    {
-    "id": "palette",
-    "title": "Your Colours & Three Things to Carry",
-    "enabled": true,
-    "preview": [
-     "Each one is given with its exact code and the two shades it should never sit beside, because the same colour reads differently under warm light than it does under cold.",
-     "The profile names the three objects worth carrying, where to keep each of them, and the two days your decisions land best."
-    ],
-    "reveal": {
-     "mode": "visible"
-    }
-   },
-   {
-    "id": "mistakes",
-    "title": "5 Hidden Strengths & Blind Spots",
-    "teaser_line": "Four more, and the costliest one is last.",
-    "enabled": true,
-    "preview": [
-     "It reads as obvious written down, and it still shapes more of your week than anything else on this list.",
-     "The remaining four are ranked by how much of your energy each one is quietly costing you."
-    ],
-    "reveal": {
-     "mode": "locked"
-    }
-   },
-   {
     "id": "dna",
-    "title": "Your Mind Blueprint",
-    "teaser_line": "How your {palette} splits between your two strongest axes — and where that drains you.",
+    "title": "Why You Drain Where Others Charge",
+    "teaser_line": "The conditions that empty you, and the ones that fill you back up.",
     "enabled": true,
     "preview": [
      "Three scales, read off your own taps, and one place where they pull hard against each other.",
@@ -2147,8 +2122,8 @@
    },
    {
     "id": "materials",
-    "title": "How You Connect",
-    "teaser_line": "Who steadies you, who quietly costs you, and why one kind keeps finding you.",
+    "title": "Who Steadies You, Who Costs You",
+    "teaser_line": "Four profiles read against yours — two that fit, two that cost.",
     "enabled": true,
     "preview": [
      "It is the pattern underneath the people you keep choosing, rather than a list of types to avoid.",
@@ -2159,13 +2134,13 @@
     }
    },
    {
-    "id": "splurge",
-    "title": "Work & Money Path",
-    "teaser_line": "Where your {carry} energy earns — and what to stop taking on.",
+    "id": "mistakes",
+    "title": "The Strength You're Sitting On",
+    "teaser_line": "Four more, and the costliest one is last.",
     "enabled": true,
     "preview": [
-     "Your working rhythm is not flat and never was, and the shape of it is far more useful than an average.",
-     "The profile marks the months your energy pays best and names the one kind of work to stop accepting."
+     "It reads as obvious written down, and it still shapes more of your week than anything else on this list.",
+     "The remaining four are ranked by how much of your energy each one is quietly costing you."
     ],
     "reveal": {
      "mode": "locked"
@@ -2173,8 +2148,8 @@
    },
    {
     "id": "shopping",
-    "title": "Your 12-Month Energy Map",
-    "teaser_line": "Three strong months. One quiet one.",
+    "title": "Your Next 12 Months",
+    "teaser_line": "Three strong months. One to stay quiet in.",
     "enabled": true,
     "preview": [
      "Twelve months, marked for the stretches where your energy is behind you and the two where it plainly is not.",
@@ -2185,6 +2160,7 @@
     }
    }
   ],
+  "print_whole": true,
   "mistake_one": {
    "title": "Hidden Strength #1 of 5",
    "locked_note": "Strengths 2–5 — inside your full profile"
@@ -2279,12 +2255,11 @@
   "title": "Your {style} Profile",
   "proof_line": "Built from your 13 picks",
   "manifest": [
-   "Why you drain where others charge",
-   "Who steadies you, who costs you — pairing by pairing",
-   "The strength you're sitting on without knowing",
-   "Your next 12 months, mapped to how you actually move",
-   "Your colours with exact codes, plus three things to carry",
-   "Yours to keep — full profile + PDF"
+   "Why you drain where others charge — the exact conditions that empty you",
+   "Who steadies you and who quietly costs you, profile by profile",
+   "The strength you have been sitting on and nobody has named",
+   "Your next 12 months, marked for how you actually move",
+   "Yours to keep — the whole profile, as a PDF"
   ],
   "manifest_hero": "strengths",
   "manifest_head": "What's inside — {n} sections, yours forever",
@@ -2309,11 +2284,11 @@
    "name": "Why You're Like This",
    "frame": "The full read on how you're built — and how to use it.",
    "benefits": [
-    "Why you drain where others charge",
-    "Who steadies you, who costs you — pairing by pairing",
-    "The strength you're sitting on without knowing",
-    "Your next 12 months, mapped to how you actually move",
-    "Yours to keep — full profile + PDF"
+    "Why you drain where others charge — the exact conditions that empty you",
+    "Who steadies you and who quietly costs you, profile by profile",
+    "The strength you have been sitting on and nobody has named",
+    "Your next 12 months, marked for how you actually move",
+    "Yours to keep — the whole profile, as a PDF"
    ],
    "cta_text": "Tell me why I'm like this — {price}"
   },
@@ -2324,11 +2299,11 @@
    "name": "Your Unfair Advantage",
    "frame": "You're built with one. Most people never find theirs.",
    "benefits": [
-    "The strength you're sitting on without knowing it",
-    "Why you drain where others charge — and how to stop",
-    "Who multiplies you, who quietly costs you",
-    "Your next 12 months, played to how you actually move",
-    "Yours to keep — full profile + PDF"
+    "The strength you have been sitting on and nobody has named",
+    "Why you drain where others charge — and what stops the leak",
+    "Who multiplies you, and who quietly costs you, profile by profile",
+    "Your next 12 months, marked for how you actually move",
+    "Yours to keep — the whole profile, as a PDF"
    ],
    "cta_text": "Show me my advantage — {price}"
   }
@@ -2612,7 +2587,7 @@
   "value_banner": "Five strengths, a read on how you connect and a twelve-month energy map — all of it built from your own 18 signals, yours to keep."
  },
  "result_copy": {
-  "kicker": "YOUR SHAPE",
+  "kicker": "The inner shape of your mind",
   "blend_note": "rare blend",
   "taps_caption": "Read from your shapes:",
   "balance_title": "Your four traits",
@@ -2661,43 +2636,28 @@
    },
    "cards": [
     {
+     "id": "dna",
+     "key": "Your battery",
+     "icon": "map",
+     "promise": "the conditions that empty you — and what fills you back"
+    },
+    {
      "id": "materials",
      "key": "Close ties",
      "icon": "heart",
-     "promise": "which two profiles fit you easily — and the one that quietly costs you",
-     "upgrade": {
-      "purpose_love": "the read you came for — the two profiles that fit you, and the one that drains you"
-     }
+     "promise": "which two profiles fit you easily — and the one that quietly costs you"
     },
     {
      "id": "mistakes",
-     "key": "Blind spots",
+     "key": "Hidden strength",
      "icon": "eye",
-     "promise": "what naming {weather} gave away — strengths #2–5, the costliest last"
+     "promise": "what naming {weather} gave away — strengths #2-5, the costliest last"
     },
     {
      "id": "shopping",
      "key": "Your year",
      "icon": "calendar",
-     "promise": "{first} → {last} — your 3 strongest months, and the 1 to stay quiet in"
-    },
-    {
-     "id": "splurge",
-     "key": "Work",
-     "icon": "coin",
-     "promise": "where your energy earns — and where it quietly leaks"
-    },
-    {
-     "id": "palette",
-     "key": "Your colours",
-     "icon": "palette",
-     "promise": "your 4, with exact codes + three things to carry"
-    },
-    {
-     "id": "dna",
-     "key": "Blueprint",
-     "icon": "map",
-     "promise": "how {axis} leads you and {second} feeds it"
+     "promise": "{first} to {last} — your 3 strongest months, and the 1 to stay quiet in"
     }
    ],
    "scales": [

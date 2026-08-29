@@ -59,6 +59,16 @@ GLYPH = (280, 280)
 # for a block the reader reads as one object.
 GRID = (200, 200)
 
+# A funnel whose frames are shown whole wants portrait slots to show them in.
+# Letterboxing a 3:4 sculpture into the 760x200 banner above leaves it a fifth
+# of the width with backdrop either side, which is the crop problem wearing a
+# different shape. These are the same slots at the frames' own aspect, and
+# they are only ever used by a funnel that asks for whole frames — every other
+# funnel's boxes, bytes and ceilings are exactly what they were.
+TAP_WHOLE = (420, 560)
+GRID_WHOLE = (200, 267)
+WHOLE_BOX = {TAP: TAP_WHOLE, GRID: GRID_WHOLE}
+
 # A report that draws one picture per section carries eight of them.
 CEILING = {TAP: 30 * 1024, BAND: 34 * 1024, GLYPH: 22 * 1024,
            GRID: 12 * 1024}
@@ -129,14 +139,38 @@ def source(cfg, image_id):
     return None
 
 
-def crop_to(image, box):
-    """Centre-crop to the box's aspect, then resize onto it.
+# The renders' own backdrop, so a letterboxed frame sits on the colour its
+# sweep is made of rather than on white. The same value the result page uses
+# for `--pr-frame`, and the same reason.
+FRAME_GROUND = (206, 163, 113)
 
-    The same thing `object-fit: cover` would do at render time, done once here
-    so the bytes never reach the PDF.
+
+def crop_to(image, box, whole=False):
+    """Fit the image onto the box: cropped to fill, or whole with a ground.
+
+    `whole` is what the report asks for now. The sculptures are the asset the
+    funnel is built on, and a print copy pre-cropped to a square threw away a
+    third of every 3:4 frame before the PDF ever saw it — so on that path the
+    image is scaled to fit inside the box and the remainder is filled with the
+    renders' own backdrop. `object-fit: contain` in the stylesheet cannot
+    recover pixels this file already discarded, which is why the change has to
+    be here as well as there.
+
+    Without it this is the old behaviour exactly: centre-crop to the box's
+    aspect, then resize onto it, which is what `object-fit: cover` would do at
+    render time.
     """
     want = box[0] / float(box[1])
     have = image.width / float(image.height)
+    if whole:
+        scale = min(box[0] / float(image.width), box[1] / float(image.height))
+        size = (max(1, int(round(image.width * scale))),
+                max(1, int(round(image.height * scale))))
+        fitted = image.resize(size, Image.LANCZOS)
+        ground = Image.new("RGB", box, FRAME_GROUND)
+        ground.paste(fitted, ((box[0] - size[0]) // 2,
+                              (box[1] - size[1]) // 2))
+        return ground
     if have > want:                                  # too wide, trim the sides
         width = int(round(image.height * want))
         left = (image.width - width) // 2
@@ -175,6 +209,14 @@ def main(argv=None):
         print("%s draws no images in its report" % args.funnel)
         return 1
 
+    # Whether this funnel's frames are shown whole or cropped to fill, read
+    # from the funnel rather than passed on the command line: a flag somebody
+    # has to remember is a flag that silently re-crops a gallery the next time
+    # the script is run without it.
+    whole = bool((cfg.get("report") or {}).get("print_whole"))
+    if whole:
+        print("  (whole frames: scaled to fit, backdrop where they do not)")
+
     missing = 0
     for image_id in sorted(todo):
         src = source(cfg, image_id)
@@ -183,10 +225,13 @@ def main(argv=None):
             missing += 1
             continue
         box = todo[image_id]
+        if whole:
+            box = WHOLE_BOX.get(box, box)
         with Image.open(src) as image:
-            out = crop_to(image.convert("RGB"), box)
+            out = crop_to(image.convert("RGB"), box, whole=whole)
         path = os.path.join(OUT, image_id + ".jpg")
-        quality, size = write(path, out, CEILING.get(box, MAX_BYTES))
+        quality, size = write(path, out, CEILING.get(todo[image_id],
+                                                     MAX_BYTES))
         print("  %-14s %-9s q%-3d %5.1f KB"
               % (image_id, "%dx%d" % box, quality, size / 1024.0))
 

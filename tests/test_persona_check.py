@@ -859,18 +859,20 @@ check("it is two layers: a rendered base and an inlay",
                                ".pr-head-inlay"))
       and 'HEAD_BASE = "/static/galleries/persona/head_base.webp"' in module)
 check("  the base frame is on disk", "head_base" in gallery)
-# The measured numbers. They were top 13% / left 26% / 48%, written against a
-# mockup; once the approved render was committed it was measurable that the
-# box overlapped the ear and ran off the brow. scripts/gen_persona.py
-# --check-head is what measures them, and test_personaart pins the two
-# against each other — here it is only that the sheet carries the measurement
-# rather than the mockup.
-check("  and the inlay sits on the measured cranial field",
-      re.search(r"\.pr-head-inlay \{[^}]*top: 5%;[^}]*left: 45%;"
-                r"[^}]*width: 22\.5%;[^}]*height: 22\.5%;", sheet, re.S)
+# The measured numbers, and the third set of them. They were a mockup's box
+# first, then the smooth field on the crown; they are the head itself now,
+# because the radar is the head's defining feature rather than a mark on top
+# of it. scripts/gen_persona.py --check-head measures the head's extent and
+# reports the box it wants; test_personaart pins the two against each other.
+check("  and the inlay spans the measured head",
+      re.search(r"\.pr-head-inlay \{[^}]*top: 0\.8%;[^}]*left: 15\.3%;"
+                r"[^}]*width: 68(?:\.0)?%;[^}]*height: 68(?:\.0)?%;", sheet, re.S)
       is not None)
-check("  not on the mockup's box",
-      not re.search(r"\.pr-head-inlay \{[^}]*top: 13%;", sheet, re.S))
+check("  not the crown patch it replaced",
+      not re.search(r"\.pr-head-inlay \{[^}]*width: 22\.5%;", sheet, re.S))
+check("  and it is big enough to be the thing you look at",
+      float(re.search(r"\.pr-head-inlay \{[^}]*width: ([\d.]+)%",
+                      sheet, re.S).group(1)) >= 60)
 check("the SVG is still generated from the tallies",
       "function headValues(" in module and "data.split" in module
       and "function headSvg(" in module)
@@ -981,7 +983,8 @@ check("  the delivered page asks for the head",
                 module) is not None)
 check("  the free page does not",
       re.search(r"richHero\(glyph\(ctx\.picks\.now\), data, copy,\s*"
-                r"\{ share: true, ctx: ctx \}\)", module) is not None)
+                r"\{ share: true, ctx: ctx, lean: true \}\)", module)
+      is not None)
 check("  so the pair is drawn only under that flag",
       module.count("card.appendChild(headPair(data));") == 1
       and re.search(r"if \(opts && opts\.head\) \{\s*"
@@ -990,9 +993,10 @@ check("  so the pair is drawn only under that flag",
 check("  and the totem stands alone on the other branch",
       "card.appendChild(soloTotem(data));" in module
       and module.count("function soloTotem(") == 1)
-check("  and only the share button differs besides",
-      "{ share: true, ctx: ctx }" in module
-      and "if (opts && opts.share && opts.ctx)" in module)
+check("  and only the share button and the lean layout differ besides",
+      "{ share: true, ctx: ctx, lean: true }" in module
+      and "if (opts && opts.share && opts.ctx)" in module
+      and "var lean = !!(opts && opts.lean);" in module)
 check("the solo totem stands on the same pedestal as the pair's",
       ".pr-solo .pr-stand" in sheet and ".pr-solo .pr-totem-art" in sheet
       and re.search(r"\.pr-solo \{[^}]*margin: 0 auto", sheet, re.S)
@@ -1076,9 +1080,19 @@ check("the twins' own result module is not this one",
 OWN = re.compile(r"\bpersona\b|result_persona|galleries/persona")
 engine = open(os.path.join(ROOT, "static/js/engine.js"),
               encoding="utf-8").read()
-check("  and result_zodiac.js knows nothing about persona",
-      not OWN.search(open(os.path.join(ROOT, "static/js/result_zodiac.js"),
-                          encoding="utf-8").read()))
+# Code, not prose. The zodiac module carries a byte-identical copy of the
+# variant mechanism and says so in a comment naming the file it came from,
+# which is the sentence a maintainer needs to keep the two in step. What it
+# must not do is *depend* on this funnel — draw its classes, read its
+# gallery, load its module — and that is a claim about code.
+_zodiac_src = open(os.path.join(ROOT, "static/js/result_zodiac.js"),
+                   encoding="utf-8").read()
+_zodiac_code = re.sub(r"//[^\n]*", "",
+                      re.sub(r"/\*.*?\*/", "", _zodiac_src, flags=re.S))
+check("  and result_zodiac.js depends on nothing of persona's",
+      not OWN.search(_zodiac_code), str(OWN.findall(_zodiac_code)[:3]))
+check("  naming it only where it says where the shared mechanism came from",
+      _zodiac_src.count("result_persona.js") <= 1)
 check("engine.js knows nothing about persona either — it is all config",
       not OWN.search(engine), str(OWN.findall(engine)[:3]))
 # app.py used to name this funnel nowhere at all, which was the proof the
@@ -1192,10 +1206,20 @@ check("  and not from the delivered page",
       "reportVariant" not in module[module.find("function delivered(root"):])
 
 # Nothing else on the platform grew a variants key or lost its paywall.
-check("no neighbour funnel was given variants",
-      not any(json.load(open(os.path.join(ROOT, "funnels", s + ".json"),
-                             encoding="utf-8")).get("paywall_variants")
-              for s in NEIGHBOUR_SLUGS))
+# zodiac30 adopted the mechanism for a layout test, which is what it was
+# built funnel-agnostic for. Everything else still declares none, and that is
+# the claim worth keeping: a funnel gets variants by asking for them.
+VARIANT_FUNNELS = {"zodiac30"}
+check("only the funnel that asked for them has variants",
+      set(s for s in NEIGHBOUR_SLUGS
+          if json.load(open(os.path.join(ROOT, "funnels", s + ".json"),
+                            encoding="utf-8")).get("paywall_variants"))
+      == VARIANT_FUNNELS)
+check("  and its arms are a layout test, not this funnel's offer copy",
+      all(set(v) <= {"id", "enabled", "weight", "name", "template"}
+          for v in json.load(open(os.path.join(ROOT,
+                                               "funnels/zodiac30.json"),
+                                  encoding="utf-8"))["paywall_variants"]))
 check("  and each still carries its own single call to action",
       all(json.load(open(os.path.join(ROOT, "funnels", s + ".json"),
                          encoding="utf-8"))
@@ -1226,11 +1250,97 @@ check("  and only the persona module writes that key",
               os.path.join(ROOT, "static/js", name), encoding="utf-8").read())
       == 1)
 
-check("the locked teasers promise what the offer promises",
-      all(any(word in " ".join(sec.get("teaser_line", "")
-                               for sec in cfg["report"]["sections"]).lower()
-              for word in words)
-          for words in (("drain",), ("costs you",))))
+# The sections ARE the offer now: one per bullet on the card, in the order
+# the card lists them. Pinned against the config's own benefits rather than
+# against a word list here, so a bullet rewritten without its section — or a
+# section added without its bullet — fails rather than drifts.
+SECTION_ORDER = ["dna", "materials", "mistakes", "shopping"]
+check("the report is the four sections the paywall sells",
+      [sec["id"] for sec in cfg["report"]["sections"]] == SECTION_ORDER,
+      str([sec["id"] for sec in cfg["report"]["sections"]]))
+check("  and nothing the paywall does not",
+      not any(sec["id"] in ("palette", "splurge")
+              for sec in cfg["report"]["sections"]))
+for variant in cfg["paywall_variants"]:
+    check("  %s promises one thing per section, plus the keepsake"
+          % variant["id"],
+          len(variant["benefits"]) == len(SECTION_ORDER) + 1,
+          str(len(variant["benefits"])))
+check("  every section has a teaser of its own",
+      all((sec.get("teaser_line") or "").strip()
+          for sec in cfg["report"]["sections"]))
+check("  and the delivered page can still name each one",
+      sorted(c["id"] for c in cfg["result_copy"]["profile"]["cards"])
+      == sorted(SECTION_ORDER))
+
+print("\n--- the page the reader lands on ---")
+# The order the page argues in, read off the module rather than off a
+# screenshot: picture, evidence, measure, rarity, price.
+body = module[module.index("  function render(root, ctx)"):
+              module.index("  // --- the delivered report")]
+ZONES = ["richHero", "taps(ctx, copy)", "traitBars(data)", "rarityBadge(data)",
+         "offer(ctx, copy, data, variant)"]
+at = [body.find(z) for z in ZONES]
+check("the free page runs picture, evidence, measure, rarity, price",
+      all(x > 0 for x in at) and at == sorted(at), str(at))
+# Scoped to the branch that draws the rich page. The `else` beside it is the
+# plain fallback for a config with no table, and a scan that ran across both
+# would read that branch's own node as something wedged in between.
+rich = body[body.index("if (data) {"):body.index("    } else {")]
+check("  the rarity is the last thing that branch draws",
+      rich.rindex("appendChild(rare)")
+      == max(m.start() for m in re.finditer(r"appendChild\(", rich)))
+check("  and the offer comes straight after it",
+      body.index("rarityBadge(data)") < body.index("offer(ctx, copy, data,"))
+check("  the bullet zone is gone from the module",
+      "function questions(" not in module
+      and "function questionCard(" not in module)
+check("  and the paragraph woven from their picks with it",
+      "function bridge(" not in module
+      and "narrativeBlock(data.narrative)" not in body)
+check("  the stylesheet paints neither any more",
+      not any(cls in sheet for cls in (".pr-cards", ".pr-card-icon",
+                                       ".pr-bridge", ".pr-card-key")))
+check("  but the narrative is still built, for the delivered page",
+      "function narrativeBlock(" in module
+      and "narrativeBlock(data.narrative)" in module)
+check("the rarity is the loudest thing after the picture",
+      re.search(r"\.pr-rarity-figure \{[^}]*font-size: (\d+)px", sheet, re.S)
+      is not None
+      and int(re.search(r"\.pr-rarity-figure \{[^}]*font-size: (\d+)px",
+                        sheet, re.S).group(1)) >= 36)
+check("  and the totem earns more room than it had",
+      re.search(r"\.pr-solo \.pr-totem-art \{ width: (\d+)px", sheet)
+      is not None
+      and int(re.search(r"\.pr-solo \.pr-totem-art \{ width: (\d+)px",
+                        sheet).group(1)) >= 200)
+check("  the contact-sheet label stepped back",
+      re.search(r"\.pr-taps-caption \{[^}]*font-size: (\d+)px", sheet, re.S)
+      is not None
+      and int(re.search(r"\.pr-taps-caption \{[^}]*font-size: (\d+)px",
+                        sheet, re.S).group(1)) <= 11)
+check("  and the sheet is two rows for a thirteen-step run",
+      re.search(r"\.pr-taps-grid \{[^}]*repeat\(7, 1fr\)", sheet, re.S)
+      is not None)
+check("the line above the totem is the one the owner asked for",
+      cfg["result_copy"]["kicker"] == "The inner shape of your mind")
+
+print("\n--- the sculptures are shown whole ---")
+check("the contact sheet contains rather than crops",
+      re.search(r"\.pr-tap img \{[^}]*object-fit: contain;", sheet, re.S)
+      is not None)
+check("  on a ground toned to the renders' own backdrop",
+      re.search(r"\.pr-tap img \{[^}]*background: var\(--pr-frame",
+                sheet, re.S) is not None
+      and "--pr-frame:" in sheet)
+check("  and so does the section photograph",
+      re.search(r"\.pr-shot img \{[^}]*object-fit: contain;", sheet, re.S)
+      is not None)
+check("nowhere in this funnel's own frames is cover still used",
+      not re.search(r"\.pr-(tap|shot) img \{[^}]*object-fit: cover;",
+                    sheet, re.S))
+check("the funnel asks for whole frames in print too",
+      cfg["report"].get("print_whole") is True)
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for f in fails:

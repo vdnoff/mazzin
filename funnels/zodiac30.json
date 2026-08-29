@@ -3041,6 +3041,21 @@
     ],
     "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right."
   },
+  "paywall_variants": [
+    {
+      "id": "control",
+      "enabled": true,
+      "weight": 1,
+      "name": "The page as it is"
+    },
+    {
+      "id": "minimal",
+      "enabled": true,
+      "weight": 1,
+      "name": "The short way down",
+      "template": "minimal"
+    }
+  ],
   "result": {
     "mistakes_teaser": "You've seen strength #1. The other four run deeper — one explains your {moonphase} choice.",
     "value_banner": "Five strengths, a compatibility read and a twelve-month energy map — all of it built from your own 18 signals, yours to keep."

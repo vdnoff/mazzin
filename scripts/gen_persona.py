@@ -489,6 +489,78 @@ def encode(img):
 # --- the head's cranial zone -------------------------------------------------
 
 
+def head_extent(path):
+    """The head's own bounding box in PLATE space, as percentages.
+
+    `cranial_zone` above finds the smooth field on the crown, which is what
+    the inlay used to sit in. It does not sit there any more: the radar is
+    drawn across the whole head now, so the box that positions it is derived
+    from the head itself rather than from the bald patch on top of it.
+
+    Two things this has to get right, and an earlier draft got neither.
+
+    The backdrop is a gradient. It is lighter on the left than on the right,
+    so a reference sampled from one edge reads the far edge as an object and
+    returns a head as wide as the frame. Both edges are sampled and the
+    backdrop is interpolated across the row.
+
+    The plinth is not the head. The widest row in this render is the teal
+    base at the bottom, so a box fitted to "the widest part" fits the stand.
+    The scan stops at the neck, found as the first row below the skull whose
+    span has narrowed well inside the widest one.
+    """
+    from PIL import Image
+
+    img = Image.open(path).convert("RGB")
+    width, height = img.size
+    px = img.load()
+    side = width                        # the plate is square, cover-cropped
+    top_crop = (height - side) // 2
+
+    def span(y):
+        left = [sum(px[x, y][c] for x in range(2, 10)) / 8.0 for c in range(3)]
+        right = [sum(px[x, y][c] for x in range(width - 10, width - 2)) / 8.0
+                 for c in range(3)]
+        first = last = None
+        run = 0
+        for x in range(width):
+            t = x / float(width - 1)
+            ref = [left[c] + (right[c] - left[c]) * t for c in range(3)]
+            gap = sum((px[x, y][c] - ref[c]) ** 2 for c in range(3)) ** 0.5
+            if gap > 26:
+                run += 1
+                if run >= 6:
+                    if first is None:
+                        first = x - 5
+                    last = x
+            else:
+                run = 0
+        return (first, last) if first is not None else None
+
+    rows = {}
+    for y in range(top_crop, top_crop + side):
+        found = span(y)
+        if found:
+            rows[y] = found
+    if not rows:
+        return None
+    order = sorted(rows)
+    crown = order[0]
+    widest = max((rows[y][1] - rows[y][0], y) for y in order
+                 if y < crown + side * 0.6)[1]
+    limit = 0.62 * (rows[widest][1] - rows[widest][0])
+    neck = next((y for y in order
+                 if y > widest and (rows[y][1] - rows[y][0]) < limit),
+                order[-1])
+    band = [y for y in order if crown <= y <= neck]
+    left = min(rows[y][0] for y in band)
+    right = max(rows[y][1] for y in band)
+    return {"left": 100.0 * left / side,
+            "top": 100.0 * (crown - top_crop) / side,
+            "width": 100.0 * (right - left) / side,
+            "height": 100.0 * (neck - crown) / side}
+
+
 def cranial_zone(path, cells=40):
     """Where the smooth empty field sits in the head render, in PLATE space.
 
@@ -583,7 +655,8 @@ def cranial_zone(path, cells=40):
 # measurement this tool took, adopted after the first render made it checkable:
 # the old top 13% / left 26% / 48% was written against a mockup and put the box
 # over the ear with its left edge off the brow.
-CSS_INLAY = {"top": 5.0, "left": 45.0, "width": 22.5, "height": 22.5}
+CSS_INLAY = {"top": 0.8, "left": 15.3, "width": 68.0,
+             "height": 68.0}
 
 
 # --- the manifest ------------------------------------------------------------
@@ -692,17 +765,34 @@ def main(argv=None):
         if not os.path.exists(path):
             print("no head_base.webp on disk yet")
             return 1
-        found = cranial_zone(path)
-        print("css  : top %(top).1f%% left %(left).1f%% "
+        extent = head_extent(path)
+        if extent:
+            print("head : left %(left).1f%% top %(top).1f%% "
+                  "%(width).1fx%(height).1f%% of the plate" % extent)
+            # The box the stylesheet should carry: a square the width of the
+            # head, centred on it and nudged to sit inside the plate.
+            box = extent["width"]
+            want_left = extent["left"] + (extent["width"] - box) / 2.0
+            want_top = max(0.8, extent["top"] + extent["height"] / 2.0
+                           - box / 2.0)
+            print("want : left %.1f%% top %.1f%% %.1fx%.1f%%"
+                  % (want_left, want_top, box, box))
+        print("css  : left %(left).1f%% top %(top).1f%% "
               "%(width).1fx%(height).1f%%" % CSS_INLAY)
-        if not found:
-            print("render: no smooth field found — look at it by eye")
+        if not extent:
+            print("render: no head found — look at it by eye")
             return 1
-        print("render: top %(top).1f%% left %(left).1f%% "
-              "%(width).1fx%(height).1f%%" % found)
-        drift = max(abs(found[k] - CSS_INLAY[k]) for k in CSS_INLAY)
+        want = {"left": want_left, "top": want_top,
+                "width": box, "height": box}
+        drift = max(abs(want[k] - CSS_INLAY[k]) for k in CSS_INLAY)
         print("worst drift: %.1f percentage points" % drift)
         print("nothing was changed — .pr-head-inlay is edited by hand")
+        # The cranium, still measured, because it is what the crown patch
+        # used to sit in and a future change may want it again.
+        crown = cranial_zone(path)
+        if crown:
+            print("(the old crown field: top %(top).1f%% left %(left).1f%% "
+                  "%(width).1fx%(height).1f%%)" % crown)
         return 0 if drift <= 6 else 1
 
     plan = frames(cfg)

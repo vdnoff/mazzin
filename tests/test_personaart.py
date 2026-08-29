@@ -65,6 +65,17 @@ def load(path, name):
 print("\n--- it loads with no key and draws nothing on import ---")
 saved_key = os.environ.pop("OPENAI_API_KEY", None)
 gen = load(os.path.join(REPO, "scripts/gen_persona.py"), "gen_persona_v3")
+
+import database                                             # noqa: E402
+
+# No suite talks to a database. reports.py is imported for the one number it
+# shares with the generator — the inlay box the PDF draws the head at, which
+# has to be the box the page draws it at.
+database.execute = lambda *a, **kw: None
+database.query_all = lambda *a, **kw: []
+database.query_one = lambda *a, **kw: None
+
+import reports                                              # noqa: E402
 style = load(os.path.join(REPO, "scripts/persona_style.py"), "persona_style_t")
 check("the generator imports", True)
 gen_src = open(os.path.join(REPO, "scripts/gen_persona.py"),
@@ -402,17 +413,23 @@ if tiny:
 print("    %d frames, %d still placeholder-sized" % (len(gallery), len(tiny)))
 
 
-print("\n--- the cranial zone, which is measured and never moved ---")
-check("the generator can measure it", callable(gen.cranial_zone))
+print("\n--- the head's own box, which is measured and never moved ---")
+check("the generator can measure the head", callable(gen.head_extent))
+check("  and the cranium too, which the box used to sit in",
+      callable(gen.cranial_zone))
 check("  and knows what the stylesheet claims",
-      gen.CSS_INLAY == {"top": 5.0, "left": 45.0,
-                        "width": 22.5, "height": 22.5}, str(gen.CSS_INLAY))
+      gen.CSS_INLAY == {"top": 0.8, "left": 15.3,
+                        "width": 68.0, "height": 68.0}, str(gen.CSS_INLAY))
 sheet = open(os.path.join(REPO, "static/css/result_persona.css"),
              encoding="utf-8").read()
 check("  which is what the stylesheet actually says",
-      re.search(r"\.pr-head-inlay \{[^}]*top: 5%;[^}]*left: 45%;"
-                r"[^}]*width: 22\.5%;[^}]*height: 22\.5%;", sheet, re.S)
+      re.search(r"\.pr-head-inlay \{[^}]*top: 0\.8%;[^}]*left: 15\.3%;"
+                r"[^}]*width: 68(?:\.0)?%;[^}]*height: 68(?:\.0)?%;",
+                sheet, re.S)
       is not None)
+check("  and the PDF draws it at the same box",
+      reports.PERSONA_INLAY_BOX == gen.CSS_INLAY,
+      str(reports.PERSONA_INLAY_BOX))
 # It names the stylesheet rule in a docstring, which is how it explains
 # itself, and that is fine. What it must never do is write one: a generator
 # that could silently move the reader's own diagram is what this guards
@@ -449,20 +466,25 @@ check("    and the manifest writer writes the manifest",
       and "os.replace(tmp, MANIFEST)" in gen_src)
 head_path = os.path.join(GALLERY, "head_base.webp")
 if os.path.exists(head_path) and os.path.getsize(head_path) > 6 * 1024:
-    found = gen.cranial_zone(head_path)
-    check("  a smooth cranial field is found in the render", bool(found))
+    found = gen.head_extent(head_path)
+    check("  the head is found in the render", bool(found))
     if found:
-        drift = max(abs(found[k] - gen.CSS_INLAY[k]) for k in gen.CSS_INLAY)
-        # Asserted now, not reported. The stylesheet used to carry numbers
-        # written against a mockup and this printed the gap; the numbers are
-        # the measurement itself now, so the two agreeing is a property worth
-        # holding — and the day the head is redrawn with the crown somewhere
-        # else, this is what says so instead of the page quietly drawing a
-        # radar on an ear.
+        # The box the head wants: a square its own width, centred on it and
+        # nudged to sit inside the plate. The same arithmetic --check-head
+        # prints, held here so the stylesheet cannot drift off the render.
+        box = found["width"]
+        want = {"left": found["left"] + (found["width"] - box) / 2.0,
+                "top": max(0.8, found["top"] + found["height"] / 2.0
+                           - box / 2.0),
+                "width": box, "height": box}
+        drift = max(abs(want[k] - gen.CSS_INLAY[k]) for k in gen.CSS_INLAY)
         print("    css   : %s" % gen.CSS_INLAY)
-        print("    render: %s" % {k: round(v, 1) for k, v in found.items()})
-        check("  the stylesheet's inlay sits on the render's cranial field",
+        print("    render: %s" % {k: round(v, 1) for k, v in want.items()})
+        check("  the stylesheet's inlay spans the render's head",
               drift <= 3.0, "worst drift %.1f points" % drift)
+        check("  and it really is most of the head, not a patch on it",
+              gen.CSS_INLAY["width"] >= 0.85 * found["width"],
+              "%.1f of %.1f" % (gen.CSS_INLAY["width"], found["width"]))
 else:
     notes.append("head_base.webp is still the v3-A placeholder, so the "
                  ".pr-head-inlay percentages could not be checked against a "
