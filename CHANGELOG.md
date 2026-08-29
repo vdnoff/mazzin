@@ -483,3 +483,6 @@ bottom.
 
 ## 2026-08-29 — claude/minimal-template-polish
 - zodiac30: minimal template polish
+
+## 2026-08-29 — claude/persona-report-v3
+- variants: report arm before DOM work — fixes silent arm-asymmetric event loss
