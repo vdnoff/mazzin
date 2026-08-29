@@ -474,3 +474,6 @@ bottom.
 
 ## 2026-08-29 — claude/persona-reports
 - persona: paid product — profile, delivered head, pairings, PDF, mail
+
+## 2026-08-29 — claude/persona-report-v2
+- persona report v2 + zodiac30 template A/B
