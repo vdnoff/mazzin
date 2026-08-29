@@ -163,10 +163,25 @@ def comparable(config):
     # one is not, and neither fact says anything about whether the two configs
     # are the same shape. Asserted on its own account below.
     out.pop("sale", None)
+    # And `paywall_variants`, which is the same kind of fact one level up:
+    # zodiac30 is running a layout A/B and this funnel is not. This check has
+    # been red on main since that list shipped — it compared a config with the
+    # key against one without and called the shapes different, which they are,
+    # and which says nothing about the translation. Normalised here so the
+    # check guards the thing it was written to guard again.
+    out.pop("paywall_variants", None)
     copy = dict(config["result_copy"])
     for key in ADDED:
         copy.pop(key, None)
     profile = dict(copy["profile"])
+    # And the minimal arm's own copy, one level further in, for the same
+    # reason again: zodiac30 runs a layout A/B and this funnel declares no
+    # `paywall_variants` at all, so there is no arm here to read a checklist
+    # or a two-line rarity. Their absence is not a shape the two configs
+    # disagree on — it is one funnel running an experiment the other is not.
+    # Asserted on its own account below.
+    for key in ("rarity_minimal", "checklist", "checklist_tail"):
+        profile.pop(key, None)
     cross = profile["sign_cross"]
     profile["sign_cross"] = ([cross[k] for k in cross if k != "cusp"]
                              + [cross["cusp"]])
@@ -185,6 +200,13 @@ check("  and `pricing` is the only block they disagree on",
       "%s vs %s" % (cfg["pricing"], twin["pricing"]))
 import payments  # noqa: E402
 
+check("  and runs no layout experiment either",
+      not cfg.get("paywall_variants"), str(cfg.get("paywall_variants")))
+check("    so it carries none of the minimal arm's copy",
+      not {"rarity_minimal", "checklist", "checklist_tail"}
+      & set(cfg["result_copy"]["profile"]),
+      str(sorted({"rarity_minimal", "checklist", "checklist_tail"}
+                 & set(cfg["result_copy"]["profile"]))))
 check("  this funnel runs no sale of its own",
       "sale" not in cfg, str(cfg.get("sale")))
 check("    so it charges its regular price, whatever the English one is doing",
