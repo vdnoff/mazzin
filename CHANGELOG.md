@@ -471,3 +471,6 @@ bottom.
 
 ## 2026-08-29 — claude/stripe-mode-switch
 - admin: stripe mode switch per funnel
+
+## 2026-08-29 — claude/persona-reports
+- persona: paid product — profile, delivered head, pairings, PDF, mail
