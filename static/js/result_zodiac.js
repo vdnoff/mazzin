@@ -471,8 +471,36 @@
   // The rarity, at the size the claim deserves, for the arm that asks for it.
   // Same idea as the persona page's: the number is the argument, so it is set
   // apart from the sentence it sits in rather than left inside a pill.
-  function rarityBadge(data) {
+  // How many readings do NOT land this blend, out of the same 1-in-N the
+  // ribbon is built from. One number, one source: a blend that is 1 in 40 is
+  // 98%, one that is 1 in 10 is 90%, and there is nothing here to keep in
+  // step with anything else.
+  function differentPct(n) {
+    return (typeof n === "number" && n >= 2)
+      ? Math.round((1 - 1 / n) * 100) : 0;
+  }
+
+  function rarityBadge(data, table) {
     if (!data || !data.rarity_line) return null;
+    // The arm that gives the rarity its own screen says it in two lines: what
+    // it is, and what that means. A funnel that declares no such copy — every
+    // one but this — falls through to the single line below, unchanged.
+    var own = (table || {}).rarity_minimal;
+    var pct = differentPct(data.rarity);
+    if (own && own.line && pct) {
+      var badge = elm("div", "zr-rarity is-stacked");
+      badge.appendChild(elm("p", "zr-rarity-line", own.line));
+      if (own.sub) {
+        var words = {};
+        var keys = Object.keys(data.words || {});
+        for (var k = 0; k < keys.length; k++) {
+          words[keys[k]] = data.words[keys[k]];
+        }
+        words.pct = String(pct);
+        badge.appendChild(elm("p", "zr-rarity-sub", fill(own.sub, words)));
+      }
+      return badge;
+    }
     var wrap = elm("div", "zr-rarity");
     var line = data.rarity_line;
     var found = /(\d+(?:\.\d+)?%)/.exec(line);
@@ -775,7 +803,11 @@
               + " 11.1 2.4 8 2.4z",
               "M5.4 7.2h.01", "M7.4 5.1h.01", "M10.2 5.6h.01"],
     map: ["M2.5 4.2 6 2.7l4 1.6 3.5-1.5v9.5L10 13.8l-4-1.6-3.5 1.5z",
-          "M6 2.7v9.5", "M10 4.3v9.5"]
+          "M6 2.7v9.5", "M10 4.3v9.5"],
+    // The offer's checklist. A tick rather than a padlock: this list is what
+    // is in the report, and a row of locks over the price is the page arguing
+    // with the button under it.
+    check: ["M3.2 8.4 6.4 11.6 12.8 4.8"]
   };
 
   function drawn(paths, cls) {
@@ -826,6 +858,51 @@
     lock.setAttribute("aria-hidden", "true");
     lock.appendChild(drawn([LOCK_PATH]));
     item.appendChild(lock);
+    return item;
+  }
+
+  // What is in the report, five short lines, above the price.
+  //
+  // Every line is a clause of a promise the funnel already makes: the keyword
+  // is the question card's own `key` and the text is the config's short form
+  // of that card's `promise`, so this list cannot promise a chapter something
+  // the chapter does not say it contains. Reordered by what they said they
+  // came for, exactly as the question cards are — a career purpose reads
+  // Money first — and only the first match moves.
+  function checklist(ctx, data) {
+    var table = profileBlock(ctx) || {};
+    var rows = table.checklist || [];
+    if (!rows.length) return null;
+    var keys = {};
+    (table.cards || []).forEach(function (card) {
+      keys[card.id] = card.key || "";
+    });
+    var list = elm("ul", "zr-checklist");
+    firstly(rows.slice(), emphasised(purposeRule(ctx))).forEach(
+      function (row) {
+        list.appendChild(checkRow(keys[row.id] || "",
+                                  fill(row.line || "", data.words || {})));
+      });
+    if (table.checklist_tail) {
+      list.appendChild(checkRow("", table.checklist_tail));
+    }
+    return list;
+  }
+
+  function checkRow(key, text) {
+    var item = elm("li", "zr-check");
+    var mark = elm("span", "zr-check-mark");
+    mark.setAttribute("aria-hidden", "true");
+    mark.appendChild(drawn(ICONS.check));
+    item.appendChild(mark);
+    var line = elm("p", "zr-check-line");
+    if (key) {
+      line.appendChild(elm("strong", "zr-check-key", key + ":"));
+      line.appendChild(document.createTextNode(" " + text));
+    } else {
+      line.appendChild(document.createTextNode(text));
+    }
+    item.appendChild(line);
     return item;
   }
 
@@ -881,7 +958,7 @@
   // placement: the consent box, the button, its error line and the legal
   // links are moved into this card, which is why the withdrawal waiver still
   // gates the same button it always did and no payment code lives in here.
-  function offer(ctx, copy, data) {
+  function offer(ctx, copy, data, template) {
     var card = elm("section", "zr-offer");
     var nodes = ctx.nodes;
 
@@ -893,6 +970,15 @@
       var head = ctx.withPrice(
         fill((profileBlock(ctx) || {}).offer_head || "", data.words || {}));
       if (head) card.appendChild(elm("p", "zr-offer-head", head));
+    }
+
+    // Between the headline and the anchor, on the arm that took the question
+    // cards off the page above. Those cards were the answer to "what am I
+    // buying"; without them the offer has to carry it, and it carries it here
+    // rather than as six blocks the reader scrolls past to reach the price.
+    if (data && template === "minimal") {
+      var list = checklist(ctx, data);
+      if (list) card.appendChild(list);
     }
 
     // The price, and the order of the argument around it.
@@ -1168,11 +1254,15 @@
     if (strip) root.appendChild(strip);
     if (data && template === "minimal") {
       // The short way down the page: the picture, the evidence it was read
-      // from, the measure, how rare that is, and then the price. No locked
-      // bullets doing the offer's job above the offer, and no bridge line.
-      var bars = balance(ctx, copy, elements);
-      if (bars) root.appendChild(bars);
-      var rare = rarityBadge(data);
+      // from, how rare the reading is, and then the price. No locked bullets
+      // doing the offer's job above the offer, and no bridge line.
+      //
+      // The four element tiles are gone too. They restated the hero's split
+      // bar one for one — the same four numbers, in the same order, a screen
+      // apart — and a page whose argument is brevity cannot afford to say a
+      // thing twice. The bar keeps it; `balance` still draws for the funnels
+      // that have no rich hero to put it in.
+      var rare = rarityBadge(data, profileBlock(ctx) || {});
       if (rare) root.appendChild(rare);
     } else if (data) {
       var free = freeStrength(ctx, copy);
@@ -1183,7 +1273,7 @@
     } else {
       root.appendChild(path(ctx, copy, elements));
     }
-    root.appendChild(offer(ctx, copy, data));
+    root.appendChild(offer(ctx, copy, data, template));
     reportVariant(ctx, variant);
 
     // The container engine.js moved the offer rows into is empty now and its
