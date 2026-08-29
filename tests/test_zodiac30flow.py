@@ -45,6 +45,62 @@ CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
 HOLD_MS = 1650
 SETTLE_MS = 420
 
+# --- which arm this suite walks ---------------------------------------------
+#
+# zodiac30 runs a layout A/B, and the session id decides which page a reader
+# gets. This suite asserts the control layout — the question cards, the free
+# strength, the bridge line — so it has to ask for the control arm rather than
+# take whichever one a fresh browser happens to hash to. Without this it was a
+# coin flip per run: half of them landed on the minimal arm, found no question
+# cards, and failed on assertions that were never about that page. The minimal
+# arm has its own suite in test_variants.py.
+
+
+def _hashed(text):
+    """The module's own FNV-1a, so this picks the arm it would pick."""
+    value = 0x811C9DC5
+    for ch in text:
+        value ^= ord(ch)
+        value = (value + ((value << 1) + (value << 4) + (value << 7)
+                          + (value << 8) + (value << 24))) & 0xFFFFFFFF
+    return value
+
+
+def _arm_for(sid, cfg):
+    pool = [v for v in (cfg.get("paywall_variants") or [])
+            if v.get("enabled") is not False and v.get("weight", 1) > 0]
+    if not pool:
+        return "control"
+    total = sum(v.get("weight", 1) for v in pool)
+    point = (_hashed(sid) % 100000) / 100000.0 * total
+    seen = 0
+    for variant in pool:
+        seen += variant.get("weight", 1)
+        if point < seen:
+            return variant["id"]
+    return pool[-1]["id"]
+
+
+def _control_sid():
+    cfg = json.load(open(os.path.join(ROOT, "funnels/zodiac30.json"),
+                         encoding="utf-8"))
+    for n in range(4000):
+        sid = "c0000000-0000-4000-8000-%012d" % n
+        if _arm_for(sid, cfg) == "control":
+            return sid
+    raise SystemExit("no session id reaches the control arm")
+
+
+CONTROL_SID = _control_sid()
+
+
+def pin_control(page):
+    """Ask for the control arm before the page has a chance to choose one."""
+    page.add_init_script(
+        "try{sessionStorage.setItem('mazzin_sid',%s);}catch(e){}"
+        % json.dumps(CONTROL_SID))
+
+
 fails = []
 checks = [0]
 
@@ -160,6 +216,7 @@ def to_result(page, slug, seeking=None):
     `seeking` names a card to tap when the step offering it comes up; every
     other step takes whatever is in the first slot.
     """
+    pin_control(page)
     page.goto("http://127.0.0.1:%d/%s" % (PORT, slug))
     page.wait_for_selector("#cards .card", timeout=20000)
     page.wait_for_timeout(300)
@@ -278,6 +335,7 @@ def walk_beats(page, slug, ids, stop_after=None):
     Returns (beats, tapped). `stop_after` leaves the walk once that step's
     beat has been read, for the runs that only care about an early one.
     """
+    pin_control(page)
     page.goto("http://127.0.0.1:%d/%s" % (PORT, slug))
     page.wait_for_selector("#cards .card", timeout=20000)
     page.wait_for_timeout(300)
@@ -375,6 +433,7 @@ def offer_at(slug, iso):
 
 
 def _offer_walk(page, slug):
+    pin_control(page)
     page.goto("http://127.0.0.1:%d/%s" % (PORT, slug))
     page.wait_for_selector("#cards .card", timeout=20000)
     page.wait_for_timeout(300)
@@ -402,6 +461,7 @@ def _offer_walk(page, slug):
 
 
 def start(page, slug):
+    pin_control(page)
     page.goto("http://127.0.0.1:%d/%s" % (PORT, slug))
     page.wait_for_selector("#cards .card", timeout=20000)
     page.wait_for_timeout(400)
@@ -1144,9 +1204,15 @@ def rest_of_run(page):
         check("  and the note beside the price is unchanged",
               live["note"] == "one-time", live["note"])
         check("  nothing on the card counts down or runs out",
-              not re.search(r"hurry|spots|seats|in stock|selling fast|"
-                            r"almost gone|act now|countdown|expires in|"
-                            r"\d+\s*(?:left|remaining)",
+              # "spots" and "seats" only where they are a count of what is
+              # available. The report has a chapter called Blind spots, and
+              # a scarcity scan that reads a chapter name as a scarcity claim
+              # is a scan that will be turned off the first time it cries
+              # wolf.
+              not re.search(r"hurry|in stock|selling fast|almost gone|act now|"
+                            r"countdown|expires in|while stocks|"
+                            r"\d+\s*(?:left|remaining|spots?|seats?)|"
+                            r"(?:limited|only)\s+\d*\s*(?:spots?|seats?)",
                             live["residue"]), live["residue"][:120])
 
     over = offer_at("zodiac30", AFTER)

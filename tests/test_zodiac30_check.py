@@ -1374,9 +1374,13 @@ check("the block carries these five keys and no others",
 # product is available or how long the reader has to decide — and it is
 # scanned over what the offer says, which is the sale block and the card
 # around it, rather than over every sentence in the funnel.
-URGENCY = re.compile(r"\b(hurry|spots?|seats?|in stock|selling fast|"
-                     r"almost gone|act now|countdown|expires in|"
-                     r"while stocks|don't miss|\d+\s*(?:left|remaining))\b",
+# "spots" and "seats" count only where they are a count of what is left. One
+# of this report's six chapters is called Blind spots, and a scan that reads a
+# chapter name as a scarcity claim is one somebody switches off.
+URGENCY = re.compile(r"\b(?:hurry|in stock|selling fast|almost gone|"
+                     r"act now|countdown|expires in|while stocks|"
+                     r"don't miss|\d+\s*(?:left|remaining|spots?|seats?)|"
+                     r"(?:limited|only)\s+\d*\s*(?:spots?|seats?))\b",
                      re.I)
 OFFER_COPY = ([sale["label"]]
               + [cfg["checkout"]["cta_label"], cfg["checkout"]["reframe"]]
