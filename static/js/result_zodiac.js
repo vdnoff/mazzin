@@ -573,6 +573,23 @@
   // ribbon is built from. One number, one source: a blend that is 1 in 40 is
   // 98%, one that is 1 in 10 is 90%, and there is nothing here to keep in
   // step with anything else.
+  // Two centred lines, broken at the em-dash rather than at whatever width
+  // the box happens to be. The break is where the sentence turns, so it is
+  // the same break in any column — and a translation that carries no dash
+  // gets one line rather than a guess at where to cut it.
+  function rarityNote(text) {
+    var note = elm("p", "zr-rarity-note");
+    var cut = String(text).split("\u2014");
+    if (cut.length !== 2) {
+      note.textContent = text;
+      return note;
+    }
+    note.appendChild(elm("span", "zr-rarity-note-line",
+                         cut[0].trim() + " \u2014"));
+    note.appendChild(elm("span", "zr-rarity-note-line", cut[1].trim()));
+    return note;
+  }
+
   function differentPct(n) {
     return (typeof n === "number" && n >= 2)
       ? Math.round((1 - 1 / n) * 100) : 0;
@@ -580,23 +597,18 @@
 
   function rarityBadge(data, table) {
     if (!data || !data.rarity_line) return null;
-    // The arm that gives the rarity its own screen says it in two lines: what
-    // it is, and what that means. A funnel that declares no such copy — every
-    // one but this — falls through to the single line below, unchanged.
-    var own = (table || {}).rarity_minimal;
+    // The arm that gives the rarity its own screen gives it a card: the frame
+    // of the claim, the number at the size the claim deserves, and one line
+    // about what it is worth. A funnel that declares no such copy — every one
+    // but this — falls through to the single line below, unchanged.
+    var own = (table || {}).rarity_card;
     var pct = differentPct(data.rarity);
-    if (own && own.line && pct) {
-      var badge = elm("div", "zr-rarity is-stacked");
-      badge.appendChild(elm("p", "zr-rarity-line", own.line));
-      if (own.sub) {
-        var words = {};
-        var keys = Object.keys(data.words || {});
-        for (var k = 0; k < keys.length; k++) {
-          words[keys[k]] = data.words[keys[k]];
-        }
-        words.pct = String(pct);
-        badge.appendChild(elm("p", "zr-rarity-sub", fill(own.sub, words)));
-      }
+    if (own && own.lead && pct) {
+      var badge = elm("div", "zr-rarity is-card");
+      badge.appendChild(elm("p", "zr-rarity-lead", own.lead));
+      badge.appendChild(elm("p", "zr-rarity-figure", pct + "%"));
+      if (own.tail) badge.appendChild(elm("p", "zr-rarity-tail", own.tail));
+      if (own.note) badge.appendChild(rarityNote(own.note));
       return badge;
     }
     var wrap = elm("div", "zr-rarity");
@@ -969,22 +981,29 @@
   // Money first — and only the first match moves.
   function checklist(ctx, data) {
     var table = profileBlock(ctx) || {};
-    var rows = table.checklist || [];
+    var rows = table.unlock || [];
     if (!rows.length) return null;
     var keys = {};
     (table.cards || []).forEach(function (card) {
       keys[card.id] = card.key || "";
     });
+    var block = elm("div", "zr-unlock");
+    if (table.unlock_head) {
+      block.appendChild(elm("p", "zr-unlock-head", table.unlock_head));
+    }
     var list = elm("ul", "zr-checklist");
     firstly(rows.slice(), emphasised(purposeRule(ctx))).forEach(
       function (row) {
         list.appendChild(checkRow(keys[row.id] || "",
                                   fill(row.line || "", data.words || {})));
       });
-    if (table.checklist_tail) {
-      list.appendChild(checkRow("", table.checklist_tail));
+    var tail = table.unlock_tail;
+    if (tail && tail.key) {
+      list.appendChild(checkRow(tail.key,
+                                fill(tail.line || "", data.words || {})));
     }
-    return list;
+    block.appendChild(list);
+    return block;
   }
 
   function checkRow(key, text) {
@@ -993,10 +1012,13 @@
     mark.setAttribute("aria-hidden", "true");
     mark.appendChild(drawn(ICONS.check));
     item.appendChild(mark);
+    // The keyword and the description in one paragraph beside the tick, so a
+    // row that runs to two lines wraps under its own text rather than under
+    // the icon.
     var line = elm("p", "zr-check-line");
     if (key) {
-      line.appendChild(elm("strong", "zr-check-key", key + ":"));
-      line.appendChild(document.createTextNode(" " + text));
+      line.appendChild(elm("strong", "zr-check-key", key));
+      line.appendChild(document.createTextNode(" \u2014 " + text));
     } else {
       line.appendChild(document.createTextNode(text));
     }

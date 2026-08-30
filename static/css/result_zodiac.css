@@ -650,6 +650,135 @@ body:has(.result-module) {
   font-size: 14px;
 }
 
+/* --- the rarity, as a card ------------------------------------------------ */
+
+.result-module.is-minimal .zr-rarity.is-card {
+  margin: 22px auto 4px;
+  /* Padding, not a height. The note under the figure is two lines at 390px
+     and one on a wider phone, and a fixed box would leave dead ground under
+     it on the second. */
+  padding: 26px 24px 24px;
+  max-width: 340px;
+  border: 1px solid var(--zr-lux);
+  border-radius: 20px;
+  background:
+    radial-gradient(120% 140% at 50% 0%,
+      rgba(196, 166, 96, 0.14) 0%, rgba(196, 166, 96, 0) 70%),
+    rgba(18, 22, 46, 0.72);
+  box-shadow: 0 0 26px rgba(196, 166, 96, 0.14);
+  text-align: center;
+}
+
+.result-module.is-minimal .zr-rarity.is-card .zr-rarity-lead,
+.result-module.is-minimal .zr-rarity.is-card .zr-rarity-tail {
+  display: block;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--zr-muted);
+}
+
+/* The number is the argument, so it is the size of one. */
+.result-module.is-minimal .zr-rarity.is-card .zr-rarity-figure {
+  display: block;
+  margin: 2px 0 0;
+  font-family: var(--font-display, inherit);
+  font-size: 72px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--zr-lux);
+}
+
+.result-module.is-minimal .zr-rarity-note {
+  margin: 16px 0 0;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--zr-lux);
+}
+
+/* Each half of the sentence on its own line, centred, so the break is where
+   the sentence turns rather than where the box happens to end. */
+.result-module.is-minimal .zr-rarity-note-line { display: block; }
+
+/* --- the unlock block ----------------------------------------------------- */
+
+.result-module.is-minimal .zr-unlock { margin: 0 0 18px; }
+
+.result-module.is-minimal .zr-unlock-head {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--zr-lux);
+}
+
+.result-module.is-minimal .zr-checklist { margin: 0; }
+
+.result-module.is-minimal .zr-check {
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 11px;
+}
+
+.result-module.is-minimal .zr-check-mark {
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  color: var(--zr-lux);
+}
+
+/* One paragraph beside the tick, so the second line of a long row wraps under
+   its own text and never under the icon. */
+.result-module.is-minimal .zr-check-line {
+  font-size: 17.5px;
+  line-height: 1.45;
+  color: var(--zr-bright);
+}
+
+.result-module.is-minimal .zr-check-key {
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--zr-lux);
+}
+
+/* --- the price it is instead of ------------------------------------------- */
+
+/* Drawn rather than declared. `text-decoration: line-through` is one hairline
+   in the type's own colour, which beside a 52px figure reads as a rendering
+   artefact rather than as a price that was crossed out. This is a rule of its
+   own, thick, tilted a couple of degrees and in a red the gold does not
+   contain — so it reads as a strike at a glance.
+
+   A stylesheet change and not a markup one: the struck price is a node both
+   arms draw, and the control arm's rendered page has to stay exactly what it
+   was. */
+.result-module.is-minimal .zr-price-was {
+  position: relative;
+  font-size: 29px;
+  font-weight: 700;
+  color: #9AA3C4;
+  text-decoration: none;
+}
+
+.result-module.is-minimal .zr-price-was::after {
+  content: "";
+  position: absolute;
+  left: -3px;
+  right: -3px;
+  top: 52%;
+  height: 3px;
+  border-radius: 3px;
+  background: #E27870;
+  transform: rotate(-6deg);
+}
+
 /* the four-element chart */
 .zr-balance {
   display: flex;
