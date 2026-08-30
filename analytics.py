@@ -166,6 +166,68 @@ def variant_config(cfg):
 
 # --- windows ---------------------------------------------------------------
 
+# --- what counts as paid traffic -------------------------------------------
+#
+# One definition, one function, and every query on the dashboard and in the
+# console script runs through it. A second copy of this predicate is how the
+# panel and the CLI start disagreeing about the same window.
+#
+# A session is paid when the row that recorded its arrival carries a subid
+# that is present, non-empty, and not a share link's. That is the strongest
+# signal this pipeline actually stores:
+#
+#   - There is no `fbclid` column and nothing captures one. engine.js reads
+#     `subid` and the four `utm_*` parameters off the URL and nothing else
+#     (`readAttribution`), so a click id is not available to filter on however
+#     much we might prefer it.
+#   - `utm_source` is weaker rather than stronger here: it is set by whoever
+#     wrote the link, it is absent from the ad URLs this funnel actually runs,
+#     and an owner pasting a utm into a test visit would read as paid.
+#   - `subid` is the ad-set identifier the Meta final URLs carry, and the one
+#     thing that reliably distinguishes a bought click from a typed address.
+#   - The share loop deliberately reuses the same column — a returning visitor
+#     from a share card arrives on `subid=share-<persona>`, see app.py and
+#     scripts/gen_persona_share_pages.py — so those are excluded by prefix
+#     rather than by a separate mechanism.
+#
+# The test is on the `funnel_start` row rather than on every row, because
+# attribution is read from the URL once per page load: a reader who arrives on
+# an ad and later opens the result in a tab without the parameters has events
+# carrying no subid at all. The arrival is the record of how they were
+# acquired.
+SHARE_SUBID_PREFIX = "share-"
+
+
+def paid_sessions_clause(alias, funnel, start=None, end=None):
+    """`(sql fragment, params)` restricting `alias`'s rows to paid sessions.
+
+    The fragment is a whole `AND ...` and is safe to drop into any query that
+    has a `session_id` on `alias`; it is empty when nothing should be
+    filtered, so callers can interpolate it unconditionally.
+
+    The window is applied to the arrival row as well as to whatever the caller
+    is counting. Without it a session that arrived before the window would
+    stop being paid inside it, which is not what "paid traffic this week"
+    means to anybody reading the page.
+    """
+    window, params = _window_clause("a0.created_at", start, end)
+    fragment = (
+        "AND %s.session_id IN ("
+        "SELECT a0.session_id FROM events a0 "
+        "WHERE a0.funnel = %%s AND a0.event = 'funnel_start' "
+        "AND a0.subid IS NOT NULL AND a0.subid <> '' "
+        "AND a0.subid NOT LIKE %%s %s)" % (alias, window)
+    )
+    return fragment, [funnel, SHARE_SUBID_PREFIX + "%"] + params
+
+
+def _paid_parts(alias, funnel, paid_only, start=None, end=None):
+    """The fragment and params for a builder, or empty when unfiltered."""
+    if not paid_only:
+        return "", []
+    return paid_sessions_clause(alias, funnel, start, end)
+
+
 def _window_clause(column, start, end):
     """`(sql fragment, params)` for a half-open window on `column`.
 
@@ -192,11 +254,13 @@ FROM events e
 WHERE e.funnel = %s
   AND e.event IN ({names})
   {window}
+  {paid}
 GROUP BY e.event
 """
 
 
-def event_counts(funnel, start=None, end=None, events=FUNNEL_EVENTS):
+def event_counts(funnel, start=None, end=None, events=FUNNEL_EVENTS,
+                 paid_only=False):
     """`{event: sessions}` for one funnel, zero-filled for every event asked.
 
     One query per funnel rather than one query for all of them: the index is
@@ -205,10 +269,11 @@ def event_counts(funnel, start=None, end=None, events=FUNNEL_EVENTS):
     `GROUP BY funnel, event` over a date range would read the table.
     """
     window, params = _window_clause("e.created_at", start, end)
+    paid, paid_params = _paid_parts("e", funnel, paid_only, start, end)
     sql = EVENT_COUNT_SQL.format(
-        names=", ".join(["%s"] * len(events)), window=window)
+        names=", ".join(["%s"] * len(events)), window=window, paid=paid)
     rows = database.query_all(
-        sql, tuple([funnel] + list(events) + params)) or []
+        sql, tuple([funnel] + list(events) + params + paid_params)) or []
     counts = {name: 0 for name in events}
     for row in rows:
         counts[row["event"]] = int(row["sessions"] or 0)
@@ -222,16 +287,19 @@ WHERE e.funnel = %s
   AND e.event = 'swipe'
   AND e.step IS NOT NULL
   {window}
+  {paid}
 GROUP BY e.step
 ORDER BY e.step
 """
 
 
-def swipe_steps(funnel, start=None, end=None):
+def swipe_steps(funnel, start=None, end=None, paid_only=False):
     """`{step: sessions}` — how far into the quiz readers actually get."""
     window, params = _window_clause("e.created_at", start, end)
+    paid, paid_params = _paid_parts("e", funnel, paid_only, start, end)
     rows = database.query_all(
-        SWIPE_STEPS_SQL.format(window=window), tuple([funnel] + params)) or []
+        SWIPE_STEPS_SQL.format(window=window, paid=paid),
+        tuple([funnel] + params + paid_params)) or []
     return {int(row["step"]): int(row["sessions"] or 0) for row in rows
             if row["step"] is not None}
 
@@ -244,18 +312,22 @@ FROM events e
 WHERE e.funnel = %s
   AND e.event IN ({names})
   {window}
+  {paid}
 GROUP BY COALESCE(e.subid, %s), e.event
 """
 
 
-def subid_events(funnel, start=None, end=None, events=FUNNEL_EVENTS):
+def subid_events(funnel, start=None, end=None, events=FUNNEL_EVENTS,
+                 paid_only=False):
     """`{subid: {event: sessions}}` — the same columns, split by campaign."""
     window, params = _window_clause("e.created_at", start, end)
+    paid, paid_params = _paid_parts("e", funnel, paid_only, start, end)
     sql = SUBID_EVENTS_SQL.format(
-        names=", ".join(["%s"] * len(events)), window=window)
+        names=", ".join(["%s"] * len(events)), window=window, paid=paid)
     rows = database.query_all(
         sql,
-        tuple([NO_SUBID, funnel] + list(events) + params + [NO_SUBID])) or []
+        tuple([NO_SUBID, funnel] + list(events) + params + paid_params
+              + [NO_SUBID])) or []
     out = {}
     for row in rows:
         cell = out.setdefault(row["subid"], {name: 0 for name in events})
@@ -273,11 +345,12 @@ FROM purchases p
 WHERE p.funnel = %s
   AND p.status = %s
   {window}
+  {paid}
 GROUP BY p.currency
 """
 
 
-def purchase_totals(funnel, start=None, end=None):
+def purchase_totals(funnel, start=None, end=None, paid_only=False):
     """`[{currency, purchases, cents}]`, one row per currency.
 
     Per currency because the funnels are not all priced in one: zodiac-ro
@@ -287,9 +360,10 @@ def purchase_totals(funnel, start=None, end=None):
     wrong by the time it was read.
     """
     window, params = _window_clause("p.created_at", start, end)
+    paid, paid_params = _paid_parts("p", funnel, paid_only, start, end)
     rows = database.query_all(
-        PURCHASES_SQL.format(window=window),
-        tuple([funnel, PAID_STATUS] + params)) or []
+        PURCHASES_SQL.format(window=window, paid=paid),
+        tuple([funnel, PAID_STATUS] + params + paid_params)) or []
     return [{"currency": (row["currency"] or "").lower(),
              "purchases": int(row["purchases"] or 0),
              "cents": int(row["cents"] or 0)} for row in rows]
@@ -306,6 +380,7 @@ JOIN (
   FROM events e
   WHERE e.funnel = %s
     AND e.event = 'funnel_start'
+    {paid}
     {window_events}
   GROUP BY e.session_id
 ) a ON a.session_id = p.session_id
@@ -316,7 +391,7 @@ GROUP BY COALESCE(a.subid, %s), p.currency
 """
 
 
-def subid_purchases(funnel, start=None, end=None):
+def subid_purchases(funnel, start=None, end=None, paid_only=False):
     """`{subid: [{currency, purchases, cents}]}`, attributed by session join.
 
     `purchases` carries no `subid` column and does not need one: the webhook
@@ -331,10 +406,15 @@ def subid_purchases(funnel, start=None, end=None):
     """
     ev_window, ev_params = _window_clause("e.created_at", start, end)
     pu_window, pu_params = _window_clause("p.created_at", start, end)
+    # The arrival row is already in this statement, so paid-only is a
+    # predicate on it rather than a second lookup of the same thing.
+    inner = ("AND e.subid IS NOT NULL AND e.subid <> '' "
+             "AND e.subid NOT LIKE %s") if paid_only else ""
     sql = SUBID_PURCHASES_SQL.format(
-        window_events=ev_window, window_purchases=pu_window)
-    params = ([NO_SUBID, funnel] + ev_params
-              + [funnel, PAID_STATUS] + pu_params + [NO_SUBID])
+        window_events=ev_window, window_purchases=pu_window, paid=inner)
+    params = ([NO_SUBID, funnel]
+              + ([SHARE_SUBID_PREFIX + "%"] if paid_only else [])
+              + ev_params + [funnel, PAID_STATUS] + pu_params + [NO_SUBID])
     rows = database.query_all(sql, tuple(params)) or []
     out = {}
     for row in rows:
@@ -380,6 +460,7 @@ FROM (
     AND e.extra IS NOT NULL
     AND JSON_EXTRACT(e.extra, '$.variant') IS NOT NULL
     {window}
+    {paid}
   GROUP BY e.session_id, variant
 ) a
 LEFT JOIN (
@@ -395,7 +476,7 @@ ORDER BY variant, shown DESC
 """
 
 
-def variant_rows(funnel, start=None, end=None):
+def variant_rows(funnel, start=None, end=None, paid_only=False):
     """Per variant × subid: shown, reached, paid. The A/B readout's one query.
 
     Shared, not copied. `scripts/paywall_variant_stats.py` prints these rows
@@ -404,9 +485,10 @@ def variant_rows(funnel, start=None, end=None):
     they stop running the same statement — so they run this one.
     """
     window, params = _window_clause("e.created_at", start, end)
-    sql = VARIANT_SQL.format(window=window)
+    paid, paid_params = _paid_parts("e", funnel, paid_only, start, end)
+    sql = VARIANT_SQL.format(window=window, paid=paid)
     return database.query_all(
-        sql, tuple([funnel] + params + [funnel, funnel])) or []
+        sql, tuple([funnel] + params + paid_params + [funnel, funnel])) or []
 
 
 def fold_variants(rows):

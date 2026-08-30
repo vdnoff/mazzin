@@ -426,6 +426,44 @@ def _parse_date(value):
         return None
 
 
+AUDIENCE_KEY = "audience"
+PAID_ONLY = "paid"
+ALL_TRAFFIC = "all"
+DEFAULT_AUDIENCE = PAID_ONLY
+
+
+def resolve_audience(args, store=None):
+    """Which traffic the page counts: paid only, or everything.
+
+    Paid by default, because that is the question the dashboard exists to
+    answer — what the ad spend bought. Direct visits, arrivals from a share
+    card and the owner's own test runs are traffic, and none of them are
+    performance.
+
+    Sticky per admin session, the same way somebody expects a filter to be:
+    set it once and every page keeps it until it is set back. An explicit
+    parameter always wins over the stored value, so a pasted URL shows what
+    it says rather than what the last click left behind.
+    """
+    store = session if store is None else store
+    asked = (args.get(AUDIENCE_KEY) or "").strip().lower()
+    if asked in (PAID_ONLY, ALL_TRAFFIC):
+        name = asked
+        try:
+            store[AUDIENCE_KEY] = name
+        except Exception:      # a store that will not take it is not fatal
+            pass
+    else:
+        name = store.get(AUDIENCE_KEY) or DEFAULT_AUDIENCE
+        if name not in (PAID_ONLY, ALL_TRAFFIC):
+            name = DEFAULT_AUDIENCE
+    return {"audience": name, "paid_only": name == PAID_ONLY,
+            "label": "Paid only" if name == PAID_ONLY else "All traffic",
+            "other": ALL_TRAFFIC if name == PAID_ONLY else PAID_ONLY,
+            "other_label": ("All traffic" if name == PAID_ONLY
+                            else "Paid only")}
+
+
 def resolve_range(args, now=None):
     """The window every query on the page runs against.
 
@@ -495,14 +533,15 @@ def _revenue_display(rows):
     return " + ".join(r["display"] for r in rows) if rows else "—"
 
 
-def overview(window):
+def overview(window, paid_only=False):
     """One row per funnel. The landing page's whole payload."""
     rows = []
     for slug in analytics.funnel_slugs():
         meta = analytics.funnel_meta(slug)
-        counts = analytics.event_counts(slug, window["start"], window["end"])
+        counts = analytics.event_counts(slug, window["start"], window["end"],
+                                        paid_only=paid_only)
         totals = analytics.purchase_totals(
-            slug, window["start"], window["end"])
+            slug, window["start"], window["end"], paid_only=paid_only)
         purchases = sum(t["purchases"] for t in totals)
         revenue = _revenue(totals)
         starts = counts["funnel_start"]
@@ -556,10 +595,11 @@ TOP_SUBIDS = 8
 OTHER_SUBID = "(other)"
 
 
-def _subid_rows(slug, window, limit=TOP_SUBIDS):
-    events = analytics.subid_events(slug, window["start"], window["end"])
+def _subid_rows(slug, window, limit=TOP_SUBIDS, paid_only=False):
+    events = analytics.subid_events(slug, window["start"], window["end"],
+                                    paid_only=paid_only)
     purchases = analytics.subid_purchases(
-        slug, window["start"], window["end"])
+        slug, window["start"], window["end"], paid_only=paid_only)
 
     keys = sorted(set(events) | set(purchases),
                   key=lambda k: (-(events.get(k, {}).get("funnel_start", 0)),
@@ -625,15 +665,18 @@ def _unattributed(totals, subid_rows):
             **{event: 0 for event in analytics.FUNNEL_EVENTS}}
 
 
-def funnel_detail(slug, window):
+def funnel_detail(slug, window, paid_only=False):
     """Everything the detail page draws, and the JSON behind it."""
     meta = analytics.funnel_meta(slug)
-    counts = analytics.event_counts(slug, window["start"], window["end"])
-    totals = analytics.purchase_totals(slug, window["start"], window["end"])
+    counts = analytics.event_counts(slug, window["start"], window["end"],
+                                    paid_only=paid_only)
+    totals = analytics.purchase_totals(slug, window["start"], window["end"],
+                                       paid_only=paid_only)
     purchases = sum(t["purchases"] for t in totals)
     revenue = _revenue(totals)
 
-    seen = analytics.swipe_steps(slug, window["start"], window["end"])
+    seen = analytics.swipe_steps(slug, window["start"], window["end"],
+                                 paid_only=paid_only)
     # Every step the config declares, whether or not anybody reached it. A
     # missing row is the most interesting row on a drop-off chart and it must
     # not be the one the query leaves out.
@@ -648,7 +691,7 @@ def funnel_detail(slug, window):
             "of_first": analytics.rate(reached, top),
         })
 
-    rows = _subid_rows(slug, window)
+    rows = _subid_rows(slug, window, paid_only=paid_only)
     leftover = _unattributed(totals, rows)
     if leftover:
         rows.append(leftover)
@@ -669,13 +712,13 @@ def funnel_detail(slug, window):
         "steps": steps,
         "subids": rows,
         "share_tap": counts["share_tap"] if meta["shares"] else None,
-        "variants": (variants(slug, window, meta=meta)
+        "variants": (variants(slug, window, meta=meta, paid_only=paid_only)
                      if meta["variants"] else None),
     }
     return detail
 
 
-def variants(slug, window, meta=None):
+def variants(slug, window, meta=None, paid_only=False):
     """The A/B panel: what the config says is live, and what it did.
 
     Both halves matter and neither answers the other's question. The config
@@ -686,7 +729,8 @@ def variants(slug, window, meta=None):
     honest way to read a test somebody has already stopped.
     """
     meta = meta or analytics.funnel_meta(slug)
-    rows = analytics.variant_rows(slug, window["start"], window["end"])
+    rows = analytics.variant_rows(slug, window["start"], window["end"],
+                                  paid_only=paid_only)
     declared = {arm["id"]: arm for arm in meta["variants"]}
 
     def cell(row):
@@ -811,8 +855,9 @@ def logout():
 @_guarded("the overview")
 def index():
     window = resolve_range(request.args)
-    data = overview(window)
-    return render_template("overview.html", window=window,
+    audience = resolve_audience(request.args)
+    data = overview(window, paid_only=audience["paid_only"])
+    return render_template("overview.html", window=window, audience=audience,
                            range_query=_range_query(window),
                            csrf=csrf_token(), **data)
 
@@ -824,8 +869,9 @@ def funnel(slug):
         return render_template("unconfigured.html",
                                message="No funnel called %r." % slug), 404
     window = resolve_range(request.args)
-    detail = funnel_detail(slug, window)
-    return render_template("funnel.html", window=window,
+    audience = resolve_audience(request.args)
+    detail = funnel_detail(slug, window, paid_only=audience["paid_only"])
+    return render_template("funnel.html", window=window, audience=audience,
                            range_query=_range_query(window),
                            csrf=csrf_token(), **detail)
 
@@ -847,8 +893,10 @@ def api_funnels():
 @_guarded("the overview")
 def api_overview():
     window = resolve_range(request.args)
-    payload = overview(window)
+    audience = resolve_audience(request.args)
+    payload = overview(window, paid_only=audience["paid_only"])
     payload["range"] = _range_json(window)
+    payload["audience"] = audience["audience"]
     payload["counted"] = "unique sessions"
     return jsonify(payload)
 
@@ -859,8 +907,10 @@ def api_funnel(slug):
     if slug not in analytics.funnel_slugs():
         return jsonify({"error": "unknown_funnel"}), 404
     window = resolve_range(request.args)
-    payload = funnel_detail(slug, window)
+    audience = resolve_audience(request.args)
+    payload = funnel_detail(slug, window, paid_only=audience["paid_only"])
     payload["range"] = _range_json(window)
+    payload["audience"] = audience["audience"]
     payload["counted"] = "unique sessions"
     return jsonify(payload)
 
@@ -871,8 +921,10 @@ def api_variants(slug):
     if slug not in analytics.funnel_slugs():
         return jsonify({"error": "unknown_funnel"}), 404
     window = resolve_range(request.args)
-    payload = variants(slug, window)
+    audience = resolve_audience(request.args)
+    payload = variants(slug, window, paid_only=audience["paid_only"])
     payload["range"] = _range_json(window)
+    payload["audience"] = audience["audience"]
     return jsonify(payload)
 
 

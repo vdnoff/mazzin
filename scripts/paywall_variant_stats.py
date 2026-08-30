@@ -53,12 +53,16 @@ import analytics      # noqa: E402
 # its database, which is every server this runs on.
 
 
-def rows_for(funnel, days):
+def rows_for(funnel, days, paid_only=False):
     """The stats rows for a funnel, optionally limited to the last N days."""
     start = None
     if days:
         start = datetime.datetime.now() - datetime.timedelta(days=days)
-    return analytics.variant_rows(funnel, start=start)
+    # The dashboard's filter, from the same function the panel calls —
+    # `analytics.paid_sessions_clause`, reached through `variant_rows`. A
+    # second definition here is how a console number and a panel number start
+    # disagreeing about the same window.
+    return analytics.variant_rows(funnel, start=start, paid_only=paid_only)
 
 
 def rate(paid, shown):
@@ -99,17 +103,21 @@ def main(argv=None):
                     help="hide rows with fewer sessions than this")
     ap.add_argument("--by-variant", action="store_true",
                     help="collapse subid and show one row per arm")
+    ap.add_argument("--paid-only", action="store_true",
+                    help="count only sessions acquired on a paid ad click — "
+                         "the dashboard's default view")
     args = ap.parse_args(argv)
 
-    rows = rows_for(args.funnel, args.days)
+    rows = rows_for(args.funnel, args.days, paid_only=args.paid_only)
     if not rows:
         print("no paywall_variant events for %s%s"
               % (args.funnel,
                  " in the last %d days" % args.days if args.days else ""))
         return 0
-    print("%s — paywall variants%s"
+    print("%s — paywall variants%s%s"
           % (args.funnel,
-             " (last %d days)" % args.days if args.days else ""))
+             " (last %d days)" % args.days if args.days else "",
+             " [paid traffic only]" if args.paid_only else " [all traffic]"))
     show(fold(rows) if args.by_variant else rows, args.floor)
     return 0
 
