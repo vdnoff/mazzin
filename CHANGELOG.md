@@ -501,3 +501,6 @@ bottom.
 
 ## 2026-08-30 — claude/unlock-font-tune
 - zodiac30 minimal: unlock font 16px
+
+## 2026-08-30 — claude/minimal-only
+- zodiac30: minimal only
