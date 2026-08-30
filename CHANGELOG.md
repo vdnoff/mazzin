@@ -498,3 +498,6 @@ bottom.
 
 ## 2026-08-30 — claude/minimal-facelift
 - zodiac30 minimal: full facelift (mockup-approved)
+
+## 2026-08-30 — claude/unlock-font-tune
+- zodiac30 minimal: unlock font 16px
