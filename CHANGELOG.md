@@ -510,3 +510,6 @@ bottom.
 
 ## 2026-08-29 — claude/admin-command-center
 - admin: funnel command center — switcher, ad URL, live preview, step picks
+
+## 2026-08-30 — claude/admin-command-center
+- admin: funnel command center
