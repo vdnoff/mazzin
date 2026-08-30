@@ -1,3 +1,14 @@
+{# Which traffic the numbers count. Paid is the default and the question the
+   dashboard exists to answer; "All traffic" is here so the difference can be
+   seen rather than guessed at. The choice sticks per admin session, so both
+   links carry the window and nothing else. #}
+<nav class="ranges audience">
+  <a href="{{ url_for(request.endpoint, audience='paid', **dict(range_query, **(request.view_args or {}))) }}"
+     class="{{ 'on' if audience.paid_only else '' }}">Paid only</a>
+  <a href="{{ url_for(request.endpoint, audience='all', **dict(range_query, **(request.view_args or {}))) }}"
+     class="{{ '' if audience.paid_only else 'on' }}">All traffic</a>
+  <span class="audience-note">{{ 'ad clicks only — share arrivals and direct visits excluded' if audience.paid_only else 'everything, including share arrivals and direct visits' }}</span>
+</nav>
 {# The range selector, shared by both pages. Every link keeps the page it is
    on and changes only the window. #}
 <nav class="ranges">

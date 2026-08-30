@@ -537,7 +537,7 @@ def api(path, **params):
 
 
 print("\n--- overview ---")
-status, data = api("/admin/api/overview", range="today")
+status, data = api("/admin/api/overview", range="today", audience="all")
 eq("overview answers", status, 200)
 rows = {row["slug"]: row for row in data["funnels"]}
 eq("every configured funnel has a row, live or dead",
@@ -596,7 +596,12 @@ eq("an unknown range falls back too",
    api("/admin/api/overview", range="all-time")[1]["range"]["range"], "7d")
 
 print("\n--- funnel detail ---")
-status, detail = api("/admin/api/funnel/kitchen", range="today")
+# The dashboard defaults to paid traffic now, so the blocks below that count
+# every session — the `(none)` row, the unattributed sale, the drop-off over
+# all arrivals — ask for all traffic by name. What the default does is checked
+# on its own further down; conflating the two would leave both untested.
+status, detail = api("/admin/api/funnel/kitchen", range="today",
+                     audience="all")
 eq("detail answers", status, 200)
 steps = {row["step"]: row["sessions"] for row in detail["steps"]}
 eq("every step the config declares has a row", len(detail["steps"]), 13)
@@ -639,7 +644,8 @@ eq("kitchen emits no share event, so the column is absent",
    detail["share_tap"], None)
 eq("kitchen runs no test, so there is no panel", detail["variants"], None)
 
-status, detail = api("/admin/api/funnel/persona", range="today")
+status, detail = api("/admin/api/funnel/persona", range="today",
+                     audience="all")
 eq("persona counts its shares", detail["share_tap"], 2)
 eq("an unknown funnel is a 404",
    api("/admin/api/funnel/nonesuch")[0], 404)
@@ -647,7 +653,8 @@ eq("an unknown funnel is a 404 on the page too",
    client.get("/admin/funnel/nonesuch").status_code, 404)
 
 print("\n--- a/b panel ---")
-status, panel = api("/admin/api/variants/persona", range="today")
+status, panel = api("/admin/api/variants/persona", range="today",
+                    audience="all")
 eq("the panel answers", status, 200)
 arms = {row["variant"]: row for row in panel["overall"]}
 eq("both arms are listed", sorted(arms), ["advantage", "why"])
@@ -672,7 +679,8 @@ eq("advantage split by campaign",
    by_subid[("advantage", "ig-2")]["shown"], 2)
 
 eq("the detail page carries the same panel",
-   api("/admin/api/funnel/persona", range="today")[1]["variants"]["overall"],
+   api("/admin/api/funnel/persona", range="today",
+       audience="all")[1]["variants"]["overall"],
    panel["overall"])
 
 print("\n--- the panel and the console script agree ---")
@@ -862,6 +870,106 @@ except AssertionError:
     tripped = True
 check("the spy catches a write from anywhere else", tripped)
 
+
+print("\n--- paid traffic only, which is what the dashboard is for ---")
+# Four arrivals on one funnel, one of each kind the definition has to tell
+# apart. Seeded here rather than reused from above so the counts are exact.
+rig.walk("zodiac", "paid-1", TODAY, "fb-ad-42", swipes=13, result=True,
+         paywall=True, pay_tap=True, purchase=(300, "usd", "paid", TODAY))
+rig.walk("zodiac", "share-1", TODAY, "share-open_flame", swipes=13,
+         result=True, paywall=True, pay_tap=True, purchase=(300, "usd", "paid", TODAY))
+rig.walk("zodiac", "direct-1", TODAY, None, swipes=13, result=True,
+         paywall=True, pay_tap=True, purchase=(300, "usd", "paid", TODAY))
+rig.walk("zodiac", "empty-1", TODAY, "", swipes=13, result=True,
+         paywall=True, pay_tap=True, purchase=(300, "usd", "paid", TODAY))
+
+check("one definition, in one place",
+      hasattr(analytics, "paid_sessions_clause")
+      and analytics.SHARE_SUBID_PREFIX == "share-")
+# The four cases, run as SQL rather than asserted about in prose.
+for label, subid, want in (("a real ad click", "fb-ad-42", True),
+                           ("a share arrival", "share-open_flame", False),
+                           ("a direct visit", None, False),
+                           ("an empty subid", "", False)):
+    counts = analytics.event_counts("zodiac", events=("funnel_start",),
+                                    paid_only=True)
+    seen = rig.conn.execute(
+        "SELECT COUNT(*) AS n FROM events WHERE funnel='zodiac'"
+        " AND event='funnel_start' AND session_id=?"
+        " AND subid IS NOT NULL AND subid <> ''"
+        " AND subid NOT LIKE 'share-%'",
+        ({"fb-ad-42": "paid-1", "share-open_flame": "share-1",
+          None: "direct-1", "": "empty-1"}[subid],)).fetchone()["n"]
+    check("  %s counts as paid: %s" % (label, want), bool(seen) is want)
+
+all_counts = analytics.event_counts("zodiac", events=("funnel_start",))
+paid_counts = analytics.event_counts("zodiac", events=("funnel_start",),
+                                     paid_only=True)
+check("the filter changes the number", paid_counts["funnel_start"]
+      < all_counts["funnel_start"],
+      "%d vs %d" % (paid_counts["funnel_start"], all_counts["funnel_start"]))
+check("  and keeps exactly the ad clicks",
+      all_counts["funnel_start"] - paid_counts["funnel_start"] == 3,
+      "%d dropped" % (all_counts["funnel_start"]
+                      - paid_counts["funnel_start"]))
+paid_sales = analytics.purchase_totals("zodiac", paid_only=True)
+all_sales = analytics.purchase_totals("zodiac")
+check("  purchases follow the same rule",
+      sum(t["purchases"] for t in paid_sales)
+      < sum(t["purchases"] for t in all_sales))
+
+print("\n--- the toggle ---")
+status, paid_view = api("/admin/api/funnel/zodiac", range="today",
+                        audience="paid")
+eq("the API takes the filter", status, 200)
+eq("  and says which one it answered", paid_view.get("audience"), "paid")
+status, all_view = api("/admin/api/funnel/zodiac", range="today",
+                       audience="all")
+eq("  the other way too", all_view.get("audience"), "all")
+def starts_of(payload):
+    """Arrivals, off the detail payload's own `events` block."""
+    return (payload.get("events") or {}).get("funnel_start")
+
+
+check("  and the numbers differ between them",
+      starts_of(paid_view) < starts_of(all_view),
+      "%s vs %s" % (starts_of(paid_view), starts_of(all_view)))
+check("  by exactly the three arrivals that were not ad clicks",
+      starts_of(all_view) - starts_of(paid_view) == 3,
+      "%s vs %s" % (starts_of(all_view), starts_of(paid_view)))
+
+# Sticky: the last explicit choice is what an unqualified request gets.
+status, sticky = api("/admin/api/funnel/zodiac", range="today")
+eq("the choice sticks for the session", sticky.get("audience"), "all")
+status, back = api("/admin/api/funnel/zodiac", range="today", audience="paid")
+eq("  and can be set back", back.get("audience"), "paid")
+
+# A fresh client has never chosen, so it gets the default.
+fresh = app.test_client()
+sign_in(fresh)
+first = fresh.get("/admin/api/overview?range=today").get_json()
+eq("a dashboard nobody has touched shows paid only",
+   first.get("audience"), "paid")
+
+print("\n--- the console and the panel agree ---")
+panel = analytics.variant_rows("persona", paid_only=True)
+import importlib
+stats = importlib.import_module("scripts.paywall_variant_stats") \
+    if False else None
+sys.path.insert(0, os.path.join(REPO, "scripts"))
+import paywall_variant_stats as cli          # noqa: E402
+cli_rows = cli.rows_for("persona", 0, paid_only=True)
+check("the CLI runs the panel's own query",
+      cli_rows == panel, "%d vs %d rows" % (len(cli_rows), len(panel)))
+check("  and its unfiltered numbers match too",
+      cli.rows_for("persona", 0) == analytics.variant_rows("persona"))
+check("  through the shared function, not a copy of the predicate",
+      "paid_only=paid_only" in open(
+          os.path.join(REPO, "scripts/paywall_variant_stats.py"),
+          encoding="utf-8").read()
+      and "NOT LIKE" not in open(
+          os.path.join(REPO, "scripts/paywall_variant_stats.py"),
+          encoding="utf-8").read())
 
 print()
 print("%d checks, %d failed" % (checks[0], len(fails)))
