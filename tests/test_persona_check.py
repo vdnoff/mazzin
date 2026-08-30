@@ -991,11 +991,13 @@ check("  so the pair is drawn only under that flag",
                     r"card\.appendChild\(headPair\(data\)\);", module)
       is not None)
 check("  and the totem stands alone on the other branch",
-      "card.appendChild(soloTotem(data));" in module
+      "card.appendChild(soloTotem(data," in module
       and module.count("function soloTotem(") == 1)
 check("  and only the share button and the lean layout differ besides",
       "{ share: true, ctx: ctx, lean: true }" in module
-      and "if (opts && opts.share && opts.ctx)" in module
+      # The share moved onto the totem, so the guard moved with it: the
+      # delivered page passes no ctx and therefore gets no button.
+      and "(opts && opts.share) ? opts.ctx : null" in module
       and "var lean = !!(opts && opts.lean);" in module)
 check("the solo totem stands on the same pedestal as the pair's",
       ".pr-solo .pr-stand" in sheet and ".pr-solo .pr-totem-art" in sheet
@@ -1309,11 +1311,13 @@ check("the rarity is the loudest thing after the picture",
       is not None
       and int(re.search(r"\.pr-rarity-figure \{[^}]*font-size: (\d+)px",
                         sheet, re.S).group(1)) >= 36)
+# The width moved to the column so the share button's corner offset is
+# measured from the picture; the art fills it.
 check("  and the totem earns more room than it had",
-      re.search(r"\.pr-solo \.pr-totem-art \{ width: (\d+)px", sheet)
-      is not None
-      and int(re.search(r"\.pr-solo \.pr-totem-art \{ width: (\d+)px",
-                        sheet).group(1)) >= 200)
+      re.search(r"\.pr-solo \{[^}]*width: (\d+)px", sheet, re.S) is not None
+      and int(re.search(r"\.pr-solo \{[^}]*width: (\d+)px", sheet, re.S)
+              .group(1)) >= 200
+      and ".pr-solo .pr-totem-art { width: 100%" in sheet)
 check("  the contact-sheet label stepped back",
       re.search(r"\.pr-taps-caption \{[^}]*font-size: (\d+)px", sheet, re.S)
       is not None
@@ -1401,6 +1405,42 @@ check("  which the module tags from the section's own two marks",
       and 'prefix: "Quiet month:"' in module)
 check("  taking the mark off the front of the line it prefixed",
       "note.slice(mark.prefix.length)" in module)
+
+print("\n--- the share is a mark on the totem ---")
+# "Share your shape" survives as the accessible name — it is the label a
+# screen reader reads and the tooltip a cursor gets. What is gone is the
+# button DRAWING those words, which is the third argument `elm` would take.
+check("the worded row is gone",
+      not re.search(r'elm\("button", "pr-share-btn",', module)
+      and 'elm("button", "pr-share-btn")' in module)
+check("  the button carries a drawn glyph instead",
+      "function shareGlyph(" in module
+      and 'button.appendChild(shareGlyph());' in module)
+check("  and still says what it is, for anyone not looking at it",
+      'button.setAttribute("aria-label"' in module)
+check("it sits on the totem rather than under the card",
+      "wrap.appendChild(handout);" in module
+      and "function soloTotem(data, ctx, copy)" in module)
+check("  and the card no longer appends a share row of its own",
+      "card.appendChild(handout)" not in module)
+check("the corner offset is measured from the picture",
+      re.search(r"\.pr-solo \{[^}]*--pr-solo-lift: 18px", sheet, re.S)
+      is not None
+      and re.search(r"\.pr-share \{[^}]*top: calc\(var\(--pr-solo-lift\) \+ 6px\)",
+                    sheet, re.S) is not None)
+check("  which needs the column to be the art's own width",
+      re.search(r"\.pr-solo \{[^}]*width: 208px", sheet, re.S) is not None
+      and ".pr-solo .pr-totem-art { width: 100%" in sheet)
+check("  and the stand's lift named once, not twice",
+      ".pr-solo .pr-stand { padding: var(--pr-solo-lift) 0 0; }" in sheet)
+# 40 is the tap target rather than the visible mark: a thumb gets the whole
+# corner while the page shows a small square.
+check("the tap target is at least 40px square",
+      re.search(r"\.pr-share-btn \{[^}]*width: 40px;[^}]*height: 40px;",
+                sheet, re.S) is not None)
+check("  with the glyph smaller than it",
+      re.search(r"\.pr-share-glyph \{[^}]*width: 20px", sheet, re.S)
+      is not None)
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for f in fails:
