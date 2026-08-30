@@ -951,6 +951,31 @@ first = fresh.get("/admin/api/overview?range=today").get_json()
 eq("a dashboard nobody has touched shows paid only",
    first.get("audience"), "paid")
 
+print("\n--- the toggle is on the page, not just in the payload ---")
+overview_html = client.get("/admin?range=today&audience=paid").get_data(
+    as_text=True)
+check("the overview draws it", 'class="ranges audience"' in overview_html)
+check("  offering both ways", "audience=paid" in overview_html
+      and "audience=all" in overview_html)
+check("  with the live one lit",
+      re.search(r'audience=paid[^>]*class="on"', overview_html) is not None)
+check("  and a line saying what is being counted",
+      "share arrivals and direct visits excluded" in overview_html)
+funnel_html = client.get(
+    "/admin/funnel/kitchen?range=today&audience=paid").get_data(as_text=True)
+check("the funnel page draws it too",
+      'class="ranges audience"' in funnel_html)
+switched = client.get("/admin?range=today&audience=all").get_data(as_text=True)
+check("switching lights the other one",
+      re.search(r'audience=all[^>]*class="on"', switched) is not None)
+check("  and says so in the note",
+      "including share arrivals and direct visits" in switched)
+stuck = client.get("/admin?range=today").get_data(as_text=True)
+check("  and the page keeps it without being asked again",
+      re.search(r'audience=all[^>]*class="on"', stuck) is not None)
+client.get("/admin?range=today&audience=paid")   # leave it as it was
+
+
 print("\n--- the console and the panel agree ---")
 panel = analytics.variant_rows("persona", paid_only=True)
 import importlib
