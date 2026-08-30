@@ -293,10 +293,12 @@ READ = """() => {
           const key = n.querySelector('.zr-check-key');
           const mark = n.querySelector('.zr-check-mark');
           const box = line.getBoundingClientRect();
+          const cs = getComputedStyle(line);
           return {key: key ? key.textContent : '',
             text: line.textContent.trim(),
-            lines: Math.round(box.height
-                   / parseFloat(getComputedStyle(line).lineHeight)),
+            size: parseFloat(cs.fontSize),
+            leading: parseFloat(cs.lineHeight),
+            lines: Math.round(box.height / parseFloat(cs.lineHeight)),
             // A second line has to start under the words, never under the
             // tick.
             underText: Math.round(box.left)
@@ -685,6 +687,21 @@ check("  a row that runs long wraps under its text, never under the tick",
 check("    and at least one of them does run long",
       max(r["lines"] for r in rows) >= 2,
       str([r["lines"] for r in rows]))
+# The block is a list to scan, not prose to read. At 17.5px the longest row —
+# LOVE, and it is the longest by some way — ran to three lines, which put the
+# price a line and a half further down the card than it needed to be.
+check("  the rows are set at 16px",
+      all(r["size"] == 16 for r in rows), str([r["size"] for r in rows]))
+check("    with the leading a multiple of that, not a second reduction",
+      all(abs(r["leading"] - r["size"] * 1.45) < 0.6 for r in rows),
+      str([(r["size"], r["leading"]) for r in rows]))
+check("  and no row runs past two lines at 390px",
+      max(r["lines"] for r in rows) <= 2,
+      str([(r["key"], r["lines"]) for r in rows]))
+longest = max(rows, key=lambda r: len(r["text"]))
+check("    including the longest of them, which is %r"
+      % longest["key"], longest["lines"] <= 2,
+      "%s at %d lines" % (longest["key"], longest["lines"]))
 check("it sits above the price, under the headline",
       minimal["offer"].index("zr-unlock")
       == minimal["offer"].index("zr-offer-head") + 1

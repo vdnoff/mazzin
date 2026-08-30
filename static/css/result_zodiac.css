@@ -735,8 +735,17 @@ body:has(.result-module) {
 
 /* One paragraph beside the tick, so the second line of a long row wraps under
    its own text and never under the icon. */
+/* 16px, down from 17.5. The LOVE row is the longest of the five and ran to
+   three lines at the larger size; at this one it wraps to two, which takes
+   the whole block down a line and a half and leaves the price under it
+   carrying more of the card.
+
+   The line-height is unitless and stays 1.45, which IS the proportional
+   tightening asked for: the leading is a multiple of the size, so it comes
+   down from 25.4px to 23.2px on its own. Setting a smaller ratio as well
+   would have tightened it twice. */
 .result-module.is-minimal .zr-check-line {
-  font-size: 17.5px;
+  font-size: 16px;
   line-height: 1.45;
   color: var(--zr-bright);
 }
