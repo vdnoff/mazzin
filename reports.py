@@ -6229,13 +6229,20 @@ PERSONA_PDF_CSS = ZODIAC_PDF_CSS + """
    `contain` alone would not have been enough: the print copies under
    static/img/print were pre-cropped before the PDF ever saw them, so
    scripts/gen_print_variants.py writes this funnel's at 3:4 as well. */
-/* A media object: a fixed modest column with the section's opening text
-   running beside it. It was a full-width box with a portrait floating in the
-   middle and most of the box empty. */
+/* A media object built from table cells rather than a float — see
+   `_pdf_media` in this file for why a float cannot be used here. */
+.media {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 2mm;
+}
+.media-shot { width: 30mm; padding: 0 5mm 0 0; vertical-align: top; }
+.media-text { vertical-align: top; }
+.media-text > * { margin-top: 0; }
+
 .tap {
-  float: left;
   width: 30mm;
-  margin: 0 5mm 2mm 0;
+  margin: 0;
 }
 .tap img {
   width: 30mm;
@@ -6250,8 +6257,22 @@ PERSONA_PDF_CSS = ZODIAC_PDF_CSS + """
   text-transform: none;
   line-height: 1.3;
 }
-/* The text stops wrapping at the end of its own section. */
-.section-body::after { content: ""; display: block; clear: both; }
+/* Every section contains its own float.
+
+   This was `.section-body::after`, a clearfix on a class this document does
+   not have — the wrapper is `.section` — so the float was never contained at
+   all. In print that is not a wrapping nicety: a floated figure taller than
+   its section's text carries on into the next one, and page 4 had the image
+   sitting on top of the first strength's heading while page 5 had it over
+   the month rail. The reader loses lines.
+
+   `flow-root` gives the section its own block formatting context, which is
+   the containment this needs; the clearfix after it is the same rule stated
+   the old way, for a renderer that does not know the keyword. Both are
+   harmless where the other works. */
+/* No float to contain any more: the picture and the opening text are table
+   cells. Kept as a block context so a future float cannot escape either. */
+.section { display: flow-root; }
 
 /* The contact sheet is covered edge to edge. Bands inside a grid of thirteen
    squares read as a broken sheet; whole frames are what the section slot
@@ -6455,6 +6476,67 @@ PDF_BODY = {
 }
 
 
+def _split_first_block(html):
+    """(first top-level element, everything after it).
+
+    A tag-depth scan rather than a regex: the builders emit nested markup and
+    "the first `</p>`" is the wrong answer the moment a paragraph contains a
+    span. Returns ("", html) for anything this cannot read, which puts the
+    whole body below the picture rather than guessing.
+    """
+    if not html.startswith("<"):
+        return "", html
+    depth = 0
+    i = 0
+    n = len(html)
+    while i < n:
+        if html[i] != "<":
+            i += 1
+            continue
+        close = html.find(">", i)
+        if close < 0:
+            return "", html
+        tag = html[i + 1:close]
+        if tag.startswith("/"):
+            depth -= 1
+            if depth == 0:
+                return html[:close + 1], html[close + 1:]
+        elif not tag.endswith("/") and tag.split(" ")[0] not in _VOID_TAGS:
+            depth += 1
+        i = close + 1
+    return "", html
+
+
+_VOID_TAGS = frozenset(("img", "br", "hr", "input", "meta", "link"))
+
+
+def _pdf_media(shot, body):
+    """The picture beside the section's opening text, without a float.
+
+    A floated figure is what this was, and in print it does not stay in its
+    own section: a float taller than the text beside it carries into the next
+    one, and WeasyPrint re-places it after a page break at the same offset —
+    so the image landed on top of the first strength's heading on page 4 and
+    across the month rail on page 5. `flow-root` and a clearfix on the
+    section did not fix it, because the escape happens at the page break
+    rather than at the end of the block.
+
+    Two table cells cannot do that. The picture and the opening paragraph sit
+    side by side, and everything after them is full width below — which is
+    also the shape the layout wanted: text beside the picture, not a column
+    of text running the whole length of a 30mm image.
+    """
+    if not shot:
+        return body
+    first, rest = _split_first_block(body)
+    if not first:
+        return shot + body
+    return ('<table class="media"><tr>'
+            '<td class="media-shot">%s</td>'
+            '<td class="media-text">%s</td>'
+            "</tr></table>%s" % (shot, first, rest))
+
+
 def _pdf_section_body(section, structured):
     """The inner HTML for one section, whichever schema it came in on."""
     # The photograph this section was given, if the funnel names one. Here
@@ -6469,11 +6551,11 @@ def _pdf_section_body(section, structured):
         builder = PDF_BODY.get(section.get("id"))
         if builder and isinstance(data, dict):
             try:
-                return shot + builder(data)
+                return _pdf_media(shot, builder(data))
             except Exception:
                 log.exception("pdf section %s failed", section.get("id"))
     # Schema 1, or a section that arrived without usable data.
-    return shot + "<p>%s</p>" % _e(section.get("body"))
+    return _pdf_media(shot, "<p>%s</p>" % _e(section.get("body")))
 
 
 # Six to a row, the same as the result page's grid. Stated once, because the
