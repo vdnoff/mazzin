@@ -460,6 +460,196 @@ body:has(.result-module) {
   color: var(--zr-faint);
 }
 
+/* --- the minimal arm's lux hero -------------------------------------------
+ *
+ * Everything below hangs off `.result-module.is-minimal`, which result_zodiac
+ * sets on the container for that arm and only that arm. The control page
+ * matches none of it, which is why its rendered subtree is unchanged — the
+ * variants fixture compares that subtree and is the thing keeping this
+ * honest.
+ *
+ * Gold here is #C4A660, a half-step down from the page's --zr-gold: at the
+ * weight a border and four ornaments put on screen, the brighter one reads as
+ * yellow rather than as metal. */
+.result-module.is-minimal {
+  --zr-lux: #C4A660;
+  --zr-bright: #F8F6F0;
+}
+
+.result-module.is-minimal .zr-kicker.is-framed {
+  letter-spacing: 0.22em;
+  color: var(--zr-lux);
+}
+
+/* Margins rather than a flex gap: the line is a text node between two spans,
+   and a gap only separates flex items — which the text is not, so it came out
+   welded to both marks. */
+.result-module.is-minimal .zr-kicker.is-framed .zr-star:first-child {
+  margin-right: 9px;
+}
+
+.result-module.is-minimal .zr-kicker.is-framed .zr-star:last-child {
+  margin-left: 9px;
+}
+
+.result-module.is-minimal .zr-star { color: var(--zr-lux); }
+
+.result-module.is-minimal .zr-hero.is-lux {
+  position: relative;
+  border: 1px solid var(--zr-lux);
+  border-radius: 20px;
+  padding: 26px 20px 24px;
+  box-shadow: 0 0 28px rgba(196, 166, 96, 0.16),
+              inset 0 0 40px rgba(196, 166, 96, 0.05);
+}
+
+/* One mark to a corner, inset far enough that the border passes behind the
+   glyph rather than through it. */
+.result-module.is-minimal .zr-corner {
+  position: absolute;
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.75;
+}
+
+.result-module.is-minimal .zr-corner.is-tl { top: 8px; left: 10px; }
+.result-module.is-minimal .zr-corner.is-tr { top: 8px; right: 10px; }
+.result-module.is-minimal .zr-corner.is-bl { bottom: 8px; left: 10px; }
+.result-module.is-minimal .zr-corner.is-br { bottom: 8px; right: 10px; }
+
+/* The medallion: bigger, and ringed twice — the outer ring separated from the
+   art by the card's own ground so the two do not read as one thick border. */
+.result-module.is-minimal .zr-hero.is-lux .zr-glyph {
+  width: 76px;
+  height: 76px;
+  border: 2px solid var(--zr-lux);
+  outline: 1px solid rgba(196, 166, 96, 0.45);
+  outline-offset: 3px;
+  box-shadow: 0 0 18px rgba(196, 166, 96, 0.28);
+}
+
+.result-module.is-minimal .zr-hero.is-lux .zr-subtype {
+  font-size: 35px;
+  line-height: 1.08;
+}
+
+/* A short rule under the name, the width of a word rather than of the column:
+   an accent, not a divider. */
+.result-module.is-minimal .zr-hero.is-lux .zr-subtype::after {
+  content: "";
+  display: block;
+  width: 52px;
+  height: 2px;
+  margin: 10px 0 0;
+  border-radius: 2px;
+  background: var(--zr-lux);
+}
+
+/* The formula, as capsules. Wrapping is the point: four chips do not fit one
+   line at 390px and must never be the reason the card scrolls sideways. */
+.result-module.is-minimal .zr-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+.result-module.is-minimal .zr-chip {
+  max-width: 100%;
+  padding: 3px 9px;
+  border: 1px solid rgba(196, 166, 96, 0.55);
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--zr-lux);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The side they lean to is lit and the other is not, so the row reads before
+   the dot is found. */
+.result-module.is-minimal .zr-scale-pole.is-active {
+  color: var(--zr-lux);
+  font-weight: 700;
+}
+
+.result-module.is-minimal .zr-scale-run {
+  position: absolute;
+  top: 50%;
+  height: 3px;
+  transform: translateY(-50%);
+  border-radius: 3px;
+  background: rgba(196, 166, 96, 0.42);
+}
+
+.result-module.is-minimal .zr-scale-dot {
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--zr-lux);
+  background: var(--zr-lux);
+  box-shadow: 0 0 0 3px rgba(196, 166, 96, 0.22);
+}
+
+/* Taller, with the figure inside its own block where the block is wide enough
+   to hold it, and the element names under the bar at the same widths. */
+.result-module.is-minimal .zr-split-bar {
+  height: 42px;
+  border-radius: 10px;
+}
+
+.result-module.is-minimal .zr-split-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.result-module.is-minimal .zr-split-pct {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  /* Dark on the element's own colour, which is the only ink that holds on all
+     four of them. */
+  color: rgba(14, 20, 48, 0.86);
+}
+
+.result-module.is-minimal .zr-split-names {
+  display: flex;
+  margin: 7px 0 0;
+}
+
+.result-module.is-minimal .zr-split-name {
+  flex: none;
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The reading is the sentence this card is for. It was set as an aside under
+   a rule; it is the primary text here. */
+.result-module.is-minimal .zr-crossline.is-bright {
+  margin: 20px 0 0;
+  font-size: 18.5px;
+  line-height: 1.5;
+  color: var(--zr-bright);
+}
+
+.result-module.is-minimal .zr-crossline.is-bright .zr-star {
+  margin-right: 7px;
+  font-size: 14px;
+}
+
 /* the four-element chart */
 .zr-balance {
   display: flex;
