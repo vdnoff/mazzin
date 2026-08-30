@@ -180,7 +180,8 @@ def comparable(config):
     # or a two-line rarity. Their absence is not a shape the two configs
     # disagree on — it is one funnel running an experiment the other is not.
     # Asserted on its own account below.
-    for key in ("rarity_minimal", "checklist", "checklist_tail"):
+    for key in ("rarity_card", "chips", "unlock", "unlock_head",
+                "unlock_tail"):
         profile.pop(key, None)
     cross = profile["sign_cross"]
     profile["sign_cross"] = ([cross[k] for k in cross if k != "cusp"]
@@ -202,11 +203,10 @@ import payments  # noqa: E402
 
 check("  and runs no layout experiment either",
       not cfg.get("paywall_variants"), str(cfg.get("paywall_variants")))
+ARM_ONLY = {"rarity_card", "chips", "unlock", "unlock_head", "unlock_tail"}
 check("    so it carries none of the minimal arm's copy",
-      not {"rarity_minimal", "checklist", "checklist_tail"}
-      & set(cfg["result_copy"]["profile"]),
-      str(sorted({"rarity_minimal", "checklist", "checklist_tail"}
-                 & set(cfg["result_copy"]["profile"]))))
+      not ARM_ONLY & set(cfg["result_copy"]["profile"]),
+      str(sorted(ARM_ONLY & set(cfg["result_copy"]["profile"]))))
 check("  this funnel runs no sale of its own",
       "sale" not in cfg, str(cfg.get("sale")))
 check("    so it charges its regular price, whatever the English one is doing",

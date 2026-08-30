@@ -98,8 +98,9 @@ def _no_rarity(copy):
         # draw, so their absence on the twin is not a shape the two configs
         # disagree on. Their being absent there is asserted separately.
         out["profile"] = {k: v for k, v in copy["profile"].items()
-                          if k not in ("rarity", "rarity_minimal",
-                                       "checklist", "checklist_tail")}
+                          if k not in ("rarity", "rarity_card", "chips",
+                                       "unlock", "unlock_head",
+                                       "unlock_tail")}
     return out
 
 
@@ -1216,31 +1217,53 @@ check("  and no copy states it — every mention is the {price} token",
 
 print("\n--- the minimal arm's own copy ---")
 PROFILE = cfg["result_copy"]["profile"]
-RARE = PROFILE.get("rarity_minimal") or {}
-ROWS = PROFILE.get("checklist") or []
-TAIL = PROFILE.get("checklist_tail") or ""
+RARE = PROFILE.get("rarity_card") or {}
+ROWS = PROFILE.get("unlock") or []
+TAIL = PROFILE.get("unlock_tail") or {}
+HEAD = PROFILE.get("unlock_head") or ""
 CARDS = {c["id"]: c for c in PROFILE["cards"]}
-check("the rarity has a two-line form", bool(RARE.get("line"))
-      and bool(RARE.get("sub")), str(sorted(RARE)))
-check("  and it carries those two keys and no others",
-      sorted(RARE) == ["line", "sub"], str(sorted(RARE)))
-check("  the share is a slot, not a figure",
-      "{pct}" in RARE["sub"] and not re.search(r"\d", RARE["line"]),
-      RARE["sub"])
-# The one number on that line is computed from the rarity table at render.
-# A percentage written into the config would be a second number to keep in
-# step with the first, and the stale one would be the one on the page.
+check("the rarity card has its four lines",
+      sorted(RARE) == ["lead", "note", "tail"] and all(RARE.values()),
+      str(sorted(RARE)))
+check("  the figure is computed, so the copy states none",
+      not re.search(r"\d", " ".join(RARE.values())),
+      str([v for v in RARE.values() if re.search(r"\d", v)]))
+check("  and the note breaks at a dash rather than at a newline",
+      RARE["note"].count("\u2014") == 1 and "\n" not in RARE["note"],
+      RARE["note"])
+# The one number on that card is computed from the rarity table at render.
 stated = re.findall(r"[^{]\d+\s*%", json.dumps(PROFILE, ensure_ascii=False))
 check("  no percentage is written into the profile copy anywhere",
       not stated, str(stated[:4]))
 check("  and no other statistic is either",
       not re.search(r"\b\d+\s*(?:in|of|out of)\s*\d+\b",
-                    json.dumps(
-                        {k: v for k, v in PROFILE.items()
-                         if k not in ("rarity",)}, ensure_ascii=False)),
+                    json.dumps({k: v for k, v in PROFILE.items()
+                                if k != "rarity"}, ensure_ascii=False)),
       "")
+# "Your edge over the rest" is approved copy: it is a claim about a reading
+# being uncommon, which the rarity table measures. What may not appear is a
+# claim about the reader being better than other people.
+SUPERIORITY = re.compile(r"\b(?:better than (?:most|others|other people)|"
+                         r"superior|smarter than|above average|elite|"
+                         r"you are rarer|more evolved)\b", re.I)
+check("  it claims a rare reading, not a better person",
+      not SUPERIORITY.search(json.dumps(PROFILE, ensure_ascii=False)),
+      str(SUPERIORITY.findall(json.dumps(PROFILE, ensure_ascii=False))))
 
-check("the checklist has one row per chapter it names",
+check("the formula is declared as capsules",
+      isinstance(PROFILE.get("chips"), list) and len(PROFILE["chips"]) == 4,
+      str(PROFILE.get("chips")))
+check("  each one a slot the profile block fills",
+      all(re.fullmatch(r"[^{}]*\{\w+\}[^{}]*", c) for c in PROFILE["chips"]),
+      str(PROFILE["chips"]))
+check("  naming only words the profile carries",
+      set(re.findall(r"\{(\w+)\}", " ".join(PROFILE["chips"])))
+      <= {"sign", "element", "second", "energy"},
+      str(sorted(set(re.findall(r"\{(\w+)\}",
+                                " ".join(PROFILE["chips"]))))))
+
+check("the unlock block is headed", bool(HEAD), HEAD)
+check("  with one row per chapter it names",
       len(ROWS) == 4 and all(r.get("id") in CARDS and r.get("line")
                              for r in ROWS),
       str([r.get("id") for r in ROWS]))
@@ -1252,58 +1275,102 @@ check("  the two chapters with no row of their own are the tail's",
       sorted(set(CARDS) - {r["id"] for r in ROWS}) == ["dna", "palette"],
       str(sorted(set(CARDS) - {r["id"] for r in ROWS})))
 check("  which names them both",
-      CARDS["palette"]["key"].lower() in TAIL.lower()
-      and CARDS["dna"]["key"].lower() in TAIL.lower(), TAIL)
-check("  every row is one short line",
-      all(len(r["line"]) <= 60 and "\n" not in r["line"] for r in ROWS),
-      str([len(r["line"]) for r in ROWS]))
+      "blueprint" in (TAIL.get("key", "") + TAIL.get("line", "")).lower()
+      and "colors" in TAIL.get("line", "").lower(),
+      str(TAIL))
 check("  the year row fills from the computed months",
       [r for r in ROWS if r["id"] == "shopping"][0]["line"]
-      == "{first} → {last}",
+      == "{first} → {last}, month by month",
       str([r["line"] for r in ROWS if r["id"] == "shopping"]))
 check("  and no row invents a token nothing fills",
       set(re.findall(r"\{(\w+)\}",
-                     " ".join([r["line"] for r in ROWS] + [TAIL])))
+                     " ".join([r["line"] for r in ROWS]
+                              + [TAIL.get("line", "")])))
       <= {"first", "last"},
       str(sorted(set(re.findall(r"\{(\w+)\}",
                                 " ".join([r["line"] for r in ROWS]))))))
 
-# The claim that matters: this list promises nothing the funnel does not
-# already promise. Every content word of every row has to appear in the copy
-# the question cards are built from — so a row cannot quietly add a chapter,
-# a number or a guarantee that the report never offered.
+# Every row is a promise about a chapter the report actually delivers, and
+# every content word of it already appears in the copy that chapter's own
+# question card is built from — so the offer cannot name something the
+# report does not contain.
+SECTIONS = {s["id"] for s in cfg["report"]["sections"]
+            if s.get("enabled") is not False}
+check("every unlock row names a section the report delivers",
+      {r["id"] for r in ROWS} <= SECTIONS,
+      str({r["id"] for r in ROWS} - SECTIONS))
+check("  and the tail's two are delivered as well",
+      {"palette", "dna"} <= SECTIONS, str(SECTIONS))
 SOURCE = " ".join(
     [c.get("key", "") for c in PROFILE["cards"]]
     + [c.get("promise", "") for c in PROFILE["cards"]]
     + [v for c in PROFILE["cards"]
        for v in (c.get("upgrade") or {}).values()]
-    + [PROFILE.get("offer_head", "")]).lower()
+    + [PROFILE.get("offer_head", "")]
+    # And what the report itself says it contains. A row may use the words of
+    # the section it names — "hidden strengths", "profile" — because those are
+    # the funnel's own words for what is delivered, not a new promise.
+    + [s.get("title", "") for s in cfg["report"]["sections"]]
+    + [line for s in cfg["report"]["sections"]
+       for line in (s.get("preview") or [])]
+    + [s.get("teaser_line", "") for s in cfg["report"]["sections"]]
+    # And the archetypes' own words for each chapter — the setup and trigger
+    # this funnel already shows a reader about what is in it. "The strengths
+    # you're not using" is a paraphrase of "5 Hidden Strengths", and the
+    # corpus has to be every sentence the funnel already says about the
+    # report or the check measures vocabulary rather than promises.
+    + [text for style in cfg["styles"]
+       for reveal in (style.get("reveals") or {}).values()
+       if isinstance(reveal, dict)
+       for text in reveal.values() if isinstance(text, str)]
+    + [cfg["checkout"].get("product_name", "")]).lower()
 
 
 def content(text):
-    return {w for w in re.findall(r"[a-z]{4,}", text.lower())}
+    """Words of four letters or more, singular and plural counted as one."""
+    return {re.sub(r"s$", "", w)
+            for w in re.findall(r"[a-z']{4,}", text.lower())}
 
 
+# One row paraphrases rather than quotes. The check measures vocabulary, and
+# a paraphrase is new vocabulary carrying an old promise — so the allowance is
+# named word by word, tied to the phrase it stands in for, and that phrase is
+# itself checked against the funnel. A word admitted here has to be a word
+# somebody can see the justification for.
+PARAPHRASE = {
+    "using": "5 Hidden Strengths & Blind Spots",
+    "you're": "5 Hidden Strengths & Blind Spots",
+}
+for word, stands_for in sorted(PARAPHRASE.items()):
+    check("  %-8s is allowed, standing in for %r" % (word, stands_for[:34]),
+          stands_for.lower() in SOURCE, stands_for)
+check("  and the allowance is two words, not a door",
+      len(PARAPHRASE) <= 3, str(sorted(PARAPHRASE)))
+ALLOWED = content(SOURCE) | {re.sub(r"s$", "", w) for w in PARAPHRASE}
 for row in ROWS:
-    extra = content(row["line"]) - content(SOURCE)
+    extra = content(row["line"]) - ALLOWED
     check("  %-10s promises nothing new" % row["id"], not extra, str(extra))
-check("  and neither does the tail", not content(TAIL) - content(SOURCE),
-      str(content(TAIL) - content(SOURCE)))
+check("  and neither does the tail",
+      not content(TAIL.get("key", "") + " " + TAIL.get("line", "")) - ALLOWED,
+      str(content(TAIL.get("key", "") + " " + TAIL.get("line", ""))
+          - ALLOWED))
 
-NEW_COPY = [RARE["line"], RARE["sub"], TAIL] + [r["line"] for r in ROWS]
+NEW_COPY = ([RARE["lead"], RARE["tail"], RARE["note"], HEAD,
+             TAIL.get("key", ""), TAIL.get("line", "")]
+            + [r["line"] for r in ROWS] + PROFILE["chips"])
 for text in NEW_COPY:
     hit = reports._banned_hit(text, reports.ZODIAC_BANNED)
     check("  %-46s passes the Terms check" % ('"%s"' % text[:44]),
           hit is None, hit)
-# The copy is the minimal arm's. Nothing else has an arm to read it.
 for slug in ("zodiac", "zodiac-ro", "kitchen", "persona"):
     other = json.load(open(os.path.join(ROOT, "funnels/%s.json" % slug),
                            encoding="utf-8"))
     block_ = (other.get("result_copy") or {}).get("profile") or {}
     check("  %-12s carries none of it" % slug,
-          not {"rarity_minimal", "checklist", "checklist_tail"} & set(block_),
-          str(sorted({"rarity_minimal", "checklist",
-                      "checklist_tail"} & set(block_))))
+          not {"rarity_card", "unlock", "unlock_tail", "unlock_head",
+               "chips"} & set(block_),
+          str(sorted({"rarity_card", "unlock", "unlock_tail", "unlock_head",
+                      "chips"} & set(block_))))
 
 print("\n--- and the module draws it only for that arm ---")
 minimal_js = open(os.path.join(ROOT, cfg["result_module"].lstrip("/")),
@@ -1313,7 +1380,19 @@ check("the element tiles are gone from the minimal branch",
 check("  but balance still exists for the funnels that draw it",
       "function balance(ctx, copy, elements)" in minimal_js
       and "list.appendChild(balance(ctx, copy, elements));" in minimal_js)
-check("the checklist is drawn behind the template flag",
+check("the arm is named on the container",
+      'root.classList.toggle("is-minimal", template === "minimal")'
+      in minimal_js)
+check("  and every facelift rule hangs off it",
+      all(rule.strip().startswith(".result-module.is-minimal")
+          for rule in re.findall(r"^[^\s@}/][^{}]*(?=\{)",
+                                 open(os.path.join(
+                                     ROOT, cfg["result_css"].lstrip("/")),
+                                     encoding="utf-8").read(), re.M)
+          if "is-lux" in rule or "zr-chip" in rule or "zr-unlock" in rule
+          or "zr-rarity-note" in rule or "is-framed" in rule),
+      "")
+check("the unlock block is drawn behind the template flag",
       'if (data && template === "minimal") {\n      var list = checklist('
       in minimal_js)
 check("  and the offer is handed the arm to check",
@@ -1325,11 +1404,18 @@ check("  its rows wear a tick, and the lock stays on the question cards",
       and "LOCK_PATH" not in re.search(
           r"function checkRow\([^)]*\)\s*\{(.*?)\n  \}",
           minimal_js, re.S).group(1))
-check("the two-line rarity is behind the config carrying it",
-      "var own = (table || {}).rarity_minimal;" in minimal_js
-      and "if (own && own.line && pct) {" in minimal_js)
+check("the rarity card is behind the config carrying it",
+      "var own = (table || {}).rarity_card;" in minimal_js
+      and "if (own && own.lead && pct) {" in minimal_js)
 check("  and falls through to the single line when it does not",
       'var wrap = elm("div", "zr-rarity");' in minimal_js)
+# The struck price is a node both arms draw. Restyling it had to be a
+# stylesheet change or the control's rendered page would have moved.
+check("the strike is styled, not marked up",
+      ".result-module.is-minimal .zr-price-was::after" in open(
+          os.path.join(ROOT, cfg["result_css"].lstrip("/")),
+          encoding="utf-8").read()
+      and "is-struck" not in minimal_js)
 
 print("\n--- the summer sale ---")
 import datetime  # noqa: E402

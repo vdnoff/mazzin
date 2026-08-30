@@ -3347,29 +3347,40 @@
       "bridge": "Your reading answers, specifically for {subtype_article} {subtype_bare}:",
       "offer_head": "The full {subtype_bare} reading — 6 chapters",
       "split_caption": "{fire}% Fire · {earth}% Earth · {air}% Air · {water}% Water",
-      "rarity_minimal": {
-        "line": "Your zodiac blend is rare.",
-        "sub": "{pct}% of readings come out differently. Your full reading explains why."
+      "chips": [
+        "{sign}",
+        "{element}-led",
+        "{second} under.",
+        "{energy}"
+      ],
+      "rarity_card": {
+        "lead": "Rarer than",
+        "tail": "of readings",
+        "note": "Your edge over the rest — inside your reading."
       },
-      "checklist": [
+      "unlock_head": "What you unlock:",
+      "unlock": [
         {
           "id": "materials",
-          "line": "your two magnetic signs — and the one that drains you"
+          "line": "the two signs magnetic to you — and the one that drains you"
         },
         {
           "id": "splurge",
-          "line": "where your energy earns"
+          "line": "where your energy earns, and where it leaks"
         },
         {
           "id": "shopping",
-          "line": "{first} → {last}"
+          "line": "{first} → {last}, month by month"
         },
         {
           "id": "mistakes",
-          "line": "strengths #2–5"
+          "line": "the strengths you're not using — #2 to #5"
         }
       ],
-      "checklist_tail": "+ Power colors & your full blueprint"
+      "unlock_tail": {
+        "key": "+ The blueprint",
+        "line": "your power colors & full profile map"
+      }
     }
   }
 }

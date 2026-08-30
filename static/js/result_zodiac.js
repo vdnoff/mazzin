@@ -343,8 +343,25 @@
 
   // --- a) the kicker ---------------------------------------------------------
 
-  function kicker(copy) {
-    return elm("p", "zr-kicker", copy.kicker || "YOUR COSMIC PROFILE");
+  function kicker(copy, lean) {
+    var line = elm("p", "zr-kicker", copy.kicker || "YOUR COSMIC PROFILE");
+    // The minimal arm frames it. Real nodes rather than pseudo-elements so
+    // the ornament is something a test can find and a translation can drop,
+    // and appended only for that arm — the control's kicker is one text node
+    // and stays one.
+    if (lean) {
+      line.className = "zr-kicker is-framed";
+      line.insertBefore(star(), line.firstChild);
+      line.appendChild(star());
+    }
+    return line;
+  }
+
+  // The four-pointed mark this funnel already draws on its open nodes.
+  function star() {
+    var mark = elm("span", "zr-star", "\u2726");
+    mark.setAttribute("aria-hidden", "true");
+    return mark;
   }
 
   // --- b) the cosmic ID ------------------------------------------------------
@@ -402,23 +419,50 @@
   // has no run to give it — reports.py stores the same shape on the report
   // and `deliveredHero` hands it straight in.
 
-  function scaleRow(ctx, row) {
+  function scaleRow(ctx, row, lean) {
     var wrap = elm("div", "zr-scale");
-    wrap.appendChild(elm("span", "zr-scale-pole", row.left));
+    // Which pole this row leans to. `at` counts toward the right one, so
+    // under half is the left and over half the right; dead level is neither,
+    // and neither is lit rather than one of them being lit by rounding.
+    var active = row.at < 50 ? "left" : (row.at > 50 ? "right" : "");
+    var left = elm("span", "zr-scale-pole"
+                   + (lean && active === "left" ? " is-active" : ""), row.left);
+    wrap.appendChild(left);
     var track = elm("span", "zr-scale-track");
     track.setAttribute("role", "img");
     track.setAttribute("aria-label", fillLabel(label(ctx, "scale_aria"), {
       left: row.left, right: row.right, at: row.at
     }));
+    // The run from the lit pole to the dot, so the bar reads as a distance
+    // travelled from a side rather than as a slider with a value on it.
+    if (lean && active) {
+      var run = elm("i", "zr-scale-run");
+      if (active === "left") {
+        run.style.left = "0";
+        run.style.width = row.at + "%";
+      } else {
+        run.style.left = row.at + "%";
+        run.style.width = (100 - row.at) + "%";
+      }
+      track.appendChild(run);
+    }
     var dot = elm("i", "zr-scale-dot");
     dot.style.left = row.at + "%";
     track.appendChild(dot);
     wrap.appendChild(track);
-    wrap.appendChild(elm("span", "zr-scale-pole is-right", row.right));
+    wrap.appendChild(elm("span", "zr-scale-pole is-right"
+                         + (lean && active === "right" ? " is-active" : ""),
+                         row.right));
     return wrap;
   }
 
-  function splitBar(data) {
+  // A figure fits inside its own segment at about this share of the bar. Below
+  // it "37%" is wider than the block it would sit in, so the number goes
+  // unwritten rather than spilling over the segment beside it — the name
+  // under the bar still says which element the block is.
+  var SPLIT_LABEL_MIN_PCT = 12;
+
+  function splitBar(data, lean) {
     var wrap = elm("div", "zr-split");
     var bar = elm("div", "zr-split-bar");
     bar.setAttribute("role", "img");
@@ -427,26 +471,75 @@
       var seg = elm("span", "zr-split-seg");
       seg.style.width = cell.pct + "%";
       seg.style.background = cell.color || "#E8C878";
+      if (lean && cell.pct >= SPLIT_LABEL_MIN_PCT) {
+        seg.appendChild(elm("b", "zr-split-pct", cell.pct + "%"));
+      }
       bar.appendChild(seg);
     });
     wrap.appendChild(bar);
+    if (lean) {
+      // The names under the bar rather than in a sentence beside it, each one
+      // the width of the block it names, so the word and the colour are the
+      // same measurement twice.
+      var names = elm("div", "zr-split-names");
+      (data.split || []).forEach(function (cell) {
+        var name = elm("span", "zr-split-name", cell.name || cell.tag);
+        name.style.width = cell.pct + "%";
+        name.style.color = cell.color || "#E8C878";
+        names.appendChild(name);
+      });
+      wrap.appendChild(names);
+      return wrap;
+    }
     if (data.split_caption) {
       wrap.appendChild(elm("p", "zr-split-caption", data.split_caption));
     }
     return wrap;
   }
 
+  // The formula as capsules, for the arm that draws them. Built from the words
+  // the formula line is built from rather than by cutting that line up: it
+  // carries "Fire-led, Earth undercurrent" as one segment and the mockup asks
+  // for those as two chips, so a split on the separator gives three where
+  // four are wanted. A chip whose words are missing — a run that never
+  // reached the sign step — is dropped rather than drawn empty.
+  function chipRow(ctx, data) {
+    var want = (profileBlock(ctx) || {}).chips || [];
+    if (!want.length) return null;
+    var row = elm("ul", "zr-chips");
+    want.forEach(function (shape) {
+      var text = fill(shape, data.words || {}).replace(/\{\w+\}/g, "").trim();
+      if (text) row.appendChild(elm("li", "zr-chip", text));
+    });
+    return row.childNodes.length ? row : null;
+  }
+
   function richHero(ctx, badge, data, opts) {
-    var card = elm("section", "zr-hero is-rich");
     // The minimal arm pulls the rarity out of this card and gives it its own
-    // weight further down the page. Without the flag nothing here changes,
-    // which is the whole contract: the control arm is this page as it was.
+    // weight further down the page, and draws the rest of it as the mockup
+    // asks. Without the flag nothing here changes, which is the whole
+    // contract: the control arm is this page as it was, node for node.
     var lean = !!(opts && opts.lean);
+    var card = elm("section", "zr-hero is-rich" + (lean ? " is-lux" : ""));
+    // Four marks, one to a corner. Decoration, and named as such: the card
+    // is a keepsake on this arm and the frame is the whole of that idea.
+    if (lean) {
+      ["tl", "tr", "bl", "br"].forEach(function (corner) {
+        var mark = star();
+        mark.className = "zr-corner is-" + corner;
+        card.appendChild(mark);
+      });
+    }
     var head = elm("div", "zr-hero-top");
     head.appendChild(badge);
     var id = elm("div", "zr-hero-id");
     id.appendChild(elm("h1", "zr-subtype", data.subtype));
-    if (data.formula) id.appendChild(elm("p", "zr-formula", data.formula));
+    var chips = lean ? chipRow(ctx, data) : null;
+    if (chips) {
+      id.appendChild(chips);
+    } else if (data.formula) {
+      id.appendChild(elm("p", "zr-formula", data.formula));
+    }
     head.appendChild(id);
     card.appendChild(head);
 
@@ -456,14 +549,19 @@
     if ((data.scales || []).length) {
       var scales = elm("div", "zr-scales");
       data.scales.forEach(function (row) {
-        scales.appendChild(scaleRow(ctx, row));
+        scales.appendChild(scaleRow(ctx, row, lean));
       });
       card.appendChild(scales);
     }
-    if ((data.split || []).length) card.appendChild(splitBar(data));
+    if ((data.split || []).length) card.appendChild(splitBar(data, lean));
     if (data.cross_line) {
-      card.appendChild(elm("hr", "zr-hairline"));
-      card.appendChild(elm("p", "zr-crossline", data.cross_line));
+      // The rule goes on the lux card: the reading is the loudest sentence
+      // on it now, and a line above it makes it a footnote to the chart.
+      if (!lean) card.appendChild(elm("hr", "zr-hairline"));
+      var reading = elm("p", "zr-crossline" + (lean ? " is-bright" : ""));
+      if (lean) reading.appendChild(star());
+      reading.appendChild(document.createTextNode(data.cross_line));
+      card.appendChild(reading);
     }
     return card;
   }
@@ -475,6 +573,23 @@
   // ribbon is built from. One number, one source: a blend that is 1 in 40 is
   // 98%, one that is 1 in 10 is 90%, and there is nothing here to keep in
   // step with anything else.
+  // Two centred lines, broken at the em-dash rather than at whatever width
+  // the box happens to be. The break is where the sentence turns, so it is
+  // the same break in any column — and a translation that carries no dash
+  // gets one line rather than a guess at where to cut it.
+  function rarityNote(text) {
+    var note = elm("p", "zr-rarity-note");
+    var cut = String(text).split("\u2014");
+    if (cut.length !== 2) {
+      note.textContent = text;
+      return note;
+    }
+    note.appendChild(elm("span", "zr-rarity-note-line",
+                         cut[0].trim() + " \u2014"));
+    note.appendChild(elm("span", "zr-rarity-note-line", cut[1].trim()));
+    return note;
+  }
+
   function differentPct(n) {
     return (typeof n === "number" && n >= 2)
       ? Math.round((1 - 1 / n) * 100) : 0;
@@ -482,23 +597,18 @@
 
   function rarityBadge(data, table) {
     if (!data || !data.rarity_line) return null;
-    // The arm that gives the rarity its own screen says it in two lines: what
-    // it is, and what that means. A funnel that declares no such copy — every
-    // one but this — falls through to the single line below, unchanged.
-    var own = (table || {}).rarity_minimal;
+    // The arm that gives the rarity its own screen gives it a card: the frame
+    // of the claim, the number at the size the claim deserves, and one line
+    // about what it is worth. A funnel that declares no such copy — every one
+    // but this — falls through to the single line below, unchanged.
+    var own = (table || {}).rarity_card;
     var pct = differentPct(data.rarity);
-    if (own && own.line && pct) {
-      var badge = elm("div", "zr-rarity is-stacked");
-      badge.appendChild(elm("p", "zr-rarity-line", own.line));
-      if (own.sub) {
-        var words = {};
-        var keys = Object.keys(data.words || {});
-        for (var k = 0; k < keys.length; k++) {
-          words[keys[k]] = data.words[keys[k]];
-        }
-        words.pct = String(pct);
-        badge.appendChild(elm("p", "zr-rarity-sub", fill(own.sub, words)));
-      }
+    if (own && own.lead && pct) {
+      var badge = elm("div", "zr-rarity is-card");
+      badge.appendChild(elm("p", "zr-rarity-lead", own.lead));
+      badge.appendChild(elm("p", "zr-rarity-figure", pct + "%"));
+      if (own.tail) badge.appendChild(elm("p", "zr-rarity-tail", own.tail));
+      if (own.note) badge.appendChild(rarityNote(own.note));
       return badge;
     }
     var wrap = elm("div", "zr-rarity");
@@ -871,22 +981,29 @@
   // Money first — and only the first match moves.
   function checklist(ctx, data) {
     var table = profileBlock(ctx) || {};
-    var rows = table.checklist || [];
+    var rows = table.unlock || [];
     if (!rows.length) return null;
     var keys = {};
     (table.cards || []).forEach(function (card) {
       keys[card.id] = card.key || "";
     });
+    var block = elm("div", "zr-unlock");
+    if (table.unlock_head) {
+      block.appendChild(elm("p", "zr-unlock-head", table.unlock_head));
+    }
     var list = elm("ul", "zr-checklist");
     firstly(rows.slice(), emphasised(purposeRule(ctx))).forEach(
       function (row) {
         list.appendChild(checkRow(keys[row.id] || "",
                                   fill(row.line || "", data.words || {})));
       });
-    if (table.checklist_tail) {
-      list.appendChild(checkRow("", table.checklist_tail));
+    var tail = table.unlock_tail;
+    if (tail && tail.key) {
+      list.appendChild(checkRow(tail.key,
+                                fill(tail.line || "", data.words || {})));
     }
-    return list;
+    block.appendChild(list);
+    return block;
   }
 
   function checkRow(key, text) {
@@ -895,10 +1012,13 @@
     mark.setAttribute("aria-hidden", "true");
     mark.appendChild(drawn(ICONS.check));
     item.appendChild(mark);
+    // The keyword and the description in one paragraph beside the tick, so a
+    // row that runs to two lines wraps under its own text rather than under
+    // the icon.
     var line = elm("p", "zr-check-line");
     if (key) {
-      line.appendChild(elm("strong", "zr-check-key", key + ":"));
-      line.appendChild(document.createTextNode(" " + text));
+      line.appendChild(elm("strong", "zr-check-key", key));
+      line.appendChild(document.createTextNode(" \u2014 " + text));
     } else {
       line.appendChild(document.createTextNode(text));
     }
@@ -1241,7 +1361,12 @@
     reportVariant(ctx, variant);
 
     root.innerHTML = "";
-    root.appendChild(kicker(copy));
+    // The arm, on the container rather than inside it. Every rule the
+    // facelift adds hangs off this, and `#result-module`'s own class is not
+    // part of the subtree the variants fixture compares — so the control arm
+    // stays byte-identical while its stylesheet gains rules it never matches.
+    root.classList.toggle("is-minimal", template === "minimal");
+    root.appendChild(kicker(copy, template === "minimal"));
     // The rich card, or the one this page drew before there was a table to
     // draw it from. Below the hero the two pages differ entirely, which is
     // why the branch is the whole body rather than one node.
