@@ -486,3 +486,6 @@ bottom.
 
 ## 2026-08-29 — claude/persona-report-v3
 - variants: report arm before DOM work — fixes silent arm-asymmetric event loss
+
+## 2026-08-30 — claude/persona-pdf-float-share
+- persona: PDF float fix + share icon button
