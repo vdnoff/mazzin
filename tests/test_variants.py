@@ -40,6 +40,8 @@ PERSONA = open(os.path.join(REPO, "static/js/result_persona.js"),
                encoding="utf-8").read()
 ZODIAC = open(os.path.join(REPO, "static/js/result_zodiac.js"),
               encoding="utf-8").read()
+CSS = open(os.path.join(REPO, "static/css/result_zodiac.css"),
+           encoding="utf-8").read()
 
 
 # Every 1-in-N the rarity table can produce, so the share the page prints can
@@ -59,6 +61,7 @@ Z30 = json.load(open(os.path.join(REPO, "funnels/zodiac30.json"),
                      encoding="utf-8"))
 N_VALUES = _n_values(Z30)
 MODULE = ZODIAC
+PROFILE = Z30["result_copy"]["profile"]
 
 fails = []
 checks = [0]
@@ -233,6 +236,83 @@ READ = """() => {
   return {
     shape: [...r.children].map(n => n.className),
     subtype: t('.zr-subtype'),
+    root: r.className,
+    kicker: {text: t('.zr-kicker'),
+             stars: r.querySelectorAll('.zr-kicker .zr-star').length},
+    hero: {cls: (r.querySelector('.zr-hero') || {}).className || '',
+           corners: r.querySelectorAll('.zr-corner').length},
+    chips: [...r.querySelectorAll('.zr-chip')].map(n => n.textContent),
+    // The row must never be the reason anything scrolls sideways.
+    overflow: {chips: (() => { const u = r.querySelector('.zr-chips');
+                 return u ? u.scrollWidth - u.clientWidth : 0; })(),
+               page: document.documentElement.scrollWidth
+                     - document.documentElement.clientWidth},
+    scales: [...r.querySelectorAll('.zr-scale')].map(n => ({
+      left: n.children[0].textContent,
+      leftLit: n.children[0].classList.contains('is-active'),
+      right: n.children[2].textContent,
+      rightLit: n.children[2].classList.contains('is-active'),
+      at: parseFloat((n.querySelector('.zr-scale-dot') || {style: {}})
+                     .style.left) || 0,
+      litColour: (() => { const a = n.querySelector('.zr-scale-pole.is-active');
+        return a ? getComputedStyle(a).color : null; })()})),
+    split: [...r.querySelectorAll('.zr-split-seg')].map(n => ({
+      width: parseFloat(n.style.width),
+      pct: (n.querySelector('.zr-split-pct') || {}).textContent || null,
+      // Where the block sits, so the name under it can be checked against it.
+      mid: (() => { const b = n.getBoundingClientRect(); 
+                    return Math.round((b.left + b.right) / 2); })()})),
+    names: [...r.querySelectorAll('.zr-split-name')].map(n => ({
+      text: n.textContent, width: parseFloat(n.style.width),
+      mid: (() => { const b = n.getBoundingClientRect();
+                    return Math.round((b.left + b.right) / 2); })()})),
+    bright: (() => { const c = r.querySelector('.zr-crossline');
+      return c ? {lit: c.classList.contains('is-bright'),
+                  colour: getComputedStyle(c).color,
+                  star: !!c.querySelector('.zr-star')} : null; })(),
+    rarityCard: (() => { const c = r.querySelector('.zr-rarity');
+      if (!c) return null;
+      const box = c.getBoundingClientRect();
+      const last = c.lastElementChild.getBoundingClientRect();
+      return {cls: c.className,
+        lead: (c.querySelector('.zr-rarity-lead') || {}).textContent || null,
+        figure: (c.querySelector('.zr-rarity-figure') || {}).textContent
+                || null,
+        tail: (c.querySelector('.zr-rarity-tail') || {}).textContent || null,
+        note: [...c.querySelectorAll('.zr-rarity-note-line')]
+                .map(n => n.textContent),
+        height: Math.round(box.height),
+        below: Math.round(box.bottom - last.bottom),
+        left: Math.round(last.left - box.left),
+        right: Math.round(box.right - last.right)}; })(),
+    unlock: (() => { const u = r.querySelector('.zr-unlock');
+      if (!u) return null;
+      return {head: (u.querySelector('.zr-unlock-head') || {}).textContent,
+        rows: [...u.querySelectorAll('.zr-check')].map(n => {
+          const line = n.querySelector('.zr-check-line');
+          const key = n.querySelector('.zr-check-key');
+          const mark = n.querySelector('.zr-check-mark');
+          const box = line.getBoundingClientRect();
+          return {key: key ? key.textContent : '',
+            text: line.textContent.trim(),
+            lines: Math.round(box.height
+                   / parseFloat(getComputedStyle(line).lineHeight)),
+            // A second line has to start under the words, never under the
+            // tick.
+            underText: Math.round(box.left)
+                       >= Math.round(mark.getBoundingClientRect().right)};})};
+      })(),
+    price: (() => { const w = r.querySelector('.zr-price-was');
+      const now = r.querySelector('.zr-price-now');
+      if (!w || !now) return null;
+      const mark = getComputedStyle(w, '::after');
+      return {now: now.textContent, was: w.textContent,
+        nowSize: parseFloat(getComputedStyle(now).fontSize),
+        wasSize: parseFloat(getComputedStyle(w).fontSize),
+        strikeHeight: parseFloat(mark.height) || 0,
+        strikeColour: mark.backgroundColor,
+        strikeTilted: mark.transform !== 'none',
+        decoration: getComputedStyle(w).textDecorationLine}; })(),
     html: r.innerHTML,
     balance: !!r.querySelector('.zr-balance'),
     rarity: {line: t('.zr-rarity-line'), sub: t('.zr-rarity-sub'),
@@ -353,8 +433,119 @@ check("  with the rarity given its own weight",
       str(minimal_shape))
 check("  and the offer still last",
       minimal_shape[-1] == "zr-offer" and control_shape[-1] == "zr-offer")
-check("  the hero and the contact sheet are common to both",
-      minimal_shape[:3] == control_shape[:3])
+check("  the contact sheet is common to both",
+      minimal_shape[2] == control_shape[2], str(minimal_shape[:3]))
+check("  and the kicker is the same line wearing the frame",
+      minimal_shape[0] == control_shape[0] + " is-framed",
+      "%s vs %s" % (minimal_shape[0], control_shape[0]))
+check("  and the hero is the same card wearing the lux flag",
+      minimal_shape[1] == control_shape[1] + " is-lux",
+      "%s vs %s" % (minimal_shape[1], control_shape[1]))
+
+print("\n--- the lux hero ---")
+check("the arm is named on the container, not inside it",
+      minimal["root"].endswith(" is-minimal")
+      and "is-minimal" not in control["root"],
+      "%s / %s" % (minimal["root"], control["root"]))
+check("  which is why the control's own subtree is untouched",
+      "is-minimal" not in control["html"])
+check("the kicker is framed by two marks",
+      minimal["kicker"]["stars"] == 2 and control["kicker"]["stars"] == 0,
+      "%s / %s" % (minimal["kicker"]["stars"], control["kicker"]["stars"]))
+check("  saying what it always said",
+      minimal["kicker"]["text"].strip("\u2726 ")
+      == control["kicker"]["text"].strip(),
+      minimal["kicker"]["text"])
+check("four ornaments, one to a corner",
+      minimal["hero"]["corners"] == 4 and control["hero"]["corners"] == 0,
+      "%s / %s" % (minimal["hero"]["corners"], control["hero"]["corners"]))
+CHIPS = PROFILE["chips"]
+check("the formula is drawn as capsules",
+      len(minimal["chips"]) == len(CHIPS), str(minimal["chips"]))
+check("  and the control still draws it as a line",
+      not control["chips"] and "zr-formula" in control["html"])
+# Four capsules do not fit one line at 390px. Wrapping is the design; going
+# off the side of the phone is the failure it has to be told apart from.
+check("  they wrap rather than overflow their row",
+      minimal["overflow"]["chips"] == 0,
+      str(minimal["overflow"]["chips"]))
+check("  and nothing pushes the page sideways",
+      minimal["overflow"]["page"] == 0 and control["overflow"]["page"] == 0,
+      "%s / %s" % (minimal["overflow"]["page"], control["overflow"]["page"]))
+
+print("\n--- the side they lean to is the side that is lit ---")
+GOLD = "rgb(196, 166, 96)"
+for arm_name, read in (("minimal", minimal), ("career", career)):
+    for row in read["scales"]:
+        want = "left" if row["at"] < 50 else ("right" if row["at"] > 50
+                                              else "")
+        lit = ("left" if row["leftLit"] else
+               ("right" if row["rightLit"] else ""))
+        check("  %-7s %-9s at %-4s lights %s"
+              % (arm_name, row["left"], row["at"], lit or "neither"),
+              lit == want, "wanted %s" % (want or "neither"))
+        check("    and never both", not (row["leftLit"] and row["rightLit"]))
+    lit_rows = [r for r in read["scales"] if r["litColour"]]
+    check("  %-7s lights its poles gold" % arm_name,
+          all(r["litColour"] == GOLD for r in lit_rows),
+          str([r["litColour"] for r in lit_rows]))
+check("the control lights none of them",
+      not [r for r in control["scales"] if r["leftLit"] or r["rightLit"]])
+
+print("\n--- the split, read twice and written once ---")
+MIN_PCT = int(re.search(r"var SPLIT_LABEL_MIN_PCT = (\d+)", MODULE).group(1))
+for cell in minimal["split"]:
+    wide = cell["width"] >= MIN_PCT
+    check("  a %2d%% block %s its figure"
+          % (cell["width"], "carries" if wide else "goes without"),
+          bool(cell["pct"]) == wide,
+          "%s%% -> %r" % (cell["width"], cell["pct"]))
+    if cell["pct"]:
+        check("    which is the block's own share",
+              cell["pct"] == "%d%%" % cell["width"], cell["pct"])
+# The other side of the gate, on whichever run happens to produce a block too
+# narrow to hold a figure. Both runs are checked so the negative case is
+# covered whenever either of them has one; the invariant holds either way.
+for cell in career["split"]:
+    check("  a %2d%% block on the career run %s its figure"
+          % (cell["width"], "carries" if cell["width"] >= MIN_PCT
+             else "goes without"),
+          bool(cell["pct"]) == (cell["width"] >= MIN_PCT),
+          "%s%% -> %r" % (cell["width"], cell["pct"]))
+narrow = [c for c in minimal["split"] + career["split"]
+          if c["width"] < MIN_PCT]
+check("  and the renderer gates on the width, not on the count",
+      "cell.pct >= SPLIT_LABEL_MIN_PCT" in MODULE,
+      "%d narrow blocks seen across the two runs" % len(narrow))
+check("the control writes none of them inside the bar",
+      not [c for c in control["split"] if c["pct"]])
+check("four names under four blocks",
+      len(minimal["names"]) == len(minimal["split"]) == 4,
+      str(len(minimal["names"])))
+check("  each the width of the block it names",
+      [n["width"] for n in minimal["names"]]
+      == [c["width"] for c in minimal["split"]],
+      str([n["width"] for n in minimal["names"]]))
+check("  and centred under it",
+      all(abs(n["mid"] - c["mid"]) <= 1
+          for n, c in zip(minimal["names"], minimal["split"])),
+      str([(n["mid"], c["mid"])
+           for n, c in zip(minimal["names"], minimal["split"])]))
+check("  the control keeps the sentence instead",
+      not control["names"] and "zr-split-caption" in control["html"])
+
+print("\n--- the reading is the sentence the card is for ---")
+BRIGHT = "rgb(248, 246, 240)"
+check("it is set as primary text, not as an aside",
+      minimal["bright"]["lit"] and minimal["bright"]["colour"] == BRIGHT,
+      str(minimal["bright"]))
+check("  with a mark leading it", minimal["bright"]["star"])
+check("  and no rule above it, which made it a footnote",
+      "zr-hairline" not in minimal["html"]
+      and "zr-hairline" in control["html"])
+check("the control reads it the way it always did",
+      not control["bright"]["lit"] and not control["bright"]["star"],
+      str(control["bright"]))
 
 print("\n--- and the control arm is that page byte for byte ---")
 # The strongest form of "unchanged" a browser can give: the walk is seeded, so
@@ -393,12 +584,33 @@ check("  and the hero still carries the split they restated",
 check("  the control never drew them either", not control["balance"])
 
 print("\n--- the rarity, in two lines and one number ---")
-PROFILE = Z30["result_copy"]["profile"]
-RARITY = PROFILE["rarity_minimal"]
-check("it leads with the claim", minimal["rarity"]["line"] == RARITY["line"],
-      str(minimal["rarity"]["line"]))
-check("  and no longer sets a bare figure",
-      minimal["rarity"]["figure"] is None, str(minimal["rarity"]["figure"]))
+RARITY = PROFILE["rarity_card"]
+card = minimal["rarityCard"]
+check("it is a card of its own now", "is-card" in card["cls"], card["cls"])
+check("  framing the number above and below",
+      card["lead"] == RARITY["lead"] and card["tail"] == RARITY["tail"],
+      "%s / %s" % (card["lead"], card["tail"]))
+check("  with the figure between them",
+      card["figure"] and card["figure"].endswith("%"), str(card["figure"]))
+check("  and one line about what it is worth, in two",
+      card["note"] == [RARITY["note"].split("\u2014")[0].strip()
+                       + " \u2014",
+                       RARITY["note"].split("\u2014")[1].strip()],
+      str(card["note"]))
+# Padding, not a height: the note is two lines at 390px and one on a wider
+# phone, and a fixed box leaves dead ground under it on the second.
+# The declarations, with the prose taken out — the comment inside this rule
+# says the word "height" while arguing for not setting one.
+rarity_css = re.sub(r"/\*.*?\*/", "", re.search(
+    r"\.zr-rarity\.is-card \{(.*?)\n\}", CSS, re.S).group(1), flags=re.S)
+check("  the card is sized by what is in it, not by a fixed height",
+      not re.search(r"(?<!line-)height\s*:", rarity_css), rarity_css.strip())
+check("  nothing sits closer than 24px to an edge",
+      card["below"] >= 24 and card["left"] >= 24 and card["right"] >= 24,
+      "below %s left %s right %s"
+      % (card["below"], card["left"], card["right"]))
+check("  and there is no dead ground under the last line",
+      card["below"] <= 34, str(card["below"]))
 # The percentage against the reader's OWN 1-in-N. The minimal hero is lean and
 # draws no ribbon — that is the point of the arm — so the blend is identified
 # by the subtype the page names, and the N looked up from the config's table
@@ -414,11 +626,9 @@ check("every blend the table names has one rarity",
 n = BLENDS.get(minimal["subtype"])
 check("  the page names a blend the table knows", n is not None,
       str(minimal["subtype"]))
-check("  and the share is the complement of that blend's own N",
-      n is not None and minimal["rarity"]["sub"]
-      == RARITY["sub"].replace("{pct}", str(round((1 - 1 / n) * 100))),
-      "%s — %s is 1 in %s" % (minimal["rarity"]["sub"],
-                              minimal["subtype"], n))
+check("  and the figure is the complement of that blend's own N",
+      n is not None and card["figure"] == "%d%%" % round((1 - 1 / n) * 100),
+      "%s — %s is 1 in %s" % (card["figure"], minimal["subtype"], n))
 # Every N the table can produce, driven through the same arithmetic. A browser
 # can only walk one blend per run; the formula has to hold for all of them, and
 # the brief's own two examples are in here by construction.
@@ -441,59 +651,92 @@ check("  and the config states no percentage of its own",
       str(re.findall(r"[^{]\d+\s*%",
                      json.dumps(PROFILE, ensure_ascii=False))[:4]))
 
-print("\n--- the checklist, over the price ---")
-KEYS = {c["id"]: c["key"] for c in Z30["result_copy"]["profile"]["cards"]}
-ROWS = Z30["result_copy"]["profile"]["checklist"]
-TAIL = Z30["result_copy"]["profile"]["checklist_tail"]
-check("the control arm has none of it", not control["checklist"])
-check("the minimal arm has one row per chapter, plus the tail",
-      len(minimal["checklist"]) == len(ROWS) + 1,
-      str(len(minimal["checklist"])))
+print("\n--- what you unlock, over the price ---")
+KEYS = {c["id"]: c["key"] for c in PROFILE["cards"]}
+ROWS = PROFILE["unlock"]
+TAIL = PROFILE["unlock_tail"]
+check("the control arm has none of it", control["unlock"] is None)
+rows = minimal["unlock"]["rows"]
+check("the minimal arm heads the block",
+      minimal["unlock"]["head"] == PROFILE["unlock_head"],
+      minimal["unlock"]["head"])
+check("  one row per chapter, plus the tail",
+      len(rows) == len(ROWS) + 1, str(len(rows)))
 check("  every row wears a tick", all(r["icon"] for r in minimal["checklist"]))
 check("  and not one wears a lock", minimal["locks"] == 0,
       str(minimal["locks"]))
-check("  the keys are the question cards' own",
-      [r["key"].rstrip(":") for r in minimal["checklist"][:-1]]
-      == [KEYS[row["id"]] for row in ROWS],
-      str([r["key"] for r in minimal["checklist"]]))
-check("  the tail carries no key of its own",
-      minimal["checklist"][-1]["key"] == ""
-      and minimal["checklist"][-1]["text"] == TAIL,
-      minimal["checklist"][-1]["text"])
+check("  the keywords are the question cards' own",
+      [r["key"] for r in rows[:-1]] == [KEYS[row["id"]] for row in ROWS],
+      str([r["key"] for r in rows]))
+check("  and the tail names itself",
+      rows[-1]["key"] == TAIL["key"], rows[-1]["key"])
 check("  the year row filled its month labels",
       re.search(r"\b[A-Z][a-z]{2} \d{4} → [A-Z][a-z]{2} \d{4}\b",
-                [r["text"] for r in minimal["checklist"]
-                 if r["key"].startswith(KEYS["shopping"])][0]) is not None,
-      str([r["text"] for r in minimal["checklist"]]))
+                [r["text"] for r in rows if r["key"] == KEYS["shopping"]][0])
+      is not None, str([r["text"] for r in rows]))
 check("  and no row was left holding a brace",
-      not [r for r in minimal["checklist"] if "{" in r["text"]],
-      str([r["text"] for r in minimal["checklist"] if "{" in r["text"]]))
+      not [r for r in rows if "{" in r["text"]],
+      str([r["text"] for r in rows if "{" in r["text"]]))
+# The wrap is the reason the keyword and the description are one paragraph
+# rather than two columns. A row that runs to a second line has to start that
+# line under its own words.
+check("  a row that runs long wraps under its text, never under the tick",
+      all(r["underText"] for r in rows), str([r["underText"] for r in rows]))
+check("    and at least one of them does run long",
+      max(r["lines"] for r in rows) >= 2,
+      str([r["lines"] for r in rows]))
 check("it sits above the price, under the headline",
-      minimal["offer"].index("zr-checklist")
+      minimal["offer"].index("zr-unlock")
       == minimal["offer"].index("zr-offer-head") + 1
-      and minimal["offer"].index("zr-checklist")
+      and minimal["offer"].index("zr-unlock")
       < minimal["offer"].index("zr-anchor")
-      < minimal["offer"].index("zr-price"),
+      < minimal["offer"].index("zr-price")
+      < minimal["offer"].index("zr-sale")
+      < minimal["offer"].index("zr-badges"),
       str(minimal["offer"]))
 check("  and the rest of the offer is in the order it always was",
-      [c for c in minimal["offer"] if c != "zr-checklist"]
+      [c for c in minimal["offer"] if c != "zr-unlock"]
       == control["offer"], str(minimal["offer"]))
 
 print("\n--- and it leads with what they said they came for ---")
+career_rows = career["unlock"]["rows"]
 check("a career run reads Money first",
-      career["checklist"][0]["key"].rstrip(":") == KEYS["splurge"],
-      str([r["key"] for r in career["checklist"]]))
-check("  a love run reads Love first",
-      minimal["checklist"][0]["key"].rstrip(":") == KEYS["materials"],
-      str([r["key"] for r in minimal["checklist"]]))
+      career_rows[0]["key"] == KEYS["splurge"],
+      str([r["key"] for r in career_rows]))
+check("  a love run reads Love first", rows[0]["key"] == KEYS["materials"],
+      str([r["key"] for r in rows]))
 check("  and only the first row moves",
-      [r["key"] for r in career["checklist"][1:]]
-      == [r["key"] for r in minimal["checklist"]
-          if r["key"] != career["checklist"][0]["key"]],
-      str([r["key"] for r in career["checklist"]]))
+      [r["key"] for r in career_rows[1:]]
+      == [r["key"] for r in rows if r["key"] != career_rows[0]["key"]],
+      str([r["key"] for r in career_rows]))
 check("  which is the reorder the question cards already do",
       "firstly(rows.slice(), emphasised(purposeRule(ctx)))" in MODULE
       and "firstly((table.cards || []).slice(), want)" in MODULE)
+
+print("\n--- the price it is instead of ---")
+STRIKE = "rgb(226, 120, 112)"
+check("the struck price is the regular one and nothing else",
+      minimal["price"]["was"]
+      == "$%d" % (Z30["sale"]["regular_price_cents"] // 100) == "$3",
+      minimal["price"]["was"])
+check("  set beside the hero at a little over half its size",
+      0.5 <= minimal["price"]["wasSize"] / minimal["price"]["nowSize"] <= 0.6,
+      "%s / %s" % (minimal["price"]["wasSize"], minimal["price"]["nowSize"]))
+# A hairline in the type's own colour reads as a rendering artefact beside a
+# 52px figure. This is a rule of its own, and the test is that it is drawn at
+# all — a missing pseudo-element comes back at zero height.
+check("  struck by a rule of its own, not by a text decoration",
+      minimal["price"]["strikeHeight"] >= 2
+      and minimal["price"]["decoration"] == "none",
+      str(minimal["price"]))
+check("    tilted, and in a red the gold does not contain",
+      minimal["price"]["strikeTilted"]
+      and minimal["price"]["strikeColour"] == STRIKE,
+      str(minimal["price"]))
+check("the control's is the plain line it always was",
+      control["price"]["decoration"] == "line-through"
+      and control["price"]["strikeHeight"] == 0,
+      str(control["price"]))
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for line in fails:
