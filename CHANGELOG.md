@@ -489,3 +489,6 @@ bottom.
 
 ## 2026-08-30 — claude/persona-pdf-float-share
 - persona: PDF float fix + share icon button
+
+## 2026-08-30 — claude/admin-paid-filter
+- admin: paid-traffic-only default view
