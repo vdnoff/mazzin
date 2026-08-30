@@ -495,3 +495,6 @@ bottom.
 
 ## 2026-08-30 — claude/sale-extend-199
 - zodiac30: sale .99 extended
+
+## 2026-08-30 — claude/minimal-facelift
+- zodiac30 minimal: full facelift (mockup-approved)
