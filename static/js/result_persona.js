@@ -614,6 +614,30 @@
   // it does not the link goes to the clipboard and a small toast says so. A
   // reader who dismisses the native sheet is not a failure and gets nothing:
   // `AbortError` is the ordinary way that dialog closes.
+  // The ordinary share mark: three nodes and the two lines between them.
+  // Drawn rather than typed, because the platform glyphs disagree — iOS wants
+  // a box with an arrow out of it, Android this — and a font that has neither
+  // renders a hole where the button is.
+  function shareGlyph() {
+    var svg = svgEl("svg", {
+      viewBox: "0 0 24 24", class: "pr-share-glyph",
+      "aria-hidden": "true", focusable: "false"
+    });
+    [[18, 5], [6, 12], [18, 19]].forEach(function (point) {
+      svg.appendChild(svgEl("circle", {
+        cx: point[0], cy: point[1], r: 2.6,
+        fill: "none", stroke: "currentColor", "stroke-width": 1.8
+      }));
+    });
+    [[8.4, 10.8, 15.6, 6.2], [8.4, 13.2, 15.6, 17.8]].forEach(function (line) {
+      svg.appendChild(svgEl("line", {
+        x1: line[0], y1: line[1], x2: line[2], y2: line[3],
+        stroke: "currentColor", "stroke-width": 1.8, "stroke-linecap": "round"
+      }));
+    });
+    return svg;
+  }
+
   function shareBlock(ctx, data, copy) {
     var share = (copy && copy.share) || {};
     if (!data || !data.persona_slug) return null;
@@ -621,9 +645,14 @@
     var base = share.url_base || "/persona/s/";
     var url = location.origin + base + data.persona_slug;
     var wrap = elm("div", "pr-share");
-    var button = elm("button", "pr-share-btn",
-                     share.button || "Share your shape");
+    // Icon only, on the corner of the totem. The row of words under the card
+    // was a second call to action arguing with the offer's; the sculpture is
+    // what somebody shares, so the button belongs on it.
+    var button = elm("button", "pr-share-btn");
     button.type = "button";
+    button.setAttribute("aria-label", share.button || "Share your shape");
+    button.setAttribute("title", share.button || "Share your shape");
+    button.appendChild(shareGlyph());
     var toast = elm("span", "pr-share-toast", "");
     toast.setAttribute("role", "status");
 
@@ -765,7 +794,8 @@
       var caption = headCaption(copy || {}, data);
       if (caption) card.appendChild(caption);
     } else {
-      card.appendChild(soloTotem(data));
+      card.appendChild(soloTotem(data, (opts && opts.share) ? opts.ctx : null,
+                                  copy));
     }
 
     var id = elm("div", "pr-hero-id");
@@ -789,10 +819,6 @@
     if (!lean) {
       var story = narrativeBlock(data.narrative);
       if (story) card.appendChild(story);
-    }
-    if (opts && opts.share && opts.ctx) {
-      var handout = shareBlock(opts.ctx, data, copy || {});
-      if (handout) card.appendChild(handout);
     }
     if (!lean) {
       var bars = traitBars(data);
@@ -1039,9 +1065,16 @@
   // to now the head is what the report sells. Same pedestal treatment as the
   // pair's, so the two are the same object in the same room and only the
   // company changes.
-  function soloTotem(data) {
+  function soloTotem(data, ctx, copy) {
     var wrap = elm("div", "pr-solo");
     wrap.appendChild(pedestal(data));
+    // The share, on the totem's top-right corner. The sculpture is the thing
+    // being handed over, so the button sits on it rather than in a row of its
+    // own under the card.
+    if (ctx) {
+      var handout = shareBlock(ctx, data, copy || {});
+      if (handout) wrap.appendChild(handout);
+    }
     return wrap;
   }
 

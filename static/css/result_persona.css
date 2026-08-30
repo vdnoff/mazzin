@@ -186,15 +186,21 @@ body:has(.result-module) {
    which at the totem render's 3:4 stands it 197px tall, on a 168px shadow
    that reaches a little wider than the art the way a cast shadow does. */
 .pr-solo {
-  width: 236px;
+  position: relative;
+  /* The column IS the art's width, so a corner offset below is measured from
+     the sculpture rather than from a wider box with the art centred in it.
+     The stand's top padding is named once and used twice for the same
+     reason: the share button has to start where the picture starts. */
+  --pr-solo-lift: 18px;
+  width: 208px;
   margin: 0 auto 18px;
 }
 
-.pr-solo .pr-stand { padding: 18px 0 0; }
+.pr-solo .pr-stand { padding: var(--pr-solo-lift) 0 0; }
 
 .pr-solo .pr-stand-light { inset: 0 0 22px; }
 
-.pr-solo .pr-totem-art { width: 208px; margin: 0 auto; }
+.pr-solo .pr-totem-art { width: 100%; margin: 0; }
 
 .pr-solo .pr-stand-plinth { width: 100%; height: 14px; }
 
@@ -770,28 +776,41 @@ body:has(.result-module) {
    deliberately quieter than one: a teal outline on the slab rather than a
    teal fill, which reads as an offer rather than as a second thing competing
    for the tap that matters. */
+/* On the totem's corner rather than in a row under the card, which was a
+   second call to action arguing with the offer's own. */
 .pr-share {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin: 14px 0 0;
+  position: absolute;
+  /* Inside the picture's own top-right corner: the column starts
+     `--pr-solo-lift` above the art, so the offset carries that back. */
+  top: calc(var(--pr-solo-lift) + 6px);
+  right: 6px;
+  z-index: 3;
 }
 
+/* Square and icon-only. 40px is the tap target rather than the visible mark:
+   the button is 40x40 with the glyph at 20, so a thumb has the whole corner
+   while the page shows a small one. The totem art is 208px wide and the
+   sculptures stand in the middle of their frame, so this corner is backdrop
+   on every one of the eight. */
 .pr-share-btn {
-  flex: none;
-  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
   border: 1px solid var(--pr-teal);
-  border-radius: 999px;
+  border-radius: 11px;
   font: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
   color: var(--pr-teal);
-  background: var(--pr-teal-soft);
+  background: rgba(36, 26, 16, 0.62);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
+
+.pr-share-glyph { display: block; width: 20px; height: 20px; }
 
 .pr-share-btn:active { transform: translateY(1px); }
 
@@ -799,11 +818,21 @@ body:has(.result-module) {
    say. `role="status"` is on the node rather than announced by a script, so
    the text landing in it is what a screen reader hears — which is the whole
    message on the desktop path, where nothing else visibly happens. */
+/* Under the button, right-aligned so it cannot push the totem about. */
 .pr-share-toast {
-  font-size: 13px;
-  color: var(--pr-faint);
+  position: absolute;
+  top: calc(var(--pr-solo-lift) + 50px);
+  right: 0;
+  width: max-content;
+  max-width: 150px;
+  padding: 3px 7px;
+  border-radius: 7px;
+  background: rgba(36, 26, 16, 0.86);
+  font-size: 12px;
+  color: var(--pr-text);
   opacity: 0;
   transition: opacity 160ms ease-out;
+  pointer-events: none;
 }
 
 .pr-share-toast.is-on { opacity: 1; }
