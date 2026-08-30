@@ -504,3 +504,6 @@ bottom.
 
 ## 2026-08-30 — claude/minimal-only
 - zodiac30: minimal only
+
+## 2026-08-30 — claude/zodiacro-minimal-sale
+- zodiac-ro: minimal template + sale 4.99 lei
