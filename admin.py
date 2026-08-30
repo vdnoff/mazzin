@@ -752,6 +752,10 @@ def step_breakdown(slug, window, paid_only=False):
                  "options": options, "retired": True}
         step = by_step.get(number)
         if step is None:
+            # A step number the config no longer has at all — the quiz got
+            # shorter. There is no row to hang these on and inventing one
+            # would put a step on the page that does not exist; the drop-off
+            # chart above has the same horizon for the same reason.
             continue
         step["blocks"].append(block)
         step["multi"] = len(step["blocks"]) > 1
@@ -970,11 +974,14 @@ def funnel(slug):
     detail = funnel_detail(slug, window, paid_only=audience["paid_only"])
     return render_template("funnel.html", window=window, audience=audience,
                            range_query=_range_query(window),
-                           # The switcher down the left. Every funnel, so the
-                           # page is a place to move between them rather than
-                           # somewhere you arrive from the overview and go back.
-                           siblings=[analytics.funnel_meta(other)
-                                     for other in analytics.funnel_slugs()],
+                           # The switcher down the left. Every funnel, so
+                           # this is a place to move between them rather
+                           # than one you arrive at and back out of.
+                           #
+                           # Slugs, not metas: the switcher prints the slug
+                           # and nothing else, and `funnel_meta` would parse
+                           # six eighty-kilobyte configs to supply it.
+                           siblings=analytics.funnel_slugs(),
                            csrf=csrf_token(), **detail)
 
 

@@ -115,8 +115,8 @@
     <ul>
       {% for other in siblings %}
         <li>
-          <a href="{{ url_for('admin.funnel', slug=other.slug, **range_query) }}"
-             class="{{ 'on' if other.slug == funnel.slug else '' }}">{{ other.slug }}</a>
+          <a href="{{ url_for('admin.funnel', slug=other, **range_query) }}"
+             class="{{ 'on' if other == funnel.slug else '' }}">{{ other }}</a>
         </li>
       {% endfor %}
     </ul>

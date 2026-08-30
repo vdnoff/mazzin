@@ -507,3 +507,6 @@ bottom.
 
 ## 2026-08-30 — claude/zodiacro-minimal-sale
 - zodiac-ro: minimal template + sale 4.99 lei
+
+## 2026-08-29 — claude/admin-command-center
+- admin: funnel command center — switcher, ad URL, live preview, step picks
