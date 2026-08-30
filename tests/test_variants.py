@@ -207,6 +207,19 @@ def arm_for(sid):
 # about structure and nothing else — which is exactly the claim that misses a
 # copy change. Pinning Math.random makes the walk reproducible, so the control
 # arm can be compared byte for byte against the page it drew before.
+# And the clock, for the same reason as the seed. The control page prints the
+# twelve months ahead of today and whatever the sale block is doing right now,
+# so a fixture recorded in August stops matching in September — which would
+# fail this check for a reason that has nothing to do with the control arm.
+# Pinned to one instant inside the sale window, the page is the same page in
+# any month the suite is run.
+PINNED = "2026-09-15T12:00:00Z"
+CLOCK = """(() => { const AT = Date.parse(%s); const Real = Date;
+  class Stub extends Real {
+    constructor(...a) { super(...(a.length ? a : [AT])); }
+    static now() { return AT; } }
+  window.Date = Stub; })();""" % json.dumps(PINNED)
+
 SEED = """(() => { let s = 0x2f6e2b1;
   Math.random = () => { s |= 0; s = (s + 0x6D2B79F5) | 0;
     let t = Math.imul(s ^ (s >>> 15), 1 | s);
@@ -238,6 +251,7 @@ READ = """() => {
 
 def read_for(page, sid, seeking=None):
     """One arm's finished page, from a walk that always deals the same cards."""
+    page.add_init_script(CLOCK)
     page.add_init_script(SEED)
     return _walk(page, sid, seeking)
 
