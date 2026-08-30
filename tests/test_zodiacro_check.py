@@ -170,6 +170,10 @@ def comparable(config):
     # and which says nothing about the translation. Normalised here so the
     # check guards the thing it was written to guard again.
     out.pop("paywall_variants", None)
+    # And the layout this funnel names outright. Same kind of fact again:
+    # which way a page is laid out is a product decision per funnel, not a
+    # property of the translation. Asserted on its own account below.
+    out.pop("result_template", None)
     copy = dict(config["result_copy"])
     for key in ADDED:
         copy.pop(key, None)
@@ -201,17 +205,25 @@ check("  and `pricing` is the only block they disagree on",
       "%s vs %s" % (cfg["pricing"], twin["pricing"]))
 import payments  # noqa: E402
 
-check("  and runs no layout experiment either",
+# FORCED TEST EDIT (2 of 2 in this block). Both of these said "this funnel
+# does none of that" and this funnel now does both, deliberately: it renders
+# the minimal layout as its only template, and it runs its own sale. Each is
+# asserted on its own account in the two sections at the end of this file
+# rather than dropped.
+check("  and runs no layout experiment for it",
       not cfg.get("paywall_variants"), str(cfg.get("paywall_variants")))
+# Main's key names, this funnel's answer to them. It renders the same minimal
+# layout, so it needs the same five blocks — and it names the layout outright
+# rather than being assigned an arm, which is the difference between the two
+# funnels here. Both facts are asserted in full further down.
 ARM_ONLY = {"rarity_card", "chips", "unlock", "unlock_head", "unlock_tail"}
-check("    so it carries none of the minimal arm's copy",
-      not ARM_ONLY & set(cfg["result_copy"]["profile"]),
-      str(sorted(ARM_ONLY & set(cfg["result_copy"]["profile"]))))
-check("  this funnel runs no sale of its own",
-      "sale" not in cfg, str(cfg.get("sale")))
-check("    so it charges its regular price, whatever the English one is doing",
-      payments._effective_price(cfg) == (cfg["pricing"]["amount_cents"], None),
-      str(payments._effective_price(cfg)))
+check("    it carries the minimal layout's copy, all of it",
+      ARM_ONLY <= set(cfg["result_copy"]["profile"]),
+      str(sorted(ARM_ONLY - set(cfg["result_copy"]["profile"]))))
+check("    it names the layout outright instead of being assigned an arm",
+      cfg.get("result_template") == "minimal", str(cfg.get("result_template")))
+check("  it runs a sale of its own",
+      isinstance(cfg.get("sale"), dict), str(cfg.get("sale")))
 check("    a different currency, not just a different number",
       cfg["pricing"]["currency"] != twin["pricing"]["currency"]
       and cfg["pricing"]["amount_cents"] != twin["pricing"]["amount_cents"],
@@ -396,7 +408,10 @@ check("  and the raw file names 300 nowhere either",
       "300" not in RAW, RAW[max(0, RAW.find("300") - 40):RAW.find("300") + 20])
 SLOTS = [(p, v) for p, v in STRINGS if "{price}" in v]
 check("every line that names a price interpolates {price}",
-      len(SLOTS) == 6, str(sorted(p for p, _v in SLOTS)))
+      len(SLOTS) == 7, str(sorted(p for p, _v in SLOTS)))
+check("  including the struck price a screen reader is given",
+      "{price}" in cfg["result_copy"]["labels"]["price_regular_aria"],
+      cfg["result_copy"]["labels"]["price_regular_aria"])
 check("  the CTA, the anchor and the sticky bar among them",
       all("{price}" in cfg["checkout"][k]
           for k in ("cta_label", "anchor", "anchor_head", "unlock_note"))
@@ -1782,6 +1797,166 @@ check("every delivered body builder is handed the run it renders for",
       and "function career(data, ctx)" in RESULT_JS)
 check("  and the CSS classes stayed English, as the stylesheet expects",
       '"zr-tag is-" + (mark || "works")' in RESULT_JS)
+
+# The clock, stubbed on both sides of the sale's own end so the expiry is
+# tested rather than assumed. `_effective_price` takes `now`, so nothing here
+# depends on the day this suite happens to run.
+BEFORE_END = reports.datetime.datetime(2026, 8, 27,
+                                       tzinfo=reports.datetime.timezone.utc)
+ONE_SEC = reports.datetime.timedelta(seconds=1)
+twin_cfg = json.load(open(os.path.join(ROOT, "funnels/zodiac-ro-test.json"),
+                          encoding="utf-8"))
+
+print("\n--- the minimal layout, as this funnel's only template ---")
+# Not an arm of an experiment: a layout decision already taken. The module
+# takes `result_template` only when no variant names one, and this funnel
+# declares no variants at all, so nothing is assigned and no
+# `paywall_variant` event is emitted for it.
+check("the funnel names the layout and runs no experiment",
+      cfg.get("result_template") == "minimal"
+      and "paywall_variants" not in cfg,
+      str(cfg.get("result_template")))
+check("  so the module never assigns it an arm",
+      "var template = (variant && variant.template)" in RESULT_JS
+      and "(ctx.cfg && ctx.cfg.result_template)" in RESULT_JS)
+check("  and an assigned arm would still win, for the funnel running one",
+      RESULT_JS.index("(variant && variant.template)")
+      < RESULT_JS.index("ctx.cfg.result_template"))
+check("  the module names no funnel slug to do it",
+      "zodiac30" not in RESULT_JS)
+
+MIN = cfg["result_copy"]["profile"]
+RARE = MIN["rarity_card"]
+check("the rarity card is framed, not a sentence with a number in it",
+      all(RARE.get(k) for k in ("lead", "tail", "note")), str(RARE))
+check("  every part of it Romanian, and none of it the English",
+      DIACRITIC.search(RARE["lead"]) and DIACRITIC.search(RARE["note"])
+      and RARE["lead"] != "Rarer than" and RARE["tail"] != "of readings"
+      and RARE["note"] != "Your edge over the rest — inside your reading.",
+      str(RARE))
+check("  and none of it states a figure — the module supplies the only one",
+      not [k for k in ("lead", "tail", "note") if re.search(r"\d", RARE[k])],
+      str([RARE[k] for k in ("lead", "tail", "note")
+           if re.search(r"\d", RARE[k])]))
+check("  the note carries exactly one em dash, which is where it breaks",
+      RARE["note"].count("\u2014") == 1, RARE["note"])
+check("  and the card reads as one sentence around the figure",
+      (RARE["lead"] + " 97% " + RARE["tail"]) == "Mai rar decât 97% dintre citiri",
+      RARE["lead"] + " 97% " + RARE["tail"])
+
+
+def different_pct(n):
+    """The module's own arithmetic: how many readings come out otherwise."""
+    return round((1 - 1.0 / n) * 100) if isinstance(n, int) and n >= 2 else 0
+
+
+NS = sorted({n for by_second in MIN["rarity"].values()
+             for by_energy in by_second.values()
+             for n in by_energy.values() if isinstance(n, int)})
+check("every rarity this funnel can produce yields a share under 100",
+      all(0 < different_pct(n) < 100 for n in NS),
+      str([(n, different_pct(n)) for n in NS]))
+check("  and the claim reads true at both ends",
+      different_pct(min(NS)) == round((1 - 1.0 / min(NS)) * 100)
+      and different_pct(max(NS)) == round((1 - 1.0 / max(NS)) * 100),
+      "1 in %d -> %d%%, 1 in %d -> %d%%"
+      % (min(NS), different_pct(min(NS)), max(NS), different_pct(max(NS))))
+
+CHIPS = MIN["chips"]
+check("the hero draws four capsules", len(CHIPS) == 4, str(CHIPS))
+check("  each one a token this funnel's own words fill",
+      all(re.search(r"\{\w+\}", c) for c in CHIPS), str(CHIPS))
+check("  and the two that carry prose say it the way the rest of the page does",
+      "condus de {element}" in CHIPS
+      and "subton {second}" in CHIPS
+      and cfg["result_copy"]["labels"]["led_template"] == "condus de {energy}",
+      str(CHIPS))
+check("  with no English suffix left in them",
+      not [c for c in CHIPS if "-led" in c or "under." in c], str(CHIPS))
+
+ROWS = MIN["unlock"]
+SECTION_IDS = {sec["id"] for sec in cfg["report"]["sections"]}
+CARD_IDS = {c["id"] for c in MIN["cards"]}
+check("the unlock list promises only chapters this funnel delivers",
+      {r["id"] for r in ROWS} <= SECTION_IDS,
+      str(sorted({r["id"] for r in ROWS} - SECTION_IDS)))
+check("  each of which has a card keyword to head it",
+      {r["id"] for r in ROWS} <= CARD_IDS,
+      str(sorted({r["id"] for r in ROWS} - CARD_IDS)))
+check("  no row is listed twice",
+      len({r["id"] for r in ROWS}) == len(ROWS))
+check("  every line is written and Romanian",
+      all(r.get("line") and DIACRITIC.search(r["line"]) for r in ROWS),
+      str([r["line"] for r in ROWS
+           if not (r.get("line") and DIACRITIC.search(r["line"]))]))
+check("the block has a heading, and it is not the English one",
+      MIN["unlock_head"] and MIN["unlock_head"] != "What you unlock:",
+      MIN["unlock_head"])
+TAIL = MIN["unlock_tail"]
+check("  and a tail naming the two chapters the list did not",
+      TAIL.get("key") and TAIL.get("line")
+      and DIACRITIC.search(TAIL["key"] + TAIL["line"]), str(TAIL))
+check("the unlock copy states no figure it cannot stand behind",
+      not [r for r in ROWS
+           if re.search(r"\d", re.sub(r"\{\w+\}|#\d", "", r["line"]))],
+      str([r["line"] for r in ROWS
+           if re.search(r"\d", re.sub(r"\{\w+\}|#\d", "", r["line"]))]))
+NEW_MINIMAL = ([RARE["lead"], RARE["tail"], RARE["note"], MIN["unlock_head"],
+                TAIL["key"], TAIL["line"]]
+               + [r["line"] for r in ROWS] + list(CHIPS))
+for text in NEW_MINIMAL:
+    check("  %-44s passes both Terms checks" % ('"%s"' % text[:42]),
+          reports._banned_hit(text, reports.ZODIAC_RO_BANNED) is None,
+          reports._banned_hit(text, reports.ZODIAC_RO_BANNED))
+check("and every one of them is walked by the config-wide banned scan",
+      all(any(v == text for _p, v in STRINGS) for text in NEW_MINIMAL))
+
+print("\n--- the sale, and what it is allowed to claim ---")
+SALE = cfg["sale"]
+check("it is active at 499 against a regular 999",
+      SALE["active"] is True and SALE["price_cents"] == 499
+      and SALE["regular_price_cents"] == 999, str(SALE))
+check("  and the struck figure is what this funnel actually charges",
+      SALE["regular_price_cents"] == cfg["pricing"]["amount_cents"],
+      "%s vs %s" % (SALE["regular_price_cents"],
+                    cfg["pricing"]["amount_cents"]))
+check("  which is the guard payments.py enforces, not a coincidence",
+      payments._sale(dict(cfg, sale=dict(SALE, regular_price_cents=1999)),
+                     BEFORE_END) is None)
+check("  a sale that is not a discount does not run either",
+      payments._sale(dict(cfg, sale=dict(SALE, price_cents=999)),
+                     BEFORE_END) is None)
+check("the label names the offer and no date",
+      SALE["label"] == "Reducere de vară"
+      and not re.search(r"\d", SALE["label"]), SALE["label"])
+check("  and no string on this funnel puts a date in the pitch",
+      not [p for p, v in STRINGS
+           if re.search(r"\b(30|septembrie|sept\.)\b", v)],
+      str([p for p, v in STRINGS
+           if re.search(r"\b(30|septembrie|sept\.)\b", v)][:3]))
+
+check("it ends on the date this sale was set to end",
+      SALE["ends"] == "2026-09-30T23:59:59-12:00", SALE["ends"])
+ENDS = reports.datetime.datetime.fromisoformat(SALE["ends"])
+check("  on a clock, with an offset, so the end is an instant not a guess",
+      ENDS.tzinfo is not None, SALE["ends"])
+check("  and it is not open-ended in disguise",
+      ENDS.year == 2026, str(ENDS))
+for label, when, want in (
+        ("today", BEFORE_END, 499),
+        ("one second before the end", ENDS - ONE_SEC, 499),
+        ("at the end", ENDS, 999),
+        ("one second after", ENDS + ONE_SEC, 999),
+        ("a week after", ENDS + reports.datetime.timedelta(days=7), 999)):
+    cents, live = payments._effective_price(cfg, when)
+    check("  %-26s charges %d" % (label, want),
+          cents == want and bool(live) == (want == 499),
+          "%s / %s" % (cents, bool(live)))
+check("the twin runs the same sale on test keys",
+      payments._effective_price(twin_cfg, BEFORE_END)[0] == 499
+      and twin_cfg["stripe_mode"] == "test")
+check("expiry leaves no residue: the page reverts with the charge",
+      payments._effective_price(cfg, ENDS + ONE_SEC) == (999, None))
 
 print("\n--- and the twins are untouched ---")
 # The failure this funnel could cause and no assertion above would see: a

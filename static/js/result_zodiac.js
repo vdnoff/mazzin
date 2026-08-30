@@ -150,6 +150,9 @@
     led_template: "{energy}-led",
     months: MONTH_ABBR,
     verdicts: null,               // null means "uppercase the tag", as before
+    // Said as well as struck: the line through a number is a visual
+    // convention, and a screen reader reads this instead.
+    price_regular_aria: "Regular price {price}",
     saves_head: "Where to stop spending it",
     scale_aria: "{left} to {right} — {at} out of 100 toward {right}"
   };
@@ -1124,7 +1127,8 @@
       var was = elm("span", "zr-price-was", ctx.priceRegular);
       // Said as well as struck: a line through a number is a visual
       // convention a screen reader does not read out.
-      was.setAttribute("aria-label", "Regular price " + ctx.priceRegular);
+      was.setAttribute("aria-label", fillLabel(
+        label(ctx, "price_regular_aria"), { price: ctx.priceRegular }));
       price.appendChild(was);
     }
     var note = ctx.commerce.price_note || "";
@@ -1342,7 +1346,17 @@
     // take the branch below exactly as it has always been, node for node.
     // Only an arm that names a template takes the other one.
     var variant = assignedVariant(ctx.cfg);
-    var template = (variant && variant.template) || "";
+    // A funnel may also name a template outright, with no A/B behind it. That
+    // is a layout decision already made rather than one being measured: no
+    // variants block, nothing assigned, and `reportVariant` below is handed
+    // null so no `paywall_variant` event is emitted for it.
+    //
+    // An assigned arm still wins, so a funnel running the experiment behaves
+    // exactly as it did: a control arm carries no template and a funnel
+    // running variants declares no `result_template`, so both halves of it
+    // land on "" the way they always have.
+    var template = (variant && variant.template)
+      || (ctx.cfg && ctx.cfg.result_template) || "";
     // Reported here, before a single node is built.
     //
     // It used to be the last statement in this function, and that cost the

@@ -3347,7 +3347,41 @@
       "rarity_line": "Aproximativ 1 din {n} citiri ajung la această combinație",
       "bridge": "Citirea ta răspunde, scrisă anume pentru {subtype_bare}:",
       "offer_head": "Citirea completă pentru {subtype_bare} — 6 capitole",
-      "split_caption": "{fire}% Foc · {earth}% Pământ · {air}% Aer · {water}% Apă"
+      "split_caption": "{fire}% Foc · {earth}% Pământ · {air}% Aer · {water}% Apă",
+      "rarity_card": {
+        "lead": "Mai rar decât",
+        "tail": "dintre citiri",
+        "note": "Avantajul tău față de ceilalți — în citirea ta."
+      },
+      "chips": [
+        "{sign}",
+        "condus de {element}",
+        "subton {second}",
+        "{energy}"
+      ],
+      "unlock_head": "Ce deblochezi:",
+      "unlock": [
+        {
+          "id": "materials",
+          "line": "cele două zodii magnetice pentru tine — și cea care te secătuiește"
+        },
+        {
+          "id": "splurge",
+          "line": "unde câștigă energia ta și pe unde se scurge"
+        },
+        {
+          "id": "shopping",
+          "line": "{first} → {last}, lună cu lună"
+        },
+        {
+          "id": "mistakes",
+          "line": "puterile pe care nu le folosești — de la #2 la #5"
+        }
+      ],
+      "unlock_tail": {
+        "key": "+ Planul complet",
+        "line": "culorile puterii și harta profilului tău"
+      }
     },
     "delivery_line": "PDF-ul a fost trimis la {email}",
     "delivery_line_bare": "PDF-ul a fost trimis pe e-mailul tău",
@@ -3382,7 +3416,16 @@
         "avoid": "EVITĂ"
       },
       "saves_head": "Unde să renunți",
-      "scale_aria": "de la {left} spre {right} — {at} din 100 către {right}"
+      "scale_aria": "de la {left} spre {right} — {at} din 100 către {right}",
+      "price_regular_aria": "Preț obișnuit {price}"
     }
+  },
+  "result_template": "minimal",
+  "sale": {
+    "active": true,
+    "price_cents": 499,
+    "regular_price_cents": 999,
+    "label": "Reducere de vară",
+    "ends": "2026-09-30T23:59:59-12:00"
   }
 }

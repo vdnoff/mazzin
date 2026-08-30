@@ -1362,7 +1362,13 @@ for text in NEW_COPY:
     hit = reports._banned_hit(text, reports.ZODIAC_BANNED)
     check("  %-46s passes the Terms check" % ('"%s"' % text[:44]),
           hit is None, hit)
-for slug in ("zodiac", "zodiac-ro", "kitchen", "persona"):
+# The copy belongs to whatever renders the minimal layout, which is no longer
+# this funnel alone: /zodiac-ro renders it as its only template — named
+# outright, no arm, nothing assigned — so it carries its own Romanian copy
+# for all five of these keys and is asserted on its own account in
+# tests/test_zodiacro_check.py. The three below draw the page the long way
+# and would have nowhere to put them.
+for slug in ("zodiac", "kitchen", "persona"):
     other = json.load(open(os.path.join(ROOT, "funnels/%s.json" % slug),
                            encoding="utf-8"))
     block_ = (other.get("result_copy") or {}).get("profile") or {}
@@ -1572,8 +1578,11 @@ for label, block_ in (("no block at all", None), ("a string", "yes"),
           payments._effective_price(broken)[0] == REGULAR)
 
 print("\n--- no other funnel is on offer ---")
-for slug in ("zodiac", "zodiac-ro", "zodiac-ro-test", "kitchen",
-             "kitchen-visualizer", "persona"):
+# /zodiac-ro and its twin run their own sale — a different currency, a
+# different price and their own end — asserted in tests/test_zodiacro_check.py
+# on their own account. What matters here is that this funnel's block is not
+# reaching them: the two are read independently, per funnel, off each config.
+for slug in ("zodiac", "kitchen", "kitchen-visualizer", "persona"):
     other = json.load(open(os.path.join(ROOT, "funnels/%s.json" % slug),
                            encoding="utf-8"))
     check("  %-18s carries no sale block" % slug, "sale" not in other,
