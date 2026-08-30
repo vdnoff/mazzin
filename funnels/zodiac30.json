@@ -3045,8 +3045,9 @@
     {
       "id": "control",
       "enabled": true,
-      "weight": 1,
-      "name": "The page as it is"
+      "weight": 0,
+      "name": "The page as it is",
+      "note": "Retired from the split, kept for the next test. Weight 0 takes it out of the pool entirely, so no session reaches it and there is no URL that forces it — assignment reads the session id and nothing else, by design. To see this arm again, set this weight above 0 and deploy; to compare locally without deploying, override the response for /static/funnels/zodiac30.json."
     },
     {
       "id": "minimal",
