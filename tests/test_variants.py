@@ -21,9 +21,11 @@ funnel to adopt it should need a config edit and nothing else.
 
     python3 tests/test_variants.py
 """
+import collections
 import http.server
 import json
 import os
+import random
 import re
 import socketserver
 import sys
@@ -116,18 +118,117 @@ check("  the arm is reported the same way from both",
       report in ZODIAC)
 
 
+def hashed(text):
+    """The module's own FNV-1a, so the suite picks the same arm it does."""
+    value = 0x811c9dc5
+    for ch in text:
+        value ^= ord(ch)
+        value = (value + ((value << 1) + (value << 4) + (value << 7)
+                          + (value << 8) + (value << 24))) & 0xFFFFFFFF
+    return value
+
+
+def weight_of(variant):
+    """`variantWeight`, to the letter: a non-number is 1, a negative is 0."""
+    weight = variant.get("weight")
+    return weight if isinstance(weight, (int, float)) and weight > 0 else (
+        1 if not isinstance(weight, (int, float)) else 0)
+
+
+def pool_of(cfg):
+    """`variantPool`: enabled, named, and weighing something."""
+    return [v for v in (cfg.get("paywall_variants") or [])
+            if v.get("id") and v.get("enabled") is not False
+            and weight_of(v) > 0]
+
+
+def arm_for(sid, cfg=None):
+    """Which arm a session id reaches, as `assignedVariant` decides it.
+
+    Mirrored rather than approximated — the weight filter and the
+    single-variant shortcut included. A model that skipped either would agree
+    with the module today and stop agreeing the moment a weight moved, which
+    is exactly the change this suite is here to check.
+    """
+    pool = pool_of(cfg or Z30)
+    if not pool:
+        return None
+    if len(pool) == 1:
+        return pool[0]["id"]
+    total = sum(weight_of(v) for v in pool)
+    if total <= 0:
+        return pool[0]["id"]
+    point = (hashed(sid) % 100000) / 100000.0 * total
+    seen = 0
+    for v in pool:
+        seen += weight_of(v)
+        if point < seen:
+            return v["id"]
+    return pool[-1]["id"]
+
+
 print("\n--- the layout flag ---")
 variants = Z30["paywall_variants"]
 check("zodiac30 declares two arms", len(variants) == 2,
       str([v["id"] for v in variants]))
-control = next((v for v in variants if v["id"] == "control"), None)
-minimal = next((v for v in variants if v["id"] == "minimal"), None)
+control_def = next((v for v in variants if v["id"] == "control"), None)
+minimal_def = next((v for v in variants if v["id"] == "minimal"), None)
 check("  a control that names no template",
-      control is not None and "template" not in control)
+      control_def is not None and "template" not in control_def)
 check("  and an arm that names one",
-      minimal is not None and minimal.get("template") == "minimal")
-check("  both enabled and evenly weighted",
-      all(v["enabled"] is True and v["weight"] == 1 for v in variants))
+      minimal_def is not None and minimal_def.get("template") == "minimal")
+check("  both still defined and enabled",
+      all(v["enabled"] is True for v in variants),
+      str([(v["id"], v["enabled"]) for v in variants]))
+check("  and the split is carried by weights, not by an even deal",
+      all(isinstance(v.get("weight"), int) for v in variants),
+      str([(v["id"], v.get("weight")) for v in variants]))
+
+print("\n--- minimal is the only arm served ---")
+# The A/B is over. The control is kept — defined, enabled, named, and with
+# its fixture still checked below — but it weighs nothing, which takes it out
+# of the pool rather than merely making it unlikely.
+check("the control weighs nothing", control_def["weight"] == 0,
+      str(control_def["weight"]))
+check("  and minimal weighs something", minimal_def["weight"] > 0,
+      str(minimal_def["weight"]))
+check("  so the pool is one arm long",
+      [v["id"] for v in pool_of(Z30)] == ["minimal"],
+      str([v["id"] for v in pool_of(Z30)]))
+check("  which the module renders unconditionally, whatever the hash says",
+      "if (pool.length === 1) return pool[0];" in ZODIAC)
+# Ten thousand ids in the shape engine.js actually mints — crypto.randomUUID,
+# or its v4 fallback — rather than a counter dressed as one.
+rng = random.Random(20260830)
+
+
+def production_sid():
+    raw = "%032x" % rng.getrandbits(128)
+    return "%s-%s-4%s-%x%s-%s" % (
+        raw[0:8], raw[8:12], raw[13:16],
+        (int(raw[16], 16) & 0x3) | 0x8, raw[17:20], raw[20:32])
+
+
+SESSIONS = 10000
+seen = collections.Counter(arm_for(production_sid()) for _ in range(SESSIONS))
+check("every one of %d sessions is served minimal" % SESSIONS,
+      seen["minimal"] == SESSIONS, str(dict(seen)))
+check("  and not one of them reaches the control",
+      seen["control"] == 0, str(seen["control"]))
+check("  the ids were the shape the engine mints",
+      all(re.fullmatch(r"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}"
+                       r"-[89ab][0-9a-f]{3}-[0-9a-f]{12}", production_sid())
+          for _ in range(200)))
+# The weights are what did it, not a deleted arm. Put one back and the split
+# comes back with it — which is the whole reason the definition stays.
+restored = json.loads(json.dumps(Z30))
+for v in restored["paywall_variants"]:
+    v["weight"] = 1
+back = collections.Counter(arm_for(production_sid(), restored)
+                           for _ in range(SESSIONS))
+check("the machinery still splits when a weight is put back",
+      back["control"] > SESSIONS * 0.4 and back["minimal"] > SESSIONS * 0.4,
+      str(dict(back)))
 check("the flag is optional, so every other funnel is unaffected",
       'var template = (variant && variant.template) || "";' in ZODIAC)
 check("  the old page is what a missing template renders",
@@ -147,6 +248,22 @@ print("\n--- the control arm is the page it always was ---")
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
+    """The funnel off disk, with one switch.
+
+    `serve_split` hands back zodiac30's config with the control's weight put
+    back. That arm weighs nothing in production now, so no session id reaches
+    it and there is no URL that forces one — which would leave the control
+    fixture undrivable, and the fixture is the thing that has been guarding
+    this experiment all along. Restoring the weight for one page load is the
+    same edit somebody would make to run the arm again, so what the fixture
+    checks is what they would see.
+    """
+
+    serve_split = False
+    # Every /api/track body the page sent, so the arm it reports can be read
+    # off the wire rather than off the source that emits it.
+    tracked = []
+
     def __init__(self, *a, **kw):
         super().__init__(*a, directory=REPO, **kw)
 
@@ -159,12 +276,24 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self._json({})
         if path == "/api/report":
             return self._json({"complete": False, "report": None})
+        if path == "/static/funnels/zodiac30.json" and Handler.serve_split:
+            with open(os.path.join(REPO, "static/funnels/zodiac30.json"),
+                      encoding="utf-8") as fh:
+                cfg = json.load(fh)
+            for variant in cfg.get("paywall_variants") or []:
+                variant["weight"] = 1
+            return self._json(cfg)
         if path == "/zodiac30":
             self.path = "/static/funnel.html"
         return super().do_GET()
 
     def do_POST(self):
-        self.rfile.read(int(self.headers.get("content-length") or 0))
+        raw = self.rfile.read(int(self.headers.get("content-length") or 0))
+        if self.path.split("?")[0] == "/api/track":
+            try:
+                Handler.tracked.append(json.loads(raw.decode("utf-8")))
+            except (ValueError, UnicodeDecodeError):
+                pass
         self._json({"ok": True})
 
     def _json(self, body):
@@ -181,28 +310,6 @@ LAID = ("() => { const c=document.querySelector('#screen-swipe #cards .card');"
 SETTLED = ("() => [...document.querySelectorAll('#screen-swipe #cards .card')]"
            ".every(c=>{const t=getComputedStyle(c).transform;"
            " return t==='none'||/matrix\\(1, 0, 0, 1/.test(t);})")
-
-
-def hashed(text):
-    """The module's own FNV-1a, so the suite picks the same arm it does."""
-    value = 0x811c9dc5
-    for ch in text:
-        value ^= ord(ch)
-        value = (value + ((value << 1) + (value << 4) + (value << 7)
-                          + (value << 8) + (value << 24))) & 0xFFFFFFFF
-    return value
-
-
-def arm_for(sid):
-    pool = [v for v in Z30["paywall_variants"] if v.get("enabled") is not False]
-    total = sum(v.get("weight", 1) for v in pool)
-    point = (hashed(sid) % 100000) / 100000.0 * total
-    seen = 0
-    for v in pool:
-        seen += v.get("weight", 1)
-        if point < seen:
-            return v["id"]
-    return pool[-1]["id"]
 
 
 # The quiz shuffles every step it draws, so two runs of the same arm tap
@@ -385,14 +492,24 @@ def _walk(page, sid, seeking=None):
 CONTROL_SHAPE = ["zr-kicker", "zr-hero is-rich", "zr-taps", "zr-free",
                  "zr-bridge", "zr-cards", "zr-offer"]
 
+# Session ids for each arm, picked against the split config — the one the
+# control page is rendered under below. Against the shipped config there is
+# only one arm and no id would find the other, which is the point of the
+# change and the reason the walk has to say which config it is asking about.
+SPLIT = json.loads(json.dumps(Z30))
+for variant in SPLIT["paywall_variants"]:
+    variant["weight"] = 1
 sids = {}
 for n in range(4000):
     sid = "a1b2c3d4-0000-4000-8000-%012d" % n
-    sids.setdefault(arm_for(sid), sid)
+    sids.setdefault(arm_for(sid, SPLIT), sid)
     if len(sids) == 2:
         break
-check("both arms are reachable", set(sids) == {"control", "minimal"},
-      str(sorted(sids)))
+check("both arms are reachable when both are weighted",
+      set(sids) == {"control", "minimal"}, str(sorted(sids)))
+check("  and only one of them is, as this funnel now ships",
+      arm_for(sids["control"]) == arm_for(sids["minimal"]) == "minimal",
+      "%s / %s" % (arm_for(sids["control"]), arm_for(sids["minimal"])))
 
 socketserver.TCPServer.allow_reuse_address = True
 httpd = socketserver.TCPServer(("127.0.0.1", PORT), Handler)
@@ -403,11 +520,18 @@ try:
         errors = []
         page = browser.new_page(viewport={"width": 390, "height": 844})
         page.on("pageerror", lambda e: errors.append(str(e)))
-        control = read_for(page, sids["control"])
+        # The control arm, served the config that still splits.
+        Handler.serve_split = True
+        try:
+            control = read_for(page, sids["control"])
+        finally:
+            Handler.serve_split = False
         page.close()
         page = browser.new_page(viewport={"width": 390, "height": 844})
         page.on("pageerror", lambda e: errors.append(str(e)))
+        Handler.tracked = []
         minimal = read_for(page, sids["minimal"])
+        minimal_events = list(Handler.tracked)
         page.close()
         # The same arm again, tapping the career answer, for the reorder.
         page = browser.new_page(viewport={"width": 390, "height": 844})
@@ -548,6 +672,46 @@ check("  and no rule above it, which made it a footnote",
 check("the control reads it the way it always did",
       not control["bright"]["lit"] and not control["bright"]["star"],
       str(control["bright"]))
+
+print("\n--- the experiment is retired, not dismantled ---")
+check("the control is still defined, enabled and named",
+      control_def is not None and control_def["enabled"] is True
+      and control_def.get("name"), str(control_def))
+check("  and still names no template, which is what makes it the control",
+      "template" not in control_def)
+check("  with a note saying how to bring it back",
+      "weight" in (control_def.get("note") or "").lower(),
+      str(control_def.get("note"))[:80])
+check("the machinery is untouched",
+      all(fn in ZODIAC for fn in ("function variantWeight(",
+                                  "function variantPool(",
+                                  "function assignedVariant(",
+                                  "function reportVariant(")))
+check("  and it still reports the arm it drew",
+      'ctx.track("paywall_variant", { variant: variant.id })' in ZODIAC)
+# Off the wire, not off the source: the page actually sent this.
+reported = [e for e in minimal_events if e.get("event") == "paywall_variant"]
+check("    which the page sends, once",
+      len(reported) == 1, str([e.get("event") for e in minimal_events]))
+check("    naming the arm that is now the only one",
+      reported and (reported[0].get("extra") or {}).get("variant") == "minimal",
+      str(reported[:1]))
+check("    for this funnel", reported
+      and reported[0].get("funnel") == "zodiac30", str(reported[:1]))
+check("  which tracking.py still accepts",
+      "paywall_variant" in open(os.path.join(REPO, "tracking.py"),
+                                encoding="utf-8").read())
+# The fixture itself, and the recorder beside it. What compares them is the
+# block immediately below, which runs on every invocation of this suite.
+FIXTURE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                       "fixtures", "variants_control.html")
+check("the control fixture is still on disk, and still has a page in it",
+      os.path.isfile(FIXTURE) and os.path.getsize(FIXTURE) > 4000,
+      str(os.path.getsize(FIXTURE)) if os.path.isfile(FIXTURE) else "missing")
+check("  and the recorder that writes it is still there",
+      os.path.isfile(os.path.join(
+          os.path.dirname(os.path.abspath(__file__)),
+          "record_variants_control.py")))
 
 print("\n--- and the control arm is that page byte for byte ---")
 # The strongest form of "unchanged" a browser can give: the walk is seeded, so

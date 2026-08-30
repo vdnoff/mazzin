@@ -1217,11 +1217,25 @@ check("only the funnel that asked for them has variants",
           if json.load(open(os.path.join(ROOT, "funnels", s + ".json"),
                             encoding="utf-8")).get("paywall_variants"))
       == VARIANT_FUNNELS)
+# `note` is the sixth allowed key and is not copy: JSON carries no comments,
+# so a retired arm documents how to bring itself back in one. What keeps that
+# from becoming a way in for offer wording is the line under it — nothing
+# reads it, so nothing can render it.
+ARM_KEYS = {"id", "enabled", "weight", "name", "template", "note"}
+Z30_ARMS = json.load(open(os.path.join(ROOT, "funnels/zodiac30.json"),
+                          encoding="utf-8"))["paywall_variants"]
 check("  and its arms are a layout test, not this funnel's offer copy",
-      all(set(v) <= {"id", "enabled", "weight", "name", "template"}
-          for v in json.load(open(os.path.join(ROOT,
-                                               "funnels/zodiac30.json"),
-                                  encoding="utf-8"))["paywall_variants"]))
+      all(set(v) <= ARM_KEYS for v in Z30_ARMS),
+      str([sorted(set(v) - ARM_KEYS) for v in Z30_ARMS]))
+# Read off the variant, specifically. The module has an unrelated `own.note`
+# — the rarity card's own line — so the check names the object a variant is
+# ever held in rather than the property name on its own.
+_MODULE = open(os.path.join(ROOT, "static/js/result_zodiac.js"),
+               encoding="utf-8").read()
+check("    the note being a comment nothing renders",
+      not re.search(r"\bvariant(?:\s*\|\|\s*\{\})?\s*\.\s*note\b"
+                    r"|\bpool\[[^\]]*\]\s*\.\s*note\b", _MODULE),
+      str(re.findall(r".{0,30}\.note.{0,20}", _MODULE)))
 check("  and each still carries its own single call to action",
       all(json.load(open(os.path.join(ROOT, "funnels", s + ".json"),
                          encoding="utf-8"))
