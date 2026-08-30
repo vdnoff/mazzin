@@ -492,3 +492,6 @@ bottom.
 
 ## 2026-08-30 — claude/admin-paid-filter
 - admin: paid-traffic-only default view
+
+## 2026-08-30 — claude/sale-extend-199
+- zodiac30: sale .99 extended
