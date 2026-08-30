@@ -229,8 +229,17 @@ back = collections.Counter(arm_for(production_sid(), restored)
 check("the machinery still splits when a weight is put back",
       back["control"] > SESSIONS * 0.4 and back["minimal"] > SESSIONS * 0.4,
       str(dict(back)))
+# The line grew a second fallback: a funnel may name its layout outright,
+# with no A/B behind it — /zodiac-ro does, and carries no variants at all. An
+# assigned arm still wins, and a funnel declaring neither still lands on "",
+# which is what keeps every funnel below unaffected. This suite's own fixture
+# — zodiac30's config and both its arms — is untouched by that.
 check("the flag is optional, so every other funnel is unaffected",
-      'var template = (variant && variant.template) || "";' in ZODIAC)
+      "var template = (variant && variant.template)" in ZODIAC
+      and '|| (ctx.cfg && ctx.cfg.result_template) || "";' in ZODIAC)
+check("  an assigned arm still wins over a named template",
+      ZODIAC.index("(variant && variant.template)")
+      < ZODIAC.index("ctx.cfg.result_template"))
 check("  the old page is what a missing template renders",
       re.search(r'if \(data && template === "minimal"\) \{', ZODIAC)
       is not None
