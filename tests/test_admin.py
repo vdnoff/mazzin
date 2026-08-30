@@ -200,11 +200,23 @@ class Rig:
 
     def walk(self, funnel, session_id, when, subid=None, swipes=0,
              result=False, paywall=False, pay_tap=False, share=False,
-             variant=None, purchase=None):
-        """One reader's whole visit, in the order the client would send it."""
+             variant=None, purchase=None, picks=None):
+        """One reader's whole visit, in the order the client would send it.
+
+        `picks` is `{step: (pair_key, image_id)}`. A swipe with no entry gets
+        no `extra` at all, which is exactly what an engine.js from before the
+        payload shipped sends — and what the breakdown has to skip rather
+        than trip over.
+        """
+        picks = picks or {}
         self.event(funnel, session_id, "funnel_start", when, subid)
         for step in range(1, swipes + 1):
-            self.event(funnel, session_id, "swipe", when, subid, step=step)
+            extra = None
+            if step in picks:
+                pair_key, chosen = picks[step]
+                extra = {"pair": pair_key, "shown": [chosen], "chosen": chosen}
+            self.event(funnel, session_id, "swipe", when, subid, step=step,
+                       extra=extra)
         if result:
             self.event(funnel, session_id, "result_view", when, subid)
         if variant:
@@ -246,21 +258,63 @@ PAID_TODAY = (300, "usd", "paid", TODAY)
 PENDING_TODAY = (300, "usd", "pending", TODAY)
 PAID_WEEK = (300, "usd", "paid", WEEK)
 
+# What the quiz actually offers, read from the config the page reads. The
+# counts asserted further down are literals; these are the ids those counts
+# are attached to, and taking them from the config is what makes the test
+# survive a gallery rename without asserting nothing.
+KITCHEN_STEPS = analytics.funnel_steps("kitchen")
+STEP1 = KITCHEN_STEPS[0]["pairs"][0]
+STEP1_KEY = STEP1["key"]
+PICK_A = STEP1["images"][0]["id"]
+PICK_B = STEP1["images"][1]["id"]
+LABEL_A = STEP1["images"][0]["label"]
+LABEL_B = STEP1["images"][1]["label"]
+
+# Step 9 of kitchen declares two pairs and draws one per session, which is the
+# case a single percentage per step would report wrongly.
+MULTI = [step for step in KITCHEN_STEPS if len(step["pairs"]) > 1][0]
+MULTI_STEP = MULTI["step"]
+PAIR_ONE, PAIR_TWO = MULTI["pairs"][0], MULTI["pairs"][1]
+
+STEP2 = KITCHEN_STEPS[1]["pairs"][0]
+STEP2_KEY = STEP2["key"]
+RETIRED = "an_image_the_config_no_longer_declares"
+
+
+def pick(*rows):
+    return dict(rows)
+
+
 # kitchen — today
 rig.walk("kitchen", "k1", TODAY, "fb-a", swipes=13, result=True,
-         paywall=True, pay_tap=True, purchase=PAID_TODAY)
+         paywall=True, pay_tap=True, purchase=PAID_TODAY,
+         picks=pick((1, (STEP1_KEY, PICK_A)),
+                    (MULTI_STEP, (PAIR_ONE["key"],
+                                  PAIR_ONE["images"][0]["id"]))))
 rig.walk("kitchen", "k2", TODAY, "fb-a", swipes=13, result=True,
-         paywall=True, pay_tap=True, purchase=PAID_TODAY)
-rig.walk("kitchen", "k3", TODAY, "fb-a", swipes=8, result=True, paywall=True)
-rig.walk("kitchen", "k4", TODAY, "fb-a", swipes=5, result=True)
+         paywall=True, pay_tap=True, purchase=PAID_TODAY,
+         picks=pick((1, (STEP1_KEY, PICK_A)),
+                    (MULTI_STEP, (PAIR_TWO["key"],
+                                  PAIR_TWO["images"][0]["id"]))))
+rig.walk("kitchen", "k3", TODAY, "fb-a", swipes=8, result=True, paywall=True,
+         picks=pick((1, (STEP1_KEY, PICK_A)), (2, (STEP2_KEY, RETIRED))))
+rig.walk("kitchen", "k4", TODAY, "fb-a", swipes=5, result=True,
+         picks=pick((1, (STEP1_KEY, PICK_A))))
 rig.walk("kitchen", "k5", TODAY, "fb-b", swipes=13, paywall=True,
-         pay_tap=True, purchase=PENDING_TODAY)
-rig.walk("kitchen", "k6", TODAY, "fb-b", swipes=3)
-rig.walk("kitchen", "k7", TODAY, None, swipes=1)
+         pay_tap=True, purchase=PENDING_TODAY,
+         picks=pick((1, (STEP1_KEY, PICK_B))))
+rig.walk("kitchen", "k6", TODAY, "fb-b", swipes=3,
+         picks=pick((1, (STEP1_KEY, PICK_B))))
+# No subid, so this reader is outside the paid view — which is what makes
+# the two audiences give different answers for step 1.
+rig.walk("kitchen", "k7", TODAY, None, swipes=1,
+         picks=pick((1, (STEP1_KEY, PICK_B))))
 # kitchen — inside 7 days, not today
 rig.walk("kitchen", "kw1", WEEK, "fb-a", swipes=13, result=True, paywall=True,
-         pay_tap=True, purchase=PAID_WEEK)
-rig.walk("kitchen", "kw2", WEEK, "fb-b", swipes=2)
+         pay_tap=True, purchase=PAID_WEEK,
+         picks=pick((1, (STEP1_KEY, PICK_A))))
+rig.walk("kitchen", "kw2", WEEK, "fb-b", swipes=2,
+         picks=pick((1, (STEP1_KEY, PICK_B))))
 # kitchen — inside 30 days, and the sale it made today. Its start row is
 # outside today's window, which is what `(unattributed)` is for.
 rig.walk("kitchen", "k8", MONTH, "old", swipes=13, result=True, paywall=True,
@@ -755,6 +809,132 @@ check("and the drop-off bars", "class=\"fill\"" in body)
 
 
 # --- 3. it never writes -----------------------------------------------------
+
+print("\n--- command center: switcher, ad url, preview ---")
+page = client.get("/admin/funnel/kitchen?range=today").get_data(as_text=True)
+check("the switcher lists every funnel",
+      all(('>%s</a>' % slug) in page for slug in
+          ("kitchen", "kitchen-visualizer", "persona", "zodiac",
+           "zodiac-ro", "zodiac30")))
+check("the funnel being read is the highlighted one",
+      'class="on">kitchen</a>' in page)
+check("another funnel is not", 'class="">persona</a>' in page
+      or 'class="">zodiac</a>' in page)
+check("the overview stays one click away, window and all",
+      'class="top" href="/admin?range=today"' in page,
+      [line for line in page.splitlines() if 'class="top"' in line])
+check("every switcher link keeps the window",
+      page.count("/admin/funnel/persona?range=today") >= 1)
+
+eq("the advertising url is the funnel's canonical one",
+   admin.ad_url("kitchen"), "%s/kitchen" % config.BASE_URL.rstrip("/"))
+check("it is on the page, in something you can copy from",
+      'id="adurl"' in page and admin.ad_url("kitchen") in page)
+check("with a copy button", 'id="adcopy"' in page)
+check("and a way to open it for real", 'target="_blank"' in page)
+
+check("the preview frame points at the live funnel",
+      'id="pvframe"' in page and admin.ad_url("kitchen") in page)
+check("it is lazy", 'loading="lazy"' in page)
+check("and has a reload control", 'id="pvreload"' in page)
+check("the filters still govern the page",
+      "Paid only" in page and "7 days" in page)
+eq("the api carries the url too",
+   api("/admin/api/funnel/kitchen")[1]["ad_url"],
+   "%s/kitchen" % config.BASE_URL.rstrip("/"))
+
+
+print("\n--- each step selections ---")
+
+
+def selections(slug="kitchen", **params):
+    return {row["step"]: row
+            for row in api("/admin/api/funnel/" + slug, **params)[1]
+            ["selections"]}
+
+
+rows = selections(range="today", audience="all")
+eq("every step the config declares has a row", len(rows), 13)
+step1 = rows[1]
+eq("step 1 knows what it asked", step1["id"], KITCHEN_STEPS[0]["id"])
+eq("it counted every pick in the window", step1["total"], 7)
+options = {option["id"]: option for option in step1["blocks"][0]["options"]}
+eq("the favoured option's count", options[PICK_A]["sessions"], 4)
+eq("the other one's", options[PICK_B]["sessions"], 3)
+check("and the split is those over the total",
+      abs(options[PICK_A]["share"] - 400.0 / 7) < 1e-9,
+      options[PICK_A]["share"])
+check("...both ways",
+      abs(options[PICK_B]["share"] - 300.0 / 7) < 1e-9,
+      options[PICK_B]["share"])
+eq("the shares add to a hundred",
+   round(sum(o["share"] for o in step1["blocks"][0]["options"]), 6), 100.0)
+eq("the config's own label is what gets printed",
+   options[PICK_A]["label"], LABEL_A)
+check("and it reaches the page", LABEL_A in page and LABEL_B in page)
+
+# The audience filter. k7 arrived with no subid, so the paid view must not
+# count their pick — which changes the split rather than only the total.
+paid = selections(range="today", audience="paid")
+paid1 = paid[1]
+eq("the paid view drops the reader who arrived with no subid",
+   paid1["total"], 6)
+paid_options = {o["id"]: o for o in paid1["blocks"][0]["options"]}
+eq("...leaving the favoured count alone", paid_options[PICK_A]["sessions"], 4)
+eq("...and taking one off the other", paid_options[PICK_B]["sessions"], 2)
+check("so the split moves", abs(paid_options[PICK_A]["share"] - 200.0 / 3)
+      < 1e-9, paid_options[PICK_A]["share"])
+
+# The date filter, on the same rows.
+week = selections(range="7d", audience="all")
+eq("a wider window picks up the earlier readers", week[1]["total"], 9)
+week_options = {o["id"]: o for o in week[1]["blocks"][0]["options"]}
+eq("...on both options", (week_options[PICK_A]["sessions"],
+                          week_options[PICK_B]["sessions"]), (5, 4))
+
+# An option nobody chose keeps its row, which is the whole reason the config
+# is consulted rather than the query trusted for the option list.
+untouched = [option for option in rows[3]["blocks"][0]["options"]
+             if option["sessions"] == 0]
+check("a step nobody recorded a pick on still lists its options",
+      len(rows[3]["blocks"][0]["options"]) > 0 and
+      len(untouched) == len(rows[3]["blocks"][0]["options"]),
+      rows[3]["blocks"][0]["options"])
+eq("and its total is zero rather than missing", rows[3]["total"], 0)
+
+# A step that declares two pairs draws one of them per session, so each is
+# its own denominator.
+multi = rows[MULTI_STEP]
+check("a two-pair step is marked as one", multi["multi"], multi)
+eq("it has a block per pair", len(multi["blocks"]), 2)
+eq("each block counted only its own readers",
+   sorted(block["total"] for block in multi["blocks"]), [1, 1])
+for block in multi["blocks"]:
+    top = max(block["options"], key=lambda o: o["sessions"])
+    eq("the one pick in %s is the whole of it" % block["id"],
+       top["share"], 100.0)
+eq("and the step's total is both pairs together", multi["total"], 2)
+
+# An id the config no longer declares. Its taps happened; dropping them would
+# quietly change the denominator of the step they happened on.
+step2 = rows[2]
+retired = [o for o in step2["blocks"][0]["options"] if o["retired"]]
+eq("a pick on an image the config dropped is still shown", len(retired), 1)
+eq("...named by its id, since there is no label left to use",
+   retired[0]["id"], RETIRED)
+eq("...and counted", retired[0]["sessions"], 1)
+check("the options the config does declare are still listed at zero",
+      all(option["sessions"] == 0
+          for option in step2["blocks"][0]["options"]
+          if not option["retired"]))
+
+# Swipes with no payload at all — an engine.js from before the pick shipped.
+# They must not break the breakdown, and must not be counted as a pick.
+eq("a swipe with no payload is not a pick", rows[13]["total"], 0)
+check("even though the drop-off chart still counts the swipe",
+      api("/admin/api/funnel/kitchen", range="today")[1]["steps"][12]
+      ["sessions"] > 0)
+
 
 print("\n--- the mode switch is behind the same door ---")
 admin.reset_rate_limit()

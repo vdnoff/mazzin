@@ -4,147 +4,373 @@
   <span style="color:var(--muted);font-size:13px">{{ funnel.slug }} — {{ funnel.title }}
   {% if funnel.test_mode %}<span class="tag">test</span>{% endif %}</span>
 {% endblock %}
+
+{% block extra_css %}
+<style>
+  /* The command centre: switcher, report, live funnel. Three columns where
+     there is room for three, and one column stacked in the order you would
+     read them where there is not — the owner opens this on a phone as often
+     as on a desk. */
+  /* minmax(0, 1fr) rather than 1fr: a bare `1fr` is floored at the column's
+     min-content, and the switcher is a row of nowrap chips whose min-content
+     is the whole row — which stretched the grid past the viewport and made
+     the page itself scroll sideways on a phone. */
+  .cc { display: grid; gap: 16px; align-items: start;
+        grid-template-columns: minmax(0, 1fr); }
+  .cc-side, .cc-preview { min-width: 0; }
+  @media (min-width: 820px) {
+    .cc { grid-template-columns: 168px minmax(0, 1fr); }
+    .cc-side { position: sticky; top: 12px; }
+  }
+  @media (min-width: 1180px) {
+    .cc { grid-template-columns: 168px minmax(0, 1fr) 410px; }
+    .cc-preview { position: sticky; top: 12px; }
+  }
+  .cc-main { min-width: 0; }
+
+  /* Switcher. A column of funnels on a desk; a row that scrolls sideways on
+     a phone, where a vertical list would push the numbers off the screen. */
+  .cc-side ul { list-style: none; margin: 0; padding: 0; display: flex;
+                gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .cc-side li { flex: 0 0 auto; }
+  .cc-side a {
+    display: block; padding: 7px 11px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--card);
+    color: var(--ink); text-decoration: none; font-size: 13px;
+    white-space: nowrap;
+  }
+  .cc-side a.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .cc-side a.top { color: var(--muted); margin-bottom: 8px; }
+  .cc-side .tag { margin-left: 5px; }
+  @media (min-width: 820px) {
+    .cc-side ul { display: block; overflow: visible; }
+    .cc-side li { margin-bottom: 5px; }
+  }
+
+  /* The advertising URL. An input rather than a link, because the job is to
+     take this string somewhere else, and a text box is the control every
+     phone already knows how to select from. */
+  .adurl { background: var(--card); border: 1px solid var(--line);
+           border-radius: 10px; padding: 11px 12px; margin: 0 0 12px; }
+  .adurl b { display: block; font-size: 10.5px; text-transform: uppercase;
+             letter-spacing: .06em; color: var(--muted); margin: 0 0 6px; }
+  .adurl .grab { display: flex; gap: 6px; }
+  .adurl input {
+    font: inherit; font-size: 13px; flex: 1 1 auto; min-width: 0;
+    padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px;
+    background: #fbfbfd; color: var(--ink);
+  }
+  .adurl button, .pv button {
+    font: inherit; font-size: 13px; padding: 7px 12px; border-radius: 7px;
+    border: 1px solid var(--ink); background: var(--ink); color: #fff;
+    cursor: pointer; white-space: nowrap;
+  }
+  .adurl a.open { align-self: center; font-size: 12.5px; }
+
+  /* Live preview. The funnel is a mobile-only page, so the frame is simply
+     given a phone's width and left alone — no transform scaling, because any
+     width between 320 and 390 is a real phone and the page is built for it. */
+  .pv { background: var(--card); border: 1px solid var(--line);
+        border-radius: 10px; padding: 11px 12px; }
+  .pv .bar { display: flex; align-items: center; gap: 8px; margin: 0 0 9px; }
+  .pv .bar b { font-size: 10.5px; text-transform: uppercase; flex: 1 1 auto;
+               letter-spacing: .06em; color: var(--muted); }
+  .pv iframe { width: 100%; max-width: 390px; height: 700px; border: 0;
+               border-radius: 8px; background: #fff;
+               box-shadow: 0 0 0 1px var(--line); }
+  .pv .note { font-size: 11.5px; color: var(--muted); margin: 8px 0 0; }
+
+  /* Each step's picks. A row per option with the bar behind the label, so a
+     lopsided step reads before any number does. */
+  .sel { background: var(--card); border: 1px solid var(--line);
+         border-radius: 10px; padding: 11px 12px; margin: 0 0 9px; }
+  .sel h3 { font-size: 13px; margin: 0 0 2px; }
+  .sel .q { color: var(--muted); font-size: 12px; margin: 0 0 9px; }
+  .sel .pair { margin: 0 0 10px; }
+  .sel .pair:last-child { margin-bottom: 0; }
+  .sel .pairname { font-size: 10.5px; letter-spacing: .05em; color: var(--muted);
+                   text-transform: uppercase; margin: 0 0 5px; }
+  .opt { position: relative; display: flex; align-items: center; gap: 8px;
+         padding: 6px 9px; border-radius: 7px; margin: 0 0 4px;
+         background: #f4f6fa; overflow: hidden; }
+  .opt .fill { position: absolute; left: 0; top: 0; bottom: 0;
+               background: #dde5fa; }
+  .opt .name { position: relative; flex: 1 1 auto; font-size: 13px;
+               white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .opt .pct { position: relative; font-variant-numeric: tabular-nums;
+              font-weight: 700; font-size: 13px; }
+  .opt .n { position: relative; color: var(--muted); font-size: 11.5px;
+            font-variant-numeric: tabular-nums; min-width: 46px;
+            text-align: right; }
+  .opt.none .fill { background: #eceef2; }
+  .sel .empty { color: var(--muted); font-size: 12.5px; }
+</style>
+{% endblock %}
+
 {% block body %}
-{% include "_ranges.html" %}
+<div class="cc">
 
-<h2>Headline</h2>
-<div class="scroll">
-<table>
-  <thead>
-    <tr><th>Starts</th><th>Result</th><th>Paywall</th><th>Pay tap</th>
-        {% if share_tap is not none %}<th>Shares</th>{% endif %}
-        <th>Sales</th><th>Revenue</th><th>Conv %</th><th>Result %</th><th>Pay %</th></tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>{{ events.funnel_start }}</td>
-      <td>{{ events.result_view }}</td>
-      <td>{{ events.paywall_view }}</td>
-      <td>{{ events.pay_tap }}</td>
-      {% if share_tap is not none %}<td>{{ share_tap }}</td>{% endif %}
-      <td>{{ purchases }}</td>
-      <td class="money">{{ revenue_display }}</td>
-      <td>{{ '%.2f'|format(conversion) }}%</td>
-      <td>{{ '%.1f'|format(result_rate) }}%</td>
-      <td>{{ '%.1f'|format(pay_rate) }}%</td>
-    </tr>
-  </tbody>
-</table>
+  <nav class="cc-side">
+    <a class="top" href="{{ url_for('admin.index', **range_query) }}">← Overview</a>
+    <ul>
+      {% for other in siblings %}
+        <li>
+          <a href="{{ url_for('admin.funnel', slug=other, **range_query) }}"
+             class="{{ 'on' if other == funnel.slug else '' }}">{{ other }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  </nav>
+
+  <div class="cc-main">
+    <div class="adurl">
+      <b>URL for advertising</b>
+      <div class="grab">
+        <input id="adurl" type="text" readonly value="{{ ad_url }}"
+               aria-label="Advertising URL">
+        <button type="button" id="adcopy" data-copied="Copied">Copy</button>
+        <a class="open" href="{{ ad_url }}" target="_blank"
+           rel="noopener noreferrer">open</a>
+      </div>
+    </div>
+
+    {# The window and the audience. Both filters govern everything below them
+       on this page, the step breakdown included. #}
+    {% include "_ranges.html" %}
+
+    <h2>Headline</h2>
+    <div class="scroll">
+    <table>
+      <thead>
+        <tr><th>Starts</th><th>Result</th><th>Paywall</th><th>Pay tap</th>
+            {% if share_tap is not none %}<th>Shares</th>{% endif %}
+            <th>Sales</th><th>Revenue</th><th>Conv %</th><th>Result %</th><th>Pay %</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ events.funnel_start }}</td>
+          <td>{{ events.result_view }}</td>
+          <td>{{ events.paywall_view }}</td>
+          <td>{{ events.pay_tap }}</td>
+          {% if share_tap is not none %}<td>{{ share_tap }}</td>{% endif %}
+          <td>{{ purchases }}</td>
+          <td class="money">{{ revenue_display }}</td>
+          <td>{{ '%.2f'|format(conversion) }}%</td>
+          <td>{{ '%.1f'|format(result_rate) }}%</td>
+          <td>{{ '%.1f'|format(pay_rate) }}%</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h2>Swipe drop-off</h2>
+    <p class="note">Sessions that recorded each swipe. The bar is against the
+      best-attended step; “of starts” is against everybody who began.</p>
+    <div class="scroll">
+    <table>
+      <thead><tr><th>Step</th><th>Sessions</th><th>Of starts</th></tr></thead>
+      <tbody>
+      {% for step in steps %}
+        <tr>
+          <td>{{ step.step }}</td>
+          <td class="bar {{ 'zero' if not step.sessions }}">
+            <span class="fill" style="width: {{ '%.1f'|format(step.of_first) }}%"></span>
+            <span class="value">{{ step.sessions }}</span>
+          </td>
+          <td>{{ '%.1f'|format(step.of_start) }}%</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="3">This funnel declares no swipe steps.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+
+    <h2>By subid</h2>
+    <p class="note">Top campaigns by starts; the rest are summed into
+      <code>(other)</code>. A sale whose session began before this window shows as
+      <code>(unattributed)</code> rather than being dropped.</p>
+    <div class="scroll">
+    <table>
+      <thead>
+        <tr><th>Subid</th><th>Starts</th><th>Result</th><th>Paywall</th>
+            <th>Pay tap</th>
+            {% if share_tap is not none %}<th>Shares</th>{% endif %}
+            <th>Sales</th><th>Revenue</th><th>Conv %</th></tr>
+      </thead>
+      <tbody>
+      {% for row in subids %}
+        <tr>
+          <td>{{ row.subid }}</td>
+          <td class="{{ 'zero' if not row.funnel_start }}">{{ row.funnel_start }}</td>
+          <td class="{{ 'zero' if not row.result_view }}">{{ row.result_view }}</td>
+          <td class="{{ 'zero' if not row.paywall_view }}">{{ row.paywall_view }}</td>
+          <td class="{{ 'zero' if not row.pay_tap }}">{{ row.pay_tap }}</td>
+          {% if share_tap is not none %}
+            <td class="{{ 'zero' if not row.share_tap }}">{{ row.share_tap }}</td>
+          {% endif %}
+          <td class="{{ 'zero' if not row.purchases }}">{{ row.purchases }}</td>
+          <td class="money {{ 'zero' if not row.revenue }}">{{ row.revenue_display }}</td>
+          <td>{{ '%.2f'|format(row.conversion) }}%</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="9">Nothing in this window.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+
+    {% if variants %}
+    <h2>Paywall A/B</h2>
+    <p class="note">
+      What the config has live right now, and what the arms have done. An arm
+      switched off keeps the numbers it earned — it is marked off rather than
+      hidden. <code>shown</code> is sessions assigned, <code>reached</code> is
+      those who actually saw the offer, <code>rate</code> is paid over shown.
+    </p>
+    <div class="scroll">
+    <table>
+      <thead>
+        <tr><th>Variant</th><th>Live</th><th>Weight</th><th>Share</th>
+            <th>Shown</th><th>Reached</th><th>Paid</th><th>Rate</th></tr>
+      </thead>
+      <tbody>
+      {% for row in variants.overall %}
+        <tr>
+          <td>{{ row.variant }}
+            {% if not row.declared %}<span class="tag off">removed</span>{% endif %}
+          </td>
+          <td>{% if row.enabled %}<span class="tag on">on</span>
+              {% else %}<span class="tag off">off</span>{% endif %}</td>
+          <td>{{ row.weight }}</td>
+          <td>{{ '%.0f'|format(row.share) }}%</td>
+          <td class="{{ 'zero' if not row.shown }}">{{ row.shown }}</td>
+          <td class="{{ 'zero' if not row.reached }}">{{ row.reached }}</td>
+          <td class="{{ 'zero' if not row.paid }}">{{ row.paid }}</td>
+          <td>{{ '%.2f'|format(row.rate) }}%</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+
+    <h2>A/B by subid</h2>
+    <div class="scroll">
+    <table>
+      <thead>
+        <tr><th>Variant</th><th>Subid</th><th>Shown</th><th>Reached</th>
+            <th>Paid</th><th>Rate</th></tr>
+      </thead>
+      <tbody>
+      {% for row in variants.by_subid %}
+        <tr>
+          <td>{{ row.variant }}</td>
+          <td>{{ row.subid }}</td>
+          <td>{{ row.shown }}</td>
+          <td>{{ row.reached }}</td>
+          <td>{{ row.paid }}</td>
+          <td>{{ '%.2f'|format(row.rate) }}%</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6">No arm has been assigned in this window.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% endif %}
+
+    <h2>Each step selections</h2>
+    <p class="note">Which option was tapped, per step, over the same window and
+      the same audience as everything above. An option nobody picked keeps its
+      row — that is usually the thing worth seeing.</p>
+
+    {% for step in selections %}
+      <div class="sel">
+        <h3>Step {{ step.step }}{% if step.id %} · {{ step.id }}{% endif %}
+          <span style="color:var(--muted);font-weight:400">— {{ step.total }}
+            pick{{ '' if step.total == 1 else 's' }}</span></h3>
+        {% if step.question %}<p class="q">{{ step.question }}</p>{% endif %}
+        {% for block in step.blocks %}
+          <div class="pair">
+            {% if step.multi %}
+              <p class="pairname">{{ block.id or block.key }}
+                — {{ block.total }} pick{{ '' if block.total == 1 else 's' }}
+                {%- if block.retired %} · retired{% endif %}</p>
+            {% endif %}
+            {% for option in block.options %}
+              <div class="opt {{ 'none' if not option.sessions }}">
+                <span class="fill" style="width: {{ '%.1f'|format(option.share) }}%"></span>
+                <span class="name">{{ option.label }}{% if option.retired %}
+                  <span class="tag">gone</span>{% endif %}</span>
+                <span class="pct">{{ '%.0f'|format(option.share) }}%</span>
+                <span class="n">{{ option.sessions }}</span>
+              </div>
+            {% endfor %}
+            {% if not block.options %}
+              <p class="empty">This pair declares no images.</p>
+            {% endif %}
+          </div>
+        {% else %}
+          <p class="empty">Nothing recorded for this step in this window.</p>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="sel"><p class="empty">This funnel declares no swipe steps.</p></div>
+    {% endfor %}
+  </div>
+
+  <aside class="cc-preview">
+    <div class="pv">
+      <div class="bar">
+        <b>Live preview</b>
+        <button type="button" id="pvreload">Reload</button>
+      </div>
+      <iframe id="pvframe" src="{{ ad_url }}" loading="lazy"
+              title="{{ funnel.slug }} live preview"
+              referrerpolicy="no-referrer"></iframe>
+      <p class="note">The real page, on the real domain. It counts as a visit:
+        the session it starts carries no subid, so it stays out of the paid
+        view and lands under <code>(none)</code> in all traffic.</p>
+    </div>
+  </aside>
+
 </div>
 
-<h2>Swipe drop-off</h2>
-<p class="note">Sessions that recorded each swipe. The bar is against the
-  best-attended step; “of starts” is against everybody who began.</p>
-<div class="scroll">
-<table>
-  <thead><tr><th>Step</th><th>Sessions</th><th>Of starts</th></tr></thead>
-  <tbody>
-  {% for step in steps %}
-    <tr>
-      <td>{{ step.step }}</td>
-      <td class="bar {{ 'zero' if not step.sessions }}">
-        <span class="fill" style="width: {{ '%.1f'|format(step.of_first) }}%"></span>
-        <span class="value">{{ step.sessions }}</span>
-      </td>
-      <td>{{ '%.1f'|format(step.of_start) }}%</td>
-    </tr>
-  {% else %}
-    <tr><td colspan="3">This funnel declares no swipe steps.</td></tr>
-  {% endfor %}
-  </tbody>
-</table>
-</div>
-
-<h2>By subid</h2>
-<p class="note">Top campaigns by starts; the rest are summed into
-  <code>(other)</code>. A sale whose session began before this window shows as
-  <code>(unattributed)</code> rather than being dropped.</p>
-<div class="scroll">
-<table>
-  <thead>
-    <tr><th>Subid</th><th>Starts</th><th>Result</th><th>Paywall</th>
-        <th>Pay tap</th>
-        {% if share_tap is not none %}<th>Shares</th>{% endif %}
-        <th>Sales</th><th>Revenue</th><th>Conv %</th></tr>
-  </thead>
-  <tbody>
-  {% for row in subids %}
-    <tr>
-      <td>{{ row.subid }}</td>
-      <td class="{{ 'zero' if not row.funnel_start }}">{{ row.funnel_start }}</td>
-      <td class="{{ 'zero' if not row.result_view }}">{{ row.result_view }}</td>
-      <td class="{{ 'zero' if not row.paywall_view }}">{{ row.paywall_view }}</td>
-      <td class="{{ 'zero' if not row.pay_tap }}">{{ row.pay_tap }}</td>
-      {% if share_tap is not none %}
-        <td class="{{ 'zero' if not row.share_tap }}">{{ row.share_tap }}</td>
-      {% endif %}
-      <td class="{{ 'zero' if not row.purchases }}">{{ row.purchases }}</td>
-      <td class="money {{ 'zero' if not row.revenue }}">{{ row.revenue_display }}</td>
-      <td>{{ '%.2f'|format(row.conversion) }}%</td>
-    </tr>
-  {% else %}
-    <tr><td colspan="9">Nothing in this window.</td></tr>
-  {% endfor %}
-  </tbody>
-</table>
-</div>
-
-{% if variants %}
-<h2>Paywall A/B</h2>
-<p class="note">
-  What the config has live right now, and what the arms have done. An arm
-  switched off keeps the numbers it earned — it is marked off rather than
-  hidden. <code>shown</code> is sessions assigned, <code>reached</code> is
-  those who actually saw the offer, <code>rate</code> is paid over shown.
-</p>
-<div class="scroll">
-<table>
-  <thead>
-    <tr><th>Variant</th><th>Live</th><th>Weight</th><th>Share</th>
-        <th>Shown</th><th>Reached</th><th>Paid</th><th>Rate</th></tr>
-  </thead>
-  <tbody>
-  {% for row in variants.overall %}
-    <tr>
-      <td>{{ row.variant }}
-        {% if not row.declared %}<span class="tag off">removed</span>{% endif %}
-      </td>
-      <td>{% if row.enabled %}<span class="tag on">on</span>
-          {% else %}<span class="tag off">off</span>{% endif %}</td>
-      <td>{{ row.weight }}</td>
-      <td>{{ '%.0f'|format(row.share) }}%</td>
-      <td class="{{ 'zero' if not row.shown }}">{{ row.shown }}</td>
-      <td class="{{ 'zero' if not row.reached }}">{{ row.reached }}</td>
-      <td class="{{ 'zero' if not row.paid }}">{{ row.paid }}</td>
-      <td>{{ '%.2f'|format(row.rate) }}%</td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
-</div>
-
-<h2>A/B by subid</h2>
-<div class="scroll">
-<table>
-  <thead>
-    <tr><th>Variant</th><th>Subid</th><th>Shown</th><th>Reached</th>
-        <th>Paid</th><th>Rate</th></tr>
-  </thead>
-  <tbody>
-  {% for row in variants.by_subid %}
-    <tr>
-      <td>{{ row.variant }}</td>
-      <td>{{ row.subid }}</td>
-      <td>{{ row.shown }}</td>
-      <td>{{ row.reached }}</td>
-      <td>{{ row.paid }}</td>
-      <td>{{ '%.2f'|format(row.rate) }}%</td>
-    </tr>
-  {% else %}
-    <tr><td colspan="6">No arm has been assigned in this window.</td></tr>
-  {% endfor %}
-  </tbody>
-</table>
-</div>
-{% endif %}
+<script>
+// Two buttons' worth of behaviour, written out rather than framework'd.
+(function () {
+  var field = document.getElementById("adurl");
+  var copy = document.getElementById("adcopy");
+  if (field && copy) {
+    copy.addEventListener("click", function () {
+      var done = function () {
+        var was = copy.textContent;
+        copy.textContent = copy.getAttribute("data-copied");
+        setTimeout(function () { copy.textContent = was; }, 1200);
+      };
+      // The modern call needs a secure context; the selection fallback is what
+      // answers on plain http, which is where this runs in development.
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(field.value).then(done, function () {
+          field.select(); document.execCommand("copy"); done();
+        });
+      } else {
+        field.select(); document.execCommand("copy"); done();
+      }
+    });
+  }
+  var frame = document.getElementById("pvframe");
+  var reload = document.getElementById("pvreload");
+  if (frame && reload) {
+    reload.addEventListener("click", function () {
+      // Dropping the attribute and putting it back re-fetches even when the
+      // URL has not changed, and leaves no cache-busting parameter on a URL
+      // the funnel will read.
+      var url = frame.getAttribute("src");
+      frame.removeAttribute("src");
+      frame.setAttribute("src", url);
+    });
+  }
+}());
+</script>
 {% endblock %}

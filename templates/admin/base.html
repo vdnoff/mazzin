@@ -118,6 +118,10 @@
   td.bar span.value { position: relative; }
   footer { color: var(--muted); font-size: 12px; padding: 0 16px 30px; }
 </style>
+{# Page-specific rules. The command centre's three-column grid lives on the
+   page that has three columns rather than in here, where it would be dead
+   weight on every other one. #}
+{% block extra_css %}{% endblock %}
 </head>
 <body>
 <header class="bar">

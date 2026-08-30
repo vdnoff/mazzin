@@ -128,6 +128,62 @@ def funnel_meta(slug):
     return meta
 
 
+def funnel_steps(slug):
+    """The quiz's shape, as the pick breakdown needs it to put names on ids.
+
+    The `pairs` / bare `images` fallback mirrors tracking.py's `_pairs_of`
+    exactly, and the key is built the same way that module builds it — a step
+    id and a pair id joined by a colon — because that string is what a swipe
+    row actually carries. Deriving it a second way here would be a second
+    opinion about which pair a stored event belongs to.
+    """
+    try:
+        cfg = config.load_funnel(slug)
+    except (KeyError, ValueError, OSError):
+        return []
+    steps = []
+    raw = (cfg.get("swipe") or {}).get("steps") or []
+    for number, step in enumerate(raw, 1):
+        if not isinstance(step, dict):
+            continue
+        step_id = step.get("id")
+        pairs = []
+        for pair in _pairs_of(step):
+            pair_id = pair.get("id")
+            key = ("%s:%s" % (step_id, pair_id)
+                   if isinstance(step_id, str) and isinstance(pair_id, str)
+                   else "")
+            images = [{"id": item.get("id"),
+                       "label": item.get("label") or item.get("id"),
+                       "img": item.get("img")}
+                      for item in (pair.get("images") or [])
+                      if isinstance(item, dict)
+                      and isinstance(item.get("id"), str)]
+            if images:
+                pairs.append({"key": key, "id": pair_id, "images": images})
+        steps.append({"step": number, "id": step_id,
+                      "question": step.get("question"),
+                      "format": step.get("format") or "pair",
+                      "pairs": pairs})
+    return steps
+
+
+def _pairs_of(step):
+    """A step's pairs, however the config spelled them.
+
+    Kept identical to tracking.py's function of the same name: that one decides
+    which pair ids a swipe event is allowed to name, and this one decides which
+    pair ids the dashboard can put a label on. They have to agree.
+    """
+    pairs = step.get("pairs")
+    if isinstance(pairs, list) and pairs:
+        return [p for p in pairs if isinstance(p, dict)]
+    images = step.get("images")
+    if isinstance(images, list) and images:
+        return [{"id": "p1", "images": images}]
+    return []
+
+
 def variant_config(cfg):
     """The paywall arms a config declares, with the share each one is live at.
 
@@ -302,6 +358,58 @@ def swipe_steps(funnel, start=None, end=None, paid_only=False):
         tuple([funnel] + params + paid_params)) or []
     return {int(row["step"]): int(row["sessions"] or 0) for row in rows
             if row["step"] is not None}
+
+
+# Which option was tapped, per step. The one query behind "each step
+# selections", and it is readable only because tracking.py already stores the
+# answer: a swipe's `extra` carries the pair that was drawn and the image id
+# that was chosen, both checked against the funnel's own config on the way in.
+# So this is a group-by, not a schema change.
+#
+# Grouped by pair as well as by step, and that is not decoration. A step may
+# declare more than one pair — kitchen and kitchen-visualizer both do — and one
+# of them is drawn per session, so a reader who saw pair A could never have
+# chosen an image from pair B. Percentages across the two mixed together would
+# be percentages of nothing.
+STEP_SELECTIONS_SQL = """
+SELECT e.step                                       AS step,
+       JSON_UNQUOTE(JSON_EXTRACT(e.extra, '$.pair'))   AS pair,
+       JSON_UNQUOTE(JSON_EXTRACT(e.extra, '$.chosen')) AS chosen,
+       COUNT(DISTINCT e.session_id)                 AS sessions
+FROM events e
+WHERE e.funnel = %s
+  AND e.event = 'swipe'
+  AND e.step IS NOT NULL
+  AND e.extra IS NOT NULL
+  AND JSON_EXTRACT(e.extra, '$.chosen') IS NOT NULL
+  {window}
+  {paid}
+GROUP BY e.step, pair, chosen
+ORDER BY e.step, pair, sessions DESC
+"""
+
+
+def step_selections(funnel, start=None, end=None, paid_only=False):
+    """`{(step, pair): {image_id: sessions}}` — what was picked, where.
+
+    Sessions rather than events, like every other count here: a reader who
+    reloaded mid-quiz and swiped a step twice is one reader with one opinion
+    about it. A session that somehow recorded two different choices for one
+    step counts in both, which is the honest reading of a row that says it
+    happened.
+    """
+    window, params = _window_clause("e.created_at", start, end)
+    paid, paid_params = _paid_parts("e", funnel, paid_only, start, end)
+    rows = database.query_all(
+        STEP_SELECTIONS_SQL.format(window=window, paid=paid),
+        tuple([funnel] + params + paid_params)) or []
+    out = {}
+    for row in rows:
+        if row["step"] is None or not row["chosen"]:
+            continue
+        key = (int(row["step"]), row["pair"] or "")
+        out.setdefault(key, {})[row["chosen"]] = int(row["sessions"] or 0)
+    return out
 
 
 SUBID_EVENTS_SQL = """

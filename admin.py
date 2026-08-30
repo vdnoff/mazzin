@@ -665,6 +665,105 @@ def _unattributed(totals, subid_rows):
             **{event: 0 for event in analytics.FUNNEL_EVENTS}}
 
 
+def ad_url(slug):
+    """The funnel's canonical public URL — what goes in an ad's final URL.
+
+    Built from BASE_URL rather than written out, so a staging deploy shows its
+    own hostname instead of handing somebody production's by mistake.
+    """
+    return "%s/%s" % (config.BASE_URL.rstrip("/"), slug)
+
+
+def step_breakdown(slug, window, paid_only=False):
+    """Per step, which option readers actually tapped.
+
+    Readable with no change to the write path, because tracking.py already
+    stores the answer: every swipe carries the pair that was drawn and the
+    image that was chosen, both validated against the funnel's own config when
+    they were written. So this is the config's labels joined onto a group-by.
+
+    One block per pair, not one per step. A step with two pairs draws one of
+    them per session, so a reader who saw the wood pair could not have picked
+    a stone; a single percentage across both would divide by a denominator
+    nobody was ever shown.
+
+    Zero-filled from the config, because an option nobody picks is the most
+    interesting row here and a GROUP BY cannot return it.
+    """
+    picked = analytics.step_selections(
+        slug, window["start"], window["end"], paid_only=paid_only)
+    seen_keys = set()
+    steps = []
+
+    for step in analytics.funnel_steps(slug):
+        blocks = []
+        for pair in step["pairs"]:
+            key = (step["step"], pair["key"])
+            seen_keys.add(key)
+            counts = picked.get(key, {})
+            total = sum(counts.values())
+            declared = {image["id"] for image in pair["images"]}
+            options = [{
+                "id": image["id"],
+                "label": image["label"],
+                "img": image["img"],
+                "sessions": counts.get(image["id"], 0),
+                "share": analytics.rate(counts.get(image["id"], 0), total),
+                "retired": False,
+            } for image in pair["images"]]
+            # An id in the data that the config no longer declares: a gallery
+            # edited under a live funnel. Its taps happened and are shown,
+            # marked, rather than quietly dropped out of the denominator.
+            for orphan in sorted(set(counts) - declared):
+                options.append({
+                    "id": orphan, "label": orphan, "img": None,
+                    "sessions": counts[orphan],
+                    "share": analytics.rate(counts[orphan], total),
+                    "retired": True,
+                })
+            options.sort(key=lambda option: (-option["sessions"],
+                                             option["label"]))
+            blocks.append({"key": pair["key"], "id": pair["id"],
+                           "total": total, "options": options})
+        steps.append({
+            "step": step["step"],
+            "id": step["id"],
+            "question": step["question"],
+            "format": step["format"],
+            "multi": len(blocks) > 1,
+            "total": sum(block["total"] for block in blocks),
+            "blocks": blocks,
+        })
+
+    # Rows whose pair the config does not describe at all — a step renamed, or
+    # a pair retired outright. Grouped under the step they were recorded on so
+    # the numbers still add up to what the table holds.
+    by_step = {step["step"]: step for step in steps}
+    for (number, pair_key), counts in sorted(picked.items()):
+        if (number, pair_key) in seen_keys:
+            continue
+        total = sum(counts.values())
+        options = sorted(
+            ({"id": image, "label": image, "img": None, "sessions": count,
+              "share": analytics.rate(count, total), "retired": True}
+             for image, count in counts.items()),
+            key=lambda option: (-option["sessions"], option["label"]))
+        block = {"key": pair_key, "id": pair_key, "total": total,
+                 "options": options, "retired": True}
+        step = by_step.get(number)
+        if step is None:
+            # A step number the config no longer has at all — the quiz got
+            # shorter. There is no row to hang these on and inventing one
+            # would put a step on the page that does not exist; the drop-off
+            # chart above has the same horizon for the same reason.
+            continue
+        step["blocks"].append(block)
+        step["multi"] = len(step["blocks"]) > 1
+        step["total"] += total
+
+    return steps
+
+
 def funnel_detail(slug, window, paid_only=False):
     """Everything the detail page draws, and the JSON behind it."""
     meta = analytics.funnel_meta(slug)
@@ -710,6 +809,8 @@ def funnel_detail(slug, window, paid_only=False):
                                       counts["funnel_start"]),
         "pay_rate": analytics.rate(counts["pay_tap"], counts["paywall_view"]),
         "steps": steps,
+        "selections": step_breakdown(slug, window, paid_only=paid_only),
+        "ad_url": ad_url(slug),
         "subids": rows,
         "share_tap": counts["share_tap"] if meta["shares"] else None,
         "variants": (variants(slug, window, meta=meta, paid_only=paid_only)
@@ -873,6 +974,14 @@ def funnel(slug):
     detail = funnel_detail(slug, window, paid_only=audience["paid_only"])
     return render_template("funnel.html", window=window, audience=audience,
                            range_query=_range_query(window),
+                           # The switcher down the left. Every funnel, so
+                           # this is a place to move between them rather
+                           # than one you arrive at and back out of.
+                           #
+                           # Slugs, not metas: the switcher prints the slug
+                           # and nothing else, and `funnel_meta` would parse
+                           # six eighty-kilobyte configs to supply it.
+                           siblings=analytics.funnel_slugs(),
                            csrf=csrf_token(), **detail)
 
 
