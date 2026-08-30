@@ -2984,10 +2984,10 @@
   },
   "sale": {
     "active": true,
-    "price_cents": 200,
+    "price_cents": 199,
     "regular_price_cents": 300,
     "label": "Summer Sale",
-    "ends": "2026-08-31T23:59:59-12:00"
+    "ends": "2026-09-30T23:59:59-12:00"
   },
   "checkout": {
     "kicker": "Your profile is ready",

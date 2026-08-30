@@ -1340,11 +1340,17 @@ import reports  # noqa: E402
 UTC = datetime.timezone.utc
 sale = cfg.get("sale") or {}
 REGULAR = cfg["pricing"]["amount_cents"]
+module_js = open(os.path.join(ROOT, cfg["result_module"].lstrip("/")),
+                 encoding="utf-8").read()
 check("the funnel carries a sale block", isinstance(sale, dict) and sale,
       str(sale))
 check("  it is on", sale.get("active") is True, str(sale.get("active")))
-check("  at two dollars", sale.get("price_cents") == 200,
+check("  at a dollar ninety-nine", sale.get("price_cents") == 199,
       str(sale.get("price_cents")))
+check("  which is not a round number of dollars, and prints as one anyway",
+      sale["price_cents"] % 100 != 0
+      and "(cents / 100).toFixed(2)" in engine,
+      str(sale["price_cents"]))
 # The one that stops a false discount. A struck-through figure is a claim
 # about what this product costs when it is not on sale, so the block's idea
 # of the regular price has to BE the funnel's price — not a rounder number
@@ -1358,12 +1364,24 @@ check("  labelled, and ending on a date", bool(sale.get("label"))
       and bool(sale.get("ends")), str(sale))
 check("  the end is written with a timezone",
       payments._sale_ends(sale.get("ends")) is not None, str(sale.get("ends")))
-check("  and it is the last hour of the last zone to reach the 31st",
+check("  and it is the last hour of the last zone to reach the 30th",
       payments._sale_ends(sale["ends"])
-      == datetime.datetime(2026, 8, 31, 23, 59, 59,
+      == datetime.datetime(2026, 9, 30, 23, 59, 59,
                            tzinfo=datetime.timezone(
                                datetime.timedelta(hours=-12))),
       str(payments._sale_ends(sale["ends"])))
+# The offer was extended once. The card does not say when it closes, so no
+# copy went stale with the date — which is the reason it does not say it.
+check("  the card names no date at all",
+      "zr-sale" in module_js and "saleEnds" not in module_js
+      and 'card.appendChild(elm("p", "zr-sale", ctx.sale.label));' in module_js,
+      "")
+check("  and no month name is written into the offer copy",
+      not re.search(r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
+                    r"[a-z]*\s+\d{1,2}\b",
+                    json.dumps(cfg["checkout"], ensure_ascii=False)
+                    + json.dumps(sale, ensure_ascii=False)),
+      "")
 check("the block carries these five keys and no others",
       sorted(sale) == ["active", "ends", "label", "price_cents",
                        "regular_price_cents"], str(sorted(sale)))
@@ -1410,14 +1428,20 @@ print("\n--- and it is the clock that ends it, not a deploy ---")
 # second is already outside it.
 BOUNDARY = payments._sale_ends(sale["ends"]).astimezone(UTC)
 SECOND = datetime.timedelta(seconds=1)
-check("  which lands at noon UTC on the first",
-      BOUNDARY == datetime.datetime(2026, 9, 1, 11, 59, 59, tzinfo=UTC),
+check("  which lands at noon UTC on the first of October",
+      BOUNDARY == datetime.datetime(2026, 10, 1, 11, 59, 59, tzinfo=UTC),
       str(BOUNDARY))
+SALE_PRICE = sale["price_cents"]
 for label, when, want in (
-        ("a month before", BOUNDARY - datetime.timedelta(days=30), 200),
-        ("one second before it ends", BOUNDARY - SECOND, 200),
-        ("the second it ends", BOUNDARY, 300),
-        ("a day after", BOUNDARY + datetime.timedelta(days=1), 300)):
+        ("a month before", BOUNDARY - datetime.timedelta(days=30),
+         SALE_PRICE),
+        # The date the offer used to close on. It was extended, and the only
+        # thing that had to change for that is this one config value.
+        ("the old end, a month back",
+         datetime.datetime(2026, 9, 1, 12, tzinfo=UTC), SALE_PRICE),
+        ("one second before it ends", BOUNDARY - SECOND, SALE_PRICE),
+        ("the second it ends", BOUNDARY, REGULAR),
+        ("a day after", BOUNDARY + datetime.timedelta(days=1), REGULAR)):
     got = payments._effective_price(cfg, when)[0]
     check("  %-26s charges %d" % (label, want), got == want, str(got))
 check("  and the sale object comes back only while it is running",
@@ -1436,7 +1460,7 @@ BROKEN = [
     ("priced above it", {"price_cents": REGULAR + 100}),
     ("priced at nothing", {"price_cents": 0}),
     ("priced with a bool", {"price_cents": True}),
-    ("priced with a float", {"price_cents": 2.5}),
+    ("priced with a float", {"price_cents": 1.99}),
     ("ending in words", {"ends": "soon"}),
     ("ending without a timezone", {"ends": "2026-08-31T23:59:59"}),
     ("not ending at all", {"ends": None}),

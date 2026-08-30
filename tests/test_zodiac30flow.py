@@ -1173,14 +1173,18 @@ def rest_of_run(page):
     print("\n--- the summer sale, on both sides of the last second ---")
     # The offer's own instant: 23:59:59 in UTC-12 is 11:59:59Z on the 1st, and
     # that second is already outside it. One page a second before, one on it.
-    DURING = "2026-09-01T11:59:58Z"
-    AFTER = "2026-09-01T11:59:59Z"
+    DURING = "2026-10-01T11:59:58Z"
+    AFTER = "2026-10-01T11:59:59Z"
     sale = json.load(open(os.path.join(ROOT, "funnels/zodiac30.json"),
                           encoding="utf-8"))["sale"]
     live = offer_at("zodiac30", DURING)
     check("the card is reached with the sale running", live is not None)
     if live:
-        check("  two dollars is the hero", live["now"] == "$2", live["now"])
+        check("  the sale price is the hero", live["now"] == "$1.99",
+              live["now"])
+        check("    written to the cent, because it is not a round dollar",
+              live["now"] == "$%.2f" % (sale["price_cents"] / 100.0),
+              live["now"])
         check("  three is beside it", live["was"] == "$3", live["was"])
         check("    and it is the price this funnel actually charges",
               live["was"] == "$%d" % (sale["regular_price_cents"] // 100)
@@ -1189,10 +1193,19 @@ def rest_of_run(page):
               live["strike"] == "line-through", live["strike"])
         check("    and said, for a reader who cannot see a line",
               live["label"] == "Regular price $3", live["label"])
-        check("  one line names the offer and the day it stops",
-              live["sale"] == "Summer Sale · ends Aug 31", live["sale"])
-        check("  the button names the two dollars it will take",
-              live["button"] == "Open my full profile — $2", live["button"])
+        # The offer's name and nothing else. The card carried a closing date
+        # until the sale was extended; a date on a card is a promise about a
+        # config value, and this one had already been spent once.
+        check("  one line names the offer, and only the offer",
+              live["sale"] == sale["label"] == "Summer Sale", live["sale"])
+        check("    with no date anywhere on the card",
+              not re.search(r"\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|"
+                            r"nov|dec)[a-z]*\.?\s+\d{1,2}\b|"
+                            r"\bends\b|\d{4}-\d{2}-\d{2}",
+                            live["residue"]), live["residue"][:160])
+        check("  the button names the price it will take",
+              live["button"] == "Open my full profile — $1.99",
+              live["button"])
         check("  the badges are the ones that were always there",
               live["badges"] == ["One-time", "No subscription, ever"],
               str(live["badges"]))
@@ -1228,7 +1241,7 @@ def rest_of_run(page):
               == "Open my full profile — $3", over["button"])
         check("  not a word of the sale is left on the card",
               "summer sale" not in over["residue"]
-              and "$2" not in over["residue"], over["residue"][:120])
+              and "$1.99" not in over["residue"], over["residue"][:120])
         check("  and everything else is exactly what it was",
               [over["badges"], over["anchor"], over["sub"], over["note"]]
               == [["One-time", "No subscription, ever"],

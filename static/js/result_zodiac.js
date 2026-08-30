@@ -936,22 +936,6 @@
     return "";
   }
 
-  // "Aug 31", in the offer's own timezone rather than the reader's.
-  //
-  // The date is what the offer says, so it has to read the same in Auckland
-  // as in Los Angeles — formatting the instant locally would show one of them
-  // the day before. A month name and a number, in English, because that is
-  // what every other word on this card is.
-  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-  function saleEnds(value) {
-    var parts = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value || ""));
-    if (!parts) return "";
-    var month = MONTHS[parseInt(parts[2], 10) - 1];
-    return month ? month + " " + parseInt(parts[3], 10) : "";
-  }
-
   // --- e) the offer ----------------------------------------------------------
 
   // engine.js has already built and wired all of this. What happens here is
@@ -1027,13 +1011,12 @@
     if (note) price.appendChild(elm("span", "zr-price-note", note));
     card.appendChild(price);
     if (ctx.sale && ctx.sale.label) {
-      // The label and the date the offer ends, and nothing else. No clock
-      // counting down, no number of copies left: this page has one honest
-      // thing to say about the offer, which is what it is and when it stops.
-      var ends = saleEnds(ctx.sale.ends);
-      card.appendChild(elm("p", "zr-sale",
-                           ends ? ctx.sale.label + " · ends " + ends
-                                : ctx.sale.label));
+      // The offer's name, and nothing else at all. No clock counting down, no
+      // number of copies left, and no closing date either — a date on a card
+      // is a promise about a config value, and an offer that gets extended
+      // twice has spent that promise. The block still ends on its own clock;
+      // the page simply does not make a date part of the pitch.
+      card.appendChild(elm("p", "zr-sale", ctx.sale.label));
     }
 
     // The two questions a reader asks a $3 button, answered where they are
