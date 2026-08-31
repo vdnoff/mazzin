@@ -58,6 +58,12 @@ events = []
 class Handler(http.server.SimpleHTTPRequestHandler):
     """The funnel off disk, with the three POSTs a purchase makes recorded."""
 
+    # Serves kitchen with `single_page: false`, which is the only way to
+    # reach the two-screen flow: every funnel on disk is single-page, so the
+    # button that opens the paywall is hidden on all of them and the code
+    # behind it cannot be driven otherwise.
+    two_screen = False
+
     def __init__(self, *a, **kw):
         super().__init__(*a, directory=REPO, **kw)
 
@@ -68,6 +74,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         path = self.path.split("?")[0]
         if path == "/api/pixel-config":
             return self._json({"pixel_id": "111"})
+        if path == "/static/funnels/kitchen.json" and Handler.two_screen:
+            with open(os.path.join(REPO, "static/funnels/kitchen.json"),
+                      encoding="utf-8") as fh:
+                cfg = json.load(fh)
+            cfg["checkout"]["single_page"] = False
+            return self._json(cfg)
         if path in ("/zodiac", "/kitchen"):
             self.path = "/static/funnel.html"
         return super().do_GET()
@@ -240,6 +252,43 @@ def run(browser, slug):
             "result_view": count("result_view")}
 
 
+def run_two_screen(browser):
+    """The flow where the paywall is a screen of its own, and can be reopened.
+
+    `InitiateCheckout` is Meta's name for the intent step, and that intent is
+    one act however many times the reader walks back to look at the price
+    again. The button that opens the paywall used to send it on every tap,
+    which the funnel report could not have shown: this path records
+    `paywall_open` per tap rather than `paywall_view`, so a second pixel event
+    had no row beside it to be counted against.
+    """
+    print("\n--- the two-screen flow, opened twice ---")
+    del events[:]
+    Handler.two_screen = True
+    page = browser.new_page(viewport={"width": 380, "height": 844})
+    try:
+        walk(page, "kitchen")
+        check("the button that opens the paywall is on the page",
+              page.locator("#cta").is_visible())
+        for nth in ("first", "second"):
+            page.locator("#cta").click()
+            page.wait_for_timeout(900)
+            check("  the %s tap opens the paywall" % nth,
+                  page.locator("#screen-paywall.is-active").count() == 1)
+            page.locator("#paywall-back").click()
+            page.wait_for_timeout(700)
+    finally:
+        Handler.two_screen = False
+
+    check("both taps are counted", count("paywall_open") == 2,
+          "%d: %s" % (count("paywall_open"), names()))
+    check("  and Meta hears InitiateCheckout once, not twice",
+          pixel(page).count("InitiateCheckout") == 1, pixel(page))
+    check("  which is one intent, however many times it was looked at",
+          pixel(page).count("Lead") == 1, pixel(page))
+    page.close()
+
+
 def main():
     socketserver.TCPServer.allow_reuse_address = True
     httpd = socketserver.TCPServer(("127.0.0.1", PORT), Handler)
@@ -248,6 +297,7 @@ def main():
         with sync_playwright() as pw:
             browser = pw.chromium.launch(executable_path=CHROME)
             got = {slug: run(browser, slug) for slug in ("zodiac", "kitchen")}
+            run_two_screen(browser)
             browser.close()
     finally:
         httpd.shutdown()
