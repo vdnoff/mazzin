@@ -594,9 +594,13 @@ print("\n--- overview ---")
 status, data = api("/admin/api/overview", range="today", audience="all")
 eq("overview answers", status, 200)
 rows = {row["slug"]: row for row in data["funnels"]}
+# FORCED TEST EDIT. This is an exhaustive list of the funnels on disk, and
+# /zodiac-bg is one of them now. The claim is that the overview shows EVERY
+# configured funnel including the ones with no traffic, so the list has to
+# grow with the directory rather than be loosened to a subset check.
 eq("every configured funnel has a row, live or dead",
    sorted(rows), ["kitchen", "kitchen-visualizer", "persona", "zodiac",
-                  "zodiac-ro", "zodiac30"])
+                  "zodiac-bg", "zodiac-ro", "zodiac30"])
 eq("a funnel with no traffic still shows",
    rows["zodiac"]["funnel_start"], 0)
 

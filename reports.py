@@ -1094,6 +1094,14 @@ PROMPT_BUDGET = 0.65
 # raises above the default.
 ZODIAC_RO_PROMPT_BUDGET = 0.55
 
+# And the same rule again for Bulgarian, which runs long for the same kind of
+# reason: the definite article suffixes the noun, the future and the passive
+# are both analytic, and "на" sits between almost any two ideas. Measured the
+# same way and landing on the same number as Romanian — which is a fact about
+# how far both languages sit from English, not a shared constant, so it is
+# written out here rather than aliased to the Romanian one.
+ZODIAC_BG_PROMPT_BUDGET = 0.55
+
 
 def _budget(cap, budget=None):
     """A round number to ask for, comfortably under a validator ceiling."""
@@ -1213,6 +1221,7 @@ def _check_prompt_lengths(budget=None):
 
 _check_prompt_lengths()
 _check_prompt_lengths(ZODIAC_RO_PROMPT_BUDGET)
+_check_prompt_lengths(ZODIAC_BG_PROMPT_BUDGET)
 
 
 def _budget_lines(section_id, budget=None):
@@ -1298,6 +1307,36 @@ RENDER_WORDS_RO = dict(RENDER_WORDS, **{
     "pdf_note": ("Păstrează-l — profilul tău rămâne disponibil și la linkul "
                  "primit după plată."),
     "mail_style": "personal",
+    "pdf_filename": "mazzin-%s-profil.pdf",
+})
+
+# And the same map again for /zodiac-bg.
+#
+# "Струва си" / "Откажи се" rather than a literal Splurge / Save, for the same
+# reason the Romanian pair is not literal: that section is career energy and
+# never money, and the Bulgarian verbs for spending and putting money aside
+# would put this funnel one noun away from the line its own banned list draws.
+# "Струва си" heads the work worth the effort, "Откажи се" the list of things
+# to decline — which is what the two headings actually mean here.
+#
+# The page says these same words. `funnels/zodiac-bg.json` carries the verdict
+# badges and the month abbreviations in `result_copy.labels`, and
+# tests/test_zodiacbg_check.py pins the two files to each other: a reader who
+# saw РАБОТИ on the page and WORKS in the PDF has been handed two documents
+# about themselves.
+RENDER_WORDS_BG = dict(RENDER_WORDS, **{
+    "year_strong": "Най-силен месец:",
+    "year_quiet": "Тих месец:",
+    "fix": "Решение:",
+    "skip": "За избягване",
+    "splurge": "Струва си",
+    "save": "Откажи се",
+    "verdicts": {"works": "РАБОТИ", "avoid": "ИЗБЯГВАЙ"},
+    "style_fallback": "Твоят стил",
+    "taps_caption": "Прочетено от докосванията ти:",
+    "pdf_note": ("Запази го — профилът ти остава достъпен и на линка, към "
+                 "който те върнахме след плащането."),
+    "mail_style": "личен",
     "pdf_filename": "mazzin-%s-profil.pdf",
 })
 
@@ -1527,6 +1566,40 @@ ZODIAC_RO_SPEC = dict(
      _zodiac_spec(text, section_id, ZODIAC_RO_PROMPT_BUDGET)
      + ZODIAC_RO_JSON_RULE)
     for section_id, text in _marked_shapes(RENDER_WORDS_RO).items())
+
+
+# The same contract for Bulgarian, and it is the same contract for the same
+# reason: a model asked for "the sentence to say" types quotation marks around
+# it, and one straight double quote inside a value costs the whole section.
+# The pair offered instead is the Bulgarian one — „ and “ — which is not the
+# same closing character Romanian uses, so this is written out rather than
+# shared.
+ZODIAC_BG_JSON_RULE = """
+
+PUNCTUATION, AND IT DECIDES WHETHER THIS SECTION SURVIVES. The straight
+double-quote character (") is the JSON delimiter. Every one you type inside a
+value ends that value early and costs the whole section, however good the
+writing is.
+
+So do not type it at all inside a value. Where a field asks you for a
+sentence to say — the words to decline something with, the line to open a
+conversation with — write that sentence plainly, with no quotation marks
+around it at all: Кажи му направо, че не можеш да поемеш това сега. If you
+truly must mark it as speech, use the Bulgarian pair „ and “ (U+201E and
+U+201C), never the straight one. The same goes for apostrophes: Bulgarian does
+not need them, and a straight ' is safer than a straight " but still better
+avoided.
+
+One more: every value is one line. No line breaks inside a value."""
+
+
+# The same six shapes, marked in Bulgarian, in Bulgarian numbers, each closing
+# on that rule.
+ZODIAC_BG_SPEC = dict(
+    (section_id,
+     _zodiac_spec(text, section_id, ZODIAC_BG_PROMPT_BUDGET)
+     + ZODIAC_BG_JSON_RULE)
+    for section_id, text in _marked_shapes(RENDER_WORDS_BG).items())
 
 
 # What a reader gets when generation fails outright, so it has to be
@@ -1939,10 +2012,208 @@ ZODIAC_STUBS_RO = {
     },
 }
 
+# The same four swatch roles again, for the funnel that says them in
+# Bulgarian. Same rule as the Romanian set: about days and momentum rather
+# than finishes, because this document is not a paint chart.
+ZODIAC_COLOR_TEXT_BG = [
+    ("тази, в която живееш",
+     "обикновените дни, и онези, които искаш да останат обикновени",
+     "Слоят най-близо до теб — това, което се носи без решение."),
+    ("за деня, в който нещо трябва да помръдне",
+     "един ден в седмицата, избран предварително, а не в момента",
+     "Едно място, където пада погледът: маншет, каишка, шал."),
+    ("тежестта отдолу",
+     "дългите дни, и стаите, които държиш заради другите",
+     "Обувките, горните слоеве и ъглите на стаята, в която работиш."),
+    ("използвана веднъж и никога два пъти",
+     "вечерта, която има значение, и нито една от онези, които нямат",
+     "Едно-единствено нещо на ключицата или на китката."),
+]
+
+# And the fallbacks, in Bulgarian. A reader who paid in Bulgarian and lost the
+# model gets a Bulgarian report: publishable rather than apologetic, true of
+# the archetype since the style name is the only thing it knows, and inside
+# the same Terms line — nothing here foretells anything, and nothing here is
+# medical or financial advice.
+ZODIAC_STUBS_BG = {
+    "palette": {
+        "intro": "Палитра {name} се държи на един цвят, в който живееш, "
+                 "един, към който посягаш, когато денят трябва да се обърне, "
+                 "и един, който носи тежестта, за да не изгорят първите два.",
+        # The reader's own four, read off the config at build time, exactly as
+        # the English and Romanian stubs do.
+        "colors": FROM_CONFIG,
+        "closing_rule": "Носи едно силно нещо, не три, и му дай един ден от "
+                        "седмицата, а не навик.",
+    },
+    "mistakes": {
+        "items": [
+            {"title": "Четеш собствената си увереност като доказателство",
+             "body": "Профил {name} решава бързо и се доверява на тази "
+                     "скорост. Решение, взето от безпокойство, се усеща "
+                     "отвътре точно като решение, взето от убеденост.",
+             "fix": "Преспи една нощ всяко решение, което може да се обясни "
+                    "за десет секунди."},
+            {"title": "Държиш полезното, докато моментът стане чист",
+             "body": "Забелязваш повече от хората около теб и казваш "
+                     "по-малко. Прочитът ти обикновено е верен и обикновено "
+                     "идва късно, когато ситуацията вече се е решила без "
+                     "теб.",
+             "fix": "Сложи си таван от три дни между това да забележиш нещо "
+                    "и това да го назовеш, с несръчните думи включително."},
+            {"title": "Поемаш цената, вместо да я назовеш",
+             "body": "Взимаш допълнителния час и неудобния разговор и ги "
+                     "взимаш достатъчно тихо, че никой да не разбере, че са "
+                     "били допълнителни. За няколко години нивото, от което "
+                     "се тръгва, се измества.",
+             "fix": "Кажи какво ти е струвало, веднъж, в момента, в който се "
+                    "случва, без да искаш нищо в замяна."},
+            {"title": "Тръгваш точно когато спре да е интересно",
+             "body": "Виждаш формата на нещо рано, което е трудната част. "
+                     "Щом формата е ясна, останалото се чете като "
+                     "администрация, а стойността я прибира този, който е "
+                     "останал.",
+             "fix": "Избери едно нещо на тримесечие и остани в него отвъд "
+                    "отегчението."},
+            {"title": "Бъркаш постоянството с това, че си добре",
+             "body": "На постоянството ти разчитат другите, а то е лош "
+                     "инструмент, с който да мериш себе си. Седмиците, които "
+                     "ти струват най-много, изглеждат отвън еднакво.",
+             "fix": "Води си мярка за седмицата, която да не отчита само "
+                    "това колко от нея е минало."},
+        ],
+    },
+    "materials": {
+        "intro": "Моделът под това кой те привлича е по-постоянен от самите "
+                 "хора. Вървиш към тези, които се движат в твоя ритъм, и "
+                 "оставаш с тези, които те забавят, а това е скъп път — и си "
+                 "струва да се знае преди следващия.",
+        "pairs": [
+            {"combo": "Твоята зодия + огнена зодия", "verdict": "works",
+             "why": "Ритъмът съвпада и никой не чака другия да свърши с "
+                    "решаването. Как да го изиграеш: кажи тихата част през "
+                    "първата седмица, не през четвъртата — отсрещният "
+                    "реагира добре, когато му се казва, и чете паузата като "
+                    "присъда."},
+            {"combo": "Твоята зодия + земна зодия", "verdict": "works",
+             "why": "Те държат почвата, по която се движиш, и тъкмо това "
+                    "държане лесно спира да се вижда. Как да го изиграеш: "
+                    "назовавай на глас всяка седмица по едно конкретно нещо, "
+                    "което са свършили — постоянните хора си тръгват, когато "
+                    "постоянството им не се чете."},
+            {"combo": "Твоята зодия + твое огледало", "verdict": "avoid",
+             "why": "Две еднакви енергии правят бързо начало и кратка среда, "
+                    "и нищо в двойката не забавя нищо. Как да пазиш "
+                    "енергията си: остави в седмицата си едно нещо, което е "
+                    "само твое, и не го мести заради тях."},
+            {"combo": "Твоята зодия + някой, който има нужда да бъде носен",
+             "verdict": "avoid",
+             "why": "Носенето ти се отдава и точно затова този струва повече "
+                    "на теб, отколкото на него. Как да пазиш енергията си: "
+                    "спри да предлагаш, преди да са ти поискали, веднъж, и "
+                    "виж какво прави с останалата празнина."},
+        ],
+        "rule": "През първия месец задай втория въпрос, не първия — "
+                "отговорът на него ти казва нещо.",
+    },
+    "splurge": {
+        "splurge": {
+            "item": "Работа с видим ръб и с отговор, който идва бързо",
+            "why": "Енергия {name} дава най-много там, където резултатът се "
+                   "връща достатъчно бързо, за да можеш да коригираш по "
+                   "него, и се губи по дълги хоризонти без сигнал. Три хода: "
+                   "сложи най-тежкото нещо в първите два часа на деня, преди "
+                   "стаята да се напълни; поискай контролна точка по средата "
+                   "на всичко, което трае повече от месец; и работи двата "
+                   "дни около срока, а не седмицата преди него.",
+        },
+        "saves": [
+            {"item": "Работа, която иска да бъде изиграна",
+             "why": "Енергията, с която си една своя версия по цял ден, е "
+                    "енергия, невложена в самата работа. Откажи я, като "
+                    "питаш какъв е резултатът — ако отговорът е присъствие, "
+                    "това не е работа."},
+            {"item": "Роли, построени само върху поддръжка",
+             "why": "Ще я свършиш добре и ще ти струва повече, отколкото на "
+                    "някой, на когото тя пасва. Откажи я, като назовеш "
+                    "частта, която задържаш, и частта, която връщаш."},
+            {"item": "Всичко, което се мери само в часове",
+             "why": "Възнаграждава присъствието вместо преценката, а "
+                    "преценката е това, което наистина имаш. Сложи резултат "
+                    "върху нея, преди да приемеш, или я остави на някой, на "
+                    "когото плащат да седи там."},
+        ],
+        "split_note": "Загубата е втората половина на следобеда, раздадена "
+                      "парче по парче на неща, които са дошли, а не на "
+                      "такива, които са избрани от теб. Запуши я, като "
+                      "запазиш последните деветдесет минути от деня, преди "
+                      "да ти ги запази някой друг, и като третираш този блок "
+                      "като нещо, което не се мести.",
+    },
+    "dna": {
+        "narrative": [
+            "План {name} върви по три неща едновременно: стихията, към която "
+            "се връщаш под напрежение, енергията, по която мериш времето, и "
+            "тонът, който другите прочитат първи. През повечето време трите "
+            "са съгласни, и докато са, с теб се живее лесно и сам се "
+            "разчиташ лесно.",
+            "Интересното е там, където се дърпат едно друго. Тонът стига "
+            "преди стихията, така че хората срещат повърхността и се "
+            "нареждат по нея, а част от всяка седмица отива в поправяне на "
+            "впечатление, оставено без намерение.",
+        ],
+        "implications": [
+            "Решаваш по-бързо, отколкото можеш да обясниш, и това заслужава "
+            "доверие и заслужава да се запише някъде.",
+            "Почивката, която изглежда като нищоправене, не те възстановява; "
+            "почивката с форма — да.",
+            "Хората четат тона ти като цялата ти позиция, така че казаното "
+            "между другото е това, което отнасят със себе си.",
+        ],
+    },
+    # The same twelve positions, with no month named in the prose: the labels
+    # are stamped on at build time out of the reader's own year. The three
+    # marks and the one are the profile's own words, and they are the same two
+    # strings the shape asked the model for.
+    "shopping": {
+        "items": [
+            {"name": "1", "priority_note": "Добър за решаване на какво е "
+             "тази година, преди някой да те помоли да се хванеш за нещо."},
+            {"name": "2", "priority_note": "Добър за разчистване на това, "
+             "което миналата година е оставила отворено — малките "
+             "недовършени неща, не големите."},
+            {"name": "3", "priority_note": "Най-силен месец: това, което "
+             "започваш тук, минава достатъчно незабелязано, за да успее да "
+             "бъде построено добре."},
+            {"name": "4", "priority_note": "Добър за изричане на това, което "
+             "държиш отпреди тази карта да е започнала."},
+            {"name": "5", "priority_note": "Добър за начала, които имат "
+             "нужда от други хора в себе си."},
+            {"name": "6", "priority_note": "Най-силен месец: преценката ти е "
+             "най-остра — дай я на едно нещо, не на четири."},
+            {"name": "7", "priority_note": "Добър за събиране, не за "
+             "добавяне — месец за довършване, не за отваряне."},
+            {"name": "8", "priority_note": "Тих месец: малко добив и много "
+             "възстановяване. Добър за четене, за поправяне и за казване на "
+             "не."},
+            {"name": "9", "priority_note": "Най-силен месец: инерцията се "
+             "връща, и това, което избуташ сега, стига по-далеч, отколкото "
+             "би трябвало."},
+            {"name": "10", "priority_note": "Добър за ремонтна работа — и в "
+             "построеното, и в тези, които са строили с теб."},
+            {"name": "11", "priority_note": "Добър за разговорите, около "
+             "които все насрочваш срещи."},
+            {"name": "12", "priority_note": "Добър за честен поглед назад "
+             "към единадесетте преди него и за решаване какво се повтаря."},
+        ],
+        "skip": [],
+    },
+}
+
 # Which stub sets are the zodiac product's. `_stub_for` stamps the year onto
 # the shopping stub for these and only these, and it used to ask by identity
 # against the one object there was.
-ZODIAC_STUB_SETS = (ZODIAC_STUBS, ZODIAC_STUBS_RO)
+ZODIAC_STUB_SETS = (ZODIAC_STUBS, ZODIAC_STUBS_RO, ZODIAC_STUBS_BG)
 
 
 # The system prompt asks; this refuses. Two of these are a Terms line rather
@@ -2210,6 +2481,167 @@ ZODIAC_RO_PROFILE = {
     # Repeated to the model when its first answer did not parse. English
     # declares none and gets the generic advice alone, exactly as before.
     "json_retry": ZODIAC_RO_JSON_RETRY,
+}
+
+# --- the same product again, in Bulgarian ----------------------------------
+#
+# /zodiac-bg is zodiac30's walk with every string translated, and it needs a
+# report to match, for the reason the Romanian one did: a reader sold in
+# Bulgarian and handed an English PDF has been sold one thing and given
+# another.
+#
+# The instructions below stay in English, deliberately, exactly as the
+# Romanian ones do — they are the same rules as ZODIAC_SYSTEM's, so the three
+# can be read side by side. What is Bulgarian is the OUTPUT, which is what the
+# reader sees. The keys of the JSON are English because the validators are.
+ZODIAC_BG_SYSTEM = """You write astrological profile reports for people who \
+have just paid for one. This funnel is Bulgarian, and every word you return is \
+read by a Bulgarian speaker.
+
+LANGUAGE — the first rule, and the one that voids the whole answer when it is \
+broken. Write every field in natural, idiomatic Bulgarian, in the CYRILLIC \
+alphabet: not translated English, but Bulgarian as a Bulgarian writer would \
+put it, with Bulgarian rhythm and Bulgarian idiom. Every letter of every \
+sentence is Cyrillic — а, б, в, г, д, е, ж, з, и, й, к, л, м, н, о, п, р, с, \
+т, у, ф, х, ц, ч, ш, щ, ъ, ь, ю, я — including the ъ, which Bulgarian uses \
+inside ordinary words and which no other language spells this way. A field \
+written in English, or transliterated into the Latin alphabet, is rejected.
+
+Every field has to tell the reader something about themselves they can \
+recognise and use this week. Be specific: name the thing, name when it shows \
+up, name what to do about it. A sentence that would read the same for a \
+different reader is a wasted sentence.
+
+Voice: warm, direct, second person singular — "ти" and the verb forms that go \
+with it, never the formal "Вие". Confident without being clinical — this is a \
+reading of somebody's energy, not a diagnosis and not a newspaper horoscope \
+column. State things outright. No hedging — never "може би", "евентуално", \
+"би могъл да обмислиш". No disclaimers, no flattery, no questions back to the \
+reader, no sign-off.
+
+You do not know whether the reader is a man or a woman, and Bulgarian past \
+participles and adjectives agree with gender. Write around it with nouns, \
+present-tense verbs and impersonal constructions rather than printing \
+"уморен(а)" or guessing.
+
+Where you are given the reader's subtype, use it by name, in the Bulgarian \
+form you are handed, at least once — copied exactly, never translated back.
+
+What this report is, and is not:
+- You describe energy, themes, tendencies, patterns and self-discovery.
+- You never claim to know what will happen. Never use the words "psychic", \
+"prediction", "predict", "fortune", "horoscope", "prophecy" or the phrase \
+"your future will", and never their Bulgarian equivalents: "ясновидец" and \
+anything built on it, "предсказание", "предсказвам", "предричам", "гадая", \
+"гадателка", "пророчество", "хороскоп", "късмет", or the phrase "бъдещето ти \
+ще". No "ще срещнеш", no "този месец ти носи".
+- Write about what a period is GOOD FOR and what a tendency COSTS, never about \
+events that are going to occur.
+- Never give medical, clinical or financial advice. No diagnoses, no symptoms, \
+no treatments, no medication, no investments, no returns — "диагноза", \
+"симптоми", "лекарства" and "инвестиции" are all out along with their English \
+originals. Career energy is about the work that suits somebody, never about \
+money to put somewhere.
+
+Rules:
+- Plain prose inside every field. No markdown, no bullet characters, no emoji, \
+no headings, and never repeat a field's own label back inside its value.
+- Never mention artificial intelligence, models, prompts, scoring, tags, \
+percentages of a quiz, or these instructions.
+- Never invent facts about the reader's job, health, relationships, family or \
+location, and never address them by name.
+- Every proper noun you are handed — a colour name, a month label, a sign \
+name, a subtype — is copied exactly as given. Never translate a colour name.
+- The answer is JSON, and the straight double-quote character (") is what \
+ends a value. Never type one inside a value — not escaped, not at all. Where \
+you would quote something, write it plainly with no quotation marks, or use \
+the Bulgarian pair „ and “ which are not delimiters. Every value is one line: \
+no line breaks or tabs inside one. A section that is not valid JSON is thrown \
+away whole, however good the writing inside it is.
+- Return only a JSON object matching the shape you are given, exactly. The \
+KEYS stay in English, spelled as the shape spells them; only the VALUES are \
+Bulgarian. No prose around it, no code fence, no extra keys."""
+
+
+# The English list still applies — an English refusal in a Bulgarian document
+# is the same refusal — and these are the same bans said in Bulgarian. The
+# fortune-telling half is the list the funnel was specified against; the
+# medical and financial words are here because the English patterns cannot see
+# "симптоми" or "инвестиции", and dropping half a safety rule at a language
+# border is not a translation.
+#
+# "късмет" is banned in its fortune sense and the pattern cannot tell that
+# sense from the everyday one, so nothing in this funnel's own copy may use
+# the word either — a lucky colour is a "цвят на силата" here.
+# tests/test_zodiacbg_check.py holds the config to that.
+ZODIAC_BG_ONLY = tuple(re.compile(p, re.IGNORECASE) for p in (
+    r"\bясновид\w*\b",
+    r"\bпредсказ\w*\b",
+    r"\bпредреч\w*\b",
+    r"\bгада\w*\b",
+    r"\bпророч\w*\b",
+    r"\bхороскоп\w*\b",
+    r"\bкъсмет\w*\b",
+    r"\bбъдещето ти ще\b",
+    r"\bсимптом\w*\b",
+    r"\bлекарств\w*\b",
+    r"\bинвестиц\w*\b",
+))
+
+ZODIAC_BG_BANNED = ZODIAC_BANNED + ZODIAC_BG_ONLY
+
+# What the second attempt is told when the first one did not parse. Same
+# failure, same field, said for this language: the generic advice
+# `_parse_detail` adds names the fault, and this names the field that keeps
+# producing it.
+ZODIAC_BG_JSON_RETRY = (
+    "the character that broke it is almost certainly a straight double quote "
+    "(\") inside one of your values — most often in the sentence a field asked "
+    "you to say, like the line for declining a piece of work. Write that "
+    "sentence with NO quotation marks around it at all this time. If you must "
+    "mark it as speech use „ and “. Do not type a straight double quote "
+    "anywhere inside a value")
+
+# A distinct object rather than a share of either zodiac profile: the voice,
+# the banned list, the year labels, the compatibility table and the mail are
+# all different, and the checks that branch on a zodiac profile ask
+# `_is_zodiac` rather than testing one identity.
+ZODIAC_BG_PROFILE = {
+    "system": ZODIAC_BG_SYSTEM,
+    # The twin's shapes, asking for fewer characters and marking the year map
+    # in this language. See ZODIAC_BG_PROMPT_BUDGET.
+    "spec": ZODIAC_BG_SPEC,
+    "prompt_budget": ZODIAC_BG_PROMPT_BUDGET,
+    "stubs": ZODIAC_STUBS_BG,
+    "stub_colors": ZODIAC_COLOR_TEXT_BG,
+    # What this report prints between the model's sentences: the PDF's
+    # headings, the love verdicts' badges, and the fallbacks.
+    "words": RENDER_WORDS_BG,
+    # And the check that the year map came back marked in this language.
+    "verify_marks": True,
+    "cached": ("palette", "mistakes", "splurge"),
+    "personal": ("dna", "materials", "shopping"),
+    "banned": ZODIAC_BG_BANNED,
+    "verify": None,         # filled below, with the twin's
+    "cache_rev": {"palette": "colors2", "mistakes": "short1",
+                  "splurge": "moves1"},
+    "pdf_css": None,        # filled below, once ZODIAC_PDF_CSS is defined
+    "pdf_logo": "brand/logo-dark.svg",
+    "pdf_lang": "bg",
+    "pdf_note": ("Запази го — профилът ти остава достъпен и на линка, към "
+                 "който те върнахме след плащането."),
+    "retry_detail": True,
+    "pdf_lead": "Твоят личен космичен профил",
+    "pdf_cover": None,      # filled below, once _zodiac_cover is defined
+    "pdf_elements": None,   # filled below, with the Bulgarian element strip
+    "pdf_node": True,
+    "delivery_note": True,
+    "compatibility": None,  # filled below, once COMPATIBILITY_BG exists
+    "mail": None,           # filled below, once COPY_ZODIAC_BG exists
+    "mail_kicker": "ТВОЯТ КОСМИЧЕН ПРОФИЛ",
+    "mail_cross_fallback": "Пълният ти профил",
+    "mail_link": None,      # filled below, once the BG button exists
+    "json_retry": ZODIAC_BG_JSON_RETRY,
 }
 
 # zodiac30 is the same product down a longer walk, so it is the same
@@ -2615,6 +3047,7 @@ PERSONA_PROFILE = {
 
 PROFILES = {"zodiac": ZODIAC_PROFILE, "zodiac30": ZODIAC_PROFILE,
             "zodiac-ro": ZODIAC_RO_PROFILE,
+            "zodiac-bg": ZODIAC_BG_PROFILE,
             "persona": PERSONA_PROFILE}
 
 
@@ -2637,7 +3070,8 @@ def _is_zodiac(profile):
     and every one of those branches means "this is the zodiac product", not
     "this is the English one".
     """
-    return profile is ZODIAC_PROFILE or profile is ZODIAC_RO_PROFILE
+    return (profile is ZODIAC_PROFILE or profile is ZODIAC_RO_PROFILE
+            or profile is ZODIAC_BG_PROFILE)
 
 
 def _profile(funnel_slug):
@@ -2759,6 +3193,7 @@ ZODIAC_VERIFY = {
 
 ZODIAC_PROFILE["verify"] = ZODIAC_VERIFY
 ZODIAC_RO_PROFILE["verify"] = ZODIAC_VERIFY
+ZODIAC_BG_PROFILE["verify"] = ZODIAC_VERIFY
 # The same two checks, and they are the same checks for the same reason: the
 # persona palette is also four colours the reader was shown by name before
 # they paid, and it is also not a paint chart.
@@ -3423,6 +3858,27 @@ def _year_labels_ro(today=None):
     return out
 
 
+# And again for /zodiac-bg. Bulgarian abbreviates its months with a full
+# stop, like Romanian and unlike English, and "май" is short enough that it
+# takes none. Bound to the profile for the same reason: the writer and the
+# checker have to read the twelve labels off the same place.
+MONTH_ABBR_BG = ("яну.", "фев.", "мар.", "апр.", "май", "юни",
+                 "юли", "авг.", "сеп.", "окт.", "ное.", "дек.")
+
+
+def _year_labels_bg(today=None):
+    """["авг. 2026", "сеп. 2026", ... "юли 2027"], starting from this month."""
+    day = today or datetime.datetime.now(datetime.timezone.utc).date()
+    year, month = day.year, day.month
+    out = []
+    for _ in range(YEAR_MONTHS):
+        out.append("%s %d" % (MONTH_ABBR_BG[month - 1], year))
+        month += 1
+        if month > 12:
+            month, year = 1, year + 1
+    return out
+
+
 def _months_for(profile, today=None):
     """The twelve labels this profile's year map runs on, or None.
 
@@ -3435,6 +3891,8 @@ def _months_for(profile, today=None):
     """
     if profile is ZODIAC_RO_PROFILE:
         return _year_labels_ro(today)
+    if profile is ZODIAC_BG_PROFILE:
+        return _year_labels_bg(today)
     if _is_zodiac(profile) or profile is PERSONA_PROFILE:
         return _year_labels(today)
     return None
@@ -3706,6 +4164,17 @@ ZODIAC_PROFILE["element_labels"] = ELEMENT_LABEL
 ZODIAC_PROFILE["energy_labels"] = ENERGY_LABEL
 ZODIAC_RO_PROFILE["element_labels"] = ELEMENT_LABEL_RO
 ZODIAC_RO_PROFILE["energy_labels"] = ENERGY_LABEL_RO
+
+# The same words again for the funnel that says them in Bulgarian. These are
+# the four and the two that funnels/zodiac-bg.json also carries in
+# `result_copy.labels`, and the suite pins the two files to each other: the
+# page and the document have to name a reader's element with the same word.
+ELEMENT_LABEL_BG = {"fire": "Огън", "earth": "Земя", "air": "Въздух",
+                    "water": "Вода"}
+ENERGY_LABEL_BG = {"sun": "Слънце", "moon": "Луна"}
+
+ZODIAC_BG_PROFILE["element_labels"] = ELEMENT_LABEL_BG
+ZODIAC_BG_PROFILE["energy_labels"] = ENERGY_LABEL_BG
 
 ELEMENT_INK = dict((tag, ink) for tag, _label, ink in [
     ("fire", "Fire", "#E08A3C"), ("earth", "Earth", "#7E9B5E"),
@@ -4258,8 +4727,27 @@ COMPATIBILITY_RO = {
     "Pești": (("Rac", "Scorpion"), "Gemeni"),
 }
 
+# And once more in the names the Bulgarian funnel puts on its cards. `_sign`
+# reads the label off the config, so a table keyed in English or in Romanian
+# would simply never match here.
+COMPATIBILITY_BG = {
+    "Овен": (("Лъв", "Стрелец"), "Рак"),
+    "Телец": (("Дева", "Козирог"), "Лъв"),
+    "Близнаци": (("Везни", "Водолей"), "Риби"),
+    "Рак": (("Скорпион", "Риби"), "Овен"),
+    "Лъв": (("Овен", "Стрелец"), "Телец"),
+    "Дева": (("Телец", "Козирог"), "Стрелец"),
+    "Везни": (("Близнаци", "Водолей"), "Рак"),
+    "Скорпион": (("Рак", "Риби"), "Лъв"),
+    "Стрелец": (("Овен", "Лъв"), "Дева"),
+    "Козирог": (("Телец", "Дева"), "Везни"),
+    "Водолей": (("Близнаци", "Везни"), "Скорпион"),
+    "Риби": (("Рак", "Скорпион"), "Близнаци"),
+}
+
 ZODIAC_PROFILE["compatibility"] = COMPATIBILITY
 ZODIAC_RO_PROFILE["compatibility"] = COMPATIBILITY_RO
+ZODIAC_BG_PROFILE["compatibility"] = COMPATIBILITY_BG
 
 
 def _compat_block(cfg, choices, table=None):
@@ -6192,6 +6680,7 @@ figure figcaption { background: #141B3C; }
 # attached here, where the constant exists.
 ZODIAC_PROFILE["pdf_css"] = ZODIAC_PDF_CSS
 ZODIAC_RO_PROFILE["pdf_css"] = ZODIAC_PDF_CSS
+ZODIAC_BG_PROFILE["pdf_css"] = ZODIAC_PDF_CSS
 
 # The persona document is the same dark paper — it was sold on a dusk page and
 # the file has to open as that document — with the cover's own furniture added
@@ -6584,6 +7073,16 @@ PDF_ELEMENTS_RO = [
 
 ZODIAC_RO_PROFILE["pdf_elements"] = PDF_ELEMENTS_RO
 
+# And the same four for the Bulgarian cover.
+PDF_ELEMENTS_BG = [
+    ("fire", "Огън", "#E08A3C"),
+    ("earth", "Земя", "#7E9B5E"),
+    ("air", "Въздух", "#9CC3DF"),
+    ("water", "Вода", "#4E8FA0"),
+]
+
+ZODIAC_BG_PROFILE["pdf_elements"] = PDF_ELEMENTS_BG
+
 
 def _cover_scales(card):
     """The three spectrum rows, as inline blocks rather than a flex row.
@@ -6721,6 +7220,7 @@ def _zodiac_cover(content, profile, cfg):
 
 ZODIAC_PROFILE["pdf_cover"] = _zodiac_cover
 ZODIAC_RO_PROFILE["pdf_cover"] = _zodiac_cover
+ZODIAC_BG_PROFILE["pdf_cover"] = _zodiac_cover
 
 # --- the persona cover, and the head on it ----------------------------------
 #
@@ -7191,8 +7691,12 @@ color:#221A05;text-decoration:none">Open your profile online</a>
 ZODIAC_EMAIL_LINK_RO = ZODIAC_EMAIL_LINK.replace(
     ">Open your profile online<", ">Deschide-ți profilul online<")
 
+ZODIAC_EMAIL_LINK_BG = ZODIAC_EMAIL_LINK.replace(
+    ">Open your profile online<", ">Отвори профила си онлайн<")
+
 ZODIAC_PROFILE["mail_link"] = ZODIAC_EMAIL_LINK
 ZODIAC_RO_PROFILE["mail_link"] = ZODIAC_EMAIL_LINK_RO
+ZODIAC_BG_PROFILE["mail_link"] = ZODIAC_EMAIL_LINK_BG
 
 
 def _zodiac_email_html(content, fields):
@@ -7284,8 +7788,18 @@ COPY_PERSONA = {
     "keep": "It stays available at that link, and the PDF is yours to keep.",
 }
 
+# The fifth mail: the same product, to somebody who bought it in Bulgarian.
+COPY_ZODIAC_BG = {
+    "headline": "Профилът ти е готов.",
+    "subject": "Твоят космичен профил %s — Mazzin",
+    "body": "Пълният ти профил %s е прикачен.",
+    "keep": "Остава достъпен на онзи линк, а PDF-ът е твой, без срок.",
+    "keep_no_link": "PDF-ът е твой, без срок.",
+}
+
 ZODIAC_PROFILE["mail"] = COPY_ZODIAC
 ZODIAC_RO_PROFILE["mail"] = COPY_ZODIAC_RO
+ZODIAC_BG_PROFILE["mail"] = COPY_ZODIAC_BG
 PERSONA_PROFILE["mail"] = COPY_PERSONA
 PERSONA_PROFILE["mail_link"] = ZODIAC_EMAIL_LINK
 
@@ -7363,6 +7877,11 @@ def _email_opening(content):
     """
     price = _price_paid(content)
     copy = _email_copy(content)
+    if copy is COPY_ZODIAC_BG:
+        if price:
+            return ("Току-що даде %s за четене на енергията, с която "
+                    "вървиш през цялото това време." % html.escape(price))
+        return "Четене на енергията, с която вървиш през цялото това време."
     if copy is COPY_ZODIAC_RO:
         if price:
             return ("Tocmai ai dat %s pe o citire a energiei cu care ai "
