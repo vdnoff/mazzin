@@ -127,6 +127,12 @@
   var analyzingTimer = null;    // free-result screen, between swipe and reveal
   var generatingTimer = null;   // the card under a report that is still filling
   var paywallTracked = false;
+  // InitiateCheckout is once a session, and its own flag rather than
+  // `paywallTracked`. The two-screen flow sets that one when the button
+  // merely scrolls into view — it means "the offer was reached", and on that
+  // path the pixel event belongs to the tap rather than to the sighting — so
+  // sharing it would take InitiateCheckout off that funnel altogether.
+  var icTracked = false;
   var payMotionDone = false;    // the paywall's attention pull runs once
   var singlePage = false;       // the commerce block lives on the result page
   var commerceMoved = false;    // the paywall rows have been relocated once
@@ -6391,6 +6397,15 @@
     io.observe(offerNode());
   }
 
+  // One place InitiateCheckout is sent from, on either flow: the offer
+  // reaching the reader on a single-page funnel, or the tap that opens the
+  // paywall on a two-screen one. Whichever comes first is the one that counts.
+  function fireInitiateCheckout() {
+    if (icTracked) return;
+    icTracked = true;
+    pixelTrack("InitiateCheckout");
+  }
+
   function firePaywallView() {
     if (paywallTracked) return;
     // Reaching a block that cannot take money is not reaching checkout. With
@@ -6406,7 +6421,7 @@
     if (payHeld) return;
     paywallTracked = true;
     track("paywall_view", null, { src: payIntent });
-    pixelTrack("InitiateCheckout");
+    fireInitiateCheckout();
   }
 
   // AddPaymentInfo, once a session and on both paths.
@@ -6487,9 +6502,21 @@
     //
     // The pixel event stays here on purpose. InitiateCheckout is Meta's name
     // for the intent step, and intent is exactly what this tap is.
+    //
+    // Through the shared helper, so it is once a session here too: the
+    // paywall has a back button, and without that a reader who looks at the
+    // price, goes back and looks again sends Meta two InitiateCheckouts for
+    // one intent. The funnel report would not show it either — this path
+    // records `paywall_open` per tap, not `paywall_view`, so the second pixel
+    // event has no row beside it to be counted against.
+    //
+    // Unreachable today: every funnel is single-page, which hides this button
+    // on all three result paths. Guarded rather than deleted because what
+    // makes it unreachable is a config flag, and the day one funnel sets
+    // `single_page: false` this is the live path again.
     el.cta.addEventListener("click", function () {
       track("paywall_open");
-      pixelTrack("InitiateCheckout");
+      fireInitiateCheckout();
       renderPaywall();
       show("screen-paywall");
     });
