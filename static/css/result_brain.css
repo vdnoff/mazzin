@@ -249,21 +249,35 @@ body:has(.result-module) {
   color: var(--br-faint);
 }
 
-/* Wrapping rather than scrolling: eighteen frames is three rows on a phone,
-   and a row that scrolls sideways hides most of the evidence the caption above
-   it just claimed. */
+/* Six across, three down, edge to edge. It was a wrapping flex row of fixed
+   46px cells, which is a different thing: six of those plus their gaps came
+   to less than the column, so the last cell in every row stopped short and
+   the block sat inside its own card with a gap down the right-hand side. A
+   strip whose whole claim is "all eighteen of them, and you recognise every
+   one" cannot look like it ran out of room.
+
+   Six columns of `1fr` divide whatever the column actually is, so the row
+   ends where the card ends on every width, and eighteen frames fall into
+   three even rows with nothing left over. `minmax(0, 1fr)` rather than `1fr`
+   because a grid track sized from its content will not shrink below the
+   image's own width — which is what puts the sixth column past the edge on
+   a narrow phone.
+
+   Wrapping rather than scrolling, still: a row that scrolls sideways hides
+   most of the evidence the caption above it just claimed. */
 .br-taps-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 6px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* Square, from the width the grid gave it. A fixed height would fight the
+   track and leave the same gap this rule exists to remove. */
 .br-tap {
-  width: 46px;
-  height: 46px;
+  aspect-ratio: 1 / 1;
   border: 1px solid var(--br-line);
   border-radius: 10px;
   overflow: hidden;

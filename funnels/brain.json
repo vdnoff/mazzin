@@ -365,7 +365,8 @@
               }
             ]
           }
-        ]
+        ],
+        "label_mode": "none"
       },
       {
         "id": "spa2",
@@ -426,7 +427,8 @@
               }
             ]
           }
-        ]
+        ],
+        "label_mode": "none"
       },
       {
         "id": "spa3",
@@ -487,7 +489,8 @@
               }
             ]
           }
-        ]
+        ],
+        "label_mode": "none"
       },
       {
         "id": "spa4",
@@ -548,7 +551,8 @@
               }
             ]
           }
-        ]
+        ],
+        "label_mode": "none"
       },
       {
         "id": "chg1",
@@ -1089,28 +1093,22 @@
         "format": "grid6",
         "images": [
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "1"
+            "img": "/static/galleries/brain/box_closed.webp"
           },
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "2"
+            "img": "/static/galleries/brain/box_closed.webp"
           },
           {
-            "img": "/static/galleries/brain/box_open_key.webp",
-            "label": "3"
+            "img": "/static/galleries/brain/box_open_key.webp"
           },
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "4"
+            "img": "/static/galleries/brain/box_closed.webp"
           },
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "5"
+            "img": "/static/galleries/brain/box_closed.webp"
           },
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "6"
+            "img": "/static/galleries/brain/box_closed.webp"
           }
         ]
       },
@@ -1146,28 +1144,22 @@
         "format": "grid6",
         "images": [
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "1"
+            "img": "/static/galleries/brain/box_closed.webp"
           },
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "2"
+            "img": "/static/galleries/brain/box_closed.webp"
           },
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "3"
+            "img": "/static/galleries/brain/box_closed.webp"
           },
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "4"
+            "img": "/static/galleries/brain/box_closed.webp"
           },
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "5"
+            "img": "/static/galleries/brain/box_closed.webp"
           },
           {
-            "img": "/static/galleries/brain/box_open_cup.webp",
-            "label": "6"
+            "img": "/static/galleries/brain/box_open_cup.webp"
           }
         ]
       },
@@ -1207,28 +1199,22 @@
         "format": "grid6",
         "images": [
           {
-            "img": "/static/galleries/brain/box_open_star.webp",
-            "label": "1"
+            "img": "/static/galleries/brain/box_open_star.webp"
           },
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "2"
+            "img": "/static/galleries/brain/box_closed.webp"
           },
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "3"
+            "img": "/static/galleries/brain/box_closed.webp"
           },
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "4"
+            "img": "/static/galleries/brain/box_closed.webp"
           },
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "5"
+            "img": "/static/galleries/brain/box_closed.webp"
           },
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "6"
+            "img": "/static/galleries/brain/box_closed.webp"
           }
         ]
       },
@@ -1272,28 +1258,22 @@
         "format": "grid6",
         "images": [
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "1"
+            "img": "/static/galleries/brain/box_closed.webp"
           },
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "2"
+            "img": "/static/galleries/brain/box_closed.webp"
           },
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "3"
+            "img": "/static/galleries/brain/box_closed.webp"
           },
           {
-            "img": "/static/galleries/brain/box_open_moon.webp",
-            "label": "4"
+            "img": "/static/galleries/brain/box_open_moon.webp"
           },
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "5"
+            "img": "/static/galleries/brain/box_closed.webp"
           },
           {
-            "img": "/static/galleries/brain/box_closed.webp",
-            "label": "6"
+            "img": "/static/galleries/brain/box_closed.webp"
           }
         ]
       },
@@ -1816,7 +1796,7 @@
         "mem_hit"
       ],
       "accent": "#3B7DD8",
-      "blurb": "You hold things. What was on the screen is still on the screen for you a beat after it goes, and most of what people call your attention is really just that you never quite put the last thing down.",
+      "blurb": "You hold things. What was on the screen is still on the screen for you a beat after it goes, and most of what people call your attention is really just that you never quite put the last thing down. The Recorder sharpens fastest on one drill a day, and it is the shortest one in your plan.",
       "reveals": {
         "palette": {
           "colors": [
@@ -1842,24 +1822,24 @@
           "lucky_days": "Wednesday and Sunday — the first for taking things in, the second for letting them settle."
         },
         "dna": {
-          "setup": "Two of the four rounds run on the same trick and you use it for both, which is why one of them felt easy and the other",
-          "trigger": "cost you more than it should have,"
+          "setup": "Two of the four rounds run on the same trick and you already own it, which is why one felt easy — the plan aims that same trick at",
+          "trigger": "the round it has never been pointed at,"
         },
         "materials": {
-          "setup": "The round you dropped is the one that asks you to let go of what you were already holding, and the people who tire you out are the ones who",
-          "trigger": "keep adding to it,"
+          "setup": "The round you dropped is the one that asks you to let go of what you were holding, and it lifts fastest with",
+          "trigger": "a two-minute drill you can do standing up,"
         },
         "mistakes": {
-          "setup": "Your first strength is the one you would have guessed. The one costing you is quieter and shows up",
-          "trigger": "whenever you are asked to start over,"
+          "setup": "Your first strength is the one you would have guessed. The habit worth swapping is quieter, and it turns up",
+          "trigger": "every time you are asked to start over,"
         },
         "shopping": {
-          "setup": "Seven days, one small thing each, and the first is the one that fixes the round you were weakest on —",
-          "trigger": "and it takes under a minute,"
+          "setup": "Seven days, one small thing each, and day one goes straight at your weakest round —",
+          "trigger": "it takes under a minute,"
         },
         "mistake_one": {
           "title": "You trust the first version",
-          "body": "Whatever you took in first stays first, and a correction has to work twice as hard to replace it. That is why you are rarely wrong about what was said and sometimes wrong about what is true now.",
+          "body": "Whatever you took in first stays first, and a correction has to work twice as hard to replace it. That is a real strength on three of the four rounds, and it is the one the plan aims at the fourth.",
           "fix": "Say the new version out loud once. It files it as first."
         }
       }
@@ -1871,7 +1851,7 @@
         "spa_hit"
       ],
       "accent": "#4CAF7D",
-      "blurb": "You keep the map. Where a thing was gets filed with what it was, so you walk back to things other people have to go looking for, and you rarely notice you are doing it.",
+      "blurb": "You keep the map. Where a thing was gets filed with what it was, so you walk back to things other people have to go looking for, and you rarely notice you are doing it. The Navigator sharpens on its feet — three of your seven days are about moving.",
       "reveals": {
         "palette": {
           "colors": [
@@ -1897,16 +1877,16 @@
           "lucky_days": "Tuesday and Saturday — the first for laying things out, the second for walking them."
         },
         "dna": {
-          "setup": "You file where beside what, always, and the round that came apart is the one where there was no where —",
-          "trigger": "which is worth knowing before the next one,"
+          "setup": "You file where beside what, always, and the round that came apart is the one where there was no where — the plan gives you a where for",
+          "trigger": "the round that has never had one,"
         },
         "materials": {
-          "setup": "The round you dropped says something about how you take instructions, and the people who work best with you",
-          "trigger": "draw it rather than say it,"
+          "setup": "Your weakest round lifts fastest when the instruction is drawn rather than said, which is why day two asks you to",
+          "trigger": "sketch it before you start,"
         },
         "mistakes": {
           "setup": "Four of your five strengths are versions of the same one. The fifth is not, and it is the one that",
-          "trigger": "makes rooms easier for other people,"
+          "trigger": "makes rooms easier for everybody in them,"
         },
         "shopping": {
           "setup": "Seven days, and three of them are about moving rather than sitting, because your weakest round",
@@ -1914,7 +1894,7 @@
         },
         "mistake_one": {
           "title": "You navigate instead of reading",
-          "body": "Given a list and a layout you take the layout every time, which is fast until the layout is somebody else's and they never drew you one.",
+          "body": "Given a list and a layout you take the layout every time, which is fast — and faster still once you start drawing the layout yourself instead of waiting for one.",
           "fix": "Sketch it before you start. Two minutes buys the whole task."
         }
       }
@@ -1926,7 +1906,7 @@
         "chg_hit"
       ],
       "accent": "#F2B33D",
-      "blurb": "You notice the edit. Something moved and you knew before you could say what — the version in your head and the one in front of you refuse to agree quietly, and you are the one who says so.",
+      "blurb": "You notice the edit. Something moved and you knew before you could say what — the version in your head and the one in front of you refuse to agree quietly, and you are the one who says so. The Detector sharpens by looking a second longer, and that one habit lowers the number on its own.",
       "reveals": {
         "palette": {
           "colors": [
@@ -1952,16 +1932,16 @@
           "lucky_days": "Monday and Friday — the first for spotting what moved, the second for saying it out loud."
         },
         "dna": {
-          "setup": "Spotting the edit and holding the original are two different jobs and you are much better at one, which shows",
-          "trigger": "in how fast you answered,"
+          "setup": "Spotting the edit and holding the original are two different jobs and you are much better at one — the plan builds the other in",
+          "trigger": "under a week,"
         },
         "materials": {
-          "setup": "Your weakest round is the one that rewards sitting still, and the thing that costs you most in a day",
-          "trigger": "is being interrupted mid-compare,"
+          "setup": "Your weakest round rewards sitting still, and the one change that lifts it is",
+          "trigger": "looking for a second longer,"
         },
         "mistakes": {
-          "setup": "Your strengths are all early-warning. The two blind spots are what happens after the warning —",
-          "trigger": "and one of them is expensive,"
+          "setup": "Your strengths are all early warning. Both habits worth swapping are what happens after the warning, and one of them",
+          "trigger": "swaps out in a single day,"
         },
         "shopping": {
           "setup": "Seven days built around the one thing you skip, which is not looking harder but",
@@ -1969,7 +1949,7 @@
         },
         "mistake_one": {
           "title": "You raise it before you have named it",
-          "body": "You know something moved a beat before you know what, and you tend to say so in that beat — which reads as certainty you have not got yet.",
+          "body": "You know something moved a beat before you know what, which is the earliest anybody catches it. The second beat, the one where you name it, is what the plan adds.",
           "fix": "Wait until you can point at it. The beat costs nothing."
         }
       }
@@ -1981,7 +1961,7 @@
         "foc_hit"
       ],
       "accent": "#8E6FD8",
-      "blurb": "You go straight at it. Where other people scan the whole board, you land on the one thing that does not belong, and everything else stays out of focus until you are finished with it.",
+      "blurb": "You go straight at it. Where other people scan the whole board, you land on the one thing that does not belong, and everything else stays out of focus until you are finished with it. The Laser sharpens by widening, which is the easiest gain in your plan and the one that lowers the number most.",
       "reveals": {
         "palette": {
           "colors": [
@@ -2007,24 +1987,24 @@
           "lucky_days": "Thursday and Sunday — the first for going deep, the second for coming back up."
         },
         "dna": {
-          "setup": "A narrow beam is worth more than a wide one on three of the four rounds. The fourth is where it",
-          "trigger": "quietly worked against you,"
+          "setup": "A narrow beam beats a wide one on three of the four rounds. The fourth is where widening it",
+          "trigger": "lowers your number fastest,"
         },
         "materials": {
-          "setup": "The round you dropped is the one that needs everything at once, and the people you find tiring",
-          "trigger": "are the ones who talk while you aim,"
+          "setup": "The round you dropped needs everything at once, and the drill that lifts it asks you to",
+          "trigger": "take the whole board in one look,"
         },
         "mistakes": {
-          "setup": "Your five strengths all come from the same habit. So do both blind spots, which is why one of them",
-          "trigger": "is easier to fix than you think,"
+          "setup": "Your five strengths all come from the same habit. So do both habits worth swapping, which is why the first one",
+          "trigger": "changes more easily than you think,"
         },
         "shopping": {
           "setup": "Seven days, and the hardest one asks you to widen rather than sharpen —",
-          "trigger": "which is the whole point of it,"
+          "trigger": "which is where your number moves most,"
         },
         "mistake_one": {
           "title": "You finish the wrong thing beautifully",
-          "body": "Once the beam is on something it stays there, so the question of whether it was the right something gets asked after rather than before.",
+          "body": "Once the beam is on something it stays there, which is why you finish what other people abandon. Choosing the target out loud first is the whole of the upgrade.",
           "fix": "Pick the target out loud before you start. Then aim."
         }
       }
@@ -2064,19 +2044,19 @@
   "report": {
     "generating_messages": [
       "Weighing your sixteen rounds against the four domains…",
-      "Working out where your score actually came from…",
-      "Finding the round that moved it most…",
-      "Almost there — writing your report…"
+      "Working out which round lifts fastest…",
+      "Picking the drill that moves your number most…",
+      "Almost there — writing your plan…"
     ],
     "sections": [
       {
         "id": "dna",
-        "title": "Your Brain Profile",
-        "teaser_line": "Which of the four rounds you actually run on, and the one you lean on when you are tired.",
+        "title": "Your Brain Profile & Your Edge",
+        "teaser_line": "Which round you already run on, and how to make it carry more of your day.",
         "enabled": true,
         "preview": [
-          "Four scores, read off your own taps, and one place where two of them pull hard against each other.",
-          "It names the round you lead with, the one you fall back to, and which of the two you are using when you are rushing."
+          "Four scores off your own taps, and the pair of them doing most of the lifting.",
+          "It names the round to lean on, the one to build next, and the quickest way to put the first to work on the second."
         ],
         "reveal": {
           "mode": "locked"
@@ -2084,12 +2064,12 @@
       },
       {
         "id": "materials",
-        "title": "What Your Weakest Round Says",
-        "teaser_line": "The round you dropped most, and what it is really telling you about how you take things in.",
+        "title": "Your Weakest Round — and the Fastest Way to Lift It",
+        "teaser_line": "The round you dropped, and the two-minute drill that moves it first.",
         "enabled": true,
         "preview": [
-          "It is not the round itself. It is the thing the round asks for, which shows up in about nine places a week.",
-          "The chapter names those places, and the one small change that makes most of them easier."
+          "It is never the round itself. It is the one thing the round asks for, and that thing trains quickly.",
+          "The chapter names the drill, when to do it, and what to expect by the end of the week."
         ],
         "reveal": {
           "mode": "locked"
@@ -2097,12 +2077,12 @@
       },
       {
         "id": "mistakes",
-        "title": "5 Sharp Strengths & 2 Blind Spots",
-        "teaser_line": "Five things your brain does better than most people's. And the two places it looks away.",
+        "title": "5 Sharp Strengths & 2 Habits Holding You Back",
+        "teaser_line": "Five things you already do well. And the two habits quietly costing you speed.",
         "enabled": true,
         "preview": [
-          "The first strength reads as obvious written down, and it still shapes more of your week than anything else on the list.",
-          "The two blind spots are ranked, and the costlier one is last."
+          "The first strength reads as obvious written down, and it is the one the rest of the plan builds on.",
+          "Both habits come with the swap that replaces them, and the easier one is first."
         ],
         "reveal": {
           "mode": "locked"
@@ -2110,12 +2090,12 @@
       },
       {
         "id": "shopping",
-        "title": "Your 7-Day Sharpening Plan",
-        "teaser_line": "One small thing a day for a week, chosen for the round you were weakest on.",
+        "title": "Your 7-Day Brain Refresh Plan",
+        "teaser_line": "One small thing a day for a week, aimed at the round you want to lift.",
         "enabled": true,
         "preview": [
-          "Seven days, each one a single thing that takes under five minutes and targets the round you actually dropped.",
-          "Every day says what it is for, so the easy ones stop reading as filler."
+          "Seven days, each a single thing under five minutes, chosen for the round you scored lowest on.",
+          "Every day says what it sharpens, so you can watch the number you are moving."
         ],
         "reveal": {
           "mode": "locked"
@@ -2125,26 +2105,26 @@
     "print_whole": true,
     "mistake_one": {
       "title": "Sharp Strength #1 of 5",
-      "locked_note": "Strengths 2–5 and both blind spots — inside your full report"
+      "locked_note": "Strengths 2–5 and both habits to swap — inside your full plan"
     },
     "also": {
-      "title": "Also in your report",
+      "title": "Also in your plan",
       "rows": [
         {
           "section": "dna",
-          "hook": "How your four round scores split, and which pair of them is doing most of the work."
+          "hook": "How your four round scores split, and which pair to lean on."
         },
         {
           "section": "materials",
-          "hook": "What the round you dropped is really asking for, and where else it asks for it."
+          "hook": "The drill that lifts your weakest round, and when to do it."
         },
         {
           "section": "shopping",
-          "hook": "Seven days, one small thing each, aimed at the round you were weakest on."
+          "hook": "Seven days, one small thing each, in the order that moves the number."
         },
         {
           "title": "Your Round-by-Round Card",
-          "hook": "Every round you played, what it was measuring, and how you answered it."
+          "hook": "Every round you played, what it sharpens, and how you answered it."
         }
       ]
     },
@@ -2175,7 +2155,7 @@
   "pricing": {
     "amount_cents": 500,
     "currency": "usd",
-    "cta": "Unlock my full report"
+    "cta": "Unlock my Brain Refresh"
   },
   "sale": {
     "active": true,
@@ -2185,15 +2165,15 @@
     "ends": "2026-12-31T23:59:59-12:00"
   },
   "checkout": {
-    "kicker": "Your brain age is in",
-    "product_name": "Your Brain Age Report",
+    "kicker": "Your refresh plan is ready",
+    "product_name": "Your Brain Refresh Report",
     "product_image": "/static/brand/icon-512.png",
     "single_page": true,
     "express": true,
     "withdrawal_consent": false,
     "commerce": {
-      "anchor_head": "A {price} read on how your brain actually works",
-      "anchor_head_accent": "how your brain actually works",
+      "anchor_head": "A {price} plan built from your own sixteen rounds",
+      "anchor_head_accent": "built from your own sixteen rounds",
       "price_anchor": "A puzzle book about nobody in particular costs more",
       "price_anchor_accent": "costs more",
       "price_note": "one-time",
@@ -2206,27 +2186,27 @@
         "Secure via Stripe",
         "PDF to your email"
       ],
-      "mid_line": "Your complete report, for less than a coffee.",
+      "mid_line": "Your complete refresh plan, for less than a coffee.",
       "mid_line_accent": "a coffee",
       "mid_button": "See what's inside ↓",
-      "sticky_label": "Unlock my full report — {price}"
+      "sticky_label": "Unlock my Brain Refresh — {price}"
     },
-    "title": "Your {style} Report",
+    "title": "Your {style} Refresh",
     "proof_line": "Built from your 16 rounds",
     "manifest": [
-      "Which of the four rounds you actually run on — and the one you lean on when you are tired",
-      "What the round you dropped is really telling you",
-      "Five things your brain does better than most, and the two places it looks away",
-      "A seven-day plan aimed at the round you were weakest on",
-      "Yours to keep — the whole report, as a PDF"
+      "The round you already run on — and how to lean on it harder",
+      "The two-minute drill that lifts your weakest round first",
+      "Five strengths to build on, and the two habits to swap",
+      "Seven days, one small thing each, in the order that moves the number",
+      "Yours to keep — the whole plan, as a PDF"
     ],
     "manifest_hero": "strengths",
     "manifest_head": "What's inside — {n} sections, yours forever",
-    "anchor_head": "A {price} read on how your brain actually works",
+    "anchor_head": "A {price} plan built from your own sixteen rounds",
     "anchor": "A puzzle book about nobody in particular costs more. Your complete report — {price}, once.",
     "reframe": "Less than a coffee. Yours forever.",
     "price_suffix": "one-time",
-    "cta_label": "Unlock my full report — {price}",
+    "cta_label": "Unlock my Brain Refresh — {price}",
     "consent_prechecked": true,
     "trust": [
       "Secure payment via Stripe",
@@ -2310,8 +2290,8 @@
     }
   },
   "result": {
-    "mistakes_teaser": "You've seen strength #1. The other four run deeper — one of them explains the round you dropped.",
-    "value_banner": "Four chapters, a seven-day plan and your round-by-round card — all of it built from your own taps, yours to keep."
+    "mistakes_teaser": "You have seen strength #1. The other four are what the plan builds on — and one of them lifts your weakest round on its own.",
+    "value_banner": "Four chapters, a seven-day refresh plan and your round-by-round card — built from your own taps, yours to keep."
   },
   "result_copy": {
     "kicker": "Your brain age",
@@ -2321,62 +2301,62 @@
     "head_title": "Your brain type",
     "score_lead": "Scored just now",
     "head_caption": "Four rounds, scored off your own taps.",
-    "strength_lead": "You said you felt {mood}. Your rounds said otherwise.",
-    "offer_sub": "Your complete report — once, forever.",
+    "strength_lead": "You said you felt {mood}. Here is where to start.",
+    "offer_sub": "Your complete refresh plan — once, forever.",
     "locked_note": "Locked",
     "price_regular_aria": "Regular price {price}",
-    "delivered_note": "A PDF of this report is in your inbox. This page stays at the link you were sent back to.",
-    "younger_line": "{n} years younger than your age group",
-    "level_line": "right where your age group sits",
-    "older_line": "{n} years older — let's fix that",
-    "age_line_bare": "compared with your age group",
+    "delivered_note": "A PDF of this plan is in your inbox. This page stays at the link you were sent back to.",
+    "younger_line": "{n} years younger than your age group — keep it there",
+    "level_line": "right where your age group sits — one week of drills moves it",
+    "older_line": "{n} years older — and the good news is that this is the easiest number to lower",
+    "age_line_bare": "and this number moves with practice",
     "purpose_map": {
       "mood_sharp": {
         "emphasized_section": "mistakes",
-        "offer_sub": "You came in sharp. The five things behind that are inside."
+        "offer_sub": "You came in sharp. The five strengths to build on are inside."
       },
       "mood_ok": {
         "emphasized_section": "dna",
-        "offer_sub": "Which round you actually run on is inside."
+        "offer_sub": "The round to lean on, and the one to lift first — inside."
       },
       "mood_foggy": {
         "emphasized_section": "materials",
-        "offer_sub": "What the round you dropped is telling you — inside."
+        "offer_sub": "The drill that lifts your weakest round is inside."
       },
       "mood_fumes": {
         "emphasized_section": "shopping",
-        "offer_sub": "Seven days, one small thing each. It's inside."
+        "offer_sub": "Seven days, one small thing each. It starts tomorrow."
       }
     },
     "profile": {
-      "bridge": "Your report answers, specifically for {type}:",
-      "offer_head": "{type} — the full report, 4 chapters",
+      "bridge": "Your plan, written for {type}:",
+      "offer_head": "{type} — your refresh plan, 4 chapters",
       "essence": {
-        "memory_mind": "You hold what you were shown, a beat longer than most.",
-        "spatial_mind": "You keep the map, and you keep it without trying.",
-        "change_mind": "You see the edit before you can name it.",
-        "focus_mind": "You go straight at the one thing that is wrong."
+        "memory_mind": "You hold what you were shown. That is the one that sharpens fastest.",
+        "spatial_mind": "You keep the map without trying. Now make it work harder.",
+        "change_mind": "You see the edit before you can name it. Speed is next.",
+        "focus_mind": "You go straight at it. Widening is your easiest gain."
       },
       "cards": [
         {
           "id": "dna",
           "key": "Your rounds",
-          "promise": "which one you run on — and the one you lean on when you are tired"
+          "promise": "the round you already run on — and how to lean on it harder"
         },
         {
           "id": "materials",
           "key": "Weakest round",
-          "promise": "what the round you dropped is really asking for"
+          "promise": "the drill that lifts your weakest round first"
         },
         {
           "id": "mistakes",
           "key": "Sharp strengths",
-          "promise": "five your brain does better than most, and the two it looks away from"
+          "promise": "five strengths to build on, and the two habits to swap"
         },
         {
           "id": "shopping",
           "key": "Seven days",
-          "promise": "one small thing a day, aimed at your weakest round"
+          "promise": "one small thing a day, in the order that moves the number"
         }
       ],
       "share": {
@@ -2396,30 +2376,30 @@
       "rarity_card": {
         "lead": "Your brain type",
         "tail": "on this run",
-        "note": "What it costs you on the other three rounds — inside your report."
+        "note": "Every type sharpens on a different drill — yours is the first page of your plan."
       },
-      "unlock_head": "What you unlock:",
+      "unlock_head": "What lowers your brain age:",
       "unlock": [
         {
           "id": "materials",
-          "line": "what the round you dropped is really asking for"
+          "line": "the two-minute drill that lifts your weakest round first"
         },
         {
           "id": "mistakes",
-          "line": "five strengths you are not using — and the two blind spots"
+          "line": "the two habits to swap, and the ones that keep you sharp"
         },
         {
           "id": "dna",
-          "line": "which of the four rounds you actually run on"
+          "line": "the round you already run on — and how to lean on it harder"
         },
         {
           "id": "shopping",
-          "line": "seven days, one small thing each"
+          "line": "seven days, one small thing each, in the order that works"
         }
       ],
       "unlock_tail": {
-        "key": "+ Your card",
-        "line": "every round you played, scored and kept"
+        "key": "+ Play again",
+        "line": "play it again in a week — the number moves"
       }
     }
   },

@@ -199,6 +199,23 @@ class Card(object):
             self.d.rectangle([x0, y0, x1, y1], fill=colour, outline=outline,
                              width=int(width * self.w * SS))
 
+    def text_above(self, body, size, bottom, colour=INK, cx=0.5, bold=True):
+        """Centred across, with the glyphs' feet at `bottom`.
+
+        Centring on a y is the wrong tool where the thing under the text moves
+        between cards: the gap the eye reads is the one between the bottom of
+        the number and the top of what is under it, and that is what this
+        sets.
+        """
+        path = BOLD if bold else REGULAR
+        if not path:
+            raise RuntimeError("no usable font on this machine")
+        font = ImageFont.truetype(path, int(size * SS))
+        box = self.d.textbbox((0, 0), body, font=font)
+        x = cx * self.w * SS - (box[2] - box[0]) / 2.0 - box[0]
+        y = bottom * self.h * SS - box[3]
+        self.d.text((x, y), body, font=font, fill=colour)
+
     def text(self, body, size, colour=INK, cx=0.5, cy=0.5, bold=True):
         """Centred on (cx, cy), in points of the finished card."""
         path = BOLD if bold else REGULAR
@@ -445,8 +462,47 @@ TREES = {
 # numbers there.
 TREE_SCALE = 1.18
 
+# Where the tree stands on the card.
+AGE_BASE_Y = 0.84
 
-def tree(card, stage, base_y=0.84, colour=GREEN, bark=(122, 92, 62)):
+# The age card is a tile, and the tile is drawn here rather than in the
+# stylesheet. On a phone the six of them were six numbers floating on the page
+# ground: the card's own background is behind the picture, the picture filled
+# it edge to edge, and the picture was the same off-white as everything else.
+# So the ground of THIS card is a shade of its own — sage over the cream, far
+# enough off it to read as a surface at arm's length — with a keyline inside
+# the edge and a line under the tree for it to stand on.
+#
+# The keyline is inset well clear of the edge on purpose. These cells are
+# taller than they are wide and the art is square, so `object-fit: cover`
+# crops a few per cent off each side; a rule any closer to the edge would be
+# the first thing the crop took.
+AGE_PANEL_FILL = (224, 229, 211)
+AGE_PANEL_EDGE = (196, 204, 179)
+AGE_PANEL_INSET = 0.085
+AGE_PANEL_RADIUS = 0.075
+AGE_GROUND_FILL = (205, 212, 189)
+
+# How much air sits between the bottom of the numeral and the top of the
+# leaves. The number and the tree are one figure — the bracket labelled by the
+# thing that grew that far — and the gap is what says so.
+AGE_NUMERAL_GAP = 0.030
+AGE_NUMERAL_SIZE = 100
+
+
+def canopy_top(stage):
+    """Where the leaves start on one stage, as a fraction of the card."""
+    height, _width, canopy, _roots = TREES[stage]
+    top = AGE_BASE_Y - height * TREE_SCALE
+    return min(top + (dy - r) * TREE_SCALE for _dx, dy, r in canopy)
+
+
+def numeral_bottom(stage):
+    """Where the bracket's feet go on one stage. Follows the leaves."""
+    return canopy_top(stage) - AGE_NUMERAL_GAP
+
+
+def tree(card, stage, base_y=AGE_BASE_Y, colour=GREEN, bark=(122, 92, 62)):
     """One tree, grown from the table above, standing on `base_y`."""
     height, width, canopy, roots = TREES[stage]
     height *= TREE_SCALE
@@ -474,10 +530,20 @@ def tree(card, stage, base_y=0.84, colour=GREEN, bark=(122, 92, 62)):
 
 
 def age_card(text, stage):
-    """The bracket over the stage it stands at."""
-    card = Card()
-    card.text(text, 74, cy=0.155)
+    """The bracket over the stage it stands at, on a tile of its own."""
+    card = Card(ground=AGE_PANEL_FILL)
+    inset = AGE_PANEL_INSET
+    card.d.rounded_rectangle(
+        [inset * card.w * SS, inset * card.h * SS,
+         (1 - inset) * card.w * SS, (1 - inset) * card.h * SS],
+        AGE_PANEL_RADIUS * card.w * SS,
+        outline=AGE_PANEL_EDGE, width=max(1, int(SS)))
+    # The line the tree stands on. Short, soft, and the same family as the
+    # keyline — it is a floor, not a rule under a heading.
+    card.rect((0.30, AGE_BASE_Y - 0.004, 0.70, AGE_BASE_Y + 0.006),
+              AGE_GROUND_FILL, radius=0.005)
     tree(card, stage)
+    card.text_above(text, AGE_NUMERAL_SIZE, numeral_bottom(stage))
     return card
 
 
