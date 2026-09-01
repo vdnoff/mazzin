@@ -522,3 +522,6 @@ bottom.
 
 ## 2026-09-01 — claude/pdf-minimal-hero
 - email names paid price; PDF hero mirrors minimal template; images keep with heading
+
+## 2026-09-01 — claude/brain-engine
+- engine: flash template + domain axes + elapsed_ms
