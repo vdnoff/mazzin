@@ -84,6 +84,10 @@
     "Searching for the combinations that fit you…",
     "Almost there — writing your recommendations…"
   ];
+  // The ceiling on a recorded reaction. Past a minute the number is a phone
+  // that was put down rather than a decision being made, and an unbounded
+  // figure is one backgrounded tab moving the average of every step it is on.
+  var ELAPSED_MAX_MS = 60000;
   var STATUS_MS = 2500;         // how long each loading line holds
   var STATUS_LINES = [
     "Confirming your payment\u2026",
@@ -104,6 +108,7 @@
   var preloaded = {};        // img src -> already requested
   var winnerStyleId = null; // set when the result is computed
   var picking = false;      // true through the selection hold; taps ignored
+  var shownAtMs = null;     // when the current step's cards finished rendering
   var confettiDone = false; // the burst fires once per session, never again
   var unlockedContent = null;   // report shown after returning from Stripe
   var unlockedComplete = false; // whether that report is finished
@@ -410,9 +415,23 @@
   // is the whole of teaching it. No other funnel scores against these four
   // words, so no other funnel can be moved by their being here.
   var AXIS_AXIS = ["drive", "anchor", "wave", "prism"];
+  // The memory funnel's four domains, on exactly the same terms as the six
+  // above. Each is a pair rather than a spread because a memory round is
+  // answered right or wrong: recall, position, what changed, and holding
+  // attention. Naming them here is the whole of teaching the engine to key a
+  // personal line on one — an axis this file has never heard of resolves to no
+  // leader at all, silently, and the beat then reads its own line forever.
+  //
+  // No funnel shipping today scores against any of these eight words, so a
+  // funnel whose cards carry none of them is unmoved by their being here.
+  var MEM_AXIS = ["mem_hit", "mem_miss"];
+  var SPA_AXIS = ["spa_hit", "spa_miss"];
+  var CHG_AXIS = ["chg_hit", "chg_miss"];
+  var FOC_AXIS = ["foc_hit", "foc_miss"];
   var AXES = {
     tone: TONE_AXIS, material: MATERIAL_AXIS, season: SEASON_AXIS,
-    element: ELEMENT_AXIS, energy: ENERGY_AXIS, axis: AXIS_AXIS
+    element: ELEMENT_AXIS, energy: ENERGY_AXIS, axis: AXIS_AXIS,
+    mem: MEM_AXIS, spa: SPA_AXIS, chg: CHG_AXIS, foc: FOC_AXIS
   };
 
   // The tag they have chosen most on one axis, or null when the axis has not
@@ -634,6 +653,15 @@
   // the reader a pair the rule did not pick.
   function prepareNext() {
     var index = step + 1;
+    // The beat that fires the moment this step is answered. Every other
+    // interstitial draws frames the browser already has — the echo row hands
+    // back images that were on screen seconds ago — but a flash brings its
+    // own, and a memorise screen that paints late is one the reader is given
+    // less time to read than the config said it would be.
+    var flash = flashAt(index);
+    if (flash) {
+      flash.flash.images.forEach(function (g) { preload(g.img); });
+    }
     var st = stepAt(index);
     if (!st) return;
     if (st.adaptive) {
@@ -732,6 +760,10 @@
     pair.forEach(function (item, i) {
       el.cards.appendChild(cardNode(item, i));
     });
+    // The clock a reaction is measured against starts here, with the cards in
+    // the document, rather than at the top of the step change: what it is for
+    // is time spent in front of the question, not time spent decoding it.
+    shownAtMs = nowMs();
     setCaption((st && st.question) || "");
     renderProgress();
     prepareNext();
@@ -824,11 +856,45 @@
     var st = stepAt(index);
     var picked = shownAt(index);
     if (!st || !picked || !st.id) return null;
-    return {
+    var extra = {
       pair: st.id + ":" + picked.id,
       shown: picked.images.map(function (g) { return g.id; }),
       chosen: item.id
     };
+    // How long the question was on screen before it was answered. Tracking
+    // and nothing else: it is not scored, it is not in `choices` or
+    // `tag_scores`, and it never reaches /api/checkout — the report is
+    // written from what somebody chose, not from how fast they chose it.
+    //
+    // Gated on the funnel asking for it, because /api/track validates a swipe
+    // payload against a closed set of keys and refuses the whole event on a
+    // key it does not know. Sending this from every funnel would drop every
+    // swipe row the platform records; a funnel that names nothing sends
+    // exactly the three fields it always has.
+    if (timingTracked() && shownAtMs != null) extra.elapsed_ms = elapsedMs();
+    return extra;
+  }
+
+  // Whether this funnel records reaction times at all. One key, off the
+  // config, and no funnel shipping today carries it.
+  function timingTracked() {
+    return !!(cfg && cfg.track_timing);
+  }
+
+  // performance.now() where there is one, the wall clock where there is not.
+  // Only ever read as a difference, so which of the two answered does not
+  // matter to anything downstream.
+  function nowMs() {
+    return (window.performance && performance.now)
+      ? performance.now() : Date.now();
+  }
+
+  // Whole milliseconds, clamped at both ends. It is written to a column and
+  // read back as a number: a negative from a clock that stepped back, and a
+  // tab left open over lunch, are both something other than a reaction.
+  function elapsedMs() {
+    var ms = Math.round(nowMs() - shownAtMs);
+    return Math.max(0, Math.min(ms, ELAPSED_MAX_MS));
   }
 
   function choose(item, card) {
@@ -1041,6 +1107,10 @@
     midSeen[entry.after_step] = true;
     midOpen = true;
     midAuto = !!autoAdvanceMs(entry);
+    // The memorise screen. It is the one interstitial with nothing to read
+    // back, so every part of this screen that reads something back is turned
+    // off below rather than left to a config that happens not to fill it.
+    var flash = isFlash(entry);
     // Defensive: an open landing on top of an open would otherwise leave the
     // first screen's dismiss running against the second one's copy.
     clearTimeout(midTimer);
@@ -1051,6 +1121,12 @@
     el.midSub.hidden = !entry.sub;
     el.midCta.textContent = entry.cta || "Continue analysis";
     el.midCta.hidden = midAuto;
+    // Kicker, line, grid. A subline on a flash is a sentence competing with
+    // the frames somebody is being asked to hold in their head.
+    if (flash) {
+      el.midSub.textContent = "";
+      el.midSub.hidden = true;
+    }
     // The working row is the four-second screen's answer to looking idle. On
     // a two-second cut it is a second thing moving beside the accent and its
     // copy never reaches its second line, so the accent is the whole of it.
@@ -1060,11 +1136,12 @@
       startWorking();
     }
     if (el.midWorking) el.midWorking.hidden = midAuto;
-    setHandoff(entry.next || "");
+    setHandoff(flash ? "" : (entry.next || ""));
     renderProgress();
     // Counted before the screen is shown, because the dismiss is measured
     // from how many frames it has to get through.
     var echoes = setEcho(entry, midAuto);
+    setFlash(entry);
     var auto = autoAdvanceMs(entry, echoes);
     // The accent and the entrance are both set after the screen is on, not
     // before it. A transition primed on a `display: none` subtree has no
@@ -1109,6 +1186,13 @@
     // frames the frames are the accent — two things pulsing at once is one
     // too many.
     var bar = entry.template === "almost";
+    // A flash carries its own countdown, which is the only thing on it that
+    // should be moving: a spark beside it is a second clock the reader has to
+    // work out they can ignore.
+    if (isFlash(entry)) {
+      if (node) node.hidden = true;
+      return;
+    }
     if (!auto || (echoes && !bar)) {
       if (node) node.hidden = true;
       return;
@@ -1156,6 +1240,13 @@
   // One row of them, built on first use and refilled on every open, like the
   // working row and the accent above it.
   function setEcho(entry, auto) {
+    // A flash hands nothing back: what is on it is what the next step is
+    // about, and a row of earlier choices under it is three more pictures to
+    // memorise by mistake.
+    if (isFlash(entry)) {
+      if (el.midEcho) { el.midEcho.hidden = true; el.midEcho.innerHTML = ""; }
+      return 0;
+    }
     var picks = auto ? echoPicks(entry) : [];
     var row = el.midEcho;
     if (!picks.length) {
@@ -1189,6 +1280,108 @@
       row.appendChild(cell);
     });
     return picks.length;
+  }
+
+  // --- the flash: frames to hold, and a bar that runs out --------------------
+
+  // The memorise half of a memory round: a set of pictures, held for exactly
+  // as long as the entry says, then gone. It is the one interstitial that is
+  // not a read-back — there is nothing on it about the reader, because the
+  // whole screen is the question the next step will ask.
+  //
+  // Three things make an entry one of these, and the third is why a funnel
+  // that has never heard of this is untouched by it. It has to name the
+  // template, it has to carry frames, and it has to say how long for: every
+  // other interstitial has a button, and a screen with neither a button nor a
+  // timing is a screen with no way off it. An entry missing any of the three
+  // is not a flash and renders as the ordinary beat it otherwise describes.
+  function isFlash(entry) {
+    var flash = entry && entry.flash;
+    return !!(entry && entry.template === "flash"
+      && flash && flash.images && flash.images.length
+      && autoAdvanceMs(entry));
+  }
+
+  // Which grid this set is laid out on. The same GRID_SIZE table the swipe
+  // steps read, so the frames are memorised in the shape they will be
+  // answered in rather than in a second layout that merely resembles it. A
+  // format the table has never heard of falls back to the four-up, which is
+  // the smallest grid there is and fits any number of frames legibly.
+  function flashFormat(entry) {
+    var f = entry && entry.flash && entry.flash.format;
+    return GRID_SIZE[f] ? f : "grid4";
+  }
+
+  // The flash anchored on a step, for the preload above. `interstitialAfter`
+  // is the wrong lookup for that: it is the one that decides what to open, so
+  // it skips an entry already seen and personalises the copy on the way. This
+  // only wants to know which bytes to warm.
+  function flashAt(completed) {
+    var list = (cfg && cfg.interstitials) || [];
+    for (var i = 0; i < list.length; i++) {
+      var entry = list[i];
+      if (entry && entry.after_step === completed && isFlash(entry)) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
+  // The screen itself, built on first use and refilled on every open, like the
+  // echo row and the accent above it. Rebuilt rather than reset, which is what
+  // restarts the countdown: the bar is a fresh node every time, so its
+  // animation plays from the start without the class-off-reflow-class dance
+  // the reused nodes need.
+  function setFlash(entry) {
+    var host = el.midFlash;
+    if (!isFlash(entry)) {
+      if (host) { host.hidden = true; host.innerHTML = ""; }
+      return;
+    }
+    if (!host) {
+      host = elm("div", "mid is-flash");
+      host.id = "mid-flash";
+      el.midSub.parentNode.appendChild(host);
+      el.midFlash = host;
+    }
+    host.hidden = false;
+    host.innerHTML = "";
+
+    // Not aria-hidden, unlike the echo row: that one hands back pictures
+    // somebody has already been shown, where this one is the question. The
+    // frames carry no alt of their own — they are photographs, and what there
+    // is to say about one is the label the config wrote under it.
+    var grid = elm("ul", "mid-flash-grid cards is-" + flashFormat(entry));
+    entry.flash.images.forEach(function (frame) {
+      var cell = elm("li", "mid-flash-cell");
+      var img = document.createElement("img");
+      img.src = frame.img;
+      img.alt = "";
+      img.decoding = "async";
+      cell.appendChild(img);
+      // Optional, and per frame only because the config wrote one. A set with
+      // a name under some of its frames and not others is a set the reader
+      // reads unevenly, so this is all-or-nothing in the config rather than
+      // defaulted to anything here.
+      if (frame.label) {
+        cell.appendChild(elm("span", "mid-flash-label", frame.label));
+      }
+      grid.appendChild(cell);
+    });
+    host.appendChild(grid);
+
+    // The countdown, under the grid. It drains by transform and never by
+    // width: this screen runs while the next step's images are still decoding,
+    // and a layout animation here drops frames on the one screen somebody is
+    // being asked to read carefully. The duration is the only part JS writes —
+    // the drain itself is a CSS animation, so there is no second clock in this
+    // file to disagree with the dismiss above on a slow frame.
+    var bar = elm("div", "mid-flash-bar");
+    bar.setAttribute("aria-hidden", "true");
+    var fill = elm("i", "mid-flash-fill");
+    fill.style.animationDuration = autoAdvanceMs(entry) + "ms";
+    bar.appendChild(fill);
+    host.appendChild(bar);
   }
 
   // Restart the entrance. The screen is one set of nodes reused eight times,
