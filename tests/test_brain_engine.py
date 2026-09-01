@@ -498,13 +498,14 @@ check("  and a swipe payload is still the closed set of three",
       tracking.SWIPE_EXTRA_KEYS == frozenset(("pair", "shown", "chosen")),
       str(sorted(tracking.SWIPE_EXTRA_KEYS)))
 
+OWNER = "brain.json"
+
 print("\n--- and only the funnel that asked for them can reach them ---")
 # /brain is that funnel and arrived a phase after this file did. What is
 # checked here is unchanged in substance: these three are opt-in, and every
 # funnel that did not opt in is untouched by their existing. The list is
 # spelled out rather than left as "none", so a fourth funnel growing a flash
 # by accident still fails.
-OWNER = "brain.json"
 for name, cfg in CONFIGS.items():
     if name == OWNER:
         continue
@@ -518,8 +519,14 @@ check("  and the funnel that does is the one built on it",
 # Read structurally rather than off the JSON text: `reveal` is also what a
 # report section calls its lock state, and a substring scan would report every
 # funnel on the platform for a key none of them carries here.
+#
+# /brain names all five now, which is what it was built for. The claim that
+# still matters is the one either side of it: no other funnel does, so none of
+# them draws a count-in, a clock or a card it did not draw before.
 loud = []
 for name, cfg in CONFIGS.items():
+    if name == OWNER:
+        continue
     for entry in cfg.get("interstitials") or []:
         for key in ("prepare", "reveal"):
             if entry.get(key):
@@ -528,8 +535,14 @@ for name, cfg in CONFIGS.items():
         for key in ("timer_ms", "timeout_pick", "label_mode"):
             if st.get(key):
                 loud.append("%s:%s.%s" % (name, st.get("id"), key))
-check("no funnel names a count-in, a reveal, a clock or its own labels yet",
+check("no other funnel names a count-in, a reveal, a clock or its own labels",
       not loud, str(loud))
+own = CONFIGS[OWNER]
+check("  and the funnel that does names every one of them",
+      [e for e in own["interstitials"] if e.get("prepare")]
+      and [e for e in own["interstitials"] if e.get("reveal")]
+      and [s for s in own["swipe"]["steps"] if s.get("timer_ms")]
+      and [s for s in own["swipe"]["steps"] if s.get("label_mode")])
 check("no shipping funnel asks for reaction times",
       not [n for n, c in CONFIGS.items() if c.get("track_timing")],
       str([n for n, c in CONFIGS.items() if c.get("track_timing")]))

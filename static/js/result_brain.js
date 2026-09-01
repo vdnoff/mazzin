@@ -88,6 +88,13 @@
     return (ctx.cfg && ctx.cfg.result_copy) || {};
   }
 
+  // Which layout this funnel asked for. Named in the config rather than
+  // assigned to a session: this page is not running a test, and a reader who
+  // paid on one layout has to come back to the same one.
+  function template(ctx) {
+    return (ctx.cfg && ctx.cfg.result_template) || "";
+  }
+
   function profileCopy(ctx) {
     return (copyOf(ctx).profile) || {};
   }
@@ -149,8 +156,62 @@
 
   // --- a) the kicker ---------------------------------------------------------
 
-  function kicker(copy) {
-    return elm("p", "br-kicker", copy.kicker || "Your brain age");
+  function kicker(copy, lean) {
+    var line = elm("p", "br-kicker", copy.kicker || "Your brain age");
+    // The minimal arm frames it. Real nodes rather than pseudo-elements so
+    // the ornament is something a check can find and a translation can drop,
+    // and appended only for that arm — the plain kicker is one text node and
+    // stays one.
+    if (lean) {
+      line.className = "br-kicker is-framed";
+      line.insertBefore(mark(), line.firstChild);
+      line.appendChild(mark());
+    }
+    return line;
+  }
+
+  // The diamond this page already draws on an open node. Reused rather than a
+  // second ornament: one funnel, one mark.
+  function mark() {
+    var node = elm("span", "br-mark", "\u25C6");
+    node.setAttribute("aria-hidden", "true");
+    return node;
+  }
+
+  // Four of them, one to a corner, on the cards the minimal arm treats as
+  // keepsakes rather than as panels.
+  function corners(card) {
+    ["tl", "tr", "bl", "br"].forEach(function (corner) {
+      var node = mark();
+      node.className = "br-corner is-" + corner;
+      card.appendChild(node);
+    });
+  }
+
+  // The four rounds as capsules, which is what the minimal arm shows instead
+  // of four bars — the same four numbers, in the place the eye goes after the
+  // headline figure. Each chip is a template in the config filled from the
+  // run; one whose token is unanswered is dropped rather than drawn empty.
+  function chipWords(ctx, data) {
+    var names = (ageBlock(ctx) || {}).domains || {};
+    var words = {};
+    DOMAINS.forEach(function (key) {
+      words[key] = (names[key] || key) + " "
+        + Math.min(PER_DOMAIN, data.counts[key] || 0) + "/" + PER_DOMAIN;
+    });
+    return words;
+  }
+
+  function chipRow(ctx, data) {
+    var want = profileCopy(ctx).chips || [];
+    if (!want.length) return null;
+    var words = chipWords(ctx, data);
+    var row = elm("ul", "br-chips");
+    want.forEach(function (shape) {
+      var text = fill(shape, words).replace(/\{\w+\}/g, "").trim();
+      if (text) row.appendChild(elm("li", "br-chip", text));
+    });
+    return row.childNodes.length ? row : null;
   }
 
   // --- b) the number ---------------------------------------------------------
@@ -175,8 +236,9 @@
     return copy.level_line || "right where your age group sits";
   }
 
-  function score(copy, data) {
-    var card = elm("section", "br-score");
+  function score(ctx, copy, data, lean) {
+    var card = elm("section", "br-score" + (lean ? " is-lux" : ""));
+    if (lean) corners(card);
     // Its own label, not the type card's. The kicker above already says what
     // the number is; this says when it was measured, which is the part that
     // makes it feel earned rather than looked up.
@@ -188,6 +250,11 @@
     card.appendChild(big);
     var line = ageLine(copy, data);
     if (line) card.appendChild(elm("p", "br-age-note", line));
+    // The four rounds, on the arm that draws no bars. Inside the hero rather
+    // than under it: they are what the number was made of, and a screen
+    // between the figure and its own working is a screen too many.
+    var chips = lean ? chipRow(ctx, data) : null;
+    if (chips) card.appendChild(chips);
     return card;
   }
 
@@ -226,9 +293,27 @@
 
   // --- d) the brain type -----------------------------------------------------
 
-  function typeCard(ctx, copy) {
-    var card = elm("section", "br-type");
+  function typeCard(ctx, copy, lean) {
     var essence = (profileCopy(ctx).essence || {})[ctx.style.id] || "";
+    var own = profileCopy(ctx).rarity_card || {};
+    // The arm that gives the type its own screen gives it a card: the frame
+    // of the claim, the name at the size the claim deserves, and one line
+    // about what it is worth. A config that declares no such copy falls
+    // through to the plain block below, unchanged.
+    if (lean && own.lead) {
+      var big = elm("section", "br-type is-card");
+      corners(big);
+      big.appendChild(elm("p", "br-type-lead", own.lead));
+      big.appendChild(elm("p", "br-type-figure", ctx.style.name || ""));
+      if (own.tail) big.appendChild(elm("p", "br-type-tail", own.tail));
+      if (essence) big.appendChild(elm("p", "br-type-essence", essence));
+      if (ctx.style.blurb) {
+        big.appendChild(elm("p", "br-type-blurb", ctx.style.blurb));
+      }
+      if (own.note) big.appendChild(noteLines(own.note));
+      return big;
+    }
+    var card = elm("section", "br-type");
     card.appendChild(elm("p", "br-type-label", copy.head_caption
                          || "Four rounds, scored off your own taps."));
     card.appendChild(elm("h1", "br-type-name", ctx.style.name || ""));
@@ -237,6 +322,22 @@
       card.appendChild(elm("p", "br-type-blurb", ctx.style.blurb));
     }
     return card;
+  }
+
+  // Two centred lines, broken at the em-dash rather than at whatever width
+  // the box happens to be. The break is where the sentence turns, so it is
+  // the same break in any column — and copy carrying no dash gets one line
+  // rather than a guess at where to cut it.
+  function noteLines(text) {
+    var note = elm("p", "br-type-note");
+    var cut = String(text).split("\u2014");
+    if (cut.length !== 2) {
+      note.textContent = text;
+      return note;
+    }
+    note.appendChild(elm("span", "br-type-note-line", cut[0].trim() + " \u2014"));
+    note.appendChild(elm("span", "br-type-note-line", cut[1].trim()));
+    return note;
   }
 
   // --- e) the frames they tapped ---------------------------------------------
@@ -518,6 +619,64 @@
     if (box) box.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
+  // --- f2) what the price buys, above the price ------------------------------
+  //
+  // The arm that takes the locked rows off the page above has to say what the
+  // report contains somewhere, and it says it here rather than as four blocks
+  // the reader scrolls past to reach the button. Every line is a clause of a
+  // promise the funnel already makes: the keyword is the section card's own
+  // `key` and the text is the config's short form of that card's promise, so
+  // this list cannot offer a chapter something the chapter does not claim.
+  // Reordered by what the run said they came for, exactly as the locked rows
+  // are, and only the first match moves.
+
+  var CHECK_ICON = "M3.2 8.4 6.4 11.6 12.8 4.8";
+
+  function checklist(ctx) {
+    var table = profileCopy(ctx);
+    var rows = table.unlock || [];
+    if (!rows.length) return null;
+    var keys = {};
+    (table.cards || []).forEach(function (card) {
+      keys[card.id] = card.key || "";
+    });
+    var block = elm("div", "br-unlock");
+    if (table.unlock_head) {
+      block.appendChild(elm("p", "br-unlock-head", table.unlock_head));
+    }
+    var list = elm("ul", "br-checklist");
+    firstly(rows.slice(), emphasised(purposeRule(ctx))).forEach(
+      function (row) {
+        list.appendChild(checkRow(keys[row.id] || "", row.line || ""));
+      });
+    var tail = table.unlock_tail;
+    if (tail && tail.key) {
+      list.appendChild(checkRow(tail.key, tail.line || ""));
+    }
+    block.appendChild(list);
+    return block;
+  }
+
+  function checkRow(key, text) {
+    var item = elm("li", "br-check");
+    var tick = elm("span", "br-check-mark");
+    tick.setAttribute("aria-hidden", "true");
+    var svg = svgEl("svg", { viewBox: "0 0 16 16" });
+    svg.appendChild(svgEl("path", {
+      d: CHECK_ICON, "stroke-linecap": "round", "stroke-linejoin": "round"
+    }));
+    tick.appendChild(svg);
+    item.appendChild(tick);
+    // The keyword and the description in one paragraph beside the tick, so a
+    // row that runs to two lines wraps under its own text rather than under
+    // the icon.
+    var line = elm("p", "br-check-line");
+    if (key) line.appendChild(elm("span", "br-check-key", key + " "));
+    line.appendChild(document.createTextNode(text));
+    item.appendChild(line);
+    return item;
+  }
+
   // --- g) the offer ----------------------------------------------------------
   //
   // engine.js has already built and wired all of this. What happens here is
@@ -525,13 +684,21 @@
   // are moved into this card, which is why the withdrawal waiver still gates
   // the same button it always did and no payment code lives in here.
 
-  function offer(ctx, copy, data, variant) {
+  function offer(ctx, copy, data, variant, lean) {
     var card = elm("section", "br-offer");
     var nodes = ctx.nodes;
 
     var head = ctx.withPrice(fill(profileCopy(ctx).offer_head || "",
                                   { type: ctx.style.name || "" }));
     if (head) card.appendChild(elm("p", "br-offer-head", head));
+
+    // Between the headline and the anchor, on the arm that took the locked
+    // rows off the page above. Those rows were the answer to "what am I
+    // buying"; without them the offer has to carry it.
+    if (lean) {
+      var list = checklist(ctx);
+      if (list) card.appendChild(list);
+    }
 
     // The price, and the order of the argument around it. The reader's own
     // price is the thing they are deciding about, so it is the loudest text
@@ -553,11 +720,37 @@
     }
     card.appendChild(anchor);
 
+    // `ctx.price` is already whatever the checkout is about to charge —
+    // engine.js resolves the sale before it fills a single {price} — so the
+    // figure needs no arithmetic here. What a sale adds is the comparison
+    // beside it: the regular price, struck, and one line naming the offer.
+    //
+    // `ctx.sale` is null unless a sale is genuinely running, and it is null
+    // for a block whose claimed regular price is not this funnel's own. So
+    // there is no state in which this draws a struck figure that is not the
+    // price this product sells at the rest of the year.
     var price = elm("p", "br-price");
     price.appendChild(elm("span", "br-price-now", ctx.price));
+    if (ctx.sale && ctx.priceRegular) {
+      var was = elm("span", "br-price-was", ctx.priceRegular);
+      // Said as well as struck: a line through a number is a visual
+      // convention a screen reader does not read out.
+      was.setAttribute("aria-label",
+                       fill(copy.price_regular_aria || "Regular price {price}",
+                            { price: ctx.priceRegular }));
+      price.appendChild(was);
+    }
     var note = ctx.commerce.price_note || "";
     if (note) price.appendChild(elm("span", "br-price-note", note));
     card.appendChild(price);
+    if (ctx.sale && ctx.sale.label) {
+      // The offer's name, and nothing else at all. No clock counting down and
+      // no closing date: a date on a card is a promise about a config value,
+      // and an offer that gets extended twice has spent that promise. The
+      // block still ends on its own clock; the page does not make a date part
+      // of the pitch.
+      card.appendChild(elm("p", "br-sale", ctx.sale.label));
+    }
 
     var badges = ctx.commerce.badges || [];
     if (badges.length) {
@@ -635,21 +828,34 @@
     var variant = assignedVariant(ctx.cfg);
     reportVariant(ctx, variant);
 
+    // The layout, named by the config outright rather than assigned. A
+    // funnel that names none draws the page this file has always drawn.
+    var lean = template(ctx) === "minimal";
+
     root.innerHTML = "";
-    root.appendChild(kicker(copy));
+    // The arm goes on the container rather than inside it, so every rule the
+    // minimal layout adds hangs off one class and the plain page keeps its
+    // stylesheet without matching any of them.
+    root.classList.toggle("is-minimal", lean);
+    root.appendChild(kicker(copy, lean));
     // The order this page argues in: the number, what it means against their
-    // own age group, which rounds produced it, who that makes them, the frames
-    // they tapped, what the report still has, and then the price. Nothing
-    // between the last locked row and the button.
+    // own age group, which rounds produced it, who that makes them, the
+    // frames they tapped, and then the price.
+    //
+    // On the minimal arm the four bars are gone — the chips inside the hero
+    // are the same four numbers, and a page whose argument is brevity cannot
+    // afford to say a thing twice — and so are the locked rows, which were
+    // doing the offer's job above the offer. What the report contains is said
+    // once, on the offer card, next to the price.
     if (data) {
-      root.appendChild(score(copy, data));
-      root.appendChild(bars(ctx, copy, data));
+      root.appendChild(score(ctx, copy, data, lean));
+      if (!lean) root.appendChild(bars(ctx, copy, data));
     }
-    root.appendChild(typeCard(ctx, copy));
+    root.appendChild(typeCard(ctx, copy, lean));
     var strip = taps(ctx, copy);
     if (strip) root.appendChild(strip);
-    root.appendChild(path(ctx, copy));
-    root.appendChild(offer(ctx, copy, data, variant));
+    if (!lean) root.appendChild(path(ctx, copy));
+    root.appendChild(offer(ctx, copy, data, variant, lean));
     applyVariantCta(ctx, variant);
 
     // The container engine.js moved the offer rows into is empty now and its
@@ -779,17 +985,21 @@
   function delivered(root, ctx) {
     var copy = copyOf(ctx);
     var data = storedProfile(ctx);
+    var lean = template(ctx) === "minimal";
     root.innerHTML = "";
     root.classList.add("is-delivered");
+    root.classList.toggle("is-minimal", lean);
     var note = deliveryNote(ctx, copy);
     if (note) root.appendChild(note);
-    root.appendChild(kicker(copy));
+    root.appendChild(kicker(copy, lean));
     // The same head as before the money, off the block the report carries.
+    // The reader paid on this page and the thing they bought has to open as
+    // the same document, so the arm travels with it.
     if (data) {
-      root.appendChild(score(copy, data));
-      root.appendChild(bars(ctx, copy, data));
+      root.appendChild(score(ctx, copy, data, lean));
+      if (!lean) root.appendChild(bars(ctx, copy, data));
     }
-    root.appendChild(typeCard(ctx, copy));
+    root.appendChild(typeCard(ctx, copy, lean));
     var strip = deliveredTaps(ctx, copy);
     if (strip) root.appendChild(strip);
     // Same reorder after the money as before it: the section they came for is
