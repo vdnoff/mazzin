@@ -44,6 +44,13 @@ JS = os.path.join(ROOT, "static", "js")
 ENGINE_JS = open(os.path.join(JS, "engine.js"), encoding="utf-8").read()
 RESULT_JS = open(os.path.join(JS, "result_zodiac.js"), encoding="utf-8").read()
 
+# Imported here rather than beside the Terms checks that first needed it:
+# the price block below reads `_price_paid` and the module's own source, and
+# runs before that section.
+import reports                                             # noqa: E402
+
+REPORTS_SRC = open(os.path.join(ROOT, "reports.py"), encoding="utf-8").read()
+
 PATH = os.path.join(ROOT, "funnels/zodiac-bg.json")
 RAW = open(PATH, encoding="utf-8").read()
 cfg = json.loads(RAW)
@@ -339,10 +346,20 @@ check("pricing is 499 eur",
       cfg["pricing"]["amount_cents"] == 499
       and cfg["pricing"]["currency"] == "eur",
       str(cfg["pricing"]))
+# The space between the number and the sign is U+00A0, not an ordinary one.
+# On the paywall the euro sign was wrapping onto its own line, which is a
+# price that reads as two things; a no-break space is the only fix that
+# survives every width the card is drawn at.
 check("  written the way Bulgarian writes money",
-      cfg["pricing"].get("price_format") == "{amount} €"
+      cfg["pricing"].get("price_format") == "{amount}\u00a0\u20ac"
       and cfg["pricing"].get("decimal_mark") == ",",
-      str(cfg["pricing"]))
+      repr(cfg["pricing"].get("price_format")))
+check("    the space in it being a no-break one, not an ordinary space",
+      "\u00a0" in cfg["pricing"]["price_format"]
+      and " " not in cfg["pricing"]["price_format"],
+      repr(cfg["pricing"]["price_format"]))
+check("    written literally into the file, not as an escape",
+      '"price_format": "{amount}\u00a0\u20ac"' in RAW)
 check("  and the English three declare neither key, so they format as before",
       not any(k in json.load(open(os.path.join(ROOT, "funnels", slug + ".json"),
                                   encoding="utf-8"))["pricing"]
@@ -428,13 +445,21 @@ def long(pricing):
     return amount + " " + (pricing.get("currency") or "usd").upper()
 
 
-check("  which renders as 4,99 €, short form and long",
-      short(cfg["pricing"]) == long(cfg["pricing"]) == "4,99 €",
-      "%s / %s" % (short(cfg["pricing"]), long(cfg["pricing"])))
-check("  and the sale price renders as 1,99 € through the same formatter",
+check("  which renders as 4,99\u00a0€, short form and long",
+      short(cfg["pricing"]) == long(cfg["pricing"]) == "4,99\u00a0\u20ac",
+      "%r / %r" % (short(cfg["pricing"]), long(cfg["pricing"])))
+check("  and the sale price renders as 1,99\u00a0€ through the same formatter",
       short(dict(cfg["pricing"], amount_cents=cfg["sale"]["price_cents"]))
-      == "1,99 €",
-      short(dict(cfg["pricing"], amount_cents=cfg["sale"]["price_cents"])))
+      == "1,99\u00a0\u20ac",
+      repr(short(dict(cfg["pricing"],
+                      amount_cents=cfg["sale"]["price_cents"]))))
+check("    so the no-break space survives into every {price} slot",
+      all("\u00a0" in v.replace("{price}", short(cfg["pricing"]))
+          for _p, v in STRINGS if "{price}" in v))
+check("    and reports.py fills it the same way, for the mail and the PDF",
+      'shape.replace("{amount}", amount)' in REPORTS_SRC
+      and reports._price_paid({"funnel": "zodiac-bg"}) == "4,99\u00a0\u20ac",
+      repr(reports._price_paid({"funnel": "zodiac-bg"})))
 for slug in ("zodiac", "zodiac30", "kitchen", "kitchen-visualizer"):
     en = json.load(open(os.path.join(ROOT, "funnels", slug + ".json"),
                         encoding="utf-8"))["pricing"]
@@ -452,6 +477,13 @@ def js_body(name):
     return ENGINE_JS[head:ENGINE_JS.index("\n  }\n", head)]
 
 
+# Both formatters substitute the slot by plain replacement, so whatever
+# character the funnel put beside {amount} is what reaches the page — that is
+# the whole mechanism the no-break space rests on, and it is asserted against
+# the source rather than assumed.
+check("both formatters fill the slot by plain replacement",
+      js_body("formatPrice").count('own.replace("{amount}"') == 1
+      and js_body("formatPriceShort").count('own.replace("{amount}"') == 1)
 check("both engine.js formatters read the funnel's own format",
       all("priceFormat()" in js_body(fn) and "priceAmount(cents," in js_body(fn)
           for fn in ("formatPrice", "formatPriceShort")),
@@ -716,6 +748,54 @@ check("the sixteen that name no blend are the same-element and cusp lines",
 CLINICAL = re.compile(r"кръстос\w*", re.IGNORECASE)
 check("  and no line in the config uses the clinical word for a cross",
       not CLINICAL.search(RAW), str(CLINICAL.findall(RAW)[:3]))
+
+print("\n--- the product has one name, and it is профил ---")
+# What the live page was selling was a "четене" in some lines and a "профил"
+# in others — two names for one thing, on the screen that asks for the money.
+# "профил" wins: it is what the page is titled, what the mail attaches and
+# what the PDF is. "четене" is gone, in every inflection, and the whole config
+# is scanned rather than the lines that happened to carry it.
+READING = re.compile(r"четен", re.IGNORECASE)
+reading = [(p, v) for p, v in STRINGS if READING.search(v)]
+check("no string in the funnel calls the product a четене", not reading,
+      str(reading[:4]))
+check("  not in the raw file either, keys included",
+      not READING.search(RAW),
+      str(READING.findall(RAW)[:3]))
+# The verb is a separate word and was rewritten with it, so the looser stem
+# the review asked for is clean too: nothing here reads "се чете" either.
+check("  and no ordinary form of the verb is left in the copy",
+      not re.search(r"чете", RAW, re.IGNORECASE),
+      str(re.findall(r".{15}чете.{15}", RAW)[:3]))
+check("  while профил is everywhere the product is named",
+      all(re.search(r"профил", cfg[b][k], re.IGNORECASE)
+          for b, k in (("checkout", "product_name"), ("meta", "title"))),
+      str([cfg["checkout"]["product_name"], cfg["meta"]["title"]]))
+for label, value in (
+        ("rarity_card.note", cfg["result_copy"]["profile"]["rarity_card"]["note"]),
+        ("rarity_card.tail", cfg["result_copy"]["profile"]["rarity_card"]["tail"]),
+        ("profile.rarity_line", cfg["result_copy"]["profile"]["rarity_line"]),
+        ("profile.offer_head", cfg["result_copy"]["profile"]["offer_head"]),
+        ("profile.bridge", cfg["result_copy"]["profile"]["bridge"])):
+    check("  %-20s names it профил" % label,
+          re.search(r"профил", value, re.IGNORECASE) is not None, value)
+check("  the rarity card still counts in {n}, over профили",
+      cfg["result_copy"]["profile"]["rarity_line"]
+      == "Приблизително 1 на {n} профила попада на това съчетание",
+      cfg["result_copy"]["profile"]["rarity_line"])
+check("  and the note is the one the review asked for, one em dash and all",
+      cfg["result_copy"]["profile"]["rarity_card"]["note"]
+      == "Твоето предимство пред останалите — в пълния ти профил.",
+      cfg["result_copy"]["profile"]["rarity_card"]["note"])
+
+check("the hint invites a pull rather than a decision",
+      cfg["swipe"]["hint"] == "Докосни това, което те привлича",
+      cfg["swipe"]["hint"])
+check("  and the subtext beside it is untouched",
+      cfg["swipe"]["subtext"]
+      == "18 докосвания. Без писане. Космичен профил, който наистина е твой."
+      and cfg["swipe"]["subtext_accent"] == "18 докосвания",
+      cfg["swipe"]["subtext"])
 
 print("\n--- the count claims still say eighteen ---")
 COUNTED = [("swipe.subtext", cfg["swipe"]["subtext"]),
@@ -1074,8 +1154,7 @@ check("  and the translated profiles are the only ones that declare one",
       str([slug for slug, pr in reports.PROFILES.items()
            if pr.get("json_retry")]))
 check("  and every call site still hands the profile's own",
-      open(os.path.join(ROOT, "reports.py"), encoding="utf-8").read().count(
-          'profile.get("json_retry")') == 3)
+      REPORTS_SRC.count('profile.get("json_retry")') == 3)
 
 WANT = ("splurge",)
 
@@ -1341,10 +1420,17 @@ check("  the subject still takes the style name",
       and reports.COPY_ZODIAC_BG["body"].count("%s") == 1)
 check("the opening line is Bulgarian and names the price",
       CYRILLIC.search(reports._email_opening({"funnel": "zodiac-bg"}))
-      and "4,99 €" in reports._email_opening({"funnel": "zodiac-bg"}),
+      and "4,99\u00a0\u20ac" in reports._email_opening({"funnel": "zodiac-bg"}),
+      reports._email_opening({"funnel": "zodiac-bg"}))
+# The one place the ACT of reading is meant rather than the thing sold, and
+# the word for it is "прочит" — never "четене", which is the product noun this
+# funnel does not use.
+check("  and it calls that a прочит, not a четене",
+      "прочит" in reports._email_opening({"funnel": "zodiac-bg"})
+      and "чете" not in reports._email_opening({"funnel": "zodiac-bg"}),
       reports._email_opening({"funnel": "zodiac-bg"}))
 check("  read off the funnel rather than written into the mail",
-      reports._price_paid({"funnel": "zodiac-bg"}) == "4,99 €"
+      reports._price_paid({"funnel": "zodiac-bg"}) == "4,99\u00a0\u20ac"
       and reports._price_paid({"funnel": "zodiac30"}) == "$3"
       and reports._price_paid({"funnel": "zodiac-ro"}) == "9,99 lei",
       "%s / %s" % (reports._price_paid({"funnel": "zodiac-bg"}),
@@ -1352,6 +1438,79 @@ check("  read off the funnel rather than written into the mail",
 check("  and the English opening is unchanged",
       reports._email_opening({"funnel": "zodiac30"}).startswith("You just spent"),
       reports._email_opening({"funnel": "zodiac30"}))
+print("\n--- the archetype name, in a Bulgarian sentence ---")
+# What the live page did: glued the style name straight onto a bare noun.
+# "Профил Небесен въздух решава бързо" is two nominatives side by side with
+# nothing joining them — it is not a sentence in Bulgarian. The head noun
+# takes its definite article and the name goes in the Bulgarian quotation
+# pair, which is how a title is set: Профилът „Небесен въздух“ решава бързо.
+STYLE_NAME = "Небесен въздух"
+check("the funnel's four archetypes are the names this is about",
+      [s["name"] for s in cfg["styles"]]
+      == ["Сияен огън", "Дълбока вода", "Устойчива земя", "Небесен въздух"],
+      str([s["name"] for s in cfg["styles"]]))
+check("the mail subject sets the name in „ “",
+      reports.COPY_ZODIAC_BG["subject"] % STYLE_NAME
+      == "Твоят космичен профил \u201eНебесен въздух\u201c — Mazzin",
+      reports.COPY_ZODIAC_BG["subject"] % STYLE_NAME)
+check("  and the body takes the article on the head noun with it",
+      reports.COPY_ZODIAC_BG["body"] % STYLE_NAME
+      == "Пълният ти профил \u201eНебесен въздух\u201c е прикачен.",
+      reports.COPY_ZODIAC_BG["body"] % STYLE_NAME)
+check("  neither of them glues a bare name onto a bare noun",
+      not re.search(r"профил %s" % STYLE_NAME,
+                    (reports.COPY_ZODIAC_BG["subject"] % STYLE_NAME)
+                    + " " + (reports.COPY_ZODIAC_BG["body"] % STYLE_NAME)))
+check("  and the English and Romanian mails are untouched",
+      reports.COPY_ZODIAC["subject"] == "Your %s cosmic profile — Mazzin"
+      and reports.COPY_ZODIAC_RO["subject"] == "Profilul tău cosmic %s — Mazzin",
+      "%s / %s" % (reports.COPY_ZODIAC["subject"],
+                   reports.COPY_ZODIAC_RO["subject"]))
+
+# Every stub that names the archetype, filled the way `_stub_for` fills it.
+FILLED = {sid: json.dumps(reports._fill(stub, STYLE_NAME), ensure_ascii=False)
+          for sid, stub in reports.ZODIAC_STUBS_BG.items()}
+NAMING = [(sid, text) for sid, text in sorted(FILLED.items())
+          if STYLE_NAME in text]
+check("four of the six stubs name the archetype",
+      [sid for sid, _t in NAMING] == ["dna", "mistakes", "palette", "splurge"],
+      str([sid for sid, _t in NAMING]))
+for sid, text in NAMING:
+    check("  %-9s quotes it" % sid,
+          ("\u201e%s\u201c" % STYLE_NAME) in text,
+          re.search(r".{0,24}%s.{0,6}" % STYLE_NAME, text).group(0))
+    check("    and articles the noun in front of it",
+          not re.search(r"(?:Профил|Палитра|Енергия|План) %s" % STYLE_NAME,
+                        text),
+          re.search(r".{0,24}%s.{0,6}" % STYLE_NAME, text).group(0))
+check("  the four heads being the articled forms",
+      all(head in FILLED[sid] for sid, head in (
+          ("palette", "Палитрата \u201e"), ("mistakes", "Профилът \u201e"),
+          ("splurge", "Енергията \u201e"), ("dna", "Планът \u201e"))),
+      str([sid for sid, head in (
+          ("palette", "Палитрата \u201e"), ("mistakes", "Профилът \u201e"),
+          ("splurge", "Енергията \u201e"), ("dna", "Планът \u201e"))
+          if head not in FILLED[sid]]))
+check("the swatch prose names no archetype, so it needs no rule",
+      STYLE_NAME not in json.dumps(reports.ZODIAC_COLOR_TEXT_BG,
+                                   ensure_ascii=False)
+      and "{name}" not in json.dumps(reports.ZODIAC_COLOR_TEXT_BG,
+                                     ensure_ascii=False))
+check("  and the English stubs still say it the English way",
+      "A {name} palette runs on" in json.dumps(reports.ZODIAC_STUBS,
+                                               ensure_ascii=False))
+# The model writes the sections the stubs only stand in for, so it is told
+# the same rule in the same words.
+check("the prompt states the rule, with the pair and a worked example",
+      "NAMING THE ARCHETYPE" in profile["system"]
+      and "\u201e" in profile["system"] and "\u201c" in profile["system"]
+      and "Профилът \u201eНебесен въздух\u201c" in profile["system"])
+check("  and names the failure it is there to prevent",
+      "Профил Небесен въздух" in profile["system"])
+check("  the English and Romanian prompts say nothing about it",
+      "NAMING THE ARCHETYPE" not in reports.ZODIAC_SYSTEM
+      and "NAMING THE ARCHETYPE" not in reports.ZODIAC_RO_SYSTEM)
+
 check("the button on the mail is Bulgarian",
       "Отвори" in profile["mail_link"]
       and "Open your profile online" not in profile["mail_link"])
@@ -1392,9 +1551,23 @@ check("  and it holds the same three sections as the twin",
       reports.cached_sections("zodiac-bg")
       == reports.cached_sections("zodiac30") == ("palette", "mistakes",
                                                  "splurge"))
-check("  stamped with the same revisions",
-      all(reports._cache_tag("zodiac-bg", s) == reports._cache_tag("zodiac30", s)
-          for s in ("palette", "mistakes", "splurge")))
+# Not the twin's revisions any more. Every cached section names the
+# archetype, and the rule for how Bulgarian names it changed — a row warmed
+# under the old prompt says "Профил Небесен въздух", which is the thing the
+# live review caught. So all three go stale and are written again.
+check("  stamped with revisions of its own, so the warmed rows go stale",
+      all(reports._cache_tag("zodiac-bg", s) != reports._cache_tag("zodiac30", s)
+          for s in ("palette", "mistakes", "splurge")),
+      str([(s, reports._cache_tag("zodiac-bg", s)) for s in
+           ("palette", "mistakes", "splurge")]))
+check("    and the English funnels keep the revisions they had",
+      reports.ZODIAC_PROFILE["cache_rev"]
+      == {"palette": "colors2", "mistakes": "short1", "splurge": "moves1"},
+      str(reports.ZODIAC_PROFILE["cache_rev"]))
+check("    as does zodiac-ro",
+      reports.ZODIAC_RO_PROFILE["cache_rev"]
+      == {"palette": "colors2", "mistakes": "short1", "splurge": "moves1"},
+      str(reports.ZODIAC_RO_PROFILE["cache_rev"]))
 
 print("\n--- the words the report prints itself ---")
 check("the profile carries its own words",
@@ -1694,7 +1867,7 @@ check("  the note carries exactly one em dash, which is where it breaks",
       RARE["note"].count("—") == 1, RARE["note"])
 check("  and the card reads as one sentence around the figure",
       (RARE["lead"] + " 97% " + RARE["tail"])
-      == "По-рядко от 97% от четенията",
+      == "По-рядко от 97% от профилите",
       RARE["lead"] + " 97% " + RARE["tail"])
 
 
