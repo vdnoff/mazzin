@@ -525,3 +525,6 @@ bottom.
 
 ## 2026-09-01 — claude/brain-engine
 - engine: flash template + domain axes + elapsed_ms
+
+## 2026-09-01 — claude/brain-funnel
+- brain: Brain Age Challenge funnel v1
