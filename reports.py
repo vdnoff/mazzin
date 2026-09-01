@@ -1333,7 +1333,7 @@ RENDER_WORDS_BG = dict(RENDER_WORDS, **{
     "save": "Откажи се",
     "verdicts": {"works": "РАБОТИ", "avoid": "ИЗБЯГВАЙ"},
     "style_fallback": "Твоят стил",
-    "taps_caption": "Прочетено от докосванията ти:",
+    "taps_caption": "Според докосванията ти:",
     "pdf_note": ("Запази го — профилът ти остава достъпен и на линка, към "
                  "който те върнахме след плащането."),
     "mail_style": "личен",
@@ -2037,7 +2037,7 @@ ZODIAC_COLOR_TEXT_BG = [
 # medical or financial advice.
 ZODIAC_STUBS_BG = {
     "palette": {
-        "intro": "Палитра {name} се държи на един цвят, в който живееш, "
+        "intro": "Палитрата „{name}“ се държи на един цвят, в който живееш, "
                  "един, към който посягаш, когато денят трябва да се обърне, "
                  "и един, който носи тежестта, за да не изгорят първите два.",
         # The reader's own four, read off the config at build time, exactly as
@@ -2049,7 +2049,7 @@ ZODIAC_STUBS_BG = {
     "mistakes": {
         "items": [
             {"title": "Четеш собствената си увереност като доказателство",
-             "body": "Профил {name} решава бързо и се доверява на тази "
+             "body": "Профилът „{name}“ решава бързо и се доверява на тази "
                      "скорост. Решение, взето от безпокойство, се усеща "
                      "отвътре точно като решение, взето от убеденост.",
              "fix": "Преспи една нощ всяко решение, което може да се обясни "
@@ -2070,7 +2070,7 @@ ZODIAC_STUBS_BG = {
                     "случва, без да искаш нищо в замяна."},
             {"title": "Тръгваш точно когато спре да е интересно",
              "body": "Виждаш формата на нещо рано, което е трудната част. "
-                     "Щом формата е ясна, останалото се чете като "
+                     "Щом формата е ясна, останалото прилича на "
                      "администрация, а стойността я прибира този, който е "
                      "останал.",
              "fix": "Избери едно нещо на тримесечие и остани в него отвъд "
@@ -2093,14 +2093,14 @@ ZODIAC_STUBS_BG = {
              "why": "Ритъмът съвпада и никой не чака другия да свърши с "
                     "решаването. Как да го изиграеш: кажи тихата част през "
                     "първата седмица, не през четвъртата — отсрещният "
-                    "реагира добре, когато му се казва, и чете паузата като "
-                    "присъда."},
+                    "реагира добре, когато му се казва, и приема паузата "
+                    "като присъда."},
             {"combo": "Твоята зодия + земна зодия", "verdict": "works",
              "why": "Те държат почвата, по която се движиш, и тъкмо това "
                     "държане лесно спира да се вижда. Как да го изиграеш: "
                     "назовавай на глас всяка седмица по едно конкретно нещо, "
                     "което са свършили — постоянните хора си тръгват, когато "
-                    "постоянството им не се чете."},
+                    "постоянството им остава незабелязано."},
             {"combo": "Твоята зодия + твое огледало", "verdict": "avoid",
              "why": "Две еднакви енергии правят бързо начало и кратка среда, "
                     "и нищо в двойката не забавя нищо. Как да пазиш "
@@ -2119,7 +2119,7 @@ ZODIAC_STUBS_BG = {
     "splurge": {
         "splurge": {
             "item": "Работа с видим ръб и с отговор, който идва бързо",
-            "why": "Енергия {name} дава най-много там, където резултатът се "
+            "why": "Енергията „{name}“ дава най-много там, където резултатът се "
                    "връща достатъчно бързо, за да можеш да коригираш по "
                    "него, и се губи по дълги хоризонти без сигнал. Три хода: "
                    "сложи най-тежкото нещо в първите два часа на деня, преди "
@@ -2152,9 +2152,10 @@ ZODIAC_STUBS_BG = {
     },
     "dna": {
         "narrative": [
-            "План {name} върви по три неща едновременно: стихията, към която "
-            "се връщаш под напрежение, енергията, по която мериш времето, и "
-            "тонът, който другите прочитат първи. През повечето време трите "
+            "Планът „{name}“ върви по три неща едновременно: стихията, към "
+            "която се връщаш под напрежение, енергията, по която мериш "
+            "времето, и тонът, който другите прочитат първи. През повечето "
+            "време трите "
             "са съгласни, и докато са, с теб се живее лесно и сам се "
             "разчиташ лесно.",
             "Интересното е там, където се дърпат едно друго. Тонът стига "
@@ -2194,7 +2195,7 @@ ZODIAC_STUBS_BG = {
             {"name": "7", "priority_note": "Добър за събиране, не за "
              "добавяне — месец за довършване, не за отваряне."},
             {"name": "8", "priority_note": "Тих месец: малко добив и много "
-             "възстановяване. Добър за четене, за поправяне и за казване на "
+             "възстановяване. Добър за книги, за поправяне и за казване на "
              "не."},
             {"name": "9", "priority_note": "Най-силен месец: инерцията се "
              "връща, и това, което избуташ сега, стига по-далеч, отколкото "
@@ -2527,6 +2528,15 @@ present-tense verbs and impersonal constructions rather than printing \
 Where you are given the reader's subtype, use it by name, in the Bulgarian \
 form you are handed, at least once — copied exactly, never translated back.
 
+NAMING THE ARCHETYPE. The style name you are given is a proper noun, and a \
+Bulgarian sentence cannot glue it straight onto a bare noun: "Профил Небесен \
+въздух решава бързо" is two nominatives side by side and reads as broken. \
+Every time you name it, put the definite article on the head noun and the \
+name itself in the Bulgarian quotation pair „ and “: Профилът „Небесен \
+въздух“ решава бързо. Палитрата „Небесен въздух“ се държи на един цвят. \
+Енергията „Небесен въздух“ дава най-много там, където. The name inside the \
+quotes is copied exactly as you were given it and is never inflected.
+
 What this report is, and is not:
 - You describe energy, themes, tendencies, patterns and self-discovery.
 - You never claim to know what will happen. Never use the words "psychic", \
@@ -2623,8 +2633,13 @@ ZODIAC_BG_PROFILE = {
     "personal": ("dna", "materials", "shopping"),
     "banned": ZODIAC_BG_BANNED,
     "verify": None,         # filled below, with the twin's
-    "cache_rev": {"palette": "colors2", "mistakes": "short1",
-                  "splurge": "moves1"},
+    # Bumped past the English revisions rather than sharing them: every cached
+    # section names the archetype, and the rule for how to name it in
+    # Bulgarian changed. A row warmed under the old prompt says "Профил
+    # Небесен въздух" — publishable English, broken Bulgarian — so all three
+    # go stale and are written again.
+    "cache_rev": {"palette": "bgname1", "mistakes": "bgname1",
+                  "splurge": "bgname1"},
     "pdf_css": None,        # filled below, once ZODIAC_PDF_CSS is defined
     "pdf_logo": "brand/logo-dark.svg",
     "pdf_lang": "bg",
@@ -7789,10 +7804,16 @@ COPY_PERSONA = {
 }
 
 # The fifth mail: the same product, to somebody who bought it in Bulgarian.
+#
+# The archetype name is a proper noun dropped into a Bulgarian sentence, and a
+# bare noun followed by a bare name does not read as Bulgarian — "профил
+# Небесен въздух" is two nominatives side by side with nothing joining them.
+# The head noun takes its definite article and the name goes in „ “, which is
+# how Bulgarian quotes a title: "Пълният ти профил „Небесен въздух“".
 COPY_ZODIAC_BG = {
     "headline": "Профилът ти е готов.",
-    "subject": "Твоят космичен профил %s — Mazzin",
-    "body": "Пълният ти профил %s е прикачен.",
+    "subject": "Твоят космичен профил \u201e%s\u201c — Mazzin",
+    "body": "Пълният ти профил \u201e%s\u201c е прикачен.",
     "keep": "Остава достъпен на онзи линк, а PDF-ът е твой, без срок.",
     "keep_no_link": "PDF-ът е твой, без срок.",
 }
@@ -7879,9 +7900,9 @@ def _email_opening(content):
     copy = _email_copy(content)
     if copy is COPY_ZODIAC_BG:
         if price:
-            return ("Току-що даде %s за четене на енергията, с която "
-                    "вървиш през цялото това време." % html.escape(price))
-        return "Четене на енергията, с която вървиш през цялото това време."
+            return ("Току-що даде %s за прочит на енергията, с която "
+                    "вървиш от самото начало." % html.escape(price))
+        return "Прочит на енергията, с която вървиш от самото начало."
     if copy is COPY_ZODIAC_RO:
         if price:
             return ("Tocmai ai dat %s pe o citire a energiei cu care ai "
