@@ -6,6 +6,7 @@
   "stripe_mode": "test",
   "result_module": "/static/js/result_brain.js",
   "result_css": "/static/css/result_brain.css",
+  "result_template": "minimal",
   "meta": {
     "title": "Brain Age Challenge",
     "og_image": "/static/galleries/brain/og.webp"
@@ -78,11 +79,12 @@
               }
             ]
           }
-        ]
+        ],
+        "label_mode": "none"
       },
       {
         "id": "mood",
-        "question": "Your brain right now:",
+        "question": "How would you rate your brain right now?",
         "format": "grid4",
         "pairs": [
           {
@@ -166,7 +168,8 @@
               }
             ]
           }
-        ]
+        ],
+        "label_mode": "on_tap"
       },
       {
         "id": "mem2",
@@ -210,7 +213,8 @@
               }
             ]
           }
-        ]
+        ],
+        "label_mode": "on_tap"
       },
       {
         "id": "mem3",
@@ -254,7 +258,8 @@
               }
             ]
           }
-        ]
+        ],
+        "label_mode": "on_tap"
       },
       {
         "id": "mem4",
@@ -298,11 +303,12 @@
               }
             ]
           }
-        ]
+        ],
+        "label_mode": "on_tap"
       },
       {
         "id": "spa1",
-        "question": "Where was the key?",
+        "question": "Where is the key now?",
         "format": "grid6",
         "shuffle": false,
         "pairs": [
@@ -322,7 +328,7 @@
                 "img": "/static/galleries/brain/box_closed.webp",
                 "label": "2",
                 "tags": [
-                  "spa_miss"
+                  "spa_hit"
                 ]
               },
               {
@@ -330,7 +336,7 @@
                 "img": "/static/galleries/brain/box_closed.webp",
                 "label": "3",
                 "tags": [
-                  "spa_hit"
+                  "spa_miss"
                 ]
               },
               {
@@ -363,7 +369,7 @@
       },
       {
         "id": "spa2",
-        "question": "Where was the cup?",
+        "question": "Where is the cup now?",
         "format": "grid6",
         "shuffle": false,
         "pairs": [
@@ -399,7 +405,7 @@
                 "img": "/static/galleries/brain/box_closed.webp",
                 "label": "4",
                 "tags": [
-                  "spa_miss"
+                  "spa_hit"
                 ]
               },
               {
@@ -415,7 +421,7 @@
                 "img": "/static/galleries/brain/box_closed.webp",
                 "label": "6",
                 "tags": [
-                  "spa_hit"
+                  "spa_miss"
                 ]
               }
             ]
@@ -424,7 +430,7 @@
       },
       {
         "id": "spa3",
-        "question": "Where was the star?",
+        "question": "Where is the star now?",
         "format": "grid6",
         "shuffle": false,
         "pairs": [
@@ -436,7 +442,7 @@
                 "img": "/static/galleries/brain/box_closed.webp",
                 "label": "1",
                 "tags": [
-                  "spa_hit"
+                  "spa_miss"
                 ]
               },
               {
@@ -452,7 +458,7 @@
                 "img": "/static/galleries/brain/box_closed.webp",
                 "label": "3",
                 "tags": [
-                  "spa_miss"
+                  "spa_hit"
                 ]
               },
               {
@@ -485,7 +491,7 @@
       },
       {
         "id": "spa4",
-        "question": "Where was the moon?",
+        "question": "Where is the moon now?",
         "format": "grid6",
         "shuffle": false,
         "pairs": [
@@ -497,7 +503,7 @@
                 "img": "/static/galleries/brain/box_closed.webp",
                 "label": "1",
                 "tags": [
-                  "spa_miss"
+                  "spa_hit"
                 ]
               },
               {
@@ -521,7 +527,7 @@
                 "img": "/static/galleries/brain/box_closed.webp",
                 "label": "4",
                 "tags": [
-                  "spa_hit"
+                  "spa_miss"
                 ]
               },
               {
@@ -782,7 +788,9 @@
               }
             ]
           }
-        ]
+        ],
+        "timer_ms": 5000,
+        "timeout_pick": "odd_s1"
       },
       {
         "id": "ink",
@@ -826,7 +834,9 @@
               }
             ]
           }
-        ]
+        ],
+        "timer_ms": 5000,
+        "timeout_pick": "ink_s1"
       },
       {
         "id": "next",
@@ -870,7 +880,9 @@
               }
             ]
           }
-        ]
+        ],
+        "timer_ms": 5000,
+        "timeout_pick": "next_a2"
       },
       {
         "id": "count",
@@ -915,7 +927,10 @@
               }
             ]
           }
-        ]
+        ],
+        "timer_ms": 5000,
+        "timeout_pick": "count_7",
+        "label_mode": "on_tap"
       }
     ]
   },
@@ -925,7 +940,11 @@
       "template": "flash",
       "kicker": "Round 1 · Memory",
       "line": "Memorise these",
-      "auto_advance_ms": 3000,
+      "auto_advance_ms": 5000,
+      "prepare": {
+        "line": "Prepare to memorize",
+        "count": 3
+      },
       "flash": {
         "format": "grid4",
         "images": [
@@ -953,7 +972,11 @@
       "template": "flash",
       "kicker": "Round 1 · Memory",
       "line": "Memorise these",
-      "auto_advance_ms": 3000,
+      "auto_advance_ms": 5000,
+      "prepare": {
+        "line": "Prepare to memorize",
+        "count": 3
+      },
       "flash": {
         "format": "grid4",
         "images": [
@@ -981,7 +1004,11 @@
       "template": "flash",
       "kicker": "Round 1 · Memory",
       "line": "Memorise these",
-      "auto_advance_ms": 3500,
+      "auto_advance_ms": 5000,
+      "prepare": {
+        "line": "Prepare to memorize",
+        "count": 3
+      },
       "flash": {
         "format": "grid4",
         "images": [
@@ -1017,7 +1044,11 @@
       "template": "flash",
       "kicker": "Round 1 · Memory",
       "line": "Memorise these",
-      "auto_advance_ms": 4000,
+      "auto_advance_ms": 5000,
+      "prepare": {
+        "line": "Prepare to memorize",
+        "count": 3
+      },
       "flash": {
         "format": "grid4",
         "images": [
@@ -1053,7 +1084,7 @@
       "template": "flash",
       "kicker": "Round 2 · Spatial",
       "line": "Where is the key?",
-      "auto_advance_ms": 2500,
+      "auto_advance_ms": 5000,
       "flash": {
         "format": "grid6",
         "images": [
@@ -1082,6 +1113,27 @@
             "label": "6"
           }
         ]
+      },
+      "reveal": {
+        "open_slot": 2,
+        "open_ms": 5000,
+        "close_ms": 600,
+        "closed_img": "/static/galleries/brain/box_closed.webp",
+        "swap_ms": 900,
+        "swaps": [
+          [
+            2,
+            5
+          ],
+          [
+            0,
+            3
+          ],
+          [
+            5,
+            1
+          ]
+        ]
       }
     },
     {
@@ -1089,7 +1141,7 @@
       "template": "flash",
       "kicker": "Round 2 · Spatial",
       "line": "Where is the cup?",
-      "auto_advance_ms": 2500,
+      "auto_advance_ms": 5000,
       "flash": {
         "format": "grid6",
         "images": [
@@ -1118,6 +1170,31 @@
             "label": "6"
           }
         ]
+      },
+      "reveal": {
+        "open_slot": 5,
+        "open_ms": 5000,
+        "close_ms": 600,
+        "closed_img": "/static/galleries/brain/box_closed.webp",
+        "swap_ms": 700,
+        "swaps": [
+          [
+            5,
+            2
+          ],
+          [
+            0,
+            4
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            1,
+            5
+          ]
+        ]
       }
     },
     {
@@ -1125,7 +1202,7 @@
       "template": "flash",
       "kicker": "Round 2 · Spatial",
       "line": "Where is the star?",
-      "auto_advance_ms": 2500,
+      "auto_advance_ms": 5000,
       "flash": {
         "format": "grid6",
         "images": [
@@ -1154,6 +1231,35 @@
             "label": "6"
           }
         ]
+      },
+      "reveal": {
+        "open_slot": 0,
+        "open_ms": 5000,
+        "close_ms": 600,
+        "closed_img": "/static/galleries/brain/box_closed.webp",
+        "swap_ms": 550,
+        "swaps": [
+          [
+            0,
+            4
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            4,
+            5
+          ],
+          [
+            0,
+            3
+          ],
+          [
+            5,
+            2
+          ]
+        ]
       }
     },
     {
@@ -1161,7 +1267,7 @@
       "template": "flash",
       "kicker": "Round 2 · Spatial",
       "line": "Where is the moon?",
-      "auto_advance_ms": 2500,
+      "auto_advance_ms": 5000,
       "flash": {
         "format": "grid6",
         "images": [
@@ -1190,6 +1296,39 @@
             "label": "6"
           }
         ]
+      },
+      "reveal": {
+        "open_slot": 3,
+        "open_ms": 5000,
+        "close_ms": 600,
+        "closed_img": "/static/galleries/brain/box_closed.webp",
+        "swap_ms": 400,
+        "swaps": [
+          [
+            3,
+            1
+          ],
+          [
+            0,
+            5
+          ],
+          [
+            1,
+            4
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            4,
+            0
+          ],
+          [
+            5,
+            1
+          ]
+        ]
       }
     },
     {
@@ -1197,7 +1336,11 @@
       "template": "flash",
       "kicker": "Round 3 · Change",
       "line": "Study these four",
-      "auto_advance_ms": 3000,
+      "auto_advance_ms": 5000,
+      "prepare": {
+        "line": "Prepare to memorize",
+        "count": 3
+      },
       "flash": {
         "format": "grid4",
         "images": [
@@ -1225,7 +1368,11 @@
       "template": "flash",
       "kicker": "Round 3 · Change",
       "line": "Study these four",
-      "auto_advance_ms": 3000,
+      "auto_advance_ms": 5000,
+      "prepare": {
+        "line": "Prepare to memorize",
+        "count": 3
+      },
       "flash": {
         "format": "grid4",
         "images": [
@@ -1253,7 +1400,11 @@
       "template": "flash",
       "kicker": "Round 3 · Change",
       "line": "Study these four",
-      "auto_advance_ms": 3000,
+      "auto_advance_ms": 5000,
+      "prepare": {
+        "line": "Prepare to memorize",
+        "count": 3
+      },
       "flash": {
         "format": "grid4",
         "images": [
@@ -1281,7 +1432,11 @@
       "template": "flash",
       "kicker": "Round 3 · Change",
       "line": "Study these four",
-      "auto_advance_ms": 3000,
+      "auto_advance_ms": 5000,
+      "prepare": {
+        "line": "Prepare to memorize",
+        "count": 3
+      },
       "flash": {
         "format": "grid4",
         "images": [
@@ -1337,7 +1492,11 @@
       "template": "flash",
       "kicker": "Round 4 · Focus",
       "line": "Remember the pattern:",
-      "auto_advance_ms": 4000,
+      "auto_advance_ms": 5000,
+      "prepare": {
+        "line": "Prepare to memorize",
+        "count": 3
+      },
       "flash": {
         "format": "grid4",
         "images": [
@@ -1365,7 +1524,11 @@
       "template": "flash",
       "kicker": "Round 4 · Focus",
       "line": "Count the circles",
-      "auto_advance_ms": 2000,
+      "auto_advance_ms": 5000,
+      "prepare": {
+        "line": "Prepare to memorize",
+        "count": 3
+      },
       "flash": {
         "format": "grid4",
         "images": [
@@ -2010,9 +2173,16 @@
     }
   },
   "pricing": {
-    "amount_cents": 300,
+    "amount_cents": 500,
     "currency": "usd",
     "cta": "Unlock my full report"
+  },
+  "sale": {
+    "active": true,
+    "price_cents": 199,
+    "regular_price_cents": 500,
+    "label": "Launch Offer",
+    "ends": "2026-12-31T23:59:59-12:00"
   },
   "checkout": {
     "kicker": "Your brain age is in",
@@ -2065,38 +2235,6 @@
     ],
     "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right."
   },
-  "paywall_variants": [
-    {
-      "id": "score",
-      "enabled": true,
-      "weight": 1,
-      "name": "Why You Scored That",
-      "frame": "The full read on where your number came from — and what moves it.",
-      "benefits": [
-        "Which of the four rounds you actually run on — and the one you lean on when you are tired",
-        "What the round you dropped is really telling you",
-        "Five things your brain does better than most, and the two places it looks away",
-        "A seven-day plan aimed at the round you were weakest on",
-        "Yours to keep — the whole report, as a PDF"
-      ],
-      "cta_text": "Show me why I scored that — {price}"
-    },
-    {
-      "id": "sharpen",
-      "enabled": true,
-      "weight": 1,
-      "name": "Your Sharpening Plan",
-      "frame": "One week, one small thing a day, aimed at your weakest round.",
-      "benefits": [
-        "A seven-day plan aimed at the round you were weakest on",
-        "What the round you dropped is really telling you",
-        "Five things your brain does better than most, and the two places it looks away",
-        "Which of the four rounds you actually run on — and the one you lean on when you are tired",
-        "Yours to keep — the whole report, as a PDF"
-      ],
-      "cta_text": "Give me the plan — {price}"
-    }
-  ],
   "pairings": {
     "memory_mind": {
       "memory_mind": {
@@ -2186,6 +2324,7 @@
     "strength_lead": "You said you felt {mood}. Your rounds said otherwise.",
     "offer_sub": "Your complete report — once, forever.",
     "locked_note": "Locked",
+    "price_regular_aria": "Regular price {price}",
     "delivered_note": "A PDF of this report is in your inbox. This page stays at the link you were sent back to.",
     "younger_line": "{n} years younger than your age group",
     "level_line": "right where your age group sits",
@@ -2247,6 +2386,40 @@
         "url_base": "/brain/s/",
         "copied": "Link copied",
         "failed": "Could not share"
+      },
+      "chips": [
+        "{mem}",
+        "{spa}",
+        "{chg}",
+        "{foc}"
+      ],
+      "rarity_card": {
+        "lead": "Your brain type",
+        "tail": "on this run",
+        "note": "What it costs you on the other three rounds — inside your report."
+      },
+      "unlock_head": "What you unlock:",
+      "unlock": [
+        {
+          "id": "materials",
+          "line": "what the round you dropped is really asking for"
+        },
+        {
+          "id": "mistakes",
+          "line": "five strengths you are not using — and the two blind spots"
+        },
+        {
+          "id": "dna",
+          "line": "which of the four rounds you actually run on"
+        },
+        {
+          "id": "shopping",
+          "line": "seven days, one small thing each"
+        }
+      ],
+      "unlock_tail": {
+        "key": "+ Your card",
+        "line": "every round you played, scored and kept"
       }
     }
   },

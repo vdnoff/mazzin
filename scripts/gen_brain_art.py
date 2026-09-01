@@ -288,13 +288,20 @@ CHANGE = [
      "after": {"colour": "red", "form": "cross", "rot": 45.0}},
 ]
 
-# The age groups, and the six words that go on them.
-AGES = [("age_21", "18–24"), ("age_30", "25–34"), ("age_40", "35–44"),
-        ("age_50", "45–54"), ("age_60", "55–64"), ("age_70", "65+")]
+# The age groups: the bracket, and a tree at the stage that group is at. The
+# card carries the words because this step draws no badge under it — the six
+# cards have to be tellable apart from the art alone — and the tree is what
+# makes six numbers a row somebody reads left to right rather than six numbers
+# they have to compare. Nothing on this funnel is a claim about anybody: a
+# sprout and an ancient tree are both trees.
+AGES = [("age_21", "18–24", "sprout"), ("age_30", "25–34", "sapling"),
+        ("age_40", "35–44", "young"), ("age_50", "45–54", "full"),
+        ("age_60", "55–64", "broad"), ("age_70", "65+", "ancient")]
 
-# How full the bar is, and what colour it runs at. Four steps, top to bottom.
-MOODS = [("mood_sharp", 1.00, GREEN), ("mood_ok", 0.66, TEAL),
-         ("mood_foggy", 0.36, AMBER), ("mood_fumes", 0.13, RED)]
+# How the reader says they feel, drawn rather than measured. Four bars at four
+# heights were a chart of a thing nobody had measured yet; these are four
+# pictures, and a reader picks one the way they would pick a weather symbol.
+MOODS = ("mood_sharp", "mood_ok", "mood_foggy", "mood_fumes")
 
 # The word, and the ink it is set in. Exactly one card tells the truth.
 INKS = [("ink_1", "RED", BLUE), ("ink_2", "BLUE", BLUE),
@@ -405,12 +412,133 @@ def circles(count):
     return card
 
 
-def bar(level, colour):
-    """The mood card: a bar, filled to how sharp they say they feel."""
+# The six stages, each a trunk and a canopy. Stated as numbers rather than
+# drawn per stage: a sprout and an ancient tree differ in how tall the trunk
+# is, how thick it is, and how many rounds of canopy sit on it, and writing
+# that as a table keeps the six a sequence instead of six drawings that happen
+# to be in the same file.
+#
+#   trunk height, trunk width, canopy blobs as (dx, dy, r), roots
+TREES = {
+    "sprout":  (0.09, 0.016, [(0.0, -0.02, 0.045)], 0),
+    "sapling": (0.15, 0.022, [(0.0, -0.03, 0.075)], 0),
+    "young":   (0.19, 0.030, [(0.0, -0.04, 0.105)], 0),
+    "full":    (0.21, 0.040, [(-0.075, 0.005, 0.090),
+                              (0.075, 0.005, 0.090),
+                              (0.0, -0.065, 0.105)], 0),
+    "broad":   (0.20, 0.052, [(-0.125, 0.020, 0.090),
+                              (0.125, 0.020, 0.090),
+                              (-0.060, -0.045, 0.105),
+                              (0.060, -0.045, 0.105),
+                              (0.0, -0.100, 0.095)], 0),
+    "ancient": (0.19, 0.068, [(-0.155, 0.030, 0.085),
+                              (0.155, 0.030, 0.085),
+                              (-0.080, -0.040, 0.110),
+                              (0.080, -0.040, 0.110),
+                              (0.0, -0.110, 0.105)], 2),
+}
+
+
+# The whole sequence, scaled once. The table above is written as proportions
+# of each other so the six read as one plant growing; this is how much room
+# that plant is given on the card, and it is a number here rather than six
+# numbers there.
+TREE_SCALE = 1.18
+
+
+def tree(card, stage, base_y=0.84, colour=GREEN, bark=(122, 92, 62)):
+    """One tree, grown from the table above, standing on `base_y`."""
+    height, width, canopy, roots = TREES[stage]
+    height *= TREE_SCALE
+    width *= TREE_SCALE
+    canopy = [(dx * TREE_SCALE, dy * TREE_SCALE, r * TREE_SCALE)
+              for dx, dy, r in canopy]
+    unit = card.w * SS
+    cx = 0.5 * unit
+    foot = base_y * unit
+    top = foot - height * unit
+    # The two exposed roots the oldest stage gets, drawn before the trunk so
+    # the trunk closes over where they meet it.
+    for side in range(roots):
+        sign = -1 if side == 0 else 1
+        card.d.polygon([(cx, foot - 0.02 * unit),
+                        (cx + sign * 0.085 * unit, foot + 0.012 * unit),
+                        (cx + sign * 0.085 * unit, foot + 0.030 * unit),
+                        (cx, foot)], fill=bark)
+    card.d.rounded_rectangle(
+        [cx - width * unit, top, cx + width * unit, foot],
+        width * unit, fill=bark)
+    for dx, dy, r in canopy:
+        card.shape("circle", colour,
+                   cx=0.5 + dx, cy=(top / unit) + dy, r=r)
+
+
+def age_card(text, stage):
+    """The bracket over the stage it stands at."""
     card = Card()
-    card.rect((0.16, 0.42, 0.84, 0.58), (223, 218, 206), radius=0.08)
-    end = 0.16 + (0.84 - 0.16) * level
-    card.rect((0.16, 0.42, max(end, 0.22), 0.58), colour, radius=0.08)
+    card.text(text, 74, cy=0.155)
+    tree(card, stage)
+    return card
+
+
+def mood_card(name):
+    """One of four pictures of how sharp somebody says they feel.
+
+    A picture rather than a quantity: a bar at four heights is a chart of
+    something nobody has measured yet, and the reader is being asked how they
+    feel rather than to read one.
+    """
+    card = Card()
+    unit = card.w * SS
+    cx, cy = 0.5 * unit, 0.5 * unit
+    if name == "mood_sharp":
+        # A bolt inside a lit ring. Two rings rather than one, the outer
+        # thinner and set off — the same "this one is switched on" the
+        # timer's glow says elsewhere on the funnel.
+        card.d.ellipse([cx - 0.30 * unit, cy - 0.30 * unit,
+                        cx + 0.30 * unit, cy + 0.30 * unit],
+                       outline=AMBER, width=int(0.010 * unit))
+        card.d.ellipse([cx - 0.245 * unit, cy - 0.245 * unit,
+                        cx + 0.245 * unit, cy + 0.245 * unit],
+                       outline=AMBER, width=int(0.028 * unit))
+        card.d.polygon([(cx + 0.045 * unit, cy - 0.165 * unit),
+                        (cx - 0.105 * unit, cy + 0.020 * unit),
+                        (cx - 0.010 * unit, cy + 0.020 * unit),
+                        (cx - 0.045 * unit, cy + 0.165 * unit),
+                        (cx + 0.105 * unit, cy - 0.020 * unit),
+                        (cx + 0.010 * unit, cy - 0.020 * unit)], fill=AMBER)
+    elif name == "mood_ok":
+        # A sun most of the way out from behind one small cloud.
+        card.shape("circle", AMBER, cx=0.44, cy=0.42, r=0.145)
+        for i in range(8):
+            angle = math.radians(i * 45.0)
+            x0 = 0.44 * unit + math.cos(angle) * 0.185 * unit
+            y0 = 0.42 * unit + math.sin(angle) * 0.185 * unit
+            x1 = 0.44 * unit + math.cos(angle) * 0.245 * unit
+            y1 = 0.42 * unit + math.sin(angle) * 0.245 * unit
+            card.d.line([(x0, y0), (x1, y1)], fill=AMBER,
+                        width=int(0.020 * unit))
+        cloud = (196, 202, 212)
+        for dx, dy, r in ((-0.085, 0.0, 0.085), (0.020, -0.030, 0.105),
+                          (0.115, 0.010, 0.080)):
+            card.shape("circle", cloud, cx=0.56 + dx, cy=0.63 + dy, r=r)
+        card.rect((0.435, 0.630, 0.705, 0.712), cloud, radius=0.041)
+    elif name == "mood_foggy":
+        # Bands, lightest at the top, so the card reads as something settling
+        # rather than as three grey rules.
+        bands = ((0.20, 0.24, 0.80, (214, 218, 224)),
+                 (0.14, 0.38, 0.86, (198, 203, 212)),
+                 (0.24, 0.52, 0.76, (181, 187, 199)),
+                 (0.16, 0.66, 0.84, (163, 170, 184)))
+        for x0, y, x1, tone in bands:
+            card.rect((x0, y, x1, y + 0.085), tone, radius=0.042)
+    else:
+        # A battery with almost nothing in it, and the terminal on the end so
+        # it reads as a battery at a glance rather than as a bar.
+        card.rect((0.185, 0.375, 0.760, 0.625), (206, 210, 218), radius=0.035)
+        card.rect((0.215, 0.405, 0.730, 0.595), GROUND, radius=0.022)
+        card.rect((0.235, 0.425, 0.290, 0.575), RED, radius=0.014)
+        card.rect((0.775, 0.455, 0.830, 0.545), (206, 210, 218), radius=0.020)
     return card
 
 
@@ -451,10 +579,10 @@ def main():
         card.save(name, quality)
         written.append(name)
 
-    for card_id, text in AGES:
-        put(word(text, 92), card_id)
-    for card_id, level, colour in MOODS:
-        put(bar(level, colour), card_id)
+    for card_id, text, stage in AGES:
+        put(age_card(text, stage), card_id)
+    for card_id in MOODS:
+        put(mood_card(card_id), card_id)
 
     for r, round_spec in enumerate(MEMORY, start=1):
         for i, (colour, form) in enumerate(round_spec["flash"], start=1):

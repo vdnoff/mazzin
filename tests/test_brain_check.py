@@ -27,6 +27,22 @@ each have to win a run that hits only their own domain, a run that hits
 everything has to score the base, and a run that hits nothing has to land on
 the formula's ceiling with the clamp still slack.
 
+v2, after the live review, is mostly about time. Every flash now counts the
+reader in and holds five seconds; the four spatial rounds close the lid and
+shuffle the boxes, faster and more often each round; the four focus rounds
+answer themselves if nobody answers them. So the checks below walk the shuffle
+rather than reading the config's word for where it lands — the swaps are
+applied here, in order, exactly as engine.js applies them, and the slot they
+land the object on has to be the slot the step scores. A config that stated
+both could state them differently; this one cannot.
+
+The result page is the minimal layout, named outright the way zodiac-ro and
+zodiac-bg name theirs, which is why this funnel is the one key short of
+persona's set: there is no arm to assign, one price and one button. The price
+is five dollars with a launch offer under it, and the offer is checked through
+payments._effective_price rather than by reading the block — what the reader
+is charged is decided there and nowhere else.
+
 Two deviations from the brief this funnel was written to, both deliberate and
 both checked here:
 
@@ -45,6 +61,7 @@ No database, no network, no key. Everything is read off disk.
 
     python3 tests/test_brain_check.py
 """
+import datetime
 import json
 import os
 import re
@@ -76,6 +93,11 @@ ENGINE = open(os.path.join(ROOT, "static/js/engine.js"),
               encoding="utf-8").read()
 MODULE = open(os.path.join(ROOT, "static/js/result_brain.js"),
               encoding="utf-8").read()
+RESULT_CSS = open(os.path.join(ROOT, "static/css/result_brain.css"),
+                  encoding="utf-8").read()
+# Five seconds is the beat this funnel settled on after the live review:
+# every flash holds it, and so does every clock on a step.
+FLASH_MS = 5000
 
 steps = cfg["swipe"]["steps"]
 by_id = {s["id"]: s for s in steps}
@@ -120,8 +142,8 @@ check("funnels/brain.json is /brain",
 check("  its static copy is byte-identical",
       RAW == open(STATIC, encoding="utf-8").read())
 check("  it transacts on the test keys", cfg["stripe_mode"] == "test")
-check("  at three dollars",
-      cfg["pricing"]["amount_cents"] == 300
+check("  at five dollars, less a launch offer",
+      cfg["pricing"]["amount_cents"] == 500
       and cfg["pricing"]["currency"] == "usd")
 check("  drawing its result with its own module",
       cfg["result_module"] == "/static/js/result_brain.js"
@@ -135,13 +157,22 @@ check("  and it is the only file that writes the button's label",
 check("the funnels directory and its static copy agree",
       sorted(os.listdir(os.path.join(ROOT, "funnels")))
       == sorted(os.listdir(os.path.join(ROOT, "static/funnels"))))
-check("it carries every key the newest funnel carries",
-      not [k for k in json.load(open(os.path.join(ROOT, "funnels/persona.json"),
-                                     encoding="utf-8")) if k not in cfg],
-      str([k for k in json.load(open(os.path.join(ROOT,
-                                                  "funnels/persona.json"),
-                                     encoding="utf-8")) if k not in cfg]))
-check("  plus the one it brought with it", "brain_age" in cfg)
+# `paywall_variants` is the one key of persona's this funnel deliberately does
+# not carry. The minimal layout is named outright here, the way zodiac-ro and
+# zodiac-bg name theirs, so there is no arm to assign and no second offer to
+# write: one page, one price, one button. The mechanism is still in the module
+# and a config edit turns it back on.
+PERSONA = json.load(open(os.path.join(ROOT, "funnels/persona.json"),
+                         encoding="utf-8"))
+missing = [k for k in PERSONA if k not in cfg]
+check("it carries every key the newest funnel carries but one",
+      missing == ["paywall_variants"], str(missing))
+check("  and no other funnel that names a layout carries that key either",
+      not [n for n in ("zodiac-ro", "zodiac-bg")
+           if json.load(open(os.path.join(ROOT, "funnels/%s.json" % n),
+                             encoding="utf-8")).get("paywall_variants")])
+check("  plus the two it brought with it",
+      "brain_age" in cfg and "result_template" in cfg)
 check("the art script that drew the gallery is committed with it",
       os.path.exists(os.path.join(ROOT, "scripts/gen_brain_art.py")))
 
@@ -234,19 +265,20 @@ for sid in sorted(NEEDS_FLASH, key=lambda s: SCORED[s][1]):
     check("    on a grid the engine knows",
           flash.get("format") in GRID_SIZE, str(flash.get("format")))
     ms = entry.get("auto_advance_ms")
-    check("    held for a beat between two and four seconds",
-          isinstance(ms, int) and 2000 <= ms <= 4000, str(ms))
+    check("    held for five seconds",
+          ms == FLASH_MS, str(ms))
     check("    with frames on it, and a kicker and a line over them",
           len(flash.get("images") or []) >= 4
           and entry.get("kicker") and entry.get("line"))
     check("    and every frame names a file",
           all(f.get("img") for f in flash["images"]))
-INTERSTITIAL_MS = int(re.search(r"var INTERSTITIAL_MS = (\d+);",
-                                ENGINE).group(1))
+FLASH_MAX_MS = int(re.search(r"var FLASH_MAX_MS = (\d+);", ENGINE).group(1))
 check("no flash asks to be held longer than the engine will hold it",
-      all(e["auto_advance_ms"] <= INTERSTITIAL_MS
+      all(e["auto_advance_ms"] <= FLASH_MAX_MS
           for e in mids if e.get("template") == "flash"),
-      str(INTERSTITIAL_MS))
+      str(FLASH_MAX_MS))
+check("  and the ceiling it is measured against is the flash's own",
+      'if (entry.template === "flash") ceiling = FLASH_MAX_MS;' in ENGINE)
 check("the two rounds that need no flash have none",
       15 - 1 not in mid_by_after or
       mid_by_after[14][0].get("template") != "flash")
@@ -280,9 +312,9 @@ for r in range(1, 5):
     check("  %s: exactly one box was open" % sid, len(opened) == 1,
           str(opened))
     check("    and the other five were shut", len(closed) == 5, str(closed))
-    check("    the slot scored as the hit is the slot that was open",
-          opened and hit_index(sid) == opened[0],
-          "hit %d, open %s" % (hit_index(sid), opened))
+    check("    and the reveal opens the one the flash drew open",
+          entry["reveal"]["open_slot"] == opened[0],
+          "reveal %d, open %s" % (entry["reveal"]["open_slot"], opened))
     check("    and every card on the round is the same shut box",
           len({c["img"] for c in images(by_id[sid])}) == 1,
           str({c["img"] for c in images(by_id[sid])}))
@@ -435,6 +467,180 @@ check("both of them advance on their own, like the flashes do",
 check("the analysing screen draws the run back",
       cfg["analyzing_echo"] is True)
 
+print("\n--- v2: every round is counted in, timed, or shuffled ---")
+check("every flash counts the reader in, except the four that shuffle",
+      sorted(e["after_step"] for e in mids if e.get("prepare"))
+      == [2, 3, 4, 5, 10, 11, 12, 13, 16, 17],
+      str(sorted(e["after_step"] for e in mids if e.get("prepare"))))
+for entry in mids:
+    if not entry.get("prepare"):
+        continue
+    rule = entry["prepare"]
+    check("  beat %-2d counts three, in the reader's own words"
+          % entry["after_step"],
+          rule.get("count") == 3 and rule.get("line") == "Prepare to memorize",
+          str(rule))
+check("a reveal and a count-in are never on the same screen",
+      not [e for e in mids if e.get("prepare") and e.get("reveal")])
+
+print("\n--- the shuffle: declared, and landing where the step scores ---")
+SPEED = {"spa1": (3, 900), "spa2": (4, 700), "spa3": (5, 550),
+         "spa4": (6, 400)}
+for r in range(1, 5):
+    sid = "spa%d" % r
+    entry = mid_by_after[SCORED[sid][1] - 1][0]
+    rule = entry.get("reveal") or {}
+    frames = entry["flash"]["images"]
+    swaps = rule.get("swaps") or []
+    want_n, want_ms = SPEED[sid]
+    check("  %s shuffles %d times at %dms" % (sid, want_n, want_ms),
+          len(swaps) == want_n and rule.get("swap_ms") == want_ms,
+          "%d swaps at %s" % (len(swaps), rule.get("swap_ms")))
+    check("    the box is open for five seconds, then closes",
+          rule.get("open_ms") == FLASH_MS and rule.get("close_ms") == 600,
+          str((rule.get("open_ms"), rule.get("close_ms"))))
+    shut = [f["img"] for i, f in enumerate(frames)
+            if i != rule.get("open_slot")]
+    check("    and closes onto the one file every other slot already draws",
+          len(set(shut)) == 1
+          and rule.get("closed_img") == shut[0]
+          == "/static/galleries/brain/box_closed.webp",
+          str((rule.get("closed_img"), sorted(set(shut)))))
+    check("    every swap names two slots this grid has",
+          all(isinstance(p, list) and len(p) == 2 and p[0] != p[1]
+              and all(isinstance(v, int) and 0 <= v < len(frames) for v in p)
+              for p in swaps), str(swaps))
+    # The engine swaps whatever is at the two positions, in order. Walked here
+    # rather than restated, so the config and the check cannot agree on a
+    # number that is wrong: where the object actually ends up IS the slot the
+    # step has to score, and nothing but the swaps decides it.
+    at = rule.get("open_slot")
+    for a, b in swaps:
+        if at == a:
+            at = b
+        elif at == b:
+            at = a
+    check("    and the object lands on the slot the step scores",
+          at == hit_index(sid),
+          "swaps land it on %s, %s scores %d" % (at, sid, hit_index(sid)))
+    check("    which is not the slot it was shown in",
+          at != rule.get("open_slot"), str(at))
+check("each round shuffles more, and faster, than the one before",
+      [SPEED["spa%d" % r][0] for r in range(1, 5)] == [3, 4, 5, 6]
+      and [SPEED["spa%d" % r][1] for r in range(1, 5)] == [900, 700, 550, 400])
+check("  and each round's question asks where the thing is now",
+      all(by_id["spa%d" % r]["question"].endswith(" now?")
+          for r in range(1, 5)),
+      str([by_id["spa%d" % r]["question"] for r in range(1, 5)]))
+
+print("\n--- the four focus rounds answer themselves if nobody does ---")
+for sid in ("odd", "ink", "next", "count"):
+    step = by_id[sid]
+    pick = step.get("timeout_pick")
+    tags = {i["id"]: i["tags"] for i in images(step)}
+    check("  %-5s gives five seconds" % sid, step.get("timer_ms") == FLASH_MS,
+          str(step.get("timer_ms")))
+    check("    and names a card on this step for the clock to press",
+          pick in tags, str(pick))
+    check("    which is a miss, so a clock cannot score a hit",
+          tags.get(pick) == ["foc_miss"], str(tags.get(pick)))
+check("no other step carries a clock",
+      not [s["id"] for s in steps
+           if s.get("timer_ms") and s["id"] not in ("odd", "ink", "next",
+                                                    "count")],
+      str([s["id"] for s in steps if s.get("timer_ms")]))
+check("  and every clock is inside the range the engine honours",
+      all(1000 <= s["timer_ms"] <= 15000 for s in steps if s.get("timer_ms")))
+
+print("\n--- which steps name their cards, and when ---")
+check("the age step names nothing — its art carries the bracket",
+      by_id["age"].get("label_mode") == "none",
+      str(by_id["age"].get("label_mode")))
+check("the five rounds that must not name a card up front do not",
+      sorted(s["id"] for s in steps if s.get("label_mode") == "on_tap")
+      == ["count", "mem1", "mem2", "mem3", "mem4"],
+      str(sorted(s["id"] for s in steps if s.get("label_mode") == "on_tap")))
+check("  and every override is a mode the engine knows",
+      all(s["label_mode"] in ("none", "on_tap", "badge")
+          for s in steps if s.get("label_mode")))
+check("every other step takes the funnel's own badge",
+      cfg["swipe"]["label_mode"] == "badge")
+check("the mood round asks the question the review asked for",
+      by_id["mood"]["question"] == "How would you rate your brain right now?")
+
+print("\n--- the launch offer ---")
+import payments                                             # noqa: E402
+sale = cfg["sale"]
+check("the block is the shape payments.py reads",
+      sorted(sale) == ["active", "ends", "label", "price_cents",
+                       "regular_price_cents"], str(sorted(sale)))
+check("  it is live, and cheaper than the price it strikes through",
+      sale["active"] is True and sale["price_cents"] == 199
+      and sale["price_cents"] < cfg["pricing"]["amount_cents"])
+check("  and the struck figure is the price this funnel actually charges",
+      sale["regular_price_cents"] == cfg["pricing"]["amount_cents"],
+      "%s vs %s" % (sale["regular_price_cents"],
+                    cfg["pricing"]["amount_cents"]))
+BEFORE = datetime.datetime(2026, 6, 1, tzinfo=datetime.timezone.utc)
+AFTER = datetime.datetime(2027, 6, 1, tzinfo=datetime.timezone.utc)
+check("payments.py charges the offer price while it runs",
+      payments._effective_price(cfg, BEFORE) == (199, sale),
+      str(payments._effective_price(cfg, BEFORE)[0]))
+check("  and the regular price the day after it ends, with nothing deployed",
+      payments._effective_price(cfg, AFTER) == (500, None),
+      str(payments._effective_price(cfg, AFTER)))
+check("  the end is an instant with an offset on it, not a naive date",
+      payments._sale_ends(sale["ends"]) is not None, sale["ends"])
+check("the offer has a name and no countdown",
+      sale["label"] == "Launch Offer")
+
+print("\n--- the result page: the minimal layout, named outright ---")
+check("the funnel names the layout rather than testing for it",
+      cfg.get("result_template") == "minimal"
+      and "paywall_variants" not in cfg,
+      str(cfg.get("result_template")))
+check("  and the module reads that name",
+      '(ctx.cfg && ctx.cfg.result_template)' in MODULE
+      and 'template(ctx) === "minimal"' in MODULE)
+profile = cfg["result_copy"]["profile"]
+check("the copy the layout needs is all declared",
+      all(k in profile for k in ("chips", "rarity_card", "unlock",
+                                 "unlock_head", "unlock_tail")),
+      str(sorted(profile)))
+check("  four chips, one token each, one per round",
+      profile["chips"] == ["{mem}", "{spa}", "{chg}", "{foc}"],
+      str(profile["chips"]))
+check("  the type card carries a frame and a line under it",
+      all(profile["rarity_card"].get(k) for k in ("lead", "tail", "note")),
+      str(profile["rarity_card"]))
+check("  the unlock list is one row per chapter",
+      sorted(r["id"] for r in profile["unlock"])
+      == sorted(s["id"] for s in cfg["report"]["sections"]),
+      str([r["id"] for r in profile["unlock"]]))
+check("    every row of it has a line",
+      all(r.get("line") for r in profile["unlock"]))
+check("    and the keepsake closes it",
+      profile["unlock_tail"].get("key") and profile["unlock_tail"].get("line"))
+check("every unlock row has a keyword to lead with",
+      set(r["id"] for r in profile["unlock"])
+      <= set(c["id"] for c in profile["cards"]))
+check("the struck price is read out as well as drawn",
+      "price_regular_aria" in cfg["result_copy"]
+      and "{price}" in cfg["result_copy"]["price_regular_aria"])
+check("the module draws the sale beside the price it charges",
+      "ctx.sale && ctx.priceRegular" in MODULE
+      and 'elm("span", "br-price-was", ctx.priceRegular)' in MODULE
+      and 'elm("p", "br-sale", ctx.sale.label)' in MODULE)
+check("  and the stylesheet strikes it through on this layout",
+      ".result-module.is-minimal .br-price-was::after {" in RESULT_CSS)
+check("the layout drops the bars and the locked rows for chips and a list",
+      "if (!lean) root.appendChild(bars(ctx, copy, data));" in MODULE
+      and "if (!lean) root.appendChild(path(ctx, copy));" in MODULE
+      and "if (list) card.appendChild(list);" in MODULE)
+check("  and the delivered page opens as the page they paid on",
+      'root.classList.toggle("is-minimal", lean);' in MODULE
+      and MODULE.count('root.classList.toggle("is-minimal", lean);') == 2)
+
 print("\n--- the copy: a game, and nothing that sounds like anything else ---")
 BANNED = ("memory loss", "cognitive", "decline", "dementia", "test yourself",
           "health", "diagnosis")
@@ -463,9 +669,8 @@ money = [(at, text) for at, text in strings
          if "$" in text or re.search(r"\d\s*%", text)]
 check("no price is written out anywhere; it is always the token", not money,
       str(money[:3]))
-check("  and the token is on the label that charges",
-      "{price}" in cfg["checkout"]["cta_label"]
-      and all("{price}" in v["cta_text"] for v in cfg["paywall_variants"]))
+check("  and the token is on the one label that charges",
+      "{price}" in cfg["checkout"]["cta_label"])
 percent = [(at, text) for at, text in strings
            if "%" in text.replace("{pct}", "")]
 check("  the only percent sign anywhere is {pct}", not percent,
@@ -492,16 +697,14 @@ check("the checkout names the product this funnel sells",
       cfg["checkout"]["product_name"] == "Your Brain Age Report"
       and cfg["checkout"]["cta_label"] == "Unlock my full report — {price}"
       and cfg["checkout"]["proof_line"] == "Built from your 16 rounds")
-check("two paywall arms, both live and both weighted",
-      len(cfg["paywall_variants"]) == 2
-      and all(v.get("enabled") is not False and v.get("weight", 1) > 0
-              for v in cfg["paywall_variants"]))
-check("  each arm offers one line per chapter, plus the keepsake",
-      all(len(v["benefits"]) == len(sections) + 1
-          for v in cfg["paywall_variants"]),
-      str([len(v["benefits"]) for v in cfg["paywall_variants"]]))
-check("  and both argue the same five things in their own order",
-      len({frozenset(v["benefits"]) for v in cfg["paywall_variants"]}) == 1)
+check("one offer, not two: the layout is named rather than tested",
+      "paywall_variants" not in cfg)
+check("  and the manifest still offers one line per chapter, plus the "
+      "keepsake",
+      len(cfg["checkout"]["manifest"]) == len(sections) + 1,
+      str(len(cfg["checkout"]["manifest"])))
+check("  which is what the unlock list on the offer card argues",
+      len(cfg["result_copy"]["profile"]["unlock"]) == len(sections))
 check("every chapter has a card in the result copy",
       sorted(c["id"] for c in cfg["result_copy"]["profile"]["cards"])
       == sorted(s["id"] for s in sections))

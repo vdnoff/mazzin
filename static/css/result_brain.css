@@ -46,6 +46,7 @@ body:has(.result-module) {
   --br-spa: #4CAF7D;
   --br-chg: #F2B33D;
   --br-foc: #8E6FD8;
+  --br-lux: #3B7DD8;
 
   /* Full bleed, exactly. body carries `padding: 0 18px`, so the pull has to be
      that number and not a rounded one — at -20px the page scrolls two pixels
@@ -583,6 +584,283 @@ body:has(.result-module) {
 /* An open row has no lock in the corner, so the title may use the full width
    the locked one had to leave. */
 .result-module.is-delivered .br-node { padding-right: 14px; }
+
+/* --- the nodes both layouts draw --------------------------------------------- */
+
+/* The four rounds as capsules. Wrapping is the point: four chips do not fit
+   one line at 390px and must never be the reason the card scrolls sideways. */
+.br-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+.br-chip {
+  max-width: 100%;
+  padding: 4px 10px;
+  border: 1px solid rgba(59, 125, 216, 0.45);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: var(--br-lux);
+  white-space: nowrap;
+}
+
+/* What is in the report, above the price. Tight on purpose: it is a list to
+   scan, not to read. A tick, never a padlock — a lock over the price is the
+   page arguing with its own button. */
+.br-checklist {
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.br-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 8px;
+}
+
+.br-check:first-child { margin-top: 0; }
+
+.br-check-mark {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  color: var(--br-spa);
+}
+
+.br-check-mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.br-check-line {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--br-muted);
+}
+
+.br-check-key {
+  font-weight: 700;
+  color: var(--br-ink);
+}
+
+/* The regular price, beside the one they are being offered. Small, muted and
+   struck: it is the reference the discount is measured against, not a second
+   thing to read. */
+.br-price-was {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--br-faint);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+/* One line under the price: what the offer is called. No date and no clock —
+   the block ends on its own clock and the page does not make that a promise. */
+.br-sale {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--br-lux);
+}
+
+/* --- the minimal layout ------------------------------------------------------ */
+
+/* The short way down the page: the number, who that makes them, the frames it
+   was read off, and the price — with what the price buys stated once, on the
+   card that takes the money. Everything here hangs off `is-minimal`, which
+   engine.js's own container carries only when the config names the layout, so
+   a funnel that names none renders the page above untouched. */
+.result-module.is-minimal {
+  --br-lux: #3B7DD8;
+  --br-lux-soft: rgba(59, 125, 216, 0.10);
+}
+
+.result-module.is-minimal .br-kicker.is-framed {
+  text-align: center;
+  letter-spacing: 0.22em;
+  color: var(--br-lux);
+}
+
+/* Margins rather than a flex gap: the line is a text node between two spans,
+   and a gap only separates flex items — which the text is not. */
+.result-module.is-minimal .br-kicker.is-framed .br-mark:first-child {
+  margin-right: 9px;
+}
+
+.result-module.is-minimal .br-kicker.is-framed .br-mark:last-child {
+  margin-left: 9px;
+}
+
+.br-mark { font-size: 9px; vertical-align: 2px; }
+
+/* One mark to a corner, inset far enough that the border passes behind it
+   rather than through it. */
+.result-module.is-minimal .br-corner {
+  position: absolute;
+  font-size: 8px;
+  line-height: 1;
+  color: var(--br-lux);
+  opacity: 0.7;
+}
+
+.result-module.is-minimal .br-corner.is-tl { top: 9px; left: 11px; }
+.result-module.is-minimal .br-corner.is-tr { top: 9px; right: 11px; }
+.result-module.is-minimal .br-corner.is-bl { bottom: 9px; left: 11px; }
+.result-module.is-minimal .br-corner.is-br { bottom: 9px; right: 11px; }
+
+/* The two keepsake cards: the number, and the type. Same frame on both, so
+   they read as one pair rather than as a card and a panel. */
+.result-module.is-minimal .br-score.is-lux,
+.result-module.is-minimal .br-type.is-card {
+  position: relative;
+  padding: 28px 22px 24px;
+  border: 1px solid var(--br-lux);
+  border-radius: 20px;
+  background:
+    radial-gradient(120% 140% at 50% 0%,
+      var(--br-lux-soft) 0%, rgba(59, 125, 216, 0) 70%),
+    var(--br-card);
+  box-shadow: 0 0 26px rgba(59, 125, 216, 0.10);
+  text-align: center;
+}
+
+.result-module.is-minimal .br-type.is-card { margin: 20px 0 0; }
+
+.result-module.is-minimal .br-score.is-lux .br-age-number {
+  font-size: 96px;
+  color: var(--br-lux);
+}
+
+.result-module.is-minimal .br-score.is-lux .br-age-note {
+  font-size: 16px;
+  color: var(--br-ink);
+}
+
+/* The frame of the claim, over and under the thing being claimed. */
+.result-module.is-minimal .br-type-lead,
+.result-module.is-minimal .br-type-tail {
+  display: block;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--br-faint);
+}
+
+/* The name is the argument, so it is the size of one. Set smaller than the
+   brain age above it on purpose: four words at 72px would wrap on every
+   type but The Laser. */
+.result-module.is-minimal .br-type-figure {
+  display: block;
+  margin: 4px 0 2px;
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--br-lux);
+}
+
+.result-module.is-minimal .br-type-essence {
+  margin: 12px 0 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--br-ink);
+}
+
+.result-module.is-minimal .br-type-blurb {
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: var(--br-muted);
+}
+
+.result-module.is-minimal .br-type-note {
+  margin: 16px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--br-lux);
+}
+
+/* Each half of the sentence on its own line, centred, so the break is where
+   the sentence turns rather than where the box happens to end. */
+.result-module.is-minimal .br-type-note-line { display: block; }
+
+.result-module.is-minimal .br-unlock { margin: 0 0 18px; }
+
+.result-module.is-minimal .br-unlock-head {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--br-lux);
+}
+
+.result-module.is-minimal .br-checklist { margin: 0 0 16px; }
+
+.result-module.is-minimal .br-check-line {
+  font-size: 15.5px;
+  line-height: 1.45;
+  color: var(--br-ink);
+}
+
+.result-module.is-minimal .br-check-key {
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--br-lux);
+}
+
+.result-module.is-minimal .br-check-mark { color: var(--br-lux); }
+
+/* Drawn rather than declared. `line-through` is one hairline in the type's
+   own colour, which beside a 40px figure reads as a rendering artefact rather
+   than as a price that was crossed out. This is a rule of its own — thick,
+   tilted a couple of degrees, in a red the page's blue does not contain. */
+.result-module.is-minimal .br-price-was {
+  position: relative;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--br-faint);
+  text-decoration: none;
+}
+
+.result-module.is-minimal .br-price-was::after {
+  content: "";
+  position: absolute;
+  left: -3px;
+  right: -3px;
+  top: 52%;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--br-chg);
+  transform: rotate(-6deg);
+}
+
+.result-module.is-minimal .br-price-now { color: var(--br-lux); }
 
 /* Wider phones and small tablets only. There is no desktop layout here and
    there is not meant to be one — this is the same column, allowed to stop

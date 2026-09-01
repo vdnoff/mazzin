@@ -1208,12 +1208,14 @@ check("  and not from the delivered page",
       "reportVariant" not in module[module.find("function delivered(root"):])
 
 # Nothing else on the platform grew a variants key or lost its paywall.
-# zodiac30 adopted the mechanism for a layout test and brain for an offer
-# test, which is what it was built funnel-agnostic for. Everything else still
-# declares none, and that is the claim worth keeping: a funnel gets variants
-# by asking for them, and the list of funnels that asked is spelled out here
-# so that growing it is a decision somebody makes rather than a drift.
-VARIANT_FUNNELS = {"zodiac30", "brain"}
+# zodiac30 adopted the mechanism for a layout test, which is what it was built
+# funnel-agnostic for. brain carried it for one release and then dropped it:
+# it names its layout outright the way zodiac-ro and zodiac-bg do, and a
+# funnel with one page and one price has no arm to assign. Everything else
+# still declares none, and that is the claim worth keeping: a funnel gets
+# variants by asking for them, and the list of funnels that asked is spelled
+# out here so that growing it is a decision somebody makes rather than a drift.
+VARIANT_FUNNELS = {"zodiac30"}
 check("only the funnel that asked for them has variants",
       set(s for s in NEIGHBOUR_SLUGS
           if json.load(open(os.path.join(ROOT, "funnels", s + ".json"),
