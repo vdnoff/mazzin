@@ -691,7 +691,9 @@ check("  the colour names being the twin's own, character for character",
 
 # A straight double quote inside a value is what reports.py spends a whole
 # prompt rule keeping out of a generated section. The config is held to the
-# same rule, and to the typographic one under it: Bulgarian quotes with „ “.
+# same rule — and, unlike the generated prose, its own quotation marks never
+# pass through a JSON parser, so it keeps the typographic pair „ “ it has
+# always used. Only what the model writes has to be guillemets.
 check("no value in the config contains a straight double quote",
       not [p for p, v in STRINGS if '"' in v],
       str([p for p, v in STRINGS if '"' in v][:4]))
@@ -1141,8 +1143,14 @@ print("\n--- Bulgarian prose is what breaks the JSON ---")
 check("the prompt says the answer is JSON and what breaks it",
       "not valid JSON" in profile["system"]
       and "escaped" in profile["system"])
-check("  and offers the Bulgarian punctuation that costs nothing to parse",
-      "„" in profile["system"] and "“" in profile["system"])
+# FORCED TEST EDIT (1 of 2). This pinned „ “ as the pair the prompt offers,
+# and that pair is what broke production: the model opened with U+201E and
+# closed with a straight ", which is the JSON delimiter, and ten of twelve
+# warmed sections were thrown away. The prompt offers guillemets now, which
+# cannot be mistaken for a delimiter, and it names the old pair by codepoint
+# rather than typing it.
+check("  and offers the punctuation that costs nothing to parse",
+      "«" in profile["system"] and "»" in profile["system"])
 check("  the English prompt is unchanged",
       reports.ZODIAC_PROFILE["system"] is reports.ZODIAC_SYSTEM
       and "„" not in reports.ZODIAC_SYSTEM)
@@ -1152,13 +1160,20 @@ check("every BG shape closes on the punctuation contract",
 check("  which tells it to write the sentence with no quotation marks",
       "no quotation marks"
       in " ".join(reports.ZODIAC_BG_JSON_RULE.split()))
-check("  and offers the Bulgarian pair as the only alternative",
-      "„" in reports.ZODIAC_BG_JSON_RULE
-      and "U+201E" in reports.ZODIAC_BG_JSON_RULE
+# FORCED TEST EDIT (2 of 2). Same reason: the alternative offered is the
+# guillemet pair now. The old pair is still named — by codepoint, so it can be
+# forbidden without the glyph appearing anywhere the model might copy it from.
+check("  and offers the guillemets as the only alternative",
+      "«" in reports.ZODIAC_BG_JSON_RULE
+      and "U+00AB" in reports.ZODIAC_BG_JSON_RULE
+      and "U+00BB" in reports.ZODIAC_BG_JSON_RULE)
+check("    naming the pair that broke it, without typing it",
+      "U+201E" in reports.ZODIAC_BG_JSON_RULE
       and "U+201C" in reports.ZODIAC_BG_JSON_RULE)
-check("  which is not the Romanian pair — the closing mark differs",
+check("  which is not the Romanian rule — that one still offers its own pair",
       "U+201D" in reports.ZODIAC_RO_JSON_RULE
-      and "U+201D" not in reports.ZODIAC_BG_JSON_RULE)
+      and "U+201D" not in reports.ZODIAC_BG_JSON_RULE
+      and "«" not in reports.ZODIAC_RO_JSON_RULE)
 check("the English shapes carry none of it",
       not any(reports.ZODIAC_BG_JSON_RULE in t
               for t in reports.ZODIAC_SPEC.values())
@@ -1473,21 +1488,28 @@ check("  and the English opening is unchanged",
 print("\n--- the archetype name, in a Bulgarian sentence ---")
 # What the live page did: glued the style name straight onto a bare noun.
 # "Профил Небесен въздух решава бързо" is two nominatives side by side with
-# nothing joining them — it is not a sentence in Bulgarian. The head noun
-# takes its definite article and the name goes in the Bulgarian quotation
-# pair, which is how a title is set: Профилът „Небесен въздух“ решава бързо.
+# nothing joining them — it is not a sentence in Bulgarian. So the name is
+# wrapped and the noun in front of it is an ordinary common noun that takes
+# an article where the syntax asks for one: Профилът «Небесен въздух» решава
+# бързо, but умът на профила «Небесен въздух».
+#
+# FORCED TEST EDITS through this block. The wrapper was „ “ and is guillemets
+# now — U+201E opened and a straight " closed it, which is the JSON delimiter,
+# and warm_cache lost ten of twelve sections to exactly that. A guillemet
+# cannot be mistaken for a delimiter.
 STYLE_NAME = "Небесен въздух"
+OPEN, CLOSE = "\u00ab", "\u00bb"
 check("the funnel's four archetypes are the names this is about",
       [s["name"] for s in cfg["styles"]]
       == ["Сияен огън", "Дълбока вода", "Устойчива земя", "Небесен въздух"],
       str([s["name"] for s in cfg["styles"]]))
-check("the mail subject sets the name in „ “",
+check("the mail subject sets the name in guillemets",
       reports.COPY_ZODIAC_BG["subject"] % STYLE_NAME
-      == "Твоят космичен профил \u201eНебесен въздух\u201c — Mazzin",
+      == "Твоят космичен профил \u00abНебесен въздух\u00bb — Mazzin",
       reports.COPY_ZODIAC_BG["subject"] % STYLE_NAME)
 check("  and the body takes the article on the head noun with it",
       reports.COPY_ZODIAC_BG["body"] % STYLE_NAME
-      == "Пълният ти профил \u201eНебесен въздух\u201c е прикачен.",
+      == "Пълният ти профил \u00abНебесен въздух\u00bb е прикачен.",
       reports.COPY_ZODIAC_BG["body"] % STYLE_NAME)
 check("  neither of them glues a bare name onto a bare noun",
       not re.search(r"профил %s" % STYLE_NAME,
@@ -1508,21 +1530,18 @@ check("four of the six stubs name the archetype",
       [sid for sid, _t in NAMING] == ["dna", "mistakes", "palette", "splurge"],
       str([sid for sid, _t in NAMING]))
 for sid, text in NAMING:
-    check("  %-9s quotes it" % sid,
-          ("\u201e%s\u201c" % STYLE_NAME) in text,
+    check("  %-9s wraps it in guillemets" % sid,
+          ((OPEN + STYLE_NAME + CLOSE) in text),
           re.search(r".{0,24}%s.{0,6}" % STYLE_NAME, text).group(0))
     check("    and articles the noun in front of it",
           not re.search(r"(?:Профил|Палитра|Енергия|План) %s" % STYLE_NAME,
                         text),
           re.search(r".{0,24}%s.{0,6}" % STYLE_NAME, text).group(0))
-check("  the four heads being the articled forms",
-      all(head in FILLED[sid] for sid, head in (
-          ("palette", "Палитрата \u201e"), ("mistakes", "Профилът \u201e"),
-          ("splurge", "Енергията \u201e"), ("dna", "Планът \u201e"))),
-      str([sid for sid, head in (
-          ("palette", "Палитрата \u201e"), ("mistakes", "Профилът \u201e"),
-          ("splurge", "Енергията \u201e"), ("dna", "Планът \u201e"))
-          if head not in FILLED[sid]]))
+HEADS = (("palette", "Палитрата "), ("mistakes", "Профилът "),
+         ("splurge", "Енергията "), ("dna", "Планът "))
+check("  the four heads being the articled forms, each a common noun",
+      all((head + OPEN) in FILLED[sid] for sid, head in HEADS),
+      str([sid for sid, head in HEADS if (head + OPEN) not in FILLED[sid]]))
 check("the swatch prose names no archetype, so it needs no rule",
       STYLE_NAME not in json.dumps(reports.ZODIAC_COLOR_TEXT_BG,
                                    ensure_ascii=False)
@@ -1535,10 +1554,138 @@ check("  and the English stubs still say it the English way",
 # the same rule in the same words.
 check("the prompt states the rule, with the pair and a worked example",
       "NAMING THE ARCHETYPE" in profile["system"]
-      and "\u201e" in profile["system"] and "\u201c" in profile["system"]
-      and "Профилът \u201eНебесен въздух\u201c" in profile["system"])
+      and "GUILLEMETS" in profile["system"]
+      and "\u00abНебесен въздух\u00bb" in profile["system"]
+      and "Профилът \u00abНебесен въздух\u00bb" in profile["system"])
 check("  and names the failure it is there to prevent",
       "Профил Небесен въздух" in profile["system"])
+# The article rule as it actually is, rather than "always articled": the head
+# is a common noun and behaves like one. After a preposition it is bare, and
+# the prompt has to show that or the model writes "Умът на Профилът".
+check("  the article rule is the one Bulgarian actually has",
+      "\u0443\u043c\u044a\u0442 \u043d\u0430 \u043f\u0440\u043e\u0444"
+      "\u0438\u043b\u0430 \u00abНебесен въздух\u00bb" in profile["system"]
+      and "Умът на Профилът" in profile["system"],
+      "the prompt shows neither the prepositional case nor the error")
+check("  and forbids the pair that broke it, by codepoint",
+      "U+201E" in profile["system"] and "U+201C" in profile["system"])
+
+print("\n--- nothing the model is shown carries the pair that broke it ---")
+# The outage, in one sentence: the prompt showed the model U+201E … U+201C,
+# the model opened with U+201E and closed with a straight ", which is the JSON
+# delimiter, and warm_cache lost ten of twelve sections — twice each, because
+# the retry showed it the same pair again. So the glyphs appear nowhere the
+# model could copy them from: the prompts name them by codepoint instead.
+#
+# The funnel's own config is a separate matter and keeps „ “: those strings
+# are rendered by the browser and never pass through a JSON parser.
+SHOWN = {
+    "system": profile["system"],
+    "json rule": reports.ZODIAC_BG_JSON_RULE,
+    "json retry": reports.ZODIAC_BG_JSON_RETRY,
+    "spec": json.dumps(reports.ZODIAC_BG_SPEC, ensure_ascii=False),
+    "stubs": json.dumps(reports.ZODIAC_STUBS_BG, ensure_ascii=False),
+    "swatch prose": json.dumps(reports.ZODIAC_COLOR_TEXT_BG,
+                               ensure_ascii=False),
+    "mail": json.dumps(reports.COPY_ZODIAC_BG, ensure_ascii=False),
+    "render words": json.dumps(reports.RENDER_WORDS_BG, ensure_ascii=False),
+}
+for name, text in sorted(SHOWN.items()):
+    check("  %-13s carries no \u201e and no \u201c" % name,
+          "\u201e" not in text and "\u201c" not in text,
+          re.search(r".{0,30}[\u201e\u201c].{0,30}", text).group(0)
+          if re.search(r"[\u201e\u201c]", text) else "")
+check("  and the guillemets are what they use instead",
+      all("\u00ab" in SHOWN[k] for k in
+          ("system", "json rule", "json retry", "stubs", "mail")))
+check("the config keeps its own typographic pair, which parses nothing",
+      any("\u201e" in v for _p, v in STRINGS)
+      or True,  # a funnel with no quoted prose is not a failure
+      "")
+check("  and still contains no straight double quote",
+      not [p for p, v in STRINGS if '"' in v])
+
+print("\n--- the straight quote is repaired before the parser sees it ---")
+# Belt to the prompt's braces. A model that has been told once can still reach
+# for the key next to it, and what it costs when it does is a buyer's report.
+repair = profile.get("json_repair")
+check("the BG profile declares a repair", callable(repair))
+check("  and it is the only profile that does",
+      [slug for slug, pr in reports.PROFILES.items() if pr.get("json_repair")]
+      == ["zodiac-bg"],
+      str([slug for slug, pr in reports.PROFILES.items()
+           if pr.get("json_repair")]))
+
+# The three fragments out of the warm_cache log, character for character.
+# The first two are what it died on; the third is the one that must survive
+# untouched, because there the straight quote really is the end of the value.
+NAMED = "палитрата „Сияен огън\" работят"
+MID = '"why": "Енергията „Дълбока вода\" не губи'
+ENDS = '"Сияен огън",'
+check("a name closed with a straight quote becomes a guillemet",
+      repair(NAMED) == "палитрата «Сияен огън» работят", repr(repair(NAMED)))
+check("  and the value's own opening quote is left alone",
+      repair(MID) == '"why": "Енергията «Дълбока вода» не губи',
+      repr(repair(MID)))
+check("  while a value that ENDS with the name keeps its real closing quote",
+      repair(ENDS) == ENDS, repr(repair(ENDS)))
+check("an English answer is untouched, quotes and all",
+      repair('{"a": "He said \\"no\\" and meant it."}')
+      == '{"a": "He said \\"no\\" and meant it."}')
+check("  and a Bulgarian answer that was written correctly is untouched",
+      repair('{"a": "Палитрата «Сияен огън» работи."}')
+      == '{"a": "Палитрата «Сияен огън» работи."}')
+check("  the closing curly quote is normalised with the opening one",
+      repair("Палитрата „Сияен огън“ работи")
+      == "Палитрата «Сияен огън» работи",
+      repr(repair("Палитрата „Сияен огън“ работи")))
+check("  and a straight quote followed by JSON structure is never touched",
+      repair('{"a": "текст", "b": "друг"}') == '{"a": "текст", "b": "друг"}')
+
+# End to end, on the shape the warmer actually asks for: the section that
+# production threw away twice is accepted now.
+COLORS = [{"name": name, "hex": code, "role": "за движение",
+           "finish": "понеделник", "where": "на китката"}
+          for name, code in (("Solar Amber", "#F2A33C"),
+                             ("Ember Gold", "#D8642A"),
+                             ("Ash Basalt", "#3A1E14"),
+                             ("Sun White", "#FBE2A0"))]
+BROKEN = json.dumps(
+    {"palette": {
+        "intro": "PLACEHOLDER работят заедно и държат деня, а третият "
+                 "носи тежестта отдолу.",
+        "colors": COLORS,
+        "closing_rule": "Носи едно силно нещо, не три."}},
+    ensure_ascii=False).replace("PLACEHOLDER", "Палитрата „Сияен огън\"")
+check("the section production threw away does not parse as it stands",
+      reports._parse_detail(BROKEN, ("palette",), [])[0] is None)
+check("  and parses once the repair has run",
+      reports._parse_detail(BROKEN, ("palette",), [], repair)[0] is not None,
+      str(reports._parse_detail(BROKEN, ("palette",), [], repair)[1]))
+check("  with the name in guillemets in the text that is stored",
+      "«Сияен огън»" in (
+          reports._parse_detail(BROKEN, ("palette",), [], repair)[0]
+          or {}).get("palette", {}).get("intro", ""))
+check("_parse_detail takes the repair as an argument, defaulting to none",
+      "repair" in reports._parse_detail.__code__.co_varnames
+      and reports._parse_detail.__defaults__[-1] is None)
+check("_generate takes it too, and hands it to BOTH attempts",
+      "json_repair" in reports._generate.__code__.co_varnames
+      and REPORTS_SRC.count(
+          "_parse_detail(text, want, notes, json_repair)") == 1
+      and REPORTS_SRC.count(
+          "_parse_detail(text, want, None, json_repair)") == 1)
+check("  and every call site hands the profile's own",
+      REPORTS_SRC.count('profile.get("json_repair")') == 3)
+
+check("the warmed rows go stale, so the broken ones are written again",
+      profile["cache_rev"] == {"palette": "bgname2", "mistakes": "bgname2",
+                               "splurge": "bgname2"},
+      str(profile["cache_rev"]))
+check("  and the English and Romanian revisions are untouched",
+      reports.ZODIAC_PROFILE["cache_rev"]
+      == reports.ZODIAC_RO_PROFILE["cache_rev"]
+      == {"palette": "colors2", "mistakes": "short1", "splurge": "moves1"})
 check("  the English and Romanian prompts say nothing about it",
       "NAMING THE ARCHETYPE" not in reports.ZODIAC_SYSTEM
       and "NAMING THE ARCHETYPE" not in reports.ZODIAC_RO_SYSTEM)

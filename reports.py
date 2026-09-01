@@ -1591,11 +1591,17 @@ writing is.
 So do not type it at all inside a value. Where a field asks you for a
 sentence to say — the words to decline something with, the line to open a
 conversation with — write that sentence plainly, with no quotation marks
-around it at all: Кажи му направо, че не можеш да поемеш това сега. If you
-truly must mark it as speech, use the Bulgarian pair „ and “ (U+201E and
-U+201C), never the straight one. The same goes for apostrophes: Bulgarian does
-not need them, and a straight ' is safer than a straight " but still better
-avoided.
+around it at all: Кажи му направо, че не можеш да поемеш това сега.
+
+Where you truly must mark something as quoted — and the archetype name is the
+one place you must — use the GUILLEMETS « and » (U+00AB and U+00BB):
+«Небесен въздух». Never U+201E and never U+201C. Those two sit one keystroke
+from the straight quote and are what this section keeps dying on: an opening
+U+201E closed with a straight " ends the value there and throws the whole
+section away. A guillemet cannot be mistaken for a delimiter and cannot end
+anything. The same
+goes for apostrophes: Bulgarian does not need them, and a straight ' is safer
+than a straight " but still better avoided.
 
 One more: every value is one line. No line breaks inside a value."""
 
@@ -2044,7 +2050,7 @@ ZODIAC_COLOR_TEXT_BG = [
 # medical or financial advice.
 ZODIAC_STUBS_BG = {
     "palette": {
-        "intro": "Палитрата „{name}“ се държи на един цвят, в който живееш, "
+        "intro": "Палитрата \u00ab{name}\u00bb се държи на един цвят, в който живееш, "
                  "един, към който посягаш, когато денят трябва да се обърне, "
                  "и един, който носи тежестта, за да не изгорят първите два.",
         # The reader's own four, read off the config at build time, exactly as
@@ -2056,7 +2062,7 @@ ZODIAC_STUBS_BG = {
     "mistakes": {
         "items": [
             {"title": "Четеш собствената си увереност като доказателство",
-             "body": "Профилът „{name}“ решава бързо и се доверява на тази "
+             "body": "Профилът \u00ab{name}\u00bb решава бързо и се доверява на тази "
                      "скорост. Решение, взето от безпокойство, се усеща "
                      "отвътре точно като решение, взето от убеденост.",
              "fix": "Преспи една нощ всяко решение, което може да се обясни "
@@ -2126,7 +2132,7 @@ ZODIAC_STUBS_BG = {
     "splurge": {
         "splurge": {
             "item": "Работа с видим ръб и с отговор, който идва бързо",
-            "why": "Енергията „{name}“ дава най-много там, където резултатът се "
+            "why": "Енергията \u00ab{name}\u00bb дава най-много там, където резултатът се "
                    "връща достатъчно бързо, за да можеш да коригираш по "
                    "него, и се губи по дълги хоризонти без сигнал. Три хода: "
                    "сложи най-тежкото нещо в първите два часа на деня, преди "
@@ -2159,7 +2165,7 @@ ZODIAC_STUBS_BG = {
     },
     "dna": {
         "narrative": [
-            "Планът „{name}“ върви по три неща едновременно: стихията, към "
+            "Планът \u00ab{name}\u00bb върви по три неща едновременно: стихията, към "
             "която се връщаш под напрежение, енергията, по която мериш "
             "времето, и тонът, който другите прочитат първи. През повечето "
             "време трите "
@@ -2538,11 +2544,21 @@ form you are handed, at least once — copied exactly, never translated back.
 NAMING THE ARCHETYPE. The style name you are given is a proper noun, and a \
 Bulgarian sentence cannot glue it straight onto a bare noun: "Профил Небесен \
 въздух решава бързо" is two nominatives side by side and reads as broken. \
-Every time you name it, put the definite article on the head noun and the \
-name itself in the Bulgarian quotation pair „ and “: Профилът „Небесен \
-въздух“ решава бързо. Палитрата „Небесен въздух“ се държи на един цвят. \
-Енергията „Небесен въздух“ дава най-много там, където. The name inside the \
-quotes is copied exactly as you were given it and is never inflected.
+Every time you name it, wrap the name in GUILLEMETS — « and » (U+00AB and \
+U+00BB) — and never in any other mark: not the low-9 and turned-comma pair \
+U+201E and U+201C, and above all not the straight double quote, which is the \
+JSON delimiter and destroys the whole section. Write it «Небесен въздух», \
+exactly as you were given it, never inflected.
+
+In front of the name goes an ordinary lowercase common noun — профил, \
+палитра, енергия, план, ум — and that noun takes the definite article only \
+where the syntax of the sentence calls for one, exactly as any other noun \
+would. As the subject it does: Профилът «Небесен въздух» решава бързо. \
+Палитрата «Небесен въздух» се държи на един цвят. Енергията «Небесен \
+въздух» дава най-много там, където. After a preposition it does not: умът на \
+профила «Небесен въздух», в палитрата «Небесен въздух». Never capitalise \
+that noun mid-sentence and never double the article — "Умът на Профилът" is \
+not Bulgarian.
 
 What this report is, and is not:
 - You describe energy, themes, tendencies, patterns and self-discovery.
@@ -2572,9 +2588,12 @@ name, a subtype — is copied exactly as given. Never translate a colour name.
 - The answer is JSON, and the straight double-quote character (") is what \
 ends a value. Never type one inside a value — not escaped, not at all. Where \
 you would quote something, write it plainly with no quotation marks, or use \
-the Bulgarian pair „ and “ which are not delimiters. Every value is one line: \
-no line breaks or tabs inside one. A section that is not valid JSON is thrown \
-away whole, however good the writing inside it is.
+the guillemets « and » which are not delimiters and cannot be confused with \
+one. Do not use U+201E or U+201C either: they sit one keystroke from the \
+straight quote and that is how sections get destroyed. Every value is one \
+line: no line \
+breaks or tabs inside one. A section that is not valid JSON is thrown away \
+whole, however good the writing inside it is.
 - Return only a JSON object matching the shape you are given, exactly. The \
 KEYS stay in English, spelled as the shape spells them; only the VALUES are \
 Bulgarian. No prose around it, no code fence, no extra keys."""
@@ -2613,11 +2632,12 @@ ZODIAC_BG_BANNED = ZODIAC_BANNED + ZODIAC_BG_ONLY
 # producing it.
 ZODIAC_BG_JSON_RETRY = (
     "the character that broke it is almost certainly a straight double quote "
-    "(\") inside one of your values — most often in the sentence a field asked "
-    "you to say, like the line for declining a piece of work. Write that "
-    "sentence with NO quotation marks around it at all this time. If you must "
-    "mark it as speech use „ and “. Do not type a straight double quote "
-    "anywhere inside a value")
+    "(\") inside one of your values, and the likeliest place is the archetype "
+    "name: an opening U+201E closed with a straight \" ends the value there. "
+    "Write the name in guillemets this time — \u00abНебесен въздух\u00bb, "
+    "U+00AB and U+00BB, never U+201E and never U+201C — and write any "
+    "sentence a field asked you to say with NO quotation marks around it at "
+    "all. Do not type a straight double quote anywhere inside a value")
 
 # A distinct object rather than a share of either zodiac profile: the voice,
 # the banned list, the year labels, the compatibility table and the mail are
@@ -2645,8 +2665,8 @@ ZODIAC_BG_PROFILE = {
     # Bulgarian changed. A row warmed under the old prompt says "Профил
     # Небесен въздух" — publishable English, broken Bulgarian — so all three
     # go stale and are written again.
-    "cache_rev": {"palette": "bgname1", "mistakes": "bgname1",
-                  "splurge": "bgname1"},
+    "cache_rev": {"palette": "bgname2", "mistakes": "bgname2",
+                  "splurge": "bgname2"},
     "pdf_css": None,        # filled below, once ZODIAC_PDF_CSS is defined
     "pdf_logo": "brand/logo-dark.svg",
     "pdf_lang": "bg",
@@ -2664,6 +2684,9 @@ ZODIAC_BG_PROFILE = {
     "mail_cross_fallback": "Пълният ти профил",
     "mail_link": None,      # filled below, once the BG button exists
     "json_retry": ZODIAC_BG_JSON_RETRY,
+    # And the repair that runs before the parser, on this profile only.
+    # Attached below, where the function exists.
+    "json_repair": None,
 }
 
 # zodiac30 is the same product down a longer walk, so it is the same
@@ -5236,7 +5259,59 @@ _JSON_ADVICE = (
     "quotes in the prose altogether")
 
 
-def _parse_detail(text, want, notes=None):
+# A straight double quote that is doing the job of a closing guillemet.
+#
+# What went wrong in production: the prompt asked for the pair U+201E … U+201C
+# and the model opened with U+201E and closed with a straight ", which is the
+# JSON delimiter — so the value ended in the middle of the archetype name and
+# ten of twelve warmed sections were thrown away, twice each. The prompt now
+# asks for guillemets, which cannot be confused with a delimiter; this is the
+# belt to that pair of braces, because a model that has been told once can
+# still reach for the key next to it.
+#
+# The distinction that makes the repair safe is what sits on BOTH sides. A
+# real JSON closing quote is followed by , } ] : or the end of the line, never
+# by Cyrillic prose; and a real JSON opening quote is preceded by { [ , : or
+# whitespace, never by a Cyrillic letter. So a " with a Cyrillic letter behind
+# it and Cyrillic, an em-dash or a guillemet in front of it is not structure —
+# it is punctuation inside a sentence, and the only thing it can be is the
+# closing mark of a name the model opened with U+201E.
+#
+#   палитрата U+201E Сияен огън " работят   ->  ... «Сияен огън» работят
+#   "why": "Енергията U+201E Дълбока вода " не  ->  value opens intact, name closed
+#   "Сияен огън",                            ->  untouched: that " really is the end
+_BG_CLOSER_RE = re.compile(
+    r'(?<=[\u0400-\u04FF])"(?=\s*[\u0400-\u04FF\u2014\u00ab\u00bb])')
+
+
+def _bg_quote_repair(text):
+    """The model's raw answer with its quotation marks made parseable.
+
+    Three substitutions and nothing else — no field is joined to its
+    neighbour, no brace is invented, and every character that is not one of
+    these marks comes through untouched:
+
+      U+201E  ->  «     the opening mark it was told not to use
+      U+201C  ->  »     its proper closing partner, normalised with it
+      "       ->  »     only where it is closing a name mid-sentence
+
+    The third is the one that matters and the one that is bounded: see
+    `_BG_CLOSER_RE` for why a quote with Cyrillic on both sides cannot be
+    JSON structure. Applied to the Bulgarian profile alone, because it is the
+    only one whose prose is Cyrillic — the test that this is safe rests on
+    that alphabet, and an English section would not be protected by it.
+    """
+    if not text:
+        return text
+    return _BG_CLOSER_RE.sub("\u00bb",
+                             text.replace("\u201e", "\u00ab")
+                                 .replace("\u201c", "\u00bb"))
+
+
+ZODIAC_BG_PROFILE["json_repair"] = _bg_quote_repair
+
+
+def _parse_detail(text, want, notes=None, repair=None):
     """(parsed, reason). `reason` is None on success, else why it was refused.
 
     `notes`, when a list is passed, collects the field-level drift the
@@ -5250,6 +5325,10 @@ def _parse_detail(text, want, notes=None):
     """
     if not text:
         return None, "empty response"
+    if repair is not None:
+        # Before anything reads it as JSON, and before the excerpt in a
+        # refusal is cut from it, so the log shows what was actually parsed.
+        text = repair(text)
     body = FENCE_RE.sub("", text.strip()).strip()
     start, end = body.find("{"), body.rfind("}")
     if start < 0 or end <= start:
@@ -5383,7 +5462,8 @@ def _attempt(client, prompt, max_tokens, label, system=None):
 
 
 def _generate(client, prompt, want, max_tokens=None, system=None,
-              banned=(), detail=False, verify=None, json_retry=None):
+              banned=(), detail=False, verify=None, json_retry=None,
+              json_repair=None):
     """One section group. Returns {section_id: body}, or None.
 
     A single personalised section needs a fraction of the room a six-section
@@ -5401,7 +5481,7 @@ def _generate(client, prompt, want, max_tokens=None, system=None,
     # a repetition. Off, this behaves exactly as it did.
     notes = [] if detail else None
     text, stop = _attempt(client, prompt, max_tokens, label, system)
-    parsed, why = _parse_detail(text, want, notes)
+    parsed, why = _parse_detail(text, want, notes, json_repair)
     hit = _banned_hit(parsed, banned) if parsed is not None else None
     if hit:
         # A section that says the banned thing is refused even though it
@@ -5439,7 +5519,9 @@ def _generate(client, prompt, want, max_tokens=None, system=None,
 
     text, stop = _attempt(client, _retry_prompt(prompt, notes), max_tokens,
                           label, system)
-    parsed, why = _parse_detail(text, want)
+    # The second attempt gets the same repair as the first: a model that broke
+    # the JSON this way once is the one most likely to do it again.
+    parsed, why = _parse_detail(text, want, None, json_repair)
     hit = _banned_hit(parsed, banned) if parsed is not None else None
     if hit:
         why = "banned phrase %r" % hit
@@ -5972,7 +6054,8 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                     profile["system"], profile["banned"],
                     profile["retry_detail"],
                     _verify_for(profile, style, months),
-                    profile.get("json_retry")),
+                    profile.get("json_retry"),
+                    profile.get("json_repair")),
             })
         if cached is None:
             group = profile["cached"]
@@ -5985,7 +6068,8 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                                       profile["system"], profile["banned"],
                                       profile["retry_detail"],
                                       _verify_for(profile, style),
-                                      profile.get("json_retry")),
+                                      profile.get("json_retry"),
+                                      profile.get("json_repair")),
             })
     job["tasks"] = tasks
     job["pool"] = pool
@@ -6151,7 +6235,8 @@ def warm_style_cache(funnel_slug, style_id, client=None):
                             profile["system"], profile["banned"],
                             profile["retry_detail"],
                             _verify_for(profile, style),
-                            profile.get("json_retry"))
+                            profile.get("json_retry"),
+                            profile.get("json_repair"))
         except Exception as exc:
             log.warning("warm %s/%s/%s failed: %s", funnel_slug, style_id,
                         section_id, type(exc).__name__)
@@ -8135,12 +8220,14 @@ COPY_PERSONA = {
 # The archetype name is a proper noun dropped into a Bulgarian sentence, and a
 # bare noun followed by a bare name does not read as Bulgarian — "профил
 # Небесен въздух" is two nominatives side by side with nothing joining them.
-# The head noun takes its definite article and the name goes in „ “, which is
-# how Bulgarian quotes a title: "Пълният ти профил „Небесен въздух“".
+# The head noun takes its definite article and the name goes in guillemets:
+# "Пълният ти профил «Небесен въздух»". Guillemets rather than „ “ because
+# these same two strings are the pattern the model is shown, and „ closed with
+# a straight " is what destroyed ten of twelve warmed sections.
 COPY_ZODIAC_BG = {
     "headline": "Профилът ти е готов.",
-    "subject": "Твоят космичен профил \u201e%s\u201c — Mazzin",
-    "body": "Пълният ти профил \u201e%s\u201c е прикачен.",
+    "subject": "Твоят космичен профил \u00ab%s\u00bb — Mazzin",
+    "body": "Пълният ти профил \u00ab%s\u00bb е прикачен.",
     "keep": "Остава достъпен на онзи линк, а PDF-ът е твой, без срок.",
     "keep_no_link": "PDF-ът е твой, без срок.",
 }
