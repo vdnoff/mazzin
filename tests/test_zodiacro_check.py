@@ -1320,18 +1320,59 @@ check("  the subject still takes the style name",
       and reports.COPY_ZODIAC_RO["body"].count("%s") == 1)
 check("  and it is not a kitchen mail by another name",
       "kitchen" not in reports.COPY_ZODIAC_RO["subject"].lower())
-check("the opening line is Romanian and names the price",
-      DIACRITIC.search(reports._email_opening({"funnel": "zodiac-ro"}))
-      and "9,99 lei" in reports._email_opening({"funnel": "zodiac-ro"}),
-      reports._email_opening({"funnel": "zodiac-ro"}))
-check("  read off the funnel rather than written into the mail",
-      reports._price_paid({"funnel": "zodiac-ro"}) == "9,99 lei"
-      and reports._price_paid({"funnel": "zodiac30"}) == "$3",
+# FORCED TEST EDIT (3, this block). These read the price off the funnel's
+# config, which is what `_price_paid` used to do and is the bug: this funnel
+# runs a sale, so a buyer who paid 4,99 lei was thanked for 9,99. The mail
+# names what the purchase row says was charged now, so the purchase is what
+# these hand it — and with no purchase to read, a funnel that carries a sale
+# block gets no number rather than the wrong one.
+import database                                            # noqa: E402
+
+_ROWS = {}
+database.query_one = lambda sql, args: _ROWS.get(args[0])
+
+
+def paid(slug, cents, currency, purchase_id=1):
+    """`_price_paid` for a purchase the webhook recorded at `cents`."""
+    _ROWS.clear()
+    _ROWS[purchase_id] = {"amount_cents": cents, "currency": currency,
+                          "created_at": None}
+    return reports._price_paid({"funnel": slug}, purchase_id)
+
+
+def opening(slug, cents, currency, purchase_id=1):
+    _ROWS.clear()
+    _ROWS[purchase_id] = {"amount_cents": cents, "currency": currency,
+                          "created_at": None}
+    return reports._email_opening({"funnel": slug}, purchase_id)
+
+
+check("the opening line is Romanian and names the price that was paid",
+      DIACRITIC.search(opening("zodiac-ro", 999, "ron"))
+      and "9,99 lei" in opening("zodiac-ro", 999, "ron"),
+      opening("zodiac-ro", 999, "ron"))
+check("  and the sale price when that is what the buyer was charged",
+      "4,99 lei" in opening("zodiac-ro", 499, "ron"),
+      opening("zodiac-ro", 499, "ron"))
+check("  read off the purchase rather than written into the mail",
+      paid("zodiac-ro", 999, "ron") == "9,99 lei"
+      and paid("zodiac-ro", 499, "ron") == "4,99 lei"
+      and paid("zodiac30", 300, "usd") == "$3"
+      and paid("zodiac30", 199, "usd") == "$1.99",
+      "%s / %s" % (paid("zodiac-ro", 499, "ron"), paid("zodiac30", 199, "usd")))
+check("  and no number at all when the purchase cannot be read",
+      reports._price_paid({"funnel": "zodiac-ro"}) is None
+      and reports._price_paid({"funnel": "zodiac30"}) is None,
       "%s / %s" % (reports._price_paid({"funnel": "zodiac-ro"}),
                    reports._price_paid({"funnel": "zodiac30"})))
+check("    while a funnel that has never run a sale still names its price",
+      reports._price_paid({"funnel": "zodiac"}) == "$3"
+      and reports._price_paid({"funnel": "kitchen"}) == "$3",
+      "%s / %s" % (reports._price_paid({"funnel": "zodiac"}),
+                   reports._price_paid({"funnel": "kitchen"})))
 check("  and the English opening is unchanged",
-      reports._email_opening({"funnel": "zodiac30"}).startswith("You just spent"),
-      reports._email_opening({"funnel": "zodiac30"}))
+      opening("zodiac30", 300, "usd").startswith("You just spent"),
+      opening("zodiac30", 300, "usd"))
 check("the button on the mail is Romanian",
       "Deschide" in profile["mail_link"]
       and "Open your profile online" not in profile["mail_link"])

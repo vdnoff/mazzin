@@ -347,6 +347,100 @@ def main():
     check("a run with no taps at all is illustrated with nothing", not bare,
           str(bare))
 
+    print("\n--- the cover mirrors whichever layout the page draws ---")
+    # The page renders the minimal template, and this cover did not: the
+    # reader was shown four capsules and a rarity card and was sent a formula
+    # line and a "1 in N readings" pill. Which layout the cover draws is
+    # decided the way result_zodiac.js decides it — by what the funnel's own
+    # `result_copy.profile` carries — so the funnel that has no minimal copy
+    # keeps the cover it has always had, which is the block above.
+
+    def rich(slug, style_id, sign_id):
+        """A report carrying the hero card the reader was shown."""
+        cfg2 = config.load_funnel(slug)
+        style = reports._style(cfg2, style_id)
+        choices = choices_for(slug, sign_id)
+        scores = {}
+        for step in cfg2["swipe"]["steps"]:
+            for image in step["pairs"][0]["images"]:
+                if image["id"] in choices:
+                    for tag in image.get("tags") or []:
+                        scores[tag] = scores.get(tag, 0) + 2
+        row = stub_report(reports, slug, style_id, sign_id)
+        card = reports._profile_for(cfg2, slug, style, scores, choices)
+        row["visuals"]["profile"] = card
+        return row, card, cfg2
+
+    row, card, cfg30 = rich("zodiac30", "celestial_air", "sign_virgo")
+    lux = (reports._pdf_html(row).split('<section class="cover">')[1]
+           .split("</section>")[0])
+    table = cfg30["result_copy"]["profile"]
+    check("the minimal cover is the one drawn for a funnel that has the copy",
+          '<div class="cover-card rich lux">' in lux, lux[:200])
+    check("  the legacy rarity pill is gone from it",
+          "cover-ribbon" not in lux
+          and card["rarity_line"] not in lux, card["rarity_line"])
+    check("  and so is the formula line the capsules replace",
+          'class="cover-formula"' not in lux)
+    check("the capsules are the funnel's own chips, filled from this run",
+          all(('<li class="cover-chip">%s</li>'
+               % reports._TOKEN_RE.sub("", reports._fill_tokens(
+                   shape, card["words"])).strip()) in lux
+              for shape in table["chips"]),
+          lux.split('class="cover-chips"')[1][:180])
+    check("the rarity is its own card, in this funnel's own words",
+          all(t in lux for t in ('<div class="cover-rare">',
+                                 table["rarity_card"]["lead"],
+                                 table["rarity_card"]["tail"])),
+          lux.split("cover-rare")[1][:160] if "cover-rare" in lux else lux[:160])
+    check("  carrying the share the page computes, not the 1-in-N",
+          '<p class="cover-rare-figure">%d%%</p>'
+          % reports._different_pct(card["rarity"]) in lux,
+          "1 in %s" % card["rarity"])
+    check("  and the note broken at the em dash, as rarityNote breaks it",
+          lux.count('class="cover-rare-noteline"') == 2,
+          table["rarity_card"]["note"])
+    check("the three scales are still drawn, with the leading pole lit",
+          lux.count('class="cover-scale"') == len(card["scales"])
+          and "cover-pole is-active" in lux,
+          "%d scales" % lux.count('class="cover-scale"'))
+    check("  and the split names the four elements under the bar",
+          all('>%s</span>' % cell["name"] in lux for cell in card["split"])
+          and 'class="cover-splitnames"' in lux)
+    check("the reading leads with the mark and drops the rule above it",
+          'class="cover-crossline is-bright"' in lux
+          and "cover-hair" not in lux)
+    # And the funnel with no minimal copy is untouched, which the whole block
+    # above already read — restated here against the same builder.
+    plain = (reports._pdf_html(rich("zodiac", "deep_water", "sign_pisces")[0])
+             .split('<section class="cover">')[1].split("</section>")[0])
+    check("a funnel without the minimal copy keeps the legacy card",
+          "cover-card rich lux" not in plain and "cover-rare" not in plain
+          and 'class="cover-ribbon"' in plain,
+          plain[:200])
+
+    print("\n--- a section picture never leaves its heading ---")
+    # The heading ended a page and its picture opened the next one, alone.
+    # `break-after: avoid-page` on the heading could not hold it: what follows
+    # the heading is a table WeasyPrint may break between its own rows.
+    shots = reports._pdf_html(row)
+    check("heading, picture and opening text are one block",
+          shots.count('<div class="section-open">')
+          == shots.count('<table class="media">'),
+          "%d boxes, %d media tables"
+          % (shots.count('<div class="section-open">'),
+             shots.count('<table class="media">')))
+    check("  the heading is inside the box, not above it",
+          '<div class="section-open"><h2 class="section-title">' in shots)
+    check("  and the box is what carries the picture",
+          '</h2><table class="media">' in shots)
+    check("the sheet forbids a break inside it",
+          ".section-open { break-inside: avoid-page; }" in shots
+          and ".media { break-inside: avoid-page; }" in shots)
+    check("  and kitchen's sheet never grew the rule it cannot use",
+          ".section-open" not in reports._pdf_html(
+              stub_report(reports, "kitchen", "modern_rustic")))
+
     print("\n--- the whole document renders ---")
     try:
         import weasyprint                                  # noqa: F401

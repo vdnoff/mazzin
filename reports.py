@@ -24,6 +24,7 @@ written to a log line.
 import base64
 import concurrent.futures
 import datetime
+import decimal
 import html
 import json
 import logging
@@ -54,6 +55,12 @@ SELECT_REPORT_SQL = (
 # Both ways a purchase can be identified in a link. Exactly one of them is
 # filled for any given row: a hosted checkout has the session and no intent in
 # the link, a payment confirmed in the page has the intent and no session.
+# What the buyer was actually charged, as the webhook recorded it from
+# Stripe. Read for the receipt line in the mail — see `_price_paid`, which
+# will not name a number it cannot source.
+SELECT_PURCHASE_PRICE_SQL = (
+    "SELECT amount_cents, currency, created_at FROM purchases WHERE id = %s")
+
 SELECT_PURCHASE_TOKENS_SQL = (
     "SELECT checkout_session, payment_intent FROM purchases WHERE id = %s"
 )
@@ -6542,6 +6549,150 @@ figure figcaption { background: #141B3C; }
   border-radius: 50%;
   background: #E8C878;
 }
+/* --- the minimal card ----------------------------------------------------
+
+   result_zodiac.js's lux arm, in print units. Same blocks in the same order:
+   the frame and its four marks, the capsules where the formula was, the lit
+   pole on each scale, the figures inside the split and the names under it,
+   the reading as the loudest sentence on the card, and the rarity on a card
+   of its own below. Nothing here is invented — where the page uses a shadow
+   or a radial gradient this uses the flat colour under it, because a print
+   sheet has no screen to glow on. */
+.cover-card.rich.lux {
+  position: relative;
+  border: 0.35mm solid #C4A660;
+  border-radius: 5mm;
+  padding: 8mm 8mm 6mm;
+  break-inside: avoid-page;
+}
+.cover-card.lux .cover-scales { margin-top: 4mm; }
+.cover-card.lux .cover-split { margin-top: 4mm; }
+.cover-card.lux .cover-band { margin-top: 5mm; }
+.cover-card.lux .cover-band img { height: 15mm; }
+/* The closing note sits under the rarity card on this layout rather than
+   under the hero, and the cover has to end on its own page. */
+.cover-rare + .cover-note { margin-top: 4mm; }
+.cover-corner {
+  position: absolute;
+  font-size: 7pt;
+  line-height: 1;
+  color: #C4A660;
+}
+.cover-corner.is-tl { top: 2.5mm; left: 3mm; }
+.cover-corner.is-tr { top: 2.5mm; right: 3mm; }
+.cover-corner.is-bl { bottom: 2.5mm; left: 3mm; }
+.cover-corner.is-br { bottom: 2.5mm; right: 3mm; }
+/* A short rule under the name, the width of a word rather than of the column:
+   an accent, not a divider. */
+.cover-card.lux .cover-subtype { font-size: 19pt; }
+.cover-rule {
+  width: 14mm;
+  height: 0.6mm;
+  margin: 2.6mm 0 0;
+  border-radius: 0.6mm;
+  background: #C4A660;
+}
+/* The formula, as capsules. */
+.cover-chips { margin: 3mm 0 0; padding: 0; list-style: none; font-size: 0; }
+.cover-chip {
+  display: inline-block;
+  margin: 0 1.6mm 1.6mm 0;
+  padding: 0.9mm 2.6mm;
+  border: 0.25mm solid rgba(196, 166, 96, 0.55);
+  border-radius: 6mm;
+  font-size: 7pt;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #C4A660;
+}
+/* The side a scale leans to is lit and the other is not, so the row reads
+   before the dot is found. */
+.cover-pole.is-active { color: #E8C878; }
+.cover-run.is-lit { background: rgba(196, 166, 96, 0.42); }
+/* Taller, with the figure inside its own block where the block is wide
+   enough to hold it. Centred by line-height rather than by a flex rule: this
+   page is paginated and inline-blocks go where they are told. */
+.cover-card.lux .cover-splitbar { height: 6.5mm; border-radius: 2mm; }
+.cover-card.lux .cover-seg {
+  height: 6.5mm;
+  line-height: 6.5mm;
+  text-align: center;
+}
+.cover-seg-pct {
+  font-size: 7.5pt;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  /* Dark on the element's own colour, which is the only ink that holds on
+     all four of them. */
+  color: #0E1430;
+}
+/* The names under the bar, each the width of the block it names, so the word
+   and the colour are the same measurement twice. */
+.cover-splitnames { margin: 2.4mm 0 0; font-size: 0; }
+.cover-splitname {
+  display: inline-block;
+  overflow: hidden;
+  font-size: 6.5pt;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  vertical-align: top;
+  white-space: nowrap;
+}
+/* The reading is the sentence this card is for. It was set as an aside under
+   a rule; it is the primary text here. */
+.cover-crossline.is-bright {
+  margin: 4mm 0 0;
+  font-size: 11pt;
+  line-height: 1.45;
+  color: #EDEFF6;
+}
+.cover-star { margin-right: 2mm; font-size: 9pt; color: #C4A660; }
+/* The rarity, as a card: the frame of the claim, the number at the size the
+   claim deserves, and one line about what it is worth. */
+.cover-rare {
+  margin: 4mm auto 0;
+  padding: 4mm 6mm 4mm;
+  max-width: 82mm;
+  border: 0.35mm solid #C4A660;
+  border-radius: 5mm;
+  background: rgba(196, 166, 96, 0.07);
+  text-align: center;
+  /* Whole or on the next page, never torn at the fold. */
+  break-inside: avoid-page;
+}
+.cover-rare-lead,
+.cover-rare-tail {
+  margin: 0;
+  font-size: 8pt;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #868FB6;
+}
+/* The number is the argument, so it is the size of one. */
+.cover-rare-figure {
+  margin: 0.5mm 0 0;
+  font-family: "Mazzin Serif", Georgia, "Times New Roman", serif;
+  font-size: 28pt;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: #C4A660;
+}
+.cover-rare-note {
+  margin: 3mm 0 0;
+  font-size: 9.5pt;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #C4A660;
+}
+/* Each half of the sentence on its own line, so the break is where the
+   sentence turns rather than where the box happens to end. */
+.cover-rare-noteline { display: block; }
+
 .cover-split { margin: 8mm 0 0; }
 .cover-splitbar {
   height: 2.4mm;
@@ -6619,6 +6770,23 @@ figure figcaption { background: #141B3C; }
   overflow: hidden;
 }
 .cover-band img { height: 26mm; }
+/* The heading, the picture that illustrates it and the paragraph that
+   picture sits beside are one block that cannot be broken.
+
+   `break-after: avoid-page` on the heading alone was not enough: it keeps the
+   heading with whatever follows it, and what follows is a table WeasyPrint is
+   free to break between its own rows. So the heading ended a page and its
+   picture opened the next one, a screen away from the section it illustrates
+   — "Rooftop under stars" alone at the top of page 5. One avoid-break box
+   around all three is the fix, and it holds whichever way the text above it
+   happens to fall.
+
+   Only this sheet carries it: the section picture is a zodiac idea, and
+   kitchen's document has no such picture to orphan. */
+.section-open { break-inside: avoid-page; }
+/* And the picture never leaves the paragraph it was set beside. */
+.media { break-inside: avoid-page; }
+
 .cover-band figcaption {
   padding: 1.4mm 2.5mm;
   font-size: 7.5pt;
@@ -6734,7 +6902,7 @@ PERSONA_PDF_CSS = ZODIAC_PDF_CSS + """
    static/img/print were pre-cropped before the PDF ever saw them, so
    scripts/gen_print_variants.py writes this funnel's at 3:4 as well. */
 /* A media object built from table cells rather than a float — see
-   `_pdf_media` in this file for why a float cannot be used here. */
+   `_pdf_opening` in this file for why a float cannot be used here. */
 .media {
   width: 100%;
   border-collapse: collapse;
@@ -7014,35 +7182,55 @@ def _split_first_block(html):
 _VOID_TAGS = frozenset(("img", "br", "hr", "input", "meta", "link"))
 
 
-def _pdf_media(shot, body):
-    """The picture beside the section's opening text, without a float.
+def _pdf_opening(head, shot, body):
+    """One section's heading, its picture and its opening text, as one block.
 
-    A floated figure is what this was, and in print it does not stay in its
-    own section: a float taller than the text beside it carries into the next
-    one, and WeasyPrint re-places it after a page break at the same offset —
-    so the image landed on top of the first strength's heading on page 4 and
-    across the month rail on page 5. `flow-root` and a clearfix on the
-    section did not fix it, because the escape happens at the page break
-    rather than at the end of the block.
+    Two things are held together here and they were broken by different
+    faults.
 
-    Two table cells cannot do that. The picture and the opening paragraph sit
-    side by side, and everything after them is full width below — which is
-    also the shape the layout wanted: text beside the picture, not a column
-    of text running the whole length of a 30mm image.
+    The picture sits beside the opening paragraph in two table cells rather
+    than as a float. A floated figure is what this was, and in print it does
+    not stay in its own section: a float taller than the text beside it
+    carries into the next one, and WeasyPrint re-places it after a page break
+    at the same offset — so the image landed on top of the first strength's
+    heading on page 4 and across the month rail on page 5. `flow-root` and a
+    clearfix on the section did not fix it, because the escape happens at the
+    page break rather than at the end of the block. Two table cells cannot do
+    that, and it is also the shape the layout wanted: text beside the picture,
+    not a column of text running the whole length of a 30mm image.
+
+    And the heading goes in the box with them. The table alone could still be
+    broken away from the heading above it at a page boundary, which is how a
+    picture came to open a page on its own with the section it illustrates a
+    screen behind it. The whole opening is one unbreakable unit now.
+
+    A section with no picture is left exactly as it was — heading, then body,
+    no box. There is nothing to orphan there, `break-after: avoid-page` on the
+    heading is the rule that block has always been held to, and kitchen's
+    document prints character for character what it printed before.
     """
     if not shot:
-        return body
+        return head + body
     first, rest = _split_first_block(body)
     if not first:
-        return shot + body
-    return ('<table class="media"><tr>'
+        # Nothing this can read a first block out of: the picture leads and
+        # the body follows it, still inside the unbreakable box.
+        return '<div class="section-open">%s%s</div>%s' % (head, shot, body)
+    return ('<div class="section-open">%s'
+            '<table class="media"><tr>'
             '<td class="media-shot">%s</td>'
             '<td class="media-text">%s</td>'
-            "</tr></table>%s" % (shot, first, rest))
+            "</tr></table></div>%s" % (head, shot, first, rest))
 
 
-def _pdf_section_body(section, structured):
-    """The inner HTML for one section, whichever schema it came in on."""
+def _pdf_section_body(section, structured, head=""):
+    """One whole section — its heading and its body, whichever schema it came
+    in on.
+
+    The heading is passed in rather than concatenated by the caller because
+    it belongs inside the unbreakable opening box with the picture: see
+    `_pdf_opening`.
+    """
     # The photograph this section was given, if the funnel names one. Here
     # rather than in the six builders: which picture belongs to a section is
     # the config's business, and threading it through every builder would put
@@ -7055,11 +7243,11 @@ def _pdf_section_body(section, structured):
         builder = PDF_BODY.get(section.get("id"))
         if builder and isinstance(data, dict):
             try:
-                return _pdf_media(shot, builder(data))
+                return _pdf_opening(head, shot, builder(data))
             except Exception:
                 log.exception("pdf section %s failed", section.get("id"))
     # Schema 1, or a section that arrived without usable data.
-    return _pdf_media(shot, "<p>%s</p>" % _e(section.get("body")))
+    return _pdf_opening(head, shot, "<p>%s</p>" % _e(section.get("body")))
 
 
 # Six to a row, the same as the result page's grid. Stated once, because the
@@ -7099,7 +7287,7 @@ PDF_ELEMENTS_BG = [
 ZODIAC_BG_PROFILE["pdf_elements"] = PDF_ELEMENTS_BG
 
 
-def _cover_scales(card):
+def _cover_scales(card, lean=False):
     """The three spectrum rows, as inline blocks rather than a flex row.
 
     Same reason the element cells below are: this document is paginated by
@@ -7117,43 +7305,168 @@ def _cover_scales(card):
     for row in (card.get("scales") or []):
         if not row.get("left") or not row.get("right"):
             continue
+        at = max(0, min(100, int(row.get("at") or 0)))
+        # Which pole this row leans to. Under half is the left and over half
+        # the right; dead level is neither, and neither is lit rather than one
+        # of them being lit by rounding. `scaleRow`, in the same words.
+        active = "left" if at < 50 else ("right" if at > 50 else "")
+        lit = " is-active" if lean and active else ""
+        # The run reads as a distance travelled from the lit side rather than
+        # as a slider with a value on it, so on the minimal card it starts at
+        # the lit pole. The dot is pushed along by an empty run either way —
+        # an absolutely positioned dot hangs its whole width off the end of
+        # the track at 100.
+        if lean and active == "right":
+            track = ('<span class="cover-run" style="width: %d%%"></span>'
+                     '<i class="cover-dot"></i>'
+                     '<span class="cover-run is-lit" style="width: %d%%">'
+                     "</span>" % (at, 100 - at))
+        else:
+            run = "cover-run is-lit" if (lean and active == "left") \
+                else "cover-run"
+            track = ('<span class="%s" style="width: %d%%"></span>'
+                     '<i class="cover-dot"></i>' % (run, at))
         rows.append(
             '<div class="cover-scale">'
-            '<span class="cover-pole">%s</span>'
-            '<span class="cover-track">'
-            '<span class="cover-run" style="width: %d%%"></span>'
-            '<i class="cover-dot"></i></span>'
-            '<span class="cover-pole right">%s</span></div>'
-            % (_e(row["left"]), max(0, min(100, int(row.get("at") or 0))),
-               _e(row["right"])))
+            '<span class="cover-pole%s">%s</span>'
+            '<span class="cover-track">%s</span>'
+            '<span class="cover-pole right%s">%s</span></div>'
+            % (lit if active == "left" else "", _e(row["left"]), track,
+               lit if active == "right" else "", _e(row["right"])))
     return "".join(rows)
 
 
-def _cover_split(card):
-    """The four elements as one bar, and the caption that adds to a hundred."""
+def _cover_split(card, lean=False):
+    """The four elements as one bar, and what is written under it.
+
+    Legacy: the caption that adds to a hundred. Minimal: the figure inside
+    each block wide enough to hold it and the element names beneath at the
+    same widths — result_zodiac.js's `splitBar(data, lean)`, which is where
+    the twelve-percent floor comes from too.
+    """
     cells = (card.get("split") or [])
     if not cells:
         return ""
-    segments = "".join(
-        '<span class="cover-seg" style="width: %d%%; background: %s"></span>'
-        % (max(0, int(cell.get("pct") or 0)), cell.get("color") or "#E8C878")
+    segments = []
+    for cell in cells:
+        pct = max(0, int(cell.get("pct") or 0))
+        figure = ('<b class="cover-seg-pct">%d%%</b>' % pct) if (
+            lean and pct >= SPLIT_LABEL_MIN_PCT) else ""
+        segments.append(
+            '<span class="cover-seg" style="width: %d%%; background: %s">'
+            "%s</span>" % (pct, cell.get("color") or "#E8C878", figure))
+    bar = '<div class="cover-splitbar">%s</div>' % "".join(segments)
+    if not lean:
+        return bar + ('<p class="cover-splitcap">%s</p>'
+                      % _e(card.get("split_caption")))
+    names = "".join(
+        '<span class="cover-splitname" style="width: %d%%; color: %s">%s</span>'
+        % (max(0, int(cell.get("pct") or 0)),
+           cell.get("color") or "#E8C878",
+           _e(cell.get("name") or cell.get("tag")))
         for cell in cells)
-    return ('<div class="cover-splitbar">%s</div>'
-            '<p class="cover-splitcap">%s</p>'
-            % (segments, _e(card.get("split_caption"))))
+    return bar + '<div class="cover-splitnames">%s</div>' % names
+
+
+# The page's own floor for printing a figure inside a segment, from
+# result_zodiac.js. Below it the block is narrower than the number.
+SPLIT_LABEL_MIN_PCT = 12
+
+# The mark the minimal card sets in its corners and in front of the reading.
+STAR = "\u2726"
+
+
+def _cover_chips(cfg, card):
+    """The formula as capsules, the way `chipRow` draws it, or "".
+
+    Same source and same filling: the funnel's own `result_copy.profile.chips`
+    templated with this reader's words, with any token the run could not fill
+    dropped rather than printed. A funnel that declares no chips gets nothing
+    here and keeps the formula line it has always had.
+    """
+    shapes = (_profile_table(cfg) or {}).get("chips") or []
+    words = card.get("words") or {}
+    cells = []
+    for shape in shapes:
+        text = _TOKEN_RE.sub("", _fill_tokens(shape, words)).strip()
+        if text:
+            cells.append('<li class="cover-chip">%s</li>' % _e(text))
+    return ('<ul class="cover-chips">%s</ul>' % "".join(cells)) if cells else ""
+
+
+def _different_pct(n):
+    """How many readings do NOT land this blend — `differentPct` in the page.
+
+    One number from one source: the same 1-in-N the ribbon was built from, so
+    the card and the sentence can never disagree about how rare a blend is.
+    """
+    n = _minor_units(n)
+    return int(round((1 - 1.0 / n) * 100)) if n and n >= 2 else 0
+
+
+def _cover_rarity(cfg, card):
+    """The rarity as its own card, or "" — `rarityBadge`'s first branch.
+
+    The frame of the claim, the number at the size the claim deserves, and one
+    line about what it is worth, all four strings read off the funnel's own
+    `rarity_card` so each language prints its own. A funnel that declares none
+    gets nothing: the legacy pill it used to print is gone from both layouts.
+    """
+    own = (_profile_table(cfg) or {}).get("rarity_card") or {}
+    pct = _different_pct(card.get("rarity"))
+    if not own.get("lead") or not pct:
+        return ""
+    parts = ['<p class="cover-rare-lead">%s</p>' % _e(own["lead"]),
+             '<p class="cover-rare-figure">%d%%</p>' % pct]
+    if own.get("tail"):
+        parts.append('<p class="cover-rare-tail">%s</p>' % _e(own["tail"]))
+    note = own.get("note")
+    if note:
+        # Broken at the em-dash rather than at whatever width the box is —
+        # the break is where the sentence turns, so it is the same break in
+        # any column. A translation carrying no dash gets one line rather
+        # than a guess at where to cut it. `rarityNote`, exactly.
+        halves = str(note).split("\u2014")
+        if len(halves) == 2:
+            parts.append(
+                '<p class="cover-rare-note">'
+                '<span class="cover-rare-noteline">%s \u2014</span>'
+                '<span class="cover-rare-noteline">%s</span></p>'
+                % (_e(halves[0].strip()), _e(halves[1].strip())))
+        else:
+            parts.append('<p class="cover-rare-note">%s</p>' % _e(note))
+    return '<div class="cover-rare">%s</div>' % "".join(parts)
 
 
 def _zodiac_rich_cover(content, profile, cfg, card):
     """The cover, when the report carries the hero the reader was shown.
 
-    Every part of the card on the page, in the order the page has them: the
-    glyph and the subtype on one row, the formula under it, the rarity, the
-    three scales, the four-element split, and the sign line under a hairline.
-    Somebody who paid on that page and then opens this file should recognise
-    it as the same document.
+    Every part of the card on the page, in the order the page has them, in
+    whichever of the two layouts that page draws. Somebody who paid on that
+    page and then opens this file should recognise it as the same document —
+    which is exactly what stopped being true when the page moved to the
+    minimal template and this kept printing the old one: the reader was shown
+    a rarity card and four capsules, and was sent a "1 in N readings" pill and
+    a formula line.
+
+    Which layout is decided the way the page decides it, by what the funnel's
+    own `result_copy.profile` carries. A funnel that declares no `chips` and
+    no `rarity_card` — zodiac v1, persona, every kitchen — has no minimal arm
+    on the page either, and gets this document exactly as it has always got
+    it. Nothing here is a third design: every block below is
+    result_zodiac.js's, in the same order, in print units.
     """
+    table = _profile_table(cfg) or {}
+    lean = bool(table.get("chips") or table.get("rarity_card"))
     hero = _pdf_visuals().get("hero") or {}
     glyph = _pdf_image(hero.get("glyph"), "cover-glyph")
+    chips = _cover_chips(cfg, card) if lean else ""
+    # The four corner marks the lux card carries. Decoration, and named as
+    # such — `aria-hidden` on the page, and a print document has no reader to
+    # hide them from.
+    corners = "".join(
+        '<span class="cover-corner is-%s">%s</span>' % (corner, STAR)
+        for corner in ("tl", "tr", "bl", "br")) if lean else ""
     return [
         '<section class="cover">',
         '<img class="cover-logo" src="%s" alt="Mazzin">'
@@ -7161,23 +7474,37 @@ def _zodiac_rich_cover(content, profile, cfg, card):
         '<p class="cover-kicker">%s</p>'
         % _e(((cfg or {}).get("result_copy") or {}).get("kicker")
              or profile["pdf_lead"]),
-        '<div class="cover-card rich">',
+        '<div class="cover-card rich%s">' % (" lux" if lean else ""),
+        corners,
         '<table class="cover-top"><tr>',
         ('<td class="cover-top-glyph">%s</td>' % glyph) if glyph else "",
         '<td class="cover-top-id">',
         '<h1 class="cover-subtype">%s</h1>' % _e(card.get("subtype")),
-        ('<p class="cover-formula">%s</p>' % _e(card["formula"]))
-        if card.get("formula") else "",
+        '<div class="cover-rule"></div>' if lean else "",
+        # The capsules stand in for the formula on the minimal card, exactly
+        # as `richHero` swaps them: chips when the funnel has them, the
+        # formula line when it does not.
+        chips or (('<p class="cover-formula">%s</p>' % _e(card["formula"]))
+                  if card.get("formula") else ""),
         "</td></tr></table>",
-        ('<p class="cover-ribbon">%s</p>' % _e(card["rarity_line"]))
-        if card.get("rarity_line") else "",
-        '<div class="cover-scales">%s</div>' % _cover_scales(card),
-        '<div class="cover-split">%s</div>' % _cover_split(card),
-        ('<div class="cover-hair"></div>'
-         '<p class="cover-crossline">%s</p>' % _e(card["cross_line"]))
+        # The legacy pill, for the legacy layout only. The minimal one gives
+        # the rarity its own card below the hero instead, which is the whole
+        # of the change the page made.
+        (('<p class="cover-ribbon">%s</p>' % _e(card["rarity_line"]))
+         if card.get("rarity_line") else "") if not lean else "",
+        '<div class="cover-scales">%s</div>' % _cover_scales(card, lean),
+        '<div class="cover-split">%s</div>' % _cover_split(card, lean),
+        # The rule goes on the lux card: the reading is the loudest sentence
+        # on it now, and a line above it makes it a footnote to the chart.
+        (('' if lean else '<div class="cover-hair"></div>')
+         + '<p class="cover-crossline%s">%s%s</p>'
+         % (" is-bright" if lean else "",
+            ('<span class="cover-star">%s</span>' % STAR) if lean else "",
+            _e(card["cross_line"])))
         if card.get("cross_line") else "",
         _pdf_image(hero.get("band"), "cover-band", True),
         "</div>",
+        _cover_rarity(cfg, card) if lean else "",
         '<p class="cover-note">%s</p>' % _e(profile.get("pdf_note") or ""),
         "</section>",
     ]
@@ -7535,11 +7862,11 @@ def _pdf_html(content):
     node = profile.get("pdf_node")
     for index, section in enumerate(content.get("sections") or [], 1):
         mark = ('<span class="node">%d</span>' % index) if node else ""
+        head = ('<h2 class="section-title">%s%s<span class="bar"></span></h2>'
+                % (mark, _e(section.get("title"))))
         blocks.append(
-            '<div class="section"><h2 class="section-title">%s%s'
-            '<span class="bar"></span></h2>%s</div>'
-            % (mark, _e(section.get("title")),
-               _pdf_section_body(section, structured))
+            '<div class="section">%s</div>'
+            % _pdf_section_body(section, structured, head)
         )
     # The document's own language, so WeasyPrint hyphenates and a reader
     # opens a file that says what it is. A profile that declares none is
@@ -7852,51 +8179,134 @@ def _slug(text):
 SYMBOLS = {"USD": "$", "EUR": "€", "GBP": "£"}
 
 
-def _price_paid(content):
-    """What this report cost, as a string for one sentence, or None.
+def _minor_units(value):
+    """`value` as integer minor units, or None. Never a float.
 
-    Read out of the funnel's own pricing rather than written into the copy: a
-    receipt that names a price the checkout does not charge is the one line in
-    the mail nobody would forgive. None when it cannot be read, and the
-    sentence is then written without a number rather than with a guessed one.
+    Money is an integer count of the smallest unit here and in MySQL, and the
+    one way to turn a correct price into a wrong one is to let a float into
+    the middle of it. A Decimal that happens to be whole is accepted because
+    a driver may hand one back; a float is refused whatever it holds.
     """
-    try:
-        cfg = config.load_funnel(content.get("funnel") or "")
-    except (KeyError, ValueError, OSError):
+    if isinstance(value, bool):
         return None
-    pricing = cfg.get("pricing") or {}
-    cents = pricing.get("amount_cents")
-    if isinstance(cents, bool) or not isinstance(cents, int) or cents <= 0:
+    if isinstance(value, int):
+        return value
+    if (isinstance(value, decimal.Decimal)
+            and value == value.to_integral_value()):
+        return int(value)
+    return None
+
+
+def _written_price(cfg, cents, currency=None):
+    """`cents` written the way this funnel writes money, or None.
+
+    The funnel's own `price_format` and `decimal_mark` — the same two optional
+    keys engine.js reads, so the page, the mail and the PDF name one price in
+    one shape. Absent on every dollar funnel, which therefore renders exactly
+    what it always did. Whatever character the format puts beside the amount
+    is substituted in verbatim, no-break space included.
+    """
+    cents = _minor_units(cents)
+    if cents is None or cents <= 0:
         return None
-    currency = str(pricing.get("currency") or "usd").upper()
-    # Cents are integers and stay integers; this is display, not arithmetic.
+    pricing = (cfg or {}).get("pricing") or {}
+    # Integers in, integers out; this is display, not arithmetic.
     whole, part = divmod(cents, 100)
     amount = str(whole) if part == 0 else "%d.%02d" % (whole, part)
-    # The funnel's own way of writing money, where a symbol in front of a
-    # point-separated number is the wrong shape — Romanian writes 9,99 lei.
-    # The same two optional keys engine.js reads, so the page, the mail and
-    # the PDF name one price in one format. Absent on every dollar funnel,
-    # which therefore renders exactly what it always did.
     mark = pricing.get("decimal_mark")
     if isinstance(mark, str) and mark:
         amount = amount.replace(".", mark)
     shape = pricing.get("price_format")
     if isinstance(shape, str) and shape:
         return shape.replace("{amount}", amount)
-    symbol = SYMBOLS.get(currency)
-    return (symbol + amount) if symbol else ("%s %s" % (amount, currency))
+    code = str(currency or pricing.get("currency") or "usd").upper()
+    symbol = SYMBOLS.get(code)
+    return (symbol + amount) if symbol else ("%s %s" % (amount, code))
 
 
-def _email_opening(content):
+def _aware(when):
+    """A stored timestamp as an aware UTC datetime, or None.
+
+    `purchases.created_at` is a naive MySQL DATETIME written by the server in
+    UTC. It has to be made aware before it can be compared with a sale's own
+    `ends`, which carries an offset — a naive/aware comparison raises, and the
+    whole point of reaching for this value is to avoid guessing.
+    """
+    if not isinstance(when, datetime.datetime):
+        return None
+    return (when if when.tzinfo is not None
+            else when.replace(tzinfo=datetime.timezone.utc))
+
+
+def _price_paid(content, purchase_id=None):
+    """What this reader actually paid, as a string for one sentence, or None.
+
+    It used to read `pricing.amount_cents` off the funnel, which is the price
+    the funnel charges when nothing is running — so every buyer who took a
+    sale was thanked for a sum they did not pay. A receipt naming a number the
+    reader can check against their own card statement is the one line in the
+    mail nobody would forgive, so this reads what was charged, in this order:
+
+    1. the purchase row, which is what the Stripe webhook recorded — the only
+       record of the actual transaction, amount and currency both;
+    2. failing a usable amount there, what the funnel was charging at the
+       moment of the sale, which the same row still dates;
+    3. failing that, no number at all. The sentence is written without one
+       rather than with a guess — and the regular price is never that guess on
+       a funnel that has ever carried a sale block, because a sale may have
+       applied and nothing here can rule it out.
+
+    A funnel with no sale block at all is the one case where the config price
+    is provably what was charged, and it is named. That is every kitchen and
+    persona report, and zodiac v1: all of them keep the line they always had.
+    """
+    try:
+        cfg = config.load_funnel(content.get("funnel") or "")
+    except (KeyError, ValueError, OSError):
+        return None
+
+    row = None
+    if purchase_id is not None:
+        try:
+            row = database.query_one(SELECT_PURCHASE_PRICE_SQL, (purchase_id,))
+        except Exception:
+            # A receipt is not worth an exception on the mail path.
+            log.exception("purchase price read failed for %s", purchase_id)
+            row = None
+
+    if row:
+        written = _written_price(cfg, row.get("amount_cents"),
+                                 row.get("currency"))
+        if written:
+            return written
+        when = _aware(row.get("created_at"))
+        if when is not None:
+            # Imported here rather than at the top: payments imports this
+            # module, and a module-level import back would be a cycle.
+            import payments
+            cents, _running = payments._effective_price(cfg, when)
+            return _written_price(cfg, cents)
+        return None
+
+    if isinstance(cfg.get("sale"), dict):
+        return None
+    return _written_price(cfg, (cfg.get("pricing") or {}).get("amount_cents"))
+
+
+def _email_opening(content, purchase_id=None):
     """The congratulation. Names the price when we know it, and does not
     reach for a substitute when we do not.
+
+    `purchase_id` is what lets it name the price this reader was charged
+    rather than the one the funnel lists; without it `_price_paid` will only
+    answer for a funnel that has never run a sale.
 
     The saving is the same figure the funnel leads with everywhere else. It
     was "thousands" here, which is the one place the reader has already paid
     and can check the claim against what they are holding — a vaguer number
     there than on the way in reads as the number getting smaller.
     """
-    price = _price_paid(content)
+    price = _price_paid(content, purchase_id)
     copy = _email_copy(content)
     if copy is COPY_ZODIAC_BG:
         if price:
@@ -8059,7 +8469,7 @@ def send_report_email(purchase_id, email, content, checkout_session=None):
             "keep": keep,
             "logo": html.escape(config.BASE_URL + "/static/brand/logo.svg"),
             "home": html.escape(config.BASE_URL),
-            "opening": _email_opening(content),
+            "opening": _email_opening(content, purchase_id),
         }),
         "attachments": [
             {

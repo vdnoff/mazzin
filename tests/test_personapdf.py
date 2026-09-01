@@ -160,9 +160,13 @@ check("the section picture is not a float",
                                   __import__("re").S))
 check("  it is a table cell beside the opening text",
       ".media-shot" in sheet and ".media-text" in sheet)
+# FORCED TEST EDIT. `_pdf_media` is `_pdf_opening` now: the same builder,
+# renamed because the box it returns holds the section heading as well as the
+# picture and its opening text — the heading was being left on the page above
+# and the picture opened the next one alone.
 check("  and the builder puts it there",
-      "def _pdf_media(" in open(os.path.join(REPO, "reports.py"),
-                                encoding="utf-8").read())
+      "def _pdf_opening(" in open(os.path.join(REPO, "reports.py"),
+                                  encoding="utf-8").read())
 check("the section is still its own block context",
       ".section { display: flow-root; }" in sheet)
 

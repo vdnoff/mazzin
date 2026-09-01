@@ -456,10 +456,33 @@ check("  and the sale price renders as 1,99\u00a0€ through the same formatter"
 check("    so the no-break space survives into every {price} slot",
       all("\u00a0" in v.replace("{price}", short(cfg["pricing"]))
           for _p, v in STRINGS if "{price}" in v))
+# FORCED TEST EDIT (2 sites, this and the mail block below). `_price_paid`
+# used to read `pricing.amount_cents`, so a buyer who took the sale was
+# thanked for the regular price — 1,99 € paid, "4,99 €" in the mail. It reads
+# the purchase row now, which is what the webhook recorded from Stripe, so a
+# price assertion has to hand it a purchase.
+import database                                            # noqa: E402
+
+_ROWS = {}
+database.query_one = lambda sql, args: _ROWS.get(args[0])
+
+
+def _bought(slug, cents, currency="eur", when=None, purchase_id=1):
+    """`(price string, opening line)` for a purchase recorded at `cents`."""
+    _ROWS.clear()
+    _ROWS[purchase_id] = {"amount_cents": cents, "currency": currency,
+                          "created_at": when}
+    return (reports._price_paid({"funnel": slug}, purchase_id),
+            reports._email_opening({"funnel": slug}, purchase_id))
+
+
 check("    and reports.py fills it the same way, for the mail and the PDF",
       'shape.replace("{amount}", amount)' in REPORTS_SRC
-      and reports._price_paid({"funnel": "zodiac-bg"}) == "4,99\u00a0\u20ac",
-      repr(reports._price_paid({"funnel": "zodiac-bg"})))
+      and _bought("zodiac-bg", 499)[0] == "4,99\u00a0\u20ac",
+      repr(_bought("zodiac-bg", 499)[0]))
+check("    the sale price through that same format, nbsp and all",
+      _bought("zodiac-bg", 199)[0] == "1,99\u00a0\u20ac",
+      repr(_bought("zodiac-bg", 199)[0]))
 for slug in ("zodiac", "zodiac30", "kitchen", "kitchen-visualizer"):
     en = json.load(open(os.path.join(ROOT, "funnels", slug + ".json"),
                         encoding="utf-8"))["pricing"]
@@ -1418,26 +1441,35 @@ for field in ("headline", "subject", "body", "keep", "keep_no_link"):
 check("  the subject still takes the style name",
       reports.COPY_ZODIAC_BG["subject"].count("%s") == 1
       and reports.COPY_ZODIAC_BG["body"].count("%s") == 1)
-check("the opening line is Bulgarian and names the price",
-      CYRILLIC.search(reports._email_opening({"funnel": "zodiac-bg"}))
-      and "4,99\u00a0\u20ac" in reports._email_opening({"funnel": "zodiac-bg"}),
-      reports._email_opening({"funnel": "zodiac-bg"}))
+# FORCED TEST EDIT (2 of 2). Same reason as the block above: the mail names
+# what the reader was actually charged, so the purchase is what says which
+# number that is.
+check("the opening line is Bulgarian and names the price that was paid",
+      CYRILLIC.search(_bought("zodiac-bg", 499)[1])
+      and "4,99\u00a0\u20ac" in _bought("zodiac-bg", 499)[1],
+      _bought("zodiac-bg", 499)[1])
+check("  and the sale price when that is what the card was charged",
+      "1,99\u00a0\u20ac" in _bought("zodiac-bg", 199)[1],
+      _bought("zodiac-bg", 199)[1])
 # The one place the ACT of reading is meant rather than the thing sold, and
 # the word for it is "прочит" — never "четене", which is the product noun this
 # funnel does not use.
 check("  and it calls that a прочит, not a четене",
-      "прочит" in reports._email_opening({"funnel": "zodiac-bg"})
-      and "чете" not in reports._email_opening({"funnel": "zodiac-bg"}),
-      reports._email_opening({"funnel": "zodiac-bg"}))
-check("  read off the funnel rather than written into the mail",
-      reports._price_paid({"funnel": "zodiac-bg"}) == "4,99\u00a0\u20ac"
-      and reports._price_paid({"funnel": "zodiac30"}) == "$3"
-      and reports._price_paid({"funnel": "zodiac-ro"}) == "9,99 lei",
-      "%s / %s" % (reports._price_paid({"funnel": "zodiac-bg"}),
-                   reports._price_paid({"funnel": "zodiac30"})))
+      "прочит" in _bought("zodiac-bg", 199)[1]
+      and "чете" not in _bought("zodiac-bg", 199)[1],
+      _bought("zodiac-bg", 199)[1])
+check("  read off the purchase rather than written into the mail",
+      _bought("zodiac-bg", 199)[0] == "1,99\u00a0\u20ac"
+      and _bought("zodiac30", 199, "usd")[0] == "$1.99"
+      and _bought("zodiac-ro", 499, "ron")[0] == "4,99 lei",
+      "%s / %s" % (_bought("zodiac-bg", 199)[0],
+                   _bought("zodiac30", 199, "usd")[0]))
+check("  and no number at all when the purchase cannot be read",
+      reports._price_paid({"funnel": "zodiac-bg"}) is None,
+      repr(reports._price_paid({"funnel": "zodiac-bg"})))
 check("  and the English opening is unchanged",
-      reports._email_opening({"funnel": "zodiac30"}).startswith("You just spent"),
-      reports._email_opening({"funnel": "zodiac30"}))
+      _bought("zodiac30", 300, "usd")[1].startswith("You just spent"),
+      _bought("zodiac30", 300, "usd")[1])
 print("\n--- the archetype name, in a Bulgarian sentence ---")
 # What the live page did: glued the style name straight onto a bare noun.
 # "Профил Небесен въздух решава бързо" is two nominatives side by side with
