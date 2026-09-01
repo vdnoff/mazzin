@@ -516,3 +516,6 @@ bottom.
 
 ## 2026-09-01 — claude/zodiac-bg
 - Bulgarian localization: zodiac-bg funnel + report profile
+
+## 2026-09-01 — claude/zodiac-bg-polish
+- zodiac-bg copy polish after live review
