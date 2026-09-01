@@ -531,3 +531,6 @@ bottom.
 
 ## 2026-09-01 — claude/brain-engine-2
 - engine: timer, prepare, reveal, timed steps, per-step labels
+
+## 2026-09-01 — claude/brain-funnel-2
+- brain v2: live-review fixes, minimal result, launch offer
