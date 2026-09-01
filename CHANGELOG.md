@@ -537,3 +537,6 @@ bottom.
 
 ## 2026-09-01 — claude/zodiac-bg-json-quotes
 - zodiac-bg: guillemets + JSON quote repair
+
+## 2026-09-01 — claude/brain-funnel-3
+- brain v3: phone-review fixes, improvement-first copy
