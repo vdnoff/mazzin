@@ -534,3 +534,6 @@ bottom.
 
 ## 2026-09-01 — claude/brain-funnel-2
 - brain v2: live-review fixes, minimal result, launch offer
+
+## 2026-09-01 — claude/zodiac-bg-json-quotes
+- zodiac-bg: guillemets + JSON quote repair
