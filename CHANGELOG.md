@@ -519,3 +519,6 @@ bottom.
 
 ## 2026-09-01 — claude/zodiac-bg-polish
 - zodiac-bg copy polish after live review
+
+## 2026-09-01 — claude/pdf-minimal-hero
+- email names paid price; PDF hero mirrors minimal template; images keep with heading
