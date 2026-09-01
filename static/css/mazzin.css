@@ -954,6 +954,29 @@ body.is-fading .dots span { background: #868FB6; }
   }
 }
 
+/* The badge a step held back until it was answered. Same pill, same place —
+   it is the badge mode's own node, arriving late — and reachable only through
+   `label_mode: "on_tap"` on a step, which no funnel shipping today carries.
+   The translate has to restate the pill's own centring: an animation on
+   `transform` replaces it outright, and without the -50% the label lands half
+   a pill to the right of the card it is naming. */
+.cards .card-name.is-late {
+  animation: mz-label-in 220ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes mz-label-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Opted out of motion: it appears, which is the part that carries the
+   meaning. The rise was the decoration. */
+@media (prefers-reduced-motion: reduce) {
+  .cards .card-name.is-late {
+    animation: mz-label-in 160ms linear both;
+  }
+}
+
 /* Subordinate to the art, and sized to the cell it sits in. Twelve cells are
    narrow enough that the pair size would leave "Sagittarius" as three
    characters and an ellipsis. */
@@ -3212,27 +3235,118 @@ body.is-fading .dots span { background: #868FB6; }
   }
 }
 
-/* --- the flash: frames to hold, and a bar that runs out --------------------- */
+/* --- the countdown ---------------------------------------------------------- */
+
+/* One clock, drawn one way, wherever a reader is being held to one: over the
+   memorise flash, and over a step that answers itself if nobody answers it.
+   Two countdowns that looked different would read as two different rules, and
+   the reader has no way to find out they are the same one.
+
+   Nothing here is scoped harder than the class because there is no node to
+   paint unless a config asked for one: engine.js builds a `.mz-timer` only for
+   a flash entry, or for a step carrying `timer_ms` and `timeout_pick`. Where
+   it goes is the two blocks further down; what it looks like is here. */
+.mz-timer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* The rail. A pill rather than a rule, because it is a quantity of time
+   remaining rather than a divider, and a hairline reads as the latter. */
+.mz-timer-track {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--accent-soft, rgba(0, 0, 0, 0.08));
+  /* The rail is a container for something that scales past its own box. */
+  overflow: hidden;
+}
+
+/* It drains by transform and never by width. Both places this runs are places
+   where something else is decoding — the next pair behind a flash, the next
+   step behind a timed one — and a width animation is a layout pass every
+   frame on exactly the screen that cannot afford one.
+
+   engine.js writes the duration and the target and then stops touching it, so
+   the bar is driven by the compositor rather than by the main thread and
+   cannot drift from the timeout it is drawn for by a frame that was dropped.
+
+   The gradient runs accent into warm along the rail, so the end that is about
+   to disappear is the hot one — the colour arrives at the reader before the
+   number does. */
+.mz-timer-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg,
+                              var(--accent) 0%,
+                              var(--mz-warm, #E8A33D) 100%);
+  box-shadow: 0 0 8px 1px var(--mz-glow, rgba(192, 86, 33, 0.34));
+  transform-origin: left center;
+  transform: scaleX(1);
+}
+
+/* The last stretch. One colour change, on the rail and the numeral at once,
+   because a reader glancing at either has to get the same answer. */
+.mz-timer.is-warn .mz-timer-fill {
+  background: var(--mz-warn, #E2574C);
+  box-shadow: 0 0 10px 1px rgba(226, 87, 76, 0.42);
+}
+
+/* Tabular figures and a fixed box: the numeral changes every second and a
+   proportional 1 would move the rail beside it on every tick. */
+.mz-timer-count {
+  flex: none;
+  min-width: 22px;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.mz-timer.is-warn .mz-timer-count { color: var(--mz-warn, #E2574C); }
+
+/* Opted out of motion: the rail still drains, because it is the only reading
+   of how much time is left on a screen nobody can hold open, and taking it
+   away leaves the reader guessing rather than leaves them undisturbed. What
+   comes off is the glow, which was the decorative half. */
+@media (prefers-reduced-motion: reduce) {
+  .mz-timer-fill { box-shadow: none; }
+}
+
+/* --- the flash: frames to hold, and a clock over them ----------------------- */
 
 /* The memorise screen. engine.js builds the block below only for an entry that
    names the template, carries frames and says how long it holds for, so none
-   of this is reachable from a funnel that has never heard of it — which is
-   every funnel shipping today. Nothing here is scoped any harder than the
-   class for that reason: there is no node to paint unless a config asked.
+   of this is reachable from a funnel that has never heard of it. Nothing here
+   is scoped any harder than the class for that reason: there is no node to
+   paint unless a config asked.
 
    The grid itself is deliberately not laid out here. It carries `.cards` and
    `.is-grid4` or `.is-grid6` — the same classes the swipe step uses — so the
    frames are memorised in the shape they will be answered in, off the one
    table that decides what a grid is. What this block does is take the list
-   styling off that row, size the cells, and give the screen its countdown. */
+   styling off that row, size the cells, and place the clock over them. */
 .mid.is-flash {
   margin: 20px 0 0;
 }
 
+/* Above the frames, in both places a timer is drawn. A clock under the thing
+   it is timing is a clock the reader finds after it has run out. */
+.mid.is-flash .mz-timer {
+  margin: 0 auto 12px;
+  max-width: 260px;
+}
+
 /* The row's own heights rather than the swipe screen's: there the grid is the
    one elastic thing in the column, here it sits between a headline and a
-   countdown on a screen that is not scrollable. The columns, gaps and rows
-   are still whatever `.cards.is-<format>` says they are. */
+   clock on a screen that is not scrollable. The columns, gaps and rows are
+   still whatever `.cards.is-<format>` says they are. */
 .mid.is-flash .mid-flash-grid {
   margin: 0;
   padding: 0;
@@ -3246,6 +3360,10 @@ body.is-fading .dots span { background: #868FB6; }
   overflow: hidden;
   border-radius: 14px;
   background: rgba(0, 0, 0, 0.06);
+  /* The swaps move these by transform and then put them back. Stated here so
+     a cell that has never moved and one that has just been put back are the
+     same declaration rather than two. */
+  transform-origin: center bottom;
 }
 
 .mid.is-flash .mid-flash-cell img {
@@ -3274,44 +3392,100 @@ body.is-fading .dots span { background: #868FB6; }
   text-align: center;
 }
 
-/* The countdown. A thin rule under the grid that empties as the screen runs
-   out, so how long is left is a thing you can see rather than a thing you
-   have to have been counting. */
-.mid.is-flash .mid-flash-bar {
-  overflow: hidden;
-  height: 3px;
-  max-width: 220px;
-  margin: 14px auto 0;
-  border-radius: 3px;
-  background: var(--accent-soft, rgba(0, 0, 0, 0.10));
+/* --- the flash: the count-in ------------------------------------------------ */
+
+/* Three, two, one, and then the frames. It is a phase of the same screen
+   rather than a screen of its own: the kicker stays, the line changes, and
+   what swaps is which of the two blocks below is on. Built whether or not it
+   runs, so nothing arrives mid-screen and shifts the layout under somebody
+   who is trying to hold a picture in their head. */
+.mid.is-flash .mz-prepare { display: none; }
+
+.mid.is-flash.is-prepare .mz-prepare {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: min(50vw, 34vh);
 }
 
-/* It drains by transform and never by width. This screen runs while the next
-   step's images are still decoding; a width animation is a layout pass every
-   frame, on the one screen the reader is being asked to read carefully.
+.mid.is-flash.is-prepare .mz-timer,
+.mid.is-flash.is-prepare .mid-flash-grid { display: none; }
 
-   engine.js writes the duration and nothing else — the drain is declared
-   here, so there is no second clock in the page to disagree with the dismiss
-   the engine is actually holding the screen for. */
-.mid.is-flash .mid-flash-fill {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--accent);
-  transform-origin: left center;
-  animation: flash-drain linear forwards;
+/* One numeral, as large as the column allows. Tabular again, so 3 and 1 sit
+   on the same centre and the count does not appear to move sideways. */
+.mid.is-flash .mz-prepare-count {
+  font-family: var(--brand);
+  font-size: 92px;
+  line-height: 1;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  color: var(--accent);
 }
 
-@keyframes flash-drain {
-  from { transform: scaleX(1); }
-  to { transform: scaleX(0); }
+/* Each numeral arrives. engine.js takes the class off and puts it back with a
+   reflow between, because this is one node three times and a CSS animation on
+   it otherwise plays once and never again. */
+.mid.is-flash .mz-prepare-count.is-in {
+  animation: mz-count-in 420ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
-/* No reduced-motion rule for the bar on purpose. Everything else that moves on
-   an interstitial is decoration and comes off; this is the only reading of how
-   much time is left on a screen nobody can hold open, and taking it away
-   leaves the reader guessing rather than leaves them undisturbed. */
+@keyframes mz-count-in {
+  from { opacity: 0; transform: scale(1.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* --- the flash: the lid, and the boxes changing places ---------------------- */
+
+/* The closed art, faded up over the open art in the cell it is closing. Both
+   images fill the same box, so the crossfade is two pictures in one frame
+   rather than a picture and a gap. engine.js writes the opacity transition
+   from the config's own `close_ms`. */
+.mid.is-flash .mid-flash-lid {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+/* The lid coming down: a squash and a release, on the cell rather than on
+   either image, so the two pictures move as one object. The duration is
+   written by engine.js from the same `close_ms` the crossfade uses — the two
+   halves of the move cannot end up on different clocks. */
+.mid.is-flash .mid-flash-cell.is-closing {
+  animation-name: mz-lid;
+  animation-timing-function: cubic-bezier(0.34, 0, 0.32, 1);
+  animation-fill-mode: both;
+}
+
+@keyframes mz-lid {
+  0% { transform: scaleY(1); }
+  55% { transform: scaleY(0.9); }
+  100% { transform: scaleY(1); }
+}
+
+/* Opted out of motion: the lid still closes, because which box the thing is
+   in is the question the next step asks. What comes off is the squash — the
+   crossfade alone says the same thing. */
+@media (prefers-reduced-motion: reduce) {
+  .mid.is-flash .mid-flash-cell.is-closing { animation: none; }
+  .mid.is-flash .mz-prepare-count.is-in { animation: none; }
+}
+
+/* --- a step with a clock on it ---------------------------------------------- */
+
+/* engine.js puts both classes on the swipe screen for the length of a step
+   that carries `timer_ms`, and takes both off again the moment it is
+   answered. A funnel with no timed steps never sees either, which is why this
+   block cannot reach one. */
+.step.is-timed .mz-timer {
+  flex: 0 0 auto;
+  margin: 0 0 10px;
+}
+
+/* The clock is a row in the stage's column and the cards are the elastic one,
+   so nothing else needs to move: the question stays where it was and the hint
+   stays under the cards. */
+.step.is-timed .cards { margin-top: 0; }
 
 /* --- single-page checkout -------------------------------------------------- */
 
