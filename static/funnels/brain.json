@@ -1,0 +1,2343 @@
+{
+  "slug": "brain",
+  "funnel_id": "brain_v1",
+  "locale": "en",
+  "theme": "brain",
+  "stripe_mode": "test",
+  "result_module": "/static/js/result_brain.js",
+  "result_css": "/static/css/result_brain.css",
+  "meta": {
+    "title": "Brain Age Challenge",
+    "og_image": "/static/galleries/brain/og.webp"
+  },
+  "swipe": {
+    "pairs_count": 18,
+    "headline": "How old is your brain?",
+    "subtext": "18 quick rounds. No sign-up.",
+    "subtext_accent": "No sign-up.",
+    "hint": "Tap fast. Trust your gut.",
+    "label_mode": "badge",
+    "analyzing_fade_to": "#F4F1EA",
+    "steps": [
+      {
+        "id": "age",
+        "question": "First — your age group:",
+        "format": "grid6",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "age_21",
+                "img": "/static/galleries/brain/age_21.webp",
+                "label": "18–24",
+                "tags": [
+                  "age_21"
+                ]
+              },
+              {
+                "id": "age_30",
+                "img": "/static/galleries/brain/age_30.webp",
+                "label": "25–34",
+                "tags": [
+                  "age_30"
+                ]
+              },
+              {
+                "id": "age_40",
+                "img": "/static/galleries/brain/age_40.webp",
+                "label": "35–44",
+                "tags": [
+                  "age_40"
+                ]
+              },
+              {
+                "id": "age_50",
+                "img": "/static/galleries/brain/age_50.webp",
+                "label": "45–54",
+                "tags": [
+                  "age_50"
+                ]
+              },
+              {
+                "id": "age_60",
+                "img": "/static/galleries/brain/age_60.webp",
+                "label": "55–64",
+                "tags": [
+                  "age_60"
+                ]
+              },
+              {
+                "id": "age_70",
+                "img": "/static/galleries/brain/age_70.webp",
+                "label": "65+",
+                "tags": [
+                  "age_70"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "mood",
+        "question": "Your brain right now:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "mood_sharp",
+                "img": "/static/galleries/brain/mood_sharp.webp",
+                "label": "Sharp",
+                "tags": [
+                  "mood_sharp"
+                ]
+              },
+              {
+                "id": "mood_ok",
+                "img": "/static/galleries/brain/mood_ok.webp",
+                "label": "Okay",
+                "tags": [
+                  "mood_ok"
+                ]
+              },
+              {
+                "id": "mood_foggy",
+                "img": "/static/galleries/brain/mood_foggy.webp",
+                "label": "Foggy",
+                "tags": [
+                  "mood_foggy"
+                ]
+              },
+              {
+                "id": "mood_fumes",
+                "img": "/static/galleries/brain/mood_fumes.webp",
+                "label": "Running on fumes",
+                "tags": [
+                  "mood_fumes"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "mem1",
+        "question": "Which one did you just see?",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "mem1_hit",
+                "img": "/static/galleries/brain/mem1_f2.webp",
+                "label": "Blue triangle",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem1_m1",
+                "img": "/static/galleries/brain/mem1_m1.webp",
+                "label": "Violet hexagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem1_m2",
+                "img": "/static/galleries/brain/mem1_m2.webp",
+                "label": "Teal diamond",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem1_m3",
+                "img": "/static/galleries/brain/mem1_m3.webp",
+                "label": "Amber cross",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "mem2",
+        "question": "Which one did you just see?",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "mem2_hit",
+                "img": "/static/galleries/brain/mem2_f4.webp",
+                "label": "Blue diamond",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem2_m1",
+                "img": "/static/galleries/brain/mem2_m1.webp",
+                "label": "Amber triangle",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_m2",
+                "img": "/static/galleries/brain/mem2_m2.webp",
+                "label": "Teal circle",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_m3",
+                "img": "/static/galleries/brain/mem2_m3.webp",
+                "label": "Red pentagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "mem3",
+        "question": "Which one did you just see?",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "mem3_hit",
+                "img": "/static/galleries/brain/mem3_f5.webp",
+                "label": "Green diamond",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem3_m1",
+                "img": "/static/galleries/brain/mem3_m1.webp",
+                "label": "Blue star",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_m2",
+                "img": "/static/galleries/brain/mem3_m2.webp",
+                "label": "Red circle",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_m3",
+                "img": "/static/galleries/brain/mem3_m3.webp",
+                "label": "Violet pentagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "mem4",
+        "question": "Which one did you just see?",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "mem4_hit",
+                "img": "/static/galleries/brain/mem4_f3.webp",
+                "label": "Blue pentagon",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem4_m1",
+                "img": "/static/galleries/brain/mem4_m1.webp",
+                "label": "Teal hexagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_m2",
+                "img": "/static/galleries/brain/mem4_m2.webp",
+                "label": "Amber cross",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_m3",
+                "img": "/static/galleries/brain/mem4_m3.webp",
+                "label": "Green circle",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "spa1",
+        "question": "Where was the key?",
+        "format": "grid6",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "spa1_s1",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "1",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa1_s2",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "2",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa1_s3",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "3",
+                "tags": [
+                  "spa_hit"
+                ]
+              },
+              {
+                "id": "spa1_s4",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "4",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa1_s5",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "5",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa1_s6",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "6",
+                "tags": [
+                  "spa_miss"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "spa2",
+        "question": "Where was the cup?",
+        "format": "grid6",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "spa2_s1",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "1",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_s2",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "2",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_s3",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "3",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_s4",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "4",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_s5",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "5",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_s6",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "6",
+                "tags": [
+                  "spa_hit"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "spa3",
+        "question": "Where was the star?",
+        "format": "grid6",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "spa3_s1",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "1",
+                "tags": [
+                  "spa_hit"
+                ]
+              },
+              {
+                "id": "spa3_s2",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "2",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa3_s3",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "3",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa3_s4",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "4",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa3_s5",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "5",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa3_s6",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "6",
+                "tags": [
+                  "spa_miss"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "spa4",
+        "question": "Where was the moon?",
+        "format": "grid6",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "spa4_s1",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "1",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa4_s2",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "2",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa4_s3",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "3",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa4_s4",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "4",
+                "tags": [
+                  "spa_hit"
+                ]
+              },
+              {
+                "id": "spa4_s5",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "5",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa4_s6",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "6",
+                "tags": [
+                  "spa_miss"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "chg1",
+        "question": "Which one changed?",
+        "format": "grid4",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "chg1_s1",
+                "img": "/static/galleries/brain/chg1_f1.webp",
+                "label": "1",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_s2",
+                "img": "/static/galleries/brain/chg1_x.webp",
+                "label": "2",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg1_s3",
+                "img": "/static/galleries/brain/chg1_f3.webp",
+                "label": "3",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_s4",
+                "img": "/static/galleries/brain/chg1_f4.webp",
+                "label": "4",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "chg2",
+        "question": "Which one changed?",
+        "format": "grid4",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "chg2_s1",
+                "img": "/static/galleries/brain/chg2_f1.webp",
+                "label": "1",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_s2",
+                "img": "/static/galleries/brain/chg2_f2.webp",
+                "label": "2",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_s3",
+                "img": "/static/galleries/brain/chg2_f3.webp",
+                "label": "3",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_s4",
+                "img": "/static/galleries/brain/chg2_x.webp",
+                "label": "4",
+                "tags": [
+                  "chg_hit"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "chg3",
+        "question": "Which one changed?",
+        "format": "grid4",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "chg3_s1",
+                "img": "/static/galleries/brain/chg3_x.webp",
+                "label": "1",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg3_s2",
+                "img": "/static/galleries/brain/chg3_f2.webp",
+                "label": "2",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_s3",
+                "img": "/static/galleries/brain/chg3_f3.webp",
+                "label": "3",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_s4",
+                "img": "/static/galleries/brain/chg3_f4.webp",
+                "label": "4",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "chg4",
+        "question": "Which one changed?",
+        "format": "grid4",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "chg4_s1",
+                "img": "/static/galleries/brain/chg4_f1.webp",
+                "label": "1",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_s2",
+                "img": "/static/galleries/brain/chg4_f2.webp",
+                "label": "2",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_s3",
+                "img": "/static/galleries/brain/chg4_x.webp",
+                "label": "3",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg4_s4",
+                "img": "/static/galleries/brain/chg4_f4.webp",
+                "label": "4",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "odd",
+        "question": "Tap the odd one out",
+        "format": "grid6",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "odd_s1",
+                "img": "/static/galleries/brain/odd_base.webp",
+                "label": "1",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "odd_s2",
+                "img": "/static/galleries/brain/odd_base.webp",
+                "label": "2",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "odd_s3",
+                "img": "/static/galleries/brain/odd_base.webp",
+                "label": "3",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "odd_s4",
+                "img": "/static/galleries/brain/odd_diff.webp",
+                "label": "4",
+                "tags": [
+                  "foc_hit"
+                ]
+              },
+              {
+                "id": "odd_s5",
+                "img": "/static/galleries/brain/odd_base.webp",
+                "label": "5",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "odd_s6",
+                "img": "/static/galleries/brain/odd_base.webp",
+                "label": "6",
+                "tags": [
+                  "foc_miss"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ink",
+        "question": "Tap the card where the word matches its colour",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "ink_s1",
+                "img": "/static/galleries/brain/ink_1.webp",
+                "label": "1",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "ink_s2",
+                "img": "/static/galleries/brain/ink_2.webp",
+                "label": "2",
+                "tags": [
+                  "foc_hit"
+                ]
+              },
+              {
+                "id": "ink_s3",
+                "img": "/static/galleries/brain/ink_3.webp",
+                "label": "3",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "ink_s4",
+                "img": "/static/galleries/brain/ink_4.webp",
+                "label": "4",
+                "tags": [
+                  "foc_miss"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "next",
+        "question": "Which shape comes next?",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "next_a1",
+                "img": "/static/galleries/brain/nxt_a1.webp",
+                "label": "1",
+                "tags": [
+                  "foc_hit"
+                ]
+              },
+              {
+                "id": "next_a2",
+                "img": "/static/galleries/brain/nxt_a2.webp",
+                "label": "2",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "next_a3",
+                "img": "/static/galleries/brain/nxt_a3.webp",
+                "label": "3",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "next_a4",
+                "img": "/static/galleries/brain/nxt_a4.webp",
+                "label": "4",
+                "tags": [
+                  "foc_miss"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "count",
+        "question": "How many circles did you see?",
+        "format": "grid4",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "count_7",
+                "img": "/static/galleries/brain/cnt_7.webp",
+                "label": "7",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "count_8",
+                "img": "/static/galleries/brain/cnt_8.webp",
+                "label": "8",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "count_9",
+                "img": "/static/galleries/brain/cnt_9.webp",
+                "label": "9",
+                "tags": [
+                  "foc_hit"
+                ]
+              },
+              {
+                "id": "count_10",
+                "img": "/static/galleries/brain/cnt_10.webp",
+                "label": "10",
+                "tags": [
+                  "foc_miss"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "interstitials": [
+    {
+      "after_step": 2,
+      "template": "flash",
+      "kicker": "Round 1 · Memory",
+      "line": "Memorise these",
+      "auto_advance_ms": 3000,
+      "flash": {
+        "format": "grid4",
+        "images": [
+          {
+            "img": "/static/galleries/brain/mem1_f1.webp",
+            "label": "Red circle"
+          },
+          {
+            "img": "/static/galleries/brain/mem1_f2.webp",
+            "label": "Blue triangle"
+          },
+          {
+            "img": "/static/galleries/brain/mem1_f3.webp",
+            "label": "Amber square"
+          },
+          {
+            "img": "/static/galleries/brain/mem1_f4.webp",
+            "label": "Green star"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 3,
+      "template": "flash",
+      "kicker": "Round 1 · Memory",
+      "line": "Memorise these",
+      "auto_advance_ms": 3000,
+      "flash": {
+        "format": "grid4",
+        "images": [
+          {
+            "img": "/static/galleries/brain/mem2_f1.webp",
+            "label": "Violet square"
+          },
+          {
+            "img": "/static/galleries/brain/mem2_f2.webp",
+            "label": "Green hexagon"
+          },
+          {
+            "img": "/static/galleries/brain/mem2_f3.webp",
+            "label": "Red star"
+          },
+          {
+            "img": "/static/galleries/brain/mem2_f4.webp",
+            "label": "Blue diamond"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 4,
+      "template": "flash",
+      "kicker": "Round 1 · Memory",
+      "line": "Memorise these",
+      "auto_advance_ms": 3500,
+      "flash": {
+        "format": "grid4",
+        "images": [
+          {
+            "img": "/static/galleries/brain/mem3_f1.webp",
+            "label": "Amber circle"
+          },
+          {
+            "img": "/static/galleries/brain/mem3_f2.webp",
+            "label": "Violet triangle"
+          },
+          {
+            "img": "/static/galleries/brain/mem3_f3.webp",
+            "label": "Teal square"
+          },
+          {
+            "img": "/static/galleries/brain/mem3_f4.webp",
+            "label": "Red hexagon"
+          },
+          {
+            "img": "/static/galleries/brain/mem3_f5.webp",
+            "label": "Green diamond"
+          },
+          {
+            "img": "/static/galleries/brain/mem3_f6.webp",
+            "label": "Blue cross"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 5,
+      "template": "flash",
+      "kicker": "Round 1 · Memory",
+      "line": "Memorise these",
+      "auto_advance_ms": 4000,
+      "flash": {
+        "format": "grid4",
+        "images": [
+          {
+            "img": "/static/galleries/brain/mem4_f1.webp",
+            "label": "Green square"
+          },
+          {
+            "img": "/static/galleries/brain/mem4_f2.webp",
+            "label": "Teal star"
+          },
+          {
+            "img": "/static/galleries/brain/mem4_f3.webp",
+            "label": "Blue pentagon"
+          },
+          {
+            "img": "/static/galleries/brain/mem4_f4.webp",
+            "label": "Amber diamond"
+          },
+          {
+            "img": "/static/galleries/brain/mem4_f5.webp",
+            "label": "Violet circle"
+          },
+          {
+            "img": "/static/galleries/brain/mem4_f6.webp",
+            "label": "Red triangle"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 6,
+      "template": "flash",
+      "kicker": "Round 2 · Spatial",
+      "line": "Where is the key?",
+      "auto_advance_ms": 2500,
+      "flash": {
+        "format": "grid6",
+        "images": [
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "1"
+          },
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "2"
+          },
+          {
+            "img": "/static/galleries/brain/box_open_key.webp",
+            "label": "3"
+          },
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "4"
+          },
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "5"
+          },
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "6"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 7,
+      "template": "flash",
+      "kicker": "Round 2 · Spatial",
+      "line": "Where is the cup?",
+      "auto_advance_ms": 2500,
+      "flash": {
+        "format": "grid6",
+        "images": [
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "1"
+          },
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "2"
+          },
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "3"
+          },
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "4"
+          },
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "5"
+          },
+          {
+            "img": "/static/galleries/brain/box_open_cup.webp",
+            "label": "6"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 8,
+      "template": "flash",
+      "kicker": "Round 2 · Spatial",
+      "line": "Where is the star?",
+      "auto_advance_ms": 2500,
+      "flash": {
+        "format": "grid6",
+        "images": [
+          {
+            "img": "/static/galleries/brain/box_open_star.webp",
+            "label": "1"
+          },
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "2"
+          },
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "3"
+          },
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "4"
+          },
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "5"
+          },
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "6"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 9,
+      "template": "flash",
+      "kicker": "Round 2 · Spatial",
+      "line": "Where is the moon?",
+      "auto_advance_ms": 2500,
+      "flash": {
+        "format": "grid6",
+        "images": [
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "1"
+          },
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "2"
+          },
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "3"
+          },
+          {
+            "img": "/static/galleries/brain/box_open_moon.webp",
+            "label": "4"
+          },
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "5"
+          },
+          {
+            "img": "/static/galleries/brain/box_closed.webp",
+            "label": "6"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 10,
+      "template": "flash",
+      "kicker": "Round 3 · Change",
+      "line": "Study these four",
+      "auto_advance_ms": 3000,
+      "flash": {
+        "format": "grid4",
+        "images": [
+          {
+            "img": "/static/galleries/brain/chg1_f1.webp",
+            "label": "1"
+          },
+          {
+            "img": "/static/galleries/brain/chg1_f2.webp",
+            "label": "2"
+          },
+          {
+            "img": "/static/galleries/brain/chg1_f3.webp",
+            "label": "3"
+          },
+          {
+            "img": "/static/galleries/brain/chg1_f4.webp",
+            "label": "4"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 11,
+      "template": "flash",
+      "kicker": "Round 3 · Change",
+      "line": "Study these four",
+      "auto_advance_ms": 3000,
+      "flash": {
+        "format": "grid4",
+        "images": [
+          {
+            "img": "/static/galleries/brain/chg2_f1.webp",
+            "label": "1"
+          },
+          {
+            "img": "/static/galleries/brain/chg2_f2.webp",
+            "label": "2"
+          },
+          {
+            "img": "/static/galleries/brain/chg2_f3.webp",
+            "label": "3"
+          },
+          {
+            "img": "/static/galleries/brain/chg2_f4.webp",
+            "label": "4"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 12,
+      "template": "flash",
+      "kicker": "Round 3 · Change",
+      "line": "Study these four",
+      "auto_advance_ms": 3000,
+      "flash": {
+        "format": "grid4",
+        "images": [
+          {
+            "img": "/static/galleries/brain/chg3_f1.webp",
+            "label": "1"
+          },
+          {
+            "img": "/static/galleries/brain/chg3_f2.webp",
+            "label": "2"
+          },
+          {
+            "img": "/static/galleries/brain/chg3_f3.webp",
+            "label": "3"
+          },
+          {
+            "img": "/static/galleries/brain/chg3_f4.webp",
+            "label": "4"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 13,
+      "template": "flash",
+      "kicker": "Round 3 · Change",
+      "line": "Study these four",
+      "auto_advance_ms": 3000,
+      "flash": {
+        "format": "grid4",
+        "images": [
+          {
+            "img": "/static/galleries/brain/chg4_f1.webp",
+            "label": "1"
+          },
+          {
+            "img": "/static/galleries/brain/chg4_f2.webp",
+            "label": "2"
+          },
+          {
+            "img": "/static/galleries/brain/chg4_f3.webp",
+            "label": "3"
+          },
+          {
+            "img": "/static/galleries/brain/chg4_f4.webp",
+            "label": "4"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 14,
+      "template": "confirm",
+      "kicker": "Round 4 · Focus",
+      "line": "Last four. Speed counts.",
+      "sub": "Same rules. Nothing to memorise.",
+      "cta": "Continue",
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "chg1",
+        "chg2",
+        "chg3",
+        "chg4"
+      ],
+      "personal": {
+        "axis": "chg",
+        "lines": {
+          "chg_hit": {
+            "line": "Nothing slips past you.",
+            "sub": "Change detection is your strong suit."
+          },
+          "chg_miss": {
+            "line": "Changes are sneaky.",
+            "sub": "Most people miss two of four."
+          }
+        }
+      }
+    },
+    {
+      "after_step": 16,
+      "template": "flash",
+      "kicker": "Round 4 · Focus",
+      "line": "Remember the pattern:",
+      "auto_advance_ms": 4000,
+      "flash": {
+        "format": "grid4",
+        "images": [
+          {
+            "img": "/static/galleries/brain/nxt_q1.webp",
+            "label": "1"
+          },
+          {
+            "img": "/static/galleries/brain/nxt_q2.webp",
+            "label": "2"
+          },
+          {
+            "img": "/static/galleries/brain/nxt_q3.webp",
+            "label": "3"
+          },
+          {
+            "img": "/static/galleries/brain/nxt_qm.webp",
+            "label": "?"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 17,
+      "template": "flash",
+      "kicker": "Round 4 · Focus",
+      "line": "Count the circles",
+      "auto_advance_ms": 2000,
+      "flash": {
+        "format": "grid4",
+        "images": [
+          {
+            "img": "/static/galleries/brain/cnt_f1.webp"
+          },
+          {
+            "img": "/static/galleries/brain/cnt_f2.webp"
+          },
+          {
+            "img": "/static/galleries/brain/cnt_f3.webp"
+          },
+          {
+            "img": "/static/galleries/brain/cnt_f4.webp"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 18,
+      "template": "almost",
+      "kicker": "Computing",
+      "line": "All 16 rounds in.",
+      "sub": "Working out your brain age...",
+      "cta": "See my brain age",
+      "auto_advance_ms": 2400,
+      "echo_steps": [
+        "odd",
+        "ink",
+        "next",
+        "count"
+      ]
+    }
+  ],
+  "interstitial_working": [
+    "Scoring that round…",
+    "Lining it up against the others…",
+    "Working out where you land…"
+  ],
+  "preview_gallery": [
+    {
+      "id": "mem1_f1",
+      "img": "/static/galleries/brain/mem1_f1.webp",
+      "tags": [
+        "mem_hit"
+      ]
+    },
+    {
+      "id": "mem1_f2",
+      "img": "/static/galleries/brain/mem1_f2.webp",
+      "tags": [
+        "mem_hit"
+      ]
+    },
+    {
+      "id": "mem1_f3",
+      "img": "/static/galleries/brain/mem1_f3.webp",
+      "tags": [
+        "mem_hit"
+      ]
+    },
+    {
+      "id": "mem1_f4",
+      "img": "/static/galleries/brain/mem1_f4.webp",
+      "tags": [
+        "mem_hit"
+      ]
+    },
+    {
+      "id": "box_open_key",
+      "img": "/static/galleries/brain/box_open_key.webp",
+      "tags": [
+        "spa_hit"
+      ]
+    },
+    {
+      "id": "box_open_cup",
+      "img": "/static/galleries/brain/box_open_cup.webp",
+      "tags": [
+        "spa_hit"
+      ]
+    },
+    {
+      "id": "box_open_star",
+      "img": "/static/galleries/brain/box_open_star.webp",
+      "tags": [
+        "spa_hit"
+      ]
+    },
+    {
+      "id": "box_open_moon",
+      "img": "/static/galleries/brain/box_open_moon.webp",
+      "tags": [
+        "spa_hit"
+      ]
+    },
+    {
+      "id": "chg1_f1",
+      "img": "/static/galleries/brain/chg1_f1.webp",
+      "tags": [
+        "chg_hit"
+      ]
+    },
+    {
+      "id": "chg1_f2",
+      "img": "/static/galleries/brain/chg1_f2.webp",
+      "tags": [
+        "chg_hit"
+      ]
+    },
+    {
+      "id": "chg1_f3",
+      "img": "/static/galleries/brain/chg1_f3.webp",
+      "tags": [
+        "chg_hit"
+      ]
+    },
+    {
+      "id": "chg1_f4",
+      "img": "/static/galleries/brain/chg1_f4.webp",
+      "tags": [
+        "chg_hit"
+      ]
+    },
+    {
+      "id": "nxt_a1",
+      "img": "/static/galleries/brain/nxt_a1.webp",
+      "tags": [
+        "foc_hit"
+      ]
+    },
+    {
+      "id": "odd_diff",
+      "img": "/static/galleries/brain/odd_diff.webp",
+      "tags": [
+        "foc_hit"
+      ]
+    },
+    {
+      "id": "ink_2",
+      "img": "/static/galleries/brain/ink_2.webp",
+      "tags": [
+        "foc_hit"
+      ]
+    },
+    {
+      "id": "cnt_f2",
+      "img": "/static/galleries/brain/cnt_f2.webp",
+      "tags": [
+        "foc_hit"
+      ]
+    }
+  ],
+  "style_elements": {
+    "title": "Your Rounds",
+    "subline": "Recognised from your taps — read in full in your report.",
+    "items": [
+      {
+        "id": "mem1_f1",
+        "label": "Red circle",
+        "spec": "Memory — the round that holds what it saw",
+        "image": "mem1_f1",
+        "img": "/static/galleries/brain/mem1_f1.webp",
+        "tags": [
+          "mem_hit"
+        ]
+      },
+      {
+        "id": "mem1_f2",
+        "label": "Blue triangle",
+        "spec": "Memory — the round that holds what it saw",
+        "image": "mem1_f2",
+        "img": "/static/galleries/brain/mem1_f2.webp",
+        "tags": [
+          "mem_hit"
+        ]
+      },
+      {
+        "id": "mem2_f3",
+        "label": "Red star",
+        "spec": "Memory — the round that holds what it saw",
+        "image": "mem2_f3",
+        "img": "/static/galleries/brain/mem2_f3.webp",
+        "tags": [
+          "mem_hit"
+        ]
+      },
+      {
+        "id": "box_open_key",
+        "label": "The key",
+        "spec": "Spatial — the round that keeps the map",
+        "image": "box_open_key",
+        "img": "/static/galleries/brain/box_open_key.webp",
+        "tags": [
+          "spa_hit"
+        ]
+      },
+      {
+        "id": "box_open_cup",
+        "label": "The cup",
+        "spec": "Spatial — the round that keeps the map",
+        "image": "box_open_cup",
+        "img": "/static/galleries/brain/box_open_cup.webp",
+        "tags": [
+          "spa_hit"
+        ]
+      },
+      {
+        "id": "box_open_moon",
+        "label": "The moon",
+        "spec": "Spatial — the round that keeps the map",
+        "image": "box_open_moon",
+        "img": "/static/galleries/brain/box_open_moon.webp",
+        "tags": [
+          "spa_hit"
+        ]
+      },
+      {
+        "id": "chg1_f1",
+        "label": "Red triangle",
+        "spec": "Change — the round that spots the edit",
+        "image": "chg1_f1",
+        "img": "/static/galleries/brain/chg1_f1.webp",
+        "tags": [
+          "chg_hit"
+        ]
+      },
+      {
+        "id": "chg2_f1",
+        "label": "Teal hexagon",
+        "spec": "Change — the round that spots the edit",
+        "image": "chg2_f1",
+        "img": "/static/galleries/brain/chg2_f1.webp",
+        "tags": [
+          "chg_hit"
+        ]
+      },
+      {
+        "id": "chg4_f3",
+        "label": "Red cross",
+        "spec": "Change — the round that spots the edit",
+        "image": "chg4_f3",
+        "img": "/static/galleries/brain/chg4_f3.webp",
+        "tags": [
+          "chg_hit"
+        ]
+      },
+      {
+        "id": "odd_diff",
+        "label": "The odd one",
+        "spec": "Focus — the round that goes straight at it",
+        "image": "odd_diff",
+        "img": "/static/galleries/brain/odd_diff.webp",
+        "tags": [
+          "foc_hit"
+        ]
+      },
+      {
+        "id": "ink_2",
+        "label": "The honest word",
+        "spec": "Focus — the round that goes straight at it",
+        "image": "ink_2",
+        "img": "/static/galleries/brain/ink_2.webp",
+        "tags": [
+          "foc_hit"
+        ]
+      },
+      {
+        "id": "nxt_a1",
+        "label": "The next shape",
+        "spec": "Focus — the round that goes straight at it",
+        "image": "nxt_a1",
+        "img": "/static/galleries/brain/nxt_a1.webp",
+        "tags": [
+          "foc_hit"
+        ]
+      }
+    ]
+  },
+  "styles": [
+    {
+      "id": "memory_mind",
+      "name": "The Recorder",
+      "tags": [
+        "mem_hit"
+      ],
+      "accent": "#3B7DD8",
+      "blurb": "You hold things. What was on the screen is still on the screen for you a beat after it goes, and most of what people call your attention is really just that you never quite put the last thing down.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Blue Signal"
+            },
+            {
+              "name": "Deep Ink"
+            },
+            {
+              "name": "Warm Chalk"
+            },
+            {
+              "name": "Slate"
+            }
+          ],
+          "line": "Blue is what you run on and slate is what you fall back to when the room gets loud.",
+          "talismans": [
+            "A notebook you actually finish",
+            "One playlist you never change",
+            "A watch you wind yourself"
+          ],
+          "lucky_days": "Wednesday and Sunday — the first for taking things in, the second for letting them settle."
+        },
+        "dna": {
+          "setup": "Two of the four rounds run on the same trick and you use it for both, which is why one of them felt easy and the other",
+          "trigger": "cost you more than it should have,"
+        },
+        "materials": {
+          "setup": "The round you dropped is the one that asks you to let go of what you were already holding, and the people who tire you out are the ones who",
+          "trigger": "keep adding to it,"
+        },
+        "mistakes": {
+          "setup": "Your first strength is the one you would have guessed. The one costing you is quieter and shows up",
+          "trigger": "whenever you are asked to start over,"
+        },
+        "shopping": {
+          "setup": "Seven days, one small thing each, and the first is the one that fixes the round you were weakest on —",
+          "trigger": "and it takes under a minute,"
+        },
+        "mistake_one": {
+          "title": "You trust the first version",
+          "body": "Whatever you took in first stays first, and a correction has to work twice as hard to replace it. That is why you are rarely wrong about what was said and sometimes wrong about what is true now.",
+          "fix": "Say the new version out loud once. It files it as first."
+        }
+      }
+    },
+    {
+      "id": "spatial_mind",
+      "name": "The Navigator",
+      "tags": [
+        "spa_hit"
+      ],
+      "accent": "#4CAF7D",
+      "blurb": "You keep the map. Where a thing was gets filed with what it was, so you walk back to things other people have to go looking for, and you rarely notice you are doing it.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Field Green"
+            },
+            {
+              "name": "Deep Pine"
+            },
+            {
+              "name": "Warm Chalk"
+            },
+            {
+              "name": "Slate"
+            }
+          ],
+          "line": "Green is the register you think in and pine is what you reach for when you need the whole picture at once.",
+          "talismans": [
+            "A paper map, folded wrong",
+            "A key you know by touch",
+            "One chair that is yours"
+          ],
+          "lucky_days": "Tuesday and Saturday — the first for laying things out, the second for walking them."
+        },
+        "dna": {
+          "setup": "You file where beside what, always, and the round that came apart is the one where there was no where —",
+          "trigger": "which is worth knowing before the next one,"
+        },
+        "materials": {
+          "setup": "The round you dropped says something about how you take instructions, and the people who work best with you",
+          "trigger": "draw it rather than say it,"
+        },
+        "mistakes": {
+          "setup": "Four of your five strengths are versions of the same one. The fifth is not, and it is the one that",
+          "trigger": "makes rooms easier for other people,"
+        },
+        "shopping": {
+          "setup": "Seven days, and three of them are about moving rather than sitting, because your weakest round",
+          "trigger": "sharpens on your feet,"
+        },
+        "mistake_one": {
+          "title": "You navigate instead of reading",
+          "body": "Given a list and a layout you take the layout every time, which is fast until the layout is somebody else's and they never drew you one.",
+          "fix": "Sketch it before you start. Two minutes buys the whole task."
+        }
+      }
+    },
+    {
+      "id": "change_mind",
+      "name": "The Detector",
+      "tags": [
+        "chg_hit"
+      ],
+      "accent": "#F2B33D",
+      "blurb": "You notice the edit. Something moved and you knew before you could say what — the version in your head and the one in front of you refuse to agree quietly, and you are the one who says so.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Signal Amber"
+            },
+            {
+              "name": "Burnt Ochre"
+            },
+            {
+              "name": "Warm Chalk"
+            },
+            {
+              "name": "Slate"
+            }
+          ],
+          "line": "Amber is what you lead with and ochre is where you land once you have stopped double-checking.",
+          "talismans": [
+            "A pen that is always in the same pocket",
+            "One mirror you trust",
+            "A door you can hear open"
+          ],
+          "lucky_days": "Monday and Friday — the first for spotting what moved, the second for saying it out loud."
+        },
+        "dna": {
+          "setup": "Spotting the edit and holding the original are two different jobs and you are much better at one, which shows",
+          "trigger": "in how fast you answered,"
+        },
+        "materials": {
+          "setup": "Your weakest round is the one that rewards sitting still, and the thing that costs you most in a day",
+          "trigger": "is being interrupted mid-compare,"
+        },
+        "mistakes": {
+          "setup": "Your strengths are all early-warning. The two blind spots are what happens after the warning —",
+          "trigger": "and one of them is expensive,"
+        },
+        "shopping": {
+          "setup": "Seven days built around the one thing you skip, which is not looking harder but",
+          "trigger": "looking for a second longer,"
+        },
+        "mistake_one": {
+          "title": "You raise it before you have named it",
+          "body": "You know something moved a beat before you know what, and you tend to say so in that beat — which reads as certainty you have not got yet.",
+          "fix": "Wait until you can point at it. The beat costs nothing."
+        }
+      }
+    },
+    {
+      "id": "focus_mind",
+      "name": "The Laser",
+      "tags": [
+        "foc_hit"
+      ],
+      "accent": "#8E6FD8",
+      "blurb": "You go straight at it. Where other people scan the whole board, you land on the one thing that does not belong, and everything else stays out of focus until you are finished with it.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Violet Beam"
+            },
+            {
+              "name": "Deep Indigo"
+            },
+            {
+              "name": "Warm Chalk"
+            },
+            {
+              "name": "Slate"
+            }
+          ],
+          "line": "Violet is the narrow band you work in and indigo is the quiet you need either side of it.",
+          "talismans": [
+            "Headphones you do not listen to",
+            "A timer you can see",
+            "One list, one page"
+          ],
+          "lucky_days": "Thursday and Sunday — the first for going deep, the second for coming back up."
+        },
+        "dna": {
+          "setup": "A narrow beam is worth more than a wide one on three of the four rounds. The fourth is where it",
+          "trigger": "quietly worked against you,"
+        },
+        "materials": {
+          "setup": "The round you dropped is the one that needs everything at once, and the people you find tiring",
+          "trigger": "are the ones who talk while you aim,"
+        },
+        "mistakes": {
+          "setup": "Your five strengths all come from the same habit. So do both blind spots, which is why one of them",
+          "trigger": "is easier to fix than you think,"
+        },
+        "shopping": {
+          "setup": "Seven days, and the hardest one asks you to widen rather than sharpen —",
+          "trigger": "which is the whole point of it,"
+        },
+        "mistake_one": {
+          "title": "You finish the wrong thing beautifully",
+          "body": "Once the beam is on something it stays there, so the question of whether it was the right something gets asked after rather than before.",
+          "fix": "Pick the target out loud before you start. Then aim."
+        }
+      }
+    }
+  ],
+  "analyzing": {
+    "duration_ms": 2500,
+    "text": "Scoring your rounds",
+    "messages": [
+      "Adding up your sixteen rounds…",
+      "Weighing them against the four domains…",
+      "Working out your brain age…"
+    ]
+  },
+  "analyzing_echo": true,
+  "brain_age": {
+    "base": 22,
+    "per_miss": 3.5,
+    "min": 20,
+    "max": 80,
+    "scored": 16,
+    "domains": {
+      "mem": "Memory",
+      "spa": "Spatial",
+      "chg": "Change",
+      "foc": "Focus"
+    },
+    "age_mid": {
+      "age_21": 21,
+      "age_30": 30,
+      "age_40": 40,
+      "age_50": 50,
+      "age_60": 60,
+      "age_70": 70
+    }
+  },
+  "report": {
+    "generating_messages": [
+      "Weighing your sixteen rounds against the four domains…",
+      "Working out where your score actually came from…",
+      "Finding the round that moved it most…",
+      "Almost there — writing your report…"
+    ],
+    "sections": [
+      {
+        "id": "dna",
+        "title": "Your Brain Profile",
+        "teaser_line": "Which of the four rounds you actually run on, and the one you lean on when you are tired.",
+        "enabled": true,
+        "preview": [
+          "Four scores, read off your own taps, and one place where two of them pull hard against each other.",
+          "It names the round you lead with, the one you fall back to, and which of the two you are using when you are rushing."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "materials",
+        "title": "What Your Weakest Round Says",
+        "teaser_line": "The round you dropped most, and what it is really telling you about how you take things in.",
+        "enabled": true,
+        "preview": [
+          "It is not the round itself. It is the thing the round asks for, which shows up in about nine places a week.",
+          "The chapter names those places, and the one small change that makes most of them easier."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "mistakes",
+        "title": "5 Sharp Strengths & 2 Blind Spots",
+        "teaser_line": "Five things your brain does better than most people's. And the two places it looks away.",
+        "enabled": true,
+        "preview": [
+          "The first strength reads as obvious written down, and it still shapes more of your week than anything else on the list.",
+          "The two blind spots are ranked, and the costlier one is last."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "shopping",
+        "title": "Your 7-Day Sharpening Plan",
+        "teaser_line": "One small thing a day for a week, chosen for the round you were weakest on.",
+        "enabled": true,
+        "preview": [
+          "Seven days, each one a single thing that takes under five minutes and targets the round you actually dropped.",
+          "Every day says what it is for, so the easy ones stop reading as filler."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      }
+    ],
+    "print_whole": true,
+    "mistake_one": {
+      "title": "Sharp Strength #1 of 5",
+      "locked_note": "Strengths 2–5 and both blind spots — inside your full report"
+    },
+    "also": {
+      "title": "Also in your report",
+      "rows": [
+        {
+          "section": "dna",
+          "hook": "How your four round scores split, and which pair of them is doing most of the work."
+        },
+        {
+          "section": "materials",
+          "hook": "What the round you dropped is really asking for, and where else it asks for it."
+        },
+        {
+          "section": "shopping",
+          "hook": "Seven days, one small thing each, aimed at the round you were weakest on."
+        },
+        {
+          "title": "Your Round-by-Round Card",
+          "hook": "Every round you played, what it was measuring, and how you answered it."
+        }
+      ]
+    },
+    "visuals": {
+      "taps": true,
+      "hero": {
+        "glyph_step": "mood",
+        "band_step": "odd"
+      },
+      "section_steps": {
+        "dna": "mem1",
+        "materials": "spa1",
+        "mistakes": "chg1",
+        "shopping": "next"
+      }
+    },
+    "hook_slots": {
+      "mood": {
+        "step": "mood",
+        "fallback": "however you felt"
+      },
+      "age": {
+        "step": "age",
+        "fallback": "your group"
+      }
+    }
+  },
+  "pricing": {
+    "amount_cents": 300,
+    "currency": "usd",
+    "cta": "Unlock my full report"
+  },
+  "checkout": {
+    "kicker": "Your brain age is in",
+    "product_name": "Your Brain Age Report",
+    "product_image": "/static/brand/icon-512.png",
+    "single_page": true,
+    "express": true,
+    "withdrawal_consent": false,
+    "commerce": {
+      "anchor_head": "A {price} read on how your brain actually works",
+      "anchor_head_accent": "how your brain actually works",
+      "price_anchor": "A puzzle book about nobody in particular costs more",
+      "price_anchor_accent": "costs more",
+      "price_note": "one-time",
+      "badges": [
+        "One-time",
+        "No subscription, ever"
+      ],
+      "price_suffix": "one-time · no subscription",
+      "trust": [
+        "Secure via Stripe",
+        "PDF to your email"
+      ],
+      "mid_line": "Your complete report, for less than a coffee.",
+      "mid_line_accent": "a coffee",
+      "mid_button": "See what's inside ↓",
+      "sticky_label": "Unlock my full report — {price}"
+    },
+    "title": "Your {style} Report",
+    "proof_line": "Built from your 16 rounds",
+    "manifest": [
+      "Which of the four rounds you actually run on — and the one you lean on when you are tired",
+      "What the round you dropped is really telling you",
+      "Five things your brain does better than most, and the two places it looks away",
+      "A seven-day plan aimed at the round you were weakest on",
+      "Yours to keep — the whole report, as a PDF"
+    ],
+    "manifest_hero": "strengths",
+    "manifest_head": "What's inside — {n} sections, yours forever",
+    "anchor_head": "A {price} read on how your brain actually works",
+    "anchor": "A puzzle book about nobody in particular costs more. Your complete report — {price}, once.",
+    "reframe": "Less than a coffee. Yours forever.",
+    "price_suffix": "one-time",
+    "cta_label": "Unlock my full report — {price}",
+    "consent_prechecked": true,
+    "trust": [
+      "Secure payment via Stripe",
+      "Instant delivery",
+      "PDF copy to your email"
+    ],
+    "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right."
+  },
+  "paywall_variants": [
+    {
+      "id": "score",
+      "enabled": true,
+      "weight": 1,
+      "name": "Why You Scored That",
+      "frame": "The full read on where your number came from — and what moves it.",
+      "benefits": [
+        "Which of the four rounds you actually run on — and the one you lean on when you are tired",
+        "What the round you dropped is really telling you",
+        "Five things your brain does better than most, and the two places it looks away",
+        "A seven-day plan aimed at the round you were weakest on",
+        "Yours to keep — the whole report, as a PDF"
+      ],
+      "cta_text": "Show me why I scored that — {price}"
+    },
+    {
+      "id": "sharpen",
+      "enabled": true,
+      "weight": 1,
+      "name": "Your Sharpening Plan",
+      "frame": "One week, one small thing a day, aimed at your weakest round.",
+      "benefits": [
+        "A seven-day plan aimed at the round you were weakest on",
+        "What the round you dropped is really telling you",
+        "Five things your brain does better than most, and the two places it looks away",
+        "Which of the four rounds you actually run on — and the one you lean on when you are tired",
+        "Yours to keep — the whole report, as a PDF"
+      ],
+      "cta_text": "Give me the plan — {price}"
+    }
+  ],
+  "pairings": {
+    "memory_mind": {
+      "memory_mind": {
+        "verdict": "avoid",
+        "line": "Two long memories and nobody willing to be wrong about Tuesday."
+      },
+      "spatial_mind": {
+        "verdict": "works",
+        "line": "One remembers what was said, one remembers where. Nothing gets lost."
+      },
+      "change_mind": {
+        "verdict": "works",
+        "line": "One holds the original, one spots the edit. That is the whole job."
+      },
+      "focus_mind": {
+        "verdict": "avoid",
+        "line": "One keeps everything, one keeps one thing. Neither hands over."
+      }
+    },
+    "spatial_mind": {
+      "memory_mind": {
+        "verdict": "works",
+        "line": "One remembers what was said, one remembers where. Nothing gets lost."
+      },
+      "spatial_mind": {
+        "verdict": "avoid",
+        "line": "Two maps of the same room, drawn differently, both right."
+      },
+      "change_mind": {
+        "verdict": "avoid",
+        "line": "One is looking at the layout, one at the difference. You will not be looking at the same thing."
+      },
+      "focus_mind": {
+        "verdict": "works",
+        "line": "One sees the whole board, one takes the square. Good division."
+      }
+    },
+    "change_mind": {
+      "memory_mind": {
+        "verdict": "works",
+        "line": "One holds the original, one spots the edit. That is the whole job."
+      },
+      "spatial_mind": {
+        "verdict": "avoid",
+        "line": "One is looking at the layout, one at the difference. You will not be looking at the same thing."
+      },
+      "change_mind": {
+        "verdict": "avoid",
+        "line": "Two people saying something moved, neither saying what."
+      },
+      "focus_mind": {
+        "verdict": "works",
+        "line": "One raises it, one finishes it. Fast, and it holds."
+      }
+    },
+    "focus_mind": {
+      "memory_mind": {
+        "verdict": "avoid",
+        "line": "One keeps everything, one keeps one thing. Neither hands over."
+      },
+      "spatial_mind": {
+        "verdict": "works",
+        "line": "One sees the whole board, one takes the square. Good division."
+      },
+      "change_mind": {
+        "verdict": "works",
+        "line": "One raises it, one finishes it. Fast, and it holds."
+      },
+      "focus_mind": {
+        "verdict": "avoid",
+        "line": "Two beams, two targets, one room."
+      }
+    }
+  },
+  "result": {
+    "mistakes_teaser": "You've seen strength #1. The other four run deeper — one of them explains the round you dropped.",
+    "value_banner": "Four chapters, a seven-day plan and your round-by-round card — all of it built from your own taps, yours to keep."
+  },
+  "result_copy": {
+    "kicker": "Your brain age",
+    "blend_note": "even split",
+    "taps_caption": "Read from your rounds:",
+    "balance_title": "Your four rounds",
+    "head_title": "Your brain type",
+    "score_lead": "Scored just now",
+    "head_caption": "Four rounds, scored off your own taps.",
+    "strength_lead": "You said you felt {mood}. Your rounds said otherwise.",
+    "offer_sub": "Your complete report — once, forever.",
+    "locked_note": "Locked",
+    "delivered_note": "A PDF of this report is in your inbox. This page stays at the link you were sent back to.",
+    "younger_line": "{n} years younger than your age group",
+    "level_line": "right where your age group sits",
+    "older_line": "{n} years older — let's fix that",
+    "age_line_bare": "compared with your age group",
+    "purpose_map": {
+      "mood_sharp": {
+        "emphasized_section": "mistakes",
+        "offer_sub": "You came in sharp. The five things behind that are inside."
+      },
+      "mood_ok": {
+        "emphasized_section": "dna",
+        "offer_sub": "Which round you actually run on is inside."
+      },
+      "mood_foggy": {
+        "emphasized_section": "materials",
+        "offer_sub": "What the round you dropped is telling you — inside."
+      },
+      "mood_fumes": {
+        "emphasized_section": "shopping",
+        "offer_sub": "Seven days, one small thing each. It's inside."
+      }
+    },
+    "profile": {
+      "bridge": "Your report answers, specifically for {type}:",
+      "offer_head": "{type} — the full report, 4 chapters",
+      "essence": {
+        "memory_mind": "You hold what you were shown, a beat longer than most.",
+        "spatial_mind": "You keep the map, and you keep it without trying.",
+        "change_mind": "You see the edit before you can name it.",
+        "focus_mind": "You go straight at the one thing that is wrong."
+      },
+      "cards": [
+        {
+          "id": "dna",
+          "key": "Your rounds",
+          "promise": "which one you run on — and the one you lean on when you are tired"
+        },
+        {
+          "id": "materials",
+          "key": "Weakest round",
+          "promise": "what the round you dropped is really asking for"
+        },
+        {
+          "id": "mistakes",
+          "key": "Sharp strengths",
+          "promise": "five your brain does better than most, and the two it looks away from"
+        },
+        {
+          "id": "shopping",
+          "key": "Seven days",
+          "promise": "one small thing a day, aimed at your weakest round"
+        }
+      ],
+      "share": {
+        "button": "Share your brain type",
+        "title": "I'm {type}. What's your brain age?",
+        "text": "18 quick rounds. No sign-up.",
+        "url_base": "/brain/s/",
+        "copied": "Link copied",
+        "failed": "Could not share"
+      }
+    }
+  },
+  "share_cards": [
+    {
+      "id": "memory_mind",
+      "img": "/static/galleries/brain/share_memory_mind.webp",
+      "persona": "The Recorder",
+      "colors": [
+        {
+          "name": "Blue Signal",
+          "hex": "#3B7DD8",
+          "element": "form"
+        },
+        {
+          "name": "Deep Ink",
+          "hex": "#2C3038",
+          "element": "type"
+        },
+        {
+          "name": "Warm Chalk",
+          "hex": "#F4F1EA",
+          "element": "ground"
+        }
+      ]
+    },
+    {
+      "id": "spatial_mind",
+      "img": "/static/galleries/brain/share_spatial_mind.webp",
+      "persona": "The Navigator",
+      "colors": [
+        {
+          "name": "Field Green",
+          "hex": "#4CAF7D",
+          "element": "form"
+        },
+        {
+          "name": "Deep Ink",
+          "hex": "#2C3038",
+          "element": "type"
+        },
+        {
+          "name": "Warm Chalk",
+          "hex": "#F4F1EA",
+          "element": "ground"
+        }
+      ]
+    },
+    {
+      "id": "change_mind",
+      "img": "/static/galleries/brain/share_change_mind.webp",
+      "persona": "The Detector",
+      "colors": [
+        {
+          "name": "Signal Amber",
+          "hex": "#F2B33D",
+          "element": "form"
+        },
+        {
+          "name": "Deep Ink",
+          "hex": "#2C3038",
+          "element": "type"
+        },
+        {
+          "name": "Warm Chalk",
+          "hex": "#F4F1EA",
+          "element": "ground"
+        }
+      ]
+    },
+    {
+      "id": "focus_mind",
+      "img": "/static/galleries/brain/share_focus_mind.webp",
+      "persona": "The Laser",
+      "colors": [
+        {
+          "name": "Violet Beam",
+          "hex": "#8E6FD8",
+          "element": "form"
+        },
+        {
+          "name": "Deep Ink",
+          "hex": "#2C3038",
+          "element": "type"
+        },
+        {
+          "name": "Warm Chalk",
+          "hex": "#F4F1EA",
+          "element": "ground"
+        }
+      ]
+    }
+  ]
+}

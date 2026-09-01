@@ -1208,10 +1208,12 @@ check("  and not from the delivered page",
       "reportVariant" not in module[module.find("function delivered(root"):])
 
 # Nothing else on the platform grew a variants key or lost its paywall.
-# zodiac30 adopted the mechanism for a layout test, which is what it was
-# built funnel-agnostic for. Everything else still declares none, and that is
-# the claim worth keeping: a funnel gets variants by asking for them.
-VARIANT_FUNNELS = {"zodiac30"}
+# zodiac30 adopted the mechanism for a layout test and brain for an offer
+# test, which is what it was built funnel-agnostic for. Everything else still
+# declares none, and that is the claim worth keeping: a funnel gets variants
+# by asking for them, and the list of funnels that asked is spelled out here
+# so that growing it is a decision somebody makes rather than a drift.
+VARIANT_FUNNELS = {"zodiac30", "brain"}
 check("only the funnel that asked for them has variants",
       set(s for s in NEIGHBOUR_SLUGS
           if json.load(open(os.path.join(ROOT, "funnels", s + ".json"),
@@ -1245,11 +1247,11 @@ check("  and each still carries its own single call to action",
           .get("pricing", {}).get("cta")
           for s in NEIGHBOUR_SLUGS))
 
-# The spot value. Only this funnel's module writes `cta_label`, and it writes
-# it into the config object engine.js was handed for this page — so a funnel
-# that never loads result_persona.js cannot have its button relabelled by any
-# of this. Pinned by value as well as by argument, because "no other funnel is
-# affected" is the kind of claim that is true right up until it is not.
+# The spot value. A result module writes `cta_label` into the config object
+# engine.js was handed for this page — so a funnel that never loads the module
+# cannot have its button relabelled by any of this. Pinned by value as well as
+# by argument, because "no other funnel is affected" is the kind of claim that
+# is true right up until it is not.
 NEIGHBOUR_CTA = {
     "zodiac30": "Open my full profile — {price}",
     "zodiac": "Open my full profile — {price}",
@@ -1259,12 +1261,17 @@ check("the neighbours' call to action is exactly what it was",
       all(json.load(open(os.path.join(ROOT, "funnels", slug + ".json"),
                          encoding="utf-8"))["checkout"]["cta_label"] == want
           for slug, want in NEIGHBOUR_CTA.items()))
-check("  and only the persona module writes that key",
-      sum(1 for name in os.listdir(os.path.join(ROOT, "static/js"))
-          if name.endswith(".js")
-          and "checkout.cta_label =" in open(
-              os.path.join(ROOT, "static/js", name), encoding="utf-8").read())
-      == 1)
+# Named rather than counted. Two modules run the variant mechanism now, and a
+# count would go on passing if a third file — engine.js, a shared helper —
+# started writing the key, which is the case this check exists for: the label
+# belongs to the module of the funnel being rendered and to nothing else.
+CTA_WRITERS = {"result_persona.js", "result_brain.js"}
+check("  and only a funnel's own result module writes that key",
+      {name for name in os.listdir(os.path.join(ROOT, "static/js"))
+       if name.endswith(".js")
+       and "checkout.cta_label =" in open(
+           os.path.join(ROOT, "static/js", name), encoding="utf-8").read()}
+      == CTA_WRITERS)
 
 # The sections ARE the offer now: one per bullet on the card, in the order
 # the card lists them. Pinned against the config's own benefits rather than

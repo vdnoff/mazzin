@@ -3,9 +3,10 @@
 
 /brain is a memory game rather than a taste quiz: it shows a set of pictures,
 takes them away, and asks what was there. None of the three things that needs
-exist yet as anything a funnel can turn on, and all three had to be added to
+existed as anything a funnel could turn on, and all three had to be added to
 files every live funnel already runs — so what this suite is actually about is
-that none of them can reach a funnel that has not asked.
+that none of them can reach a funnel that has not asked. /brain has since
+landed and asks for the first two; every other funnel is where it was.
 
   1. The `flash` interstitial: the memorise screen. Gated on the entry naming
      the template, carrying frames, and saying how long it holds for.
@@ -19,8 +20,8 @@ against a closed set of keys and refuses the whole event on one it does not
 know, so an engine that sent this from every funnel would drop every swipe row
 the platform records. The gate is what keeps that from happening, and the
 check below that no shipping funnel carries the key is what keeps it true.
-When /brain arrives it will need tracking.SWIPE_EXTRA_KEYS taught the key on
-the same deploy that turns it on; until then, nothing sends it.
+/brain does not turn it on: it will need tracking.SWIPE_EXTRA_KEYS taught the
+key on the same deploy that sets it, so until then nothing sends it.
 
 Everything is read off disk. No database, no network, no key.
 
@@ -275,12 +276,23 @@ check("  and a swipe payload is still the closed set of three",
       tracking.SWIPE_EXTRA_KEYS == frozenset(("pair", "shown", "chosen")),
       str(sorted(tracking.SWIPE_EXTRA_KEYS)))
 
-print("\n--- and none of the three is reachable from a funnel we ship ---")
+print("\n--- and only the funnel that asked for them can reach them ---")
+# /brain is that funnel and arrived a phase after this file did. What is
+# checked here is unchanged in substance: these three are opt-in, and every
+# funnel that did not opt in is untouched by their existing. The list is
+# spelled out rather than left as "none", so a fourth funnel growing a flash
+# by accident still fails.
+OWNER = "brain.json"
 for name, cfg in CONFIGS.items():
+    if name == OWNER:
+        continue
     entries = cfg.get("interstitials") or []
     check("  %-22s names no flash" % name,
           not [e for e in entries if e.get("template") == "flash"
                or e.get("flash")])
+check("  and the funnel that does is the one built on it",
+      bool([e for e in (CONFIGS[OWNER].get("interstitials") or [])
+            if e.get("template") == "flash"]))
 check("no shipping funnel asks for reaction times",
       not [n for n, c in CONFIGS.items() if c.get("track_timing")],
       str([n for n, c in CONFIGS.items() if c.get("track_timing")]))
@@ -288,20 +300,21 @@ DOMAIN = {"%s_%s" % (a, s) for a in ("mem", "spa", "chg", "foc")
           for s in ("hit", "miss")}
 carried = set()
 for name, cfg in CONFIGS.items():
+    if name == OWNER:
+        continue
     for st in (cfg.get("swipe") or {}).get("steps", []):
         for pairing in (st.get("pairs") or ([{"images": st["images"]}]
                                             if st.get("images") else [])):
             for img in pairing.get("images") or []:
                 carried |= set(img.get("tags") or []) & DOMAIN
-check("no card on any funnel carries a domain tag", not carried,
+check("no other funnel's cards carry a domain tag", not carried,
       str(sorted(carried)))
-check("no funnel keys an interstitial or a step on a domain axis",
-      not [n for n, c in CONFIGS.items()
-           if re.search(r'"axis":\s*"(?:mem|spa|chg|foc)"', json.dumps(c))],
-      str([n for n, c in CONFIGS.items()
-           if re.search(r'"axis":\s*"(?:mem|spa|chg|foc)"', json.dumps(c))]))
-check("funnels/brain.json is not in this phase",
-      not os.path.exists(os.path.join(FUNNELS, "brain.json")))
+check("no other funnel keys an interstitial or a step on a domain axis",
+      not [n for n, c in CONFIGS.items() if n != OWNER
+           and re.search(r'"axis":\s*"(?:mem|spa|chg|foc)"', json.dumps(c))],
+      str([n for n, c in CONFIGS.items() if n != OWNER
+           and re.search(r'"axis":\s*"(?:mem|spa|chg|foc)"',
+                         json.dumps(c))]))
 check("the funnels directory and its static copy still agree",
       sorted(os.listdir(FUNNELS))
       == sorted(os.listdir(os.path.join(ROOT, "static/funnels"))))

@@ -1,0 +1,592 @@
+/* The brain funnel's result page — the scoreboard.
+ *
+ * Loaded only by a funnel whose config names it, and every rule scoped under
+ * `.result-module` with a `br-` prefix, so no result stylesheet can reach
+ * another's page even when a browser has all three in cache. mazzin.css is
+ * untouched: kitchen's result, zodiac's and persona's are the documents they
+ * were.
+ *
+ * Persona's page is a gallery after hours — a deep warm ground with the
+ * reader's own forms lit on it. This one is the opposite room on purpose. The
+ * quiz was flat shapes on an off-white card and the reader has just spent two
+ * minutes looking at exactly that, so the page they land on is the same
+ * daylight, and the four round colours are the same four they were tapping.
+ * Anything else would read as a different product's page.
+ *
+ * The score is the only large thing on it. Everything under the number is
+ * either the arithmetic behind it or the offer, in that order, and the type
+ * card sits between them because "who that makes you" is the bridge from one
+ * to the other.
+ *
+ * Mobile portrait, 390x844. No web font: the number is the loudest thing here
+ * and a face that arrives late would land it twice.
+ */
+
+/* The ground behind the page as well as under it. The module full-bleeds its
+   own width but the shell's padding sits above and below it, and on the
+   delivered page — reached from a link in an email — the analysing fade never
+   ran. The value is the config's `analyzing_fade_to` to the digit: the fade
+   lands the browser on this exact colour and this rule holds it there. */
+body:has(.result-module) {
+  background-color: #F4F1EA;
+}
+
+.result-module {
+  --br-ground: #F4F1EA;
+  --br-card: #FFFFFF;
+  --br-line: rgba(44, 48, 56, 0.12);
+  --br-ink: #2C3038;
+  /* One tier down from the ink and still 5.6:1 on both the ground and the
+     card, which is what a body-sized line needs. It is the colour of every
+     teaser, the tap caption and the trust row — most of the small type on the
+     page — so it is chosen for contrast rather than for looks. */
+  --br-muted: #5C616B;
+  --br-faint: #83888F;
+  --br-mem: #3B7DD8;
+  --br-spa: #4CAF7D;
+  --br-chg: #F2B33D;
+  --br-foc: #8E6FD8;
+
+  /* Full bleed, exactly. body carries `padding: 0 18px`, so the pull has to be
+     that number and not a rounded one — at -20px the page scrolls two pixels
+     sideways on a phone, which is a small number and a real defect. */
+  margin: 0 -18px;
+  padding: 22px 18px 40px;
+  background: var(--br-ground);
+  color: var(--br-ink);
+  text-align: left;
+}
+
+/* --- a) kicker -------------------------------------------------------------- */
+
+.br-kicker {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--br-faint);
+}
+
+/* --- b) the number ---------------------------------------------------------- */
+
+/* The one thing on this page a reader would screenshot. It is set at a size
+   nothing else competes with, on a white card so it reads as a result rather
+   than as a headline, and the two lines around it are deliberately small: the
+   sentence is "your brain is thirty-four", and the words are the quiet half of
+   it. */
+.br-score {
+  margin: 0;
+  padding: 22px 18px 20px;
+  border: 1px solid var(--br-line);
+  border-radius: 18px;
+  background: var(--br-card);
+  text-align: center;
+}
+
+.br-score-lead {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--br-faint);
+}
+
+.br-age {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin: 10px 0 0;
+}
+
+.br-age-word {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--br-muted);
+}
+
+/* Tabular figures, so a two-digit score and a three-digit one sit on the same
+   optical centre — and because a number this size set in proportional digits
+   visibly re-spaces itself between one reader's page and the next. */
+.br-age-number {
+  font-size: 84px;
+  line-height: 0.98;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--br-ink);
+}
+
+.br-age-note {
+  margin: 10px 0 0;
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--br-muted);
+}
+
+/* --- c) the four rounds ----------------------------------------------------- */
+
+.br-rounds {
+  margin: 18px 0 0;
+  padding: 16px 16px 14px;
+  border: 1px solid var(--br-line);
+  border-radius: 16px;
+  background: var(--br-card);
+}
+
+.br-rounds-head {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--br-faint);
+}
+
+.br-bars {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Name, rail, count — three columns on one line, so four rounds are four rows
+   a reader takes in at a glance rather than eight stacked labels. The name
+   column is fixed rather than auto: the four words differ in length and a
+   ragged left edge on the rails would read as four different measurements. */
+.br-bar {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+}
+
+.br-bar-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--br-ink);
+}
+
+.br-bar-track {
+  display: block;
+  height: 9px;
+  border-radius: 9px;
+  background: rgba(44, 48, 56, 0.09);
+  overflow: hidden;
+}
+
+.br-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.br-bar-count {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--br-muted);
+}
+
+/* --- d) the brain type ------------------------------------------------------ */
+
+.br-type {
+  margin: 18px 0 0;
+  padding: 18px 16px 16px;
+  border: 1px solid var(--br-line);
+  border-radius: 16px;
+  background: var(--br-card);
+}
+
+.br-type-label {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--br-faint);
+}
+
+.br-type-name {
+  margin: 6px 0 0;
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--br-ink);
+}
+
+.br-type-essence {
+  margin: 8px 0 0;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--br-muted);
+}
+
+.br-type-blurb {
+  margin: 10px 0 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--br-muted);
+}
+
+/* --- e) the frames they tapped ---------------------------------------------- */
+
+.br-taps {
+  margin: 20px 0 0;
+}
+
+.br-taps-caption {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--br-faint);
+}
+
+/* Wrapping rather than scrolling: eighteen frames is three rows on a phone,
+   and a row that scrolls sideways hides most of the evidence the caption above
+   it just claimed. */
+.br-taps-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.br-tap {
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--br-line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--br-card);
+}
+
+.br-tap img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* --- f) what the report answers --------------------------------------------- */
+
+.br-path {
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.br-node {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  margin: 0 0 10px;
+  padding: 14px 14px 13px;
+  border: 1px solid var(--br-line);
+  border-radius: 14px;
+  background: var(--br-card);
+}
+
+/* The one the reader is most likely to have come for. A tint rather than a
+   badge: it has to read as first without reading as a different kind of row,
+   because everything in this list is the same kind of thing. */
+.br-node.is-lead {
+  border-color: rgba(59, 125, 216, 0.42);
+  background: rgba(59, 125, 216, 0.05);
+}
+
+.br-node-mark {
+  flex: none;
+  width: 18px;
+  margin-top: 2px;
+  color: var(--br-faint);
+}
+
+.br-node-mark svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+
+.br-node-body { min-width: 0; }
+
+.br-node-key {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--br-faint);
+}
+
+.br-node-title {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: var(--br-ink);
+}
+
+.br-teaser {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--br-muted);
+}
+
+/* Top-right of the row it belongs to, so a reader scanning the list sees four
+   locks in a column rather than four words inside four paragraphs. */
+.br-lock {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--br-faint);
+}
+
+/* --- g) the offer ----------------------------------------------------------- */
+
+.br-offer {
+  margin: 22px 0 0;
+  padding: 20px 16px 18px;
+  border: 1px solid var(--br-line);
+  border-radius: 18px;
+  background: var(--br-card);
+  text-align: center;
+}
+
+.br-offer-head {
+  margin: 0 0 10px;
+  font-size: 17px;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--br-ink);
+}
+
+.br-anchor {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--br-faint);
+}
+
+.br-accent { color: var(--br-mem); font-weight: 600; }
+
+.br-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin: 6px 0 0;
+}
+
+.br-price-now {
+  font-size: 40px;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--br-ink);
+}
+
+.br-price-note {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--br-faint);
+}
+
+.br-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.br-badge {
+  padding: 4px 10px;
+  border: 1px solid var(--br-line);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--br-muted);
+}
+
+.br-offer-sub {
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--br-muted);
+}
+
+.br-variant {
+  margin: 14px 0 0;
+  padding: 14px 14px 12px;
+  border-radius: 14px;
+  background: var(--br-ground);
+  text-align: left;
+}
+
+.br-variant-name {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--br-ink);
+}
+
+.br-variant-frame {
+  margin: 5px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--br-muted);
+}
+
+.br-variant-benefits {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The tick is drawn rather than set: a check character renders as a different
+   weight in every system stack this ships to, and this list has five of them
+   in a column where the difference is obvious. */
+.br-variant-benefit {
+  position: relative;
+  padding: 0 0 0 22px;
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--br-ink);
+}
+
+.br-variant-benefit::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 5px;
+  width: 6px;
+  height: 10px;
+  border: solid var(--br-spa);
+  border-width: 0 2px 2px 0;
+  transform: rotate(42deg);
+}
+
+.br-trust {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--br-faint);
+}
+
+/* engine.js's own nodes, moved into the card above. They are placed here, not
+   restyled: what they do is engine.js's business and what they look like is
+   mostly mazzin.css's. The only thing this sets is the room around them. */
+.result-module .pay-button { margin-top: 14px; }
+.result-module .legal-links { margin-top: 12px; }
+
+/* --- the delivered page ------------------------------------------------------ */
+
+.br-sent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(76, 175, 125, 0.12);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--br-ink);
+}
+
+.br-sent-check {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--br-spa);
+}
+
+.br-sent-check svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.br-sent-mail { font-weight: 700; }
+
+.br-body {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--br-muted);
+}
+
+.br-list {
+  margin: 10px 0 0;
+  padding: 0 0 0 18px;
+}
+
+.br-item { margin: 0 0 12px; }
+
+.br-item-title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--br-ink);
+}
+
+.br-fix {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--br-spa);
+}
+
+.br-note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--br-faint);
+}
+
+.br-footnote {
+  margin: 18px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--br-faint);
+}
+
+/* An open row has no lock in the corner, so the title may use the full width
+   the locked one had to leave. */
+.result-module.is-delivered .br-node { padding-right: 14px; }
+
+/* Wider phones and small tablets only. There is no desktop layout here and
+   there is not meant to be one — this is the same column, allowed to stop
+   growing. */
+@media (min-width: 520px) {
+  .result-module { margin: 0 auto; max-width: 520px; }
+}
