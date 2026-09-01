@@ -61,6 +61,7 @@ No database, no network, no key. Everything is read off disk.
 
     python3 tests/test_brain_check.py
 """
+import ast
 import datetime
 import json
 import os
@@ -641,9 +642,195 @@ check("  and the delivered page opens as the page they paid on",
       'root.classList.toggle("is-minimal", lean);' in MODULE
       and MODULE.count('root.classList.toggle("is-minimal", lean);') == 2)
 
+print("\n--- v3: the age cards read as cards, and the number sits on the tree ---")
+ART = open(os.path.join(ROOT, "scripts/gen_brain_art.py"),
+           encoding="utf-8").read()
+
+
+def art_number(name):
+    """One of the generator's own constants, read off its source.
+
+    A trailing comment is allowed for: `GROUND` carries one, and a check that
+    broke when somebody explained a value would be a check on the comment.
+    """
+    return float(re.search(r"^%s = ([\d.]+)\s*(?:#.*)?$" % name,
+                           ART, re.M).group(1))
+
+
+def art_colour(name):
+    body = re.search(r"^%s = \(([^)]*)\)\s*(?:#.*)?$" % name,
+                     ART, re.M).group(1)
+    return tuple(int(v) for v in body.split(","))
+
+
+# The generator's own constants, read rather than eyeballed off a pixel. What
+# a check can say about a drawing is that the numbers it was drawn from are
+# the numbers that were asked for; anything measured off the WebP would be a
+# check on the encoder.
+GROUND = art_colour("GROUND")
+PANEL = art_colour("AGE_PANEL_FILL")
+EDGE = art_colour("AGE_PANEL_EDGE")
+check("the age card has a ground of its own",
+      PANEL != GROUND, "%s vs %s" % (PANEL, GROUND))
+check("  darker than the page it sits on, on every channel",
+      all(PANEL[i] < GROUND[i] for i in range(3)), "%s" % (PANEL,))
+check("  and far enough off it to read as a surface",
+      min(GROUND[i] - PANEL[i] for i in range(3)) >= 8,
+      str([GROUND[i] - PANEL[i] for i in range(3)]))
+check("  with a keyline darker again",
+      all(EDGE[i] < PANEL[i] for i in range(3)), "%s" % (EDGE,))
+check("the keyline is inset, and rounded",
+      0.02 <= art_number("AGE_PANEL_INSET") <= 0.15
+      and art_number("AGE_PANEL_RADIUS") > 0,
+      str(art_number("AGE_PANEL_INSET")))
+check("  clear of the crop a taller cell takes off the sides",
+      art_number("AGE_PANEL_INSET") >= 0.08,
+      str(art_number("AGE_PANEL_INSET")))
+check("the tree stands on a line",
+      "AGE_GROUND_FILL" in ART
+      and "card.rect((0.30, AGE_BASE_Y - 0.004" in ART)
+check("the card is drawn on that ground rather than on the page's",
+      "Card(ground=AGE_PANEL_FILL)" in ART)
+
+# Where the numeral's feet land, worked out here from the same table the
+# generator draws from: the leaves' top on each stage, less the gap.
+# The table itself, evaluated rather than pattern-matched: three of the six
+# stages run to several lines, and a regex that reads the one-liners and
+# silently drops the rest is a check that passes on half the cards.
+TREES = ast.literal_eval(
+    re.search(r"^TREES = (\{.*?^\})", ART, re.S | re.M).group(1))
+SCALE = art_number("TREE_SCALE")
+BASE = art_number("AGE_BASE_Y")
+GAP = art_number("AGE_NUMERAL_GAP")
+
+
+def numeral_bottom(stage):
+    height, _width, blobs, _roots = TREES[stage]
+    top = BASE - height * SCALE
+    return min(top + (dy - r) * SCALE for _dx, dy, r in blobs) - GAP
+
+
+STAGES = ["sprout", "sapling", "young", "full", "broad", "ancient"]
+check("the six stages are all in the table", sorted(TREES) == sorted(STAGES),
+      str(sorted(TREES)))
+check("the sprout's number sits in the lower half of the card",
+      0.55 <= numeral_bottom("sprout") <= 0.70,
+      "%.3f" % numeral_bottom("sprout"))
+check("  which is a long way down from where it was",
+      numeral_bottom("sprout") > 0.5)
+check("every other number follows its own canopy up the card",
+      [round(numeral_bottom(s), 4) for s in STAGES]
+      == sorted((round(numeral_bottom(s), 4) for s in STAGES), reverse=True),
+      str([round(numeral_bottom(s), 3) for s in STAGES]))
+check("  and none of them is left floating above the leaves",
+      0 < GAP <= 0.05, str(GAP))
+check("the numeral is bigger than the one that vanished",
+      art_number("AGE_NUMERAL_SIZE") >= 90,
+      str(art_number("AGE_NUMERAL_SIZE")))
+check("  and set on its feet rather than centred on a guess",
+      "card.text_above(text, AGE_NUMERAL_SIZE, numeral_bottom(stage))" in ART
+      and "def text_above(" in ART)
+check("the age step still names nothing — the art carries the bracket",
+      by_id["age"].get("label_mode") == "none")
+
+print("\n--- v3: nothing on a box but the box ---")
+for r in range(1, 5):
+    sid = "spa%d" % r
+    entry = mid_by_after[SCORED[sid][1] - 1][0]
+    check("  the %s flash draws no numbers" % sid,
+          not [f for f in entry["flash"]["images"] if f.get("label")],
+          str([f.get("label") for f in entry["flash"]["images"]]))
+    check("    and the round itself draws none either",
+          by_id[sid].get("label_mode") == "none",
+          str(by_id[sid].get("label_mode")))
+check("the open box still carries its object",
+      all("box_open_" in
+          mid_by_after[SCORED["spa%d" % r][1] - 1][0]["flash"]["images"][
+              mid_by_after[SCORED["spa%d" % r][1] - 1][0]["reveal"]
+              ["open_slot"]]["img"]
+          for r in range(1, 5)))
+check("no step and no flash on this funnel numbers a card it should not",
+      not [s["id"] for s in steps if s.get("label_mode") == "none"
+           and s["id"] not in ("age", "spa1", "spa2", "spa3", "spa4")],
+      str([s["id"] for s in steps if s.get("label_mode") == "none"]))
+
+print("\n--- v3: the strip fills the card it is in ---")
+grid = re.search(r"\.br-taps-grid \{(.*?)\n\}", RESULT_CSS, re.S)
+check("the strip is a grid, not a wrapping row of fixed cells",
+      grid is not None and "display: grid;" in grid.group(1)
+      and "display: flex" not in grid.group(1))
+check("  six columns, each a share of whatever the card is",
+      grid is not None
+      and "grid-template-columns: repeat(6, minmax(0, 1fr));" in grid.group(1))
+check("  which lays eighteen rounds out in three even rows",
+      18 % 6 == 0)
+cell = re.search(r"\.br-tap \{(.*?)\n\}", RESULT_CSS, re.S)
+check("the cells are square, sized by the track rather than fixed",
+      cell is not None and "aspect-ratio: 1 / 1;" in cell.group(1)
+      and "width: 46px" not in cell.group(1)
+      and "height: 46px" not in cell.group(1))
+check("  and one rule covers both pages, so the paid strip matches",
+      RESULT_CSS.count(".br-taps-grid {") == 1
+      and ".is-delivered .br-taps-grid" not in RESULT_CSS
+      and ".is-minimal .br-taps-grid" not in RESULT_CSS)
+check("the module draws both strips through the same block",
+      MODULE.count("return tapsBlock(copy") == 2
+      and MODULE.count("function tapsBlock(") == 1)
+
+print("\n--- v3: the report is a plan, not a reading ---")
+FORWARD = ("sharpen", "refresh", "lower")
+for style in cfg["styles"]:
+    tail = style["blurb"].rstrip().rsplit(". ", 1)[-1]
+    check("  %s closes on what lifts it" % style["id"],
+          any(w in tail for w in FORWARD), tail[:70])
+check("the four chapters are titled the way the offer sells them",
+      [s["title"] for s in cfg["report"]["sections"]]
+      == ["Your Brain Profile & Your Edge",
+          "Your Weakest Round — and the Fastest Way to Lift It",
+          "5 Sharp Strengths & 2 Habits Holding You Back",
+          "Your 7-Day Brain Refresh Plan"],
+      str([s["title"] for s in cfg["report"]["sections"]]))
+check("  on the four ids the report machinery keys on, unchanged",
+      [s["id"] for s in cfg["report"]["sections"]]
+      == ["dna", "materials", "mistakes", "shopping"])
+unlock = cfg["result_copy"]["profile"]["unlock"]
+check("the unlock list is four lines, a head and a tail",
+      len(unlock) == 4
+      and cfg["result_copy"]["profile"].get("unlock_head")
+      and cfg["result_copy"]["profile"].get("unlock_tail", {}).get("line"))
+check("  headed by what the reader is buying: a lower number",
+      "lower" in cfg["result_copy"]["profile"]["unlock_head"].lower(),
+      cfg["result_copy"]["profile"]["unlock_head"])
+check("  and closed on coming back to play it again",
+      "again" in cfg["result_copy"]["profile"]["unlock_tail"]["line"].lower(),
+      cfg["result_copy"]["profile"]["unlock_tail"]["line"])
+check("the type card ends on what sharpens it",
+      any(w in cfg["result_copy"]["profile"]["rarity_card"]["note"].lower()
+          for w in FORWARD),
+      cfg["result_copy"]["profile"]["rarity_card"]["note"])
+delta = cfg["result_copy"]
+check("a reader under their age group is told to keep it there",
+      "keep it there" in delta["younger_line"], delta["younger_line"])
+check("  one on it is told a week of drills moves it",
+      "moves it" in delta["level_line"], delta["level_line"])
+check("  and one over it is told the number is the easiest to lower",
+      "easiest number to lower" in delta["older_line"],
+      delta["older_line"])
+check("  with nothing anywhere that says something is wrong with them",
+      not [t for _at, t in [] ] and "fix that" not in json.dumps(cfg).lower(),
+      "fix that")
+check("the offer is a refresh rather than a reading",
+      cfg["checkout"]["product_name"] == "Your Brain Refresh Report"
+      and cfg["checkout"]["cta_label"] == "Unlock my Brain Refresh — {price}"
+      and cfg["checkout"]["proof_line"] == "Built from your 16 rounds")
+check("  and the anchor that was working is still there",
+      cfg["checkout"]["commerce"]["price_anchor"]
+      == "A puzzle book about nobody in particular costs more"
+      and "puzzle book about nobody in particular" in cfg["checkout"]["anchor"])
+
 print("\n--- the copy: a game, and nothing that sounds like anything else ---")
 BANNED = ("memory loss", "cognitive", "decline", "dementia", "test yourself",
-          "health", "diagnosis")
+          "health", "diagnosis", "treatment", "symptom", "disorder")
 strings = []
 
 
@@ -663,7 +850,8 @@ for word in BANNED:
     guilty = [at for at, text in strings if word in text.lower()]
     check("  no string says %r" % word, not guilty, str(guilty[:4]))
 check("  and the first chapter is titled without the banned one",
-      cfg["report"]["sections"][0]["title"] == "Your Brain Profile",
+      cfg["report"]["sections"][0]["title"]
+      == "Your Brain Profile & Your Edge",
       cfg["report"]["sections"][0]["title"])
 money = [(at, text) for at, text in strings
          if "$" in text or re.search(r"\d\s*%", text)]
@@ -694,8 +882,8 @@ check("  each titled, teased and shut",
           and (s.get("reveal") or {}).get("mode") == "locked"
           for s in sections))
 check("the checkout names the product this funnel sells",
-      cfg["checkout"]["product_name"] == "Your Brain Age Report"
-      and cfg["checkout"]["cta_label"] == "Unlock my full report — {price}"
+      cfg["checkout"]["product_name"] == "Your Brain Refresh Report"
+      and cfg["checkout"]["cta_label"] == "Unlock my Brain Refresh — {price}"
       and cfg["checkout"]["proof_line"] == "Built from your 16 rounds")
 check("one offer, not two: the layout is named rather than tested",
       "paywall_variants" not in cfg)
