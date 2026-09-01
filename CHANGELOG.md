@@ -513,3 +513,6 @@ bottom.
 
 ## 2026-08-30 — claude/admin-command-center
 - admin: funnel command center
+
+## 2026-09-01 — claude/zodiac-bg
+- Bulgarian localization: zodiac-bg funnel + report profile
