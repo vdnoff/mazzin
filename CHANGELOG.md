@@ -528,3 +528,6 @@ bottom.
 
 ## 2026-09-01 — claude/brain-funnel
 - brain: Brain Age Challenge funnel v1
+
+## 2026-09-01 — claude/brain-engine-2
+- engine: timer, prepare, reveal, timed steps, per-step labels
