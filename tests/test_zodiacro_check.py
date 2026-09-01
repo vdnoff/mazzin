@@ -864,9 +864,16 @@ check("  read through the accessor, which defaults to the English one",
       and reports._prompt_budget(reports.ZODIAC_PROFILE)
       == reports._prompt_budget(reports.KITCHEN_PROFILE)
       == reports._prompt_budget(None) == reports.PROMPT_BUDGET)
-check("  and it is the only profile that sets the key",
-      [slug for slug, p in reports.PROFILES.items()
-       if p.get("prompt_budget")] == ["zodiac-ro"],
+# FORCED TEST EDIT. This said "zodiac-ro is the only profile that sets the
+# key", and /zodiac-bg now sets it too — Bulgarian runs the same 15-20% long
+# for the same kind of reason and overruns an English-calibrated budget in the
+# same section. The claim worth keeping is the one underneath: a profile gets
+# a budget of its own by being a translation, and the English three still do
+# not set the key at all. Asserted as the set of translated profiles rather
+# than loosened to "at least one".
+check("  and the translated profiles are the only ones that set the key",
+      sorted(slug for slug, p in reports.PROFILES.items()
+             if p.get("prompt_budget")) == ["zodiac-bg", "zodiac-ro"],
       str([slug for slug, p in reports.PROFILES.items()
            if p.get("prompt_budget")]))
 
@@ -1091,9 +1098,13 @@ check("  and the English prompt still says nothing about it",
 print("\n--- and the retry repeats that rule, for this funnel only ---")
 check("the RO profile declares a JSON retry note",
       profile["json_retry"] is reports.ZODIAC_RO_JSON_RETRY)
-check("  and it is the only profile that does",
-      [slug for slug, pr in reports.PROFILES.items() if pr.get("json_retry")]
-      == ["zodiac-ro"],
+# FORCED TEST EDIT, and the same one. /zodiac-bg declares a JSON retry note
+# of its own — the same failure, the same field, the Bulgarian quotation pair
+# instead of the Romanian one. English still declares none and still gets the
+# generic advice alone, which is what the three checks below hold.
+check("  and the translated profiles are the only ones that do",
+      sorted(slug for slug, pr in reports.PROFILES.items()
+             if pr.get("json_retry")) == ["zodiac-bg", "zodiac-ro"],
       str([slug for slug, pr in reports.PROFILES.items()
            if pr.get("json_retry")]))
 check("  naming the quote, the field and what to do instead",

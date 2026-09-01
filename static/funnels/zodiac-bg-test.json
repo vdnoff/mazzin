@@ -1,0 +1,3431 @@
+{
+  "slug": "zodiac-bg-test",
+  "funnel_id": "zodiac_bg_v1_test",
+  "locale": "bg",
+  "theme": "zodiac",
+  "stripe_mode": "test",
+  "result_module": "/static/js/result_zodiac.js",
+  "result_css": "/static/css/result_zodiac.css",
+  "meta": {
+    "title": "Какъв е твоят космичен профил?",
+    "og_image": "/static/galleries/zodiac/og.webp"
+  },
+  "swipe": {
+    "pairs_count": 18,
+    "headline": "Анализ на твоя космичен профил",
+    "subtext": "18 докосвания. Без писане. Космичен профил, който наистина е твой.",
+    "subtext_accent": "18 докосвания",
+    "hint": "Докосни избора си",
+    "label_mode": "badge",
+    "analyzing_fade_to": "#0E1430",
+    "steps": [
+      {
+        "id": "hook",
+        "question": "Кое небе те зове?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "zk1a",
+                "img": "/static/galleries/zodiac/zk1a.webp",
+                "label": "Огнен залез",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F2A33C",
+                    "element": "upper sky"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#D8642A",
+                    "element": "horizon"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#3A1E14",
+                    "element": "ridge line"
+                  }
+                ]
+              },
+              {
+                "id": "zk1b",
+                "img": "/static/galleries/zodiac/zk1b.webp",
+                "label": "Звездна нощ",
+                "tags": [
+                  "air",
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#C9D2E0",
+                    "element": "high stars"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#3E2E6E",
+                    "element": "mid sky"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#101A38",
+                    "element": "low sky"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sign",
+        "question": "Докосни своята зодия:",
+        "format": "grid12",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sign_aries",
+                "img": "/static/galleries/zodiac/sign_aries.webp",
+                "label": "Овен",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Ram Scarlet",
+                    "hex": "#D8452C",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#D9822A",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#3A241C",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_taurus",
+                "img": "/static/galleries/zodiac/sign_taurus.webp",
+                "label": "Телец",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "moon"
+                ],
+                "colors": [
+                  {
+                    "name": "Moss Green",
+                    "hex": "#7E9B5E",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#A79E8C",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#4A3826",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_gemini",
+                "img": "/static/galleries/zodiac/sign_gemini.webp",
+                "label": "Близнаци",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#BBD3E6",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Solar Brass",
+                    "hex": "#D4A94E",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#5A6A7A",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_cancer",
+                "img": "/static/galleries/zodiac/sign_cancer.webp",
+                "label": "Рак",
+                "tags": [
+                  "water",
+                  "moon",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#CBD6E2",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#5E8FA0",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#22335C",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_leo",
+                "img": "/static/galleries/zodiac/sign_leo.webp",
+                "label": "Лъв",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F5B942",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#D9762A",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#40241A",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_virgo",
+                "img": "/static/galleries/zodiac/sign_virgo.webp",
+                "label": "Дева",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "sun"
+                ],
+                "colors": [
+                  {
+                    "name": "Wheat Gold",
+                    "hex": "#C8B87A",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#74905A",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#443422",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_libra",
+                "img": "/static/galleries/zodiac/sign_libra.webp",
+                "label": "Везни",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#DCE6EE",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#AEC8DE",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Dusk Lilac",
+                    "hex": "#8E8CB0",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_scorpio",
+                "img": "/static/galleries/zodiac/sign_scorpio.webp",
+                "label": "Скорпион",
+                "tags": [
+                  "water",
+                  "mystic",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Surface Teal",
+                    "hex": "#4E8290",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4A2E58",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Abyss Indigo",
+                    "hex": "#141E36",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_sagittarius",
+                "img": "/static/galleries/zodiac/sign_sagittarius.webp",
+                "label": "Стрелец",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Arrow Gold",
+                    "hex": "#E8A83A",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Ember Rust",
+                    "hex": "#B85A24",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#38221A",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_capricorn",
+                "img": "/static/galleries/zodiac/sign_capricorn.webp",
+                "label": "Козирог",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Summit Grey",
+                    "hex": "#9EA093",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#8C8778",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Granite Dark",
+                    "hex": "#3A3A30",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_aquarius",
+                "img": "/static/galleries/zodiac/sign_aquarius.webp",
+                "label": "Водолей",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Frost Sky",
+                    "hex": "#AEC6DE",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4E4080",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#3A4656",
+                    "element": "lower field"
+                  }
+                ]
+              },
+              {
+                "id": "sign_pisces",
+                "img": "/static/galleries/zodiac/sign_pisces.webp",
+                "label": "Риби",
+                "tags": [
+                  "water",
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Sea Mist",
+                    "hex": "#A9C4D6",
+                    "element": "upper field"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4A3A78",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#1A2446",
+                    "element": "lower field"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "seeking",
+        "question": "Какво те доведе тук тази вечер?",
+        "format": "grid4",
+        "pin_first": true,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sk3a",
+                "img": "/static/galleries/zodiac30/sk3a.webp",
+                "label": "Любов",
+                "tags": [
+                  "water",
+                  "mystic",
+                  "purpose_love"
+                ],
+                "colors": [
+                  {
+                    "name": "Nebula Rose",
+                    "hex": "#D48CB4",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4A3078",
+                    "element": "cloud"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#141C3E",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "sk3b",
+                "img": "/static/galleries/zodiac30/sk3b.webp",
+                "label": "Кариера и пари",
+                "tags": [
+                  "fire",
+                  "bold",
+                  "purpose_career"
+                ],
+                "colors": [
+                  {
+                    "name": "Comet Gold",
+                    "hex": "#F0C05A",
+                    "element": "head"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#D8762A",
+                    "element": "tail"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#3A2216",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "sk3c",
+                "img": "/static/galleries/zodiac30/sk3c.webp",
+                "label": "Вътрешен мир",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "purpose_peace"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#C2CFD2",
+                    "element": "sky"
+                  },
+                  {
+                    "name": "Slate Green",
+                    "hex": "#6E8478",
+                    "element": "far shore"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#2E3A2C",
+                    "element": "water"
+                  }
+                ]
+              },
+              {
+                "id": "sk3d",
+                "img": "/static/galleries/zodiac30/sk3d.webp",
+                "label": "Пътят напред",
+                "tags": [
+                  "air",
+                  "sun",
+                  "purpose_path"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#C6D9EA",
+                    "element": "high sky"
+                  },
+                  {
+                    "name": "Solar Brass",
+                    "hex": "#CFA24E",
+                    "element": "horizon"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#39465A",
+                    "element": "ground"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bond",
+        "question": "Сърцето ти в момента:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "bd4a",
+                "img": "/static/galleries/zodiac30/bd4a.webp",
+                "label": "Без връзка, в търсене",
+                "tags": [
+                  "sun",
+                  "bold",
+                  "bond_single"
+                ],
+                "colors": [
+                  {
+                    "name": "Star White",
+                    "hex": "#F6EBC8",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Solar Brass",
+                    "hex": "#D8A648",
+                    "element": "halo"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#141E3C",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "bd4b",
+                "img": "/static/galleries/zodiac30/bd4b.webp",
+                "label": "Споделена любов",
+                "tags": [
+                  "water",
+                  "calm",
+                  "bond_love"
+                ],
+                "colors": [
+                  {
+                    "name": "Sea Mist",
+                    "hex": "#B4CFDC",
+                    "element": "halos"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#3E7A90",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#16244A",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "bd4c",
+                "img": "/static/galleries/zodiac30/bd4c.webp",
+                "label": "Сложно е",
+                "tags": [
+                  "moon",
+                  "mystic",
+                  "bond_complicated"
+                ],
+                "colors": [
+                  {
+                    "name": "Corona Gold",
+                    "hex": "#DCB05C",
+                    "element": "corona"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#462C60",
+                    "element": "rim"
+                  },
+                  {
+                    "name": "Eclipse Black",
+                    "hex": "#120E1C",
+                    "element": "disc"
+                  }
+                ]
+              },
+              {
+                "id": "bd4d",
+                "img": "/static/galleries/zodiac30/bd4d.webp",
+                "label": "Изцеление",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "bond_healing"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud Grey",
+                    "hex": "#C4C6BC",
+                    "element": "cloud"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#7A8C64",
+                    "element": "far ridge"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#3A3426",
+                    "element": "ground"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "energy",
+        "question": "Избери своя източник на сила",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "en4a",
+                "img": "/static/galleries/zodiac/en4a.webp",
+                "label": "Сияйно слънце",
+                "tags": [
+                  "fire",
+                  "sun"
+                ],
+                "colors": [
+                  {
+                    "name": "Sun White",
+                    "hex": "#FBE2A0",
+                    "element": "corona"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F2A83C",
+                    "element": "disc"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#C96A22",
+                    "element": "outer sky"
+                  }
+                ]
+              },
+              {
+                "id": "en4b",
+                "img": "/static/galleries/zodiac/en4b.webp",
+                "label": "Светеща луна",
+                "tags": [
+                  "water",
+                  "moon"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#D5DDE8",
+                    "element": "disc"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#4E7E92",
+                    "element": "halo"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#16204A",
+                    "element": "outer sky"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "landscape",
+        "question": "Кой свят усещаш като дом?",
+        "format": "grid6",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "ls5a",
+                "img": "/static/galleries/zodiac/ls5a.webp",
+                "label": "Вулкан",
+                "tags": [
+                  "fire",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Smoke Ochre",
+                    "hex": "#C97B3A",
+                    "element": "smoke"
+                  },
+                  {
+                    "name": "Lava Red",
+                    "hex": "#A8321F",
+                    "element": "crater"
+                  },
+                  {
+                    "name": "Basalt Black",
+                    "hex": "#2A1A16",
+                    "element": "slope"
+                  }
+                ]
+              },
+              {
+                "id": "ls5b",
+                "img": "/static/galleries/zodiac/ls5b.webp",
+                "label": "Гора",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Canopy Light",
+                    "hex": "#A6C078",
+                    "element": "canopy"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#5F8046",
+                    "element": "trunks"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#33452A",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "ls5c",
+                "img": "/static/galleries/zodiac/ls5c.webp",
+                "label": "Планина",
+                "tags": [
+                  "earth",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Snow Grey",
+                    "hex": "#CBD2D6",
+                    "element": "summit"
+                  },
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#8C8B82",
+                    "element": "face"
+                  },
+                  {
+                    "name": "Granite Dark",
+                    "hex": "#3E4038",
+                    "element": "base"
+                  }
+                ]
+              },
+              {
+                "id": "ls5d",
+                "img": "/static/galleries/zodiac/ls5d.webp",
+                "label": "Океан",
+                "tags": [
+                  "water",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Surface Teal",
+                    "hex": "#5D9BA8",
+                    "element": "surface"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#2E6E82",
+                    "element": "mid water"
+                  },
+                  {
+                    "name": "Abyss Indigo",
+                    "hex": "#132A46",
+                    "element": "deep water"
+                  }
+                ]
+              },
+              {
+                "id": "ls5e",
+                "img": "/static/galleries/zodiac/ls5e.webp",
+                "label": "Пустиня",
+                "tags": [
+                  "fire",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Heat Haze",
+                    "hex": "#EBC98C",
+                    "element": "haze"
+                  },
+                  {
+                    "name": "Warm Sand",
+                    "hex": "#D09A55",
+                    "element": "dunes"
+                  },
+                  {
+                    "name": "Dune Shadow",
+                    "hex": "#8A5A2E",
+                    "element": "shadow"
+                  }
+                ]
+              },
+              {
+                "id": "ls5f",
+                "img": "/static/galleries/zodiac/ls5f.webp",
+                "label": "Над облаците",
+                "tags": [
+                  "air",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#CFE2F0",
+                    "element": "high sky"
+                  },
+                  {
+                    "name": "Sky Blue",
+                    "hex": "#9CC3DF",
+                    "element": "mid sky"
+                  },
+                  {
+                    "name": "Cloud White",
+                    "hex": "#E6EDF2",
+                    "element": "cloud floor"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "palette",
+        "question": "Коя палитра пази енергията ти?",
+        "format": "grid6",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "pl6a",
+                "img": "/static/galleries/zodiac/pl6a.webp",
+                "label": "Червено на жарава",
+                "tags": [
+                  "fire",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F0A03C",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#CE5F26",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Signal Red",
+                    "hex": "#8E2A20",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "ember-red"
+              },
+              {
+                "id": "pl6b",
+                "img": "/static/galleries/zodiac/pl6b.webp",
+                "label": "Зелено на гората",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Canopy Light",
+                    "hex": "#AFC98A",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#6E8C50",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#3A4A2C",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "forest-green"
+              },
+              {
+                "id": "pl6c",
+                "img": "/static/galleries/zodiac/pl6c.webp",
+                "label": "Пастелно небе",
+                "tags": [
+                  "air",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#EDF2F6",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#C3D9EA",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Dusk Lilac",
+                    "hex": "#B7B2D6",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "pastel-sky"
+              },
+              {
+                "id": "pl6d",
+                "img": "/static/galleries/zodiac/pl6d.webp",
+                "label": "Дълбок океан",
+                "tags": [
+                  "water",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Surface Teal",
+                    "hex": "#4E8FA0",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#255E76",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Abyss Indigo",
+                    "hex": "#0E1E3C",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "deep-ocean"
+              },
+              {
+                "id": "pl6e",
+                "img": "/static/galleries/zodiac/pl6e.webp",
+                "label": "Космично виолетово",
+                "tags": [
+                  "water",
+                  "mystic",
+                  "moon"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#C6C2DC",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#5A3E8E",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#1C1740",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "cosmic-violet"
+              },
+              {
+                "id": "pl6f",
+                "img": "/static/galleries/zodiac/pl6f.webp",
+                "label": "Небесно злато",
+                "tags": [
+                  "fire",
+                  "sun"
+                ],
+                "colors": [
+                  {
+                    "name": "Sun White",
+                    "hex": "#FBE7B4",
+                    "element": "highlight"
+                  },
+                  {
+                    "name": "Solar Brass",
+                    "hex": "#D2A245",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#9E6A1E",
+                    "element": "shadow"
+                  }
+                ],
+                "color_family": "celestial-gold"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "moment",
+        "question": "Твоят час на силата:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "mo7a",
+                "img": "/static/galleries/zodiac/mo7a.webp",
+                "label": "Първа светлина",
+                "tags": [
+                  "sun",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Dawn Cream",
+                    "hex": "#F6DFC0",
+                    "element": "upper sky"
+                  },
+                  {
+                    "name": "Rose Gold",
+                    "hex": "#E2A579",
+                    "element": "horizon"
+                  },
+                  {
+                    "name": "Low Cloud",
+                    "hex": "#8E93A2",
+                    "element": "land"
+                  }
+                ]
+              },
+              {
+                "id": "mo7b",
+                "img": "/static/galleries/zodiac/mo7b.webp",
+                "label": "Среднощно небе",
+                "tags": [
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#B9C4D6",
+                    "element": "moonlight"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#3A2E60",
+                    "element": "mid sky"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#0E1430",
+                    "element": "low sky"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "symbol",
+        "question": "Избери своя талисман:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sy8a",
+                "img": "/static/galleries/zodiac/sy8a.webp",
+                "label": "Пламък",
+                "tags": [
+                  "fire",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Flame White",
+                    "hex": "#FBE0A2",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#EE9A32",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Signal Red",
+                    "hex": "#A32E1E",
+                    "element": "base"
+                  }
+                ]
+              },
+              {
+                "id": "sy8b",
+                "img": "/static/galleries/zodiac/sy8b.webp",
+                "label": "Кристал",
+                "tags": [
+                  "earth",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#BFB6A4",
+                    "element": "face"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#7B8C62",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#42382A",
+                    "element": "base"
+                  }
+                ]
+              },
+              {
+                "id": "sy8c",
+                "img": "/static/galleries/zodiac/sy8c.webp",
+                "label": "Перо",
+                "tags": [
+                  "air",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#EAF0F5",
+                    "element": "tip"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#BED4E6",
+                    "element": "vane"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#6E7E8E",
+                    "element": "quill"
+                  }
+                ]
+              },
+              {
+                "id": "sy8d",
+                "img": "/static/galleries/zodiac/sy8d.webp",
+                "label": "Вълна",
+                "tags": [
+                  "water",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Sea Mist",
+                    "hex": "#B6D2DE",
+                    "element": "crest"
+                  },
+                  {
+                    "name": "Surface Teal",
+                    "hex": "#579CAE",
+                    "element": "face"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#215C72",
+                    "element": "trough"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "moonphase",
+        "question": "Коя луна ти говори?",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "mn9a",
+                "img": "/static/galleries/zodiac/mn9a.webp",
+                "label": "Новолуние",
+                "tags": [
+                  "mystic",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Faint Grey",
+                    "hex": "#6E6E82",
+                    "element": "rim"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#3A3050",
+                    "element": "shadow"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#12121F",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "mn9b",
+                "img": "/static/galleries/zodiac/mn9b.webp",
+                "label": "Полумесец",
+                "tags": [
+                  "air",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#C6D6E6",
+                    "element": "lit edge"
+                  },
+                  {
+                    "name": "Dusk Blue",
+                    "hex": "#7E92AE",
+                    "element": "mid field"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#3E4A5E",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "mn9c",
+                "img": "/static/galleries/zodiac/mn9c.webp",
+                "label": "Пълнолуние",
+                "tags": [
+                  "moon",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon White",
+                    "hex": "#F0F2F6",
+                    "element": "disc"
+                  },
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#B6C0D0",
+                    "element": "halo"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#20284A",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "mn9d",
+                "img": "/static/galleries/zodiac/mn9d.webp",
+                "label": "Затъмнение",
+                "tags": [
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Corona Gold",
+                    "hex": "#E0B458",
+                    "element": "corona"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4A2E64",
+                    "element": "rim"
+                  },
+                  {
+                    "name": "Eclipse Black",
+                    "hex": "#100C1A",
+                    "element": "disc"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "flow",
+        "question": "Твоят естествен ритъм:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "fl10a",
+                "img": "/static/galleries/zodiac/fl10a.webp",
+                "label": "Гръмотевична буря",
+                "tags": [
+                  "air",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Strike White",
+                    "hex": "#F2F0E4",
+                    "element": "strike"
+                  },
+                  {
+                    "name": "Storm Silver",
+                    "hex": "#9AA6B4",
+                    "element": "cloud edge"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#2A3040",
+                    "element": "cloud body"
+                  }
+                ]
+              },
+              {
+                "id": "fl10b",
+                "img": "/static/galleries/zodiac/fl10b.webp",
+                "label": "Спокойно планинско езеро",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#BFCBD6",
+                    "element": "sky"
+                  },
+                  {
+                    "name": "Slate Green",
+                    "hex": "#6E8478",
+                    "element": "far shore"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#33402F",
+                    "element": "water"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "drain",
+        "question": "Коя енергия те изтощава най-много?",
+        "format": "grid4",
+        "scoring": "inverse",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "dr11a",
+                "img": "/static/galleries/zodiac/dr11a.webp",
+                "label": "Хаотична тълпа",
+                "tags": [
+                  "air",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Noise White",
+                    "hex": "#DCDAD2",
+                    "element": "upper"
+                  },
+                  {
+                    "name": "Grey Blue",
+                    "hex": "#8E96A2",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Crowd Slate",
+                    "hex": "#4A4E58",
+                    "element": "lower"
+                  }
+                ]
+              },
+              {
+                "id": "dr11b",
+                "img": "/static/galleries/zodiac/dr11b.webp",
+                "label": "Офис под неон",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Strip White",
+                    "hex": "#E8ECE6",
+                    "element": "ceiling"
+                  },
+                  {
+                    "name": "Grey Green",
+                    "hex": "#A8B0A2",
+                    "element": "wall"
+                  },
+                  {
+                    "name": "Carpet Grey",
+                    "hex": "#5E645E",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "dr11c",
+                "img": "/static/galleries/zodiac/dr11c.webp",
+                "label": "Застояла мъгла",
+                "tags": [
+                  "water",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Fog White",
+                    "hex": "#D8DEE2",
+                    "element": "upper"
+                  },
+                  {
+                    "name": "Damp Grey",
+                    "hex": "#9AA4AA",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Still Slate",
+                    "hex": "#5A646A",
+                    "element": "lower"
+                  }
+                ]
+              },
+              {
+                "id": "dr11d",
+                "img": "/static/galleries/zodiac/dr11d.webp",
+                "label": "Рязка светлина",
+                "tags": [
+                  "fire",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Glare White",
+                    "hex": "#FBF4E0",
+                    "element": "source"
+                  },
+                  {
+                    "name": "Hard Amber",
+                    "hex": "#DCA83C",
+                    "element": "spill"
+                  },
+                  {
+                    "name": "Burnt Edge",
+                    "hex": "#6E4A1E",
+                    "element": "edge"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sanctuary",
+        "question": "Къде душата ти се зарежда:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sa12a",
+                "img": "/static/galleries/zodiac/sa12a.webp",
+                "label": "Стая на свещи",
+                "tags": [
+                  "earth",
+                  "moon",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Candle Amber",
+                    "hex": "#E8B45E",
+                    "element": "flame"
+                  },
+                  {
+                    "name": "Warm Clay",
+                    "hex": "#9E6444",
+                    "element": "wall"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#3A2A1E",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "sa12b",
+                "img": "/static/galleries/zodiac/sa12b.webp",
+                "label": "Покрив под звездите",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Star Silver",
+                    "hex": "#C8D4E4",
+                    "element": "sky"
+                  },
+                  {
+                    "name": "City Brass",
+                    "hex": "#C4933E",
+                    "element": "skyline"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#28303E",
+                    "element": "rooftop"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "decision",
+        "question": "Когато животът се раздвои, следваш:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "dc14a",
+                "img": "/static/galleries/zodiac30/dc14a.webp",
+                "label": "Първо сърцето",
+                "tags": [
+                  "water",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Sea Mist",
+                    "hex": "#AEC8D8",
+                    "element": "outer stars"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#3A7288",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#121E42",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "dc14b",
+                "img": "/static/galleries/zodiac30/dc14b.webp",
+                "label": "Първо разума",
+                "tags": [
+                  "air",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#E4EDF4",
+                    "element": "nodes"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#B4CEE4",
+                    "element": "lattice"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#3E4A5C",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "dc14c",
+                "img": "/static/galleries/zodiac30/dc14c.webp",
+                "label": "Първо усета",
+                "tags": [
+                  "fire",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Flame White",
+                    "hex": "#FBE2A6",
+                    "element": "flame core"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#EE9A32",
+                    "element": "flame body"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#341E16",
+                    "element": "field"
+                  }
+                ]
+              },
+              {
+                "id": "dc14d",
+                "img": "/static/galleries/zodiac30/dc14d.webp",
+                "label": "Първо времето",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#B6AE9C",
+                    "element": "glass"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#6E8654",
+                    "element": "falling sand"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#382E20",
+                    "element": "field"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "tide",
+        "question": "Коя истина е повече твоя?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "td15a",
+                "img": "/static/galleries/zodiac30/td15a.webp",
+                "label": "Усещам всичко",
+                "tags": [
+                  "water",
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#C4CFDE",
+                    "element": "moonlight"
+                  },
+                  {
+                    "name": "Tidal Teal",
+                    "hex": "#2E6A82",
+                    "element": "crest"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#101A3A",
+                    "element": "trough"
+                  }
+                ]
+              },
+              {
+                "id": "td15b",
+                "img": "/static/galleries/zodiac30/td15b.webp",
+                "label": "Задържам всичко",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#A8A292",
+                    "element": "stone face"
+                  },
+                  {
+                    "name": "Slate Green",
+                    "hex": "#68806E",
+                    "element": "still water"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#33402F",
+                    "element": "shadow"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "door",
+        "question": "Избери вратата, зад която не виждаш нищо:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "dr16a",
+                "img": "/static/galleries/zodiac30/dr16a.webp",
+                "label": "Златна врата",
+                "tags": [
+                  "fire",
+                  "sun"
+                ],
+                "colors": [
+                  {
+                    "name": "Sun White",
+                    "hex": "#FBE6B0",
+                    "element": "threshold"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#EDA43A",
+                    "element": "frame"
+                  },
+                  {
+                    "name": "Ember Gold",
+                    "hex": "#9E6A1E",
+                    "element": "surround"
+                  }
+                ]
+              },
+              {
+                "id": "dr16b",
+                "img": "/static/galleries/zodiac30/dr16b.webp",
+                "label": "Индигова врата",
+                "tags": [
+                  "water",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#BEC6DC",
+                    "element": "threshold"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#4A3282",
+                    "element": "frame"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#121A3E",
+                    "element": "surround"
+                  }
+                ]
+              },
+              {
+                "id": "dr16c",
+                "img": "/static/galleries/zodiac30/dr16c.webp",
+                "label": "Врата от зелен камък",
+                "tags": [
+                  "earth",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Canopy Light",
+                    "hex": "#A8C084",
+                    "element": "threshold"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#5F8046",
+                    "element": "frame"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#33402A",
+                    "element": "surround"
+                  }
+                ]
+              },
+              {
+                "id": "dr16d",
+                "img": "/static/galleries/zodiac30/dr16d.webp",
+                "label": "Врата с цвят на небе",
+                "tags": [
+                  "air",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#E8EFF4",
+                    "element": "threshold"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#B8D2E6",
+                    "element": "frame"
+                  },
+                  {
+                    "name": "Storm Slate",
+                    "hex": "#5A6A7A",
+                    "element": "surround"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "essence",
+        "question": "Твоята космична същност:",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "es13a",
+                "img": "/static/galleries/zodiac/es13a.webp",
+                "label": "Сияен пламък",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Sun White",
+                    "hex": "#FCE8B4",
+                    "element": "core"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F0A234",
+                    "element": "body"
+                  },
+                  {
+                    "name": "Signal Red",
+                    "hex": "#9E2E1E",
+                    "element": "edge"
+                  }
+                ]
+              },
+              {
+                "id": "es13b",
+                "img": "/static/galleries/zodiac/es13b.webp",
+                "label": "Тиха дълбина",
+                "tags": [
+                  "water",
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon Silver",
+                    "hex": "#BCC8DC",
+                    "element": "surface"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#463A78",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#101A3A",
+                    "element": "deep"
+                  }
+                ]
+              },
+              {
+                "id": "es13c",
+                "img": "/static/galleries/zodiac/es13c.webp",
+                "label": "Вкоренен камък",
+                "tags": [
+                  "earth",
+                  "calm",
+                  "moon"
+                ],
+                "colors": [
+                  {
+                    "name": "Quarry Stone",
+                    "hex": "#B4AC98",
+                    "element": "face"
+                  },
+                  {
+                    "name": "Moss Green",
+                    "hex": "#6E8654",
+                    "element": "moss"
+                  },
+                  {
+                    "name": "Bark Umber",
+                    "hex": "#3A2E20",
+                    "element": "base"
+                  }
+                ]
+              },
+              {
+                "id": "es13d",
+                "img": "/static/galleries/zodiac/es13d.webp",
+                "label": "Открито небе",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Cloud White",
+                    "hex": "#EEF3F7",
+                    "element": "high"
+                  },
+                  {
+                    "name": "Pale Sky",
+                    "hex": "#AECBE2",
+                    "element": "mid"
+                  },
+                  {
+                    "name": "Solar Brass",
+                    "hex": "#C89A46",
+                    "element": "horizon"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "seal",
+        "question": "Подпечатай своето четене:",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "sl18a",
+                "img": "/static/galleries/zodiac30/sl18a.webp",
+                "label": "Изгряващо слънце",
+                "tags": [
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Sun White",
+                    "hex": "#FBE4AC",
+                    "element": "disc"
+                  },
+                  {
+                    "name": "Solar Amber",
+                    "hex": "#F0A63C",
+                    "element": "corona"
+                  },
+                  {
+                    "name": "Ash Basalt",
+                    "hex": "#3A2618",
+                    "element": "horizon"
+                  }
+                ]
+              },
+              {
+                "id": "sl18b",
+                "img": "/static/galleries/zodiac30/sl18b.webp",
+                "label": "Луна в зенита",
+                "tags": [
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Moon White",
+                    "hex": "#EFF2F6",
+                    "element": "disc"
+                  },
+                  {
+                    "name": "Deep Violet",
+                    "hex": "#3E3068",
+                    "element": "high sky"
+                  },
+                  {
+                    "name": "Midnight Indigo",
+                    "hex": "#0E1430",
+                    "element": "low sky"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "card_aria": "Избери {label}"
+  },
+  "interstitials": [
+    {
+      "after_step": 4,
+      "template": "confirm",
+      "kicker": "Сигналът е записан",
+      "line": "Два лични сигнала са вътре.",
+      "sub": "Профилът ти се стеснява.",
+      "cta": "Продължи анализа",
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "hook",
+        "sign",
+        "seeking",
+        "bond"
+      ],
+      "personal": {
+        "axis": "purpose",
+        "lines": {
+          "purpose_love": {
+            "line": "{sign} в търсене на любов.",
+            "sub": "Това стеснява кръга бързо."
+          },
+          "purpose_career": {
+            "line": "{sign} в гонитба на растежа.",
+            "sub": "Това стеснява кръга бързо."
+          },
+          "purpose_peace": {
+            "line": "{sign} в защита на своя покой.",
+            "sub": "Това стеснява кръга бързо."
+          },
+          "purpose_path": {
+            "line": "{sign} в чертане на пътя напред.",
+            "sub": "Това стеснява кръга бързо."
+          }
+        }
+      }
+    },
+    {
+      "after_step": 9,
+      "template": "almost",
+      "kicker": "Открит е модел",
+      "line": "Профилът е калибриран на {pct}%.",
+      "cta": "Продължи анализа",
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "energy",
+        "landscape",
+        "palette",
+        "moment",
+        "symbol"
+      ],
+      "personal": {
+        "axis": "element",
+        "lines": {
+          "fire": {
+            "line": "Огънят печели отново и отново.",
+            "sub": "Ако се задържи, четенето ти се променя."
+          },
+          "earth": {
+            "line": "Земята печели отново и отново.",
+            "sub": "Ако се задържи, четенето ти се променя."
+          },
+          "air": {
+            "line": "Въздухът печели отново и отново.",
+            "sub": "Ако се задържи, четенето ти се променя."
+          },
+          "water": {
+            "line": "Водата печели отново и отново.",
+            "sub": "Ако се задържи, четенето ти се променя."
+          }
+        }
+      }
+    },
+    {
+      "after_step": 14,
+      "template": "confirm",
+      "kicker": "Дълбок слой",
+      "line": "Дълбокият слой е картиран.",
+      "sub": "Остават четири сигнала.",
+      "cta": "Продължи анализа",
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "moonphase",
+        "flow",
+        "drain",
+        "sanctuary",
+        "decision"
+      ],
+      "personal": {
+        "step": "decision",
+        "lines": {
+          "dc14a": {
+            "line": "Избираш първо със сърцето.",
+            "sub": "Малцина си го признават."
+          },
+          "dc14b": {
+            "line": "Избираш първо с разума.",
+            "sub": "Сърцето пак има глас."
+          },
+          "dc14c": {
+            "line": "Първо усетът.",
+            "sub": "Най-бързият ти сигнал обикновено е най-верният."
+          },
+          "dc14d": {
+            "line": "Оставяш времето да реши.",
+            "sub": "Търпението е стратегия, не отлагане."
+          }
+        }
+      }
+    },
+    {
+      "after_step": 18,
+      "template": "almost",
+      "kicker": "Калибриране",
+      "line": "Всичките 18 сигнала са вътре.",
+      "sub": "Повечето съчетания са обичайни — да видим твоето.",
+      "cta": "Продължи анализа",
+      "auto_advance_ms": 2400,
+      "echo_steps": [
+        "tide",
+        "door",
+        "essence",
+        "seal"
+      ]
+    }
+  ],
+  "interstitial_working": [
+    "Разчитаме изборите ти…",
+    "Претегляме ги спрямо четирите стихии…",
+    "Подготвяме следващото…"
+  ],
+  "preview_gallery": [
+    {
+      "id": "ls5a",
+      "img": "/static/galleries/zodiac/ls5a.webp",
+      "tags": [
+        "fire",
+        "bold"
+      ]
+    },
+    {
+      "id": "ls5b",
+      "img": "/static/galleries/zodiac/ls5b.webp",
+      "tags": [
+        "earth",
+        "calm"
+      ]
+    },
+    {
+      "id": "ls5c",
+      "img": "/static/galleries/zodiac/ls5c.webp",
+      "tags": [
+        "earth",
+        "bold"
+      ]
+    },
+    {
+      "id": "ls5d",
+      "img": "/static/galleries/zodiac/ls5d.webp",
+      "tags": [
+        "water",
+        "mystic"
+      ]
+    },
+    {
+      "id": "ls5e",
+      "img": "/static/galleries/zodiac/ls5e.webp",
+      "tags": [
+        "fire",
+        "calm"
+      ]
+    },
+    {
+      "id": "ls5f",
+      "img": "/static/galleries/zodiac/ls5f.webp",
+      "tags": [
+        "air",
+        "calm"
+      ]
+    },
+    {
+      "id": "pl6a",
+      "img": "/static/galleries/zodiac/pl6a.webp",
+      "tags": [
+        "fire",
+        "bold"
+      ]
+    },
+    {
+      "id": "pl6b",
+      "img": "/static/galleries/zodiac/pl6b.webp",
+      "tags": [
+        "earth",
+        "calm"
+      ]
+    },
+    {
+      "id": "pl6c",
+      "img": "/static/galleries/zodiac/pl6c.webp",
+      "tags": [
+        "air",
+        "calm"
+      ]
+    },
+    {
+      "id": "pl6d",
+      "img": "/static/galleries/zodiac/pl6d.webp",
+      "tags": [
+        "water",
+        "mystic"
+      ]
+    },
+    {
+      "id": "pl6e",
+      "img": "/static/galleries/zodiac/pl6e.webp",
+      "tags": [
+        "water",
+        "mystic",
+        "moon"
+      ]
+    },
+    {
+      "id": "pl6f",
+      "img": "/static/galleries/zodiac/pl6f.webp",
+      "tags": [
+        "fire",
+        "sun"
+      ]
+    },
+    {
+      "id": "es13a",
+      "img": "/static/galleries/zodiac/es13a.webp",
+      "tags": [
+        "fire",
+        "sun",
+        "bold"
+      ]
+    },
+    {
+      "id": "es13b",
+      "img": "/static/galleries/zodiac/es13b.webp",
+      "tags": [
+        "water",
+        "moon",
+        "mystic"
+      ]
+    },
+    {
+      "id": "es13c",
+      "img": "/static/galleries/zodiac/es13c.webp",
+      "tags": [
+        "earth",
+        "calm",
+        "moon"
+      ]
+    },
+    {
+      "id": "es13d",
+      "img": "/static/galleries/zodiac/es13d.webp",
+      "tags": [
+        "air",
+        "sun",
+        "bold"
+      ]
+    }
+  ],
+  "style_elements": {
+    "title": "Твоите космични сигнали",
+    "subline": "Разпознати от изборите ти — изцяло разчетени в профила ти.",
+    "items": [
+      {
+        "id": "flame",
+        "label": "Пламък",
+        "spec": "Стихия Огън — кардинална, пламва бързо",
+        "image": "sy8a",
+        "img": "/static/galleries/zodiac/sy8a.webp",
+        "tags": [
+          "fire",
+          "bold"
+        ]
+      },
+      {
+        "id": "crystal",
+        "label": "Кристал",
+        "spec": "Стихия Земя — задържаща, бавна в промяната",
+        "image": "sy8b",
+        "img": "/static/galleries/zodiac/sy8b.webp",
+        "tags": [
+          "earth",
+          "mystic"
+        ]
+      },
+      {
+        "id": "feather",
+        "label": "Перо",
+        "spec": "Стихия Въздух — променлива, носена от движението",
+        "image": "sy8c",
+        "img": "/static/galleries/zodiac/sy8c.webp",
+        "tags": [
+          "air",
+          "calm"
+        ]
+      },
+      {
+        "id": "wave",
+        "label": "Вълна",
+        "spec": "Стихия Вода — приливна, връща се сама",
+        "image": "sy8d",
+        "img": "/static/galleries/zodiac/sy8d.webp",
+        "tags": [
+          "water",
+          "mystic"
+        ]
+      },
+      {
+        "id": "full-moon",
+        "label": "Пълнолуние",
+        "spec": "Върхова фаза — видима, изразителна, шумна",
+        "image": "mn9c",
+        "img": "/static/galleries/zodiac/mn9c.webp",
+        "tags": [
+          "moon",
+          "bold"
+        ]
+      },
+      {
+        "id": "new-moon",
+        "label": "Новолуние",
+        "spec": "Тъмна фаза — закрита, засяваща, небързаща",
+        "image": "mn9a",
+        "img": "/static/galleries/zodiac/mn9a.webp",
+        "tags": [
+          "mystic",
+          "calm"
+        ]
+      },
+      {
+        "id": "eclipse",
+        "label": "Затъмнение",
+        "spec": "Сенчеста фаза — повратни точки, наложена промяна",
+        "image": "mn9d",
+        "img": "/static/galleries/zodiac/mn9d.webp",
+        "tags": [
+          "moon",
+          "mystic"
+        ]
+      },
+      {
+        "id": "ember-reds",
+        "label": "Червено на жарава",
+        "spec": "Топъл спектър — висока наситеност, ниска светлина",
+        "image": "pl6a",
+        "img": "/static/galleries/zodiac/pl6a.webp",
+        "tags": [
+          "fire",
+          "bold"
+        ]
+      },
+      {
+        "id": "deep-ocean",
+        "label": "Дълбок океан",
+        "spec": "Хладен спектър — тъмна стойност, един тон",
+        "image": "pl6d",
+        "img": "/static/galleries/zodiac/pl6d.webp",
+        "tags": [
+          "water",
+          "mystic"
+        ]
+      },
+      {
+        "id": "volcano",
+        "label": "Вулкан",
+        "spec": "Терен на Огъня — налягане, задържано под повърхност",
+        "image": "ls5a",
+        "img": "/static/galleries/zodiac/ls5a.webp",
+        "tags": [
+          "fire",
+          "bold"
+        ]
+      },
+      {
+        "id": "forest",
+        "label": "Гора",
+        "spec": "Терен на Земята — вкоренен, бавно растящ, тих",
+        "image": "ls5b",
+        "img": "/static/galleries/zodiac/ls5b.webp",
+        "tags": [
+          "earth",
+          "calm"
+        ]
+      },
+      {
+        "id": "open-sky",
+        "label": "Над облаците",
+        "spec": "Терен на Въздуха — безграничен, без смяна на времето",
+        "image": "ls5f",
+        "img": "/static/galleries/zodiac/ls5f.webp",
+        "tags": [
+          "air",
+          "calm"
+        ]
+      }
+    ]
+  },
+  "styles": [
+    {
+      "id": "radiant_fire",
+      "name": "Сияен огън",
+      "tags": [
+        "fire",
+        "sun",
+        "bold"
+      ],
+      "blurb": "Топлина, която пристига преди теб — решаваш бързо, поемаш ангажимент на глас и стаята или се стопля, или ти прави път.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Solar Amber",
+              "rgb": [
+                242,
+                163,
+                60
+              ]
+            },
+            {
+              "name": "Ember Gold",
+              "rgb": [
+                216,
+                100,
+                42
+              ]
+            },
+            {
+              "name": "Signal Red",
+              "rgb": [
+                173,
+                51,
+                38
+              ]
+            },
+            {
+              "name": "Ash Basalt",
+              "rgb": [
+                58,
+                30,
+                20
+              ]
+            }
+          ],
+          "line": "Solar Amber е ежедневният ти регистър, Signal Red е това, към което посягаш, когато трябва да обърнеш стаята към себе си, а Ash Basalt е тежестта, която пази цялото да не изгори до четвъртък.",
+          "talismans": [
+            "Карнеол — носен в джоб, не на показ",
+            "Слънчев камък — на верижка, достатъчно къса да стои на ключицата",
+            "Месингов ключ в палтото, което носиш най-често"
+          ],
+          "lucky_days": "Вторник и неделя — първият за започване на неща, вторият за довършването им."
+        },
+        "mistakes": {
+          "setup": "С тази от петте се живее най-лесно. Другите четири режат по-дълбоко, а тази, която ти струва най-много точно сега, е",
+          "trigger": "скоростта, с която решаваш, а не самото решение,"
+        },
+        "dna": {
+          "setup": "Огън и Слънце се четат отвън като едно и също, а отвътре дърпат в противоположни посоки, и разделението личи",
+          "trigger": "в изборите, които направи най-бързо,"
+        },
+        "materials": {
+          "setup": "Хората те четат като човек, който е сигурен, много преди ти да го усетиш, а този, който остава, е онзи, който",
+          "trigger": "изчаква първата седмица,"
+        },
+        "splurge": {
+          "setup": "Моделът, по който печелиш, не е равен и никога не е бил замислен да бъде, а месецът, в който се обръща, е",
+          "trigger": "този веднага след като ти доскучае,"
+        },
+        "shopping": {
+          "setup": "Два прозореца в следващите дванадесет месеца носят по-голямата част от устрема ти, а първият се отваря",
+          "trigger": "по-рано от всеки план,"
+        },
+        "mistake_one": {
+          "title": "Бъркаш бързината със сигурност",
+          "body": "Устремът ти изглежда като доказателство — решението е дошло бързо, значи усещането е, че идва отдълбоко. Понякога идва единствено от неудобството да стоиш на едно място, а отвътре двете са напълно еднакви.",
+          "fix": "Преспи една нощ всяко решение, което може да се обясни за под десет секунди."
+        }
+      }
+    },
+    {
+      "id": "deep_water",
+      "name": "Дълбока вода",
+      "tags": [
+        "water",
+        "moon",
+        "mystic"
+      ],
+      "blurb": "Всичко се записва и почти нищо не личи — разчиташ стаята за секунди и я връщаш бавно, по свои условия.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Moon Silver",
+              "rgb": [
+                196,
+                205,
+                214
+              ]
+            },
+            {
+              "name": "Tidal Teal",
+              "rgb": [
+                42,
+                104,
+                122
+              ]
+            },
+            {
+              "name": "Deep Violet",
+              "rgb": [
+                70,
+                46,
+                104
+              ]
+            },
+            {
+              "name": "Midnight Indigo",
+              "rgb": [
+                24,
+                32,
+                66
+              ]
+            }
+          ],
+          "line": "Midnight Indigo е мястото, където си най-много себе си, Moon Silver е това, което позволява на другите да те намерят там, а Deep Violet е акцентът за веднъж в една стая и никога два пъти.",
+          "talismans": [
+            "Лунен камък — носен там, където го достигаш, без да гледаш",
+            "Лабрадорит — на бюрото, а не по тялото",
+            "Малка купичка морска сол до вратата, която ползваш"
+          ],
+          "lucky_days": "Понеделник и четвъртък — понеделник за разчитане на ситуация, четвъртък за изричането ѝ на глас."
+        },
+        "mistakes": {
+          "setup": "Тази вече наполовина я знаеше. Другите четири са тези, които близките ти са забелязали и не са споменали, а най-шумната е",
+          "trigger": "какво правиш с една тишина,"
+        },
+        "dna": {
+          "setup": "Вода и Луна са съгласни почти за всичко и точно затова мистичната ти трета част остава незабелязана — тя изплува",
+          "trigger": "в това, което отказваш без обяснение,"
+        },
+        "materials": {
+          "setup": "Даваш дълбочина рано и достъп късно, и точно това разминаване се разчита погрешно като",
+          "trigger": "дистанция, а е въпрос на време,"
+        },
+        "splurge": {
+          "setup": "Парите следват вниманието ти, а не усилието ти, и моделът се чупи",
+          "trigger": "винаги когато поемеш роля, която трябва да се играе,"
+        },
+        "shopping": {
+          "setup": "Най-силната ти отсечка тази година не е натоварената, а започва",
+          "trigger": "в месеца, в който спреш да я гониш,"
+        },
+        "mistake_one": {
+          "title": "Чакаш идеалния момент, за да го кажеш",
+          "body": "Поемаш повече от всеки друг в стаята и го задържаш по-дълго, затова прочитът ти почти винаги е верен. Затова и пристига, след като ситуацията вече се е решила без теб.",
+          "fix": "Сложи си таван от три дни между това да забележиш нещо и това да го назовеш, с несръчните думи включително."
+        }
+      }
+    },
+    {
+      "id": "grounded_earth",
+      "name": "Устойчива земя",
+      "tags": [
+        "earth",
+        "calm",
+        "moon"
+      ],
+      "blurb": "Тежест и търпение — строиш неща, които остават построени, а стойността на това е невидима до деня, в който вече не е.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Quarry Stone",
+              "rgb": [
+                166,
+                158,
+                142
+              ]
+            },
+            {
+              "name": "Moss Green",
+              "rgb": [
+                92,
+                112,
+                74
+              ]
+            },
+            {
+              "name": "Warm Clay",
+              "rgb": [
+                158,
+                100,
+                68
+              ]
+            },
+            {
+              "name": "Bark Umber",
+              "rgb": [
+                64,
+                48,
+                36
+              ]
+            }
+          ],
+          "line": "Moss Green и Quarry Stone са двата, до които можеш да сложиш всичко, Warm Clay е това, което пази двойката от строгост, а Bark Umber е за ръбовете, не за полето.",
+          "talismans": [
+            "Опушен кварц — в джоба, който наистина ползваш",
+            "Яспис — там, където работиш, не там, където почиваш",
+            "Мънисто от неглазирана глина на обикновена връв"
+          ],
+          "lucky_days": "Петък и събота — петък за приключване на неща, събота за започването им."
+        },
+        "mistakes": {
+          "setup": "Тази от петте се поправя най-евтино. Другите четири вървят от години, а най-отгоре в списъка е",
+          "trigger": "това, с което се съгласяваш от устойчивост,"
+        },
+        "dna": {
+          "setup": "Земята се чете като спокойствие, а спокойствието се чете като съгласие, и разликата личи",
+          "trigger": "в нещата, които никога не споменаваш два пъти,"
+        },
+        "materials": {
+          "setup": "Ти си човекът, на когото другите се подпират, а никой не проверява",
+          "trigger": "на кого се подпираш ти,"
+        },
+        "splurge": {
+          "setup": "Плащат ти по-малко по конкретен и поправим начин, а решението е",
+          "trigger": "число, изречено веднъж, без обяснение след него,"
+        },
+        "shopping": {
+          "setup": "Дванадесетте месеца напред имат една истинска панта, и тя е",
+          "trigger": "решение, около което вече обикаляш,"
+        },
+        "mistake_one": {
+          "title": "Поемаш цената, вместо да я назовеш",
+          "body": "Поемаш допълнителния час и неудобния разговор и ги поемаш достатъчно тихо, че никой да не разбере, че са били допълнителни. За няколко години нивото, от което се тръгва, се измества, а услугата просто става това, което правиш.",
+          "fix": "Кажи какво ти е струвало, веднъж, в момента, в който се случва, без да искаш нищо в замяна."
+        }
+      }
+    },
+    {
+      "id": "celestial_air",
+      "name": "Небесен въздух",
+      "tags": [
+        "air",
+        "sun",
+        "bold"
+      ],
+      "blurb": "Идеите минават през теб по-бързо, отколкото можеш да ги изхарчиш — слагаш едно до друго неща, които никой друг не би, и го правиш да изглежда лесно.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Cloud White",
+              "rgb": [
+                232,
+                232,
+                226
+              ]
+            },
+            {
+              "name": "Pale Sky",
+              "rgb": [
+                176,
+                200,
+                218
+              ]
+            },
+            {
+              "name": "Solar Brass",
+              "rgb": [
+                204,
+                164,
+                84
+              ]
+            },
+            {
+              "name": "Storm Slate",
+              "rgb": [
+                72,
+                84,
+                96
+              ]
+            }
+          ],
+          "line": "Pale Sky и Cloud White са основата и е добре да остане почти скучна; Solar Brass е единствената топла нота, която ги прави да изглеждат избрани, а Storm Slate дава на цялото ръб, за който да се хванеш.",
+          "talismans": [
+            "Прозрачен кварц — малък, у теб, а не на показ",
+            "Аквамарин — носен за разговорите, които имат значение",
+            "Сгънат хартиен жерав в джоба на чантата"
+          ],
+          "lucky_days": "Сряда и неделя — сряда за говорене, неделя за решаване какво е значело."
+        },
+        "mistakes": {
+          "setup": "Тази е видимата половина. Другите четири стоят под нея, а тази, която оформя повечето ти седмици, е",
+          "trigger": "как се справяш с третия ден,"
+        },
+        "dna": {
+          "setup": "Въздух и Слънце дават яснота, смелостта дава запомняемост, и напрежението между тях пада",
+          "trigger": "в това, което започваш и предаваш на друг,"
+        },
+        "materials": {
+          "setup": "С теб се среща лесно и се стига трудно, а човекът, който минава, е този, който",
+          "trigger": "задава втория въпрос,"
+        },
+        "splurge": {
+          "setup": "Най-добрите ти пари идват от частта от работата, която ти е най-малко интересна, и това е",
+          "trigger": "довеждането докрай, не идеята,"
+        },
+        "shopping": {
+          "setup": "Един прозорец тази година струва повече от другите единадесет месеца заедно, и той се отваря",
+          "trigger": "в седмицата, която почти отменяш,"
+        },
+        "mistake_one": {
+          "title": "Тръгваш точно в момента, в който става ценно",
+          "body": "Виждаш формата на нещо преди всички останали, което е трудната част, и после интересът свършва. Идеята остава на този, който е останал, а на теб ти остава точният и безполезен спомен, че мисълта е дошла първо при теб.",
+          "fix": "Избери по едно нещо на тримесечие и остани отвъд точката, в която спира да е интересно."
+        }
+      }
+    }
+  ],
+  "analyzing": {
+    "duration_ms": 2500,
+    "text": "Разчитаме сигналите ти",
+    "messages": [
+      "Разчитаме твоите 18 сигнала…",
+      "Претегляме твоите 18 сигнала спрямо четирите стихии…",
+      "Изолираме доминиращата ти енергия…"
+    ]
+  },
+  "analyzing_echo": true,
+  "report": {
+    "generating_messages": [
+      "Изкуственият ни интелект претегля твоите 18 сигнала спрямо четирите стихии…",
+      "Търсим съчетанията, които пасват на ТЕБ…",
+      "Съпоставяме избора ти на стихия и на енергия…",
+      "Почти готово — пишем профила ти…"
+    ],
+    "sections": [
+      {
+        "id": "palette",
+        "title": "Твоята палитра на силата и талисманите",
+        "enabled": true,
+        "preview": [
+          "Всяка идва с точния си код и с двата нюанса, до които никога не бива да стои, защото един и същ цвят се чете различно в топла и в студена светлина.",
+          "Профилът назовава трите камъка, които държат енергията ти, къде да носиш всеки от тях и двата дни, в които решенията ти попадат най-точно."
+        ],
+        "reveal": {
+          "mode": "visible"
+        }
+      },
+      {
+        "id": "mistakes",
+        "title": "5 скрити сили и слепи петна",
+        "teaser_line": "Още четири, а най-скъпата е последна.",
+        "enabled": true,
+        "preview": [
+          "Изглежда очевидно, щом е написано, и въпреки това оформя повече от седмицата ти от всичко останало в този списък.",
+          "Останалите четири са подредени според това колко от енергията ти тихо ти струва всяка."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "dna",
+        "title": "Твоят космичен план",
+        "teaser_line": "Как изборът ти на {palette} се разделя между двете ти най-силни стихии.",
+        "enabled": true,
+        "preview": [
+          "Три оси, оценени от собствените ти докосвания, и едно място, където се дърпат силно една срещу друга.",
+          "Назовава стихията ти, енергията ти и тона ти и казва с коя от трите тръгваш под напрежение."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "materials",
+        "title": "Любов и съвместимост",
+        "teaser_line": "Защо една зодия те намира отново и отново.",
+        "enabled": true,
+        "preview": [
+          "Това е моделът под хората, които избираш отново и отново, а не списък със зодии за избягване.",
+          "Профилът назовава трите енергии, с които вървиш лесно, тази, която ти струва скъпо, и какво да кажеш през първия месец."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "splurge",
+        "title": "Пътят на кариерата и парите",
+        "teaser_line": "Къде печели енергията ти на {symbol} — и какво да спреш да приемаш.",
+        "enabled": true,
+        "preview": [
+          "Ритъмът, в който печелиш, не е равен и никога не е бил, а формата му е далеч по-полезна от средна стойност.",
+          "Профилът отбелязва месеците, в които енергията ти се отплаща най-добре, и назовава единствения вид работа, която да спреш да приемаш."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "shopping",
+        "title": "Твоята енергийна карта за 12 месеца",
+        "teaser_line": "Три силни месеца. Един тих.",
+        "enabled": true,
+        "preview": [
+          "Дванадесет месеца, маркирани за отсечките, в които енергията ти е зад гърба ти, и за двете, в които явно не е.",
+          "Всеки прозорец идва с това, за което е добър, така че тихите месеци спират да се четат като провал."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      }
+    ],
+    "mistake_one": {
+      "title": "Скрита сила #1 от 5",
+      "locked_note": "Сили 2–5 — в пълния ти профил"
+    },
+    "also": {
+      "title": "Още в профила ти",
+      "rows": [
+        {
+          "section": "dna",
+          "hook": "Как изборите ти на {palette} се разделят между двете ти най-силни стихии."
+        },
+        {
+          "section": "splurge",
+          "hook": "Къде печели енергията ти на {symbol} — и единственият вид работа, която да спреш да приемаш."
+        },
+        {
+          "section": "shopping",
+          "hook": "Двата месеца, в които енергията ти на {sign} върви с теб, и този, в който да мълчиш."
+        },
+        {
+          "title": "Точните цветови кодове на силата ти",
+          "hook": "Кодът на всеки цвят по-горе, къде да го използваш и единственият нюанс, който да държиш далеч от него."
+        }
+      ]
+    },
+    "visuals": {
+      "taps": true,
+      "hero": {
+        "glyph_step": "sign",
+        "band_step": "landscape"
+      },
+      "section_steps": {
+        "palette": "palette",
+        "mistakes": "moonphase",
+        "dna": "essence",
+        "materials": "sanctuary",
+        "splurge": "flow",
+        "shopping": "moment"
+      }
+    },
+    "hook_slots": {
+      "sign": {
+        "step": "sign",
+        "fallback": "зодия"
+      },
+      "palette": {
+        "step": "palette",
+        "fallback": "палитра"
+      },
+      "moonphase": {
+        "step": "moonphase",
+        "fallback": "луна"
+      },
+      "symbol": {
+        "step": "symbol",
+        "fallback": "талисман"
+      }
+    },
+    "preparing": "Подготвяме персонализирания ти профил…",
+    "locked_aria": "Заключено"
+  },
+  "pricing": {
+    "amount_cents": 499,
+    "currency": "eur",
+    "cta": "Отключи пълния ми профил",
+    "price_format": "{amount} €",
+    "decimal_mark": ","
+  },
+  "checkout": {
+    "kicker": "Профилът ти е готов",
+    "product_name": "Твоят личен космичен профил",
+    "product_image": "/static/brand/icon-512.png",
+    "single_page": true,
+    "express": true,
+    "withdrawal_consent": false,
+    "commerce": {
+      "anchor_head": "Профил за {price} вместо консултация за 70 €",
+      "anchor_head_accent": "70 €",
+      "price_anchor": "вместо частна консултация за 70 €",
+      "price_anchor_accent": "70 €",
+      "price_note": "еднократно",
+      "badges": [
+        "ЕДНОКРАТНО",
+        "БЕЗ АБОНАМЕНТ"
+      ],
+      "price_suffix": "еднократно · без абонамент",
+      "trust": [
+        "Сигурно плащане през Stripe",
+        "PDF на твоя e-mail"
+      ],
+      "mid_line": "Пълната ти енергийна карта, за по-малко от две кафета.",
+      "mid_line_accent": "две кафета",
+      "mid_button": "Виж какво има вътре ↓",
+      "sticky_label": "Отключи пълния профил — {price}"
+    },
+    "title": "Твоят профил — {style}",
+    "proof_line": "Изградено от твоите 18 избора",
+    "manifest": [
+      "Твоята палитра на силата с точни кодове, плюс трите ти талисмана",
+      "5 скрити сили и слепи петна — с това какво да направиш за всяко",
+      "Твоят космичен план: стихия, енергия и тон, с оценки",
+      "Любов и съвместимост: моделът под това кого избираш",
+      "Кариера и пари: месеците, в които енергията ти се отплаща най-добре",
+      "Твоята енергийна карта за 12 месеца, маркирана прозорец по прозорец"
+    ],
+    "manifest_hero": "strengths",
+    "manifest_head": "Какво има вътре — {n} секции, твои завинаги",
+    "anchor_head": "Четене за {price} на енергията, която харчиш всеки ден",
+    "anchor": "Частна консултация с астролог струва от 70 €. Пълният ти профил — {price}, еднократно.",
+    "reframe": "По-малко от две кафета. Твой завинаги.",
+    "price_suffix": "еднократно",
+    "cta_label": "Отвори пълния ми профил — {price}",
+    "consent_prechecked": true,
+    "trust": [
+      "Сигурно плащане през Stripe",
+      "Мигновена доставка",
+      "PDF копие на твоя e-mail"
+    ],
+    "eu_withdrawal_text": "Мигновена доставка — отказвам се от правото си на отказ в 14-дневен срок.",
+    "unlock_note": "Отключи всичките {n} секции · {price}",
+    "number_words": [
+      "нула",
+      "едно",
+      "две",
+      "три",
+      "четири",
+      "пет",
+      "шест",
+      "седем",
+      "осем",
+      "девет",
+      "десет"
+    ],
+    "redirecting": "Пренасочваме те…",
+    "error_checkout": "Плащането не можа да се отвори. Опитай пак.",
+    "error_payment": "Плащането не мина. Опитай пак.",
+    "error_consent": "Отбележи полето по-горе, за да продължиш."
+  },
+  "result": {
+    "mistakes_teaser": "Видя сила #1. Другите четири са по-дълбоки — една обяснява избора ти на {moonphase}.",
+    "value_banner": "Пет сили, четене за съвместимост и енергийна карта за дванадесет месеца — всичко изградено от твоите собствени 18 сигнала, твое за постоянно."
+  },
+  "result_copy": {
+    "kicker": "ТВОЯТ КОСМИЧЕН ПРОФИЛ",
+    "blend_note": "рядко съчетание",
+    "taps_caption": "Прочетено от докосванията ти:",
+    "balance_title": "Балансът на стихиите ти",
+    "strength_lead": "{symbol} и {moonphase} поставят тази сила на първо място.",
+    "offer_sub": "Пълният ти профил — веднъж, завинаги.",
+    "locked_note": "Заключено",
+    "delivered_note": "PDF с този профил е в пощата ти. Тази страница остава на линка, към който те върнахме.",
+    "purpose_map": {
+      "purpose_love": {
+        "emphasized_section": "materials",
+        "offer_sub": "Четенето за съвместимост е вътре."
+      },
+      "purpose_career": {
+        "emphasized_section": "splurge",
+        "offer_sub": "Месеците ти за пари са вътре."
+      },
+      "purpose_peace": {
+        "emphasized_section": "mistakes",
+        "offer_sub": "Спокойствието ти има модел. Вътре е."
+      },
+      "purpose_path": {
+        "emphasized_section": "shopping",
+        "offer_sub": "Годината ти, картирана прозорец по прозорец — вътре."
+      }
+    },
+    "profile": {
+      "subtypes": {
+        "radiant_fire": {
+          "earth": {
+            "sun": "Светлата ковачница",
+            "moon": "Спотаената жарава"
+          },
+          "air": {
+            "sun": "Дивата светлина",
+            "moon": "Нощният пламък"
+          },
+          "water": {
+            "sun": "Топлото течение",
+            "moon": "Бавното горене"
+          }
+        },
+        "deep_water": {
+          "fire": {
+            "sun": "Огряната дълбина",
+            "moon": "Сиянието отдолу"
+          },
+          "earth": {
+            "sun": "Каменният вир",
+            "moon": "Неподвижният кладенец"
+          },
+          "air": {
+            "sun": "Бистрият прилив",
+            "moon": "Носещата се дълбина"
+          }
+        },
+        "grounded_earth": {
+          "fire": {
+            "sun": "Слънчевото било",
+            "moon": "Ниското огнище"
+          },
+          "air": {
+            "sun": "Отвореното поле",
+            "moon": "Тихата градина"
+          },
+          "water": {
+            "sun": "Речният камък",
+            "moon": "Дълбокият корен"
+          }
+        },
+        "celestial_air": {
+          "fire": {
+            "sun": "Слънчевата искра",
+            "moon": "Вятърът с фенери"
+          },
+          "earth": {
+            "sun": "Високата поляна",
+            "moon": "Застиналата мъгла"
+          },
+          "water": {
+            "sun": "Дъхът на морето",
+            "moon": "Тъкачът на дъжда"
+          }
+        }
+      },
+      "sign_cross": {
+        "Овен": {
+          "fire": "Овен, който води с Огън, е зодията в чист вид — началото е всичко, и ти вече се движиш, докато стаята още решава.",
+          "earth": "Овен, който води със Земя, е истинско съчетание — импулсът идва навреме, но ти построяваш нещото, преди да го обявиш.",
+          "air": "Овен, който води с Въздух, е необичайно съчетание — бързината ти отива в спора, а не в действието, и печелиш стаи, в които никой не те е канил.",
+          "water": "Овен, който води с Вода, е рядко съчетание — зарядът е целият там и минава през това, което усещаш, а не през това, което започваш."
+        },
+        "Телец": {
+          "fire": "Телец, който води с Огън, е необичайно съчетание — търпението е истинско и стои върху топлина, която се показва само когато ти отнемат нещо.",
+          "earth": "Телец, който води със Земя, е зодията в чист вид — държиш почвата, като стоиш върху нея, а това, което пазиш, е мярката за теб.",
+          "air": "Телец, който води с Въздух, е истинско съчетание — установяваш се бавно и мислиш бързо, така че решението е взето много преди да си го признаеш.",
+          "water": "Телец, който води с Вода, е необичайно съчетание — устойчивостта е емоционална, не материална, и уютът за теб значи някой да те усеща, не да те обзавежда."
+        },
+        "Близнаци": {
+          "fire": "Близнаци, които водят с Огън, са необичайно съчетание — двата ума спират да спорят в мига, в който нещо си струва да се направи, и тогава посоката е една.",
+          "earth": "Близнаци, които водят със Земя, са истинско съчетание — говориш с възможности и се обвързваш с конкретика, а конкретиката е това, което хората помнят.",
+          "air": "Близнаци, които водят с Въздух, са зодията в чист вид — мислиш на глас, в компания, и мисълта е завършена едва след като някой ѝ е отговорил.",
+          "water": "Близнаци, които водят с Вода, са рядко съчетание — бързината разчита настроението на стаята преди думите ѝ, и това е половината от теб, която наричат странно точна."
+        },
+        "Рак": {
+          "fire": "Рак, който води с Огън, е необичайно съчетание — черупката още е там, а зад нея има нещо, което излиза първо, а не последно.",
+          "earth": "Рак, който води със Земя, е истинско съчетание — грижиш се за хората с логистика, а не със сантимент, и това попада по-силно.",
+          "air": "Рак, който води с Въздух, е рядко съчетание — усещаш всичко и го подреждаш, а дистанцията, която пазиш, е работна, не студена.",
+          "water": "Рак, който води с Вода, е зодията в чист вид — премерваш температурата на стаята, преди да си свалиш палтото, и почти никога не грешиш."
+        },
+        "Лъв": {
+          "fire": "Лъв, който води с Огън, е зодията в чист вид — стопляш стаята само с присъствие, а представлението и човекът са едно и също.",
+          "earth": "Лъв, който води със Земя, е истинско съчетание — блясъкът е истински и е построен, и предпочиташ да разчитат на теб, отколкото да те гледат.",
+          "air": "Лъв, който води с Въздух, е необичайно съчетание — огънят ти личи в начина, по който решаваш, не в начина, по който гориш.",
+          "water": "Лъв, който води с Вода, е рядко съчетание — топлината първо се обръща навътре, а стаята вижда втората ѝ редакция."
+        },
+        "Дева": {
+          "fire": "Дева, която води с Огън, е необичайно съчетание — стандартът идва с топлина зад себе си, и една подробност може да ти изяде цяла седмица.",
+          "earth": "Дева, която води със Земя, е зодията в чист вид — подобряваш това, което е пред теб, и подобрението е достатъчно конкретно, за да се посочи с пръст.",
+          "air": "Дева, която води с Въздух, е истинско съчетание — прецизността отива в езика, и можеш да разглобиш объркана идея с едно изречение.",
+          "water": "Дева, която води с Вода, е необичайно съчетание — забелязваш какво не е наред с един човек така, както другите забелязват промяната на времето, и почти нищо от това не казваш."
+        },
+        "Везни": {
+          "fire": "Везни, които водят с Огън, са необичайно съчетание — балансът е решение, което вземаш отново и отново, и го вземаш бързо и на глас.",
+          "earth": "Везни, които водят със Земя, са истинско съчетание — премерваш нещата по това колко струва да ги задържиш, и вкусът ти е работен бюджет.",
+          "air": "Везни, които водят с Въздух, са зодията в чист вид — държиш и двете страни достатъчно дълго, за да видиш формата на цялото, и чак тогава вземаш едната.",
+          "water": "Везни, които водят с Вода, са рядко съчетание — справедливостта за теб е усещане, и по-скоро ще носиш един дисбаланс с месеци, отколкото да го назовеш."
+        },
+        "Скорпион": {
+          "fire": "Скорпион, който води с Огън, е необичайно съчетание — дълбочината е шумна, а не тиха, и хората знаят точно как стоят нещата с теб.",
+          "earth": "Скорпион, който води със Земя, е истинско съчетание — интензивността отива в това, което строиш, а търпението ти изнервя хората.",
+          "air": "Скорпион, който води с Въздух, е рядко съчетание — разглобяваш нещо, за да го разбереш, и разбирането е мястото, където пада интензивността.",
+          "water": "Скорпион, който води с Вода, е зодията в чист вид — стигаш до дъното на нещо от първия път, а плитката компания те изморява до час."
+        },
+        "Стрелец": {
+          "fire": "Стрелец, който води с Огън, е зодията в чист вид — стрелата напуска лъка, а прицелването се случва по пътя.",
+          "earth": "Стрелец, който води със Земя, е истинско съчетание — хоризонтът още е смисълът, но вече носиш провизии, и точно затова наистина пристигаш.",
+          "air": "Стрелец, който води с Въздух, е необичайно съчетание — пътуваш през идеи също толкова лесно, колкото през места, и спорът е пътуването.",
+          "water": "Стрелец, който води с Вода, е рядко съчетание — търсенето е навътре толкова често, колкото и навън, и стигаш най-далеч, когато никой не гледа."
+        },
+        "Козирог": {
+          "fire": "Козирог, който води с Огън, е необичайно съчетание — изкачването е от нагон, а не от дълг, и се състезаваш с една своя версия.",
+          "earth": "Козирог, който води със Земя, е зодията в чист вид — строиш в камък, нарочно, и предпочиташ да дойдеш рано, вместо да направиш впечатление.",
+          "air": "Козирог, който води с Въздух, е истинско съчетание — структурата е първо в мисленето, и виждаш цялата стълба, преди да я докоснеш.",
+          "water": "Козирог, който води с Вода, е рядко съчетание — дисциплината пази нещо меко, а хората, които минат през нея, остават завинаги."
+        },
+        "Водолей": {
+          "fire": "Водолей, който води с Огън, е необичайно съчетание — дистанцията, която пазиш, е позиция, и ще я защитаваш топло и надълго.",
+          "earth": "Водолей, който води със Земя, е истинско съчетание — странната идея идва с план към нея, и точно това кара хората да я последват.",
+          "air": "Водолей, който води с Въздух, е зодията в чист вид — мислиш отвън стаята нарочно, и гледката оттам е приносът ти.",
+          "water": "Водолей, който води с Вода, е рядко съчетание — отстранеността е начин да те е грижа за всички наведнъж, а отделният случай пак те засяга."
+        },
+        "Риби": {
+          "fire": "Риби, които водят с Огън, са необичайно съчетание — мечтаенето има двигател отдолу, и това, което започваш, обикновено се довършва.",
+          "earth": "Риби, които водят със Земя, са истинско съчетание — правиш въобразеното истинско, което е най-рядката половина от въображението.",
+          "air": "Риби, които водят с Въздух, са рядко съчетание — чувството пристига вече преведено, и можеш да обясниш едно настроение на човека, който го изживява.",
+          "water": "Риби, които водят с Вода, са зодията в чист вид — поемаш атмосферата на стаята, без да искаш, а самотата е поддръжка, не сърдене."
+        },
+        "cusp": {
+          "fire": "Границата между две зодии, с водещ Огън — носиш енергиите на два сезона и една от тях тръгва първа, всеки път.",
+          "earth": "Границата между две зодии, с водеща Земя — две енергии стоят в теб, а по-устойчивата е тази, с която хората се срещат.",
+          "air": "Границата между две зодии, с водещ Въздух — държиш две природи наведнъж и точно затова можеш да защитиш и двете страни, и да мислиш и двете.",
+          "water": "Границата между две зодии, с водеща Вода — двете енергии, между които стоиш, се срещат в това, което усещаш, а не в това, което правиш."
+        }
+      },
+      "cards": [
+        {
+          "id": "materials",
+          "key": "Любов",
+          "icon": "heart",
+          "promise": "кои две зодии са магнетични за теб — и коя изцежда връзките ти",
+          "upgrade": {
+            "purpose_love": "четенето, за което дойде — двете ти магнетични зодии и тази, която те изцежда"
+          }
+        },
+        {
+          "id": "mistakes",
+          "key": "Слепи петна",
+          "icon": "eye",
+          "promise": "какво разкри изборът ти на {moonphase} — сили #2–5, най-скъпата последна"
+        },
+        {
+          "id": "shopping",
+          "key": "Твоята година",
+          "icon": "calendar",
+          "promise": "{first} → {last} — 3-те най-силни месеца и 1-ия за изчакване"
+        },
+        {
+          "id": "splurge",
+          "key": "Пари",
+          "icon": "coin",
+          "promise": "къде печели енергията ти — и къде тихо изтича"
+        },
+        {
+          "id": "palette",
+          "key": "Цветове на силата",
+          "icon": "palette",
+          "promise": "твоите 4, с точни кодове + талисмани"
+        },
+        {
+          "id": "dna",
+          "key": "План",
+          "icon": "map",
+          "promise": "как {element} води, а {second} захранва"
+        }
+      ],
+      "scales": [
+        {
+          "id": "energy",
+          "left": "Слънце",
+          "right": "Луна"
+        },
+        {
+          "id": "tone",
+          "left": "Смело",
+          "right": "Спокойно"
+        },
+        {
+          "id": "depth",
+          "left": "Мистично",
+          "right": "Заземено"
+        }
+      ],
+      "rarity": {
+        "radiant_fire": {
+          "earth": {
+            "sun": 10,
+            "moon": 40
+          },
+          "air": {
+            "sun": 15,
+            "moon": 40
+          },
+          "water": {
+            "sun": 25,
+            "moon": 40
+          }
+        },
+        "deep_water": {
+          "fire": {
+            "sun": 40,
+            "moon": 15
+          },
+          "earth": {
+            "sun": 40,
+            "moon": 10
+          },
+          "air": {
+            "sun": 40,
+            "moon": 10
+          }
+        },
+        "grounded_earth": {
+          "fire": {
+            "sun": 30,
+            "moon": 12
+          },
+          "air": {
+            "sun": 30,
+            "moon": 10
+          },
+          "water": {
+            "sun": 40,
+            "moon": 20
+          }
+        },
+        "celestial_air": {
+          "fire": {
+            "sun": 15,
+            "moon": 40
+          },
+          "earth": {
+            "sun": 20,
+            "moon": 40
+          },
+          "water": {
+            "sun": 25,
+            "moon": 40
+          }
+        }
+      },
+      "formula": "{sign} · водеща стихия {element}, подтон {second} · {energy}",
+      "rarity_line": "Приблизително 1 на {n} четения попада на това съчетание",
+      "bridge": "Четенето ти отговаря, конкретно за {subtype_bare}:",
+      "offer_head": "Пълното четене за {subtype_bare} — 6 глави",
+      "split_caption": "{fire}% Огън · {earth}% Земя · {air}% Въздух · {water}% Вода",
+      "chips": [
+        "{sign}",
+        "водеща стихия {element}",
+        "подтон {second}",
+        "{energy}"
+      ],
+      "rarity_card": {
+        "lead": "По-рядко от",
+        "tail": "от четенията",
+        "note": "Твоето предимство пред останалите — в твоето четене."
+      },
+      "unlock_head": "Какво отключваш:",
+      "unlock": [
+        {
+          "id": "materials",
+          "line": "двете зодии, магнетични за теб — и тази, която те изцежда"
+        },
+        {
+          "id": "splurge",
+          "line": "къде печели енергията ти и къде изтича"
+        },
+        {
+          "id": "shopping",
+          "line": "{first} → {last}, месец по месец"
+        },
+        {
+          "id": "mistakes",
+          "line": "силите, които не използваш — от #2 до #5"
+        }
+      ],
+      "unlock_tail": {
+        "key": "+ Пълният план",
+        "line": "цветовете на силата ти и цялата карта на профила"
+      }
+    },
+    "delivery_line": "PDF-ът е изпратен на {email}",
+    "delivery_line_bare": "PDF-ът е изпратен на твоя e-mail",
+    "labels": {
+      "elements": {
+        "fire": "Огън",
+        "earth": "Земя",
+        "air": "Въздух",
+        "water": "Вода"
+      },
+      "energies": {
+        "sun": "Слънце",
+        "moon": "Луна"
+      },
+      "led_template": "водеща енергия {energy}",
+      "months": [
+        "яну.",
+        "фев.",
+        "мар.",
+        "апр.",
+        "май",
+        "юни",
+        "юли",
+        "авг.",
+        "сеп.",
+        "окт.",
+        "ное.",
+        "дек."
+      ],
+      "verdicts": {
+        "works": "РАБОТИ",
+        "avoid": "ИЗБЯГВАЙ"
+      },
+      "saves_head": "От какво да се откажеш",
+      "scale_aria": "от {left} към {right} — {at} от 100 към {right}",
+      "price_regular_aria": "Редовна цена {price}"
+    }
+  },
+  "result_template": "minimal",
+  "sale": {
+    "active": true,
+    "price_cents": 199,
+    "regular_price_cents": 499,
+    "label": "Лятно намаление",
+    "ends": "2026-09-30T23:59:59-12:00"
+  }
+}
