@@ -44,6 +44,29 @@
   // the screen now has to outlast its own last thumbnail, and a frame that
   // leaves before it has finished appearing is worse than no frame.
   var ECHO_HOLD_MS = 4500;
+  // The flash's own ceiling, and the one place a screen may outstay the four
+  // seconds every other interstitial is held to. A memorise screen is not a
+  // beat between steps — it is the question, and a six-up somebody has to
+  // hold in their head needs longer than a sentence they only have to read.
+  // Nothing but `template: "flash"` reaches it: INTERSTITIAL_MS and
+  // ECHO_HOLD_MS are what they were for every other template.
+  var FLASH_MAX_MS = 8000;
+  // The countdown, shared by the flash and by a step with a clock on it.
+  var TIMER_TICK_MS = 100;      // how often the numeral is repainted
+  var TIMER_WARN_MS = 1500;     // the fill turns amber for the last
+  // A step may hold the reader to a clock. The floor is a second because
+  // below that nobody can read the question, let alone answer it; the ceiling
+  // is fifteen because a step nobody answers in fifteen seconds is a step
+  // they have walked away from.
+  var STEP_TIMER_MIN_MS = 1000;
+  var STEP_TIMER_MAX_MS = 15000;
+  // One beat per numeral on the flash's prepare count, and how long the
+  // chosen card's name is held on a step that names cards only after the tap.
+  var PREPARE_TICK_MS = 1000;
+  var LABEL_FLASH_MS = 500;
+  // What a reveal falls back to when the config names only some of it.
+  var REVEAL_CLOSE_MS = 600;
+  var REVEAL_SWAP_MS = 700;
   // The analysing screen's own grid: every choice at once, faster, because
   // there are eighteen of them rather than three.
   var GRID_STAGGER_MS = 95;
@@ -146,6 +169,12 @@
   var midTimer = null;          // its auto-dismiss
   var midAuto = false;          // that one carries its own timing, so no button
   var midSeen = {};             // after_step -> already shown this run
+  var midPrepare = false;       // a flash is counting its reader in
+  var midReveal = false;        // a flash is closing a lid or shuffling boxes
+  var midSteps = [];            // the flash sequence's own timers
+  var midPrepareSkip = null;    // what a tap during the count-in runs
+  var stepTimer = null;         // a timed step's countdown, or null
+  var timedOut = false;         // the clock answered this step, not the reader
   var workingTimer = null;      // the interstitial's rotating micro-copy
   // Which of the three steps the reader is standing in: 0 while they are
   // choosing, 1 once the offer and the upload box are what is in front of
@@ -380,9 +409,23 @@
     return GRID_SIZE[stepFormat(st)] || 2;
   }
 
-  // Whether card labels are on screen all the time or only in the chip after
-  // a tap. Absent is the tap-reveal behaviour every funnel has had.
+  // Whether card labels are on screen all the time, only after the tap, or
+  // not at all. Absent is the tap-reveal behaviour every funnel has had.
+  //
+  // The step is asked first. One walk can want all three: a grid of named
+  // signs has to be readable before the tap, a memory round must not name the
+  // frames it is asking somebody to recognise, and a round where the name is
+  // the reward wants it only once the choice is made. A step that names
+  // nothing takes the funnel's own setting, which is every step shipping
+  // today.
+  //
+  // Read off `step` rather than taken as an argument: this is called from
+  // `cardNode`, which draws the cards of the step the reader is on and no
+  // other, and threading the step through would put a second source of truth
+  // for "which step is this" next to the one the whole file already uses.
   function labelMode() {
+    var own = (stepAt(step) || {}).label_mode;
+    if (own) return own;
     return (cfg && cfg.swipe && cfg.swipe.label_mode) || "";
   }
 
@@ -661,6 +704,10 @@
     var flash = flashAt(index);
     if (flash) {
       flash.flash.images.forEach(function (g) { preload(g.img); });
+      // The lid a reveal closes with. It is not one of the frames, so nothing
+      // else warms it, and it is painted mid-animation where a late decode is
+      // a blank cell in the middle of the one move the round is about.
+      if (flash.reveal) preload(flash.reveal.closed_img);
     }
     var st = stepAt(index);
     if (!st) return;
@@ -764,6 +811,11 @@
     // the document, rather than at the top of the step change: what it is for
     // is time spent in front of the question, not time spent decoding it.
     shownAtMs = nowMs();
+    timedOut = false;
+    // The clock, on the steps that have one. Started here, with the cards
+    // already decoded and in the document, for the same reason the mark above
+    // is taken here.
+    startStepTimer(st);
     setCaption((st && st.question) || "");
     renderProgress();
     prepareNext();
@@ -872,6 +924,13 @@
     // swipe row the platform records; a funnel that names nothing sends
     // exactly the three fields it always has.
     if (timingTracked() && shownAtMs != null) extra.elapsed_ms = elapsedMs();
+    // And whether anybody actually answered. A step the clock answered is a
+    // real row — the card was scored, the walk went on — and reading the two
+    // together is the only way to tell "chose the wrong one" from "ran out of
+    // time", which on a memory round are different findings. Behind the same
+    // key as the reaction above, for the same reason: /api/track refuses a
+    // swipe payload carrying a field it was not taught.
+    if (timingTracked() && timedOut) extra.timed_out = true;
     return extra;
   }
 
@@ -897,9 +956,99 @@
     return Math.max(0, Math.min(ms, ELAPSED_MAX_MS));
   }
 
+  // --- a step with a clock on it ---------------------------------------------
+  //
+  // Most steps wait. A round where the answer is what somebody remembers has
+  // to not wait, or the reader who cannot remember simply sits there until it
+  // comes back to them, and the round stops measuring the thing it was for.
+  //
+  // Gated on the step naming both halves: how long, and which card the engine
+  // is to press when nobody does. One without the other is not a timed step —
+  // a clock that runs out onto nothing would leave the walk stopped on a
+  // screen with no way forward, which is worse than no clock.
+
+  // How long this step gives, clamped, or 0 for the steps every funnel has.
+  function stepTimerMs(st) {
+    var ms = st && st.timer_ms;
+    if (typeof ms !== "number" || !isFinite(ms) || ms <= 0) return 0;
+    if (!timeoutPick(st)) return 0;
+    return Math.max(STEP_TIMER_MIN_MS, Math.min(ms, STEP_TIMER_MAX_MS));
+  }
+
+  // The card the clock presses. Looked up in what is actually on screen rather
+  // than in the config's own list: a step deals shuffled, and an id that is
+  // not in this run's draw is an id nobody could have tapped either.
+  function timeoutPick(st) {
+    var want = st && st.timeout_pick;
+    if (!want) return null;
+    for (var i = 0; i < pair.length; i++) {
+      if (pair[i].id === want) return pair[i];
+    }
+    return null;
+  }
+
+  function stopStepTimer() {
+    if (stepTimer) {
+      stepTimer.timer.stop();
+      clearTimeout(stepTimer.id);
+      if (stepTimer.node.parentNode) {
+        stepTimer.node.parentNode.removeChild(stepTimer.node);
+      }
+    }
+    stepTimer = null;
+    if (el.swipe) el.swipe.classList.remove("step", "is-timed");
+  }
+
+  // Started with the cards in the document and not before: the reader is given
+  // the seconds the config named to answer the question, not the seconds
+  // between two steps.
+  //
+  // Above the cards, inside the stage, so the clock and the question are one
+  // block and the hint under the cards stays where it is on every other step.
+  function startStepTimer(st) {
+    stopStepTimer();
+    var ms = stepTimerMs(st);
+    if (!ms) return;
+    if (!el.stage || !el.cards) return;
+    var timer = makeTimer();
+    el.stage.insertBefore(timer.node, el.cards);
+    if (el.swipe) el.swipe.classList.add("step", "is-timed");
+    timer.start(ms);
+    var id = setTimeout(function () { timeOut(st); }, ms);
+    stepTimer = { timer: timer, node: timer.node, id: id, step: step };
+  }
+
+  // The clock ran out. What happens is a tap on the card the config named —
+  // the same path, the same scoring, the same hold — with one word added to
+  // what is recorded, because a run where the answer was given by a stopwatch
+  // is not a run where somebody chose.
+  function timeOut(st) {
+    if (!stepTimer || stepTimer.step !== step || picking) return;
+    var item = timeoutPick(st);
+    if (!item) { stopStepTimer(); return; }
+    timedOut = true;
+    var card = cardFor(item);
+    choose(item, card);
+  }
+
+  // The node on screen for one image, or null. The cards are dealt shuffled,
+  // so this is a search rather than an index.
+  function cardFor(item) {
+    for (var i = 0; i < pair.length; i++) {
+      if (pair[i] === item) return el.cards.children[i] || null;
+    }
+    return null;
+  }
+
   function choose(item, card) {
     if (picking || !pair.length) return;   // one tap per pair
     picking = true;
+    // Whoever got here first, the clock is done. A tap clears it; so does the
+    // clock's own expiry, which arrives through this same function.
+    stopStepTimer();
+    // Read before the counter moves, because `labelMode` answers for the step
+    // the reader is on and in three lines' time that will be the next one.
+    var labels = labelMode();
     // Read before the counter moves: this describes the step just answered.
     var extra = swipeExtra(step, item);
     // A normal step asks what they want and scores the answer up. An inverse
@@ -919,13 +1068,25 @@
     if (card) {
       card.classList.add("is-chosen");
       el.cards.classList.add("is-picking");
-      // The chip names what they just chose, in the words the step used for
-      // it. A tag-derived reaction had to guess at meaning the label already
-      // states.
-      setTimeout(function () { showReaction(item.label || "", card); },
-                 REACTION_DELAY_MS);
+      // A step that names nothing until it is answered names it here: the
+      // badge every other card would have carried all along, arriving on the
+      // one card they picked. It is the reveal on this kind of step, so the
+      // chip that would otherwise say the same word over the same picture
+      // stands down — two labels on one card is one label too many.
+      if (labels === "on_tap") {
+        revealLabel(item, card);
+      } else {
+        // The chip names what they just chose, in the words the step used for
+        // it. A tag-derived reaction had to guess at meaning the label already
+        // states.
+        setTimeout(function () { showReaction(item.label || "", card); },
+                   REACTION_DELAY_MS);
+      }
     }
 
+    // The badge is worth nothing if the set leaves while it is still arriving,
+    // so this one mode — and only this one — buys itself the time to be read.
+    var late = labels === "on_tap" ? LABEL_FLASH_MS : 0;
     var reduced = prefersReducedMotion();
     setTimeout(function () {
       // The pip fills as the set leaves, not as the card is tapped. It used to
@@ -944,7 +1105,17 @@
         // invisible one must not advance the quiz twice.
         advance();
       }, reduced ? SWAP_REDUCED_MS : EXIT_MS + EXIT_CHOSEN_MS);
-    }, reduced ? HOLD_REDUCED_MS : HOLD_MS);
+    }, (reduced ? HOLD_REDUCED_MS : HOLD_MS) + late);
+  }
+
+  // The label a `on_tap` step held back, on the card that was chosen. Same
+  // node and same class the badge mode draws, so it is the same object in the
+  // same place — it simply arrives late, and the stylesheet animates it in.
+  function revealLabel(item, card) {
+    if (!item.label || card.querySelector(".card-name")) return;
+    var name = elm("span", "card-name is-late", item.label);
+    name.setAttribute("aria-hidden", "true");   // the button already says it
+    card.appendChild(name);
   }
 
   function advance() {
@@ -1100,6 +1271,11 @@
     // back by its own stagger so the last one gets the moment the first got.
     var want = ms + (echoes || 0) * ECHO_STAGGER_MS;
     var ceiling = echoes ? ECHO_HOLD_MS : INTERSTITIAL_MS;
+    // The one exception, and it is the template rather than the funnel:
+    // a memorise screen is the question, not a beat between questions, and
+    // holding it to the four seconds a sentence gets makes a six-up
+    // unanswerable. Every other template keeps the ceiling it always had.
+    if (entry.template === "flash") ceiling = FLASH_MAX_MS;
     return Math.max(AUTO_MIN_MS, Math.min(want, ceiling));
   }
 
@@ -1151,6 +1327,12 @@
     setAccent(entry, midAuto, echoes);
     playEntrance(midAuto);
     track("interstitial", step);
+    // A flash is a sequence rather than a beat — a count-in, the frames, a lid
+    // and a shuffle — and whichever phase is last owns the dismiss. It is
+    // started here rather than built here because the timer's rail is a
+    // transition, and a transition primed on a screen that is still
+    // `display: none` arrives at its end value in one frame.
+    if (flash) { startFlash(entry, auto); return; }
     // Its own beat, or four seconds and a button — whichever this entry asked
     // for. Either way a tap gets there first: a screen that only ever waits is
     // a screen somebody sits through.
@@ -1163,6 +1345,14 @@
     midAuto = false;
     clearTimeout(midTimer);
     midTimer = null;
+    // A flash may have a count, a lid or a shuffle still queued. They are
+    // cancelled as one: a swap that fired after this would be animating over
+    // whatever screen came next.
+    midPrepare = false;
+    midReveal = false;
+    midPrepareSkip = null;
+    clearFlashSteps();
+    if (flashParts) flashParts.timer.stop();
     stopWorking();
     advance();
   }
@@ -1171,7 +1361,19 @@
   // rather than to a control, because there is no control — and gated on the
   // mode, so on a funnel that renders the button a tap beside it still does
   // exactly nothing.
+  //
+  // A flash has phases, and they answer a tap differently. The count-in is
+  // something to get past, so a tap goes straight to the frames. The reveal is
+  // not: what the next step asks is where a thing ended up, and a reader who
+  // skipped the shuffle is being asked a question they were not shown the
+  // answer to. So a tap during it does nothing at all, which is the one place
+  // on this platform where a tap is deliberately ignored.
   function tapInterstitial() {
+    if (midPrepare) {
+      if (midPrepareSkip) midPrepareSkip();
+      return;
+    }
+    if (midReveal) return;
     if (midAuto) closeInterstitial();
   }
 
@@ -1282,6 +1484,71 @@
     return picks.length;
   }
 
+  // --- the countdown --------------------------------------------------------
+
+  // One clock, drawn one way, wherever the reader is being held to one: the
+  // memorise flash, and a step that answers itself if nobody answers it. Two
+  // countdowns that looked different would read as two different rules, and
+  // the reader has no way to find out they are the same one.
+  //
+  // The rail drains by transform and never by width. A width animation is a
+  // layout pass every frame, and both places this runs are places where
+  // something else is decoding — the next pair behind the flash, the next
+  // step behind a timed one. The transition is what drives it: the engine
+  // writes a duration and a target and then stops touching it, so the bar
+  // cannot drift from the timeout it is drawn for by a frame the main thread
+  // dropped. The numeral is repainted off a deadline rather than counted
+  // down, for the same reason — a tab that was backgrounded comes back
+  // showing the truth rather than showing where it left off.
+  function makeTimer() {
+    var node = elm("div", "mz-timer");
+    // The rail is decoration for the numeral beside it, which is the part a
+    // screen reader can actually use.
+    var track = elm("span", "mz-timer-track");
+    track.setAttribute("aria-hidden", "true");
+    var fill = elm("i", "mz-timer-fill");
+    track.appendChild(fill);
+    node.appendChild(track);
+    var count = elm("span", "mz-timer-count");
+    count.setAttribute("role", "timer");
+    node.appendChild(count);
+
+    var tick = null;
+    var ends = 0;
+
+    function stop() {
+      if (tick) clearInterval(tick);
+      tick = null;
+    }
+
+    function paint() {
+      var left = Math.max(0, ends - nowMs());
+      count.textContent = String(Math.ceil(left / 1000));
+      // Amber for the last stretch. The class rather than a colour written
+      // here, so what "running out" looks like stays in the stylesheet.
+      node.classList.toggle("is-warn", left <= TIMER_WARN_MS);
+      if (left <= 0) stop();
+    }
+
+    function start(ms) {
+      stop();
+      ends = nowMs() + ms;
+      node.classList.remove("is-warn");
+      // The reflow between the two writes is what makes the eighth timer draw
+      // the same as the first: without it the browser coalesces both into the
+      // end state and the bar is simply already empty.
+      fill.style.transition = "none";
+      fill.style.transform = "scaleX(1)";
+      void fill.offsetWidth;
+      fill.style.transition = "transform " + ms + "ms linear";
+      fill.style.transform = "scaleX(0)";
+      paint();
+      tick = setInterval(paint, TIMER_TICK_MS);
+    }
+
+    return { node: node, start: start, stop: stop };
+  }
+
   // --- the flash: frames to hold, and a bar that runs out --------------------
 
   // The memorise half of a memory round: a set of pictures, held for exactly
@@ -1327,13 +1594,25 @@
     return null;
   }
 
+  // What the last `setFlash` built, so the sequence below can drive it without
+  // going back to the DOM for nodes it just made. Null when the screen on
+  // display is not a flash.
+  var flashParts = null;
+
   // The screen itself, built on first use and refilled on every open, like the
   // echo row and the accent above it. Rebuilt rather than reset, which is what
-  // restarts the countdown: the bar is a fresh node every time, so its
+  // restarts the countdown and the swaps: every node is a fresh one, so its
   // animation plays from the start without the class-off-reflow-class dance
   // the reused nodes need.
+  //
+  // Building is all this does. Nothing here starts a clock: the timer's rail
+  // is a transition, and a transition primed on a subtree that is still
+  // `display: none` has no layout to start from and arrives at its end value
+  // in one frame. `startFlash` runs after the screen is shown, which is the
+  // whole reason the two are separate functions.
   function setFlash(entry) {
     var host = el.midFlash;
+    flashParts = null;
     if (!isFlash(entry)) {
       if (host) { host.hidden = true; host.innerHTML = ""; }
       return;
@@ -1346,6 +1625,21 @@
     }
     host.hidden = false;
     host.innerHTML = "";
+    host.classList.remove("is-prepare");
+
+    // The count-in, when the entry asked for one. Built whether or not it
+    // runs, because the stylesheet holds it out of the way in every state but
+    // its own, and a node that appears mid-screen is a node that shifts the
+    // layout under somebody who is trying to memorise what is on it.
+    var count = elm("span", "mz-prepare-count");
+    var prepare = elm("div", "mz-prepare");
+    prepare.appendChild(count);
+    host.appendChild(prepare);
+
+    // Above the grid, in both places it is drawn. A clock under the thing it
+    // is timing is a clock the reader finds after it has run out.
+    var timer = makeTimer();
+    host.appendChild(timer.node);
 
     // Not aria-hidden, unlike the echo row: that one hands back pictures
     // somebody has already been shown, where this one is the question. The
@@ -1370,18 +1664,236 @@
     });
     host.appendChild(grid);
 
-    // The countdown, under the grid. It drains by transform and never by
-    // width: this screen runs while the next step's images are still decoding,
-    // and a layout animation here drops frames on the one screen somebody is
-    // being asked to read carefully. The duration is the only part JS writes —
-    // the drain itself is a CSS animation, so there is no second clock in this
-    // file to disagree with the dismiss above on a slow frame.
-    var bar = elm("div", "mid-flash-bar");
-    bar.setAttribute("aria-hidden", "true");
-    var fill = elm("i", "mid-flash-fill");
-    fill.style.animationDuration = autoAdvanceMs(entry) + "ms";
-    bar.appendChild(fill);
-    host.appendChild(bar);
+    flashParts = { host: host, timer: timer, grid: grid, count: count };
+  }
+
+  // --- the flash sequence ----------------------------------------------------
+  //
+  // A flash is up to three screens wearing one: a count-in, the frames with a
+  // clock over them, and — where the round is about where a thing went rather
+  // than what it was — the lid closing on it and the boxes changing places.
+  // Each phase hands to the next, and the dismiss belongs to whichever phase
+  // is last, which is why `openInterstitial` hands the whole thing over rather
+  // than setting a timeout of its own.
+
+  // Every timeout the sequence is holding. Cancelled as one, because a screen
+  // that closes while a swap is still queued would run that swap over the next
+  // screen's nodes.
+  function clearFlashSteps() {
+    midSteps.forEach(function (id) { clearTimeout(id); });
+    midSteps = [];
+  }
+
+  function laterFlash(fn, ms) {
+    midSteps.push(setTimeout(fn, ms));
+  }
+
+  // The count-in this entry asked for, or null. `count` is what makes it one:
+  // a line with no number under it is a sentence, and this phase exists to put
+  // a number on the screen.
+  function preparePlan(entry) {
+    var rule = entry && entry.prepare;
+    var count = rule && rule.count;
+    if (!rule || typeof count !== "number" || !isFinite(count) || count < 1) {
+      return null;
+    }
+    // A ceiling, because the count is time the reader cannot get past without
+    // tapping, and a config typo should cost seconds rather than minutes.
+    return { line: rule.line || "", count: Math.min(9, Math.round(count)) };
+  }
+
+  // The reveal this entry asked for, or null — and every part of it read off
+  // the config rather than decided here. There is no randomness on this path
+  // and there must not be: the whole point of declaring the swaps is that the
+  // author knows which slot the thing ends up in and a check can say so too.
+  // A rule naming a slot the grid has not got is not a reveal at all.
+  function revealPlan(entry, auto) {
+    var rule = entry && entry.reveal;
+    var frames = (entry && entry.flash && entry.flash.images) || [];
+    var slot = rule && rule.open_slot;
+    if (!rule || typeof slot !== "number" || slot < 0
+        || slot >= frames.length) {
+      return null;
+    }
+    if (!rule.closed_img) return null;
+    var swaps = [];
+    (rule.swaps || []).forEach(function (pair) {
+      if (!pair || pair.length !== 2) return;
+      var a = pair[0];
+      var b = pair[1];
+      if (typeof a !== "number" || typeof b !== "number" || a === b) return;
+      if (a < 0 || b < 0 || a >= frames.length || b >= frames.length) return;
+      swaps.push([Math.round(a), Math.round(b)]);
+    });
+    return {
+      open_slot: Math.round(slot),
+      open_ms: Math.max(AUTO_MIN_MS,
+                        Math.min(rule.open_ms || auto, FLASH_MAX_MS)),
+      close_ms: Math.max(0, rule.close_ms || REVEAL_CLOSE_MS),
+      swap_ms: Math.max(0, rule.swap_ms || REVEAL_SWAP_MS),
+      closed_img: rule.closed_img,
+      swaps: swaps
+    };
+  }
+
+  function startFlash(entry, auto) {
+    var parts = flashParts;
+    clearFlashSteps();
+    // Nothing was built, which means the entry was not a flash after all. The
+    // screen is still up and still has to leave.
+    if (!parts) {
+      midTimer = setTimeout(closeInterstitial, auto || INTERSTITIAL_MS);
+      return;
+    }
+    var plan = preparePlan(entry);
+    if (!plan) {
+      showFlashFrames(entry, parts, auto);
+      return;
+    }
+    runPrepare(entry, parts, plan, function () {
+      showFlashFrames(entry, parts, auto);
+    });
+  }
+
+  // Kicker, one line, and a numeral. The frames are in the document already
+  // and the stylesheet holds them out of the way, so what changes between this
+  // phase and the next is a class rather than a layout.
+  //
+  // Its time is spent on top of the entry's own beat rather than out of it:
+  // somebody who has just been counted in has had none of the seconds they
+  // were promised to look at the frames.
+  function runPrepare(entry, parts, plan, done) {
+    midPrepare = true;
+    parts.host.classList.add("is-prepare");
+    el.midLine.textContent = plan.line;
+    var fired = false;
+
+    function finish() {
+      if (fired) return;
+      fired = true;
+      midPrepare = false;
+      midPrepareSkip = null;
+      clearFlashSteps();
+      parts.host.classList.remove("is-prepare");
+      el.midLine.textContent = fillTokens(entry.line || "");
+      done();
+    }
+
+    // What a tap during the count runs. Impatient readers go straight to the
+    // frames; nobody waits longer than the config said.
+    midPrepareSkip = finish;
+    countIn(parts, plan.count);
+    for (var n = 1; n < plan.count; n++) {
+      (function (left) {
+        laterFlash(function () { countIn(parts, left); },
+                   (plan.count - left) * PREPARE_TICK_MS);
+      }(plan.count - n));
+    }
+    laterFlash(finish, plan.count * PREPARE_TICK_MS);
+  }
+
+  // One numeral, arriving. The class comes off and goes back on with a reflow
+  // between, because this is the same node three times and a CSS animation on
+  // it otherwise plays once and never again.
+  function countIn(parts, n) {
+    var node = parts.count;
+    node.classList.remove("is-in");
+    node.textContent = String(n);
+    void node.offsetWidth;
+    node.classList.add("is-in");
+  }
+
+  // The frames, with the clock over them. On an ordinary flash this is the
+  // whole screen and the clock is also the dismiss. On a reveal the clock
+  // times the looking, and what happens when it runs out is the reveal rather
+  // than the exit.
+  function showFlashFrames(entry, parts, auto) {
+    var plan = revealPlan(entry, auto);
+    var hold = plan ? plan.open_ms : auto;
+    parts.timer.start(hold);
+    if (!plan) {
+      midTimer = setTimeout(closeInterstitial, hold);
+      return;
+    }
+    midReveal = true;
+    laterFlash(function () { runReveal(parts, plan); }, hold);
+  }
+
+  function runReveal(parts, plan) {
+    parts.timer.stop();
+    closeLid(parts.grid.children[plan.open_slot], plan, function () {
+      runSwaps(parts.grid, plan, 0, function () {
+        midReveal = false;
+        closeInterstitial();
+      });
+    });
+  }
+
+  // The lid coming down: the closed art fades up over the open one while the
+  // cell squashes and releases. The squash is a keyframe in the stylesheet and
+  // the only thing written here is how long it takes, so the two halves of the
+  // move cannot end up on different clocks.
+  function closeLid(cell, plan, done) {
+    if (!cell) { done(); return; }
+    var lid = document.createElement("img");
+    lid.className = "mid-flash-lid";
+    lid.src = plan.closed_img;
+    lid.alt = "";
+    lid.decoding = "async";
+    lid.style.transition = "opacity " + plan.close_ms + "ms linear";
+    cell.appendChild(lid);
+    cell.style.animationDuration = plan.close_ms + "ms";
+    void lid.offsetWidth;
+    cell.classList.add("is-closing");
+    lid.style.opacity = "1";
+    laterFlash(function () {
+      cell.classList.remove("is-closing");
+      done();
+    }, plan.close_ms);
+  }
+
+  // The swaps, in the order the config wrote them, one at a time. Sequential
+  // rather than concurrent on purpose: two pairs moving at once is a shuffle
+  // nobody can follow, which is the same as no shuffle at all.
+  function runSwaps(grid, plan, i, done) {
+    if (i >= plan.swaps.length) { done(); return; }
+    swapCells(grid, plan.swaps[i][0], plan.swaps[i][1], plan.swap_ms,
+              function () { runSwaps(grid, plan, i + 1, done); });
+  }
+
+  // Two cells trading places. They move by transform, and then the list is
+  // reordered and the transforms come off — so the picture and the DOM agree
+  // the moment the move ends, and the next swap measures where things
+  // actually are rather than where they were drawn.
+  function swapCells(grid, a, b, ms, done) {
+    var one = grid.children[a];
+    var two = grid.children[b];
+    if (!one || !two || one === two) { done(); return; }
+    var dx = two.offsetLeft - one.offsetLeft;
+    var dy = two.offsetTop - one.offsetTop;
+    var ease = "transform " + ms + "ms cubic-bezier(0.4, 0, 0.2, 1)";
+    one.style.transition = ease;
+    two.style.transition = ease;
+    one.style.transform = "translate(" + dx + "px, " + dy + "px)";
+    two.style.transform = "translate(" + (-dx) + "px, " + (-dy) + "px)";
+    one.style.zIndex = "2";
+    two.style.zIndex = "2";
+    laterFlash(function () {
+      [one, two].forEach(function (cell) {
+        cell.style.transition = "none";
+        cell.style.transform = "none";
+        cell.style.zIndex = "";
+      });
+      // The swap itself. A marker rather than two inserts, because "a before
+      // b" and "b before a" are otherwise two different pieces of code.
+      var mark = document.createElement("li");
+      grid.insertBefore(mark, one);
+      grid.insertBefore(one, two);
+      grid.insertBefore(two, mark);
+      grid.removeChild(mark);
+      void grid.offsetWidth;
+      done();
+    }, ms);
   }
 
   // Restart the entrance. The screen is one set of nodes reused eight times,
@@ -6625,6 +7137,8 @@
 
   function cache() {
     el.cards = $("cards");
+    el.swipe = $("screen-swipe");
+    el.stage = $("stage");
     el.pips = $("pips");
     el.tapHint = $("tap-hint");
     el.interstitial = $("screen-interstitial");
