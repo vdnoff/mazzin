@@ -543,3 +543,6 @@ bottom.
 
 ## 2026-09-02 — claude/brain-funnel-4
 - brain v4: round titles, time's up, letters, IMPROVE NOW
+
+## 2026-09-02 — claude/brain-report
+- brain: report profile + timing tracking — purchasable
