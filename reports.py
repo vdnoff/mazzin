@@ -236,7 +236,13 @@ SHAPE = {
                               "where": _t(2, 400)}),
     },
     "mistakes": {
-        "items": _lst(4, 6, {"title": _t(3, 90), "body": _t(30),
+        # Seven rather than six, because /brain's chapter sells five sharp
+        # strengths and two habits and all seven belong in the one section
+        # its title names. A ceiling is the outer wall rather than the
+        # target: kitchen, zodiac and persona all still ask for five, and
+        # widening a maximum cannot reject an answer that was accepted
+        # before it moved.
+        "items": _lst(4, 7, {"title": _t(3, 90), "body": _t(30),
                              "fix": _t(10)}),
     },
     "materials": {
@@ -3090,10 +3096,423 @@ PERSONA_PROFILE = {
 }
 
 
+# --- /brain: the report a two-minute game buys ------------------------------
+#
+# The other three products read somebody: a kitchen from photographs, a sign
+# from a date, a temperament from shapes. This one measures something instead
+# — sixteen rounds, scored, with a number at the end — and that changes what
+# the document has to be. A reading can afford to be interesting. A score has
+# to be useful, or the reader has a number and nothing to do with it.
+#
+# So every section here ends on an action, and the whole report is written as
+# a plan rather than as a verdict. The round somebody dropped is the round
+# with the most room in it, and that is not a euphemism: it is the round where
+# a week of two-minute drills moves the number most, which is the thing being
+# sold.
+
+# The line this product must not cross, and it is a different line from the
+# others'. Zodiac drifts mystical and persona drifts toward a personality
+# framework; this one drifts clinical, because it puts a number on somebody's
+# head and calls it an age. Every word below is a word that turns a game into
+# an assessment, and the reader did not buy an assessment.
+#
+# Written out rather than built on ZODIAC_BANNED: the mystical half is not a
+# risk here — nothing in a memory game reaches for a horoscope — and every
+# pattern a profile carries is a retry and then a stub when it fires, which a
+# paying reader pays for in latency.
+BRAIN_BANNED = tuple(re.compile(p, re.IGNORECASE) for p in (
+    r"\bmemory\s+loss\b",
+    r"\bcognitive\w*\b",
+    r"\bdeclin(?:e|es|ed|ing)\b",
+    r"\bdementia\b",
+    r"\bhealth\w*\b",
+    r"\bdiagnos(?:e|es|ed|is|tic)\w*\b",
+    r"\btreatment\w*\b",
+    r"\bsymptoms?\b",
+    r"\bdisorder\w*\b",
+    r"\bpatients?\b",
+    r"\bclinical\w*\b",
+    # The trademarked phrase, which this product is not and may not imply it
+    # is. "Drill", "practice" and "round" are the words that belong here.
+    r"\bbrain\s+training\b",
+    r"\bIQ\b",
+    r"\bimpair\w*\b",
+    r"\bdeficit\w*\b",
+))
+
+
+BRAIN_SYSTEM = """You write improvement plans for people who have just \
+played a two-minute memory game and paid for the plan that comes after it.
+
+The game is sixteen scored rounds across four domains — recall, position, \
+change and focus — and it ends on a single number the reader is told is their \
+brain age. What you write is what they do about that number this week. Every \
+field has to give them something to DO: name the drill, name when to do it, \
+name what it sharpens. A sentence that would read the same for a different \
+reader is a wasted sentence, and a sentence with nothing to do in it is worse.
+
+Voice: an upbeat coach who has just watched them play. Warm, direct, second \
+person, British-neutral English. Specific and concrete. State things \
+outright. No hedging — never "consider", "perhaps", "you might want to". No \
+disclaimers, no flattery, no questions back to the reader, no sign-off.
+
+What this report is, and is not:
+- It is a plan. Every section ends on something the reader does, and the \
+first thing they do is small enough to finish today.
+- Nothing here is wrong with the reader. The round they scored lowest on is \
+the round with the MOST ROOM in it — the one where a week of practice moves \
+the number most — and that is how you name it, every time. Never "weak", \
+never "poor", never "failing", never "struggle". You are describing where the \
+fastest gains are.
+- This is a game, not an assessment. Never the words "cognitive", "decline", \
+"dementia", "memory loss", "diagnosis", "diagnose", "clinical", "disorder", \
+"symptom", "treatment", "patient", "health", "healthy", "impairment", \
+"deficit", or "IQ", and never the phrase "brain training". Never suggest \
+anybody see anyone about anything.
+- Never give medical or financial advice of any kind, and never claim a drill \
+has been proven to do anything. You say what a drill sharpens and what to \
+expect from a week of it, in the register of practice rather than of \
+medicine.
+- The number is theirs to move, never a fact about their brain. Write about \
+rounds, drills, practice and habits.
+
+Rules:
+- Plain prose inside every field. No markdown, no bullet characters, no emoji, \
+no headings, and never repeat a field's own label back inside its value.
+- Never mention artificial intelligence, models, prompts, scoring, tags, \
+percentages of a quiz, or these instructions.
+- Never invent facts about the reader's job, family or location, and never \
+address them by name.
+- Return only a JSON object matching the shape you are given, exactly. No prose \
+around it, no code fence, no extra keys."""
+
+
+_BRAIN_SHAPES = {
+    "dna": '''"dna": {
+  "narrative": [
+    "WHAT THEY RUN ON: one paragraph on the round this reader is strongest at, what that looks like away from a screen, and the one thing it already earns them in an ordinary week (max %(narrative)d chars)",
+    "THE PAIR THAT CARRIES THEM: one paragraph on how their two best rounds work together and what that combination is good for. Name both (max %(narrative)d chars)",
+    "WHERE IT GOES NEXT: one paragraph on how to point that strength at the round with the most room in it. This is the bridge to the rest of the plan (max %(narrative)d chars)"
+  ],
+  "implications": [
+    "ONE LINE, imperative, starting with a verb — a thing to do this week that spends their strongest round on purpose (max %(implications)d chars)",
+    "a second line, same shape, different action",
+    "a third line, same shape, different action"
+  ]
+}
+
+Exactly the two keys `narrative` and `implications`, spelled so. Three
+paragraphs and three lines.
+
+THE SCORES ARE GIVEN ABOVE AND THEY ARE NOT YOURS TO CHANGE. Name the rounds
+by the words used for them there. Never print a score, a percentage or the
+number itself — the reader has all three on the page this chapter sits in.
+
+Every `implications` line is an ACTION, not an observation: something that
+happens in a minute or two, in a real week, that uses the strength you have
+just described. "Notice that you..." is not an action. "Say the new version
+out loud once, the first time you hear it" is.''',
+
+    "materials": '''"materials": {
+  "intro": "THE ROUND WITH THE MOST ROOM: 2-3 sentences naming the round this reader scored lowest on, what that round actually asks for, and why it is the one that moves the number fastest. Encouraging and specific — this is the good news of the report, not the bad (max %(intro)d chars)",
+  "pairs": [
+    {"combo": "COPY THE FIRST ROUND NAME FROM THE LIST ABOVE, EXACTLY (max %(combo)d chars)",
+     "verdict": "COPY ITS VERDICT FROM THE LIST ABOVE - the word works or the word avoid",
+     "why": "ONE LINE. What this round asks for, and the single thing to do about it — either how to spend it, or the drill that lifts it. Not a paragraph (max %(why)d chars)"},
+    {"combo": "the second round from the list, exactly", "verdict": "its verdict, exactly", "why": "one line"},
+    {"combo": "the third round from the list, exactly", "verdict": "its verdict, exactly", "why": "one line"},
+    {"combo": "the fourth round from the list, exactly", "verdict": "its verdict, exactly", "why": "one line"}
+  ],
+  "rule": "THE DRILL: 2-3 sentences spelling out one two-minute drill for the round with the most room in it. What to do, with what, and how many times. Somebody has to be able to do it tomorrow morning from this paragraph alone (max %(rule)d chars)"
+}
+
+THE FOUR ROUNDS ARE NOT YOURS TO CHOOSE. All four are given above, each with
+its verdict. Reproduce all four, in that order, with `combo` and `verdict`
+exactly as written. Invent no round and never change a verdict.
+
+`verdict` is the word "works" or the word "avoid" and nothing else. "avoid"
+here does not mean anything is wrong — it marks the round with room in it,
+and the line beside it says what lifts it.
+
+This section is read as a table: a name, a badge, and one line. The paragraph
+at the end is `rule`, and it is the only paragraph here. It is also the most
+important thing in the report: it is the drill the whole plan is built on, so
+it is specific enough to follow without thinking.''',
+
+    "mistakes": '''"mistakes": {
+  "items": [
+    {"title": "the sharp strength, as a short phrase (max %(title)d chars)",
+     "body": "EXACTLY TWO SENTENCES and no more. The first says what this brain type does better than most and where it shows up in an ordinary week. The second says what it makes easy that other people find hard. No third sentence, and do not join two of them with a semicolon to get around that (max %(body)d chars)",
+     "fix": "ONE imperative sentence starting with a verb — how to spend this strength on purpose this week (max %(fix)d chars)"},
+    {"title": "the second strength", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the third strength", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the fourth strength", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the fifth strength", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the first HABIT holding them back, as a short phrase", "body": "two sentences: what the habit is and when it happens", "fix": "one imperative sentence — the swap that replaces it"},
+    {"title": "the second habit", "body": "two sentences", "fix": "one sentence"}
+  ]
+}
+
+SEVEN items under the single key `items`, in this order: five strengths, then
+two habits. Each is an object with `title`, `body` and `fix` spelled exactly
+so.
+
+The five strengths belong to this brain type and are genuinely good news —
+five things this reader does better than most people, named specifically
+enough to recognise. A strength nobody could fail to have is not a strength.
+
+The two habits are habits, not faults: things this type does out of practice
+that cost it speed, each with the swap that replaces it. Never say a habit
+means something is wrong. `fix` on a habit is the replacement, in the
+imperative, and it is small enough to start today.
+
+All seven are the same shape and the same length: two sentences and one. This
+is read on a phone by somebody scrolling. Cut every clause that is
+scene-setting, every "which is why", and every restatement of the title.''',
+
+    "shopping": '''"shopping": {
+  "items": [
+    {"name": "Day 1 - <the drill's name, two or three words> (max %(name)d chars)",
+     "priority_note": "What to do, in enough detail to do it without thinking, and what it sharpens. Two to three sentences. Under five minutes, start to finish (max %(priority_note)d chars)"},
+    {"name": "Day 2 - <its drill>", "priority_note": "what to do, and what it sharpens"},
+    {"name": "Day 3 - <its drill>", "priority_note": "same"},
+    {"name": "Day 4 - <its drill>", "priority_note": "same"},
+    {"name": "Day 5 - <its drill>", "priority_note": "same"},
+    {"name": "Day 6 - <its drill>", "priority_note": "same"},
+    {"name": "Day 7 - <its drill>", "priority_note": "same"}
+  ],
+  "skip": []
+}
+
+Two keys, `items` and `skip`, spelled exactly so. SEVEN items under `items`,
+one per day, in order. `skip` is an empty list — send it, and put nothing in
+it.
+
+`name` opens with the day, exactly as "Day 1 - ", "Day 2 - " and so on,
+followed by a short name for that day's drill.
+
+DAY ONE AND DAY FOUR BELONG TO THE ROUND WITH THE MOST ROOM. Day one is the
+two-minute drill from the chapter before this one, said again in the doing
+rather than in the explaining. Day four is a harder version of the same
+thing. The other five days spread across the remaining three rounds, and at
+least one of them spends the reader's strongest round rather than training it.
+
+EVERY DAY IS A THING SOMEBODY DOES, ALONE, WITH WHAT THEY ALREADY HAVE. No
+apps, no equipment, no other people required, nothing to buy. Under five
+minutes each. If a day cannot be done at a bus stop or a kitchen table, it is
+the wrong day.
+
+The register, exactly:
+
+  BAD  "Day 3 - Mindfulness: take some time to be present."
+  BAD  "Day 5 - Focus work: try to concentrate for longer."
+  GOOD "Day 1 - Shopping list recall: read a list of eight things once, put
+        it face down, and write down as many as you can. Do it again in the
+        evening with the same list and beat the morning score."
+  GOOD "Day 6 - Room sweep: stand in a doorway, take one look, turn around,
+        and name six things behind you and where each one was."
+
+If a day would survive being moved to another reader with a different weakest
+round, it is the wrong day.''',
+}
+
+BRAIN_SPEC = dict((section_id, _zodiac_spec(text, section_id))
+                  for section_id, text in _BRAIN_SHAPES.items())
+
+
+# The four rounds, and what each one is called in the document. The keys are
+# the config's own domain prefixes, so a round renamed on the funnel is
+# renamed here and in the prompt at the same time.
+BRAIN_DOMAINS = ("mem", "spa", "chg", "foc")
+
+
+# The badges the four rounds wear in the PDF. The class the stylesheet colours
+# stays the English verdict; only the word inside it changes — and it changes
+# because "AVOID" over the round somebody is being told to practise is the
+# document contradicting its own advice.
+BRAIN_WORDS = dict(
+    RENDER_WORDS,
+    verdicts={"works": "STRENGTH", "avoid": "ROOM TO GROW"},
+    pdf_note=("Keep this — your plan also stays available at the link you "
+              "were sent back to after checkout."),
+)
+
+
+# What a reader gets when there is no key, and it is not allowed to be a
+# different product from the one that arrives when there is. Same lengths,
+# same structure, same voice — and banned-clean, because the fallback is
+# exactly the path where nothing is checking.
+BRAIN_STUBS = {
+    "dna": {
+        "narrative": [
+            "You hold what you have just been shown for a beat longer than "
+            "most people do, and it turns up everywhere: the name you catch "
+            "the first time, the aisle you walk back to without checking, "
+            "the instruction you only need once.",
+            "That holding pairs with how quickly you spot a difference. "
+            "Together they make you the one who notices that something moved "
+            "before anybody else has looked up, and the one who can say what "
+            "it was.",
+            "The round with the most room in it is the one that asks you to "
+            "let go of what you were already holding. Point the same "
+            "attention at starting fresh and the number comes down faster "
+            "than anything else in this plan will move it.",
+        ],
+        "implications": [
+            "Say a new name out loud once, the first time you hear it.",
+            "Before you leave a room, take one look back and name three "
+            "things and where they were.",
+            "When a plan changes, say the new version aloud before you act "
+            "on it.",
+        ],
+    },
+    "materials": {
+        "intro": "The round with the most room in it is the one that asks "
+                 "you to drop what you were holding and take in something "
+                 "new. That is good news: it is the round that responds "
+                 "fastest to practice, and two minutes a day moves it inside "
+                 "a week.",
+        "pairs": [
+            {"combo": "Memory", "verdict": "works",
+             "why": "You keep what you were shown — spend it by taking one "
+                    "deliberate look before you need to remember anything."},
+            {"combo": "Spatial", "verdict": "works",
+             "why": "You file where beside what — sketch a layout before you "
+                    "start a task and the whole task gets shorter."},
+            {"combo": "Change", "verdict": "avoid",
+             "why": "Spotting an edit rewards a second look — count to two "
+                    "before you decide nothing moved."},
+            {"combo": "Focus", "verdict": "avoid",
+             "why": "A narrow beam is fast and misses the edges — name the "
+                    "target out loud before you aim it."},
+        ],
+        "rule": "Here is the drill. Open any page of text, read one "
+                "paragraph once, close it, and say the paragraph back in a "
+                "sentence. Do it three times, with three different "
+                "paragraphs, and do it before you have looked at a screen "
+                "for anything else. Two minutes, every morning, for a week.",
+    },
+    "mistakes": {
+        "items": [
+            {"title": "You only need telling once",
+             "body": "An instruction lands with you first time and stays "
+                     "there, which is why you are rarely the one asking for "
+                     "it again. It makes you fast at anything with steps in "
+                     "it.",
+             "fix": "Take the instructions once, deliberately, and then put "
+                    "them away rather than re-reading."},
+            {"title": "You recognise before you can name",
+             "body": "You know a face, a route or a difference before you "
+                     "have found the word for it. That head start is worth "
+                     "more than the word.",
+             "fix": "Act on the recognition and let the name catch up."},
+            {"title": "You keep the map",
+             "body": "Where a thing was is filed with what it was, so you "
+                     "walk back to things other people go looking for. It "
+                     "saves you minutes every day you never notice.",
+             "fix": "Put the things you reach for most in fixed places and "
+                    "stop deciding."},
+            {"title": "You notice the edit",
+             "body": "Something moved and you knew before you could say "
+                     "what. In a room full of people looking at the same "
+                     "thing, you are the one who says so.",
+             "fix": "Say what changed out loud, once, as soon as you spot "
+                    "it."},
+            {"title": "You finish what you start",
+             "body": "Once your attention is on something it stays there "
+                     "until the thing is done. Most people lose the thread "
+                     "and you simply do not.",
+             "fix": "Pick the one thing worth finishing before you start, "
+                    "not after."},
+            {"title": "You re-read what you already know",
+             "body": "You go back over the instruction you took in first "
+                     "time, because going back feels like being careful. It "
+                     "costs a minute every time and buys nothing.",
+             "fix": "Read it once, close it, and start."},
+            {"title": "You decide nothing moved too quickly",
+             "body": "When a difference is small you call it early and move "
+                     "on. The one you miss is always the small one.",
+             "fix": "Count to two before you decide two things are the "
+                    "same."},
+        ],
+    },
+    "shopping": {
+        "items": [
+            {"name": "Day 1 - Paragraph recall",
+             "priority_note": "Read one paragraph of anything once, close "
+                              "it, and say it back in a sentence. Three "
+                              "paragraphs, two minutes. Sharpens the round "
+                              "with the most room in it."},
+            {"name": "Day 2 - Doorway sweep",
+             "priority_note": "Stand in a doorway, take one look, turn "
+                              "around, and name six things behind you and "
+                              "where each one was. Sharpens position."},
+            {"name": "Day 3 - List of eight",
+             "priority_note": "Write eight things you need, read the list "
+                              "once, put it face down, and shop from "
+                              "memory. Check it at the till. Sharpens "
+                              "recall."},
+            {"name": "Day 4 - Paragraph recall, harder",
+             "priority_note": "The same drill as day one, with two "
+                              "paragraphs instead of one and a gap of an "
+                              "hour before you say them back."},
+            {"name": "Day 5 - Spot the change",
+             "priority_note": "Look at a shelf or a desk for ten seconds, "
+                              "turn away while somebody moves one thing, "
+                              "and find it. On your own, move something "
+                              "yourself and come back in an hour."},
+            {"name": "Day 6 - One target",
+             "priority_note": "Name out loud the one thing you are about to "
+                              "do, then do only that until it is finished. "
+                              "Once, on the hardest task of the day. "
+                              "Sharpens focus."},
+            {"name": "Day 7 - Play again",
+             "priority_note": "Play the rounds again from the top and watch "
+                              "the number. A week of two-minute drills "
+                              "moves it, and this is the day you see by how "
+                              "much."},
+        ],
+        "skip": [],
+    },
+}
+
+
+BRAIN_PROFILE = {
+    "system": BRAIN_SYSTEM,
+    "spec": BRAIN_SPEC,
+    "stubs": BRAIN_STUBS,
+    # The five strengths and the two habits belong to the brain type rather
+    # than to the run: everybody who plays as a Recorder gets the same seven,
+    # which is what makes them worth warming once instead of writing eight
+    # thousand times.
+    "cached": ("mistakes",),
+    # The other three are the run. The profile chapter names the rounds this
+    # reader actually scored on, the weakest-round chapter is built around
+    # which one that was, and the plan's first day is the drill for it —
+    # caching any of them per type would be four answers where there are four
+    # thousand readers.
+    "personal": ("dna", "materials", "shopping"),
+    "banned": BRAIN_BANNED,
+    # No palette here and no year map, so there is nothing for the shared
+    # verifier to hold this product to. What polices it is the banned list
+    # above and the shapes themselves.
+    "verify": None,
+    "retry_detail": True,
+    "words": BRAIN_WORDS,
+    "mail": None,           # filled below, once COPY_BRAIN exists
+    "mail_link": None,      # filled below, once the shared button exists
+    "pdf_lead": "Your Brain Refresh report",
+    "pdf_note": ("Keep this — your plan also stays available at the link you "
+                 "were sent back to after checkout."),
+    "delivery_note": True,
+}
+
+
 PROFILES = {"zodiac": ZODIAC_PROFILE, "zodiac30": ZODIAC_PROFILE,
             "zodiac-ro": ZODIAC_RO_PROFILE,
             "zodiac-bg": ZODIAC_BG_PROFILE,
-            "persona": PERSONA_PROFILE}
+            "persona": PERSONA_PROFILE,
+            "brain": BRAIN_PROFILE}
 
 
 def _prompt_budget(profile):
@@ -4707,6 +5126,171 @@ def _persona_picks_block(cfg, choices):
               "this section. Not a paraphrase — the label itself.")
 
 
+# --- /brain: the number the reader was already shown ------------------------
+#
+# The browser worked all of this out while the run existed and put it on the
+# screen before any money changed hands. The report has to arrive at exactly
+# the same figures, from exactly the same table, for two reasons: the
+# delivered page draws them back off the stored block rather than recomputing
+# them — the tab it opens in never ran the quiz — and a document that
+# disagreed with the page that sold it is worse than one that said nothing.
+
+
+def _js_round(value):
+    """`Math.round`, which is not Python's `round`.
+
+    Python rounds a half to even; JavaScript rounds it up. They disagree on
+    exactly the scores this funnel produces: a base of 22 with 3.5 for each
+    miss lands on a half for every odd number of misses, and three misses is
+    32.5 — 33 in the browser and 32 here. Floor of the value plus a half is
+    what the browser does, on every value, so this is the whole conversion.
+    """
+    return int(math.floor(value + 0.5))
+
+
+def _brain_numbers(cfg, style, tag_scores):
+    """The block the browser computed, rebuilt server-side, or None.
+
+    None on a funnel with no `brain_age` table and on a run with no tallies —
+    both of which leave the report exactly as it was.
+    """
+    block = (cfg or {}).get("brain_age") or {}
+    scored = block.get("scored")
+    if not block or not tag_scores or not isinstance(scored, int) \
+            or scored <= 0:
+        return None
+
+    # Counted off the hits rather than off a miss tally, exactly as the module
+    # does it: a round nobody answered is a miss, and counting `*_miss` tags
+    # would quietly score it as neither. The number is always out of `scored`.
+    counts = {}
+    hits = 0
+    for key in BRAIN_DOMAINS:
+        got = max(0, int(tag_scores.get(key + "_hit") or 0))
+        counts[key] = got
+        hits += got
+    misses = max(0, scored - hits)
+
+    age = _js_round((block.get("base") or 0)
+                    + (block.get("per_miss") or 0) * misses)
+    floor = block.get("min")
+    ceiling = block.get("max")
+    if isinstance(floor, (int, float)):
+        age = max(int(floor), age)
+    if isinstance(ceiling, (int, float)):
+        age = min(int(ceiling), age)
+
+    # Their own age group, off the service tag the first round carries, and
+    # in the table's own order — the module takes the first tag it finds with
+    # a score on it and so does this.
+    mid = None
+    for tag, value in (block.get("age_mid") or {}).items():
+        if (tag_scores.get(tag) or 0) > 0 and isinstance(value, (int, float)):
+            mid = int(value)
+            break
+
+    # The round with the most room in it. Ties go to the earliest of the four,
+    # so the same run always names the same round — in the prompt, in the
+    # chapter and in the plan's first day.
+    weakest = min(BRAIN_DOMAINS,
+                  key=lambda key: (counts[key], BRAIN_DOMAINS.index(key)))
+
+    return {
+        "age": age,
+        "hits": hits,
+        "misses": misses,
+        "scored": scored,
+        "counts": counts,
+        "age_mid": mid,
+        "delta": None if mid is None else age - mid,
+        "weakest": weakest,
+        "domains": dict(block.get("domains") or {}),
+        "type": (style or {}).get("id") or "",
+        "type_name": (style or {}).get("name") or "",
+    }
+
+
+def _brain_round_name(numbers, key):
+    """What this funnel calls one round, or the bare key."""
+    return (numbers.get("domains") or {}).get(key) or key
+
+
+def _brain_rounds_block(numbers):
+    """How this reader actually played, for the sections written for them."""
+    if not numbers:
+        return None
+    lines = ["- %s: %d of 4" % (_brain_round_name(numbers, key),
+                                min(4, numbers["counts"][key]))
+             for key in BRAIN_DOMAINS]
+    room = _brain_round_name(numbers, numbers["weakest"])
+    tail = [
+        "THE ROUNDS THIS PERSON PLAYED, and how they scored:",
+        "\n".join(lines),
+        "The round with the most room in it is %s. It is the one this plan "
+        "is built around, and it is named that way rather than as a weakness "
+        "— it is where a week of practice moves the number most." % room,
+    ]
+    delta = numbers.get("delta")
+    if delta is not None:
+        if delta >= 3:
+            tail.append(
+                "Their number came out above the middle of their own age "
+                "group, which is the best news in this report: it is the "
+                "number with the most room to come down.")
+        elif delta <= -3:
+            tail.append(
+                "Their number came out below the middle of their own age "
+                "group. Write for somebody keeping an edge they already "
+                "have, not for somebody catching up.")
+        else:
+            tail.append(
+                "Their number came out level with the middle of their own "
+                "age group. Write for somebody about to move it for the "
+                "first time.")
+    tail.append(
+        "Name the rounds by the words above and never print a score, a "
+        "percentage or the number itself — the reader has all three on the "
+        "page this chapter sits in.")
+    return "\n\n".join(tail)
+
+
+def _brain_pairs_block(numbers):
+    """The four rounds and the badge each wears, from the run, not the model.
+
+    Three of four or better is a strength; anything under it is a round with
+    room in it. The word is the schema's — `works` or `avoid` — and the badge
+    the reader sees is the profile's, because "AVOID" printed over the round
+    somebody is being told to practise is the document arguing with its own
+    plan.
+    """
+    if not numbers:
+        return None
+    rows = []
+    for key in BRAIN_DOMAINS:
+        verdict = "works" if numbers["counts"][key] >= 3 else "avoid"
+        rows.append("- %s — %s" % (_brain_round_name(numbers, key), verdict))
+    return ("REQUIRED — these are this reader's four rounds and the verdict "
+            "each one carries, in this order:\n"
+            + "\n".join(rows)
+            + "\nReproduce all four as `pairs`, in this order, with `combo` "
+              "the round's name exactly as written here and `verdict` the "
+              "word beside it. Invent no round and never change a verdict.")
+
+
+def _brain_plan_block(numbers):
+    """Which round the first day of the week belongs to."""
+    if not numbers:
+        return None
+    room = _brain_round_name(numbers, numbers["weakest"])
+    return ("REQUIRED — day one and day four of this plan are drills for %s, "
+            "which is the round with the most room in it for this reader. "
+            "Day one is the two-minute drill the chapter before this one "
+            "spelled out, written as the doing rather than the explaining. "
+            "The remaining five days spread across the other three rounds, "
+            "and at least one of them spends the round this reader is "
+            "already strongest at rather than training it." % room)
+
+
 def _profile_for(cfg, funnel_slug, style, tag_scores, choices):
     """The stored block for a purchase, or None.
 
@@ -4953,9 +5537,20 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
     profile = _profile(funnel_slug)
     zodiac = _is_zodiac(profile)
     persona = profile is PERSONA_PROFILE
+    brain = profile is BRAIN_PROFILE
 
     parts = [_style_block(style, name)]
-    parts.append(_leaning_block(tag_scores))
+    # `_leaning_block` is kitchen's vocabulary — it asks the model to let the
+    # pull change "which colours and materials you name" — and the memory
+    # game has neither. Its rounds block below is this product's version of
+    # the same idea, and it is stated in scores rather than in tag counts.
+    if not brain:
+        parts.append(_leaning_block(tag_scores))
+    numbers = _brain_numbers(cfg, style, tag_scores) if brain else None
+    if numbers:
+        rounds = _brain_rounds_block(numbers)
+        if rounds:
+            parts.append(rounds)
 
     extra = None
     if cfg is not None and choices:
@@ -5034,7 +5629,13 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
     # elements were named on the result screen before any money changed hands,
     # with the promise that the report specifies each one — so this section is
     # required to, by name, rather than left to mention them if it happens to.
-    if section_id == "materials" and not zodiac and cfg is not None and choices:
+    # Not on the memory game: its `style_elements` block exists for the same
+    # reason every funnel's does, but its result page draws no element strip
+    # and nothing was promised. The block asks for "the finish, the material
+    # or the fitting to ask a supplier for", which is a kitchen sentence in a
+    # chapter about a round somebody played.
+    if section_id == "materials" and not zodiac and not brain \
+            and cfg is not None and choices:
         specs = _element_specs(cfg, choices, tag_scores)
         if specs:
             parts.append(
@@ -5048,6 +5649,19 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
                   "for. Do not contradict a specification above. You may group "
                   "them where they belong together, and you may add to them, "
                   "but nothing on the list may be missing.")
+
+    # The four rounds and their badges come off the run rather than out of
+    # the model, exactly as the love pairings do on the zodiac product: the
+    # chapter is read as a table and a table the model invented would not be
+    # the reader's own.
+    if numbers and section_id == "materials":
+        pairs = _brain_pairs_block(numbers)
+        if pairs:
+            parts.append(pairs)
+    if numbers and section_id == "shopping":
+        plan = _brain_plan_block(numbers)
+        if plan:
+            parts.append(plan)
 
     if persona and cfg is not None:
         card = _profile_for(cfg, funnel_slug, style, tag_scores, choices)
@@ -6011,6 +6625,15 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     if card:
         visuals = dict(visuals or {})
         visuals["profile"] = card
+    # The memory game's own figures, measured while the run still existed.
+    # They travel for the same reason the hero card does and one more: the
+    # delivered page prints the number the reader was shown before they paid,
+    # and it opens in a tab that never played a round.
+    if profile is BRAIN_PROFILE:
+        numbers = _brain_numbers(cfg, style, tag_scores)
+        if numbers:
+            visuals = dict(visuals or {})
+            visuals["brain"] = numbers
     # The twelve months this purchase's year map runs over, read off the clock
     # once and then treated as a fact about the purchase. The prompt is built
     # from it, the check that polices the answer is bound to it, and it is
@@ -8215,6 +8838,19 @@ COPY_PERSONA = {
     "keep": "It stays available at that link, and the PDF is yours to keep.",
 }
 
+# The memory game's own. Every registered product gets one, because the
+# fallback is kitchen's — a brain buyer told they had dodged the mistakes
+# that cost renovators four thousand pounds is the leak the persona mail was
+# fixed for, and a new product falls into it by default.
+COPY_BRAIN = {
+    "headline": "Your refresh plan is ready.",
+    "subject": "%s — your brain refresh plan",
+    "body": "Your full plan as %s is attached: the round with the most room "
+            "in it, the two-minute drill that lifts it, five sharp strengths "
+            "to lean on, and seven days to move the number.",
+    "keep": "It stays available at that link, and the PDF is yours to keep.",
+}
+
 # The fifth mail: the same product, to somebody who bought it in Bulgarian.
 #
 # The archetype name is a proper noun dropped into a Bulgarian sentence, and a
@@ -8236,7 +8872,11 @@ ZODIAC_PROFILE["mail"] = COPY_ZODIAC
 ZODIAC_RO_PROFILE["mail"] = COPY_ZODIAC_RO
 ZODIAC_BG_PROFILE["mail"] = COPY_ZODIAC_BG
 PERSONA_PROFILE["mail"] = COPY_PERSONA
+BRAIN_PROFILE["mail"] = COPY_BRAIN
 PERSONA_PROFILE["mail_link"] = ZODIAC_EMAIL_LINK
+# The same button, for the same reason: it is the one that says "open it in
+# the browser", and there is nothing product-specific in it.
+BRAIN_PROFILE["mail_link"] = ZODIAC_EMAIL_LINK
 
 
 def _email_copy(content):
@@ -8415,6 +9055,11 @@ def _email_opening(content, purchase_id=None):
             return ("You just spent %s on the read underneath the shapes you "
                     "chose." % html.escape(price))
         return "The read underneath the shapes you chose."
+    if copy is COPY_BRAIN:
+        if price:
+            return ("You just spent %s on the plan that moves the number you "
+                    "were shown." % html.escape(price))
+        return "The plan that moves the number you were shown."
     if copy is COPY_VISUALIZER:
         if price:
             return ("Your own kitchen, redrawn in the style your choices "

@@ -4,6 +4,7 @@
   "locale": "en",
   "theme": "brain",
   "stripe_mode": "test",
+  "track_timing": true,
   "result_module": "/static/js/result_brain.js",
   "result_css": "/static/css/result_brain.css",
   "result_template": "minimal",
