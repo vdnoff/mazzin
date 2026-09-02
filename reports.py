@@ -3138,6 +3138,14 @@ BRAIN_BANNED = tuple(re.compile(p, re.IGNORECASE) for p in (
     r"\bIQ\b",
     r"\bimpair\w*\b",
     r"\bdeficit\w*\b",
+    # The plan puts one day on food, which is the one day that could turn
+    # into a pharmacy. Everyday things on a plate are the whole of it: a
+    # named pill, a named vitamin or a dose is a claim this product has no
+    # business making and no way to stand behind.
+    r"\bsupplements?\b",
+    r"\bvitamins?\b",
+    r"\bdosages?\b",
+    r"\bdoses?\b",
 ))
 
 
@@ -3167,8 +3175,10 @@ fastest gains are.
 - This is a game, not an assessment. Never the words "cognitive", "decline", \
 "dementia", "memory loss", "diagnosis", "diagnose", "clinical", "disorder", \
 "symptom", "treatment", "patient", "health", "healthy", "impairment", \
-"deficit", or "IQ", and never the phrase "brain training". Never suggest \
-anybody see anyone about anything.
+"deficit", or "IQ", and never the phrase "brain training". Never the words \
+"supplement", "supplements", "vitamin", "vitamins", "dosage" or "dose" — the \
+food day is everyday things on a plate, never anything out of a bottle. Never \
+suggest anybody see anyone about anything.
 - Never give medical or financial advice of any kind, and never claim a drill \
 has been proven to do anything. You say what a drill sharpens and what to \
 expect from a week of it, in the register of practice rather than of \
@@ -3294,8 +3304,27 @@ followed by a short name for that day's drill.
 DAY ONE AND DAY FOUR BELONG TO THE ROUND WITH THE MOST ROOM. Day one is the
 two-minute drill from the chapter before this one, said again in the doing
 rather than in the explaining. Day four is a harder version of the same
-thing. The other five days spread across the remaining three rounds, and at
-least one of them spends the reader's strongest round rather than training it.
+thing.
+
+ONE OF THE REMAINING DAYS IS FUEL, and it is a day about food. Name three or
+four ordinary things to put on a plate that week and where they go — a
+breakfast, a snack, what to have with dinner — in the same register as every
+other day: specific, cheap, and buyable in any supermarket. Say what each one
+is FOR in the plainest possible terms and stop there.
+
+Nothing out of a bottle and nothing measured — the words for those are
+refused above and the day is food on a plate, not a shelf in a chemist. Never
+claim that eating something has been shown to do anything.
+
+  BAD  "Increase your intake of omega-3 through the week."
+  BAD  "Add antioxidant-rich foods to support your memory."
+  GOOD "Put a handful of walnuts in the cupboard and eat them at four
+        o'clock instead of the biscuit."
+  GOOD "Oily fish at dinner twice this week — tinned sardines on toast
+        counts."
+
+The three days that are left spread across the remaining rounds, and at least
+one of them spends the reader's strongest round rather than training it.
 
 EVERY DAY IS A THING SOMEBODY DOES, ALONE, WITH WHAT THEY ALREADY HAVE. No
 apps, no equipment, no other people required, nothing to buy. Under five
@@ -3461,11 +3490,13 @@ BRAIN_STUBS = {
                               "turn away while somebody moves one thing, "
                               "and find it. On your own, move something "
                               "yourself and come back in an hour."},
-            {"name": "Day 6 - One target",
-             "priority_note": "Name out loud the one thing you are about to "
-                              "do, then do only that until it is finished. "
-                              "Once, on the hardest task of the day. "
-                              "Sharpens focus."},
+            {"name": "Day 6 - Fuel",
+             "priority_note": "Put a handful of walnuts in the cupboard and "
+                              "eat them at four o'clock instead of the "
+                              "biscuit. Oily fish at dinner twice this week, "
+                              "and something green on the plate at lunch. "
+                              "Ordinary food, bought anywhere, on the days "
+                              "you are doing the drills."},
             {"name": "Day 7 - Play again",
              "priority_note": "Play the rounds again from the top and watch "
                               "the number. A week of two-minute drills "

@@ -280,6 +280,16 @@ body:has(.result-module) {
   box-shadow: 0 3px 10px rgba(59, 125, 216, 0.26);
 }
 
+/* The line under the button: what "improve" actually means here. Muted,
+   because the button is the loud half and this is the sentence that makes it
+   a promise rather than a slogan. */
+.br-urge-foot {
+  margin: 12px 0 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--br-muted);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .br-urge-cta:active { transform: none; }
 }
@@ -340,6 +350,38 @@ body:has(.result-module) {
   height: 100%;
   object-fit: cover;
 }
+
+/* A round the clock answered. It is a square in the strip like any other,
+   because the walk had eighteen rounds in it either way — what changes is
+   that there is no card to show, so it shows what happened instead. Same
+   cross and same red as the overlay that covered the cards at the time. */
+.br-tap.is-out {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-color: rgba(226, 87, 76, 0.45);
+  background: rgba(226, 87, 76, 0.10);
+}
+
+.br-tap-out {
+  position: relative;
+  width: 55%;
+  height: 55%;
+}
+
+.br-tap-out i {
+  position: absolute;
+  top: 50%;
+  left: 8%;
+  width: 84%;
+  height: 3px;
+  margin-top: -1.5px;
+  border-radius: 3px;
+  background: var(--br-chg-danger, #E2574C);
+}
+
+.br-tap-out i:first-child { transform: rotate(45deg); }
+.br-tap-out i:last-child { transform: rotate(-45deg); }
 
 /* --- f) what the report answers --------------------------------------------- */
 

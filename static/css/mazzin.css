@@ -3235,6 +3235,156 @@ body.is-fading .dots span { background: #868FB6; }
   }
 }
 
+/* --- the intro card ---------------------------------------------------------- */
+
+/* The screen before the first question, for the funnels that ask for one.
+   engine.js builds it only where `cfg.intro` names a button, so there is no
+   node — and nothing here to match — on a funnel that names none.
+
+   It lives in the stage rather than in a screen of its own, which is why the
+   rules below hide the question rather than the section: `funnel_start` has
+   already fired and the first pair is already warming behind it. */
+#screen-swipe.is-intro .step-kicker,
+#screen-swipe.is-intro .caption,
+#screen-swipe.is-intro .cards,
+#screen-swipe.is-intro .tap-hint,
+#screen-swipe.is-intro .progress-row { display: none; }
+
+.intro {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  text-align: center;
+  padding: 8px 0 24px;
+}
+
+.intro-kicker {
+  margin: 0 0 16px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* Margins rather than a flex gap: the line is a text node between two marks,
+   and a gap only separates flex items — which the text is not. */
+.intro-mark { font-size: 9px; vertical-align: 2px; }
+.intro-kicker .intro-mark:first-child { margin-right: 10px; }
+.intro-kicker .intro-mark:last-child { margin-left: 10px; }
+
+.intro-head {
+  margin: 0;
+  font-family: var(--brand);
+  font-optical-sizing: auto;
+  font-size: 38px;
+  line-height: 1.08;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.intro-sub {
+  margin: 14px 0 0;
+  max-width: 22em;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* Wrapping is the point: three chips do not always fit one line at 360px and
+   must never be the reason this screen scrolls sideways. */
+.intro-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.intro-chip {
+  padding: 6px 13px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* The one control on the screen, and it looks like it. Full width, solid,
+   and the loudest thing here after the headline. */
+.intro-cta {
+  display: block;
+  width: 100%;
+  margin: 30px 0 0;
+  padding: 18px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--ui);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.intro-cta:active { transform: translateY(1px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-cta:active { transform: none; }
+}
+
+.intro-foot {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* --- the round, as a pill ----------------------------------------------------- */
+
+/* The same line, drawn as a badge. engine.js puts `is-pill` on it only where
+   `swipe.round_pill` is set, so the funnels that carry a plain kicker keep
+   the plain kicker. */
+.step-kicker.is-pill {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px auto 0;
+  padding: 6px 6px 6px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* The counter, solid, inside the pill it belongs to — so "3 of 4" is read as
+   part of the round rather than as a second thing beside it. */
+.step-kicker-count {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
 /* --- the round a step belongs to -------------------------------------------- */
 
 /* A line over the question naming where in the walk the reader is. engine.js

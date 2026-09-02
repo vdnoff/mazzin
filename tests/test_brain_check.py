@@ -276,8 +276,12 @@ for sid in sorted(NEEDS_FLASH, key=lambda s: SCORED[s][1]):
     check("    on a grid the engine knows",
           flash.get("format") in GRID_SIZE, str(flash.get("format")))
     ms = entry.get("auto_advance_ms")
-    check("    held for five seconds",
-          ms == FLASH_MS, str(ms))
+    # Five seconds everywhere but the last memory round, which is the hardest
+    # of the four and is meant to be: six frames, two and a half seconds.
+    want_ms = 2500 if sid == "mem4" else FLASH_MS
+    check("    held for %s" % ("two and a half seconds" if sid == "mem4"
+                               else "five seconds"),
+          ms == want_ms, str(ms))
     check("    with frames on it, and a kicker and a line over them",
           len(flash.get("images") or []) >= 4
           and entry.get("kicker") and entry.get("line"))
@@ -434,12 +438,17 @@ check("a run that hits every round scores the base",
       brain_age(0) == block["base"], str(brain_age(0)))
 check("  and the floor never bites at that end",
       block["base"] >= block["min"])
+# A miss costs four years now rather than three and a half, which puts
+# sixteen of them past the ceiling: the clamp is what a reader who answers
+# nothing actually sees, and it is checked as the thing it now is.
 ceiling = block["base"] + block["per_miss"] * block["scored"]
-check("a run that misses every round scores the formula's ceiling",
-      brain_age(block["scored"]) == round(ceiling), str(brain_age(16)))
-check("  which sits inside the clamp, so the clamp never bites either",
-      block["min"] <= ceiling <= block["max"],
-      "%s not in [%s, %s]" % (ceiling, block["min"], block["max"]))
+check("a run that misses every round scores the clamp, not past it",
+      brain_age(block["scored"]) == block["max"], str(brain_age(16)))
+check("  which is where the formula would have gone over it",
+      ceiling > block["max"],
+      "%s vs %s" % (ceiling, block["max"]))
+check("  and a miss costs four years",
+      block["per_miss"] == 4.0, str(block["per_miss"]))
 check("  every score in between is inside the clamp",
       all(block["min"] <= brain_age(m) <= block["max"]
           for m in range(block["scored"] + 1)))
@@ -496,7 +505,7 @@ check("a reveal and a count-in are never on the same screen",
 
 print("\n--- the shuffle: declared, and landing where the step scores ---")
 SPEED = {"spa1": (3, 900), "spa2": (4, 700), "spa3": (5, 550),
-         "spa4": (6, 400)}
+         "spa4": (7, 350)}
 for r in range(1, 5):
     sid = "spa%d" % r
     entry = mid_by_after[SCORED[sid][1] - 1][0]
@@ -537,8 +546,8 @@ for r in range(1, 5):
     check("    which is not the slot it was shown in",
           at != rule.get("open_slot"), str(at))
 check("each round shuffles more, and faster, than the one before",
-      [SPEED["spa%d" % r][0] for r in range(1, 5)] == [3, 4, 5, 6]
-      and [SPEED["spa%d" % r][1] for r in range(1, 5)] == [900, 700, 550, 400])
+      [SPEED["spa%d" % r][0] for r in range(1, 5)] == [3, 4, 5, 7]
+      and [SPEED["spa%d" % r][1] for r in range(1, 5)] == [900, 700, 550, 350])
 check("  and each round's question asks where the thing is now",
       all(by_id["spa%d" % r]["question"].endswith(" now?")
           for r in range(1, 5)),
@@ -549,8 +558,10 @@ for sid in ("odd", "ink", "next", "count"):
     step = by_id[sid]
     pick = step.get("timeout_pick")
     tags = {i["id"]: i["tags"] for i in images(step)}
-    check("  %-5s gives five seconds" % sid, step.get("timer_ms") == FLASH_MS,
-          str(step.get("timer_ms")))
+    # Four seconds on the last one, which is the round that got harder.
+    want = 4000 if sid == "count" else FLASH_MS
+    check("  %-5s gives %s seconds" % (sid, want // 1000),
+          step.get("timer_ms") == want, str(step.get("timer_ms")))
     check("    and names a card on this step for the clock to press",
           pick in tags, str(pick))
     check("    which is a miss, so a clock cannot score a hit",
@@ -624,17 +635,24 @@ check("  four chips, one token each, one per round",
 check("  the type card carries a frame and a line under it",
       all(profile["rarity_card"].get(k) for k in ("lead", "tail", "note")),
       str(profile["rarity_card"]))
-check("  the unlock list is one row per chapter",
+# Four chapters and one promise inside a chapter: the food day is part of
+# the seven-day plan rather than a chapter of its own, and it carries its own
+# keyword because there is no section card to take one from.
+check("  the unlock list is one row per chapter, plus the food day",
       sorted(r["id"] for r in profile["unlock"])
-      == sorted(s["id"] for s in cfg["report"]["sections"]),
+      == sorted([s["id"] for s in cfg["report"]["sections"]] + ["fuel"]),
       str([r["id"] for r in profile["unlock"]]))
 check("    every row of it has a line",
       all(r.get("line") for r in profile["unlock"]))
 check("    and the keepsake closes it",
       profile["unlock_tail"].get("key") and profile["unlock_tail"].get("line"))
 check("every unlock row has a keyword to lead with",
-      set(r["id"] for r in profile["unlock"])
-      <= set(c["id"] for c in profile["cards"]))
+      all(row.get("key") or row["id"] in set(c["id"] for c in
+                                             profile["cards"])
+          for row in profile["unlock"]),
+      str([r["id"] for r in profile["unlock"]
+           if not r.get("key")
+           and r["id"] not in set(c["id"] for c in profile["cards"])]))
 check("the struck price is read out as well as drawn",
       "price_regular_aria" in cfg["result_copy"]
       and "{price}" in cfg["result_copy"]["price_regular_aria"])
@@ -802,8 +820,8 @@ check("  on the four ids the report machinery keys on, unchanged",
       [s["id"] for s in cfg["report"]["sections"]]
       == ["dna", "materials", "mistakes", "shopping"])
 unlock = cfg["result_copy"]["profile"]["unlock"]
-check("the unlock list is four lines, a head and a tail",
-      len(unlock) == 4
+check("the unlock list is five lines, a head and a tail",
+      len(unlock) == 5
       and cfg["result_copy"]["profile"].get("unlock_head")
       and cfg["result_copy"]["profile"].get("unlock_tail", {}).get("line"))
 check("  headed by what the reader is buying: a lower number",
@@ -923,10 +941,12 @@ check("the letters are set in a serif, which nothing else on the walk is",
 check("  on a block of their own colour, which does not turn with them",
       "card.rect((0.29, 0.29, 0.75, 0.75), tint(PALETTE[colour])" in ART
       and "layer.rotate(rot" in ART)
-check("  and the rotated round is turned far enough to see",
-      int([s["after"][3] for s in ast.literal_eval(
+check("  and the rotated round is turned little enough to be a round",
+      10 <= int([s["after"][3] for s in ast.literal_eval(
           re.search(r"^LETTERS = (\[.*?^\])", ART, re.S | re.M).group(1))][3])
-      >= 20)
+      <= 18,
+      str([s["after"][3] for s in ast.literal_eval(
+          re.search(r"^LETTERS = (\[.*?^\])", ART, re.S | re.M).group(1))]))
 
 print("\n--- v4: the odd one out is six umbrellas ---")
 odd_imgs = [c["img"] for c in images(by_id["odd"])]
@@ -1006,17 +1026,173 @@ check("  set as the loudest control on the page after the number",
       ".br-urge-cta {" in RESULT_CSS
       and re.search(r"\.br-urge-cta \{[^}]*text-transform: uppercase;",
                     RESULT_CSS, re.S) is not None)
-check("the offer leads with the reader's own type and their own rounds",
+check("the offer leads with the plan rather than with a label",
       cfg["result_copy"]["profile"]["offer_head"]
-      == "{type}: your improvement plan, built from your 18 rounds")
-check("  and every bullet promises a drill rather than a reading",
+      == "Your improvement plan — built from your 18 rounds"
+      and "{type}" not in cfg["result_copy"]["profile"]["offer_head"],
+      cfg["result_copy"]["profile"]["offer_head"])
+check("  and every bullet promises something to do rather than a reading",
       all(any(w in row["line"] for w in
-              ("drill", "habits", "technique", "days"))
+              ("drill", "habits", "technique", "days", "plate"))
           for row in cfg["result_copy"]["profile"]["unlock"]),
       str([r["line"] for r in cfg["result_copy"]["profile"]["unlock"]]))
 check("  weakest round first",
       cfg["result_copy"]["profile"]["unlock"][0]["id"] == "materials",
       cfg["result_copy"]["profile"]["unlock"][0]["id"])
+
+print("\n--- v5: the card before the first question ---")
+intro = cfg.get("intro") or {}
+check("the funnel carries an intro block",
+      sorted(intro) == ["chips", "cta", "foot", "headline", "kicker", "sub"],
+      str(sorted(intro)))
+check("  named as the thing the ad promised",
+      intro.get("kicker") == "BRAIN AGE CHALLENGE"
+      and intro.get("headline") == "How old is your brain?")
+check("  saying what it is, how long it takes and what comes out of it",
+      "18 quick rounds" in intro.get("sub", "")
+      and "brain age" in intro.get("sub", "")
+      and "lower it" in intro.get("sub", ""), intro.get("sub"))
+check("  with three chips and one button",
+      intro.get("chips") == ["2 MINUTES", "NO SIGN-UP", "INSTANT RESULT"]
+      and intro.get("cta") == "START NOW", str(intro.get("chips")))
+check("  and the foot line the review asked for",
+      intro.get("foot") == "Self-discovery.", str(intro.get("foot")))
+check("the rounds are drawn as pills",
+      cfg["swipe"].get("round_pill") is True)
+check("  and every kicker still splits into a label and a counter",
+      all("·" in s["kicker"] for s in steps), str(
+          [s["kicker"] for s in steps if "·" not in s["kicker"]]))
+
+print("\n--- v5: the last task of every round is the hardest ---")
+check("the last memory round answers on a six-up",
+      by_id["mem4"]["format"] == "grid6"
+      and len(images(by_id["mem4"])) == 6, by_id["mem4"]["format"])
+mem4 = mid_by_after[SCORED["mem4"][1] - 1][0]
+check("  off a flash of six, on the same grid, held two and a half seconds",
+      mem4["flash"]["format"] == "grid6"
+      and len(mem4["flash"]["images"]) == 6
+      and mem4["auto_advance_ms"] == 2500,
+      str(mem4["auto_advance_ms"]))
+check("  and the other three memory rounds still answer on a four-up",
+      all(by_id["mem%d" % r]["format"] == "grid4" for r in range(1, 4)))
+spa4 = mid_by_after[SCORED["spa4"][1] - 1][0]["reveal"]
+check("the last spatial round shuffles seven times at 350ms",
+      len(spa4["swaps"]) == 7 and spa4["swap_ms"] == 350,
+      "%d at %s" % (len(spa4["swaps"]), spa4["swap_ms"]))
+check("the last change round turns its letter fifteen degrees",
+      by_id["chg4"]["pairs"][0]["images"][
+          [i for i, c in enumerate(images(by_id["chg4"]))
+           if "chg_hit" in c["tags"]][0]]["img"].endswith("_15.webp"),
+      images(by_id["chg4"])[2]["img"])
+check("  and the twenty-five degree card is gone from the gallery",
+      not [n for n in os.listdir(GALLERY) if n.endswith("_25.webp")])
+count_flash = mid_by_after[SCORED["count"][1] - 1][0]
+SPOTS = ast.literal_eval(
+    re.search(r"^COUNT_SPOTS = (\[.*?^\])", ART, re.S | re.M).group(1))
+check("the counting round shows eleven circles",
+      sum(len(frame) for frame in SPOTS) == 11
+      and art_number("COUNT_TOTAL") == 11,
+      str(sum(len(frame) for frame in SPOTS)))
+check("  scattered rather than laid out, so it cannot be counted by pattern",
+      len({round(x, 3) for frame in SPOTS for x, _y in frame}) >= 8
+      and len({round(y, 3) for frame in SPOTS for _x, y in frame}) >= 8,
+      str(len({round(x, 3) for frame in SPOTS for x, _y in frame})))
+check("  the answer is among the four on offer, and it is eleven",
+      [c["label"] for c in images(by_id["count"])] == ["9", "10", "11", "12"]
+      and images(by_id["count"])[hit_index("count")]["label"] == "11",
+      str([c["label"] for c in images(by_id["count"])]))
+check("  and the round gives four seconds rather than five",
+      by_id["count"]["timer_ms"] == 4000, str(by_id["count"]["timer_ms"]))
+check("    with a miss for the clock to press",
+      images(by_id["count"])[
+          [i for i, c in enumerate(images(by_id["count"]))
+           if c["id"] == by_id["count"]["timeout_pick"]][0]]["tags"]
+      == ["foc_miss"])
+
+print("\n--- v5: the pattern round has four different answers ---")
+# Stopped at the first bracket that closes a line rather than at the first
+# one in column zero: this table's own closing bracket sits at the end of its
+# last entry, so `^\]` runs on into whatever declares the next list.
+NEXT = ast.literal_eval(
+    re.search(r"^NEXT_ANSWERS = (\[.*?\])\n", ART, re.S | re.M).group(1))
+check("one of the four candidates is a crescent now",
+      [form for _name, form, _rot in NEXT].count("crescent") == 1,
+      str([form for _name, form, _rot in NEXT]))
+check("  and no two of them are the same drawing",
+      len({(form, rot) for _name, form, rot in NEXT}) == 4,
+      str([(f, r) for _n, f, r in NEXT]))
+check("  the triangle at ninety degrees, which was the sequence redrawn, is "
+      "gone",
+      ("triangle", 90.0) not in {(form, rot) for _n, form, rot in NEXT})
+check("  the file exists and the step draws it",
+      os.path.exists(os.path.join(GALLERY, "nxt_a3.webp"))
+      and images(by_id["next"])[2]["img"].endswith("nxt_a3.webp"))
+check("  and the round still scores the same card",
+      images(by_id["next"])[0]["tags"] == ["foc_hit"]
+      and [c["tags"] for c in images(by_id["next"])[1:]]
+      == [["foc_miss"]] * 3)
+
+print("\n--- v5: the offer, and the line under the button ---")
+unlock = cfg["result_copy"]["profile"]["unlock"]
+fuel = [row for row in unlock if row["id"] == "fuel"]
+check("the plan sells a day of food as well as the drills",
+      len(fuel) == 1 and fuel[0].get("key") == "Fuel",
+      str([r["id"] for r in unlock]))
+check("  in the words the review asked for",
+      "what to put on your plate this week" in fuel[0]["line"]
+      and "feed a sharp brain" in fuel[0]["line"], fuel[0]["line"])
+check("  and the manifest carries it too",
+      any("put on your plate" in line
+          for line in cfg["checkout"]["manifest"]),
+      str(cfg["checkout"]["manifest"]))
+FOOD_BANNED = ("supplement", "vitamin", "dosage", "dose", "proven",
+               "clinically", "boost your")
+check("  with nothing out of a bottle in either",
+      not [w for w in FOOD_BANNED
+           if w in (fuel[0]["line"] + " "
+                    + " ".join(cfg["checkout"]["manifest"])).lower()],
+      str([w for w in FOOD_BANNED
+           if w in (fuel[0]["line"] + " "
+                    + " ".join(cfg["checkout"]["manifest"])).lower()]))
+check("the offer names no brain type at all",
+      "{type}" not in json.dumps(cfg["result_copy"]["profile"]["offer_head"])
+      and "{type}" not in json.dumps(cfg["checkout"]))
+check("the button carries a line saying what following the plan does",
+      cfg["result_copy"].get("improve_foot")
+      == "Follow the 7-day plan, play again — the number moves.",
+      str(cfg["result_copy"].get("improve_foot")))
+check("  with no percentage and no number nobody has measured",
+      not re.search(r"\d", cfg["result_copy"]["improve_foot"]
+                    .replace("7-day", "")),
+      cfg["result_copy"]["improve_foot"])
+check("  and the module draws it under the control",
+      "copy.improve_foot" in MODULE
+      and MODULE.index("block.appendChild(button);")
+      < MODULE.index("copy.improve_foot"))
+
+print("\n--- v5: the strip shows what happened ---")
+check("a spatial round draws the box that was open, not the shut one",
+      "function standIn(cfg, index)" in MODULE
+      and "entry.after_step !== index" in MODULE
+      and "frames[open].img" in MODULE)
+for r in range(1, 5):
+    sid = "spa%d" % r
+    entry = mid_by_after[SCORED[sid][1] - 1][0]
+    stand = entry["flash"]["images"][entry["reveal"]["open_slot"]]["img"]
+    check("  %s stands in the %s" % (sid, stand.rsplit("_", 1)[-1][:-5]),
+          "box_open_" in stand, stand)
+check("  and every other round still draws the card that was tapped",
+      "standIn(ctx.cfg, index) || pick.img" in MODULE)
+check("a round the clock answered draws a cross instead of a card",
+      'item.className = "br-tap is-out";' in MODULE
+      and MODULE.count('mark.appendChild(elm("i"));') >= 2
+      and ".br-tap.is-out {" in RESULT_CSS
+      and ".br-tap-out i:first-child { transform: rotate(45deg); }"
+      in RESULT_CSS)
+check("  read off the run before the money",
+      "var late = ctx.timed_out || [];" in MODULE)
+check("  and off the report after it",
+      "(ctx.visuals && ctx.visuals.timed_out) || []" in MODULE)
 
 print("\n--- the copy: a game, and nothing that sounds like anything else ---")
 BANNED = ("memory loss", "cognitive", "decline", "dementia", "test yourself",
@@ -1077,12 +1253,12 @@ check("the checkout names the product this funnel sells",
       and cfg["checkout"]["proof_line"] == "Built from your 16 rounds")
 check("one offer, not two: the layout is named rather than tested",
       "paywall_variants" not in cfg)
-check("  and the manifest still offers one line per chapter, plus the "
+check("  and the manifest offers one line per chapter, the food day and the "
       "keepsake",
-      len(cfg["checkout"]["manifest"]) == len(sections) + 1,
+      len(cfg["checkout"]["manifest"]) == len(sections) + 2,
       str(len(cfg["checkout"]["manifest"])))
 check("  which is what the unlock list on the offer card argues",
-      len(cfg["result_copy"]["profile"]["unlock"]) == len(sections))
+      len(cfg["result_copy"]["profile"]["unlock"]) == len(sections) + 1)
 check("every chapter has a card in the result copy",
       sorted(c["id"] for c in cfg["result_copy"]["profile"]["cards"])
       == sorted(s["id"] for s in sections))

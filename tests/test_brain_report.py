@@ -150,13 +150,17 @@ def client_age(misses):
     return max(BLOCK["min"], min(BLOCK["max"], age))
 
 
-check("Python's own round would have disagreed with the browser",
-      round(BLOCK["base"] + BLOCK["per_miss"] * 3) != client_age(3),
-      "round() says %s, the browser says %s"
-      % (round(BLOCK["base"] + BLOCK["per_miss"] * 3), client_age(3)))
-check("  which is why the module converts rather than rounds",
-      reports._js_round(32.5) == 33 and reports._js_round(-0.5) == 0,
-      str(reports._js_round(32.5)))
+# The table's per-miss lands on whole numbers today, so nothing in this
+# funnel's own range exercises the difference. It is still the difference,
+# and a per-miss that goes back to a half — this one has already been 3.5
+# once — would land straight on it, so the conversion is checked on the value
+# rather than through the config.
+check("Python's own round disagrees with the browser on a half",
+      round(32.5) == 32 and reports._js_round(32.5) == 33,
+      "round() says %s" % round(32.5))
+check("  and agrees with it everywhere else",
+      all(reports._js_round(v) == round(v)
+          for v in (22.0, 26.4, 33.6, 78.0, 80.2)))
 
 for style in CFG["styles"]:
     for per_round, label in ((4, "a perfect run"), (0, "an all-miss run"),
@@ -174,11 +178,17 @@ check("a perfect run lands on the base",
       numbers["age"] == BLOCK["base"] and numbers["misses"] == 0)
 choices, scores = run_of(0)
 numbers = reports._brain_numbers(CFG, CFG["styles"][0], scores)
-check("  and an all-miss run on the formula's own ceiling",
-      numbers["age"] == BLOCK["base"] + BLOCK["per_miss"] * BLOCK["scored"]
-      and numbers["misses"] == BLOCK["scored"], str(numbers["age"]))
-check("  which is inside the clamp, so the clamp never bites",
-      BLOCK["min"] <= numbers["age"] <= BLOCK["max"])
+# The formula's own ceiling is above the clamp now — sixteen misses at four
+# years apiece is 86 against a maximum of 80 — so the clamp is what the reader
+# actually sees at that end, and it is checked as the thing it now is.
+RAW_CEILING = BLOCK["base"] + BLOCK["per_miss"] * BLOCK["scored"]
+check("  and an all-miss run on the clamp rather than past it",
+      numbers["age"] == BLOCK["max"] and numbers["misses"] == BLOCK["scored"],
+      str(numbers["age"]))
+check("  which is where the formula would have gone over it",
+      RAW_CEILING > BLOCK["max"], "%s vs %s" % (RAW_CEILING, BLOCK["max"]))
+check("  and the browser clamps at the same number",
+      client_age(BLOCK["scored"]) == BLOCK["max"])
 check("a funnel with no table stores nothing",
       reports._brain_numbers({}, CFG["styles"][0], scores) is None)
 check("  and neither does a run with no tallies",
@@ -432,6 +442,51 @@ check("and the funnel now asks for the two",
       CFG.get("track_timing") is True
       and json.load(open(os.path.join(REPO, "static/funnels/brain.json"),
                          encoding="utf-8")).get("track_timing") is True)
+
+print("\n--- v5: one of the seven days is food ---")
+shopping = reports._BRAIN_SHAPES["shopping"]
+check("the plan gives a day to what goes on the plate",
+      "ONE OF THE REMAINING DAYS IS FUEL" in shopping
+      and "a day about food" in shopping)
+check("  three or four ordinary things, and where they go",
+      "three or\nfour ordinary things to put on a plate" in shopping
+      or "ordinary things to put on a plate" in shopping, shopping[:40])
+check("  buyable anywhere, and said in the same register as every other day",
+      "buyable in any supermarket" in shopping)
+check("  with nothing out of a bottle and nothing measured",
+      "Nothing out of a bottle and nothing measured" in shopping)
+check("  and no claim that eating something does anything",
+      "Never\nclaim that eating something has been shown to do anything."
+      in shopping or "has been shown to do anything" in shopping)
+check("it shows the register rather than describing it",
+      shopping.count("BAD ") >= 2 and shopping.count("GOOD ") >= 2)
+FOOD_WORDS = ("supplement", "supplements", "vitamin", "dosage", "dose")
+for word in FOOD_WORDS:
+    check("  %r is refused in the answer" % word,
+          any(p.search("Take a %s each morning." % word)
+              for p in reports.BRAIN_BANNED))
+    check("    and named in the system prompt as forbidden",
+          word.lower() in reports.BRAIN_SYSTEM.lower(), word)
+check("the shape itself carries none of them",
+      reports._banned_hit(shopping, reports.BRAIN_BANNED) is None,
+      str(reports._banned_hit(shopping, reports.BRAIN_BANNED)))
+check("  and neither does the stub that ships without a key",
+      reports._banned_hit(reports.BRAIN_STUBS["shopping"],
+                          reports.BRAIN_BANNED) is None)
+check("  which has a fuel day of its own",
+      any("Fuel" in row["name"]
+          for row in reports.BRAIN_STUBS["shopping"]["items"]),
+      str([row["name"] for row in reports.BRAIN_STUBS["shopping"]["items"]]))
+check("    naming food anybody can buy",
+      any("walnuts" in row["priority_note"]
+          for row in reports.BRAIN_STUBS["shopping"]["items"]))
+check("no other profile grew the food ban",
+      not any(p.pattern == r"\bsupplements?\b"
+              for p in reports.PERSONA_PROFILE["banned"])
+      and not any(p.pattern == r"\bsupplements?\b"
+                  for p in reports.ZODIAC_PROFILE["banned"]))
+check("  and kitchen still refuses nothing of its own",
+      reports.KITCHEN_PROFILE["banned"] == ())
 
 print("\n--- the neighbours ---")
 check("kitchen still resolves to kitchen",

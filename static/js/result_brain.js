@@ -389,49 +389,121 @@
       }
     });
     block.appendChild(button);
+    // One line under the button. It is the answer to the question the button
+    // raises — improve how? — and it is the whole promise of the plan in a
+    // sentence, with no number in it that nobody has measured.
+    if (copy.improve_foot) {
+      block.appendChild(elm("p", "br-urge-foot", copy.improve_foot));
+    }
     return block;
   }
 
   // --- e) the frames they tapped ---------------------------------------------
+  //
+  // Eighteen squares, one per round, in the order they were played. Two of
+  // them are not the card that was tapped, and both for the same reason: the
+  // strip is a record of the walk rather than a contact sheet of the art.
+  //
+  // A spatial round was answered on six identical closed boxes, so the tapped
+  // card is a shut lid — the same shut lid six times, four rounds running. The
+  // strip draws the box that was OPEN on that round's flash instead, which is
+  // the thing the round was actually about and the only frame of it the reader
+  // would recognise.
+  //
+  // And a round the clock answered is not a round anybody played. It gets a
+  // cross rather than a picture of a card nobody chose.
 
-  function tapsGrid(picks) {
+  // Which frame stands for one step, or null to draw the tapped card. Read off
+  // the config's own interstitials: the entry anchored on the step before this
+  // one, and the slot its reveal says was open.
+  function standIn(cfg, index) {
+    var list = (cfg && cfg.interstitials) || [];
+    for (var i = 0; i < list.length; i++) {
+      var entry = list[i];
+      if (!entry || entry.after_step !== index) continue;
+      var rule = entry.reveal;
+      var frames = (entry.flash && entry.flash.images) || [];
+      var open = rule && rule.open_slot;
+      if (typeof open === "number" && frames[open]) return frames[open].img;
+    }
+    return null;
+  }
+
+  function tapsGrid(cells) {
     var row = elm("ul", "br-taps-grid");
-    picks.forEach(function (pick) {
-      var cell = elm("li", "br-tap");
+    cells.forEach(function (cell) {
+      var item = elm("li", "br-tap");
+      if (!cell.img) {
+        // The cross, drawn as two bars the stylesheet crosses — the same
+        // mark, in the same red, that covered the cards when the clock ran
+        // out. One idea, twice.
+        item.className = "br-tap is-out";
+        var mark = elm("span", "br-tap-out");
+        mark.setAttribute("aria-hidden", "true");
+        mark.appendChild(elm("i"));
+        mark.appendChild(elm("i"));
+        item.appendChild(mark);
+        row.appendChild(item);
+        return;
+      }
       var img = document.createElement("img");
-      img.src = pick.img;
+      img.src = cell.img;
       img.alt = "";
       img.loading = "lazy";
       img.decoding = "async";
-      cell.appendChild(img);
-      row.appendChild(cell);
+      item.appendChild(img);
+      row.appendChild(item);
     });
     return row;
   }
 
-  function tapsBlock(copy, picks) {
-    if (picks.length < TAPS_MIN) return null;
+  function tapsBlock(copy, cells) {
+    if (cells.length < TAPS_MIN) return null;
     var block = elm("section", "br-taps");
     block.appendChild(elm("p", "br-taps-caption",
                           copy.taps_caption || "Read from your rounds:"));
-    block.appendChild(tapsGrid(picks));
+    block.appendChild(tapsGrid(cells));
     return block;
   }
 
   // Step order, because that is the order the reader put them there. A step
-  // they somehow did not answer is absent rather than drawn as a gap.
+  // they somehow did not answer is absent rather than drawn as a gap; a step
+  // the clock answered is present, and crossed.
   function taps(ctx, copy) {
     var steps = (ctx.cfg && ctx.cfg.swipe && ctx.cfg.swipe.steps) || [];
-    return tapsBlock(copy, steps
-      .map(function (step) { return ctx.picks[step.id]; })
-      .filter(function (pick) { return pick && pick.img; }));
+    var out = [];
+    var late = ctx.timed_out || [];
+    steps.forEach(function (step, index) {
+      var pick = ctx.picks[step.id];
+      if (!pick || !pick.img) return;
+      if (late.indexOf(step.id) !== -1) {
+        out.push({ img: null });
+        return;
+      }
+      out.push({ img: standIn(ctx.cfg, index) || pick.img });
+    });
+    return tapsBlock(copy, out);
   }
 
+  // The same strip after the money, off the ids the report carries. The two
+  // substitutions are the same two: a stand-in where the config names one,
+  // and a cross where the report says the clock answered.
   function deliveredTaps(ctx, copy) {
     var want = (ctx.visuals && ctx.visuals.taps) || [];
-    return tapsBlock(copy, want
-      .map(function (id) { return ctx.images[id]; })
-      .filter(function (pick) { return pick && pick.img; }));
+    var late = (ctx.visuals && ctx.visuals.timed_out) || [];
+    var steps = (ctx.cfg && ctx.cfg.swipe && ctx.cfg.swipe.steps) || [];
+    var out = [];
+    want.forEach(function (id, index) {
+      var pick = ctx.images[id];
+      if (!pick || !pick.img) return;
+      var step = steps[index];
+      if (step && late.indexOf(step.id) !== -1) {
+        out.push({ img: null });
+        return;
+      }
+      out.push({ img: standIn(ctx.cfg, index) || pick.img });
+    });
+    return tapsBlock(copy, out);
   }
 
   // --- f) what the report answers --------------------------------------------
@@ -699,7 +771,12 @@
     var list = elm("ul", "br-checklist");
     firstly(rows.slice(), emphasised(purposeRule(ctx))).forEach(
       function (row) {
-        list.appendChild(checkRow(keys[row.id] || "", row.line || ""));
+        // Its own keyword first, then the section card's. Most rows are a
+        // chapter and take the word that chapter is sold under; a row that
+        // is a promise inside a chapter rather than a chapter of its own —
+        // the food day inside the seven-day plan — carries its word here.
+        list.appendChild(checkRow(row.key || keys[row.id] || "",
+                                  row.line || ""));
       });
     var tail = table.unlock_tail;
     if (tail && tail.key) {

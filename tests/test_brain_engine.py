@@ -337,7 +337,24 @@ check("  and a tap clears it",
       "stopStepTimer();" in body("choose"))
 out_fn = body("timeOut")
 check("running out is a tap on the card the config named",
-      "choose(item, cardFor(item));" in out_fn and "timedOut = true;" in out_fn)
+      "choose(item, null);" in out_fn and "timedOut = true;" in out_fn)
+check("  and on no card at all, so nothing is shown as chosen",
+      "cardFor" not in ENGINE
+      and 'var late = (card && labels === "on_tap") ? LABEL_FLASH_MS : 0;'
+      in body("choose"))
+check("  the ring, the dim and the chip are all behind that card",
+      re.search(r"if \(card\) \{(.*?)\n    \}", body("choose"), re.S)
+      is not None
+      and all(bit in re.search(r"if \(card\) \{(.*?)\n    \}",
+                               body("choose"), re.S).group(1)
+              for bit in ('card.classList.add("is-chosen")',
+                          'el.cards.classList.add("is-picking")',
+                          "revealLabel(item, card);",
+                          "showReaction(item.label")))
+check("  and the ids of the rounds it answered are kept beside the choices",
+      "timedOutSteps.push((stepAt(step) || {}).id" in out_fn
+      and "chosen: chosen.slice()," in ENGINE
+      and "timed_out: timedOutSteps.slice()," in ENGINE)
 check("  and never a second one on a step already answered",
       "stepTimer.step !== step || picking" in out_fn)
 check("the screen is marked while the clock is on it, and unmarked after",
@@ -388,7 +405,8 @@ check("  the mode is read before the counter moves",
       body("choose").index("var labels = labelMode();")
       < body("choose").index("step += 1;"))
 check("only that mode delays the advance, and only by the badge's own beat",
-      'var late = labels === "on_tap" ? LABEL_FLASH_MS : 0;' in body("choose")
+      'var late = (card && labels === "on_tap") ? LABEL_FLASH_MS : 0;'
+      in body("choose")
       and "(reduced ? HOLD_REDUCED_MS : HOLD_MS) + late" in body("choose")
       and "var LABEL_FLASH_MS = 500;" in ENGINE)
 check("  the badge is the badge mode's own node, arriving late",
@@ -563,19 +581,29 @@ check("the beat lifts, and then the answer goes in unchanged",
       "over.parentNode.removeChild(over);" in out_fn
       and "picking = false;" in out_fn
       and out_fn.index("picking = false;")
-      < out_fn.index("choose(item, cardFor(item));")
+      < out_fn.index("choose(item, null);")
       and "}, over ? TIMEUP_MS : 0);" in out_fn)
 check("  with the same word recorded as before",
       "timedOut = true;" in out_fn
       and "if (timingTracked() && timedOut) extra.timed_out = true;"
       in body("swipeExtra"))
-timeup_rules = [r for r in RULES if "step-timeup" in r or "step-kicker" in r]
-check("every rule the two additions bring is scoped to its own class",
-      timeup_rules
-      and all(r.startswith((".step-timeup", ".step-kicker")) for r in
-              timeup_rules),
-      str([r for r in timeup_rules
-           if not r.startswith((".step-timeup", ".step-kicker"))]))
+# The one selector on this list that is not a class of its own is the rule
+# hiding the question behind an intro card, and it cannot be: what it hides
+# is the shell's own caption and card row. It is gated instead — nothing in
+# it matches unless engine.js has put `is-intro` on the screen, which it does
+# only for a funnel carrying an `intro` block.
+SCOPES = (".step-timeup", ".step-kicker", ".intro", "#screen-swipe.is-intro")
+own_rules = [r for r in RULES
+             if "step-timeup" in r or "step-kicker" in r
+             or ".intro" in r or "is-intro" in r]
+check("every rule these additions bring is scoped to its own class",
+      own_rules and all(r.startswith(SCOPES) for r in own_rules),
+      str([r for r in own_rules if not r.startswith(SCOPES)]))
+check("  and the one that reaches the shell is gated on the intro's class",
+      all("#screen-swipe.is-intro" in part
+          for r in own_rules if r.startswith("#screen-swipe")
+          for part in r.split(",")),
+      str([r for r in own_rules if r.startswith("#screen-swipe")]))
 check("no funnel but the memory game names either key",
       not [n for n, cfg in CONFIGS.items() if n != OWNER
            and ([s for s in (cfg.get("swipe") or {}).get("steps", [])
@@ -588,6 +616,92 @@ check("no funnel but the memory game names either key",
 check("  and the one that does names both",
       all(s.get("kicker") for s in CONFIGS[OWNER]["swipe"]["steps"])
       and CONFIGS[OWNER]["swipe"].get("timeup_line"))
+
+print("\n--- 8. the card before the first question ---")
+intro_fn = body("hasIntro")
+check("the screen is gated on the funnel naming a button",
+      "cfg && cfg.intro" in intro_fn and "block.cta" in intro_fn,
+      intro_fn.strip()[:90])
+show_fn = body("showIntro")
+check("  and no node is built for a funnel that names none",
+      'elm("section", "intro")' in show_fn
+      and "if (hasIntro()) {" in body("startQuiz"))
+check("it is built into the stage rather than as a screen of its own",
+      "el.stage.insertBefore(card, el.stage.firstChild);" in show_fn
+      and 'el.swipe.classList.add("is-intro");' in show_fn)
+check("  and the stylesheet holds the question back while it is up",
+      "#screen-swipe.is-intro .caption," in CSS
+      and "#screen-swipe.is-intro .cards," in CSS
+      and "#screen-swipe.is-intro .tap-hint," in CSS)
+check("  with the money line off for good on a funnel that has one",
+      "if (!hasIntro()) {" in body("startQuiz")
+      and body("startQuiz").index("if (!hasIntro()) {")
+      < body("startQuiz").index("setMoneyLine("))
+check("every part of the card is drawn from the block",
+      all(("block." + key) in show_fn
+          for key in ("kicker", "headline", "sub", "chips", "cta", "foot")))
+check("  the kicker carries the same two marks the minimal page frames with",
+      "kicker.appendChild(introMark());" in show_fn
+      and 'elm("span", "intro-mark"' in body("introMark"))
+check("arriving is still arriving, and starting is a second thing",
+      'track("funnel_start")' in body("startQuiz")
+      and 'track("intro_start")' in show_fn)
+check("  fired by the button and by nothing else",
+      ENGINE.count('track("intro_start")') == 1
+      and show_fn.index('button.addEventListener("click"')
+      < show_fn.index('track("intro_start")'))
+check("  and once, whatever a phone does with a double tap",
+      "if (fired) return;" in show_fn and "fired = true;" in show_fn)
+check("the event is one the server will accept",
+      "intro_start" in tracking.ALLOWED_EVENTS)
+check("  and carries no payload, which is what the server allows it",
+      not re.search(r'track\("intro_start",', ENGINE))
+check("the first pair warms while the card is being read",
+      "preloadPair(pair, function () {});" in body("startQuiz")
+      and "showIntro(renderStep);" in body("startQuiz"))
+
+print("\n--- 9. the round, as a pill ---")
+pill_fn = body("setStepKicker")
+check("the pill is gated on the funnel asking for one",
+      "cfg.swipe.round_pill" in body("roundPill")
+      and 'node.classList.toggle("is-pill", roundPill());' in pill_fn)
+check("  and a funnel that does not keeps the line it had",
+      "if (!roundPill()) {" in pill_fn
+      and "node.textContent = text;" in pill_fn)
+check("it splits on the LAST separator, not the first",
+      'var cut = text.lastIndexOf("·");' in pill_fn,
+      pill_fn[:120])
+check("  the label in one span and the counter in another",
+      'elm("span", "step-kicker-text"' in pill_fn
+      and 'elm("span", "step-kicker-count"' in pill_fn)
+check("  and a kicker with no separator is all label and no counter",
+      "cut < 0 ? text : text.slice(0, cut)" in pill_fn
+      and "if (count.trim()) {" in pill_fn)
+check("the counter is a solid badge inside the pill",
+      ".step-kicker.is-pill {" in CSS
+      and re.search(r"\.step-kicker-count \{[^}]*background: var\(--accent\);",
+                    CSS, re.S) is not None)
+check("  and the pill is the accent, on the accent's own pale ground",
+      re.search(r"\.step-kicker\.is-pill \{[^}]*border: 1px solid "
+                r"var\(--accent\);", CSS, re.S) is not None
+      and re.search(r"\.step-kicker\.is-pill \{[^}]*background: "
+                    r"var\(--accent-soft\);", CSS, re.S) is not None)
+check("nothing takes it down between the tap and the next step",
+      "step-kicker" not in body("choose")
+      and "el.stepKicker" not in body("choose"))
+
+print("\n--- and neither key reaches a funnel that did not ask ---")
+check("no funnel but the memory game carries an intro card",
+      [n for n, cfg in CONFIGS.items() if cfg.get("intro")] == [OWNER],
+      str([n for n, cfg in CONFIGS.items() if cfg.get("intro")]))
+check("  or asks for the round pill",
+      [n for n, cfg in CONFIGS.items()
+       if (cfg.get("swipe") or {}).get("round_pill")] == [OWNER],
+      str([n for n, cfg in CONFIGS.items()
+           if (cfg.get("swipe") or {}).get("round_pill")]))
+check("  and the one that does carries both",
+      CONFIGS[OWNER].get("intro")
+      and CONFIGS[OWNER]["swipe"].get("round_pill") is True)
 
 print("\n--- and only the funnel that asked for them can reach them ---")
 # /brain is that funnel and arrived a phase after this file did. What is

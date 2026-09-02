@@ -12,6 +12,18 @@
     "title": "Brain Age Challenge",
     "og_image": "/static/galleries/brain/og.webp"
   },
+  "intro": {
+    "kicker": "BRAIN AGE CHALLENGE",
+    "headline": "How old is your brain?",
+    "sub": "18 quick rounds of memory, spatial and focus games. Get your brain age at the end — and the plan to lower it.",
+    "chips": [
+      "2 MINUTES",
+      "NO SIGN-UP",
+      "INSTANT RESULT"
+    ],
+    "cta": "START NOW",
+    "foot": "Self-discovery."
+  },
   "swipe": {
     "pairs_count": 18,
     "headline": "How old is your brain?",
@@ -20,6 +32,7 @@
     "hint": "Tap fast. Trust your gut.",
     "timeup_line": "Time's up",
     "label_mode": "badge",
+    "round_pill": true,
     "analyzing_fade_to": "#F4F1EA",
     "steps": [
       {
@@ -272,7 +285,7 @@
         "id": "mem4",
         "kicker": "ROUND 1 · MEMORY · 4/4",
         "question": "Which one did you just see?",
-        "format": "grid4",
+        "format": "grid6",
         "pairs": [
           {
             "id": "p1",
@@ -305,6 +318,22 @@
                 "id": "mem4_m3",
                 "img": "/static/galleries/brain/mem4_m3.webp",
                 "label": "Green circle",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_m4",
+                "img": "/static/galleries/brain/mem4_m4.webp",
+                "label": "Violet diamond",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_m5",
+                "img": "/static/galleries/brain/mem4_m5.webp",
+                "label": "Blue hexagon",
                 "tags": [
                   "mem_miss"
                 ]
@@ -518,7 +547,7 @@
                 "img": "/static/galleries/brain/box_closed.webp",
                 "label": "1",
                 "tags": [
-                  "spa_hit"
+                  "spa_miss"
                 ]
               },
               {
@@ -534,7 +563,7 @@
                 "img": "/static/galleries/brain/box_closed.webp",
                 "label": "3",
                 "tags": [
-                  "spa_miss"
+                  "spa_hit"
                 ]
               },
               {
@@ -732,7 +761,7 @@
               },
               {
                 "id": "chg4_s3",
-                "img": "/static/galleries/brain/letter_Y_red_lg_25.webp",
+                "img": "/static/galleries/brain/letter_Y_red_lg_15.webp",
                 "label": "3",
                 "tags": [
                   "chg_hit"
@@ -919,27 +948,11 @@
             "id": "p1",
             "images": [
               {
-                "id": "count_7",
-                "img": "/static/galleries/brain/cnt_7.webp",
-                "label": "7",
-                "tags": [
-                  "foc_miss"
-                ]
-              },
-              {
-                "id": "count_8",
-                "img": "/static/galleries/brain/cnt_8.webp",
-                "label": "8",
-                "tags": [
-                  "foc_miss"
-                ]
-              },
-              {
                 "id": "count_9",
                 "img": "/static/galleries/brain/cnt_9.webp",
                 "label": "9",
                 "tags": [
-                  "foc_hit"
+                  "foc_miss"
                 ]
               },
               {
@@ -949,12 +962,28 @@
                 "tags": [
                   "foc_miss"
                 ]
+              },
+              {
+                "id": "count_11",
+                "img": "/static/galleries/brain/cnt_11.webp",
+                "label": "11",
+                "tags": [
+                  "foc_hit"
+                ]
+              },
+              {
+                "id": "count_12",
+                "img": "/static/galleries/brain/cnt_12.webp",
+                "label": "12",
+                "tags": [
+                  "foc_miss"
+                ]
               }
             ]
           }
         ],
-        "timer_ms": 5000,
-        "timeout_pick": "count_7",
+        "timer_ms": 4000,
+        "timeout_pick": "count_9",
         "label_mode": "on_tap"
       }
     ]
@@ -1069,13 +1098,13 @@
       "template": "flash",
       "kicker": "Round 1 · Memory",
       "line": "Memorise these",
-      "auto_advance_ms": 5000,
+      "auto_advance_ms": 2500,
       "prepare": {
         "line": "Prepare to memorize",
         "count": 3
       },
       "flash": {
-        "format": "grid4",
+        "format": "grid6",
         "images": [
           {
             "img": "/static/galleries/brain/mem4_f1.webp",
@@ -1303,7 +1332,7 @@
         "open_ms": 5000,
         "close_ms": 600,
         "closed_img": "/static/galleries/brain/box_closed.webp",
-        "swap_ms": 400,
+        "swap_ms": 350,
         "swaps": [
           [
             3,
@@ -1328,6 +1357,10 @@
           [
             5,
             1
+          ],
+          [
+            0,
+            2
           ]
         ]
       }
@@ -2027,7 +2060,7 @@
   "analyzing_echo": true,
   "brain_age": {
     "base": 22,
-    "per_miss": 3.5,
+    "per_miss": 4.0,
     "min": 20,
     "max": 80,
     "scored": 16,
@@ -2202,6 +2235,7 @@
       "The two-minute drill that lifts your weakest round first",
       "The two habits to swap, and the five strengths to train first",
       "The technique that turns the round you already win into the other three",
+      "What to put on your plate this week — the foods that feed a sharp brain",
       "Seven days, one drill each, in the order that moves the number",
       "Yours to keep — the whole plan, as a PDF"
     ],
@@ -2339,7 +2373,7 @@
     },
     "profile": {
       "bridge": "Your plan, written for {type}:",
-      "offer_head": "{type}: your improvement plan, built from your 18 rounds",
+      "offer_head": "Your improvement plan — built from your 18 rounds",
       "essence": {
         "memory_mind": "You hold what you were shown. That is the one that sharpens fastest.",
         "spatial_mind": "You keep the map without trying. Now make it work harder.",
@@ -2402,6 +2436,11 @@
           "line": "the technique that turns the round you already win into the other three"
         },
         {
+          "id": "fuel",
+          "key": "Fuel",
+          "line": "what to put on your plate this week — the foods that feed a sharp brain"
+        },
+        {
           "id": "shopping",
           "line": "seven days, one drill each, in the order that moves the number"
         }
@@ -2410,7 +2449,8 @@
         "key": "+ Play again",
         "line": "play it again in a week — the number moves"
       }
-    }
+    },
+    "improve_foot": "Follow the 7-day plan, play again — the number moves."
   },
   "share_cards": [
     {
