@@ -234,6 +234,54 @@ body:has(.result-module) {
   color: var(--br-muted);
 }
 
+/* --- handing it to somebody else ---------------------------------------------- */
+
+/* The quieter of the two controls on this page, and quiet on purpose: it sits
+   above the reason to buy and must not win against it. Outlined where IMPROVE
+   NOW is solid, in the same accent, at the same width — one family, two
+   weights. */
+.br-share {
+  margin: 16px 0 0;
+  text-align: center;
+}
+
+.br-share-cta {
+  display: block;
+  width: 100%;
+  padding: 13px 18px;
+  border: 1px solid var(--br-lux);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--br-lux);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.br-share-cta:active { background: var(--br-lux-soft, rgba(59, 125, 216, 0.10)); }
+
+/* --- the week after, on the page they come back to --------------------------- */
+
+/* The last line of the delivered plan, and the only link on it. It is what
+   turns a document into a habit: the plan asks for seven days and this is the
+   eighth. */
+.br-retest {
+  margin: 26px 0 0;
+  text-align: center;
+}
+
+.br-retest-link {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--br-lux);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* --- the reason to keep reading ---------------------------------------------- */
 
 /* One sentence and one control, straight under the number. Everything a page
@@ -678,6 +726,60 @@ body:has(.result-module) {
   font-size: 13px;
   line-height: 1.5;
   color: var(--br-faint);
+}
+
+/* The four rounds, on the paid page: a name, a badge and one line. Read as a
+   table rather than as prose, which is what the chapter that carries it
+   promised on the card the reader bought from. */
+.br-verdict {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--br-line);
+  border-radius: 12px;
+  background: var(--br-card);
+}
+
+.br-verdict-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+
+.br-combo {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--br-ink);
+}
+
+/* Green for a round to lean on, amber for one with room in it. The class is
+   the schema's own word and the text inside it is the funnel's, so the colour
+   and the wording cannot drift apart. */
+.br-badge-verdict {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #fff;
+}
+
+.br-badge-verdict.is-works { background: var(--br-spa); }
+.br-badge-verdict.is-avoid { background: var(--br-chg); color: var(--br-ink); }
+
+/* The drill the weakest-round chapter closes on. It is the one paragraph in
+   the report a reader is meant to do something with tomorrow morning, so it
+   is set apart from the ones they only read. */
+.br-callout {
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--br-lux-soft, rgba(59, 125, 216, 0.10));
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 600;
+  color: var(--br-ink);
 }
 
 .br-footnote {

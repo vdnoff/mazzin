@@ -3289,17 +3289,26 @@ scene-setting, every "which is why", and every restatement of the title.''',
     {"name": "Day 4 - <its drill>", "priority_note": "same"},
     {"name": "Day 5 - <its drill>", "priority_note": "same"},
     {"name": "Day 6 - <its drill>", "priority_note": "same"},
-    {"name": "Day 7 - <its drill>", "priority_note": "same"}
+    {"name": "Day 7 - <its drill>", "priority_note": "same"},
+    {"name": "Day 8 - Play again", "priority_note": "Go back and play the rounds from the top, and watch what the number does. Two to three sentences: what to expect from a second run, what to pay attention to while playing it, and what to do with whichever round is lowest this time (max %(priority_note)d chars)"}
   ],
   "skip": []
 }
 
-Two keys, `items` and `skip`, spelled exactly so. SEVEN items under `items`,
+Two keys, `items` and `skip`, spelled exactly so. EIGHT items under `items`,
 one per day, in order. `skip` is an empty list — send it, and put nothing in
 it.
 
 `name` opens with the day, exactly as "Day 1 - ", "Day 2 - " and so on,
-followed by a short name for that day's drill.
+followed by a short name for that day's drill. The last one is named exactly
+"Day 8 - Play again".
+
+DAY EIGHT IS THE POINT OF THE OTHER SEVEN. The week is not a week of
+exercises, it is a week between two runs, and the eighth day is the second
+run. Say so plainly and say nothing about how far the number will move: you
+do not know, nobody does, and a figure invented here is the one sentence in
+this document a reader can check against reality and catch out. What that day
+promises is the measurement, not the result.
 
 DAY ONE AND DAY FOUR BELONG TO THE ROUND WITH THE MOST ROOM. Day one is the
 two-minute drill from the chapter before this one, said again in the doing
@@ -3497,11 +3506,17 @@ BRAIN_STUBS = {
                               "and something green on the plate at lunch. "
                               "Ordinary food, bought anywhere, on the days "
                               "you are doing the drills."},
-            {"name": "Day 7 - Play again",
-             "priority_note": "Play the rounds again from the top and watch "
-                              "the number. A week of two-minute drills "
-                              "moves it, and this is the day you see by how "
-                              "much."},
+            {"name": "Day 7 - Doorway sweep, harder",
+             "priority_note": "The same drill as day two, from a room you "
+                              "do not know well — a shop, a waiting room, "
+                              "somebody else's kitchen. Six things and where "
+                              "each one was."},
+            {"name": "Day 8 - Play again",
+             "priority_note": "Go back and play the rounds from the top. "
+                              "Watch which round comes up lowest this time — "
+                              "it is often not the one that was lowest last "
+                              "week — and start the next seven days on that "
+                              "one."},
         ],
         "skip": [],
     },
@@ -3829,11 +3844,16 @@ def _stub_for(section_id, name, style=None, stubs=None, months=None,
     if isinstance(stub, dict) and stub.get("colors") == FROM_CONFIG:
         stub = dict(stub)
         stub["colors"] = _stub_colors(style, colors)
-    if section_id == "mistakes":
+    # Not on the memory game, and for both of the reasons this exists. Its
+    # free page hands over no strength at all — the minimal layout took the
+    # free one off — so there is no promise here to keep; and its chapter is
+    # five strengths AND two habits, so a list cut to five behind a prepended
+    # first drops the two the title sells. Every other product is unchanged.
+    if section_id == "mistakes" and stub is not BRAIN_STUBS.get("mistakes"):
         first = _mistake_one(style)
         if first:
             stub = dict(stub)
-            # Four behind it: five items, inside the 4-6 the schema allows.
+            # Four behind it: five items, inside the schema's own range.
             stub["items"] = [first] + list(stub["items"])[:4]
     if section_id == "shopping" and (
             months or any(stubs is one for one in ZODIAC_STUB_SETS)):
@@ -6600,7 +6620,7 @@ def _personal_order(cfg, funnel_slug=None):
 
 
 def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
-                 on_final=None, choices=None):
+                 on_final=None, choices=None, timed_out=None):
     """Persist an empty report and generate into it in the background.
 
     Returns as soon as the row exists. Nothing here waits on a model, so the
@@ -6614,6 +6634,17 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     `choices` is the sequence of image ids they tapped, already validated
     against this funnel. It is what lets the palette be built from colours
     they actually chose; without it every section falls back to tags alone.
+
+    `timed_out` is the ids of the steps a clock answered rather than the
+    reader, for the one funnel that has clocks. The delivered page draws a
+    cross where a round ran out, and the tab it opens in never played one, so
+    the ids have to travel on the report the way the choices and the hero
+    card do. Nothing sends them today — the checkout payload carries the
+    choices and not these — so it is None on every purchase and the delivered
+    strip draws what it drew before. It is a parameter rather than something
+    derived here because it cannot be derived: a reader may genuinely tap the
+    card the clock would have pressed, and a run that guessed it is not a run
+    that ran out.
 
     Raises if the funnel config is missing or the INSERT fails; the webhook
     treats that as non-fatal.
@@ -6665,6 +6696,16 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
         if numbers:
             visuals = dict(visuals or {})
             visuals["brain"] = numbers
+        # The rounds the clock answered, beside them. Written only where they
+        # were handed over: an empty list and a missing key are the same
+        # thing to the page that reads it, and writing an empty one on every
+        # purchase would say "no round ran out" on a report that was never
+        # told either way.
+        rounds = [step for step in (timed_out or [])
+                  if isinstance(step, str) and step]
+        if rounds:
+            visuals = dict(visuals or {})
+            visuals["timed_out"] = rounds
     # The twelve months this purchase's year map runs over, read off the clock
     # once and then treated as a fact about the purchase. The prompt is built
     # from it, the check that polices the answer is bound to it, and it is

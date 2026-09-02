@@ -19,6 +19,7 @@
     "chips": [
       "2 MINUTES",
       "NO SIGN-UP",
+      "NO SUBSCRIPTION",
       "INSTANT RESULT"
     ],
     "cta": "START NOW",
@@ -2374,6 +2375,10 @@
     "profile": {
       "bridge": "Your plan, written for {type}:",
       "offer_head": "Your improvement plan — built from your 18 rounds",
+      "share_cta": "Challenge a friend",
+      "share_line": "My brain is {n}. What's yours?",
+      "share_copied": "Copied — send it",
+      "retest_line": "In one week: play it again. The number moves.",
       "essence": {
         "memory_mind": "You hold what you were shown. That is the one that sharpens fastest.",
         "spatial_mind": "You keep the map without trying. Now make it work harder.",

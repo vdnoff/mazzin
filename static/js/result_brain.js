@@ -398,6 +398,84 @@
     return block;
   }
 
+  // --- d3) handing it to somebody else ----------------------------------------
+  //
+  // The number is the one thing on this page a reader would say out loud, so
+  // the page gives them a way to. It sits under the hero and above the reason
+  // to buy, and it is deliberately the quieter of the two controls: outlined
+  // where IMPROVE NOW is solid, because what it is competing with is the
+  // offer and it must not win.
+  //
+  // Every word of it is in the config. What gets shared, what the button
+  // says, and what it says once the text is on the clipboard are copy, and
+  // copy on this platform lives in the funnel.
+
+  // How long the label stays swapped after a copy. Long enough to be read,
+  // short enough that a reader who taps twice is not looking at a stale word.
+  var COPIED_MS = 2000;
+
+  // Where the challenge points. The origin plus the funnel's own slug rather
+  // than this tab's URL: a paid reader is sitting on `/brain?cs=...`, and a
+  // friend handed that link would land on somebody else's report.
+  function shareUrl(ctx) {
+    var slug = (ctx.cfg && ctx.cfg.slug) || "";
+    if (!slug) return "";
+    try {
+      return window.location.origin + "/" + slug;
+    } catch (e) {
+      return "/" + slug;
+    }
+  }
+
+  function share(ctx, data) {
+    var table = profileCopy(ctx);
+    if (!table.share_cta || !table.share_line || !data) return null;
+    var text = fill(table.share_line, { n: data.age });
+    var url = shareUrl(ctx);
+
+    var block = elm("section", "br-share");
+    var button = elm("button", "br-share-cta", table.share_cta);
+    button.type = "button";
+    var timer = null;
+
+    function said(word) {
+      button.textContent = word;
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        button.textContent = table.share_cta;
+      }, COPIED_MS);
+    }
+
+    button.addEventListener("click", function () {
+      // One event, on the tap, whichever way the handing-over goes. It says
+      // somebody pressed it and nothing else: no number, no session, nothing
+      // about the reader. What they shared is on their own phone.
+      try {
+        ctx.track("share_tap");
+      } catch (e) { /* an event is not worth losing the page to */ }
+      var payload = { text: text, url: url };
+      if (navigator.share) {
+        // The sheet is the phone's, and a reader who backs out of it has not
+        // done anything wrong — the rejection is swallowed rather than shown.
+        try {
+          navigator.share(payload).catch(function () {});
+          return;
+        } catch (e) { /* fall through to the clipboard */ }
+      }
+      var full = url ? (text + " " + url) : text;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(full).then(function () {
+          said(table.share_copied || table.share_cta);
+        }, function () { said(table.share_copied || table.share_cta); });
+        return;
+      }
+      said(table.share_copied || table.share_cta);
+    });
+
+    block.appendChild(button);
+    return block;
+  }
+
   // --- e) the frames they tapped ---------------------------------------------
   //
   // Eighteen squares, one per round, in the order they were played. Two of
@@ -980,6 +1058,12 @@
     if (data) {
       root.appendChild(score(ctx, copy, data, lean));
       if (!lean) root.appendChild(bars(ctx, copy, data));
+      // The one thing on this page somebody would say out loud, and the way
+      // to say it. Above the reason to buy, because a reader who has just
+      // been given a number is at their most likely to hand it on, and
+      // quieter than that reason, because it must not win against it.
+      var hand = share(ctx, data);
+      if (hand) root.appendChild(hand);
       // What the number is worth doing something about, and the way down to
       // the offer. Straight under the figure, because everything between a
       // number and the reason to act on it is a reason to stop reading.
@@ -1064,11 +1148,18 @@
     return bar;
   }
 
-  // A section body, in whatever shape the report wrote it. There are no
-  // per-section builders here yet — nothing server-side writes this funnel's
-  // sections — so this renders the two shapes every profile in reports.py
-  // produces and falls back to prose, which is what an unrecognised shape and
-  // a plain-text section both get.
+  // A section body, in whatever shape the report wrote it.
+  //
+  // Four shapes reach this page, because BRAIN_PROFILE writes four: the
+  // profile chapter is paragraphs and arrow lines, the weakest-round chapter
+  // is an opening, a badged table of the four rounds and a closing drill, the
+  // strengths are numbered items, and the plan is eight named days.
+  //
+  // It used to render two of them. `items` was read as `{title, body, fix}`
+  // only, so the plan's `{name, priority_note}` rows came out as eight empty
+  // numbers, and `pairs` was not read at all — which took the round table off
+  // the one chapter whose whole argument is that table. Both are the paid
+  // half of the document, and both were missing from it.
   function sectionBody(data) {
     var frag = document.createDocumentFragment();
     if (typeof data === "string") {
@@ -1079,6 +1170,23 @@
       frag.appendChild(elm("p", "br-body", para));
     });
     if (data.intro) frag.appendChild(elm("p", "br-body", data.intro));
+
+    // The four rounds, badged. The word inside the badge is the profile's —
+    // "AVOID" over the round somebody is being told to practise is the
+    // document arguing with its own plan — so it is read off the config the
+    // same way the offer's copy is, and falls back to the schema's own word.
+    (data.pairs || []).forEach(function (pair) {
+      var row = elm("div", "br-verdict");
+      var head = elm("p", "br-verdict-head");
+      head.appendChild(elm("span", "br-combo", pair.combo || ""));
+      head.appendChild(elm("span", "br-badge-verdict is-" + (pair.verdict
+                                                             || "works"),
+                           verdictWord(pair.verdict)));
+      row.appendChild(head);
+      if (pair.why) row.appendChild(elm("p", "br-body", pair.why));
+      frag.appendChild(row);
+    });
+
     var items = data.items || data.implications || [];
     if (items.length) {
       var list = elm("ol", "br-list");
@@ -1087,20 +1195,39 @@
         if (typeof item === "string") {
           row.appendChild(elm("p", "br-body", item));
         } else {
-          if (item.title) {
-            row.appendChild(elm("h3", "br-item-title", item.title));
-          }
-          if (item.body) row.appendChild(elm("p", "br-body", item.body));
+          // Two row shapes, one list: a strength is a title, a body and a
+          // fix; a day is a name and what to do on it. Neither is the other's
+          // fallback — a row is whichever of the two it carries.
+          var title = item.title || item.name;
+          if (title) row.appendChild(elm("h3", "br-item-title", title));
+          var body = item.body || item.priority_note;
+          if (body) row.appendChild(elm("p", "br-body", body));
           if (item.fix) row.appendChild(elm("p", "br-fix", "→ " + item.fix));
         }
         list.appendChild(row);
       });
       frag.appendChild(list);
     }
+    // The drill the weakest-round chapter closes on, and the one paragraph on
+    // it that the reader is meant to act on tomorrow morning.
+    if (data.rule) frag.appendChild(elm("p", "br-callout", data.rule));
+    (data.skip || []).forEach(function (row) {
+      frag.appendChild(elm("p", "br-note",
+                           [row.name, row.why].filter(Boolean).join(" — ")));
+    });
     if (data.closing_rule) {
       frag.appendChild(elm("p", "br-note", data.closing_rule));
     }
     return frag;
+  }
+
+  // What a verdict is called on this page. The schema's word is `works` or
+  // `avoid`; what the reader sees is the funnel's, because one of the two
+  // marks a round they are being told to practise.
+  var VERDICT_WORDS = { works: "STRENGTH", avoid: "ROOM TO GROW" };
+
+  function verdictWord(verdict) {
+    return VERDICT_WORDS[verdict] || String(verdict || "").toUpperCase();
   }
 
   function deliveredNode(ctx, section) {
@@ -1156,7 +1283,25 @@
     if (ctx.complete && copy.delivered_note) {
       root.appendChild(elm("p", "br-footnote", copy.delivered_note));
     }
+    // And the last thing the plan asks for, which is the thing that makes it
+    // a plan rather than a document: come back and play it again. A plain
+    // link to the funnel's own path, because the reader is sitting on that
+    // path with a token on the end of it and the token is what would hand
+    // them their old report instead of a new run.
+    var again = retest(ctx);
+    if (again) root.appendChild(again);
     root.hidden = false;
+  }
+
+  function retest(ctx) {
+    var table = profileCopy(ctx);
+    var slug = (ctx.cfg && ctx.cfg.slug) || "";
+    if (!table.retest_line || !slug) return null;
+    var line = elm("p", "br-retest");
+    var link = elm("a", "br-retest-link", table.retest_line);
+    link.href = "/" + slug;
+    line.appendChild(link);
+    return line;
   }
 
   window.MazzinResult = { render: render, delivered: delivered };
