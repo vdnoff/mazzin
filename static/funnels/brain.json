@@ -14,6 +14,7 @@
   },
   "intro": {
     "kicker": "BRAIN AGE CHALLENGE",
+    "image": "/static/galleries/brain/brain_intro.webp",
     "headline": "How old is your brain?",
     "sub": "18 quick rounds of memory, spatial and focus games. Get your brain age at the end — and the plan to lower it.",
     "chips": [
@@ -993,7 +994,7 @@
     {
       "after_step": 2,
       "template": "flash",
-      "kicker": "Round 1 · Memory",
+      "kicker": "ROUND 1 · MEMORY · 1/4",
       "line": "Memorise these",
       "auto_advance_ms": 5000,
       "prepare": {
@@ -1025,7 +1026,7 @@
     {
       "after_step": 3,
       "template": "flash",
-      "kicker": "Round 1 · Memory",
+      "kicker": "ROUND 1 · MEMORY · 2/4",
       "line": "Memorise these",
       "auto_advance_ms": 5000,
       "prepare": {
@@ -1057,7 +1058,7 @@
     {
       "after_step": 4,
       "template": "flash",
-      "kicker": "Round 1 · Memory",
+      "kicker": "ROUND 1 · MEMORY · 3/4",
       "line": "Memorise these",
       "auto_advance_ms": 5000,
       "prepare": {
@@ -1097,7 +1098,7 @@
     {
       "after_step": 5,
       "template": "flash",
-      "kicker": "Round 1 · Memory",
+      "kicker": "ROUND 1 · MEMORY · 4/4",
       "line": "Memorise these",
       "auto_advance_ms": 2500,
       "prepare": {
@@ -1137,7 +1138,7 @@
     {
       "after_step": 6,
       "template": "flash",
-      "kicker": "Round 2 · Spatial",
+      "kicker": "ROUND 2 · SPATIAL · 1/4",
       "line": "Where is the key?",
       "auto_advance_ms": 5000,
       "flash": {
@@ -1188,7 +1189,7 @@
     {
       "after_step": 7,
       "template": "flash",
-      "kicker": "Round 2 · Spatial",
+      "kicker": "ROUND 2 · SPATIAL · 2/4",
       "line": "Where is the cup?",
       "auto_advance_ms": 5000,
       "flash": {
@@ -1243,7 +1244,7 @@
     {
       "after_step": 8,
       "template": "flash",
-      "kicker": "Round 2 · Spatial",
+      "kicker": "ROUND 2 · SPATIAL · 3/4",
       "line": "Where is the star?",
       "auto_advance_ms": 5000,
       "flash": {
@@ -1302,7 +1303,7 @@
     {
       "after_step": 9,
       "template": "flash",
-      "kicker": "Round 2 · Spatial",
+      "kicker": "ROUND 2 · SPATIAL · 4/4",
       "line": "Where is the moon?",
       "auto_advance_ms": 5000,
       "flash": {
@@ -1369,7 +1370,7 @@
     {
       "after_step": 10,
       "template": "flash",
-      "kicker": "Round 3 · Change",
+      "kicker": "ROUND 3 · CHANGE · 1/4",
       "line": "Study these four",
       "auto_advance_ms": 5000,
       "prepare": {
@@ -1397,7 +1398,7 @@
     {
       "after_step": 11,
       "template": "flash",
-      "kicker": "Round 3 · Change",
+      "kicker": "ROUND 3 · CHANGE · 2/4",
       "line": "Study these four",
       "auto_advance_ms": 5000,
       "prepare": {
@@ -1425,7 +1426,7 @@
     {
       "after_step": 12,
       "template": "flash",
-      "kicker": "Round 3 · Change",
+      "kicker": "ROUND 3 · CHANGE · 3/4",
       "line": "Study these four",
       "auto_advance_ms": 5000,
       "prepare": {
@@ -1453,7 +1454,7 @@
     {
       "after_step": 13,
       "template": "flash",
-      "kicker": "Round 3 · Change",
+      "kicker": "ROUND 3 · CHANGE · 4/4",
       "line": "Study these four",
       "auto_advance_ms": 5000,
       "prepare": {
@@ -1509,7 +1510,7 @@
     {
       "after_step": 16,
       "template": "flash",
-      "kicker": "Round 4 · Focus",
+      "kicker": "ROUND 4 · FOCUS · 3/4",
       "line": "Remember the pattern:",
       "auto_advance_ms": 5000,
       "prepare": {
@@ -1541,7 +1542,7 @@
     {
       "after_step": 17,
       "template": "flash",
-      "kicker": "Round 4 · Focus",
+      "kicker": "ROUND 4 · FOCUS · 4/4",
       "line": "Count the circles",
       "auto_advance_ms": 5000,
       "prepare": {

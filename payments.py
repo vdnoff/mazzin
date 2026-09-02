@@ -477,6 +477,74 @@ def _read_choices(cfg, packed):
     return _clean_choices(cfg, packed.split(","))
 
 
+# --- which steps ran out of time -------------------------------------------
+#
+# A different posture from the two above, and deliberately so. The tag scores
+# and the tapped images steer report copy: a body that sends nonsense there
+# costs a better-written report and nothing else, so it is dropped rather than
+# refused. This list is not copy. It is the difference between a report that
+# tells somebody a round ran out on them and one that tells them they answered
+# it, and the server cannot check it against anything — a step that timed out
+# records the same answer as a step somebody genuinely tapped, because the
+# card the clock picks is a card they could have picked themselves.
+#
+# So the only thing that can be checked is the shape, and a body whose shape
+# is wrong is refused rather than quietly believed in part.
+
+
+def _clean_timed_out(cfg, raw):
+    """The step ids that ran out of time, or None when none were sent.
+
+    Raises OrderError(400) on anything that is not a list of distinct ids this
+    funnel actually has, no longer than the walk itself.
+    """
+    if raw is None:
+        return None
+    if not isinstance(raw, list):
+        raise OrderError(400)
+    swipe = cfg.get("swipe") or {}
+    limit = int(swipe.get("pairs_count") or 0)
+    if limit and len(raw) > limit:
+        raise OrderError(400)
+    known = {step.get("id") for step in (swipe.get("steps") or [])
+             if isinstance(step, dict)}
+    for step_id in raw:
+        if not isinstance(step_id, str) or step_id not in known:
+            raise OrderError(400)
+    # One timeout per step: a repeated id is a hand-made list.
+    if len(set(raw)) != len(raw):
+        raise OrderError(400)
+    return list(raw)
+
+
+def _timed_out_metadata(timed_out):
+    """The ids as one short string, or None if there are none to carry."""
+    if not timed_out:
+        return None
+    packed = ",".join(timed_out)
+    if len(packed) > METADATA_VALUE_MAX:
+        log.warning("timed_out too large for metadata (%d chars) — dropped",
+                    len(packed))
+        return None
+    return packed
+
+
+def _read_timed_out(cfg, packed):
+    """The ids back out of Stripe metadata, re-validated.
+
+    Dropped rather than raised on here, unlike on the way in: by the time this
+    runs the money has been taken, and a report written without the crosses is
+    a better outcome than a webhook that 400s and a purchase with no report at
+    all.
+    """
+    if not isinstance(packed, str) or not packed:
+        return None
+    try:
+        return _clean_timed_out(cfg, packed.split(","))
+    except OrderError:
+        return None
+
+
 # --- Meta click identifiers ------------------------------------------------
 
 # Meta's own formats: `fb.1.<ms>.<random>` for the browser cookie and the
@@ -507,7 +575,7 @@ def _clean_meta_ids(raw):
 
 
 def _metadata(slug, session_id, result_style, tag_scores, choices=None,
-              meta_ids=None):
+              meta_ids=None, timed_out=None):
     """Metadata for whichever object starts the payment. Absent keys are
     absent, never empty strings.
 
@@ -523,6 +591,8 @@ def _metadata(slug, session_id, result_style, tag_scores, choices=None,
         data["tag_scores"] = tag_scores
     if choices:
         data["choices"] = choices
+    if timed_out:
+        data["timed_out"] = timed_out
     for key, value in (meta_ids or {}).items():
         data[key] = value
     return data
@@ -1041,6 +1111,10 @@ def _validated_order(body):
             _clean_tag_scores(cfg, body.get("tag_scores"))),
         "choices": _choices_metadata(
             _clean_choices(cfg, body.get("choices"))),
+        # Refused rather than dropped when it is malformed — see the note over
+        # `_clean_timed_out`.
+        "timed_out": _timed_out_metadata(
+            _clean_timed_out(cfg, body.get("timed_out"))),
         # Carried through Stripe so the server-side Purchase can be joined to
         # the click that produced it. Never used to decide anything.
         #
@@ -1134,7 +1208,8 @@ def checkout():
             success_url="%s/%s?cs={CHECKOUT_SESSION_ID}" % (config.BASE_URL, slug),
             cancel_url="%s/%s?canceled=1" % (config.BASE_URL, slug),
             metadata=_metadata(slug, session_id, result_style, tag_scores,
-                               choices, meta_ids),
+                               choices, meta_ids,
+                               timed_out=order["timed_out"]),
             customer_creation="if_required",
         )
     except Exception:
@@ -1204,7 +1279,8 @@ def payment_intent():
             # the payment.
             metadata=_metadata(slug, order["session_id"],
                                order["result_style"], order["tag_scores"],
-                               order["choices"], order["meta_ids"]),
+                               order["choices"], order["meta_ids"],
+                               timed_out=order["timed_out"]),
         )
     except Exception:
         # Stripe's message can echo request contents — log the type only.
@@ -1411,7 +1487,8 @@ def _claim_visualizer_photo(purchase_id, slug, session_id):
 
 
 def _record_side_effects(purchase_id, slug, session_id, result_style, tag_scores,
-                         email=None, checkout_session=None, choices=None):
+                         email=None, checkout_session=None, choices=None,
+                         timed_out=None):
     """Report + emailed PDF + server-side purchase event.
 
     `start_report` persists an empty report row and returns; every model call
@@ -1437,6 +1514,7 @@ def _record_side_effects(purchase_id, slug, session_id, result_style, tag_scores
         reports.start_report(
             purchase_id, slug, result_style, tag_scores,
             on_final=deliver if email else None, choices=choices,
+            timed_out=timed_out,
         )
     except Exception:
         log.exception("report generation failed for purchase %s", purchase_id)
@@ -1621,10 +1699,11 @@ def stripe_webhook():
     cfg = config.load_funnel(slug)
     tag_scores = _read_tag_scores(cfg, metadata.get("tag_scores"))
     choices = _read_choices(cfg, metadata.get("choices"))
+    timed_out = _read_timed_out(cfg, metadata.get("timed_out"))
     _record_side_effects(
         purchase_id, slug, session_id, result_style, tag_scores,
         email=details.get("email"), checkout_session=checkout_session,
-        choices=choices,
+        choices=choices, timed_out=timed_out,
     )
     return jsonify({"status": "ok"}), 200
 

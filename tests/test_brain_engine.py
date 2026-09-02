@@ -373,10 +373,36 @@ check("  behind the same key the reaction is, because /api/track is closed",
       and "cfg && cfg.track_timing" in body("timingTracked"))
 check("  and reset on every step, so it cannot carry over",
       "timedOut = false;" in body("renderStep"))
-check("the checkout body does not carry it",
-      "timed_out" not in body("orderPayload")
-      and "timedOut" not in body("orderPayload"))
-check("payments.py has never heard of it", "timed_out" not in PAYMENTS)
+# v7. It reaches the purchase now, from the same state the free page reads.
+# The server cannot derive it: a step that ran out records the same answer as
+# a step somebody tapped, because the card the clock picks is one they could
+# have picked themselves.
+order_fn = body("orderPayload")
+check("the checkout body carries the ids, from that same state",
+      "if (timedOutSteps.length) payload.timed_out = timedOutSteps.slice();"
+      in order_fn)
+check("  and only when there are some, so every other funnel is unchanged",
+      "if (timedOutSteps.length)" in order_fn)
+check("payments.py validates it rather than believing it",
+      "def _clean_timed_out(cfg, raw):" in PAYMENTS)
+check("  a list, of ids this funnel has, no two the same, no longer than the "
+      "walk",
+      "if not isinstance(raw, list):" in PAYMENTS
+      and "if step_id not in known" in PAYMENTS.replace(
+          "if not isinstance(step_id, str) or step_id not in known",
+          "if step_id not in known")
+      and "if len(set(raw)) != len(raw):" in PAYMENTS
+      and "if limit and len(raw) > limit:" in PAYMENTS)
+check("  and refuses rather than dropping, unlike the two beside it",
+      PAYMENTS.count("raise OrderError(400)")
+      >= 5 and "return None" in PAYMENTS)
+check("it rides Stripe's metadata and is re-checked coming back",
+      'data["timed_out"] = timed_out' in PAYMENTS
+      and "def _read_timed_out(cfg, packed):" in PAYMENTS
+      and "except OrderError:" in PAYMENTS)
+check("  and lands on the parameter reports.py already had",
+      "timed_out=timed_out," in PAYMENTS
+      and "timed_out=None):" in PAYMENTS)
 check("  and tracking.py knows it only as one a swipe MAY carry",
       "timed_out" in tracking.SWIPE_EXTRA_OPTIONAL,
       str(sorted(tracking.SWIPE_EXTRA_OPTIONAL)))
@@ -419,8 +445,11 @@ check("  and it restates the pill's own centring, which the animation replaces",
                     CSS, re.S).group(1).count("translateX(-50%)") == 2)
 
 print("\n--- and the new paint cannot reach a screen that did not ask ---")
+# v7 adds a fifth: the memory game's own blue, which repaints the clock and
+# the count-in. It is scoped to the theme class engine.js sets from `theme`
+# in the config, so it cannot reach a funnel that names another one.
 NEW_SCOPES = (".mz-timer", ".mid.is-flash", ".step.is-timed",
-              ".cards .card-name.is-late")
+              ".cards .card-name.is-late", "body.theme-brain ")
 new_rules = [r for r in RULES
              if "mz-" in r or "mid-flash" in r or ".mid.is-flash" in r
              or "is-timed" in r or "is-late" in r]
@@ -435,7 +464,8 @@ check("the auto-advance mode's keyframes are still exactly the five it had",
       str(sorted(re.findall(r"@keyframes (mid-[\w-]+)", CSS))))
 check("  and every keyframe these branches added is in their own family",
       sorted(re.findall(r"@keyframes (mz-[\w-]+)", CSS))
-      == ["mz-count-in", "mz-label-in", "mz-lid", "mz-timeup-in"],
+      == ["mz-count-in", "mz-label-in", "mz-lid", "mz-pill-pulse",
+          "mz-timeup-in"],
       str(sorted(re.findall(r"@keyframes (mz-[\w-]+)", CSS))))
 
 print("\n--- 2. the domain axes ---")
@@ -592,10 +622,18 @@ check("  with the same word recorded as before",
 # is the shell's own caption and card row. It is gated instead — nothing in
 # it matches unless engine.js has put `is-intro` on the screen, which it does
 # only for a funnel carrying an `intro` block.
-SCOPES = (".step-timeup", ".step-kicker", ".intro", "#screen-swipe.is-intro")
+#
+# v7 adds three more of the same kind: the layer the one pill travels in, the
+# memorise screen's kicker while it is hosting that pill, and the memory
+# game's own blue — the last of which is under the theme class and so cannot
+# reach any other funnel.
+SCOPES = (".step-timeup", ".step-kicker", ".intro", "#screen-swipe.is-intro",
+          ".pill-layer", ".pill-float", ".mid-kicker.is-pill-host",
+          "body.theme-brain ")
 own_rules = [r for r in RULES
              if "step-timeup" in r or "step-kicker" in r
-             or ".intro" in r or "is-intro" in r]
+             or ".intro" in r or "is-intro" in r
+             or "pill-layer" in r or "pill-float" in r or "is-pill-host" in r]
 check("every rule these additions bring is scoped to its own class",
       own_rules and all(r.startswith(SCOPES) for r in own_rules),
       str([r for r in own_rules if not r.startswith(SCOPES)]))
@@ -668,15 +706,22 @@ check("the pill is gated on the funnel asking for one",
 check("  and a funnel that does not keeps the line it had",
       "if (!roundPill()) {" in pill_fn
       and "node.textContent = text;" in pill_fn)
+# v7. The split and the two spans moved out of `setStepKicker` and into a
+# pair of their own, because the memorise screen draws the same pill from the
+# same parse — one component, read the same way in both places.
+parts_fn = body("pillParts")
+fill_fn = body("fillPill")
 check("it splits on the LAST separator, not the first",
-      'var cut = text.lastIndexOf("·");' in pill_fn,
-      pill_fn[:120])
+      'var cut = text.lastIndexOf("·");' in parts_fn,
+      parts_fn[:120])
 check("  the label in one span and the counter in another",
-      'elm("span", "step-kicker-text"' in pill_fn
-      and 'elm("span", "step-kicker-count"' in pill_fn)
+      'elm("span", "step-kicker-text"' in fill_fn
+      and 'elm("span", "step-kicker-count"' in fill_fn)
 check("  and a kicker with no separator is all label and no counter",
-      "cut < 0 ? text : text.slice(0, cut)" in pill_fn
-      and "if (count.trim()) {" in pill_fn)
+      "cut < 0 ? text : text.slice(0, cut)" in parts_fn
+      and "if (parts.count) {" in fill_fn)
+check("  and the step screen still fills through it",
+      "fillPill(node, text);" in pill_fn)
 check("the counter is a solid badge inside the pill",
       ".step-kicker.is-pill {" in CSS
       and re.search(r"\.step-kicker-count \{[^}]*background: var\(--accent\);",
@@ -771,6 +816,203 @@ check("no other funnel keys an interstitial or a step on a domain axis",
 check("the funnels directory and its static copy still agree",
       sorted(os.listdir(FUNNELS))
       == sorted(os.listdir(os.path.join(ROOT, "static/funnels"))))
+
+print("\n--- v7: one pill, and it follows the reader ---")
+# The rule the whole thing turns on: the pill the reader sees is ONE node for
+# the length of the walk. Every screen that names a round draws its own copy
+# and hides it, and that copy is only ever a box to move to — which is why it
+# is hidden with opacity and not with `display`, and why the travelling node
+# lives outside both screens rather than being moved between them.
+move_fn = body("movePill")
+node_fn = body("pillNode")
+check("the travelling pill is built once, outside every screen",
+      "if (el.pill) return el.pill;" in node_fn
+      and "document.body.appendChild(layer);" in node_fn)
+check("  as two nodes, because a glide and a beat are two transforms",
+      'elm("div", "pill-float")' in node_fn
+      and 'elm("p", "step-kicker is-pill")' in node_fn
+      and "carrier.appendChild(node);" in node_fn)
+check("  and read out by nobody: the slot under it is the one in the order",
+      'layer.setAttribute("aria-hidden", "true");' in node_fn)
+check("nothing here can reach a funnel that did not ask for a pill",
+      "if (!roundPill() || !pillText) return;" in move_fn)
+check("it moves to whichever screen is up, and only to a real box",
+      '".screen.is-active .step-kicker.is-slot"' in body("pillSlot")
+      and "node && node.offsetWidth ? node : null" in body("pillSlot"))
+check("  by transform alone, so nothing on the page moves with it",
+      'el.pillFloat.style.transform = "translate("' in move_fn
+      and "style.width" not in move_fn and "style.left" not in move_fn)
+check("  over 350ms, on a curve rather than a linear ramp",
+      "var PILL_GLIDE_MS = 350;" in ENGINE
+      and '"transform " + PILL_GLIDE_MS + "ms cubic-bezier(0.22, 0.61, 0.36, 1)"'
+      in move_fn)
+check("two screens that put it in the same place swap the text and nothing else",
+      "Math.abs(pillPos.x - x) <= 1 && Math.abs(pillPos.y - y) <= 1"
+      in move_fn
+      and "el.pillFloat.style.transition = moved" in move_fn
+      and re.search(r"el\.pillFloat\.style\.transition = moved.*?: \"none\";",
+                    move_fn, re.S) is not None)
+check("the copy each screen draws holds the space and is never seen",
+      ".step-kicker.is-slot { opacity: 0; }" in CSS
+      and 'node.classList.add("is-slot");' in pill_fn)
+check("  and it is measured with this screen's own text already in it",
+      move_fn.index("fillPill(node, pillText);")
+      < move_fn.index("getBoundingClientRect()"))
+check("the move happens after the screen it belongs to is on",
+      "movePill();" in body("advance")
+      and body("advance").index('show("screen-swipe");')
+      < body("advance").index("movePill();"))
+check("  and a screen with no pill is left alone rather than emptied",
+      "if (!slot) return;" in move_fn)
+check("a pill arriving is placed rather than played",
+      "var moved = !instant && !!pillPos && !still;" in move_fn)
+check("  and the second call a step change makes is a no-op",
+      "if (still && pillText === pillShown) return;" in move_fn)
+settle_fn = body("settlePill")
+check("where the slot ends up is re-read over the frames after a move",
+      "settlePill(PILL_SETTLE_FRAMES);" in move_fn
+      and "var PILL_SETTLE_FRAMES = 30;" in ENGINE
+      and "requestAnimationFrame(" in settle_fn)
+check("  and a target that moves mid-glide is re-aimed, never replayed",
+      "style.transform =" in settle_fn
+      and "style.transition" not in settle_fn)
+check("  and it stops the moment the pill is away",
+      "if (!el.pillLayer || el.pillLayer.hidden) return;" in settle_fn)
+check("a memorise screen changing shape re-places it too",
+      "new ResizeObserver(function () { movePill(); }).observe(body);"
+      in body("pillNode"))
+
+print("\n--- v7: the beat, once a round ---")
+beat_fn = body("beatPill")
+check("it fires when the round changes and never when the counter does",
+      "if (label === pillRound) return;" in beat_fn
+      and "pillParts(pillText).label" in move_fn)
+check("  and a re-place mid-round leaves a pending beat alone",
+      beat_fn.index("if (label === pillRound) return;")
+      < beat_fn.index("clearTimeout(pillPulse);"))
+check("  the class comes off when the beat ends, so it means beating now",
+      'node.addEventListener("animationend", function () {' in body("pillNode")
+      and 'node.classList.remove("is-pulse");' in body("pillNode"))
+check("  after the glide has landed, not with it",
+      "moved ? PILL_GLIDE_MS : 0" in move_fn
+      and "}, delay);" in beat_fn)
+check("  and it is restarted rather than re-added, or it would play once",
+      'el.pill.classList.remove("is-pulse");' in beat_fn
+      and "void el.pill.offsetWidth;" in beat_fn
+      and 'el.pill.classList.add("is-pulse");' in beat_fn)
+pulse = re.search(r"@keyframes mz-pill-pulse \{(.*?)\n\}", CSS, re.S)
+check("the beat is a scale to 1.08 and back",
+      pulse is not None
+      and "scale(1.08)" in pulse.group(1)
+      and pulse.group(1).count("scale(1)") == 2)
+check("  over 400ms",
+      "animation: mz-pill-pulse 400ms" in CSS
+      and "var PILL_PULSE_MS = 400;" in ENGINE)
+check("  and the class comes off even where the beat never plays",
+      "PILL_PULSE_MS + 60" in beat_fn)
+check("  played on the inner node, so it cannot disturb the glide",
+      ".pill-float .step-kicker.is-pill.is-pulse {" in CSS)
+# WARM-UP, then four rounds. The pill arriving is the round it names changing
+# from nothing to something, so the walk gets five beats and not four.
+BRAIN = CONFIGS[OWNER]
+labels = []
+for st in BRAIN["swipe"]["steps"]:
+    text = st.get("kicker") or ""
+    cut = text.rfind("·")
+    labels.append((text if cut < 0 else text[:cut]).strip())
+changes = sum(1 for i, lab in enumerate(labels)
+              if i == 0 or lab != labels[i - 1])
+check("the walk changes round five times, so the pill beats five times",
+      changes == 5, str(changes))
+check("  and never between two steps of the same round",
+      changes == len(set(labels)), str(sorted(set(labels))))
+
+print("\n--- v7: the memorise screen draws the same pill ---")
+mid_fn = body("setMidKicker")
+check("only a memorise screen takes it, and only where a funnel asked",
+      "if (!(flash && roundPill() && text)) {" in mid_fn
+      and "host.textContent = text;" in mid_fn)
+check("  built from the same parse the step pill is built from",
+      "fillPill(slot, text);" in mid_fn
+      and 'elm("span", "step-kicker is-pill is-slot")' in mid_fn)
+check("  and placed once the screen is on",
+      "if (flash && roundPill() && entry.kicker) {" in body("openInterstitial")
+      and body("openInterstitial").index('show("screen-interstitial");')
+      < body("openInterstitial").index("pillText = entry.kicker;"))
+check("every other interstitial sends the pill away rather than carrying it",
+      "hidePill();" in body("openInterstitial"))
+check("  and so does the result, because the walk is over",
+      "hidePill();" in body("startResult"))
+
+print("\n--- v7: the picture on the intro card ---")
+intro_fn = body("showIntro")
+check("it is gated on the config naming one",
+      "if (block.image) {" in intro_fn and 'art.src = block.image;' in intro_fn)
+check("  drawn between the kicker and the headline",
+      intro_fn.index("if (block.image)")
+      < intro_fn.index("if (block.headline)"))
+check("  decorative, so it is not announced",
+      'art.alt = "";' in intro_fn
+      and 'art.setAttribute("aria-hidden", "true");' in intro_fn)
+check("  and sized in the stylesheet rather than in a script",
+      re.search(r"\.intro-art \{[^}]*max-width: 200px;", CSS, re.S) is not None
+      and re.search(r"\.intro-art \{[^}]*margin: 0 auto", CSS, re.S)
+      is not None)
+
+print("\n--- v7: the game's blue, and what it is not allowed to reach ---")
+theme_rules = [r for r in RULES if r.startswith("body.theme-brain")]
+check("every blue rule is under the funnel's own theme class",
+      theme_rules and all(r.startswith("body.theme-brain ")
+                          or r == "body.theme-brain" for r in theme_rules),
+      str(theme_rules))
+check("  and none of them repaints the accent the platform's furniture uses",
+      not [r for r in theme_rules
+           if re.search(re.escape(r) + r"\s*\{[^}]*--accent\s*:", CSS, re.S)],
+      str(theme_rules))
+check("the progress dots and the header are not in the list at all",
+      not [r for r in theme_rules
+           if "progress" in r or "brand" in r or "header" in r],
+      str(theme_rules))
+check("the pill is the game's blue on its own pale ground",
+      re.search(r"body\.theme-brain \.step-kicker\.is-pill \{[^}]*"
+                r"border: 1\.5px solid var\(--brain-line\);", CSS, re.S)
+      is not None
+      and re.search(r"body\.theme-brain \.step-kicker\.is-pill \{[^}]*"
+                    r"background: var\(--brain-soft\);", CSS, re.S) is not None
+      and re.search(r"body\.theme-brain \.step-kicker\.is-pill \{[^}]*"
+                    r"color: var\(--brain-ink\);", CSS, re.S) is not None)
+check("  and its counter is that blue solid, in white",
+      re.search(r"body\.theme-brain \.step-kicker-count \{[^}]*"
+                r"background: var\(--brain-line\);", CSS, re.S) is not None
+      and re.search(r"body\.theme-brain \.step-kicker-count \{[^}]*"
+                    r"color: #fff;", CSS, re.S) is not None)
+check("the three tokens are the ones the review named",
+      re.search(r"body\.theme-brain \{(.*?)\n\}", CSS, re.S) is not None
+      and "#378ADD" in re.search(r"body\.theme-brain \{(.*?)\n\}",
+                                 CSS, re.S).group(1)
+      and "#E6F1FB" in re.search(r"body\.theme-brain \{(.*?)\n\}",
+                                 CSS, re.S).group(1)
+      and "#0C447C" in re.search(r"body\.theme-brain \{(.*?)\n\}",
+                                 CSS, re.S).group(1))
+check("the clock is in the same family",
+      "body.theme-brain .mz-timer-fill {" in CSS
+      and "body.theme-brain .mz-timer-track { background: var(--brain-soft); }"
+      in CSS
+      and "body.theme-brain .mid.is-flash .mz-prepare-count { "
+          "color: var(--brain-line); }" in CSS)
+check("  and the last two seconds keep their red, which is not decoration",
+      not [r for r in theme_rules if "is-warn" in r], str(theme_rules))
+check("the column has one rhythm rather than four spacings",
+      "body.theme-brain .caption { margin: 26px 0 18px; }" in CSS
+      and "body.theme-brain .step.is-timed .mz-timer { margin: 0 0 16px; }"
+      in CSS)
+check("  and the memorise screens are spaced the same way",
+      "body.theme-brain .mid.is-flash .mid-line { margin-top: 26px; }" in CSS
+      and "body.theme-brain .mid.is-flash .mz-timer { margin: 18px auto 16px; }"
+      in CSS)
+check("no other funnel names this theme",
+      [n for n, c in CONFIGS.items() if c.get("theme") == "brain"] == [OWNER],
+      str([n for n, c in CONFIGS.items() if c.get("theme") == "brain"]))
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for f in fails:

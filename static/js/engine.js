@@ -865,19 +865,229 @@
       node.textContent = text;
       return;
     }
-    // "ROUND 2 · SPATIAL · 3/4" is two things: where in the walk this is, and
-    // how far through that round. The split is on the LAST separator rather
-    // than the first, because the round's own name has one in it — and a
-    // kicker with no separator at all is all label and no counter, which is
-    // what the two warm-up steps would be if they were written that way.
-    var cut = text.lastIndexOf("·");
-    var label = cut < 0 ? text : text.slice(0, cut);
-    var count = cut < 0 ? "" : text.slice(cut + 1);
-    node.appendChild(elm("span", "step-kicker-text", label.trim()));
-    if (count.trim()) {
-      node.appendChild(elm("span", "step-kicker-count", count.trim()));
-    }
+    fillPill(node, text);
+    // The pill drawn here is the one that holds the space. What the reader
+    // sees is the single node the glider carries over the top of it.
+    node.classList.add("is-slot");
+    pillText = text;
+    movePill();
   }
+
+  // "ROUND 2 · SPATIAL · 3/4" is two things: where in the walk this is, and
+  // how far through that round. The split is on the LAST separator rather
+  // than the first, because the round's own name has one in it — and a
+  // kicker with no separator at all is all label and no counter, which is
+  // what the two warm-up steps would be if they were written that way.
+  function pillParts(text) {
+    var cut = text.lastIndexOf("·");
+    return {
+      label: (cut < 0 ? text : text.slice(0, cut)).trim(),
+      count: (cut < 0 ? "" : text.slice(cut + 1)).trim()
+    };
+  }
+
+  function fillPill(node, text) {
+    var parts = pillParts(text);
+    node.textContent = "";
+    node.appendChild(elm("span", "step-kicker-text", parts.label));
+    if (parts.count) {
+      node.appendChild(elm("span", "step-kicker-count", parts.count));
+    }
+    return node;
+  }
+
+  // --- the pill that follows the reader ---------------------------------------
+  //
+  // One node for the whole walk. Each screen that names a round renders its
+  // own pill and then makes it invisible; the node below sits over whichever
+  // of those is on screen and slides between their positions. A copy rather
+  // than a move, because a node that travelled between two screens would take
+  // its box with it and the question under it would jump by the pill's height
+  // every time it left.
+  //
+  // Everything here is gated on `swipe.round_pill`. A funnel that does not
+  // ask for the pill never builds the layer, and nothing in this section can
+  // reach it.
+  var PILL_GLIDE_MS = 350;
+  var PILL_PULSE_MS = 400;
+  var pillText = "";          // what it should say, set by whoever owns it
+  var pillShown = null;       // what it is actually saying now
+  var pillPos = null;         // where it is now, in the layer's coordinates
+  var pillRound = null;       // the round it last named, for the pulse
+  var pillPulse = null;
+  var pillSettle = null;
+  // How many frames after a move the pill keeps checking where its slot
+  // actually ended up. Half a second: long enough to cover the entrance the
+  // screen it landed on is playing, short enough to be over before the next
+  // screen change.
+  var PILL_SETTLE_FRAMES = 30;
+
+  function pillNode() {
+    if (el.pill) return el.pill;
+    var layer = elm("div", "pill-layer");
+    layer.id = "pill-layer";
+    // Read out twice otherwise: the slot under it is the one in the reading
+    // order, and this is a picture of that slot.
+    layer.setAttribute("aria-hidden", "true");
+    // Two nodes, not one: the glide is a translate and the pulse is a scale,
+    // and a single element can only carry one transform. The outer one
+    // travels, the inner one beats.
+    var carrier = elm("div", "pill-float");
+    var node = elm("p", "step-kicker is-pill");
+    // Taken off when it finishes, so the class means "beating now" rather
+    // than "has beaten at some point" — which is what lets a re-place tell a
+    // pending beat from a spent one.
+    node.addEventListener("animationend", function () {
+      node.classList.remove("is-pulse");
+    });
+    carrier.appendChild(node);
+    layer.appendChild(carrier);
+    document.body.appendChild(layer);
+    el.pillLayer = layer;
+    el.pillFloat = carrier;
+    el.pill = node;
+    // A memorise screen builds itself in phases — it counts in, shows its
+    // frames, drops a lid — and the block those sit in is centred in the
+    // column, so the slot moves under the pill as each phase lands. Watched
+    // rather than guessed at: when that block changes size, the pill goes to
+    // where its slot now is, gliding there like any other move.
+    if (window.ResizeObserver) {
+      var body = document.querySelector("#screen-interstitial .mid-body");
+      if (body) new ResizeObserver(function () { movePill(); }).observe(body);
+    }
+    return node;
+  }
+
+  // Whichever screen is up, and only if its pill actually has a box: during
+  // the intro card the step's pill is `display: none`, and a rectangle of
+  // zeroes is not a place to move to.
+  function pillSlot() {
+    var node = document.querySelector(".screen.is-active .step-kicker.is-slot");
+    return node && node.offsetWidth ? node : null;
+  }
+
+  function hidePill() {
+    if (el.pillLayer) el.pillLayer.hidden = true;
+    pillPos = null;
+    pillShown = null;
+  }
+
+  // Called after the screen it belongs to is on, never before: a box measured
+  // on a `display: none` subtree is all zeroes, and the glide would be a jump
+  // from the corner of the page.
+  //
+  // A screen with no pill on it is left alone rather than hidden — the step
+  // screen sets its own text while the interstitial is still up, and a hide
+  // there would drop the pill out from under the glide it is halfway through.
+  function movePill(instant) {
+    if (!roundPill() || !pillText) return;
+    var slot = pillSlot();
+    if (!slot) return;
+    var node = pillNode();
+    el.pillLayer.hidden = false;
+    fillPill(node, pillText);
+    // Measured with this screen's own text already in it, so the two boxes
+    // are the same width and what plays is a move rather than a move and a
+    // resize at the same time.
+    var base = el.pillLayer.getBoundingClientRect();
+    var box = slot.getBoundingClientRect();
+    var x = box.left - base.left;
+    var y = box.top - base.top;
+    var still = !!pillPos
+      && Math.abs(pillPos.x - x) <= 1 && Math.abs(pillPos.y - y) <= 1;
+    // Nothing to say and nowhere to go. Returned on rather than re-applied,
+    // because a step change calls this twice — once as the kicker is filled
+    // and once with the screen on — and the second call would otherwise
+    // cancel the glide the first one just started and swallow its beat.
+    if (still && pillText === pillShown) return;
+    pillShown = pillText;
+    // A pill that is arriving rather than moving has nowhere to come from,
+    // and animating it would slide it in from the corner of the page. So a
+    // first appearance, and a return after the pill was sent away between
+    // rounds, are placed rather than played.
+    var moved = !instant && !!pillPos && !still;
+    // Two screens that put the pill in the same place get the text swap and
+    // nothing else. Animating a zero-length move is a pause with no movement
+    // in it, which reads as the page having stalled.
+    el.pillFloat.style.transition = moved
+      ? "transform " + PILL_GLIDE_MS + "ms cubic-bezier(0.22, 0.61, 0.36, 1)"
+      : "none";
+    el.pillFloat.style.transform = "translate(" + x + "px, " + y + "px)";
+    pillPos = { x: x, y: y };
+    beatPill(pillParts(pillText).label, moved ? PILL_GLIDE_MS : 0);
+    settlePill(PILL_SETTLE_FRAMES);
+  }
+
+  // Where a slot ends up is not known on the frame the move starts. The
+  // screen it is on is still playing its entrance, and a memorise screen is
+  // still deciding whether it is showing a count-in or six frames — both of
+  // which shift the block the slot sits in by a few pixels after the fact.
+  //
+  // So the target is re-read over the frames that follow and the pill is
+  // quietly re-aimed. The transition is left exactly as it was: a target that
+  // moves mid-glide is retargeted, never replayed, and by the time the glide
+  // lands the slot has stopped moving under it.
+  function settlePill(left) {
+    if (window.cancelAnimationFrame) cancelAnimationFrame(pillSettle);
+    if (left <= 0 || !window.requestAnimationFrame) return;
+    pillSettle = requestAnimationFrame(function () {
+      if (!el.pillLayer || el.pillLayer.hidden) return;
+      var slot = pillSlot();
+      if (slot) {
+        var base = el.pillLayer.getBoundingClientRect();
+        var box = slot.getBoundingClientRect();
+        var x = box.left - base.left;
+        var y = box.top - base.top;
+        if (!pillPos || Math.abs(pillPos.x - x) > 0.5
+            || Math.abs(pillPos.y - y) > 0.5) {
+          el.pillFloat.style.transform =
+            "translate(" + x + "px, " + y + "px)";
+          pillPos = { x: x, y: y };
+        }
+      }
+      settlePill(left - 1);
+    });
+  }
+
+  // One beat when the round changes, and only then: the counter moving from
+  // 1/4 to 2/4 is the same round still, and a pill that jumped at every step
+  // would be a pill nobody looks at. Five rounds, five beats — the warm-up
+  // arriving counts, because a pill appearing is the round it names changing
+  // from nothing to something.
+  //
+  // Played after the glide has landed rather than with it, so the two read as
+  // one movement: it arrives, then it announces itself.
+  function beatPill(label, delay) {
+    // The same round again — a counter tick, or the pill re-placed because a
+    // screen settled under it — leaves whatever beat is already pending
+    // alone. Only a change cancels one and schedules another.
+    if (label === pillRound) return;
+    pillRound = label;
+    clearTimeout(pillPulse);
+    if (el.pill) el.pill.classList.remove("is-pulse");
+    pillPulse = setTimeout(function () {
+      if (!el.pill) return;
+      // Removed, reflowed, added: the class may still be on the node from the
+      // round before, and adding a class that is already there plays nothing.
+      el.pill.classList.remove("is-pulse");
+      void el.pill.offsetWidth;
+      el.pill.classList.add("is-pulse");
+      // A net for the reader who asked for less motion: there the beat is
+      // turned off in the stylesheet, so no animation ever ends and the
+      // listener that takes the class back off is never called.
+      pillPulse = setTimeout(function () {
+        if (el.pill) el.pill.classList.remove("is-pulse");
+      }, PILL_PULSE_MS + 60);
+    }, delay);
+  }
+
+  // The pill is placed in pixels, so a rotation or a keyboard changes where
+  // its slot is without changing anything that would move it. Re-placed
+  // without the glide: this is not a step change, it is the same position
+  // measured again.
+  window.addEventListener("resize", function () {
+    if (el.pillLayer && !el.pillLayer.hidden) movePill(true);
+  });
 
   // The caption is the step's own question, so it changes on every pair.
   //
@@ -1222,6 +1432,10 @@
       pair = next;
       renderStep();
       show("screen-swipe");
+      // `renderStep` set the text, but it ran while this screen was still
+      // hidden. The move belongs here, with the screen on and its slot
+      // measurable.
+      movePill();
       picking = false;
     });
   }
@@ -1376,6 +1590,27 @@
     return Math.max(AUTO_MIN_MS, Math.min(want, ceiling));
   }
 
+  // The line over an interstitial's headline. A memorise screen on a funnel
+  // that asked for the pill draws the pill — the same component the step
+  // screen draws, parsed the same way, so the counter a flash before step 3
+  // shows is the round's own 1/4. Every other interstitial, and every funnel
+  // without `swipe.round_pill`, renders exactly the line it always did.
+  function setMidKicker(entry, flash) {
+    var text = (entry && entry.kicker) || "";
+    var host = el.midKicker;
+    if (!host) return;
+    host.textContent = "";
+    host.classList.remove("is-pill-host");
+    if (!(flash && roundPill() && text)) {
+      host.textContent = text;
+      return;
+    }
+    host.classList.add("is-pill-host");
+    var slot = elm("span", "step-kicker is-pill is-slot");
+    fillPill(slot, text);
+    host.appendChild(slot);
+  }
+
   function openInterstitial(entry) {
     midSeen[entry.after_step] = true;
     midOpen = true;
@@ -1388,7 +1623,7 @@
     // first screen's dismiss running against the second one's copy.
     clearTimeout(midTimer);
     midTimer = null;
-    el.midKicker.textContent = entry.kicker || "";
+    setMidKicker(entry, flash);
     el.midLine.textContent = fillTokens(entry.line || "");
     el.midSub.textContent = fillTokens(entry.sub || "");
     el.midSub.hidden = !entry.sub;
@@ -1421,6 +1656,17 @@
     // layout to start from and arrives at its end value in one frame, which
     // is a bar that is simply already drawn.
     show("screen-interstitial");
+    // With the screen on, so there is a box to measure. A memorise screen is
+    // part of the round it interrupts and carries the round's pill; every
+    // other interstitial is a beat between rounds and carries none, so the
+    // pill leaves rather than following the reader onto a screen it has
+    // nothing to say about.
+    if (flash && roundPill() && entry.kicker) {
+      pillText = entry.kicker;
+      movePill();
+    } else {
+      hidePill();
+    }
     setAccent(entry, midAuto, echoes);
     playEntrance(midAuto);
     track("interstitial", step);
@@ -3631,6 +3877,9 @@
 
   function startResult() {
     show("screen-result");
+    // The walk is over, so the thing that named where in it the reader was
+    // goes with it.
+    hidePill();
     el.analyzingText.textContent = cfg.analyzing.text;
     el.analyzing.hidden = false;
     el.resultBody.hidden = true;
@@ -5526,6 +5775,14 @@
       choices: chosen.slice()
     };
 
+    // Which steps ran out of time. The server cannot work this out for
+    // itself: a step that timed out records the same shape of answer as a
+    // step somebody answered, because the reader may genuinely have tapped
+    // the card the timeout would have picked. Sent only when there is
+    // something to send, so the payload on every funnel without a clock is
+    // the one it has always been.
+    if (timedOutSteps.length) payload.timed_out = timedOutSteps.slice();
+
     // The click identifiers travel with the order because this is the last
     // moment the browser is involved. The purchase itself is reported by the
     // server after Stripe confirms it, long after this tab may be gone, and
@@ -7350,6 +7607,18 @@
       kicker.appendChild(document.createTextNode(block.kicker));
       kicker.appendChild(introMark());
       card.appendChild(kicker);
+    }
+    // One picture, between the kicker and the headline. Gated on the config
+    // naming it, so every funnel that does not is untouched and no node is
+    // built for it. Sized in CSS rather than here: what this screen needs is
+    // an illustration at a fixed width, not an image whose size is a number
+    // in a script.
+    if (block.image) {
+      var art = elm("img", "intro-art");
+      art.src = block.image;
+      art.alt = "";
+      art.setAttribute("aria-hidden", "true");
+      card.appendChild(art);
     }
     if (block.headline) {
       card.appendChild(elm("h1", "intro-head", block.headline));
