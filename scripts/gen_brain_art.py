@@ -34,12 +34,12 @@ Written into static/galleries/brain/ as WebP, quality 80, all well under the
 
     age_*.webp        6   the age-group cards
     mood_*.webp       4   how sharp they say they feel
-    mem<r>_*.webp    32   four memory rounds: what was flashed, and the decoys
+    mem<r>_*.webp    34   four memory rounds: what was flashed, and the decoys
     box_closed.webp   1   the one closed box, reused in all 24 spatial slots
     box_open_*.webp   4   the same box open on a key, a cup, a star, a moon
-    chg<r>_*.webp    20   four change rounds: the four frames, and the one
-                          that came back different
-    odd_*.webp        2   the five that match, and the one that does not
+    letter_*.webp    20   four change rounds of letters: the four that were
+                          held up, and the one that came back different
+    umb_s*.webp       6   the five umbrellas that match, and the one that does not
     ink_*.webp        4   colour words in coloured ink, one of them honest
     nxt_*.webp        8   the sequence, and the four things it could become
     cnt_*.webp        8   the circles to count, and the four numbers
@@ -249,8 +249,27 @@ class Card(object):
 def plain(colour, form, rot=0.0, r=0.30):
     """One bold shape on the ground. The whole vocabulary of this funnel."""
     card = Card()
+    if form == "crescent":
+        crescent(card, PALETTE[colour], r=r)
+        return card
     card.shape(form, PALETTE[colour], r=r, rot=rot)
     return card
+
+
+def crescent(card, colour, r=0.30, cx=0.5, cy=0.5):
+    """A disc with a bite taken out of it by the ground behind it.
+
+    Not in FORMS, because it is not a polygon and it does not turn: it is one
+    shape on one card, drawn where a rotating triangle used to be.
+    """
+    unit = card.w * SS
+    radius = r * unit
+    x, y = cx * unit, cy * unit
+    card.d.ellipse([x - radius, y - radius, x + radius, y + radius],
+                   fill=colour)
+    bite = radius * 0.92
+    card.d.ellipse([x - bite + radius * 0.52, y - bite,
+                    x + bite + radius * 0.52, y + bite], fill=GROUND)
 
 
 # Four memory rounds. `flash` is what is held up; `decoys` are the three
@@ -274,12 +293,16 @@ MEMORY = [
                ("green", "diamond"), ("blue", "cross")],
      "decoys": [("blue", "star"), ("red", "circle"),
                 ("violet", "pentagon")]},
+    # The last memory round answers on a six-up rather than a four, which is
+    # the whole of what makes it the hardest one: six frames held for two and
+    # a half seconds, and then one of six to find rather than one of four.
     {"seen": 2,
      "flash": [("green", "square"), ("teal", "star"),
                ("blue", "pentagon"), ("amber", "diamond"),
                ("violet", "circle"), ("red", "triangle")],
      "decoys": [("teal", "hexagon"), ("amber", "cross"),
-                ("green", "circle")]},
+                ("green", "circle"), ("violet", "diamond"),
+                ("blue", "hexagon")]},
 ]
 
 # The age groups: the bracket, and a tree at the stage that group is at. The
@@ -303,12 +326,30 @@ INKS = [("ink_1", "RED", BLUE), ("ink_2", "BLUE", BLUE),
 
 # The sequence turns a quarter each frame, so the answer is the next quarter.
 NEXT_ROT = [0.0, 45.0, 90.0]
-NEXT_ANSWERS = [("nxt_a1", "triangle", 135.0), ("nxt_a2", "triangle", 180.0),
-                ("nxt_a3", "triangle", 90.0), ("nxt_a4", "square", 135.0)]
 
-# Nine circles across four frames, which is the whole of the round.
-COUNTS = [2, 3, 2, 2]
-COUNT_ANSWERS = ["7", "8", "9", "10"]
+# The four things the sequence could become. Three were triangles and one of
+# those three — the one at ninety degrees — was the sequence's own third
+# frame redrawn, so two of the four candidates were the same picture and the
+# round had a coin flip in it. That one is a crescent now: still the funnel's
+# own violet, and unmistakable for any of the other three.
+NEXT_ANSWERS = [("nxt_a1", "triangle", 135.0), ("nxt_a2", "triangle", 180.0),
+                ("nxt_a3", "crescent", 0.0), ("nxt_a4", "square", 135.0)]
+
+# Eleven circles across four frames, and not in the same place twice. The
+# grid of neat spots the round used to draw could be counted by pattern
+# rather than by looking — two here, three there, add them up — which is a
+# different round from the one this is. Every frame scatters its own, stated
+# here rather than rolled, so the same card is drawn every time.
+#
+#   (x, y) in fractions of the card, per frame
+COUNT_SPOTS = [
+    [(0.26, 0.30), (0.66, 0.22), (0.44, 0.63)],
+    [(0.31, 0.24), (0.71, 0.44), (0.22, 0.66)],
+    [(0.50, 0.28), (0.28, 0.62)],
+    [(0.24, 0.35), (0.62, 0.28), (0.75, 0.65)],
+]
+COUNT_TOTAL = 11
+COUNT_ANSWERS = ["9", "10", "11", "12"]
 
 # One card per brain type: the name, and the form the domain is drawn as
 # everywhere else on the funnel.
@@ -468,10 +509,13 @@ LETTERS = [
      "flash": [("W", "green", "lg", 0), ("F", "blue", "lg", 0),
                ("N", "amber", "lg", 0), ("Z", "violet", "lg", 0)],
      "after": ("W", "green", "sm", 0)},
+    # Fifteen degrees rather than twenty-five. At twenty-five the round was
+    # the easiest of the four and it is meant to be the hardest: a letter
+    # that has plainly fallen over is not a change anybody has to look for.
     {"changed": 2, "kind": "rotation",
      "flash": [("D", "amber", "lg", 0), ("P", "teal", "lg", 0),
                ("Y", "red", "lg", 0), ("H", "blue", "lg", 0)],
-     "after": ("Y", "red", "lg", 25)},
+     "after": ("Y", "red", "lg", 15)},
 ]
 
 
@@ -517,14 +561,11 @@ def umbrella_card(flipped=False):
     return card
 
 
-def circles(count):
-    """`count` circles, laid out so counting them is a glance, not a search."""
+def circles(spots):
+    """The circles this frame carries, where the table puts them."""
     card = Card()
-    spots = [(0.30, 0.32), (0.70, 0.32), (0.30, 0.68), (0.70, 0.68),
-             (0.50, 0.50)]
-    for i in range(count):
-        x, y = spots[i % len(spots)]
-        card.shape("circle", AMBER, cx=x, cy=y, r=0.115)
+    for x, y in spots:
+        card.shape("circle", AMBER, cx=x, cy=y, r=0.105)
     return card
 
 
@@ -766,8 +807,8 @@ def main():
     for card_id, form, rot in NEXT_ANSWERS:
         put(plain("violet", form, rot=rot), card_id)
 
-    for i, count in enumerate(COUNTS, start=1):
-        put(circles(count), "cnt_f%d" % i)
+    for i, spots in enumerate(COUNT_SPOTS, start=1):
+        put(circles(spots), "cnt_f%d" % i)
     for text in COUNT_ANSWERS:
         put(word(text, 130), "cnt_" + text)
 

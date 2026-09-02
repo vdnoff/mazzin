@@ -36,6 +36,13 @@ bp = Blueprint("tracking", __name__)
 # webhook in Phase 1b and must never be client-assertable.
 ALLOWED_EVENTS = {
     "funnel_start",
+    # The tap on an intro card's own button. `funnel_start` is the page
+    # arriving; this is somebody deciding to begin, and the gap between the
+    # two is the only measurement of a screen whose whole job is to be got
+    # past. It carries no payload — `_clean_extra` refuses an `extra` on
+    # anything but the six that have one — and only a funnel declaring an
+    # `intro` block can emit it at all.
+    "intro_start",
     "swipe",
     "interstitial",
     "result_view",

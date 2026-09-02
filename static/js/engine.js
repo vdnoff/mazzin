@@ -179,6 +179,7 @@
   var midPrepareSkip = null;    // what a tap during the count-in runs
   var stepTimer = null;         // a timed step's countdown, or null
   var timedOut = false;         // the clock answered this step, not the reader
+  var timedOutSteps = [];       // ...and the ids of every step it did
   var workingTimer = null;      // the interstitial's rotating micro-copy
   // Which of the three steps the reader is standing in: 0 while they are
   // choosing, 1 once the offer and the upload box are what is in front of
@@ -837,6 +838,12 @@
   // A step that names none renders exactly what it always did: no node is
   // built for it at all until some step asks for one, and it is hidden again
   // the moment a step without one comes up.
+  // Whether the round line is drawn as a line or as a pill with a counter in
+  // it. One funnel asks; every other one keeps the line it had.
+  function roundPill() {
+    return !!(cfg && cfg.swipe && cfg.swipe.round_pill);
+  }
+
   function setStepKicker(st) {
     var text = (st && st.kicker) || "";
     var node = el.stepKicker;
@@ -852,7 +859,24 @@
       el.stepKicker = node;
     }
     node.hidden = false;
-    node.textContent = text;
+    node.textContent = "";
+    node.classList.toggle("is-pill", roundPill());
+    if (!roundPill()) {
+      node.textContent = text;
+      return;
+    }
+    // "ROUND 2 · SPATIAL · 3/4" is two things: where in the walk this is, and
+    // how far through that round. The split is on the LAST separator rather
+    // than the first, because the round's own name has one in it — and a
+    // kicker with no separator at all is all label and no counter, which is
+    // what the two warm-up steps would be if they were written that way.
+    var cut = text.lastIndexOf("·");
+    var label = cut < 0 ? text : text.slice(0, cut);
+    var count = cut < 0 ? "" : text.slice(cut + 1);
+    node.appendChild(elm("span", "step-kicker-text", label.trim()));
+    if (count.trim()) {
+      node.appendChild(elm("span", "step-kicker-count", count.trim()));
+    }
   }
 
   // The caption is the step's own question, so it changes on every pair.
@@ -1087,6 +1111,10 @@
     var item = timeoutPick(st);
     if (!item) { stopStepTimer(); return; }
     timedOut = true;
+    // Kept beside the choices, and for the same reason they are: the result
+    // page draws a strip of what happened round by round, and a round the
+    // clock answered did not happen the way the others did.
+    timedOutSteps.push((stepAt(step) || {}).id || "");
     stopStepTimer();
     // The row is locked while the cross is up. `picking` is the guard this
     // file already uses for "one tap per pair" and it is exactly what is
@@ -1098,17 +1126,13 @@
     setTimeout(function () {
       if (over && over.parentNode) over.parentNode.removeChild(over);
       picking = false;
-      choose(item, cardFor(item));
+      // No card. Everything a tap does to the picture — the ring, the dim on
+      // the others, the chip, the badge a `on_tap` step holds back — is the
+      // engine showing somebody their own choice, and there was no choice
+      // here. The scoring, the tracking and the advance are the tap's, to the
+      // line; only the selection is withheld.
+      choose(item, null);
     }, over ? TIMEUP_MS : 0);
-  }
-
-  // The node on screen for one image, or null. The cards are dealt shuffled,
-  // so this is a search rather than an index.
-  function cardFor(item) {
-    for (var i = 0; i < pair.length; i++) {
-      if (pair[i] === item) return el.cards.children[i] || null;
-    }
-    return null;
   }
 
   function choose(item, card) {
@@ -1157,7 +1181,9 @@
 
     // The badge is worth nothing if the set leaves while it is still arriving,
     // so this one mode — and only this one — buys itself the time to be read.
-    var late = labels === "on_tap" ? LABEL_FLASH_MS : 0;
+    // No card means no badge to wait for: the clock answered, and nobody is
+    // reading the name of a card they did not pick.
+    var late = (card && labels === "on_tap") ? LABEL_FLASH_MS : 0;
     var reduced = prefersReducedMotion();
     setTimeout(function () {
       // The pip fills as the set leaves, not as the card is tapped. It used to
@@ -3410,6 +3436,9 @@
       tally: tallyOf,
       picks: picks,
       chosen: chosen.slice(),
+      // Beside the choices, because it is the same kind of fact about the run
+      // and the strip draws both. Empty on every funnel with no clock on it.
+      timed_out: timedOutSteps.slice(),
       scores: JSON.parse(JSON.stringify(scores)),
       hookWords: hookWordsFor(win),
       fillHook: function (text) { return fillHook(text, hookWordsFor(win)); },
@@ -7288,8 +7317,92 @@
     });
   }
 
+  // --- the intro card --------------------------------------------------------
+  //
+  // A screen before the first question, for the funnels that want one. It is
+  // the same screen the ad promised: what this is, how long it takes, what
+  // comes out of it, and one button.
+  //
+  // Gated on `cfg.intro` carrying a `cta`, because the button is the only way
+  // off it — a card with no button is a walk that stops before it starts. A
+  // funnel that names no intro renders exactly what it always did, and no
+  // node is built for it.
+  function hasIntro() {
+    var block = cfg && cfg.intro;
+    return !!(block && block.cta);
+  }
+
+  // Built into the stage and shown by a class on the screen, rather than as a
+  // screen of its own: `funnel_start` has already fired, the first pair is
+  // already warming, and what the reader taps takes them to a step that is
+  // ready rather than to one that starts loading.
+  function showIntro(done) {
+    var block = cfg.intro;
+    if (!el.stage || !el.swipe) { done(); return; }
+    var card = elm("section", "intro");
+    card.id = "intro";
+
+    if (block.kicker) {
+      var kicker = elm("p", "intro-kicker");
+      // The same two marks the minimal result page frames its kicker with.
+      // One ornament on one funnel, used twice, rather than two.
+      kicker.appendChild(introMark());
+      kicker.appendChild(document.createTextNode(block.kicker));
+      kicker.appendChild(introMark());
+      card.appendChild(kicker);
+    }
+    if (block.headline) {
+      card.appendChild(elm("h1", "intro-head", block.headline));
+    }
+    if (block.sub) card.appendChild(elm("p", "intro-sub", block.sub));
+    var chips = block.chips || [];
+    if (chips.length) {
+      var row = elm("ul", "intro-chips");
+      chips.forEach(function (text) {
+        row.appendChild(elm("li", "intro-chip", text));
+      });
+      card.appendChild(row);
+    }
+
+    var button = elm("button", "intro-cta", block.cta);
+    button.type = "button";
+    var fired = false;
+    button.addEventListener("click", function () {
+      // Once. A double tap on a phone is one start, and the event this fires
+      // is counted against `funnel_start` to read the drop-off between
+      // arriving and beginning.
+      if (fired) return;
+      fired = true;
+      track("intro_start");
+      el.swipe.classList.remove("is-intro");
+      if (card.parentNode) card.parentNode.removeChild(card);
+      done();
+    });
+    card.appendChild(button);
+    if (block.foot) card.appendChild(elm("p", "intro-foot", block.foot));
+
+    el.stage.insertBefore(card, el.stage.firstChild);
+    el.swipe.classList.add("is-intro");
+  }
+
+  function introMark() {
+    var node = elm("span", "intro-mark", "◆");
+    node.setAttribute("aria-hidden", "true");
+    return node;
+  }
+
   function startQuiz() {
-    setMoneyLine(cfg.swipe.subtext || "", cfg.swipe.subtext_accent || "");
+    // A funnel with an intro card says what it is on that card, so the money
+    // line above the question would be the same sentence twice — and it is a
+    // line about the offer on a screen that is about the game. Emptied rather
+    // than skipped: the node is in the shell markup, and a paragraph left
+    // untouched is an empty one with its own margins sitting over the
+    // question. Every other funnel is unchanged.
+    if (!hasIntro()) {
+      setMoneyLine(cfg.swipe.subtext || "", cfg.swipe.subtext_accent || "");
+    } else {
+      setMoneyLine("", "");
+    }
     setJourneySteps(cfg.swipe.journey_steps);
     if (el.tapHint && cfg.swipe.hint) setHint(cfg.swipe.hint);
 
@@ -7298,6 +7411,13 @@
     pair = first;
     show("screen-swipe");
     track("funnel_start");
+    if (hasIntro()) {
+      // The frames warm while the card is being read, so the first question
+      // is on screen the moment the button is pressed rather than after it.
+      preloadPair(pair, function () {});
+      showIntro(renderStep);
+      return;
+    }
     preloadPair(pair, renderStep);
   }
 
