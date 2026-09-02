@@ -359,11 +359,11 @@ check("  and reset on every step, so it cannot carry over",
 check("the checkout body does not carry it",
       "timed_out" not in body("orderPayload")
       and "timedOut" not in body("orderPayload"))
-check("payments.py and tracking.py have never heard of it",
-      "timed_out" not in PAYMENTS
-      and "timed_out" not in open(os.path.join(ROOT, "tracking.py"),
-                                  encoding="utf-8").read())
-check("  and a swipe payload is still the closed set of three",
+check("payments.py has never heard of it", "timed_out" not in PAYMENTS)
+check("  and tracking.py knows it only as one a swipe MAY carry",
+      "timed_out" in tracking.SWIPE_EXTRA_OPTIONAL,
+      str(sorted(tracking.SWIPE_EXTRA_OPTIONAL)))
+check("  so a swipe payload is still required to be the closed three",
       tracking.SWIPE_EXTRA_KEYS == frozenset(("pair", "shown", "chosen")),
       str(sorted(tracking.SWIPE_EXTRA_KEYS)))
 
@@ -491,10 +491,10 @@ check("it is not scored, so it cannot move a result",
       "elapsed" not in body("choose").split("track(")[0].replace(
           "swipeExtra", ""))
 check("payments.py has never heard of it", "elapsed" not in PAYMENTS)
-check("tracking.py has never heard of it either",
-      "elapsed" not in open(os.path.join(ROOT, "tracking.py"),
-                            encoding="utf-8").read())
-check("  and a swipe payload is still the closed set of three",
+check("tracking.py knows it only as one a swipe MAY carry",
+      "elapsed_ms" in tracking.SWIPE_EXTRA_OPTIONAL,
+      str(sorted(tracking.SWIPE_EXTRA_OPTIONAL)))
+check("  so a swipe payload is still required to be the closed three",
       tracking.SWIPE_EXTRA_KEYS == frozenset(("pair", "shown", "chosen")),
       str(sorted(tracking.SWIPE_EXTRA_KEYS)))
 
@@ -632,8 +632,8 @@ check("  and the funnel that does names every one of them",
       and [e for e in own["interstitials"] if e.get("reveal")]
       and [s for s in own["swipe"]["steps"] if s.get("timer_ms")]
       and [s for s in own["swipe"]["steps"] if s.get("label_mode")])
-check("no shipping funnel asks for reaction times",
-      not [n for n, c in CONFIGS.items() if c.get("track_timing")],
+check("no funnel but the memory game asks for reaction times",
+      [n for n, c in CONFIGS.items() if c.get("track_timing")] == [OWNER],
       str([n for n, c in CONFIGS.items() if c.get("track_timing")]))
 DOMAIN = {"%s_%s" % (a, s) for a in ("mem", "spa", "chg", "foc")
           for s in ("hit", "miss")}

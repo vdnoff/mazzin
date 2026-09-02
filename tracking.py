@@ -411,6 +411,30 @@ def _funnel_index(slug):
 
 SWIPE_EXTRA_KEYS = frozenset(("pair", "shown", "chosen"))
 
+# What a swipe MAY also carry. Optional rather than required, because a client
+# cached from before they existed sends neither and is not wrong — and because
+# the two of them are a funnel-level opt-in: engine.js writes them only where
+# the config names `track_timing`, so every other funnel goes on sending the
+# three above and nothing else.
+#
+# Optional is not lax. A key not on this list still refuses the whole event, a
+# value of the wrong type still refuses it, and what is stored is rebuilt here
+# rather than passed through — exactly as the three required ones are.
+#
+# `elapsed_ms` is how long the question was on screen before the tap, in whole
+# milliseconds. The ceiling mirrors ELAPSED_MAX_MS in engine.js, which is where
+# the clamp actually happens; this is the second one, because the client's is a
+# courtesy and this is the boundary. A minute is already a phone that was put
+# down rather than a decision being made.
+#
+# `timed_out` says the step answered itself. It is true or it is absent: a
+# client sending `false` is sending the default, and the column is easier to
+# read when the rows that carry it are the rows it happened on. `False` is
+# accepted rather than refused, because refusing it would break a client that
+# was being tidy, and it is simply not stored.
+ELAPSED_MAX_MS = 60000
+SWIPE_EXTRA_OPTIONAL = frozenset(("elapsed_ms", "timed_out"))
+
 # What a share tap says: which card was handed over. One key, and its value is
 # checked against the share cards the config declares rather than against a
 # list kept here — the same rule every other id on this path follows, and the
@@ -528,7 +552,10 @@ def _clean_extra(funnel, event, value):
         return _clean_paywall_variant(funnel, value)
     if event != "swipe":
         raise ValueError("extra")
-    if set(value) != SWIPE_EXTRA_KEYS:
+    keys = set(value)
+    if not SWIPE_EXTRA_KEYS <= keys:
+        raise ValueError("extra")
+    if keys - SWIPE_EXTRA_KEYS - SWIPE_EXTRA_OPTIONAL:
         raise ValueError("extra")
 
     index = _funnel_index(funnel)
@@ -559,7 +586,26 @@ def _clean_extra(funnel, event, value):
     if not isinstance(chosen, str) or chosen not in shown:
         raise ValueError("extra")
 
-    return {"pair": pair, "shown": list(shown), "chosen": chosen}
+    out = {"pair": pair, "shown": list(shown), "chosen": chosen}
+
+    # The two the timing funnels add. Checked the same way everything above is
+    # — the type first, then the range — and rebuilt into the answer rather
+    # than copied out of the request.
+    if "elapsed_ms" in value:
+        elapsed = value["elapsed_ms"]
+        # `bool` is an `int` in Python and `True` would store as 1ms, which is
+        # a reaction nobody has ever had.
+        if not isinstance(elapsed, int) or isinstance(elapsed, bool):
+            raise ValueError("extra")
+        if elapsed < 0 or elapsed > ELAPSED_MAX_MS:
+            raise ValueError("extra")
+        out["elapsed_ms"] = elapsed
+    if "timed_out" in value:
+        if not isinstance(value["timed_out"], bool):
+            raise ValueError("extra")
+        if value["timed_out"]:
+            out["timed_out"] = True
+    return out
 
 
 @bp.post("/api/track")

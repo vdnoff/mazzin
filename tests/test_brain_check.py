@@ -144,6 +144,15 @@ check("funnels/brain.json is /brain",
 check("  its static copy is byte-identical",
       RAW == open(STATIC, encoding="utf-8").read())
 check("  it transacts on the test keys", cfg["stripe_mode"] == "test")
+# Phase 3 turned this on, and it is what puts `elapsed_ms` and `timed_out` on
+# a swipe. engine.js gates both on it and /api/track was taught the two keys
+# on the same deploy, so the flag and the validator move together or the
+# funnel drops every swipe row it records.
+check("  and it records how long each round took",
+      cfg.get("track_timing") is True
+      and json.load(open(STATIC, encoding="utf-8")).get("track_timing")
+      is True,
+      str(cfg.get("track_timing")))
 check("  at five dollars, less a launch offer",
       cfg["pricing"]["amount_cents"] == 500
       and cfg["pricing"]["currency"] == "usd")
