@@ -208,9 +208,25 @@ for step in steps:
 check("every image id on the funnel is unique",
       len({i["id"] for s in steps for i in images(s)})
       == sum(len(images(s)) for s in steps))
-check("every card carries a label, because this funnel badges them all",
-      cfg["swipe"]["label_mode"] == "badge"
-      and all(i.get("label") for s in steps for i in images(s)))
+# v8. Not one card on this funnel shows a word any more: the art carries the
+# whole question, and the tap is answered with a mark rather than a name. The
+# labels stay in the config all the same — they are what a screen reader hears
+# ("Choose {label}"), and what this suite validates every card by. They are
+# simply never drawn.
+check("the walk answers a tap with a mark rather than a word",
+      cfg["swipe"]["label_mode"] == "check",
+      str(cfg["swipe"].get("label_mode")))
+check("  and no step overrides that with a mode of its own",
+      not [s["id"] for s in steps if "label_mode" in s],
+      str([s["id"] for s in steps if "label_mode" in s]))
+check("every card still carries a label, for the reader who hears the page",
+      all(i.get("label") for s in steps for i in images(s)),
+      str([i["id"] for s in steps for i in images(s) if not i.get("label")]))
+check("  including the four the pattern round holds up, which are the only "
+      "frames a reader is asked to hold in their head",
+      all(f.get("label") for e in cfg["interstitials"]
+          if e["after_step"] == 16
+          for f in ((e.get("flash") or {}).get("images") or [])))
 check("the four rounds that must not shuffle do not",
       all(by_id[sid].get("shuffle") is False
           for sid in ("spa1", "spa2", "spa3", "spa4",
@@ -614,18 +630,16 @@ check("  and every clock is inside the range the engine honours",
       all(1000 <= s["timer_ms"] <= 15000 for s in steps if s.get("timer_ms")))
 
 print("\n--- which steps name their cards, and when ---")
-check("the age step names nothing — its art carries the bracket",
-      by_id["age"].get("label_mode") == "none",
-      str(by_id["age"].get("label_mode")))
-check("the five rounds that must not name a card up front do not",
-      sorted(s["id"] for s in steps if s.get("label_mode") == "on_tap")
-      == ["count", "mem1", "mem2", "mem3", "mem4"],
-      str(sorted(s["id"] for s in steps if s.get("label_mode") == "on_tap")))
-check("  and every override is a mode the engine knows",
-      all(s["label_mode"] in ("none", "on_tap", "badge")
-          for s in steps if s.get("label_mode")))
-check("every other step takes the funnel's own badge",
-      cfg["swipe"]["label_mode"] == "badge")
+# v8. None of them, ever. The eleven overrides this used to walk were eleven
+# answers to "should this round say what its cards are", and the answer is now
+# the same for all eighteen: the art says it, and the tap is answered with a
+# mark. What is left to check is that nothing reintroduces a word.
+check("no step names its cards",
+      cfg["swipe"]["label_mode"] == "check"
+      and not [s["id"] for s in steps if s.get("label_mode")],
+      str([s["id"] for s in steps if s.get("label_mode")]))
+check("  and the mode is one the engine knows",
+      cfg["swipe"]["label_mode"] in ("none", "on_tap", "badge", "check"))
 check("the mood round asks the question the review asked for",
       by_id["mood"]["question"] == "How would you rate your brain right now?")
 
@@ -796,7 +810,8 @@ check("  and set on its feet rather than centred on a guess",
       "card.text_above(text, AGE_NUMERAL_SIZE, numeral_bottom(stage))" in ART
       and "def text_above(" in ART)
 check("the age step still names nothing — the art carries the bracket",
-      by_id["age"].get("label_mode") == "none")
+      not by_id["age"].get("label_mode")
+      and cfg["swipe"]["label_mode"] == "check")
 
 print("\n--- v3: nothing on a box but the box ---")
 for r in range(1, 5):
@@ -806,7 +821,8 @@ for r in range(1, 5):
           not [f for f in entry["flash"]["images"] if f.get("label")],
           str([f.get("label") for f in entry["flash"]["images"]]))
     check("    and the round itself draws none either",
-          by_id[sid].get("label_mode") == "none",
+          not by_id[sid].get("label_mode")
+          and cfg["swipe"]["label_mode"] == "check",
           str(by_id[sid].get("label_mode")))
 check("the open box still carries its object",
       all("box_open_" in
@@ -814,11 +830,13 @@ check("the open box still carries its object",
               mid_by_after[SCORED["spa%d" % r][1] - 1][0]["reveal"]
               ["open_slot"]]["img"]
           for r in range(1, 5)))
-check("the rounds that name nothing are the six that must not",
-      sorted(s["id"] for s in steps if s.get("label_mode") == "none")
-      == ["age", "odd", "spa1", "spa2", "spa3", "spa4"],
-      str(sorted(s["id"] for s in steps
-                 if s.get("label_mode") == "none")))
+# v8: it is all eighteen now, off the funnel's own mode, so there is no list
+# of six to keep in step with the config any more.
+check("the rounds that name nothing include the six that must not",
+      cfg["swipe"]["label_mode"] == "check"
+      and not [s["id"] for s in steps
+               if s["id"] in ("age", "odd", "spa1", "spa2", "spa3", "spa4")
+               and s.get("label_mode")])
 
 print("\n--- v3: the strip fills the card it is in ---")
 grid = re.search(r"\.br-taps-grid \{(.*?)\n\}", RESULT_CSS, re.S)
@@ -1010,7 +1028,8 @@ check("    and the odd one is the card the round scores",
 check("  which is why they are six files and not two",
       "UMBRELLA_SLOTS = 6" in ART and "def umbrella_card(" in ART)
 check("the round names none of them, and none of them is a number",
-      by_id["odd"].get("label_mode") == "none"
+      cfg["swipe"]["label_mode"] == "check"
+      and not by_id["odd"].get("label_mode")
       and {c["label"] for c in images(by_id["odd"])} == {"Umbrella"},
       str({c["label"] for c in images(by_id["odd"])}))
 check("  and the grid it drew before is gone",
@@ -1150,28 +1169,139 @@ check("    with a miss for the clock to press",
            if c["id"] == by_id["count"]["timeout_pick"]][0]]["tags"]
       == ["foc_miss"])
 
-print("\n--- v5: the pattern round has four different answers ---")
-# Stopped at the first bracket that closes a line rather than at the first
-# one in column zero: this table's own closing bracket sits at the end of its
-# last entry, so `^\]` runs on into whatever declares the next list.
-NEXT = ast.literal_eval(
-    re.search(r"^NEXT_ANSWERS = (\[.*?\])\n", ART, re.S | re.M).group(1))
-check("one of the four candidates is a crescent now",
-      [form for _name, form, _rot in NEXT].count("crescent") == 1,
-      str([form for _name, form, _rot in NEXT]))
-check("  and no two of them are the same drawing",
-      len({(form, rot) for _name, form, rot in NEXT}) == 4,
-      str([(f, r) for _n, f, r in NEXT]))
-check("  the triangle at ninety degrees, which was the sequence redrawn, is "
-      "gone",
-      ("triangle", 90.0) not in {(form, rot) for _n, form, rot in NEXT})
-check("  the file exists and the step draws it",
-      os.path.exists(os.path.join(GALLERY, "nxt_a3.webp"))
-      and images(by_id["next"])[2]["img"].endswith("nxt_a3.webp"))
-check("  and the round still scores the same card",
-      images(by_id["next"])[0]["tags"] == ["foc_hit"]
-      and [c["tags"] for c in images(by_id["next"])[1:]]
-      == [["foc_miss"]] * 3)
+print("\n--- v8: the art carries what the labels carried ---")
+# Off the generator's own source, never off pixels: what is checked is that
+# the words are drawn at all and that they are the four the config names, so
+# a mood card cannot quietly lose the only thing that says which one it is.
+check("the mood cards draw their word",
+      "word_under(card, MOOD_WORDS[name])" in ART
+      and "def word_under(" in ART)
+MOOD_ART = ast.literal_eval(
+    re.search(r"^MOOD_WORDS = (\{.*?\})\n", ART, re.S | re.M).group(1))
+check("  and it is the label the config gives that card",
+      MOOD_ART == {c["id"]: c["label"] for c in images(by_id["mood"])},
+      str(MOOD_ART))
+check("  set on its feet under the picture, shrunk until it fits",
+      "card.text_above(text, size, bottom)" in ART
+      and "box[2] - box[0] <= limit" in ART)
+check("  which is why every picture on those cards sits higher than it did",
+      "cx, cy = 0.5 * unit, 0.435 * unit" in ART)
+check("the count answers draw their number, and draw it large",
+      'put(word(text, 130), "cnt_" + text)' in ART
+      and art_number("COUNT_TOTAL") == 11)
+check("  and the four on offer are the four the config names",
+      ast.literal_eval(
+          re.search(r"^COUNT_ANSWERS = (\[.*?\])\n", ART, re.S | re.M).group(1))
+      == [c["label"] for c in images(by_id["count"])])
+check("the age numerals and the ink words were already in their art",
+      "def age_card(" in ART and "AGE_NUMERAL_SIZE" in ART
+      and "def word(text, size, colour=INK):" in ART)
+
+print("\n--- v8: the pattern round, rebuilt on two attributes at once ---")
+# The whole round, proved off the generator's own tables and the filenames
+# they produce — never off pixels. A dial has a notch that turns and a dot
+# that steps, the two move at different rates, and the round is only a
+# working-memory task if continuing ONE of them is not enough to answer it.
+# `art_number` answers a float, because most of what it reads is one. These
+# three are counts and degrees and index things.
+DIAL_STEP = int(art_number("DIAL_ROT_STEP"))
+DIAL_DOTS = int(art_number("DIAL_DOTS"))
+DIAL_FRAMES = int(art_number("DIAL_FRAMES"))
+NEXT_STEP = by_id["next"]
+NEXT_MID = [e for e in cfg["interstitials"] if e["after_step"] == 16][0]
+
+
+def dial_of(path):
+    """The two attributes, read back off the filename that states them."""
+    found = re.search(r"dial_r(\d+)_d(\d+)\.webp$", path)
+    return (int(found.group(1)), int(found.group(2))) if found else None
+
+
+frames = [dial_of(f["img"]) for f in NEXT_MID["flash"]["images"]]
+cands = [dial_of(c["img"]) for c in images(NEXT_STEP)]
+
+check("the flash holds up three frames and then a question mark",
+      len(NEXT_MID["flash"]["images"]) == 4
+      and frames[:3] == [f for f in frames[:3] if f]
+      and frames[3] is None
+      and NEXT_MID["flash"]["images"][3]["img"].endswith("nxt_qm.webp"),
+      str([f["img"].split("/")[-1] for f in NEXT_MID["flash"]["images"]]))
+check("  after a count-in, and held for five seconds",
+      NEXT_MID.get("prepare", {}).get("count") == 3
+      and NEXT_MID["auto_advance_ms"] == 5000,
+      str(NEXT_MID.get("auto_advance_ms")))
+check("the notch turns the same amount every frame",
+      [f[0] for f in frames[:3]]
+      == [(i * DIAL_STEP) % 360 for i in range(DIAL_FRAMES)],
+      str([f[0] for f in frames[:3]]))
+check("  and the dot steps one place every frame",
+      [f[1] for f in frames[:3]] == list(range(DIAL_FRAMES)),
+      str([f[1] for f in frames[:3]]))
+check("  so two things progress across the three, not one",
+      len({f[0] for f in frames[:3]}) == DIAL_FRAMES
+      and len({f[1] for f in frames[:3]}) == DIAL_FRAMES)
+
+ROT_NEXT = (frames[2][0] + DIAL_STEP) % 360
+DOT_NEXT = (frames[2][1] + 1) % DIAL_DOTS
+check("the step offers four candidates",
+      len(cands) == 4 and all(cands), str(cands))
+check("  and no two of them are the same picture",
+      len(set(cands)) == 4, str(cands))
+right = [c for c in cands if c == (ROT_NEXT, DOT_NEXT)]
+check("exactly one continues BOTH progressions",
+      len(right) == 1, "%s in %s" % ((ROT_NEXT, DOT_NEXT), cands))
+check("  and it is the one the round scores",
+      cands[0] == (ROT_NEXT, DOT_NEXT)
+      and images(NEXT_STEP)[0]["tags"] == ["foc_hit"],
+      str(images(NEXT_STEP)[0]["tags"]))
+wrong = cands[1:]
+check("  the other three are misses",
+      [c["tags"] for c in images(NEXT_STEP)[1:]] == [["foc_miss"]] * 3)
+scored = [(c[0] == ROT_NEXT) + (c[1] == DOT_NEXT) for c in wrong]
+check("every distractor gets EXACTLY ONE of the two right",
+      scored == [1, 1, 1], str(list(zip(wrong, scored))))
+check("  one keeps the notch and drops the dot",
+      any(c[0] == ROT_NEXT and c[1] != DOT_NEXT for c in wrong), str(wrong))
+check("  one keeps the dot and drops the notch",
+      any(c[1] == DOT_NEXT and c[0] != ROT_NEXT for c in wrong), str(wrong))
+check("  and one is a frame the flash already showed, redrawn",
+      any(c in frames[:3] for c in wrong),
+      "%s vs %s" % (wrong, frames[:3]))
+check("nothing this round draws is a triangle any more",
+      not [p for p in
+           [f["img"] for f in NEXT_MID["flash"]["images"]]
+           + [c["img"] for c in images(NEXT_STEP)]
+           if "nxt_a" in p or "nxt_q1" in p or "nxt_q2" in p or "nxt_q3" in p],
+      str([f["img"] for f in NEXT_MID["flash"]["images"]]))
+check("  and no triangle file is left in the gallery",
+      not [n for n in sorted(os.listdir(GALLERY))
+           if n.startswith("nxt_") and n != "nxt_qm.webp"],
+      str([n for n in sorted(os.listdir(GALLERY)) if n.startswith("nxt_")]))
+dial_files = [f["img"] for f in NEXT_MID["flash"]["images"]] \
+    + [c["img"] for c in images(NEXT_STEP)]
+check("every file the round names is on disk",
+      all(os.path.exists(os.path.join(ROOT, p.lstrip("/")))
+          for p in dial_files),
+      str([p for p in dial_files
+           if not os.path.exists(os.path.join(ROOT, p.lstrip("/")))]))
+check("  and every one is under twelve kilobytes",
+      all(os.path.getsize(os.path.join(ROOT, p.lstrip("/"))) < 12 * 1024
+          for p in dial_files),
+      str([(p.split("/")[-1],
+            os.path.getsize(os.path.join(ROOT, p.lstrip("/"))))
+           for p in dial_files]))
+check("the clock still presses one of the misses",
+      NEXT_STEP["timeout_pick"] in
+      [c["id"] for c in images(NEXT_STEP)[1:]],
+      str(NEXT_STEP["timeout_pick"]))
+check("  and the round still gives five seconds",
+      NEXT_STEP["timer_ms"] == 5000, str(NEXT_STEP["timer_ms"]))
+check("the labels a screen reader hears describe rather than answer",
+      all("Notch at" in c["label"] and "dot at" in c["label"]
+          for c in images(NEXT_STEP))
+      and not [c for c in images(NEXT_STEP)
+               if "next" in c["label"] or "moved on" in c["label"]],
+      str([c["label"] for c in images(NEXT_STEP)]))
 
 print("\n--- v5: the offer, and the line under the button ---")
 unlock = cfg["result_copy"]["profile"]["unlock"]
@@ -1212,10 +1342,14 @@ check("  and the module draws it under the control",
       < MODULE.index("copy.improve_foot"))
 
 print("\n--- v5: the strip shows what happened ---")
+# v8. The substitution moved into engine.js, which draws the same tiles in
+# two other places, and this module reads that rule off the context rather
+# than keeping a second copy of it. What is checked here is that it reads it
+# and does not restate it.
 check("a spatial round draws the box that was open, not the shut one",
-      "function standIn(cfg, index)" in MODULE
-      and "entry.after_step !== index" in MODULE
-      and "frames[open].img" in MODULE)
+      "function standIn(" not in MODULE
+      and "typeof ctx.tile === \"function\"" in MODULE
+      and "return ctx.tile(index, stepId, item, late);" in MODULE)
 for r in range(1, 5):
     sid = "spa%d" % r
     entry = mid_by_after[SCORED[sid][1] - 1][0]
@@ -1223,7 +1357,8 @@ for r in range(1, 5):
     check("  %s stands in the %s" % (sid, stand.rsplit("_", 1)[-1][:-5]),
           "box_open_" in stand, stand)
 check("  and every other round still draws the card that was tapped",
-      "standIn(ctx.cfg, index) || pick.img" in MODULE)
+      "return { img: (item && item.img) || null };" in MODULE
+      and MODULE.count("out.push(tileOf(ctx, index,") == 2)
 check("a round the clock answered draws a cross instead of a card",
       'item.className = "br-tap is-out";' in MODULE
       and MODULE.count('mark.appendChild(elm("i"));') >= 2

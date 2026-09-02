@@ -4952,3 +4952,110 @@ body.theme-brain .step.is-timed .mz-timer { margin: 0 0 16px; }
 body.theme-brain .mid.is-flash .mid-line { margin-top: 26px; }
 
 body.theme-brain .mid.is-flash .mz-timer { margin: 18px auto 16px; }
+
+/* --- a tap answered with a mark instead of a word ---------------------------- */
+
+/* `label_mode: "check"`. engine.js builds this node only for that mode, so a
+   funnel on any other one — which is every funnel but the memory game — never
+   has one to paint.
+
+   Over the middle of the art rather than in the corner, because on this mode
+   the middle is free: there is no label there and no chip landing on top of
+   it. What it says is "this one", and nothing else. */
+.card-check {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border-radius: 50%;
+  background: #378ADD;
+  box-shadow: 0 4px 14px rgba(12, 68, 124, 0.32);
+  transform: scale(0);
+  animation: mz-check-pop 200ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Two bars, crossed into a tick: one short arm down-left, one long arm up.
+   Drawn rather than typed for the same reason the timeout's cross is —
+   a glyph is whatever weight the device's font gives it, and this one sits on
+   top of a photograph at 44px. */
+.card-check i {
+  position: absolute;
+  display: block;
+  border-radius: 2px;
+  background: #fff;
+}
+
+.card-check i:first-child {
+  left: 12px;
+  top: 21px;
+  width: 12px;
+  height: 4px;
+  transform: rotate(45deg);
+  transform-origin: left center;
+}
+
+.card-check i:last-child {
+  left: 19px;
+  top: 27px;
+  width: 19px;
+  height: 4px;
+  transform: rotate(-52deg);
+  transform-origin: left center;
+}
+
+@keyframes mz-check-pop {
+  0% { opacity: 0; transform: scale(0); }
+  65% { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* One confirmation per tap: where the centred mark is the answer, the corner
+   badge that would pop under it says the same thing a second time. */
+.cards.is-check .check { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .card-check { animation: none; opacity: 1; transform: scale(1); }
+}
+
+/* --- a round the clock answered, in a row of tiles --------------------------- */
+
+/* The echo row between rounds and the grid on the analysing screen draw the
+   same tiles the result strip draws, which means they draw the same cross
+   where a round ran out. No cross node exists on a run with no clock in it —
+   engine.js builds one only for a step whose id is in the timed-out list —
+   so nothing here can reach a funnel without one. */
+.mid-echo-cell.is-out,
+.analyzing-cell.is-out {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Its own ground and its own border, because the cell's are set for the
+     picture that normally covers them: a tile with no picture in it would
+     otherwise show the dark square that was only ever a backstop while an
+     image decoded. Same faint red the result strip gives the same square. */
+  border-color: rgba(226, 87, 76, 0.45);
+  background: rgba(226, 87, 76, 0.12);
+}
+
+.tile-out {
+  position: relative;
+  width: 56%;
+  height: 56%;
+}
+
+.tile-out i {
+  position: absolute;
+  top: 50%;
+  left: 8%;
+  width: 84%;
+  height: 3px;
+  margin-top: -1.5px;
+  border-radius: 3px;
+  background: #E2574C;
+}
+
+.tile-out i:first-child { transform: rotate(45deg); }
+.tile-out i:last-child { transform: rotate(-45deg); }

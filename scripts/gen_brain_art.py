@@ -41,7 +41,11 @@ Written into static/galleries/brain/ as WebP, quality 80, all well under the
                           held up, and the one that came back different
     umb_s*.webp       6   the five umbrellas that match, and the one that does not
     ink_*.webp        4   colour words in coloured ink, one of them honest
-    nxt_*.webp        8   the sequence, and the four things it could become
+    dial_r*_d*.webp   6   the pattern round: three frames, the one that
+                          continues both of their progressions, and the two
+                          that continue one — the third of those three is the
+                          first frame, so six files carry seven cards
+    nxt_qm.webp       1   the question mark the pattern round's flash ends on
     cnt_*.webp        8   the circles to count, and the four numbers
     share_*.webp      4   one per brain type
     og.webp           1   1200x630, for the link preview
@@ -320,20 +324,66 @@ AGES = [("age_21", "18–24", "sprout"), ("age_30", "25–34", "sapling"),
 # pictures, and a reader picks one the way they would pick a weather symbol.
 MOODS = ("mood_sharp", "mood_ok", "mood_foggy", "mood_fumes")
 
+# The word each of those cards used to get from a label. This funnel puts no
+# words on any card any more — the art has to be the whole question — so the
+# four moods carry theirs. A battery near empty and the words "Running on
+# fumes" are the same statement, and with the label gone only one of them is
+# left to make it.
+MOOD_WORDS = {"mood_sharp": "Sharp", "mood_ok": "Okay",
+              "mood_foggy": "Foggy", "mood_fumes": "Running on fumes"}
+
 # The word, and the ink it is set in. Exactly one card tells the truth.
 INKS = [("ink_1", "RED", BLUE), ("ink_2", "BLUE", BLUE),
         ("ink_3", "GREEN", AMBER), ("ink_4", "AMBER", RED)]
 
-# The sequence turns a quarter each frame, so the answer is the next quarter.
-NEXT_ROT = [0.0, 45.0, 90.0]
+# --- the pattern round: a dial with two hands -------------------------------
+#
+# A violet ring with one notch cut out of it, and an amber dot inside. TWO
+# things move from frame to frame and the reader has to hold both: the notch
+# turns a third of a turn clockwise, and the dot steps one quarter clockwise.
+#
+# That is the whole round. One attribute progressing is a sequence anybody
+# spots at a glance and guesses right on; two is a working-memory task, which
+# is what this funnel is measuring. The round this replaces was a triangle
+# rotating by itself.
+#
+# The notch's turn is a third, so after three frames it is back where it
+# started — which is what makes the last distractor work. The first frame
+# redrawn has the right notch and the wrong dot, and cannot be dismissed by
+# anybody who only held one of the two.
+DIAL_ROT_STEP = 120        # degrees the notch turns per frame, clockwise
+DIAL_DOTS = 4              # places the dot steps through, clockwise from 12
+DIAL_FRAMES = 3            # frames shown before the question mark
 
-# The four things the sequence could become. Three were triangles and one of
-# those three — the one at ninety degrees — was the sequence's own third
-# frame redrawn, so two of the four candidates were the same picture and the
-# round had a coin flip in it. That one is a crescent now: still the funnel's
-# own violet, and unmistakable for any of the other three.
-NEXT_ANSWERS = [("nxt_a1", "triangle", 135.0), ("nxt_a2", "triangle", 180.0),
-                ("nxt_a3", "crescent", 0.0), ("nxt_a4", "square", 135.0)]
+
+def dial_name(rot, dot):
+    """The file's name states both attributes, so the round can be checked
+    off the manifest and the filenames without anybody opening a picture."""
+    return "dial_r%d_d%d" % (rot % 360, dot % DIAL_DOTS)
+
+
+# The three frames the flash shows.
+DIAL_SEQUENCE = [(i * DIAL_ROT_STEP, i) for i in range(DIAL_FRAMES)]
+
+# The one card that continues BOTH progressions — the notch turned once more,
+# the dot stepped once more.
+DIAL_NEXT = (DIAL_FRAMES * DIAL_ROT_STEP, DIAL_FRAMES)
+
+# And the three that continue exactly one of them. Every one of these is a
+# card somebody who held half the pattern would tap.
+DIAL_WRONG = [
+    # the notch continued, the dot left two places back
+    (DIAL_NEXT[0], DIAL_NEXT[1] - 2),
+    # the dot continued, the notch left where the last frame had it
+    (DIAL_NEXT[0] - DIAL_ROT_STEP, DIAL_NEXT[1]),
+    # the first frame, redrawn: right notch, wrong dot
+    DIAL_SEQUENCE[0],
+]
+
+# Which candidate carries `foc_hit`, and which of the wrong three the clock
+# presses when it runs out. Stated here so the config and the art cannot
+# disagree about which picture is the right answer.
+DIAL_ANSWERS = [DIAL_NEXT] + DIAL_WRONG
 
 # Eleven circles across four frames, and not in the same place twice. The
 # grid of neat spots the round used to draw could be counted by pattern
@@ -561,6 +611,40 @@ def umbrella_card(flipped=False):
     return card
 
 
+def dial_card(rot, dot):
+    """One frame of the pattern round: a notched ring and an inner dot.
+
+    Both angles are measured clockwise from twelve, which is how a reader
+    reads a dial; Pillow measures from three, which is the -90 below and the
+    only place that difference appears.
+    """
+    card = Card()
+    unit = card.w * SS
+    cx = cy = 0.5 * unit
+    ring = 0.315 * unit
+    stroke = int(0.042 * unit)
+    # The ring, drawn as an arc with a piece missing rather than a full circle
+    # with something painted over it: a notch is the absence, and an absence
+    # drawn as a ground-coloured bar shows its own edges the moment the card
+    # sits on anything but the ground.
+    gap = 15.0                       # half the notch, in degrees of arc
+    start = (rot - 90) + gap
+    card.d.arc([cx - ring, cy - ring, cx + ring, cy + ring],
+               start=start, end=start + (360 - 2 * gap),
+               fill=VIOLET, width=stroke)
+    # The dot, on its own smaller circle. Amber, because the two attributes
+    # have to be told apart at a glance under a five-second clock, and two
+    # violet marks on one card is one mark the eye has to resolve.
+    step = 360.0 / DIAL_DOTS
+    angle = math.radians(dot * step)
+    inner = 0.155
+    card.shape("circle", AMBER,
+               cx=0.5 + math.sin(angle) * inner,
+               cy=0.5 - math.cos(angle) * inner,
+               r=0.075)
+    return card
+
+
 def circles(spots):
     """The circles this frame carries, where the table puts them."""
     card = Card()
@@ -682,7 +766,9 @@ def mood_card(name):
     """
     card = Card()
     unit = card.w * SS
-    cx, cy = 0.5 * unit, 0.5 * unit
+    # Every picture below sits a little higher than it used to: the bottom of
+    # the card is the word's now.
+    cx, cy = 0.5 * unit, 0.435 * unit
     if name == "mood_sharp":
         # A bolt inside a lit ring. Two rings rather than one, the outer
         # thinner and set off — the same "this one is switched on" the
@@ -701,37 +787,57 @@ def mood_card(name):
                         (cx + 0.010 * unit, cy - 0.020 * unit)], fill=AMBER)
     elif name == "mood_ok":
         # A sun most of the way out from behind one small cloud.
-        card.shape("circle", AMBER, cx=0.44, cy=0.42, r=0.145)
+        card.shape("circle", AMBER, cx=0.44, cy=0.355, r=0.145)
         for i in range(8):
             angle = math.radians(i * 45.0)
             x0 = 0.44 * unit + math.cos(angle) * 0.185 * unit
-            y0 = 0.42 * unit + math.sin(angle) * 0.185 * unit
+            y0 = 0.355 * unit + math.sin(angle) * 0.185 * unit
             x1 = 0.44 * unit + math.cos(angle) * 0.245 * unit
-            y1 = 0.42 * unit + math.sin(angle) * 0.245 * unit
+            y1 = 0.355 * unit + math.sin(angle) * 0.245 * unit
             card.d.line([(x0, y0), (x1, y1)], fill=AMBER,
                         width=int(0.020 * unit))
         cloud = (196, 202, 212)
         for dx, dy, r in ((-0.085, 0.0, 0.085), (0.020, -0.030, 0.105),
                           (0.115, 0.010, 0.080)):
-            card.shape("circle", cloud, cx=0.56 + dx, cy=0.63 + dy, r=r)
-        card.rect((0.435, 0.630, 0.705, 0.712), cloud, radius=0.041)
+            card.shape("circle", cloud, cx=0.56 + dx, cy=0.565 + dy, r=r)
+        card.rect((0.435, 0.565, 0.705, 0.647), cloud, radius=0.041)
     elif name == "mood_foggy":
         # Bands, lightest at the top, so the card reads as something settling
         # rather than as three grey rules.
-        bands = ((0.20, 0.24, 0.80, (214, 218, 224)),
-                 (0.14, 0.38, 0.86, (198, 203, 212)),
-                 (0.24, 0.52, 0.76, (181, 187, 199)),
-                 (0.16, 0.66, 0.84, (163, 170, 184)))
+        bands = ((0.20, 0.175, 0.80, (214, 218, 224)),
+                 (0.14, 0.315, 0.86, (198, 203, 212)),
+                 (0.24, 0.455, 0.76, (181, 187, 199)),
+                 (0.16, 0.595, 0.84, (163, 170, 184)))
         for x0, y, x1, tone in bands:
             card.rect((x0, y, x1, y + 0.085), tone, radius=0.042)
     else:
         # A battery with almost nothing in it, and the terminal on the end so
         # it reads as a battery at a glance rather than as a bar.
-        card.rect((0.185, 0.375, 0.760, 0.625), (206, 210, 218), radius=0.035)
-        card.rect((0.215, 0.405, 0.730, 0.595), GROUND, radius=0.022)
-        card.rect((0.235, 0.425, 0.290, 0.575), RED, radius=0.014)
-        card.rect((0.775, 0.455, 0.830, 0.545), (206, 210, 218), radius=0.020)
+        card.rect((0.185, 0.310, 0.760, 0.560), (206, 210, 218), radius=0.035)
+        card.rect((0.215, 0.340, 0.730, 0.530), GROUND, radius=0.022)
+        card.rect((0.235, 0.360, 0.290, 0.510), RED, radius=0.014)
+        card.rect((0.775, 0.390, 0.830, 0.480), (206, 210, 218), radius=0.020)
+    word_under(card, MOOD_WORDS[name])
     return card
+
+
+def word_under(card, text, bottom=0.885, size=58, width=0.84):
+    """`text` centred across the card with its feet at `bottom`.
+
+    Sized by measurement rather than by a number per card: the four words this
+    draws are "Sharp" and "Running on fumes", and one type size that suits
+    both does not exist. It shrinks until the longest fits and stops there.
+    """
+    if not BOLD:
+        raise RuntimeError("no usable font on this machine")
+    limit = width * card.w * SS
+    while size > 22:
+        font = ImageFont.truetype(BOLD, int(size * SS))
+        box = card.d.textbbox((0, 0), text, font=font)
+        if box[2] - box[0] <= limit:
+            break
+        size -= 2
+    card.text_above(text, size, bottom)
 
 
 def word(text, size, colour=INK):
@@ -1003,11 +1109,15 @@ def main():
     for card_id, text, colour in INKS:
         put(word(text, 76, colour), card_id)
 
-    for i, rot in enumerate(NEXT_ROT, start=1):
-        put(plain("violet", "triangle", rot=rot), "nxt_q%d" % i)
+    # The dials: the three the flash shows, the one that continues both of
+    # their progressions, and the three that continue one. Deduplicated by
+    # name, because the last of the three wrong ones IS the first frame and
+    # the round works precisely because it is the same picture.
+    for rot, dot in DIAL_SEQUENCE + DIAL_ANSWERS:
+        name = dial_name(rot, dot)
+        if name not in written:
+            put(dial_card(rot, dot), name)
     put(word("?", 150, (150, 152, 158)), "nxt_qm")
-    for card_id, form, rot in NEXT_ANSWERS:
-        put(plain("violet", form, rot=rot), card_id)
 
     for i, spots in enumerate(COUNT_SPOTS, start=1):
         put(circles(spots), "cnt_f%d" % i)

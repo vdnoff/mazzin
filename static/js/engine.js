@@ -805,6 +805,10 @@
     GRID_NAMES.forEach(function (name) {
       el.cards.classList.toggle("is-" + name, fmt === name);
     });
+    // One confirmation per tap. Where the mode draws a mark over the middle
+    // of the card, the corner badge that would otherwise pop under it is the
+    // same statement twice, so the stylesheet takes it off behind this class.
+    el.cards.classList.toggle("is-check", labelMode() === "check");
     // Read by the per-card animation-delay. An engine.js that predates this
     // sets nothing and the CSS falls back to its own default, which is the
     // uncapped per-card figure — later, never broken.
@@ -1380,6 +1384,14 @@
       // stands down — two labels on one card is one label too many.
       if (labels === "on_tap") {
         revealLabel(item, card);
+      } else if (labels === "check") {
+        // A funnel that puts no words on any card cannot answer a tap with
+        // one either: the chip says the label out loud, and on a walk where
+        // the art carries the whole question a word appearing over it is a
+        // second thing to read under a clock. What lands instead says only
+        // "this one", which is all the chip was ever for once the picture
+        // means something on its own.
+        markChosen(card);
       } else {
         // The chip names what they just chose, in the words the step used for
         // it. A tag-derived reaction had to guess at meaning the label already
@@ -1413,6 +1425,26 @@
         advance();
       }, reduced ? SWAP_REDUCED_MS : EXIT_MS + EXIT_CHOSEN_MS);
     }, (reduced ? HOLD_REDUCED_MS : HOLD_MS) + late);
+  }
+
+  // The mark a `check` step answers a tap with: a circle over the middle of
+  // the card they picked, held for exactly as long as the chip it replaces
+  // was held, and gone with the set.
+  //
+  // Two bars rather than a tick glyph. A "\u2713" is whatever the font on the
+  // device decided a tick looks like, at whatever weight that face gives it,
+  // and this one is 44px across on top of a photograph — the same reason the
+  // cross that covers a timed-out row is drawn rather than typed.
+  //
+  // Never reached without a card: the clock answers by calling `choose` with
+  // none, and a run that ran out of time selected nothing to mark.
+  function markChosen(card) {
+    if (!card || card.querySelector(".card-check")) return;
+    var mark = elm("span", "card-check");
+    mark.setAttribute("aria-hidden", "true");   // the button already said it
+    mark.appendChild(elm("i"));
+    mark.appendChild(elm("i"));
+    card.appendChild(mark);
   }
 
   // The label a `on_tap` step held back, on the card that was chosen. Same
@@ -1768,18 +1800,99 @@
     fill.style.transform = "scaleX(" + progressRatio() + ")";
   }
 
-  // The frames this entry is handing back: the image they tapped on each of
-  // the steps it names, in the order it names them. A step they somehow did
-  // not answer is dropped rather than drawn as a gap — a broken slot on a
-  // screen whose whole claim is "these are yours" is worse than a shorter row.
+  // --- what one round's tile shows ------------------------------------------
+  //
+  // Three answers, and the SAME three everywhere a tile is drawn: the echo row
+  // between rounds, the grid on the analysing screen, and the strip on the
+  // result page. They used to disagree — the strip made two substitutions the
+  // two echoes did not — which meant a reader saw six shut lids in a row
+  // between rounds and the open boxes afterwards, for the same four rounds.
+  //
+  //   - a round the CLOCK answered has no picture. Nobody chose anything, and
+  //     a photograph of the card the timeout pressed is a picture of a choice
+  //     that was not made. It draws a cross.
+  //   - a round answered on identical closed frames shows the one frame its
+  //     flash had OPEN — the thing the round was actually about, and the only
+  //     frame of it a reader would recognise. The config says which, per
+  //     entry, in `reveal.open_slot`.
+  //   - everything else is the card they tapped.
+  //
+  // Both gates are config: a funnel that names no `reveal.open_slot` and a run
+  // with no timed-out steps get the tapped card for every round, which is what
+  // every echo on this platform has always drawn.
+  //
+  // Written here rather than in a result module because the engine draws two
+  // of the three places it applies. The module reads it off the context as
+  // `ctx.tile` rather than keeping a second copy that agrees today.
+  function stepTile(index, stepId, item, late) {
+    if (late && stepId && late.indexOf(stepId) !== -1) return { img: null };
+    return { img: openFrame(index) || (item && item.img) || null };
+  }
+
+  // The frame that stands for a step, or null to draw the tapped card. Read
+  // off the interstitial anchored on the step before this one, and the slot
+  // that entry's reveal says was open.
+  function openFrame(index) {
+    var list = (cfg && cfg.interstitials) || [];
+    for (var i = 0; i < list.length; i++) {
+      var entry = list[i];
+      if (!entry || entry.after_step !== index) continue;
+      var open = entry.reveal && entry.reveal.open_slot;
+      var frames = (entry.flash && entry.flash.images) || [];
+      if (typeof open === "number" && frames[open]) return frames[open].img;
+    }
+    return null;
+  }
+
+  // Which steps the clock answered, for the rule above. The same list the
+  // result context hands the module and the checkout sends the server; empty
+  // on every funnel without a clock, which is every funnel but one.
+  function lateSteps() {
+    return timedOutSteps;
+  }
+
+  // The frames this entry is handing back: the tile for each of the steps it
+  // names, in the order it names them. A step they somehow did not answer is
+  // dropped rather than drawn as a gap — a broken slot on a screen whose whole
+  // claim is "these are yours" is worse than a shorter row.
   function echoPicks(entry) {
     var want = (entry && entry.echo_steps) || [];
+    var steps = (cfg.swipe && cfg.swipe.steps) || [];
+    var late = lateSteps();
     var out = [];
     for (var i = 0; i < want.length; i++) {
-      var item = imageById(chosenOnStep(want[i]));
-      if (item && item.img) out.push(item);
+      var id = want[i];
+      var item = imageById(chosenOnStep(id));
+      if (!item || !item.img) continue;
+      var index = -1;
+      for (var k = 0; k < steps.length; k++) {
+        if (steps[k].id === id) { index = k; break; }
+      }
+      out.push(stepTile(index, id, item, late));
     }
     return out;
+  }
+
+  // A tile into a cell: the picture, or the cross that stands for a round the
+  // clock answered. Two bars rather than a glyph, the same mark the cover over
+  // a timed-out row draws and the same one the result strip draws — one idea,
+  // three places. No cross node is ever built on a run with no clock in it.
+  function fillTile(cell, tile) {
+    if (!tile || !tile.img) {
+      cell.classList.add("is-out");
+      var mark = elm("span", "tile-out");
+      mark.setAttribute("aria-hidden", "true");
+      mark.appendChild(elm("i"));
+      mark.appendChild(elm("i"));
+      cell.appendChild(mark);
+      return cell;
+    }
+    var img = document.createElement("img");
+    img.src = tile.img;
+    img.alt = "";
+    img.decoding = "async";
+    cell.appendChild(img);
+    return cell;
   }
 
   // One row of them, built on first use and refilled on every open, like the
@@ -1811,17 +1924,13 @@
     row.hidden = false;
     row.innerHTML = "";
     var slow = prefersReducedMotion();
-    picks.forEach(function (item, i) {
+    picks.forEach(function (tile, i) {
       var cell = elm("li", "mid-echo-cell");
       // One at a time, in the order they were tapped. Opted out of motion,
       // they arrive together in one fade — the row is the same row, and the
       // stagger is the part that was decoration.
       cell.style.animationDelay = (slow ? 0 : i * ECHO_STAGGER_MS) + "ms";
-      var img = document.createElement("img");
-      img.src = item.img;
-      img.alt = "";
-      img.decoding = "async";
-      cell.appendChild(img);
+      fillTile(cell, tile);
       row.appendChild(cell);
     });
     return picks.length;
@@ -1989,6 +2098,7 @@
     // frames carry no alt of their own — they are photographs, and what there
     // is to say about one is the label the config wrote under it.
     var grid = elm("ul", "mid-flash-grid cards is-" + flashFormat(entry));
+    var labels = labelMode();
     entry.flash.images.forEach(function (frame) {
       var cell = elm("li", "mid-flash-cell");
       var img = document.createElement("img");
@@ -2000,7 +2110,13 @@
       // a name under some of its frames and not others is a set the reader
       // reads unevenly, so this is all-or-nothing in the config rather than
       // defaulted to anything here.
-      if (frame.label) {
+      //
+      // Except on a walk that shows no words at all. There the label is what
+      // a screen reader is given for a frame it cannot see, and a caption
+      // drawn under the picture would be the one word on a funnel built to
+      // have none — and, on a round about holding a picture in your head,
+      // a description of the picture sitting under it.
+      if (frame.label && labels !== "check") {
         cell.appendChild(elm("span", "mid-flash-label", frame.label));
       }
       grid.appendChild(cell);
@@ -3685,6 +3801,12 @@
       // Beside the choices, because it is the same kind of fact about the run
       // and the strip draws both. Empty on every funnel with no clock on it.
       timed_out: timedOutSteps.slice(),
+      // The tile rule, handed over rather than restated. What one round shows
+      // — a cross where the clock answered, the open frame where the round
+      // was played on identical closed ones, the tapped card otherwise — is
+      // one statement, and the row between rounds, the grid on the analysing
+      // screen and the strip on this page all have to make it the same way.
+      tile: stepTile,
       scores: JSON.parse(JSON.stringify(scores)),
       hookWords: hookWordsFor(win),
       fillHook: function (text) { return fillHook(text, hookWordsFor(win)); },
@@ -3758,6 +3880,12 @@
       purpose: content.purpose || "",
       elements: (content.elements || []).slice(),
       visuals: content.visuals || {},
+      // The tile rule, handed over rather than restated. What one round shows
+      // — a cross where the clock answered, the open frame where the round
+      // was played on identical closed ones, the tapped card otherwise — is
+      // one statement, and the row between rounds, the grid on the analysing
+      // screen and the strip on this page all have to make it the same way.
+      tile: stepTile,
       images: _imagesById(),
       sections: sections,
       version: content.version || "",
@@ -4036,10 +4164,17 @@
   // the order they were tapped in.
   function gridPicks() {
     if (!(cfg && cfg.analyzing_echo)) return [];
+    var steps = (cfg.swipe && cfg.swipe.steps) || [];
+    var late = lateSteps();
     var out = [];
     for (var i = 0; i < chosen.length; i++) {
       var item = imageById(chosen[i]);
-      if (item && item.img) out.push(item);
+      if (!item || !item.img) continue;
+      // `chosen` is one entry per step answered, in step order, so its index
+      // is the step's — which is what the tile rule needs to find the flash
+      // that stands in for it.
+      var st = steps[i];
+      out.push(stepTile(i, st && st.id, item, late));
     }
     return out;
   }
@@ -4077,15 +4212,11 @@
     var slow = prefersReducedMotion();
     var lead = Math.round(
       ((cfg.analyzing && cfg.analyzing.duration_ms) || 2500) * 0.45);
-    picks.forEach(function (item, i) {
+    picks.forEach(function (tile, i) {
       var cell = elm("li", "analyzing-cell");
       cell.style.animationDelay =
         (slow ? 0 : lead + i * GRID_STAGGER_MS) + "ms";
-      var img = document.createElement("img");
-      img.src = item.img;
-      img.alt = "";
-      img.decoding = "async";
-      cell.appendChild(img);
+      fillTile(cell, tile);
       grid.appendChild(cell);
     });
   }
