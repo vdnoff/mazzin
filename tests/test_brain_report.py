@@ -488,6 +488,121 @@ check("no other profile grew the food ban",
 check("  and kitchen still refuses nothing of its own",
       reports.KITCHEN_PROFILE["banned"] == ())
 
+print("\n--- v6: the week ends on a second run ---")
+shopping = reports._BRAIN_SHAPES["shopping"]
+# Matched against the prompt with its wrapping collapsed: these are sentences
+# in a paragraph that is hard-wrapped to fit the file, and a check bound to
+# where the wrap happens to fall breaks on a reflow that changed nothing.
+FLAT = " ".join(shopping.split())
+check("the plan asks for eight days, not seven",
+      "EIGHT items under `items`" in FLAT
+      and '"Day 8 - Play again"' in shopping)
+check("  and the eighth is the challenge again",
+      "DAY EIGHT IS THE POINT OF THE OTHER SEVEN" in FLAT
+      and "the eighth day is the second run" in FLAT)
+check("  with nothing said about how far the number will move",
+      "say nothing about how far the number will move" in FLAT
+      and "promises is the measurement, not the result" in FLAT)
+check("  and the food day is still in there",
+      "ONE OF THE REMAINING DAYS IS FUEL" in FLAT)
+days = reports.BRAIN_STUBS["shopping"]["items"]
+check("the stub carries eight days too", len(days) == 8, str(len(days)))
+check("  named in order, day one to day eight",
+      [row["name"].split(" - ")[0] for row in days]
+      == ["Day %d" % n for n in range(1, 9)],
+      str([row["name"] for row in days]))
+check("  the last of them the second run",
+      days[-1]["name"] == "Day 8 - Play again"
+      and "play the rounds from the top" in days[-1]["priority_note"].lower(),
+      days[-1]["name"])
+check("  which promises a measurement rather than a result",
+      not re.search(r"\d+\s*(?:%|percent|years)",
+                    days[-1]["priority_note"]),
+      days[-1]["priority_note"])
+check("  and the fuel day survived beside it",
+      any("Fuel" in row["name"] for row in days),
+      str([row["name"] for row in days]))
+check("eight fits inside the schema's own ceiling",
+      reports.SHAPE["shopping"]["items"][1] <= 8
+      <= reports.SHAPE["shopping"]["items"][2],
+      str(reports.SHAPE["shopping"]["items"][1:3]))
+check("nothing banned reached either the shape or the stub",
+      reports._banned_hit(shopping, reports.BRAIN_BANNED) is None
+      and reports._banned_hit(reports.BRAIN_STUBS["shopping"],
+                              reports.BRAIN_BANNED) is None)
+
+print("\n--- v6: the rounds a clock answered, on the stored report ---")
+# Nothing sends these today. The checkout payload carries the choices and not
+# these, engine.js and payments.py are both closed this phase, and the ids
+# cannot be derived from the run — a reader may genuinely tap the card the
+# clock would have pressed, and a report that guessed would draw a cross over
+# a round somebody played. So the parameter exists, the write is proved, and
+# the absence is pinned as the thing it is.
+choices, scores = run_of(3, age_tag="age_40")
+plain = reports.start_report(11, "brain", CFG["styles"][0]["id"], scores,
+                             choices=choices)
+check("a purchase today carries no crossed rounds",
+      "timed_out" not in (plain.get("visuals") or {}),
+      str(sorted(plain.get("visuals") or {})))
+check("  because nothing hands them over yet",
+      "timed_out" not in open(os.path.join(REPO, "payments.py"),
+                              encoding="utf-8").read())
+check("  and the client is still the only thing that holds them",
+      "timed_out: timedOutSteps.slice()," in open(
+          os.path.join(REPO, "static/js/engine.js"), encoding="utf-8").read())
+given = reports.start_report(12, "brain", CFG["styles"][0]["id"], scores,
+                             choices=choices, timed_out=["ink", "count"])
+check("handed them, the report stores them",
+      (given.get("visuals") or {}).get("timed_out") == ["ink", "count"],
+      str((given.get("visuals") or {}).get("timed_out")))
+check("  under the key the delivered page already reads",
+      "(ctx.visuals && ctx.visuals.timed_out) || []" in MODULE)
+messy = reports.start_report(13, "brain", CFG["styles"][0]["id"], scores,
+                             choices=choices, timed_out=["ink", "", None, 7])
+check("  keeping only what is an id",
+      (messy.get("visuals") or {}).get("timed_out") == ["ink"],
+      str((messy.get("visuals") or {}).get("timed_out")))
+other = reports.start_report(
+    14, "persona",
+    json.load(open(os.path.join(REPO, "funnels/persona.json"),
+                   encoding="utf-8"))["styles"][0]["id"],
+    {"drive": 4}, timed_out=["ink"])
+check("no other product stores them, handed them or not",
+      "timed_out" not in (other.get("visuals") or {}))
+check("and the number is still beside them",
+      (given.get("visuals") or {}).get("brain", {}).get("age")
+      == client_age(4))
+
+print("\n--- v6: the stub the memory game ships is its own ---")
+# `_stub_for` prepends the free strength and cuts the list to five, which is
+# right for the three products whose chapter is five hidden strengths. This
+# one gives no strength away for free and its chapter is five strengths AND
+# two habits, so the prepend would inject a promise it never made and the cut
+# would drop the two the title sells.
+brain_stub = reports._stub_for("mistakes", CFG["styles"][0],
+                               stubs=reports.BRAIN_STUBS)
+check("the memory game's fallback keeps all seven",
+      len(brain_stub["items"]) == 7, str(len(brain_stub["items"])))
+check("  five strengths and then two habits, in that order",
+      brain_stub["items"][5]["title"] == "You re-read what you already know"
+      and brain_stub["items"][6]["title"]
+      == "You decide nothing moved too quickly",
+      str([r["title"] for r in brain_stub["items"][5:]]))
+check("  and none of them is a strength this funnel gave away",
+      reports._mistake_one(CFG["styles"][0])["title"]
+      not in [row["title"] for row in brain_stub["items"]])
+check("kitchen's fallback still opens on the one it promised, five long",
+      len(reports._stub_for(
+          "mistakes", "Modern Rustic",
+          json.load(open(os.path.join(REPO, "funnels/kitchen.json"),
+                         encoding="utf-8"))["styles"][0])["items"]) == 5)
+check("  and persona's still does too",
+      len(reports._stub_for(
+          "mistakes",
+          json.load(open(os.path.join(REPO, "funnels/persona.json"),
+                         encoding="utf-8"))["styles"][0],
+          stubs=reports.PERSONA_STUBS)["items"]) == 5)
+
 print("\n--- the neighbours ---")
 check("kitchen still resolves to kitchen",
       reports._profile("kitchen") is reports.KITCHEN_PROFILE

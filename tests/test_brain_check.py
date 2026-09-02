@@ -592,6 +592,7 @@ check("the mood round asks the question the review asked for",
 
 print("\n--- the launch offer ---")
 import payments                                             # noqa: E402
+import tracking                                             # noqa: E402
 sale = cfg["sale"]
 check("the block is the shape payments.py reads",
       sorted(sale) == ["active", "ends", "label", "price_cents",
@@ -1052,8 +1053,8 @@ check("  saying what it is, how long it takes and what comes out of it",
       "18 quick rounds" in intro.get("sub", "")
       and "brain age" in intro.get("sub", "")
       and "lower it" in intro.get("sub", ""), intro.get("sub"))
-check("  with three chips and one button",
-      intro.get("chips") == ["2 MINUTES", "NO SIGN-UP", "INSTANT RESULT"]
+check("  with its chips and one button",
+      len(intro.get("chips") or []) >= 3
       and intro.get("cta") == "START NOW", str(intro.get("chips")))
 check("  and the foot line the review asked for",
       intro.get("foot") == "Self-discovery.", str(intro.get("foot")))
@@ -1193,6 +1194,106 @@ check("  read off the run before the money",
       "var late = ctx.timed_out || [];" in MODULE)
 check("  and off the report after it",
       "(ctx.visuals && ctx.visuals.timed_out) || []" in MODULE)
+
+print("\n--- v6: what the intro promises, and what the page hands over ---")
+check("four chips, and the fourth is the one about money",
+      intro.get("chips") == ["2 MINUTES", "NO SIGN-UP", "NO SUBSCRIPTION",
+                             "INSTANT RESULT"],
+      str(intro.get("chips")))
+check("  none of them long enough to break a line on its own",
+      all(len(chip) <= 16 for chip in intro["chips"]),
+      str([c for c in intro["chips"] if len(c) > 16]))
+share = cfg["result_copy"]["profile"]
+for key in ("share_cta", "share_line", "share_copied", "retest_line"):
+    check("  %s is copy, in the config" % key, bool(share.get(key)),
+          str(share.get(key)))
+check("what gets shared carries the reader's own number",
+      "{n}" in share["share_line"], share["share_line"])
+check("  and no other number at all",
+      not re.search(r"\d", share["share_line"].replace("{n}", "")),
+      share["share_line"])
+check("  nor a price, a percentage or anything about anybody else",
+      "{price}" not in share["share_line"]
+      and "%" not in share["share_line"])
+check("the button says what it does, and what it did",
+      share["share_cta"] == "Challenge a friend"
+      and share["share_copied"] == "Copied — send it")
+check("the plan ends on coming back to play it again",
+      share["retest_line"] == "In one week: play it again. The number moves.")
+check("  with no promise about how far the number moves",
+      not re.search(r"\d", share["retest_line"])
+      and "%" not in share["retest_line"], share["retest_line"])
+
+check("the module reads every word of it off the config",
+      all(("table." + key) in MODULE
+          for key in ("share_cta", "share_line", "share_copied",
+                      "retest_line")))
+check("  and hardcodes none of them",
+      not [line for line in (share["share_cta"], share["share_copied"],
+                             share["retest_line"]) if line in MODULE],
+      str([line for line in (share["share_cta"], share["share_copied"],
+                             share["retest_line"]) if line in MODULE]))
+check("the share control sits under the number and above the offer",
+      MODULE.index("var hand = share(ctx, data);")
+      < MODULE.index("var push = urge(ctx, copy, data);"))
+check("  it is the quieter of the two, outlined against a solid one",
+      re.search(r"\.br-share-cta \{[^}]*background: transparent;",
+                RESULT_CSS, re.S) is not None
+      and re.search(r"\.br-urge-cta \{[^}]*background: var\(--br-lux\);",
+                    RESULT_CSS, re.S) is not None)
+check("it hands over the sheet where there is one",
+      "if (navigator.share) {" in MODULE
+      and "navigator.share(payload)" in MODULE)
+check("  and the clipboard where there is not",
+      "navigator.clipboard.writeText(full)" in MODULE
+      and "said(table.share_copied" in MODULE)
+check("  swapping the label back after a beat",
+      "var COPIED_MS = 2000;" in MODULE
+      and "timer = setTimeout(function () {" in MODULE)
+check("the link it hands over is the funnel's own path, not this tab's",
+      "window.location.origin" in MODULE
+      and '(ctx.cfg && ctx.cfg.slug)' in MODULE
+      and "location.href" not in MODULE)
+check("one event on the tap, and nothing about the reader in it",
+      'ctx.track("share_tap");' in MODULE
+      and MODULE.count('ctx.track("share_tap")') == 1
+      and not re.search(r'track\("share_tap",', MODULE))
+check("  which the server already allows",
+      "share_tap" in tracking.ALLOWED_EVENTS)
+check("the delivered page ends on the retest line",
+      "var again = retest(ctx);" in MODULE
+      and MODULE.index("var again = retest(ctx);")
+      > MODULE.index("copy.delivered_note"))
+check("  as a link back to the funnel's own path",
+      'link.href = "/" + slug;' in MODULE
+      and 'elm("a", "br-retest-link"' in MODULE)
+check("  and the free page keeps the line it already had",
+      cfg["result_copy"].get("improve_foot")
+      == "Follow the 7-day plan, play again — the number moves."
+      and "copy.improve_foot" in MODULE)
+
+print("\n--- v6: the paid page draws every shape the report writes ---")
+# Four shapes reach it, because BRAIN_PROFILE writes four. Two of them were
+# not being drawn: the plan's `{name, priority_note}` days came out as empty
+# numbers and the weakest-round table was not read at all — the paid half of
+# the document, missing from the paid page.
+check("the day rows render their own two fields",
+      "item.title || item.name" in MODULE
+      and "item.body || item.priority_note" in MODULE)
+check("the four rounds render as a badged table",
+      "(data.pairs || []).forEach" in MODULE
+      and 'elm("span", "br-combo"' in MODULE
+      and 'elm("span", "br-badge-verdict is-"' in MODULE)
+check("  with the funnel's own words in the badge, not the schema's",
+      'VERDICT_WORDS = { works: "STRENGTH", avoid: "ROOM TO GROW" };'
+      in MODULE
+      and cfg["result_copy"]["profile"] is not None)
+check("  and the class the colour hangs off is still the schema's word",
+      ".br-badge-verdict.is-works {" in RESULT_CSS
+      and ".br-badge-verdict.is-avoid {" in RESULT_CSS)
+check("the chapter closes on the drill, set apart from the prose",
+      "if (data.rule) frag.appendChild(elm(\"p\", \"br-callout\", data.rule));"
+      in MODULE and ".br-callout {" in RESULT_CSS)
 
 print("\n--- the copy: a game, and nothing that sounds like anything else ---")
 BANNED = ("memory loss", "cognitive", "decline", "dementia", "test yourself",
