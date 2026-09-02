@@ -540,3 +540,6 @@ bottom.
 
 ## 2026-09-01 — claude/brain-funnel-3
 - brain v3: phone-review fixes, improvement-first copy
+
+## 2026-09-02 — claude/brain-funnel-4
+- brain v4: round titles, time's up, letters, IMPROVE NOW
