@@ -3235,6 +3235,99 @@ body.is-fading .dots span { background: #868FB6; }
   }
 }
 
+/* --- the round a step belongs to -------------------------------------------- */
+
+/* A line over the question naming where in the walk the reader is. engine.js
+   builds it only for a step carrying `kicker`, so there is no node on a funnel
+   that names none and nothing here can reach one.
+
+   Set as the interstitial's own kicker is — same size, same tracking, same
+   accent — because it is the same idea in the same voice, one screen earlier.
+   A flex item of the swipe column, like the question under it: `.stage` is
+   `display: contents`, so its children are the column's items rather than its
+   own. */
+.step-kicker {
+  flex: 0 0 auto;
+  margin: 14px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* The question sits under the kicker rather than under the money line when
+   there is one, so the pair reads as one block instead of two. */
+.step-kicker + .caption { margin-top: 5px; }
+
+/* --- the clock running out --------------------------------------------------- */
+
+/* The cards, covered, for as long as it takes to read one word. engine.js
+   builds this only when a step with `timer_ms` on it runs out, which is a key
+   no funnel without a clock carries — so the rule below is unreachable from
+   every funnel that has never had one.
+
+   Inside the card row and absolute to it: `.cards` is the positioned box on
+   this screen, it is the thing that was being answered, and it is therefore
+   the thing that gets covered. Above the cards' own stacking, and taking the
+   pointer, so a tap in the moment the cross is up lands on nothing. */
+.step-timeup {
+  position: absolute;
+  z-index: 9;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  animation: mz-timeup-in 160ms ease-out both;
+}
+
+/* Two bars crossed, rather than a glyph: a multiplication sign is a different
+   weight in every system stack this ships to, and at this size the difference
+   is the whole drawing. */
+.step-timeup-mark {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+
+.step-timeup-mark i {
+  position: absolute;
+  top: 50%;
+  left: 6%;
+  width: 88%;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 8px;
+  background: #E2574C;
+}
+
+.step-timeup-mark i:first-child { transform: rotate(45deg); }
+.step-timeup-mark i:last-child { transform: rotate(-45deg); }
+
+.step-timeup-line {
+  margin: 0;
+  font-family: var(--brand);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+@keyframes mz-timeup-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Opted out of motion: it still covers the cards, because what it is saying
+   is that the round is over. The fade was the decorative half. */
+@media (prefers-reduced-motion: reduce) {
+  .step-timeup { animation: none; }
+}
+
 /* --- the countdown ---------------------------------------------------------- */
 
 /* One clock, drawn one way, wherever a reader is being held to one: over the

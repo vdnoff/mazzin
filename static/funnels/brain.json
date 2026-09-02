@@ -17,11 +17,13 @@
     "subtext": "18 quick rounds. No sign-up.",
     "subtext_accent": "No sign-up.",
     "hint": "Tap fast. Trust your gut.",
+    "timeup_line": "Time's up",
     "label_mode": "badge",
     "analyzing_fade_to": "#F4F1EA",
     "steps": [
       {
         "id": "age",
+        "kicker": "WARM-UP · 1/2",
         "question": "First — your age group:",
         "format": "grid6",
         "shuffle": false,
@@ -84,6 +86,7 @@
       },
       {
         "id": "mood",
+        "kicker": "WARM-UP · 2/2",
         "question": "How would you rate your brain right now?",
         "format": "grid4",
         "pairs": [
@@ -128,6 +131,7 @@
       },
       {
         "id": "mem1",
+        "kicker": "ROUND 1 · MEMORY · 1/4",
         "question": "Which one did you just see?",
         "format": "grid4",
         "pairs": [
@@ -173,6 +177,7 @@
       },
       {
         "id": "mem2",
+        "kicker": "ROUND 1 · MEMORY · 2/4",
         "question": "Which one did you just see?",
         "format": "grid4",
         "pairs": [
@@ -218,6 +223,7 @@
       },
       {
         "id": "mem3",
+        "kicker": "ROUND 1 · MEMORY · 3/4",
         "question": "Which one did you just see?",
         "format": "grid4",
         "pairs": [
@@ -263,6 +269,7 @@
       },
       {
         "id": "mem4",
+        "kicker": "ROUND 1 · MEMORY · 4/4",
         "question": "Which one did you just see?",
         "format": "grid4",
         "pairs": [
@@ -308,6 +315,7 @@
       },
       {
         "id": "spa1",
+        "kicker": "ROUND 2 · SPATIAL · 1/4",
         "question": "Where is the key now?",
         "format": "grid6",
         "shuffle": false,
@@ -370,6 +378,7 @@
       },
       {
         "id": "spa2",
+        "kicker": "ROUND 2 · SPATIAL · 2/4",
         "question": "Where is the cup now?",
         "format": "grid6",
         "shuffle": false,
@@ -432,6 +441,7 @@
       },
       {
         "id": "spa3",
+        "kicker": "ROUND 2 · SPATIAL · 3/4",
         "question": "Where is the star now?",
         "format": "grid6",
         "shuffle": false,
@@ -494,6 +504,7 @@
       },
       {
         "id": "spa4",
+        "kicker": "ROUND 2 · SPATIAL · 4/4",
         "question": "Where is the moon now?",
         "format": "grid6",
         "shuffle": false,
@@ -556,6 +567,7 @@
       },
       {
         "id": "chg1",
+        "kicker": "ROUND 3 · CHANGE · 1/4",
         "question": "Which one changed?",
         "format": "grid4",
         "shuffle": false,
@@ -565,7 +577,7 @@
             "images": [
               {
                 "id": "chg1_s1",
-                "img": "/static/galleries/brain/chg1_f1.webp",
+                "img": "/static/galleries/brain/letter_A_red_lg_0.webp",
                 "label": "1",
                 "tags": [
                   "chg_miss"
@@ -573,7 +585,7 @@
               },
               {
                 "id": "chg1_s2",
-                "img": "/static/galleries/brain/chg1_x.webp",
+                "img": "/static/galleries/brain/letter_E_blue_lg_0.webp",
                 "label": "2",
                 "tags": [
                   "chg_hit"
@@ -581,7 +593,7 @@
               },
               {
                 "id": "chg1_s3",
-                "img": "/static/galleries/brain/chg1_f3.webp",
+                "img": "/static/galleries/brain/letter_R_green_lg_0.webp",
                 "label": "3",
                 "tags": [
                   "chg_miss"
@@ -589,7 +601,7 @@
               },
               {
                 "id": "chg1_s4",
-                "img": "/static/galleries/brain/chg1_f4.webp",
+                "img": "/static/galleries/brain/letter_M_amber_lg_0.webp",
                 "label": "4",
                 "tags": [
                   "chg_miss"
@@ -601,6 +613,7 @@
       },
       {
         "id": "chg2",
+        "kicker": "ROUND 3 · CHANGE · 2/4",
         "question": "Which one changed?",
         "format": "grid4",
         "shuffle": false,
@@ -610,7 +623,7 @@
             "images": [
               {
                 "id": "chg2_s1",
-                "img": "/static/galleries/brain/chg2_f1.webp",
+                "img": "/static/galleries/brain/letter_S_violet_lg_0.webp",
                 "label": "1",
                 "tags": [
                   "chg_miss"
@@ -618,7 +631,7 @@
               },
               {
                 "id": "chg2_s2",
-                "img": "/static/galleries/brain/chg2_f2.webp",
+                "img": "/static/galleries/brain/letter_T_teal_lg_0.webp",
                 "label": "2",
                 "tags": [
                   "chg_miss"
@@ -626,7 +639,7 @@
               },
               {
                 "id": "chg2_s3",
-                "img": "/static/galleries/brain/chg2_f3.webp",
+                "img": "/static/galleries/brain/letter_B_red_lg_0.webp",
                 "label": "3",
                 "tags": [
                   "chg_miss"
@@ -634,7 +647,7 @@
               },
               {
                 "id": "chg2_s4",
-                "img": "/static/galleries/brain/chg2_x.webp",
+                "img": "/static/galleries/brain/letter_G_amber_lg_0.webp",
                 "label": "4",
                 "tags": [
                   "chg_hit"
@@ -646,6 +659,7 @@
       },
       {
         "id": "chg3",
+        "kicker": "ROUND 3 · CHANGE · 3/4",
         "question": "Which one changed?",
         "format": "grid4",
         "shuffle": false,
@@ -655,7 +669,7 @@
             "images": [
               {
                 "id": "chg3_s1",
-                "img": "/static/galleries/brain/chg3_x.webp",
+                "img": "/static/galleries/brain/letter_W_green_sm_0.webp",
                 "label": "1",
                 "tags": [
                   "chg_hit"
@@ -663,7 +677,7 @@
               },
               {
                 "id": "chg3_s2",
-                "img": "/static/galleries/brain/chg3_f2.webp",
+                "img": "/static/galleries/brain/letter_F_blue_lg_0.webp",
                 "label": "2",
                 "tags": [
                   "chg_miss"
@@ -671,7 +685,7 @@
               },
               {
                 "id": "chg3_s3",
-                "img": "/static/galleries/brain/chg3_f3.webp",
+                "img": "/static/galleries/brain/letter_N_amber_lg_0.webp",
                 "label": "3",
                 "tags": [
                   "chg_miss"
@@ -679,7 +693,7 @@
               },
               {
                 "id": "chg3_s4",
-                "img": "/static/galleries/brain/chg3_f4.webp",
+                "img": "/static/galleries/brain/letter_Z_violet_lg_0.webp",
                 "label": "4",
                 "tags": [
                   "chg_miss"
@@ -691,6 +705,7 @@
       },
       {
         "id": "chg4",
+        "kicker": "ROUND 3 · CHANGE · 4/4",
         "question": "Which one changed?",
         "format": "grid4",
         "shuffle": false,
@@ -700,7 +715,7 @@
             "images": [
               {
                 "id": "chg4_s1",
-                "img": "/static/galleries/brain/chg4_f1.webp",
+                "img": "/static/galleries/brain/letter_D_amber_lg_0.webp",
                 "label": "1",
                 "tags": [
                   "chg_miss"
@@ -708,7 +723,7 @@
               },
               {
                 "id": "chg4_s2",
-                "img": "/static/galleries/brain/chg4_f2.webp",
+                "img": "/static/galleries/brain/letter_P_teal_lg_0.webp",
                 "label": "2",
                 "tags": [
                   "chg_miss"
@@ -716,7 +731,7 @@
               },
               {
                 "id": "chg4_s3",
-                "img": "/static/galleries/brain/chg4_x.webp",
+                "img": "/static/galleries/brain/letter_Y_red_lg_25.webp",
                 "label": "3",
                 "tags": [
                   "chg_hit"
@@ -724,7 +739,7 @@
               },
               {
                 "id": "chg4_s4",
-                "img": "/static/galleries/brain/chg4_f4.webp",
+                "img": "/static/galleries/brain/letter_H_blue_lg_0.webp",
                 "label": "4",
                 "tags": [
                   "chg_miss"
@@ -736,6 +751,7 @@
       },
       {
         "id": "odd",
+        "kicker": "ROUND 4 · FOCUS · 1/4",
         "question": "Tap the odd one out",
         "format": "grid6",
         "pairs": [
@@ -744,48 +760,48 @@
             "images": [
               {
                 "id": "odd_s1",
-                "img": "/static/galleries/brain/odd_base.webp",
-                "label": "1",
+                "img": "/static/galleries/brain/umb_s1.webp",
+                "label": "Umbrella",
                 "tags": [
                   "foc_miss"
                 ]
               },
               {
                 "id": "odd_s2",
-                "img": "/static/galleries/brain/odd_base.webp",
-                "label": "2",
+                "img": "/static/galleries/brain/umb_s2.webp",
+                "label": "Umbrella",
                 "tags": [
                   "foc_miss"
                 ]
               },
               {
                 "id": "odd_s3",
-                "img": "/static/galleries/brain/odd_base.webp",
-                "label": "3",
+                "img": "/static/galleries/brain/umb_s3.webp",
+                "label": "Umbrella",
                 "tags": [
                   "foc_miss"
                 ]
               },
               {
                 "id": "odd_s4",
-                "img": "/static/galleries/brain/odd_diff.webp",
-                "label": "4",
+                "img": "/static/galleries/brain/umb_s4.webp",
+                "label": "Umbrella",
                 "tags": [
                   "foc_hit"
                 ]
               },
               {
                 "id": "odd_s5",
-                "img": "/static/galleries/brain/odd_base.webp",
-                "label": "5",
+                "img": "/static/galleries/brain/umb_s5.webp",
+                "label": "Umbrella",
                 "tags": [
                   "foc_miss"
                 ]
               },
               {
                 "id": "odd_s6",
-                "img": "/static/galleries/brain/odd_base.webp",
-                "label": "6",
+                "img": "/static/galleries/brain/umb_s6.webp",
+                "label": "Umbrella",
                 "tags": [
                   "foc_miss"
                 ]
@@ -794,10 +810,12 @@
           }
         ],
         "timer_ms": 5000,
-        "timeout_pick": "odd_s1"
+        "timeout_pick": "odd_s1",
+        "label_mode": "none"
       },
       {
         "id": "ink",
+        "kicker": "ROUND 4 · FOCUS · 2/4",
         "question": "Tap the card where the word matches its colour",
         "format": "grid4",
         "pairs": [
@@ -844,6 +862,7 @@
       },
       {
         "id": "next",
+        "kicker": "ROUND 4 · FOCUS · 3/4",
         "question": "Which shape comes next?",
         "format": "grid4",
         "pairs": [
@@ -890,6 +909,7 @@
       },
       {
         "id": "count",
+        "kicker": "ROUND 4 · FOCUS · 4/4",
         "question": "How many circles did you see?",
         "format": "grid4",
         "shuffle": false,
@@ -1325,20 +1345,16 @@
         "format": "grid4",
         "images": [
           {
-            "img": "/static/galleries/brain/chg1_f1.webp",
-            "label": "1"
+            "img": "/static/galleries/brain/letter_A_red_lg_0.webp"
           },
           {
-            "img": "/static/galleries/brain/chg1_f2.webp",
-            "label": "2"
+            "img": "/static/galleries/brain/letter_K_blue_lg_0.webp"
           },
           {
-            "img": "/static/galleries/brain/chg1_f3.webp",
-            "label": "3"
+            "img": "/static/galleries/brain/letter_R_green_lg_0.webp"
           },
           {
-            "img": "/static/galleries/brain/chg1_f4.webp",
-            "label": "4"
+            "img": "/static/galleries/brain/letter_M_amber_lg_0.webp"
           }
         ]
       }
@@ -1357,20 +1373,16 @@
         "format": "grid4",
         "images": [
           {
-            "img": "/static/galleries/brain/chg2_f1.webp",
-            "label": "1"
+            "img": "/static/galleries/brain/letter_S_violet_lg_0.webp"
           },
           {
-            "img": "/static/galleries/brain/chg2_f2.webp",
-            "label": "2"
+            "img": "/static/galleries/brain/letter_T_teal_lg_0.webp"
           },
           {
-            "img": "/static/galleries/brain/chg2_f3.webp",
-            "label": "3"
+            "img": "/static/galleries/brain/letter_B_red_lg_0.webp"
           },
           {
-            "img": "/static/galleries/brain/chg2_f4.webp",
-            "label": "4"
+            "img": "/static/galleries/brain/letter_G_green_lg_0.webp"
           }
         ]
       }
@@ -1389,20 +1401,16 @@
         "format": "grid4",
         "images": [
           {
-            "img": "/static/galleries/brain/chg3_f1.webp",
-            "label": "1"
+            "img": "/static/galleries/brain/letter_W_green_lg_0.webp"
           },
           {
-            "img": "/static/galleries/brain/chg3_f2.webp",
-            "label": "2"
+            "img": "/static/galleries/brain/letter_F_blue_lg_0.webp"
           },
           {
-            "img": "/static/galleries/brain/chg3_f3.webp",
-            "label": "3"
+            "img": "/static/galleries/brain/letter_N_amber_lg_0.webp"
           },
           {
-            "img": "/static/galleries/brain/chg3_f4.webp",
-            "label": "4"
+            "img": "/static/galleries/brain/letter_Z_violet_lg_0.webp"
           }
         ]
       }
@@ -1421,20 +1429,16 @@
         "format": "grid4",
         "images": [
           {
-            "img": "/static/galleries/brain/chg4_f1.webp",
-            "label": "1"
+            "img": "/static/galleries/brain/letter_D_amber_lg_0.webp"
           },
           {
-            "img": "/static/galleries/brain/chg4_f2.webp",
-            "label": "2"
+            "img": "/static/galleries/brain/letter_P_teal_lg_0.webp"
           },
           {
-            "img": "/static/galleries/brain/chg4_f3.webp",
-            "label": "3"
+            "img": "/static/galleries/brain/letter_Y_red_lg_0.webp"
           },
           {
-            "img": "/static/galleries/brain/chg4_f4.webp",
-            "label": "4"
+            "img": "/static/galleries/brain/letter_H_blue_lg_0.webp"
           }
         ]
       }
@@ -1606,29 +1610,29 @@
       ]
     },
     {
-      "id": "chg1_f1",
-      "img": "/static/galleries/brain/chg1_f1.webp",
+      "id": "letter_A_red_lg_0",
+      "img": "/static/galleries/brain/letter_A_red_lg_0.webp",
       "tags": [
         "chg_hit"
       ]
     },
     {
-      "id": "chg1_f2",
-      "img": "/static/galleries/brain/chg1_f2.webp",
+      "id": "letter_K_blue_lg_0",
+      "img": "/static/galleries/brain/letter_K_blue_lg_0.webp",
       "tags": [
         "chg_hit"
       ]
     },
     {
-      "id": "chg1_f3",
-      "img": "/static/galleries/brain/chg1_f3.webp",
+      "id": "letter_R_green_lg_0",
+      "img": "/static/galleries/brain/letter_R_green_lg_0.webp",
       "tags": [
         "chg_hit"
       ]
     },
     {
-      "id": "chg1_f4",
-      "img": "/static/galleries/brain/chg1_f4.webp",
+      "id": "letter_M_amber_lg_0",
+      "img": "/static/galleries/brain/letter_M_amber_lg_0.webp",
       "tags": [
         "chg_hit"
       ]
@@ -1641,8 +1645,8 @@
       ]
     },
     {
-      "id": "odd_diff",
-      "img": "/static/galleries/brain/odd_diff.webp",
+      "id": "umb_s4",
+      "img": "/static/galleries/brain/umb_s4.webp",
       "tags": [
         "foc_hit"
       ]
@@ -1727,41 +1731,41 @@
         ]
       },
       {
-        "id": "chg1_f1",
-        "label": "Red triangle",
+        "id": "letter_A_red_lg_0",
+        "label": "Letter A",
         "spec": "Change — the round that spots the edit",
-        "image": "chg1_f1",
-        "img": "/static/galleries/brain/chg1_f1.webp",
+        "image": "letter_A_red_lg_0",
+        "img": "/static/galleries/brain/letter_A_red_lg_0.webp",
         "tags": [
           "chg_hit"
         ]
       },
       {
-        "id": "chg2_f1",
-        "label": "Teal hexagon",
+        "id": "letter_S_violet_lg_0",
+        "label": "Letter S",
         "spec": "Change — the round that spots the edit",
-        "image": "chg2_f1",
-        "img": "/static/galleries/brain/chg2_f1.webp",
+        "image": "letter_S_violet_lg_0",
+        "img": "/static/galleries/brain/letter_S_violet_lg_0.webp",
         "tags": [
           "chg_hit"
         ]
       },
       {
-        "id": "chg4_f3",
-        "label": "Red cross",
+        "id": "letter_Y_red_lg_0",
+        "label": "Letter Y",
         "spec": "Change — the round that spots the edit",
-        "image": "chg4_f3",
-        "img": "/static/galleries/brain/chg4_f3.webp",
+        "image": "letter_Y_red_lg_0",
+        "img": "/static/galleries/brain/letter_Y_red_lg_0.webp",
         "tags": [
           "chg_hit"
         ]
       },
       {
-        "id": "odd_diff",
-        "label": "The odd one",
+        "id": "umb_s4",
+        "label": "The odd umbrella",
         "spec": "Focus — the round that goes straight at it",
-        "image": "odd_diff",
-        "img": "/static/galleries/brain/odd_diff.webp",
+        "image": "umb_s4",
+        "img": "/static/galleries/brain/umb_s4.webp",
         "tags": [
           "foc_hit"
         ]
@@ -2194,10 +2198,10 @@
     "title": "Your {style} Refresh",
     "proof_line": "Built from your 16 rounds",
     "manifest": [
-      "The round you already run on — and how to lean on it harder",
       "The two-minute drill that lifts your weakest round first",
-      "Five strengths to build on, and the two habits to swap",
-      "Seven days, one small thing each, in the order that moves the number",
+      "The two habits to swap, and the five strengths to train first",
+      "The technique that turns the round you already win into the other three",
+      "Seven days, one drill each, in the order that moves the number",
       "Yours to keep — the whole plan, as a PDF"
     ],
     "manifest_hero": "strengths",
@@ -2309,6 +2313,10 @@
     "younger_line": "{n} years younger than your age group — keep it there",
     "level_line": "right where your age group sits — one week of drills moves it",
     "older_line": "{n} years older — and the good news is that this is the easiest number to lower",
+    "urge_older": "That's {n} years above your group — and it's the easiest number to lower.",
+    "urge_level": "Right where your group sits. One week of drills pushes it under.",
+    "urge_younger": "Ahead of your group. Keep it there — and push it lower.",
+    "improve_cta": "Improve now",
     "age_line_bare": "and this number moves with practice",
     "purpose_map": {
       "mood_sharp": {
@@ -2330,7 +2338,7 @@
     },
     "profile": {
       "bridge": "Your plan, written for {type}:",
-      "offer_head": "{type} — your refresh plan, 4 chapters",
+      "offer_head": "{type}: your improvement plan, built from your 18 rounds",
       "essence": {
         "memory_mind": "You hold what you were shown. That is the one that sharpens fastest.",
         "spatial_mind": "You keep the map without trying. Now make it work harder.",
@@ -2382,19 +2390,19 @@
       "unlock": [
         {
           "id": "materials",
-          "line": "the two-minute drill that lifts your weakest round first"
+          "line": "the two-minute drill that lifts your weakest round — start it tomorrow"
         },
         {
           "id": "mistakes",
-          "line": "the two habits to swap, and the ones that keep you sharp"
+          "line": "the two habits to swap, and the five strengths to train first"
         },
         {
           "id": "dna",
-          "line": "the round you already run on — and how to lean on it harder"
+          "line": "the technique that turns the round you already win into the other three"
         },
         {
           "id": "shopping",
-          "line": "seven days, one small thing each, in the order that works"
+          "line": "seven days, one drill each, in the order that moves the number"
         }
       ],
       "unlock_tail": {

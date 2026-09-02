@@ -340,6 +340,58 @@
     return note;
   }
 
+  // --- d2) the reason to keep reading ----------------------------------------
+  //
+  // The number on its own is a fact. This is the sentence that makes it a
+  // thing somebody can do something about, and the control under it is the
+  // only other place on the page that goes to the price.
+  //
+  // It says the same thing three ways because there are three readers: one
+  // ahead of their group, one on it, and one behind. None of the three is
+  // told anything is wrong with them — the one furthest behind is told they
+  // have the most to gain, which is both kinder and true.
+  function urgeLine(copy, data) {
+    if (!data || data.delta === null) {
+      return copy.urge_level || "";
+    }
+    if (data.delta <= -LEVEL_BAND) return copy.urge_younger || "";
+    if (data.delta >= LEVEL_BAND) {
+      return fill(copy.urge_older || "", { n: Math.abs(data.delta) });
+    }
+    return copy.urge_level || "";
+  }
+
+  // The offer card, by id, at the moment the button is pressed rather than
+  // when it is built: the card is drawn after this block and holding a
+  // reference to a node that does not exist yet is how a page ends up with a
+  // button that does nothing on the one render where an earlier section threw.
+  var OFFER_ID = "br-offer";
+
+  function urge(ctx, copy, data) {
+    var line = urgeLine(copy, data);
+    if (!line) return null;
+    var block = elm("section", "br-urge");
+    block.appendChild(elm("p", "br-urge-line", line));
+    var button = elm("button", "br-urge-cta",
+                     copy.improve_cta || "Improve now");
+    button.type = "button";
+    // Not a payment control, and it must never be mistaken for one: it moves
+    // the page. The button that takes money is engine.js's own, it lives in
+    // the offer card, and nothing here touches it.
+    button.addEventListener("click", function () {
+      var card = document.getElementById(OFFER_ID);
+      if (!card) return;
+      try {
+        card.scrollIntoView({ behavior: "smooth", block: "start" });
+      } catch (e) {
+        // Older engines take no options object. The reader still gets there.
+        card.scrollIntoView();
+      }
+    });
+    block.appendChild(button);
+    return block;
+  }
+
   // --- e) the frames they tapped ---------------------------------------------
 
   function tapsGrid(picks) {
@@ -686,6 +738,7 @@
 
   function offer(ctx, copy, data, variant, lean) {
     var card = elm("section", "br-offer");
+    card.id = OFFER_ID;
     var nodes = ctx.nodes;
 
     var head = ctx.withPrice(fill(profileCopy(ctx).offer_head || "",
@@ -850,8 +903,16 @@
     if (data) {
       root.appendChild(score(ctx, copy, data, lean));
       if (!lean) root.appendChild(bars(ctx, copy, data));
+      // What the number is worth doing something about, and the way down to
+      // the offer. Straight under the figure, because everything between a
+      // number and the reason to act on it is a reason to stop reading.
+      var push = urge(ctx, copy, data);
+      if (push) root.appendChild(push);
     }
-    root.appendChild(typeCard(ctx, copy, lean));
+    // The type card is gone from this page. It is still computed — the report
+    // is written for it and the delivered page still draws it — but before
+    // the money it was a second identity card under the first, and what it
+    // said about the reader is what the report is for.
     var strip = taps(ctx, copy);
     if (strip) root.appendChild(strip);
     if (!lean) root.appendChild(path(ctx, copy));

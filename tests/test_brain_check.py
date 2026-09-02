@@ -63,6 +63,7 @@ No database, no network, no key. Everything is read off disk.
 """
 import ast
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -669,7 +670,6 @@ def art_colour(name):
 # check on the encoder.
 GROUND = art_colour("GROUND")
 PANEL = art_colour("AGE_PANEL_FILL")
-EDGE = art_colour("AGE_PANEL_EDGE")
 check("the age card has a ground of its own",
       PANEL != GROUND, "%s vs %s" % (PANEL, GROUND))
 check("  darker than the page it sits on, on every channel",
@@ -677,26 +677,26 @@ check("  darker than the page it sits on, on every channel",
 check("  and far enough off it to read as a surface",
       min(GROUND[i] - PANEL[i] for i in range(3)) >= 8,
       str([GROUND[i] - PANEL[i] for i in range(3)]))
-check("  with a keyline darker again",
-      all(EDGE[i] < PANEL[i] for i in range(3)), "%s" % (EDGE,))
-check("the keyline is inset, and rounded",
-      0.02 <= art_number("AGE_PANEL_INSET") <= 0.15
-      and art_number("AGE_PANEL_RADIUS") > 0,
-      str(art_number("AGE_PANEL_INSET")))
-check("  clear of the crop a taller cell takes off the sides",
-      art_number("AGE_PANEL_INSET") >= 0.08,
-      str(art_number("AGE_PANEL_INSET")))
-check("the tree stands on a line",
-      "AGE_GROUND_FILL" in ART
-      and "card.rect((0.30, AGE_BASE_Y - 0.004" in ART)
+# The tint is the whole of the tile now. A keyline a few pixels inside the
+# card's own border and a floor under a tree that is already standing on the
+# card were both drawn and both came off after the second phone review: the
+# colour was doing the work and the two rules were arguing with it.
+check("the tile is the tint and nothing else",
+      "AGE_PANEL_EDGE" not in ART and "AGE_GROUND_FILL" not in ART
+      and "AGE_PANEL_INSET" not in ART and "AGE_PANEL_RADIUS" not in ART,
+      str([n for n in ("AGE_PANEL_EDGE", "AGE_GROUND_FILL",
+                       "AGE_PANEL_INSET", "AGE_PANEL_RADIUS") if n in ART]))
+check("  so the card draws a ground, a tree and a number, in that order",
+      re.search(r"def age_card\(text, stage\):(.*?)\n\n", ART, re.S)
+      is not None
+      and "rounded_rectangle" not in
+      re.search(r"def age_card\(text, stage\):(.*?)\n\n",
+                ART, re.S).group(1))
 check("the card is drawn on that ground rather than on the page's",
       "Card(ground=AGE_PANEL_FILL)" in ART)
 
 # Where the numeral's feet land, worked out here from the same table the
 # generator draws from: the leaves' top on each stage, less the gap.
-# The table itself, evaluated rather than pattern-matched: three of the six
-# stages run to several lines, and a regex that reads the one-liners and
-# silently drops the rest is a check that passes on half the cards.
 TREES = ast.literal_eval(
     re.search(r"^TREES = (\{.*?^\})", ART, re.S | re.M).group(1))
 SCALE = art_number("TREE_SCALE")
@@ -716,8 +716,6 @@ check("the six stages are all in the table", sorted(TREES) == sorted(STAGES),
 check("the sprout's number sits in the lower half of the card",
       0.55 <= numeral_bottom("sprout") <= 0.70,
       "%.3f" % numeral_bottom("sprout"))
-check("  which is a long way down from where it was",
-      numeral_bottom("sprout") > 0.5)
 check("every other number follows its own canopy up the card",
       [round(numeral_bottom(s), 4) for s in STAGES]
       == sorted((round(numeral_bottom(s), 4) for s in STAGES), reverse=True),
@@ -749,10 +747,11 @@ check("the open box still carries its object",
               mid_by_after[SCORED["spa%d" % r][1] - 1][0]["reveal"]
               ["open_slot"]]["img"]
           for r in range(1, 5)))
-check("no step and no flash on this funnel numbers a card it should not",
-      not [s["id"] for s in steps if s.get("label_mode") == "none"
-           and s["id"] not in ("age", "spa1", "spa2", "spa3", "spa4")],
-      str([s["id"] for s in steps if s.get("label_mode") == "none"]))
+check("the rounds that name nothing are the six that must not",
+      sorted(s["id"] for s in steps if s.get("label_mode") == "none")
+      == ["age", "odd", "spa1", "spa2", "spa3", "spa4"],
+      str(sorted(s["id"] for s in steps
+                 if s.get("label_mode") == "none")))
 
 print("\n--- v3: the strip fills the card it is in ---")
 grid = re.search(r"\.br-taps-grid \{(.*?)\n\}", RESULT_CSS, re.S)
@@ -827,6 +826,188 @@ check("  and the anchor that was working is still there",
       cfg["checkout"]["commerce"]["price_anchor"]
       == "A puzzle book about nobody in particular costs more"
       and "puzzle book about nobody in particular" in cfg["checkout"]["anchor"])
+
+print("\n--- v4: every step says which round it is ---")
+# Derived here rather than copied out of the config: the walk is two warm-up
+# questions and then four rounds of four, and where a step sits in that is a
+# fact about its position. A step moved without its kicker moving with it is
+# what this catches.
+ROUNDS = [("WARM-UP", 2), ("ROUND 1 · MEMORY", 4), ("ROUND 2 · SPATIAL", 4),
+          ("ROUND 3 · CHANGE", 4), ("ROUND 4 · FOCUS", 4)]
+want = []
+for name, count in ROUNDS:
+    for n in range(1, count + 1):
+        want.append("%s · %d/%d" % (name, n, count))
+check("the kickers cover the whole walk", len(want) == len(steps))
+for step, line in zip(steps, want):
+    check("  %-6s is %s" % (step["id"], line), step.get("kicker") == line,
+          str(step.get("kicker")))
+check("the flashes still name the round they set up",
+      all(e.get("kicker") for e in mids if e.get("template") == "flash"))
+check("  in the same four words the steps use",
+      all(e["kicker"].split(" · ")[1].upper()
+          in {r[0].split(" · ")[-1] for r in ROUNDS[1:]}
+          for e in mids if e.get("template") == "flash"),
+      str(sorted({e["kicker"] for e in mids
+                  if e.get("template") == "flash"})))
+check("the funnel names what a clock says when it runs out",
+      cfg["swipe"].get("timeup_line") == "Time's up",
+      str(cfg["swipe"].get("timeup_line")))
+
+print("\n--- v4: round three is letters, and one of them changed ---")
+# The filename is the claim. `letter_<L>_<colour>_<size>_<degrees>` states the
+# four things a card can differ in, so "exactly one of these four came back
+# different, and in exactly this way" is a thing this file can hold the config
+# to without opening a single pixel.
+LETTER_RE = re.compile(r"^letter_([A-Z])_([a-z]+)_(lg|sm)_(\d+)$")
+KINDS = {"chg1": 0, "chg2": 1, "chg3": 2, "chg4": 3}   # letter/colour/size/rot
+FACET = ["letter", "colour", "size", "rotation"]
+
+
+def spec_of(path):
+    stem = path.rsplit("/", 1)[-1][:-len(".webp")]
+    found = LETTER_RE.match(stem)
+    return found.groups() if found else None
+
+
+for r in range(1, 5):
+    sid = "chg%d" % r
+    entry = mid_by_after[SCORED[sid][1] - 1][0]
+    before = [spec_of(f["img"]) for f in entry["flash"]["images"]]
+    after = [spec_of(c["img"]) for c in images(by_id[sid])]
+    check("  %s holds up four letter cards" % sid,
+          len(before) == 4 and all(before), str(before))
+    check("    and answers with four of the same kind",
+          len(after) == 4 and all(after), str(after))
+    if not (all(before) and all(after)):
+        continue
+    check("    every letter on the round is its own",
+          len({b[0] for b in before}) == 4
+          and len({a[0] for a in after}) == 4,
+          str([b[0] for b in before]))
+    check("    with nothing that pairs off as I and l, or O and Q",
+          not ({b[0] for b in before} | {a[0] for a in after})
+          & set("IOQ"), str(sorted({b[0] for b in before})))
+    moved = [i for i in range(4) if before[i] != after[i]]
+    check("    exactly one slot came back different",
+          len(moved) == 1, str(moved))
+    if len(moved) != 1:
+        continue
+    check("      and it is the slot the round scores",
+          moved[0] == hit_index(sid),
+          "changed %d, hit %d" % (moved[0], hit_index(sid)))
+    facets = [i for i in range(4)
+              if before[moved[0]][i] != after[moved[0]][i]]
+    check("      differing in exactly one thing, and it is the %s"
+          % FACET[KINDS[sid]],
+          facets == [KINDS[sid]],
+          "differs in %s" % [FACET[i] for i in facets])
+    check("      the three that did not change are the same files",
+          [before[i] for i in range(4) if i != moved[0]]
+          == [after[i] for i in range(4) if i != moved[0]])
+check("the shape cards the round used to draw are gone",
+      not [n for n in os.listdir(GALLERY) if n.startswith("chg")],
+      str([n for n in os.listdir(GALLERY) if n.startswith("chg")]))
+check("the letters are set in a serif, which nothing else on the walk is",
+      "SERIF_FONTS = [" in ART and "DejaVuSerif-Bold.ttf" in ART
+      and "def letter_card(" in ART)
+check("  on a block of their own colour, which does not turn with them",
+      "card.rect((0.29, 0.29, 0.75, 0.75), tint(PALETTE[colour])" in ART
+      and "layer.rotate(rot" in ART)
+check("  and the rotated round is turned far enough to see",
+      int([s["after"][3] for s in ast.literal_eval(
+          re.search(r"^LETTERS = (\[.*?^\])", ART, re.S | re.M).group(1))][3])
+      >= 20)
+
+print("\n--- v4: the odd one out is six umbrellas ---")
+odd_imgs = [c["img"] for c in images(by_id["odd"])]
+check("six cards, six files of their own",
+      len(odd_imgs) == 6 and len(set(odd_imgs)) == 6, str(odd_imgs))
+check("  all of them umbrellas", all("/umb_s" in p for p in odd_imgs),
+      str(odd_imgs))
+digests = [hashlib.sha256(open(os.path.join(ROOT, p.lstrip("/")),
+                               "rb").read()).hexdigest()
+           for p in odd_imgs]
+counts = {}
+for digest in digests:
+    counts[digest] = counts.get(digest, 0) + 1
+check("  five of them byte for byte the same drawing",
+      sorted(counts.values()) == [1, 5], str(sorted(counts.values())))
+check("    and the odd one is the card the round scores",
+      digests.index([d for d, n in counts.items() if n == 1][0])
+      == hit_index("odd"),
+      "odd at %d, hit %d" % (digests.index(
+          [d for d, n in counts.items() if n == 1][0]), hit_index("odd")))
+check("  which is why they are six files and not two",
+      "UMBRELLA_SLOTS = 6" in ART and "def umbrella_card(" in ART)
+check("the round names none of them, and none of them is a number",
+      by_id["odd"].get("label_mode") == "none"
+      and {c["label"] for c in images(by_id["odd"])} == {"Umbrella"},
+      str({c["label"] for c in images(by_id["odd"])}))
+check("  and the grid it drew before is gone",
+      not [n for n in os.listdir(GALLERY) if n.startswith("odd")],
+      str([n for n in os.listdir(GALLERY) if n.startswith("odd")]))
+
+print("\n--- v4: the free page argues for lowering the number ---")
+def module_body(name):
+    """One top-level function's body, the way the engine suites read them."""
+    hit = re.search(r"function %s\([^)]*\)\s*\{(.*?)\n  \}" % name,
+                    MODULE, re.S)
+    return hit.group(1) if hit else ""
+
+
+check("the type card is not drawn before the money",
+      "typeCard(" not in module_body("render")
+      and "root.appendChild(typeCard(ctx, copy, lean));"
+      in module_body("delivered"))
+check("  though the type is still computed, and still on the paid page",
+      "ctx.style.name" in MODULE and "function typeCard(" in MODULE)
+check("the urgency block sits straight under the number",
+      "var push = urge(ctx, copy, data);" in MODULE
+      and MODULE.index("var push = urge(ctx, copy, data);")
+      < MODULE.index("var strip = taps(ctx, copy);"))
+urge_fn = re.search(r"function urgeLine\(copy, data\)\s*\{(.*?)\n  \}",
+                    MODULE, re.S).group(1)
+check("  and says one of three things, by where they sit against their group",
+      "copy.urge_younger" in urge_fn and "copy.urge_level" in urge_fn
+      and "copy.urge_older" in urge_fn and "LEVEL_BAND" in urge_fn)
+for key, must in (("urge_older", "easiest number to lower"),
+                  ("urge_level", "pushes it under"),
+                  ("urge_younger", "Keep it there")):
+    check("  %s is written in the improvement voice" % key,
+          must in cfg["result_copy"].get(key, ""),
+          cfg["result_copy"].get(key))
+check("  and the one for a reader above their group counts the years",
+      "{n}" in cfg["result_copy"]["urge_older"])
+check("the control under it moves the page, and takes no money",
+      'elm("button", "br-urge-cta"' in MODULE
+      and 'card.scrollIntoView({ behavior: "smooth", block: "start" });'
+      in MODULE
+      and 'var OFFER_ID = "br-offer";' in MODULE
+      and "card.id = OFFER_ID;" in MODULE)
+check("  it resolves the offer at the tap rather than holding a node",
+      "document.getElementById(OFFER_ID)" in MODULE)
+check("  it is not the pay button, and does not touch it",
+      "ctx.checkout" not in MODULE
+      and re.search(r"function urge\(ctx, copy, data\)(.*?)\n  \}",
+                    MODULE, re.S).group(1).count("payButton") == 0)
+check("  and it is named in the funnel's own words",
+      cfg["result_copy"].get("improve_cta") == "Improve now")
+check("  set as the loudest control on the page after the number",
+      ".br-urge-cta {" in RESULT_CSS
+      and re.search(r"\.br-urge-cta \{[^}]*text-transform: uppercase;",
+                    RESULT_CSS, re.S) is not None)
+check("the offer leads with the reader's own type and their own rounds",
+      cfg["result_copy"]["profile"]["offer_head"]
+      == "{type}: your improvement plan, built from your 18 rounds")
+check("  and every bullet promises a drill rather than a reading",
+      all(any(w in row["line"] for w in
+              ("drill", "habits", "technique", "days"))
+          for row in cfg["result_copy"]["profile"]["unlock"]),
+      str([r["line"] for r in cfg["result_copy"]["profile"]["unlock"]]))
+check("  weakest round first",
+      cfg["result_copy"]["profile"]["unlock"][0]["id"] == "materials",
+      cfg["result_copy"]["profile"]["unlock"][0]["id"])
 
 print("\n--- the copy: a game, and nothing that sounds like anything else ---")
 BANNED = ("memory loss", "cognitive", "decline", "dementia", "test yourself",

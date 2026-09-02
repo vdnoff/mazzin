@@ -60,6 +60,10 @@
   // they have walked away from.
   var STEP_TIMER_MIN_MS = 1000;
   var STEP_TIMER_MAX_MS = 15000;
+  // How long the cross stays up when a clock runs out. Long enough to read as
+  // an answer to what just happened, short enough that nobody who ran out of
+  // time is also made to wait.
+  var TIMEUP_MS = 900;
   // One beat per numeral on the flash's prepare count, and how long the
   // chosen card's name is held on a step that names cards only after the tap.
   var PREPARE_TICK_MS = 1000;
@@ -816,9 +820,39 @@
     // already decoded and in the document, for the same reason the mark above
     // is taken here.
     startStepTimer(st);
+    setStepKicker(st);
     setCaption((st && st.question) || "");
     renderProgress();
     prepareNext();
+  }
+
+  // A line over the question, naming where in the walk this step sits — the
+  // round it belongs to and which of that round's questions it is. On a walk
+  // of four rounds the question alone does not say: four steps running ask
+  // "which one did you just see?", and without this the reader cannot tell
+  // the first from the last.
+  //
+  // Above the caption, inside the stage, so it is the first thing in the
+  // block the question heads and it is on screen for as long as the step is.
+  // A step that names none renders exactly what it always did: no node is
+  // built for it at all until some step asks for one, and it is hidden again
+  // the moment a step without one comes up.
+  function setStepKicker(st) {
+    var text = (st && st.kicker) || "";
+    var node = el.stepKicker;
+    if (!text) {
+      if (node) node.hidden = true;
+      return;
+    }
+    if (!node) {
+      if (!el.stage || !el.caption) return;
+      node = elm("p", "step-kicker");
+      node.id = "step-kicker";
+      el.stage.insertBefore(node, el.caption);
+      el.stepKicker = node;
+    }
+    node.hidden = false;
+    node.textContent = text;
   }
 
   // The caption is the step's own question, so it changes on every pair.
@@ -1018,6 +1052,32 @@
     stepTimer = { timer: timer, node: timer.node, id: id, step: step };
   }
 
+  // What the reader sees when nobody answered in time: the cards covered, a
+  // cross, and one line. It is a beat rather than a screen — the step is
+  // answered the moment it lifts — and it exists because a round that simply
+  // moved on left the reader believing they had tapped something.
+  //
+  // Drawn inside the card row rather than over the stage: `.stage` is
+  // `display: contents` and generates no box to position against, and the row
+  // is the thing that was being answered and so the thing that gets covered.
+  // The cross is two bars the stylesheet crosses rather than a glyph, because
+  // a multiplication sign is a different weight in every system stack this
+  // ships to and this one is the size of the card.
+  function showTimeUp() {
+    if (!el.cards) return null;
+    var over = elm("div", "step-timeup");
+    over.setAttribute("aria-live", "assertive");
+    var mark = elm("span", "step-timeup-mark");
+    mark.setAttribute("aria-hidden", "true");
+    mark.appendChild(elm("i"));
+    mark.appendChild(elm("i"));
+    over.appendChild(mark);
+    over.appendChild(elm("p", "step-timeup-line",
+                         words("swipe.timeup_line", "Time\u2019s up")));
+    el.cards.appendChild(over);
+    return over;
+  }
+
   // The clock ran out. What happens is a tap on the card the config named —
   // the same path, the same scoring, the same hold — with one word added to
   // what is recorded, because a run where the answer was given by a stopwatch
@@ -1027,8 +1087,19 @@
     var item = timeoutPick(st);
     if (!item) { stopStepTimer(); return; }
     timedOut = true;
-    var card = cardFor(item);
-    choose(item, card);
+    stopStepTimer();
+    // The row is locked while the cross is up. `picking` is the guard this
+    // file already uses for "one tap per pair" and it is exactly what is
+    // wanted: a tap during the beat does nothing, and the beat itself is not
+    // a tap. It comes off the instant before the answer goes in, so `choose`
+    // sees the same state it sees on a real one.
+    picking = true;
+    var over = showTimeUp();
+    setTimeout(function () {
+      if (over && over.parentNode) over.parentNode.removeChild(over);
+      picking = false;
+      choose(item, cardFor(item));
+    }, over ? TIMEUP_MS : 0);
   }
 
   // The node on screen for one image, or null. The cards are dealt shuffled,

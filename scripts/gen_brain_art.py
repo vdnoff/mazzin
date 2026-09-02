@@ -282,29 +282,6 @@ MEMORY = [
                 ("green", "circle")]},
 ]
 
-# Four change rounds. `flash` is the set as it was; `changed` is the slot that
-# comes back different and `after` is what it comes back as. One kind of
-# difference per round, in the order they get harder: a colour, then a form,
-# then a size, then a rotation.
-CHANGE = [
-    {"changed": 1, "kind": "colour",
-     "flash": [("red", "triangle"), ("blue", "square"),
-               ("green", "circle"), ("amber", "star")],
-     "after": {"colour": "violet", "form": "square"}},
-    {"changed": 3, "kind": "form",
-     "flash": [("teal", "hexagon"), ("violet", "circle"),
-               ("amber", "diamond"), ("red", "star")],
-     "after": {"colour": "red", "form": "pentagon"}},
-    {"changed": 0, "kind": "size",
-     "flash": [("green", "square"), ("red", "circle"),
-               ("blue", "triangle"), ("violet", "hexagon")],
-     "after": {"colour": "green", "form": "square", "r": 0.185}},
-    {"changed": 2, "kind": "rotation",
-     "flash": [("amber", "triangle"), ("teal", "diamond"),
-               ("red", "cross"), ("blue", "star")],
-     "after": {"colour": "red", "form": "cross", "rot": 45.0}},
-]
-
 # The age groups: the bracket, and a tree at the stage that group is at. The
 # card carries the words because this step draws no badge under it — the six
 # cards have to be tellable apart from the art alone — and the tree is what
@@ -401,20 +378,142 @@ def object_glyph(card, name):
                              fill=RED)
 
 
-def dot_grid(odd=False):
-    """Nine circles in a three by three. On the odd card one of them shrank.
+# --- round three: letters ---------------------------------------------------
+#
+# The change round used to be shapes, and on a phone it was the memory round
+# again: four coloured forms, four coloured forms, spot the difference. Letters
+# read as a different kind of thing at a glance, which is the whole point of
+# having four rounds rather than one played four times.
+#
+# Every letter card names itself. The file is `letter_<L>_<colour>_<size>_
+# <degrees>`, and that is not decoration: the round is "exactly one of these
+# four came back different", and a filename that states the four things a card
+# can differ in is a claim a check can hold the config to without opening a
+# single pixel.
+LETTER_SIZES = {"lg": 300, "sm": 190}
 
-    Deliberately a size rather than a hue: a shade half a step off survives
-    neither the resize nor WebP, and a round whose answer depends on the
-    encoder is a round that is sometimes unanswerable.
+# A serif, and a bold one. The quiz's own face is a sans and every other card
+# on the funnel is a flat shape; a heavy serif letter is the one thing on this
+# walk that could not be mistaken for any of them.
+SERIF_FONTS = [
+    "/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf",
+]
+
+
+def serif():
+    for path in SERIF_FONTS:
+        if os.path.exists(path):
+            return path
+    return None
+
+
+SERIF = serif()
+
+
+def tint(colour, amount=0.82):
+    """The colour, most of the way to the ground. The block behind a letter."""
+    return tuple(int(round(colour[i] + (GROUND[i] - colour[i]) * amount))
+                 for i in range(3))
+
+
+def letter_name(letter, colour, size, rot):
+    return "letter_%s_%s_%s_%d" % (letter, colour, size, rot)
+
+
+def letter_card(letter, colour, size="lg", rot=0):
+    """One letter, on a block of its own colour, turned if it is turned.
+
+    Drawn into a layer and pasted rather than drawn straight onto the card,
+    because Pillow will not rotate text in place and the rotated round is the
+    reason this exists. The block does not turn with it: it is the ground the
+    letter sits on, and a ground that tilted would be a second difference on a
+    round that is allowed exactly one.
     """
+    if not SERIF:
+        raise RuntimeError("no usable serif on this machine")
     card = Card()
-    for row in range(3):
-        for col in range(3):
-            small = odd and row == 1 and col == 1
-            card.shape("circle", GREEN,
-                       cx=0.24 + col * 0.26, cy=0.24 + row * 0.26,
-                       r=0.070 if small else 0.105)
+    unit = card.w * SS
+    card.rect((0.29, 0.29, 0.75, 0.75), tint(PALETTE[colour]), radius=0.055)
+    layer = Image.new("RGBA", (int(unit), int(unit)), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    font = ImageFont.truetype(SERIF, int(LETTER_SIZES[size] * SS))
+    box = draw.textbbox((0, 0), letter, font=font)
+    draw.text((unit / 2.0 - (box[2] - box[0]) / 2.0 - box[0],
+               unit / 2.0 - (box[3] - box[1]) / 2.0 - box[1]),
+              letter, font=font, fill=PALETTE[colour] + (255,))
+    if rot:
+        layer = layer.rotate(rot, resample=Image.BICUBIC,
+                             center=(unit / 2.0, unit / 2.0))
+    card.img.paste(layer, (0, 0), layer)
+    return card
+
+
+# Four rounds, and the one thing that changes in each. `flash` is the set as it
+# was held up; `after` is what the changed slot comes back as. The letters
+# inside a round are chosen to be unmistakable for each other at a glance —
+# nothing that pairs off as I and l, or O and Q.
+#
+#   (letter, colour, size, degrees)
+LETTERS = [
+    {"changed": 1, "kind": "letter",
+     "flash": [("A", "red", "lg", 0), ("K", "blue", "lg", 0),
+               ("R", "green", "lg", 0), ("M", "amber", "lg", 0)],
+     "after": ("E", "blue", "lg", 0)},
+    {"changed": 3, "kind": "colour",
+     "flash": [("S", "violet", "lg", 0), ("T", "teal", "lg", 0),
+               ("B", "red", "lg", 0), ("G", "green", "lg", 0)],
+     "after": ("G", "amber", "lg", 0)},
+    {"changed": 0, "kind": "size",
+     "flash": [("W", "green", "lg", 0), ("F", "blue", "lg", 0),
+               ("N", "amber", "lg", 0), ("Z", "violet", "lg", 0)],
+     "after": ("W", "green", "sm", 0)},
+    {"changed": 2, "kind": "rotation",
+     "flash": [("D", "amber", "lg", 0), ("P", "teal", "lg", 0),
+               ("Y", "red", "lg", 0), ("H", "blue", "lg", 0)],
+     "after": ("Y", "red", "lg", 25)},
+]
+
+
+# --- the odd one out: umbrellas ---------------------------------------------
+#
+# Six of them, and one has its handle hooked the other way. Written as six
+# files rather than as one file used five times and a second used once,
+# because the answer to this round would otherwise be readable off the page
+# source: five identical `src` attributes and one that is not is a round
+# anybody can win with the inspector open. Five of the six are byte for byte
+# the same drawing; only the sixth is a different picture.
+UMBRELLA_SLOTS = 6
+UMBRELLA_ODD = 4          # one-based, the slot whose handle turns the other way
+
+
+def umbrella_card(flipped=False):
+    """A canopy, a pole, and a hook that curves one way or the other."""
+    card = Card()
+    unit = card.w * SS
+    cx = 0.5 * unit
+    rim = 0.52 * unit
+    span = 0.30 * unit
+    # The canopy: a half disc, notched along its rim so it reads as panels
+    # rather than as a semicircle.
+    card.d.pieslice([cx - span, rim - span, cx + span, rim + span],
+                    180, 360, fill=RED)
+    for offset in (-0.20, 0.0, 0.20):
+        notch = 0.078 * unit
+        card.d.ellipse([cx + offset * unit - notch, rim - notch,
+                        cx + offset * unit + notch, rim + notch],
+                       fill=GROUND)
+    # The pole, from under the canopy to where the hook starts.
+    pole = 0.017 * unit
+    card.d.rectangle([cx - pole, rim - 0.02 * unit, cx + pole, 0.74 * unit],
+                     fill=INK)
+    # The hook. A half turn either to the left or to the right, which is the
+    # only difference between the odd card and the other five.
+    hook = 0.075 * unit
+    side = -1 if flipped else 1
+    left = cx if side > 0 else cx - 2 * hook
+    card.d.arc([left, 0.74 * unit - hook, left + 2 * hook, 0.74 * unit + hook],
+               0, 180, fill=INK, width=int(2 * pole))
     return card
 
 
@@ -470,18 +569,14 @@ AGE_BASE_Y = 0.84
 # ground: the card's own background is behind the picture, the picture filled
 # it edge to edge, and the picture was the same off-white as everything else.
 # So the ground of THIS card is a shade of its own — sage over the cream, far
-# enough off it to read as a surface at arm's length — with a keyline inside
-# the edge and a line under the tree for it to stand on.
+# enough off it to read as a surface at arm's length.
 #
-# The keyline is inset well clear of the edge on purpose. These cells are
-# taller than they are wide and the art is square, so `object-fit: cover`
-# crops a few per cent off each side; a rule any closer to the edge would be
-# the first thing the crop took.
+# The tint is now the whole of it. A keyline inside the edge and a line under
+# the tree were both drawn here and both came off after the second phone
+# review: on a 175px cell the keyline read as a second border a few pixels
+# inside the card's own, and the floor read as an underline under nothing. The
+# colour was doing the work; the two rules were arguing with it.
 AGE_PANEL_FILL = (224, 229, 211)
-AGE_PANEL_EDGE = (196, 204, 179)
-AGE_PANEL_INSET = 0.085
-AGE_PANEL_RADIUS = 0.075
-AGE_GROUND_FILL = (205, 212, 189)
 
 # How much air sits between the bottom of the numeral and the top of the
 # leaves. The number and the tree are one figure — the bracket labelled by the
@@ -532,16 +627,6 @@ def tree(card, stage, base_y=AGE_BASE_Y, colour=GREEN, bark=(122, 92, 62)):
 def age_card(text, stage):
     """The bracket over the stage it stands at, on a tile of its own."""
     card = Card(ground=AGE_PANEL_FILL)
-    inset = AGE_PANEL_INSET
-    card.d.rounded_rectangle(
-        [inset * card.w * SS, inset * card.h * SS,
-         (1 - inset) * card.w * SS, (1 - inset) * card.h * SS],
-        AGE_PANEL_RADIUS * card.w * SS,
-        outline=AGE_PANEL_EDGE, width=max(1, int(SS)))
-    # The line the tree stands on. Short, soft, and the same family as the
-    # keyline — it is a floor, not a rule under a heading.
-    card.rect((0.30, AGE_BASE_Y - 0.004, 0.70, AGE_BASE_Y + 0.006),
-              AGE_GROUND_FILL, radius=0.005)
     tree(card, stage)
     card.text_above(text, AGE_NUMERAL_SIZE, numeral_bottom(stage))
     return card
@@ -660,16 +745,17 @@ def main():
     for name in ("key", "cup", "star", "moon"):
         put(box(name), "box_open_" + name)
 
-    for r, round_spec in enumerate(CHANGE, start=1):
-        for i, (colour, form) in enumerate(round_spec["flash"], start=1):
-            put(plain(colour, form), "chg%d_f%d" % (r, i))
-        after = round_spec["after"]
-        put(plain(after["colour"], after["form"],
-                  rot=after.get("rot", 0.0), r=after.get("r", 0.30)),
-            "chg%d_x" % r)
+    # Every letter a round draws, its own name on it. The unchanged three
+    # slots of a step are the same files their flash held, so a round writes
+    # five files rather than eight.
+    for round_spec in LETTERS:
+        for spec in round_spec["flash"] + [round_spec["after"]]:
+            name = letter_name(*spec)
+            if name not in written:
+                put(letter_card(*spec), name)
 
-    put(dot_grid(False), "odd_base")
-    put(dot_grid(True), "odd_diff")
+    for slot in range(1, UMBRELLA_SLOTS + 1):
+        put(umbrella_card(slot == UMBRELLA_ODD), "umb_s%d" % slot)
 
     for card_id, text, colour in INKS:
         put(word(text, 76, colour), card_id)
