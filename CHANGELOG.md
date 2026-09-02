@@ -549,3 +549,6 @@ bottom.
 
 ## 2026-09-02 — claude/brain-funnel-5
 - brain v5: intro + round pill + timeout polish + difficulty
+
+## 2026-09-02 — claude/brain-funnel-6
+- brain v6: positioning chip + share + retest ritual
