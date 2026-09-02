@@ -552,3 +552,6 @@ bottom.
 
 ## 2026-09-02 — claude/brain-funnel-6
 - brain v6: positioning chip + share + retest ritual
+
+## 2026-09-02 — claude/brain-funnel-7
+- brain v7: gliding pill + blue styling + intro brain + timed_out purchase
