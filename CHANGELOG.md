@@ -546,3 +546,6 @@ bottom.
 
 ## 2026-09-02 — claude/brain-report
 - brain: report profile + timing tracking — purchasable
+
+## 2026-09-02 — claude/brain-funnel-5
+- brain v5: intro + round pill + timeout polish + difficulty
