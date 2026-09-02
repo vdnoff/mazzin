@@ -337,7 +337,7 @@ check("  and a tap clears it",
       "stopStepTimer();" in body("choose"))
 out_fn = body("timeOut")
 check("running out is a tap on the card the config named",
-      "choose(item, card);" in out_fn and "timedOut = true;" in out_fn)
+      "choose(item, cardFor(item));" in out_fn and "timedOut = true;" in out_fn)
 check("  and never a second one on a step already answered",
       "stepTimer.step !== step || picking" in out_fn)
 check("the screen is marked while the clock is on it, and unmarked after",
@@ -415,9 +415,9 @@ check("the auto-advance mode's keyframes are still exactly the five it had",
       sorted(re.findall(r"@keyframes (mid-[\w-]+)", CSS))
       == ["mid-appear", "mid-breathe", "mid-rise", "mid-spark", "mid-spin"],
       str(sorted(re.findall(r"@keyframes (mid-[\w-]+)", CSS))))
-check("  and every keyframe this branch added is in its own family",
+check("  and every keyframe these branches added is in their own family",
       sorted(re.findall(r"@keyframes (mz-[\w-]+)", CSS))
-      == ["mz-count-in", "mz-label-in", "mz-lid"],
+      == ["mz-count-in", "mz-label-in", "mz-lid", "mz-timeup-in"],
       str(sorted(re.findall(r"@keyframes (mz-[\w-]+)", CSS))))
 
 print("\n--- 2. the domain axes ---")
@@ -499,6 +499,95 @@ check("  and a swipe payload is still the closed set of three",
       str(sorted(tracking.SWIPE_EXTRA_KEYS)))
 
 OWNER = "brain.json"
+
+print("\n--- 6. a step that says which round it is ---")
+kick_fn = body("setStepKicker")
+check("the line is gated on the step naming one",
+      'var text = (st && st.kicker) || "";' in kick_fn
+      and "if (!text) {" in kick_fn and "node.hidden = true;" in kick_fn)
+check("  and no node is built for a walk that names none",
+      "if (!node) {" in kick_fn and 'elm("p", "step-kicker")' in kick_fn
+      and "el.stepKicker = node;" in kick_fn)
+check("it goes above the question, inside the stage",
+      "el.stage.insertBefore(node, el.caption);" in kick_fn)
+check("  and is refilled on every step rather than left standing",
+      "node.textContent = text;" in kick_fn
+      and "setStepKicker(st);" in body("renderStep"))
+check("  before the caption, so the two are drawn in the order they read",
+      body("renderStep").index("setStepKicker(st);")
+      < body("renderStep").index("setCaption("))
+check("the caption itself is untouched",
+      "el.caption.textContent = text;" in body("setCaption")
+      and 'el.caption.classList.add("is-enter")' in body("setCaption"))
+kick_rule = re.search(r"\.step-kicker \{(.*?)\n\}", CSS, re.S)
+check("the stylesheet sets it as the interstitial's kicker is set",
+      kick_rule is not None
+      and "text-transform: uppercase;" in kick_rule.group(1)
+      and "letter-spacing: 0.08em;" in kick_rule.group(1)
+      and "color: var(--accent);" in kick_rule.group(1))
+
+print("\n--- 7. the clock running out, said out loud ---")
+check("the beat has a length of its own",
+      "var TIMEUP_MS = 900;" in ENGINE)
+up_fn = body("showTimeUp")
+check("the cover is built only where there are cards to cover",
+      "if (!el.cards) return null;" in up_fn
+      and 'elm("div", "step-timeup")' in up_fn)
+check("  drawn inside the card row, which is the positioned box",
+      "el.cards.appendChild(over);" in up_fn
+      and re.search(r"\.step-timeup \{[^}]*position: absolute;", CSS, re.S)
+      is not None
+      and re.search(r"^\.cards \{[^}]*position: relative;", CSS, re.S | re.M)
+      is not None)
+check("  a cross of two bars rather than a glyph",
+      up_fn.count('mark.appendChild(elm("i"));') == 2
+      and ".step-timeup-mark i:first-child { transform: rotate(45deg); }"
+      in CSS
+      and ".step-timeup-mark i:last-child { transform: rotate(-45deg); }"
+      in CSS)
+check("  and one line, off the funnel's own copy",
+      'words("swipe.timeup_line", "Time\\u2019s up")' in up_fn)
+out_fn = body("timeOut")
+check("it is reached only from a step that carried a clock",
+      "if (!stepTimer || stepTimer.step !== step || picking) return;" in out_fn
+      and "st && st.timer_ms" in body("stepTimerMs"))
+check("  the clock is stopped before the cover goes up",
+      out_fn.index("stopStepTimer();") < out_fn.index("showTimeUp()"))
+check("a tap while the cover is up does nothing",
+      "picking = true;" in out_fn
+      and out_fn.index("picking = true;") < out_fn.index("showTimeUp()")
+      and "if (picking || !pair.length) return;" in body("choose"))
+check("  and the cover takes the pointer as well",
+      re.search(r"\.step-timeup \{[^}]*z-index: 9;", CSS, re.S) is not None)
+check("the beat lifts, and then the answer goes in unchanged",
+      "over.parentNode.removeChild(over);" in out_fn
+      and "picking = false;" in out_fn
+      and out_fn.index("picking = false;")
+      < out_fn.index("choose(item, cardFor(item));")
+      and "}, over ? TIMEUP_MS : 0);" in out_fn)
+check("  with the same word recorded as before",
+      "timedOut = true;" in out_fn
+      and "if (timingTracked() && timedOut) extra.timed_out = true;"
+      in body("swipeExtra"))
+timeup_rules = [r for r in RULES if "step-timeup" in r or "step-kicker" in r]
+check("every rule the two additions bring is scoped to its own class",
+      timeup_rules
+      and all(r.startswith((".step-timeup", ".step-kicker")) for r in
+              timeup_rules),
+      str([r for r in timeup_rules
+           if not r.startswith((".step-timeup", ".step-kicker"))]))
+check("no funnel but the memory game names either key",
+      not [n for n, cfg in CONFIGS.items() if n != OWNER
+           and ([s for s in (cfg.get("swipe") or {}).get("steps", [])
+                 if s.get("kicker")]
+                or (cfg.get("swipe") or {}).get("timeup_line"))],
+      str([n for n, cfg in CONFIGS.items() if n != OWNER
+           and ([s for s in (cfg.get("swipe") or {}).get("steps", [])
+                 if s.get("kicker")]
+                or (cfg.get("swipe") or {}).get("timeup_line"))]))
+check("  and the one that does names both",
+      all(s.get("kicker") for s in CONFIGS[OWNER]["swipe"]["steps"])
+      and CONFIGS[OWNER]["swipe"].get("timeup_line"))
 
 print("\n--- and only the funnel that asked for them can reach them ---")
 # /brain is that funnel and arrived a phase after this file did. What is

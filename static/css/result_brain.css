@@ -234,6 +234,56 @@ body:has(.result-module) {
   color: var(--br-muted);
 }
 
+/* --- the reason to keep reading ---------------------------------------------- */
+
+/* One sentence and one control, straight under the number. Everything a page
+   puts between a figure and the reason to act on it is a reason to stop
+   reading, so there is nothing between them. */
+.br-urge {
+  margin: 18px 0 0;
+  text-align: center;
+}
+
+.br-urge-line {
+  margin: 0 0 14px;
+  font-size: 17px;
+  line-height: 1.4;
+  font-weight: 700;
+  color: var(--br-ink);
+}
+
+/* A full-width button, and the second loudest thing on the page after the
+   number itself. It is not a payment control and must never read as one: it
+   is the accent's own colour rather than the pay button's ground, and what it
+   does is move the page. The button that takes money is engine.js's own and
+   lives in the offer card. */
+.br-urge-cta {
+  display: block;
+  width: 100%;
+  padding: 16px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--br-lux);
+  color: #fff;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 6px 18px rgba(59, 125, 216, 0.28);
+}
+
+.br-urge-cta:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 10px rgba(59, 125, 216, 0.26);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .br-urge-cta:active { transform: none; }
+}
+
 /* --- e) the frames they tapped ---------------------------------------------- */
 
 .br-taps {
