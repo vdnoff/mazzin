@@ -4807,3 +4807,148 @@ body.is-locked { overflow: hidden; }
   font-size: 14px;
   cursor: pointer;
 }
+
+/* --- the pill that follows the reader --------------------------------------- */
+
+/* One pill for the whole walk, over the top of whichever screen is up. Each
+   screen that names a round renders its own copy of the pill and hides it;
+   what the reader sees is the single node below, moved between the two
+   positions those copies mark out.
+
+   Nothing here can reach a funnel that did not ask for the pill: engine.js
+   builds this layer only where `swipe.round_pill` is set, and the slot class
+   only goes on a pill it is drawing.
+
+   Absolute against the initial containing block rather than fixed, so that a
+   page which scrolls carries the pill with it — the slot it is sitting over
+   scrolls too, and a fixed pill would come away from it. */
+.pill-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Two nodes rather than one, because a single element has one transform and
+   this needs two: the carrier travels, the pill inside it beats. */
+.pill-float {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+}
+
+.pill-float .step-kicker.is-pill { margin: 0; }
+
+/* The copy each screen draws for itself. It is never seen; what it is for is
+   its box, which is why this is opacity and not `visibility` or `display` —
+   both of those would take the space with it and the question under it would
+   jump by the pill's height on every screen change. */
+.step-kicker.is-slot { opacity: 0; }
+
+/* One beat when the round changes. Played on the inner node so it cannot
+   disturb the translate the carrier is holding. */
+.pill-float .step-kicker.is-pill.is-pulse {
+  animation: mz-pill-pulse 400ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes mz-pill-pulse {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* Opted out of motion: the pill still moves between screens, because where it
+   is IS the information — it is over the round the reader is in. What comes
+   off is the travel between the two and the beat at the end of it. */
+@media (prefers-reduced-motion: reduce) {
+  .pill-float { transition: none !important; }
+  .pill-float .step-kicker.is-pill.is-pulse { animation: none; }
+}
+
+/* The memorise screen's kicker while it is drawing the pill. The pill is an
+   inline-flex, so the line it sits on is what centres it. */
+.mid-kicker.is-pill-host {
+  text-align: center;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.mid-kicker.is-pill-host .step-kicker.is-pill { margin: 0; }
+
+/* --- the intro card's picture ----------------------------------------------- */
+
+/* Between the kicker and the headline, at a width the phone can take without
+   the card scrolling. engine.js builds no node unless `intro.image` names
+   one, so a funnel without a picture is untouched. */
+.intro-art {
+  display: block;
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  margin: 0 auto 18px;
+}
+
+/* --- brain: the game's own blue ---------------------------------------------- */
+
+/* Scoped to the one funnel's theme class, which engine.js sets from `theme`
+   in the config. The pill, the clock and the count-in are the three things a
+   reader looks at while a round is running, and on this funnel they are one
+   colour rather than the platform's warm accent — a memory game reads as an
+   instrument, not as an offer.
+
+   Deliberately narrow. The progress dots and the brand header are NOT in it:
+   those are the platform's own furniture and they say the same thing on every
+   funnel. Nothing below repaints `--accent`, which is what would reach them. */
+body.theme-brain {
+  --brain-ink: #0C447C;
+  --brain-line: #378ADD;
+  --brain-soft: #E6F1FB;
+  --brain-lift: #6FB4F0;
+}
+
+body.theme-brain .step-kicker.is-pill {
+  padding: 6px 6px 6px 15px;
+  border: 1.5px solid var(--brain-line);
+  background: var(--brain-soft);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  color: var(--brain-ink);
+}
+
+body.theme-brain .step-kicker-count {
+  background: var(--brain-line);
+  color: #fff;
+}
+
+/* The clock, in the same family. The warn state keeps its red: that one is
+   not decoration, it is the last two seconds. */
+body.theme-brain .mz-timer-track { background: var(--brain-soft); }
+
+body.theme-brain .mz-timer-fill {
+  background: linear-gradient(90deg,
+                              var(--brain-line) 0%,
+                              var(--brain-lift) 100%);
+  box-shadow: 0 0 8px 1px rgba(55, 138, 221, 0.34);
+}
+
+body.theme-brain .mid.is-flash .mz-prepare-count { color: var(--brain-line); }
+
+/* Breathing room. The column a round is played in is pill, question, clock,
+   cards, and the four of them arrived at four different distances from each
+   other because each was spaced against what it used to sit next to. Stated
+   once, here, as one rhythm: 26 under the pill, 18 under the question, 16
+   under the clock. */
+body.theme-brain .caption { margin: 26px 0 18px; }
+
+body.theme-brain .step.is-timed .mz-timer { margin: 0 0 16px; }
+
+/* The same rhythm on the memorise screens, so that moving between a step and
+   a flash is the pill moving and nothing else. */
+body.theme-brain .mid.is-flash .mid-line { margin-top: 26px; }
+
+body.theme-brain .mid.is-flash .mz-timer { margin: 18px auto 16px; }

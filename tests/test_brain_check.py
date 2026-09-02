@@ -380,13 +380,52 @@ heavy = [(p, os.path.getsize(os.path.join(ROOT, p.lstrip("/"))))
 check("every one of them is under twelve kilobytes", not heavy, str(heavy))
 check("  including the card the link preview uses",
       os.path.getsize(os.path.join(GALLERY, "og.webp")) < 12 * 1024)
+# The two files nobody has to answer a question about: the link preview, and
+# the illustration on the intro card. Neither is a game card, so neither is
+# held to the ceiling a game card is held to — a card is one of a pair the
+# reader is comparing under a clock, and what that ceiling buys is both of
+# them decoded before the clock starts.
+LOOSE = ("og.webp", "brain_intro.webp")
 check("nothing in the gallery is unreferenced",
       not [n for n in sorted(os.listdir(GALLERY))
            if "/static/galleries/brain/" + n not in set(paths)
-           and n != "og.webp"],
+           and n not in LOOSE],
       str([n for n in sorted(os.listdir(GALLERY))
            if "/static/galleries/brain/" + n not in set(paths)
-           and n != "og.webp"]))
+           and n not in LOOSE]))
+
+print("\n--- v7: the picture on the intro card ---")
+INTRO_ART = "/static/galleries/brain/brain_intro.webp"
+check("the intro card names a picture",
+      (cfg.get("intro") or {}).get("image") == INTRO_ART,
+      str((cfg.get("intro") or {}).get("image")))
+check("  and it is on disk",
+      os.path.exists(os.path.join(ROOT, INTRO_ART.lstrip("/"))))
+check("  under twenty-five kilobytes",
+      os.path.getsize(os.path.join(ROOT, INTRO_ART.lstrip("/"))) < 25 * 1024,
+      str(os.path.getsize(os.path.join(ROOT, INTRO_ART.lstrip("/")))))
+GEN = open(os.path.join(ROOT, "scripts/gen_brain_art.py"),
+           encoding="utf-8").read()
+check("  and the generator is what draws it",
+      "def brain_intro(" in GEN and 'put(brain_intro(), "brain_intro"' in GEN)
+
+print("\n--- v7: a memorise screen carries the round's own pill ---")
+flashes = [e for e in cfg["interstitials"] if e.get("template") == "flash"]
+check("every flash names a kicker",
+      flashes and all(e.get("kicker") for e in flashes), str(len(flashes)))
+check("  and it is the kicker of the step it opens, counter and all",
+      all(e["kicker"] == steps[e["after_step"]]["kicker"] for e in flashes),
+      str([(e["after_step"], e["kicker"]) for e in flashes
+           if e["kicker"] != steps[e["after_step"]]["kicker"]]))
+check("  so a flash before the third memory step still reads 1/4 of its round",
+      [e["kicker"] for e in flashes if e["after_step"] == 4]
+      == ["ROUND 1 · MEMORY · 3/4"],
+      str([e["kicker"] for e in flashes if e["after_step"] == 4]))
+check("the screens between rounds keep the line they had",
+      [e.get("kicker") for e in cfg["interstitials"]
+       if e.get("template") != "flash"] == ["Round 4 · Focus", "Computing"],
+      str([e.get("kicker") for e in cfg["interstitials"]
+           if e.get("template") != "flash"]))
 
 print("\n--- the four types, won the way engine.js wins them ---")
 
@@ -1044,7 +1083,8 @@ check("  weakest round first",
 print("\n--- v5: the card before the first question ---")
 intro = cfg.get("intro") or {}
 check("the funnel carries an intro block",
-      sorted(intro) == ["chips", "cta", "foot", "headline", "kicker", "sub"],
+      sorted(intro) == ["chips", "cta", "foot", "headline", "image", "kicker",
+                        "sub"],
       str(sorted(intro)))
 check("  named as the thing the ad promised",
       intro.get("kicker") == "BRAIN AGE CHALLENGE"

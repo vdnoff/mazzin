@@ -532,24 +532,31 @@ check("nothing banned reached either the shape or the stub",
                               reports.BRAIN_BANNED) is None)
 
 print("\n--- v6: the rounds a clock answered, on the stored report ---")
-# Nothing sends these today. The checkout payload carries the choices and not
-# these, engine.js and payments.py are both closed this phase, and the ids
-# cannot be derived from the run — a reader may genuinely tap the card the
-# clock would have pressed, and a report that guessed would draw a cross over
-# a round somebody played. So the parameter exists, the write is proved, and
-# the absence is pinned as the thing it is.
+# The ids cannot be derived from the run: a reader may genuinely tap the card
+# the clock would have pressed, so a report that guessed would draw a cross
+# over a round somebody played. They travel explicitly or not at all — which
+# is why a purchase that names none still writes no key rather than an empty
+# one.
 choices, scores = run_of(3, age_tag="age_40")
 plain = reports.start_report(11, "brain", CFG["styles"][0]["id"], scores,
                              choices=choices)
-check("a purchase today carries no crossed rounds",
+check("a purchase that names none carries no crossed rounds",
       "timed_out" not in (plain.get("visuals") or {}),
       str(sorted(plain.get("visuals") or {})))
-check("  because nothing hands them over yet",
-      "timed_out" not in open(os.path.join(REPO, "payments.py"),
-                              encoding="utf-8").read())
-check("  and the client is still the only thing that holds them",
-      "timed_out: timedOutSteps.slice()," in open(
-          os.path.join(REPO, "static/js/engine.js"), encoding="utf-8").read())
+# v7. They reach the purchase now: the checkout body carries them, payments.py
+# validates them against the funnel and hands them to this same parameter.
+ENGINE = open(os.path.join(REPO, "static/js/engine.js"),
+              encoding="utf-8").read()
+PAY = open(os.path.join(REPO, "payments.py"), encoding="utf-8").read()
+check("  the free page still holds them",
+      "timed_out: timedOutSteps.slice()," in ENGINE)
+check("  the checkout body carries them from that same state",
+      "if (timedOutSteps.length) payload.timed_out = timedOutSteps.slice();"
+      in ENGINE)
+check("  payments.py checks them against the funnel before believing them",
+      "def _clean_timed_out(cfg, raw):" in PAY)
+check("  and hands them to this parameter",
+      "timed_out=timed_out," in PAY)
 given = reports.start_report(12, "brain", CFG["styles"][0]["id"], scores,
                              choices=choices, timed_out=["ink", "count"])
 check("handed them, the report stores them",

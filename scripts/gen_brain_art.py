@@ -49,7 +49,7 @@ Written into static/galleries/brain/ as WebP, quality 80, all well under the
 import math
 import os
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "static", "galleries", "brain")
@@ -758,6 +758,208 @@ def og_card():
     return card
 
 
+
+# --- the intro brain --------------------------------------------------------
+#
+# One illustration, drawn rather than traced: a flat side-profile brain in the
+# funnel's blues, facing left. It is the only picture on the intro screen and
+# it is displayed about 200px wide, so the silhouette does the work — the
+# frontal bulge, the temporal lobe hanging forward under its notch, the
+# cerebellum as a striated wedge inside the back-lower edge. The folds are
+# texture, not anatomy, and the rule they follow is that they never cross:
+# each family is one curve stepped along a direction, and the families are
+# clipped to regions that do not overlap.
+
+# Drawn well over the ~200px it is shown at, so a 3x screen still
+# gets a clean edge, and no further: it carries an alpha channel,
+# which costs more per pixel than every other file here.
+INTRO = (680, 527)
+BRAIN_FILL = (214, 232, 249)
+BRAIN_FOLD = (55, 138, 221)     # #378ADD, the pill's border
+BRAIN_EDGE = (26, 86, 155)
+
+
+def curve_bez(p0, p1, p2, p3, n=44):
+    """A cubic through four control points, as a list of points."""
+    out = []
+    for i in range(n + 1):
+        t = i / float(n)
+        u = 1 - t
+        out.append((u * u * u * p0[0] + 3 * u * u * t * p1[0]
+                    + 3 * u * t * t * p2[0] + t * t * t * p3[0],
+                    u * u * u * p0[1] + 3 * u * u * t * p1[1]
+                    + 3 * u * t * t * p2[1] + t * t * t * p3[1]))
+    return out
+
+
+def curve_path(w, h, spec):
+    """Several cubics, written in fractions, joined into one point list."""
+    pts = []
+    for i, seg in enumerate(spec):
+        got = curve_bez(*[(p[0] * w, p[1] * h) for p in seg])
+        pts += got if i == 0 else got[1:]
+    return pts
+
+
+CEREBRUM = [
+    [(.08, .44), (.09, .19), (.28, .06), (.47, .06)],
+    [(.47, .06), (.70, .06), (.90, .19), (.92, .42)],
+    [(.92, .42), (.94, .60), (.86, .74), (.74, .79)],
+    [(.74, .79), (.66, .82), (.58, .81), (.52, .76)],
+    [(.52, .76), (.47, .72), (.45, .79), (.38, .81)],
+    [(.38, .81), (.29, .83), (.21, .77), (.19, .69)],
+    [(.19, .69), (.18, .63), (.20, .59), (.17, .555)],
+    [(.17, .555), (.13, .53), (.085, .50), (.08, .44)],
+]
+CEREBELLUM = [
+    [(.60, .58), (.72, .58), (.78, .65), (.72, .73)],
+    [(.72, .73), (.64, .78), (.56, .75), (.55, .68)],
+    [(.55, .68), (.55, .62), (.57, .58), (.60, .58)],
+]
+SYLVIAN = [[(.175, .555), (.26, .625), (.34, .625), (.41, .655)]]
+TUCK = [[(.55, .62), (.60, .57), (.70, .57), (.78, .63)]]
+
+# Each family: the first fold, the direction the rest of it steps in, how
+# many, how much the ends pull in as it steps, and the region it is clipped
+# to. The regions tile the silhouette, so no fold of one family can ever meet
+# a fold of another.
+FOLD_FAMILIES = [
+    dict(pts=[(.20, .30), (.34, .16), (.55, .15), (.70, .24)],
+         step=(.000, .060), count=6, squeeze=.03,
+         region=[(.28, .00), (.70, .00), (.70, .58), (.28, .52)]),
+    dict(pts=[(.13, .26), (.23, .32), (.28, .42), (.25, .49)],
+         step=(.048, -.008), count=4, squeeze=.00,
+         region=[(.05, .00), (.28, .00), (.28, .52), (.05, .48)]),
+    dict(pts=[(.22, .66), (.32, .72), (.44, .69), (.54, .74)],
+         step=(.000, .036), count=3, squeeze=.02,
+         region=[(.10, .55), (.58, .60), (.58, .95), (.10, .95)]),
+    dict(pts=[(.72, .18), (.85, .28), (.87, .44), (.80, .56)],
+         step=(-.048, .004), count=5, squeeze=.00,
+         region=[(.70, .00), (1.0, .00), (1.0, .58), (.70, .58)]),
+]
+
+# Where each fold breaks. A gyrus is not a contour line: it stops, and
+# another one starts beside it. Read as (start, run) along the curve.
+FOLD_CUTS = [((.00, .46), (.52, .48)),
+             ((.00, .30), (.36, .28), (.70, .30)),
+             ((.06, .40), (.52, .44)),
+             ((.00, .34), (.40, .32), (.78, .22)),
+             ((.10, .44), (.60, .38)),
+             ((.00, .26), (.32, .34), (.72, .26))]
+
+
+def fold_wander(curve, amp, period, phase):
+    """A curve pushed off its own line by a slow sine along its normals, so
+    that two folds of a family stay apart without staying parallel."""
+    out = []
+    n = len(curve)
+    for i, (x, y) in enumerate(curve):
+        px, py = curve[max(0, i - 1)]
+        nx, ny = curve[min(n - 1, i + 1)]
+        tx, ty = nx - px, ny - py
+        length = math.hypot(tx, ty) or 1.0
+        k = amp * math.sin(i / float(n) * period * math.tau + phase)
+        out.append((x + (ty / length) * k, y - (tx / length) * k))
+    return out
+
+
+def fold_snip(curve, cuts):
+    """One fold broken into the two or three `cuts` name, with gaps."""
+    n = len(curve)
+    out = []
+    for start, run in cuts:
+        a = int(start * n)
+        b = min(n, a + int(run * n))
+        if b - a > 3:
+            out.append(curve[a:b])
+    return out
+
+
+def fold_family(w, h, pts, step, count, squeeze):
+    """Every stroke one family contributes, already broken and wandering."""
+    out = []
+    for k in range(count):
+        moved = []
+        for i, (x, y) in enumerate(pts):
+            f = i / 3.0
+            sx = x + step[0] * k + squeeze * k * (0.5 - abs(f - 0.5)) * \
+                (1 if x > 0.5 else -1)
+            sy = y + step[1] * k
+            moved.append((sx * w, sy * h))
+        curve = fold_wander(curve_bez(*moved), 0.011 * h,
+                            2.4 + (k % 3) * 0.7, k * 1.6)
+        out += fold_snip(curve, FOLD_CUTS[k % len(FOLD_CUTS)])
+    return out
+
+
+def brain_intro():
+    card = Card(INTRO[0], INTRO[1])
+    # The one card with no ground of its own. Every other file here is a
+    # square the reader compares against another square, so it carries the
+    # off-white they all sit on; this one sits on the intro screen and has to
+    # take that screen's background, whatever a funnel sets it to.
+    card.img = Image.new("RGBA", card.img.size, (0, 0, 0, 0))
+    card.d = ImageDraw.Draw(card.img)
+    w, h = card.w * SS, card.h * SS
+    poly = curve_path(w, h, CEREBRUM)
+    mask = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(mask).polygon(poly, fill=255)
+
+    body = Image.new("RGB", (w, h), BRAIN_FILL)
+    cere = curve_path(w, h, CEREBELLUM)
+
+    # The folds go on their own layer so they can be kept off the outline,
+    # out of the cerebellum's wedge and off the fissure in one stamp.
+    folds = Image.new("L", (w, h), 0)
+    stroke = max(3, int(0.0105 * h))
+    for spec in FOLD_FAMILIES:
+        layer = Image.new("L", (w, h), 0)
+        ld = ImageDraw.Draw(layer)
+        for curve in fold_family(w, h, spec["pts"], spec["step"],
+                                 spec["count"], spec["squeeze"]):
+            ld.line(curve, fill=255, width=stroke, joint="curve")
+        region = Image.new("L", (w, h), 0)
+        ImageDraw.Draw(region).polygon(
+            [(x * w, y * h) for x, y in spec["region"]], fill=255)
+        folds = ImageChops.lighter(folds, ImageChops.multiply(layer, region))
+
+    keep = Image.new("L", (w, h), 255)
+    ImageDraw.Draw(keep).polygon(cere, fill=0)
+    ImageDraw.Draw(keep).line(curve_path(w, h, SYLVIAN), fill=0,
+                              width=int(0.030 * h), joint="curve")
+    inner = mask.copy()
+    ImageDraw.Draw(inner).line(poly + [poly[0]], fill=0,
+                               width=int(0.026 * h), joint="curve")
+    folds = ImageChops.multiply(ImageChops.multiply(folds, keep), inner)
+    body.paste(Image.new("RGB", (w, h), BRAIN_FOLD), (0, 0), folds)
+
+    # The cerebellum's own striations: tighter than a fold, and all one way.
+    cmask = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(cmask).polygon(cere, fill=255)
+    strip = body.copy()
+    sd = ImageDraw.Draw(strip)
+    for i in range(11):
+        y = (0.576 + i * 0.0175) * h
+        sd.line(curve_bez((0.50 * w, y + 0.015 * h),
+                          (0.62 * w, y - 0.004 * h),
+                          (0.74 * w, y - 0.004 * h),
+                          (0.84 * w, y + 0.012 * h)),
+                fill=BRAIN_FOLD, width=max(2, int(0.0046 * h)),
+                joint="curve")
+    body.paste(strip, (0, 0), cmask)
+
+    card.img.paste(body, (0, 0), mask)
+    card.d.line(poly + [poly[0]], fill=BRAIN_EDGE, width=int(0.013 * h),
+                joint="curve")
+    card.d.line(curve_path(w, h, SYLVIAN), fill=BRAIN_FOLD,
+                width=int(0.009 * h), joint="curve")
+    # The cerebellum is the same material as everything else: no second
+    # colour and no border, only the line where it tucks under the occipital.
+    card.d.line(curve_path(w, h, TUCK), fill=BRAIN_EDGE,
+                width=int(0.008 * h), joint="curve")
+    return card
+
+
 # --- main -------------------------------------------------------------------
 
 def main():
@@ -815,6 +1017,7 @@ def main():
     for style_id, name, form, colour in TYPES:
         put(share_card(name, form, colour), "share_" + style_id)
 
+    put(brain_intro(), "brain_intro", quality=72)
     put(og_card(), "og", quality=70)
 
     biggest = max(written,

@@ -95,6 +95,11 @@ def post(cfg_override=None, body=None):
     return res, rec.kwargs
 
 
+# A sentinel for "the body does not carry this key at all", which is a
+# different case from carrying it empty.
+_ABSENT = object()
+
+
 def product(kwargs):
     return kwargs["line_items"][0]["price_data"]["product_data"]
 
@@ -270,6 +275,80 @@ def main():
           == "/static/creative_src/stripe_tile.png",
           (live["checkout"]["product_image"],
            served["checkout"]["product_image"]))
+
+    print("\n--- the rounds a clock answered, on the way to the purchase ---")
+    # The one field on this payload the server is not allowed to be relaxed
+    # about. The tag scores and the tapped images steer copy, so a body that
+    # sends nonsense there is dropped and the sale goes through; this list is
+    # the difference between a report that tells somebody a round ran out on
+    # them and one that tells them they answered it, and nothing on this side
+    # can check it against the run — the card a clock picks is a card they
+    # could have picked themselves. So the shape is checked, and a body whose
+    # shape is wrong is refused rather than half-believed.
+    brain = config.load_funnel("brain")
+    brain_ids = [st["id"] for st in brain["swipe"]["steps"]]
+    brain_body = {
+        "funnel": "brain",
+        "session_id": "11111111-2222-4333-8444-555555555556",
+        "result_style": brain["styles"][0]["id"],
+        "tag_scores": {"mem_hit": 3},
+    }
+
+    def brain_post(timed_out):
+        body = dict(brain_body)
+        if timed_out is not _ABSENT:
+            body["timed_out"] = timed_out
+        return post(body=body)
+
+    res, kw = brain_post(["spa2", "ink"])
+    check("a valid list is accepted", res.status_code == 200, res.status_code)
+    check("  and rides Stripe's metadata as the ids themselves",
+          kw["metadata"].get("timed_out") == "spa2,ink",
+          kw["metadata"].get("timed_out"))
+    check("  which the webhook reads back and re-checks from scratch",
+          payments._read_timed_out(brain, kw["metadata"]["timed_out"])
+          == ["spa2", "ink"],
+          str(payments._read_timed_out(brain, kw["metadata"]["timed_out"])))
+    check("a body naming none sends no key at all rather than an empty one",
+          "timed_out" not in brain_post(_ABSENT)[1]["metadata"],
+          sorted(brain_post(_ABSENT)[1]["metadata"]))
+    check("an id this funnel does not have is a 400",
+          brain_post(["spa2", "not_a_step"])[0].status_code == 400,
+          brain_post(["spa2", "not_a_step"])[0].status_code)
+    check("  and so is one that is not a string",
+          brain_post(["spa2", 7])[0].status_code == 400,
+          brain_post(["spa2", 7])[0].status_code)
+    check("the same id twice is a 400",
+          brain_post(["spa2", "spa2"])[0].status_code == 400,
+          brain_post(["spa2", "spa2"])[0].status_code)
+    check("something that is not a list at all is a 400",
+          brain_post("spa2")[0].status_code == 400
+          and brain_post({"spa2": True})[0].status_code == 400,
+          brain_post("spa2")[0].status_code)
+    check("  a list longer than the walk itself is a 400",
+          brain_post(brain_ids + ["spa2"])[0].status_code == 400,
+          brain_post(brain_ids + ["spa2"])[0].status_code)
+    check("  and every id in the walk at once is not",
+          brain_post(brain_ids)[0].status_code == 200,
+          brain_post(brain_ids)[0].status_code)
+
+    # And the far end: what the webhook hands `start_report` is what the
+    # stored report draws its crosses from.
+    import database
+    real = (database.execute, database.query_all, database.query_one)
+    database.execute = lambda *a, **kw: None
+    database.query_all = lambda *a, **kw: []
+    database.query_one = lambda *a, **kw: None
+    try:
+        import reports
+        row = reports.start_report(
+            9901, "brain", brain["styles"][0]["id"], {"mem_hit": 3},
+            timed_out=payments._read_timed_out(brain, "spa2,ink"))
+        check("and the report stores them where the page draws crosses from",
+              (row.get("visuals") or {}).get("timed_out") == ["spa2", "ink"],
+              str((row.get("visuals") or {}).get("timed_out")))
+    finally:
+        database.execute, database.query_all, database.query_one = real
 
     print("\n%d checks, %d failed" % (checks[0], len(fails)))
     for f in fails:
