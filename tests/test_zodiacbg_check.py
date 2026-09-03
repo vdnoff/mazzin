@@ -2138,20 +2138,52 @@ for text in NEW_MINIMAL:
 check("and every one of them is walked by the config-wide banned scan",
       all(any(v == text for _p, v in STRINGS) for text in NEW_MINIMAL))
 
-print("\n--- the layout split, and the arm that rides on the events ---")
-# The same mechanism zodiac30 runs, config and all. An arm is
-# {id, enabled, weight, name, template}; assignment reads the session id and
-# nothing else, so a reader who reloads sees the same page; and the arm is
-# reported once as `paywall_variant`, which joins to every later event —
-# paywall_view, pay_tap, and the purchase the webhook writes — on that same
-# session id. Nothing about the money moves between the arms.
-check("two arms, both live",
-      len(ARMS) == 2 and all(a.get("enabled") is True for a in ARMS),
-      str(ARMS))
-check("  a fifty-fifty split",
-      [a.get("weight") for a in ARMS] == [1, 1],
+print("\n--- the layout split, switched off ---")
+# The experiment is over and every reader gets `minimal`. Off the way zodiac30
+# switches an arm off: weight 0 rather than a deleted block, so the arm and
+# the reason it exists stay readable in the config and coming back is one
+# number. The template itself is untouched in the module and its stylesheet.
+#
+# What weight 0 does, precisely: `variantPool` drops the arm, one arm left is
+# not a test and is returned unconditionally, so no session id can reach
+# `boxes` — and neither can ?arm=boxes, because the override only ever
+# returns an arm the pool already carries.
+
+
+def pool_of(config):
+    """`variantPool`, mirrored: enabled, and weighing something."""
+    return [a for a in (config.get("paywall_variants") or [])
+            if a and a.get("id") and a.get("enabled") is not False
+            and isinstance(a.get("weight"), int)
+            and not isinstance(a.get("weight"), bool) and a["weight"] > 0]
+
+
+check("both arms are still declared", len(ARMS) == 2, str(ARMS))
+check("  and one of them is in the pool",
+      [a["id"] for a in pool_of(cfg)] == ["minimal"],
+      str([a["id"] for a in pool_of(cfg)]))
+check("  so every reader gets the minimal layout",
+      len(pool_of(cfg)) == 1 and pool_of(cfg)[0]["template"] == "minimal",
+      str(pool_of(cfg)))
+check("  boxes weighs nothing, which is what takes it out",
+      [a.get("weight") for a in ARMS] == [1, 0],
       str([a.get("weight") for a in ARMS]))
-check("  the arm it has been serving, and the new one",
+check("  it is retired rather than deleted, and says how to come back",
+      ARMS[1].get("note") and "set this weight to 1" in ARMS[1]["note"],
+      str(ARMS[1].get("note")))
+check("  which is how zodiac30 retires an arm too",
+      any(a.get("weight") == 0 and a.get("note")
+          for a in twin.get("paywall_variants") or []),
+      str([(a["id"], a.get("weight")) for a in
+           twin.get("paywall_variants") or []]))
+check("  one arm in the pool is rendered unconditionally, not hashed",
+      "if (pool.length === 1) return pool[0];" in RESULT_JS)
+check("  so the override cannot reach the retired arm either",
+      "if (pool[i].id === want) return pool[i];" in RESULT_JS
+      and "forcedVariant(variantPool(ctx.cfg))" in RESULT_JS)
+check("  and the template it names is still in the module and the sheet",
+      'template === "boxes"' in RESULT_JS and ".zr-boxes-grid" in CSS)
+check("  the arm it is serving, and the one it is not",
       [(a["id"], a.get("template")) for a in ARMS]
       == [("minimal", "minimal"), ("boxes", "boxes")],
       str([(a["id"], a.get("template")) for a in ARMS]))

@@ -3464,9 +3464,10 @@
     {
       "id": "boxes",
       "enabled": true,
-      "weight": 1,
+      "weight": 0,
       "name": "The chapters first",
-      "template": "boxes"
+      "template": "boxes",
+      "note": "Retired from the split. Weight 0 takes it out of the pool entirely, so no session reaches it and ?arm=boxes cannot reach it either — the override only ever returns an arm the pool already carries. One arm in the pool is not a test and is rendered unconditionally, so every reader gets `minimal`. To run the split again, set this weight to 1 and deploy; the template itself is untouched in result_zodiac.js and its stylesheet."
     }
   ],
   "sale": {
