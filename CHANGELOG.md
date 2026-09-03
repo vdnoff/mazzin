@@ -576,3 +576,6 @@ bottom.
 
 ## 2026-09-03 — claude/zodiac-bg-boxes-scope
 - boxes: full minimal top, boxes below rarity, denser tiles
+
+## 2026-09-03 — claude/zodiac-bg-boxes-off
+- zodiac-bg: boxes A/B off, 100% minimal
