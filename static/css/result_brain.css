@@ -120,6 +120,30 @@ body:has(.result-module) {
   color: var(--br-ink);
 }
 
+/* The score is one figure and a denominator rather than a word and a figure,
+   so it sits on one line: the "/100" is the part that makes NN a score rather
+   than a quantity of something, and it belongs beside the number at a size
+   that does not compete with it. */
+.br-points {
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+}
+
+.br-points-of {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--br-muted);
+}
+
+/* Two heroes on the delivered page — the score they last saw, and the age
+   they bought — so the second one closes up against the first rather than
+   opening a gap the size of a new section between them. */
+.br-score + .br-score { margin-top: 12px; }
+
 .br-age-note {
   margin: 10px 0 0;
   font-size: 15px;

@@ -638,6 +638,103 @@ check("the mistakes ceiling moved up rather than down",
 check("  so every answer that parsed before still parses",
       len(reports._stub_for("mistakes", "X")["items"]) <= 7)
 
+print("\n--- v10: the score the free page showed, stored beside the age ---")
+
+
+def module_body(name):
+    """One top-level function's body out of the result module."""
+    hit = re.search(r"function %s\([^)]*\)\s*\{(.*?)\n  \}" % name,
+                    MODULE, re.S)
+    return hit.group(1) if hit else ""
+
+
+RULE = BLOCK["score"]
+
+
+def client_score(misses):
+    """The module's own arithmetic, restated."""
+    raw = RULE["base"] + RULE["per_miss"] * misses
+    return max(RULE["floor"], min(RULE["base"], reports._js_round(raw)))
+
+
+check("the report carries the constants rather than a copy of them",
+      "rule = block.get(\"score\")" in open(
+          os.path.join(REPO, "reports.py"), encoding="utf-8").read())
+for per_round, label, want_room in ((4, "a perfect run", 0),
+                                    (0, "an all-miss run", 4),
+                                    (2, "half of every round", 4),
+                                    (3, "one miss each", 0)):
+    choices, scores = run_of(per_round)
+    got = reports._brain_numbers(CFG, CFG["styles"][0], scores)
+    misses = BLOCK["scored"] - per_round * len(DOMAINS)
+    check("  %-18s scores %3d/100" % (label, client_score(misses)),
+          got["score"] == client_score(misses), str(got["score"]))
+    check("    with room in %d of the four" % want_room,
+          got["room_rounds"] == want_room, str(got["room_rounds"]))
+    check("    and elite is %s" % (client_score(misses) >= RULE["elite_min"]),
+          got["elite"] == (client_score(misses) >= RULE["elite_min"]),
+          str(got["elite"]))
+choices, scores = run_of(4)
+perfect = reports._brain_numbers(CFG, CFG["styles"][0], scores)
+check("a perfect run is a hundred, elite, with room in none of the four",
+      perfect["score"] == 100 and perfect["elite"] is True
+      and perfect["room_rounds"] == 0, str(perfect["score"]))
+choices, scores = run_of(0)
+bottom = reports._brain_numbers(CFG, CFG["styles"][0], scores)
+check("  and an all-miss run stops at the floor rather than below it",
+      bottom["score"] == RULE["floor"]
+      and RULE["base"] + RULE["per_miss"] * BLOCK["scored"] < RULE["floor"],
+      "%s from a raw %s" % (bottom["score"],
+                            RULE["base"] + RULE["per_miss"] * BLOCK["scored"]))
+check("the three travel on the stored report, next to the age",
+      all(key in perfect for key in ("score", "room_rounds", "elite", "age")))
+choices, scores = run_of(3, age_tag="age_40")
+row = reports.start_report(21, "brain", CFG["styles"][0]["id"], scores,
+                           choices=choices)
+stored = (row.get("visuals") or {}).get("brain") or {}
+check("  and the stored row is the single record of them",
+      stored.get("score") == 76 and stored.get("room_rounds") == 0
+      and stored.get("elite") is False and stored.get("age") == 38,
+      str({k: stored.get(k) for k in ("score", "room_rounds", "elite",
+                                      "age")}))
+check("    which the module reads rather than working out again",
+      'typeof stored.score === "number" ? stored.score : null' in MODULE
+      and "scoreOf(" not in module_body("storedProfile"))
+
+print("\n--- v10: the age is the report's to reveal ---")
+check("the chapter the report opens on opens on the number",
+      "THE NUMBER, AND WHAT THEY RUN ON" in reports._BRAIN_SHAPES["dna"]
+      and "first time they meet the age" in reports._BRAIN_SHAPES["dna"])
+check("  and is told not to reach for a population that does not exist",
+      "no average, no percentile, no share of people"
+      in reports._BRAIN_SHAPES["dna"])
+check("  while the shape it must return is the one it always was",
+      reports.SHAPE["dna"]["narrative"][1:3] == (1, 3))
+check("the page's kicker names the first card on it, which is the score",
+      "kicker(copy, lean, copy.score_kicker)" in module_body("delivered")
+      and MODULE.count("kicker(copy, lean, copy.score_kicker)") == 2)
+check("  and the age card carries its own lead, one card down",
+      'elm("p", "br-score-lead", lead)' in module_body("score")
+      and "var lead = copy.kicker" in module_body("score")
+      and CFG["result_copy"]["kicker"] == "Your brain age")
+check("the age-delta lines are the delivered page's alone",
+      "ageLine(copy, data)" in module_body("score")
+      and "ageLine(" not in module_body("scoreCard")
+      and "ageLine(" not in module_body("render"))
+check("  and they are still the same three, chosen the same way",
+      all(("copy." + key) in MODULE for key in
+          ("younger_line", "level_line", "older_line", "age_line_bare")))
+check("the other profiles are untouched by any of it",
+      "score" not in reports.KITCHEN_PROFILE
+      and "score" not in reports.ZODIAC_PROFILE
+      and "score" not in reports.PERSONA_PROFILE
+      and reports._BRAIN_SHAPES["dna"] is not reports.SHAPE["dna"])
+check("  and nothing but /brain reaches the score at all",
+      reports._brain_numbers({"brain_age": {"scored": 16}},
+                             CFG["styles"][0], {"mem_hit": 4}) is not None
+      and "score" not in reports._brain_numbers(
+          {"brain_age": {"scored": 16}}, CFG["styles"][0], {"mem_hit": 4}))
+
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for line in fails:
     print("  FAIL " + line)

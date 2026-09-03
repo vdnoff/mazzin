@@ -3200,7 +3200,7 @@ around it, no code fence, no extra keys."""
 _BRAIN_SHAPES = {
     "dna": '''"dna": {
   "narrative": [
-    "WHAT THEY RUN ON: one paragraph on the round this reader is strongest at, what that looks like away from a screen, and the one thing it already earns them in an ordinary week (max %(narrative)d chars)",
+    "THE NUMBER, AND WHAT THEY RUN ON: open on the brain age this run came to. Until this page the reader has only seen their score out of a hundred, so this is the first time they meet the age \u2014 name it, say it is a reading of these eighteen rounds and of nothing else, and say that it moves. No comparison to anybody else: no average, no percentile, no share of people. Then, in the same paragraph, the round this reader is strongest at and what that looks like away from a screen (max %(narrative)d chars)",
     "THE PAIR THAT CARRIES THEM: one paragraph on how their two best rounds work together and what that combination is good for. Name both (max %(narrative)d chars)",
     "WHERE IT GOES NEXT: one paragraph on how to point that strength at the round with the most room in it. This is the bridge to the rest of the plan (max %(narrative)d chars)"
   ],
@@ -5246,7 +5246,7 @@ def _brain_numbers(cfg, style, tag_scores):
     weakest = min(BRAIN_DOMAINS,
                   key=lambda key: (counts[key], BRAIN_DOMAINS.index(key)))
 
-    return {
+    out = {
         "age": age,
         "hits": hits,
         "misses": misses,
@@ -5258,6 +5258,44 @@ def _brain_numbers(cfg, style, tag_scores):
         "domains": dict(block.get("domains") or {}),
         "type": (style or {}).get("id") or "",
         "type_name": (style or {}).get("name") or "",
+    }
+    out.update(_brain_score(block, counts, misses))
+    return out
+
+
+def _brain_score(block, counts, misses):
+    """The score the free page showed, off the same misses the age is off.
+
+    The free page gives the score away and this report reveals the age, so the
+    two are one piece of arithmetic on one run: the reader has to be able to
+    put the number they were shown next to the number they paid for and see
+    that they agree.
+
+    Every constant is the config's, and there is nothing in here about anybody
+    else. The score is not a percentile, a rank or a comparison — it is what
+    sixteen scored rounds came to — and the copy this block feeds is held to
+    the same rule.
+    """
+    rule = block.get("score") or {}
+    if not rule:
+        return {}
+    base = rule.get("base")
+    if not isinstance(base, (int, float)):
+        return {}
+    score = _js_round(base + (rule.get("per_miss") or 0) * misses)
+    floor = rule.get("floor")
+    if isinstance(floor, (int, float)):
+        score = max(int(floor), score)
+    score = min(int(base), score)
+    cap = rule.get("room_round_max_hits")
+    cap = int(cap) if isinstance(cap, (int, float)) else 2
+    elite_min = rule.get("elite_min")
+    return {
+        "score": score,
+        # How many of the four rounds the reader dropped points in. Counted,
+        # never ranked, and never set against anybody's average.
+        "room_rounds": sum(1 for key in BRAIN_DOMAINS if counts[key] <= cap),
+        "elite": isinstance(elite_min, (int, float)) and score >= elite_min,
     }
 
 

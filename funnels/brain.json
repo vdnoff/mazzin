@@ -1155,7 +1155,7 @@
       },
       "reveal": {
         "open_slot": 2,
-        "open_ms": 5000,
+        "open_ms": 3000,
         "close_ms": 600,
         "closed_img": "/static/galleries/brain/box_closed.webp",
         "swap_ms": 900,
@@ -1206,7 +1206,7 @@
       },
       "reveal": {
         "open_slot": 5,
-        "open_ms": 5000,
+        "open_ms": 3000,
         "close_ms": 600,
         "closed_img": "/static/galleries/brain/box_closed.webp",
         "swap_ms": 700,
@@ -1261,7 +1261,7 @@
       },
       "reveal": {
         "open_slot": 0,
-        "open_ms": 5000,
+        "open_ms": 3000,
         "close_ms": 600,
         "closed_img": "/static/galleries/brain/box_closed.webp",
         "swap_ms": 550,
@@ -1320,7 +1320,7 @@
       },
       "reveal": {
         "open_slot": 3,
-        "open_ms": 5000,
+        "open_ms": 3000,
         "close_ms": 600,
         "closed_img": "/static/galleries/brain/box_closed.webp",
         "swap_ms": 350,
@@ -2055,6 +2055,13 @@
     "min": 20,
     "max": 80,
     "scored": 16,
+    "score": {
+      "base": 100,
+      "per_miss": -6,
+      "elite_min": 90,
+      "floor": 5,
+      "room_round_max_hits": 2
+    },
     "domains": {
       "mem": "Memory",
       "spa": "Spatial",
@@ -2223,6 +2230,7 @@
     "title": "Your {style} Refresh",
     "proof_line": "Built from your 16 rounds",
     "manifest": [
+      "Your brain age — the exact number your 18 rounds add up to",
       "The two-minute drill that lifts your weakest round first",
       "The two habits to swap, and the five strengths to train first",
       "The technique that turns the round you already win into the other three",
@@ -2325,11 +2333,15 @@
   },
   "result_copy": {
     "kicker": "Your brain age",
+    "score_kicker": "Your score",
     "blend_note": "even split",
     "taps_caption": "Read from your rounds:",
     "balance_title": "Your four rounds",
     "head_title": "Your brain type",
     "score_lead": "Scored just now",
+    "score_room": "Clear room in {k} of your 4 rounds.",
+    "score_room_none": "Close run — the points you dropped are all in the details.",
+    "score_elite": "Elite run. See what's behind it inside.",
     "head_caption": "Four rounds, scored off your own taps.",
     "strength_lead": "You said you felt {mood}. Here is where to start.",
     "offer_sub": "Your complete refresh plan — once, forever.",
@@ -2339,9 +2351,6 @@
     "younger_line": "{n} years younger than your age group — keep it there",
     "level_line": "right where your age group sits — one week of drills moves it",
     "older_line": "{n} years older — and the good news is that this is the easiest number to lower",
-    "urge_older": "That's {n} years above your group — and it's the easiest number to lower.",
-    "urge_level": "Right where your group sits. One week of drills pushes it under.",
-    "urge_younger": "Ahead of your group. Keep it there — and push it lower.",
     "improve_cta": "Improve now",
     "age_line_bare": "and this number moves with practice",
     "purpose_map": {
@@ -2366,7 +2375,7 @@
       "bridge": "Your plan, written for {type}:",
       "offer_head": "Your improvement plan — built from your 18 rounds",
       "share_cta": "Challenge a friend",
-      "share_line": "My brain is {n}. What's yours?",
+      "share_line": "I scored {n}/100. Beat me?",
       "share_copied": "Copied — send it",
       "retest_line": "In one week: play it again. The number moves.",
       "essence": {
@@ -2419,6 +2428,11 @@
       "unlock_head": "What lowers your brain age:",
       "unlock": [
         {
+          "id": "age",
+          "key": "Your brain age",
+          "line": "the exact number your 18 rounds add up to"
+        },
+        {
           "id": "materials",
           "line": "the two-minute drill that lifts your weakest round — start it tomorrow"
         },
@@ -2445,7 +2459,7 @@
         "line": "play it again in a week — the number moves"
       }
     },
-    "improve_foot": "Follow the 7-day plan, play again — the number moves."
+    "improve_foot": "Follow the 7-day plan, play again — the score climbs."
   },
   "share_cards": [
     {

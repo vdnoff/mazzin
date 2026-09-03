@@ -927,23 +927,33 @@
   // it is a label following the reader, and a springy curve reads as a
   // notification rather than as the same object moving.
   var PILL_EASE = "cubic-bezier(0.25, 0.1, 0.25, 1)";
-  // A correction after the glide has landed. Short, because it is a few
-  // pixels; eased, because a few pixels jumping under the reader's eye is
-  // the one thing the correction pass exists to avoid.
+  // The one correction a screen change is allowed, applied when the glide
+  // ends and the slot has moved under it. Short, because it is a few pixels;
+  // eased, because a few pixels jumping under the reader's eye is the whole
+  // reason the correction exists.
   var PILL_SETTLE_MS = 140;
+  // How long the pill waits for the screen it landed on to stop moving. The
+  // screens play their own entrances and a memorise screen counts itself in,
+  // so the slot is still travelling for a moment after the pill arrives; this
+  // is the cap on how long that is given before it settles anyway.
+  var PILL_QUIET_MS = 250;
+  // A move longer than this share of the screen's diagonal is not a move.
+  // Nothing on this walk travels that far, so a target that says so is a
+  // measurement taken of the wrong thing — a rect read before layout, a
+  // screen that was still hidden — and the pill is placed rather than flown.
+  var PILL_MAX_TRAVEL = 0.6;
+
   var pillText = "";          // what it should say, set by whoever owns it
   var pillShown = null;       // what it is actually saying now
   var pillPos = null;         // where it is now, in the layer's coordinates
   var pillRound = null;       // the round it last named, for the pulse
   var pillPulse = null;
-  var pillSettle = null;
-  var pillLands = 0;          // when the glide in flight is due to finish
+  var pillAim = null;         // the one frame a re-aim is queued on
+  var pillSnap = false;       // that queued aim is a placement, not a glide
+  var pillFlight = false;     // a glide is running right now
+  var pillQuiet = null;       // the settle waiting for the screen to hold still
+  var pillLanded = null;      // the net under `transitionend`
   var pillIdle = null;
-  // How many frames after a move the pill keeps checking where its slot
-  // actually ended up. Half a second: long enough to cover the entrance the
-  // screen it landed on is playing, short enough to be over before the next
-  // screen change.
-  var PILL_SETTLE_FRAMES = 30;
 
   function pillNode() {
     if (el.pill) return el.pill;
@@ -963,6 +973,13 @@
     node.addEventListener("animationend", function () {
       node.classList.remove("is-pulse");
     });
+    // The end of a glide is the one moment a correction is allowed, and the
+    // only moment the pill is known to be standing still.
+    carrier.addEventListener("transitionend", function (ev) {
+      if (ev.target !== carrier || ev.propertyName !== "transform") return;
+      pillFlight = false;
+      aimPill();
+    });
     carrier.appendChild(node);
     layer.appendChild(carrier);
     document.body.appendChild(layer);
@@ -971,12 +988,20 @@
     el.pill = node;
     // A memorise screen builds itself in phases — it counts in, shows its
     // frames, drops a lid — and the block those sit in is centred in the
-    // column, so the slot moves under the pill as each phase lands. Watched
-    // rather than guessed at: when that block changes size, the pill goes to
-    // where its slot now is, gliding there like any other move.
-    if (window.ResizeObserver) {
-      var body = document.querySelector("#screen-interstitial .mid-body");
-      if (body) new ResizeObserver(function () { movePill(); }).observe(body);
+    // column, so the slot moves under the pill as each phase lands.
+    //
+    // Watched as changes to the screen rather than as a resize of one box:
+    // the block the kicker sits in is `display: contents` on this funnel and
+    // so has no box to observe, and what actually moves the slot is a class
+    // going on and a grid being appended. Both are mutations. Everything goes
+    // through the same single aimer, so a phase change during a glide cannot
+    // write a second transform on the same frame.
+    var mid = document.getElementById("screen-interstitial");
+    if (mid && window.MutationObserver) {
+      new MutationObserver(function () { aimPill(); }).observe(mid, {
+        childList: true, subtree: true,
+        attributes: true, attributeFilter: ["class", "hidden"]
+      });
     }
     return node;
   }
@@ -991,60 +1016,124 @@
 
   function hidePill() {
     if (el.pillLayer) el.pillLayer.hidden = true;
+    // Where it was is no longer a place it can come from. The next time it is
+    // wanted it is PLACED, never flown in from wherever the walk left it.
     pillPos = null;
     pillShown = null;
+    pillFlight = false;
+    clearTimeout(pillQuiet);
   }
 
-  // Called after the screen it belongs to is on, never before: a box measured
-  // on a `display: none` subtree is all zeroes, and the glide would be a jump
-  // from the corner of the page.
-  //
-  // A screen with no pill on it is left alone rather than hidden — the step
-  // screen sets its own text while the interstitial is still up, and a hide
-  // there would drop the pill out from under the glide it is halfway through.
+  // The one way anything asks the pill to move. Everything — a step change,
+  // a screen opening, the memorise screen changing shape under it, a rotation
+  // — comes through here, and here queues exactly one measurement on the next
+  // frame. Two callers on one frame are one move; nothing writes a transform
+  // twice in a frame; and the measurement happens after the browser has laid
+  // the new screen out rather than in the same task that mounted it.
+  function aimPill(instant) {
+    if (!roundPill()) return;
+    if (instant) pillSnap = true;
+    if (pillAim || !window.requestAnimationFrame) {
+      if (!window.requestAnimationFrame) placePill();
+      return;
+    }
+    pillAim = requestAnimationFrame(function () {
+      pillAim = null;
+      placePill();
+    });
+  }
+
+  // Kept for the callers that read as "put the pill here": one name for the
+  // request, one place that answers it.
   function movePill(instant) {
+    aimPill(instant);
+  }
+
+  // Whether the pill is somewhere a glide could honestly start from: on the
+  // page, on screen, and with a position this run actually measured. Anything
+  // else is placed instead — a pill that animates in from off the edge is the
+  // bug this answers, and it does not matter which of the ways of losing a
+  // position produced it.
+  function pillGrounded() {
+    if (!pillPos || !el.pillLayer || el.pillLayer.hidden) return false;
+    var box = el.pillFloat.getBoundingClientRect();
+    if (!box.width || !box.height) return false;
+    return box.right > 0 && box.bottom > 0
+      && box.left < (window.innerWidth || 0)
+      && box.top < (window.innerHeight || 0);
+  }
+
+  function pillFar(x, y) {
+    var w = window.innerWidth || 0;
+    var h = window.innerHeight || 0;
+    var far = Math.sqrt(w * w + h * h) * PILL_MAX_TRAVEL;
+    var dx = pillPos.x - x;
+    var dy = pillPos.y - y;
+    return Math.sqrt(dx * dx + dy * dy) > far;
+  }
+
+  // The measurement and the single write. Never called directly: `aimPill`
+  // owns when this runs, which is once a frame at most.
+  function placePill() {
     if (!roundPill() || !pillText) return;
+    var snap = pillSnap;
+    pillSnap = false;
     var slot = pillSlot();
     if (!slot) return;
     var node = pillNode();
+    var fresh = el.pillLayer.hidden;
     el.pillLayer.hidden = false;
     fillPill(node, pillText);
     // Measured with this screen's own text already in it, so the two boxes
     // are the same width and what plays is a move rather than a move and a
-    // resize at the same time.
+    // resize at the same time. Rounded to whole pixels, so the pill comes to
+    // rest on the same grid the slot under it is drawn on.
     var base = el.pillLayer.getBoundingClientRect();
     var box = slot.getBoundingClientRect();
-    var x = box.left - base.left;
-    var y = box.top - base.top;
-    var still = !!pillPos
-      && Math.abs(pillPos.x - x) <= 1 && Math.abs(pillPos.y - y) <= 1;
-    // Nothing to say and nowhere to go. Returned on rather than re-applied,
-    // because a step change calls this twice — once as the kicker is filled
-    // and once with the screen on — and the second call would otherwise
-    // cancel the glide the first one just started and swallow its beat.
+    var x = Math.round(box.left - base.left);
+    var y = Math.round(box.top - base.top);
+    var still = !!pillPos && pillPos.x === x && pillPos.y === y;
+    // Nothing to say and nowhere to go.
     if (still && pillText === pillShown) return;
+    // A glide is running. Its target has moved, which is what the settle at
+    // the end of it is for — writing a second transform now would restart the
+    // travel from wherever it had got to, which is the tremble.
+    if (pillFlight && !snap) return;
     pillShown = pillText;
-    // A pill that is arriving rather than moving has nowhere to come from,
-    // and animating it would slide it in from the corner of the page. So a
-    // first appearance, and a return after the pill was sent away between
-    // rounds, are placed rather than played.
-    var moved = !instant && !!pillPos && !still;
-    // Two screens that put the pill in the same place get the text swap and
-    // nothing else. Animating a zero-length move is a pause with no movement
-    // in it, which reads as the page having stalled.
+    // Placed rather than played: a first appearance, a return after the pill
+    // was sent away, a rotation, a pill that is not on screen to move from,
+    // and a "move" longer than anything on this walk could be.
+    var moved = !snap && !fresh && pillGrounded() && !still && !pillFar(x, y);
     el.pillFloat.style.transition = moved
       ? "transform " + PILL_GLIDE_MS + "ms " + PILL_EASE
       : "none";
     el.pillFloat.style.transform = "translate(" + x + "px, " + y + "px)";
+    if (!moved) {
+      // Read back, so the placement is committed before anything can put a
+      // transition back on the element. Without it a transition set later in
+      // the same frame can catch the write and play it as a move.
+      void el.pillFloat.offsetWidth;
+    }
     pillPos = { x: x, y: y };
+    pillFlight = moved;
+    // `transitionend` is what normally clears this. A transition that is
+    // interrupted — the element hidden, the property overwritten — never
+    // reports one, and a pill that believed itself in flight for the rest of
+    // the walk would stop following its slot entirely.
+    clearTimeout(pillLanded);
+    if (moved) {
+      pillLanded = setTimeout(function () {
+        pillFlight = false;
+        aimPill();
+      }, PILL_GLIDE_MS + 80);
+    }
     // Promoted for the length of the move and put back down after it. Left on
     // permanently it is a compositor layer held for a walk the pill spends
     // most of standing still, which is the cost this hint is supposed to buy
     // its way out of.
     liftPill(moved ? PILL_GLIDE_MS : 0);
-    pillLands = moved ? nowMs() + PILL_GLIDE_MS : 0;
     beatPill(pillParts(pillText).label, moved ? PILL_GLIDE_MS : 0);
-    settlePill(PILL_SETTLE_FRAMES);
+    quietPill();
   }
 
   function liftPill(travel) {
@@ -1056,45 +1145,25 @@
     }, travel + PILL_SETTLE_MS + 120);
   }
 
-  // Where a slot ends up is not known on the frame the move starts. The
-  // screen it is on is still playing its entrance, and a memorise screen is
-  // still deciding whether it is showing a count-in or six frames — both of
-  // which shift the block the slot sits in by a few pixels after the fact.
-  //
-  // So the target is re-read over the frames that follow and the pill is
-  // quietly re-aimed. The transition is left exactly as it was: a target that
-  // moves mid-glide is retargeted, never replayed, and by the time the glide
-  // lands the slot has stopped moving under it.
-  function settlePill(left) {
-    if (window.cancelAnimationFrame) cancelAnimationFrame(pillSettle);
-    if (left <= 0 || !window.requestAnimationFrame) return;
-    pillSettle = requestAnimationFrame(function () {
-      if (!el.pillLayer || el.pillLayer.hidden) return;
-      var slot = pillSlot();
-      if (slot) {
-        var base = el.pillLayer.getBoundingClientRect();
-        var box = slot.getBoundingClientRect();
-        var x = box.left - base.left;
-        var y = box.top - base.top;
-        if (!pillPos || Math.abs(pillPos.x - x) > 0.5
-            || Math.abs(pillPos.y - y) > 0.5) {
-          // Mid-glide the correction rides the glide's own transition, so the
-          // pill simply arrives somewhere slightly different and the reader
-          // sees one movement. Once it has landed the correction gets a short
-          // ease of its own rather than being written straight in, because a
-          // transform assigned with no transition is a jump.
-          if (nowMs() >= pillLands) {
-            el.pillFloat.style.transition =
-              "transform " + PILL_SETTLE_MS + "ms " + PILL_EASE;
-          }
-          liftPill(0);
-          el.pillFloat.style.transform =
-            "translate(" + x + "px, " + y + "px)";
-          pillPos = { x: x, y: y };
-        }
-      }
-      settlePill(left - 1);
-    });
+  // The screen the pill just landed on is still moving: it plays its own
+  // entrance, and a memorise screen decides between a count-in and its frames
+  // a moment later. Rather than re-reading the target on thirty frames and
+  // correcting on any of them, the pill waits for that screen to stop — its
+  // own animation ending, or a quarter of a second, whichever comes first —
+  // and then aims once.
+  function quietPill() {
+    clearTimeout(pillQuiet);
+    var screen = document.querySelector(".screen.is-active");
+    var done = function () {
+      clearTimeout(pillQuiet);
+      if (screen) screen.removeEventListener("animationend", done);
+      // Through the aimer, so it is still one measurement on one frame; and
+      // through `pillFlight`, so a glide still in the air keeps its target
+      // until it lands.
+      aimPill();
+    };
+    if (screen) screen.addEventListener("animationend", done);
+    pillQuiet = setTimeout(done, PILL_QUIET_MS);
   }
 
   // The round a pill is naming, as the reader sees it. The stylesheet sets

@@ -143,7 +143,7 @@
       }
     }
 
-    return {
+    var out = {
       age: age,
       hits: hits,
       misses: misses,
@@ -152,12 +152,44 @@
       age_mid: mid,
       delta: mid === null ? null : age - mid
     };
+    return scoreOf(out, block);
+  }
+
+  // The score, out of a hundred, off the same misses the age is off. It is
+  // the number the free page shows and the age is the number the report
+  // reveals, so the two have to be the same arithmetic on the same run —
+  // which is why this takes the profile the age was computed into rather
+  // than counting anything again.
+  //
+  // Every constant is the config's. Nothing here invents a threshold, and
+  // nothing anywhere on this page compares the reader to anybody else: there
+  // is no population behind this number, and a page that implied one would be
+  // making it up.
+  function scoreOf(data, block) {
+    var rule = (block && block.score) || null;
+    if (!rule) return data;
+    var raw = (rule.base || 0) + (rule.per_miss || 0) * data.misses;
+    var floor = typeof rule.floor === "number" ? rule.floor : 0;
+    var top = typeof rule.base === "number" ? rule.base : 100;
+    data.score = Math.max(floor, Math.min(top, Math.round(raw)));
+    // A round "has room" when it is one the reader dropped points in. The
+    // line under the score counts them; it does not rank them.
+    var cap = typeof rule.room_round_max_hits === "number"
+      ? rule.room_round_max_hits : 2;
+    var room = 0;
+    DOMAINS.forEach(function (key) {
+      if ((data.counts[key] || 0) <= cap) room += 1;
+    });
+    data.room_rounds = room;
+    data.elite = typeof rule.elite_min === "number"
+      && data.score >= rule.elite_min;
+    return data;
   }
 
   // --- a) the kicker ---------------------------------------------------------
 
-  function kicker(copy, lean) {
-    var line = elm("p", "br-kicker", copy.kicker || "Your brain age");
+  function kicker(copy, lean, words) {
+    var line = elm("p", "br-kicker", words || copy.kicker || "Your brain age");
     // The minimal arm frames it. Real nodes rather than pseudo-elements so
     // the ornament is something a check can find and a translation can drop,
     // and appended only for that arm — the plain kicker is one text node and
@@ -236,13 +268,49 @@
     return copy.level_line || "right where your age group sits";
   }
 
+  // What the score says about the run, in one line. Two sentences and no
+  // third: a run with room in it is told how many rounds have room, and a run
+  // without is told it was close. Neither is told where it sits against
+  // anybody else, because nobody else has taken this.
+  function scoreLine(copy, data) {
+    if (data.elite) return copy.score_elite || "";
+    if (!data.room_rounds) return copy.score_room_none || "";
+    return fill(copy.score_room || "Clear room in {k} of your 4 rounds.",
+                { k: data.room_rounds });
+  }
+
+  // The free page's hero. The same lux treatment the age had, on the number
+  // this page is allowed to give away — the age is the thing the report opens
+  // on, and a page that has already said it has nothing left to sell.
+  function scoreCard(ctx, copy, data, lean) {
+    if (typeof data.score !== "number") return null;
+    var card = elm("section", "br-score" + (lean ? " is-lux" : ""));
+    if (lean) corners(card);
+    var lead = copy.score_lead || "";
+    if (lead) card.appendChild(elm("p", "br-score-lead", lead));
+    var big = elm("p", "br-age br-points");
+    big.appendChild(elm("span", "br-age-number", String(data.score)));
+    // Out of what the table says a clean run is worth, not out of a hundred
+    // this file decided on: the score is the config's arithmetic and so is
+    // the number it is out of.
+    var top = ((ageBlock(ctx) || {}).score || {}).base;
+    big.appendChild(elm("span", "br-points-of",
+                        "/" + (typeof top === "number" ? top : 100)));
+    card.appendChild(big);
+    var line = scoreLine(copy, data);
+    if (line) card.appendChild(elm("p", "br-age-note", line));
+    var chips = lean ? chipRow(ctx, data) : null;
+    if (chips) card.appendChild(chips);
+    return card;
+  }
+
   function score(ctx, copy, data, lean) {
     var card = elm("section", "br-score" + (lean ? " is-lux" : ""));
     if (lean) corners(card);
     // Its own label, not the type card's. The kicker above already says what
     // the number is; this says when it was measured, which is the part that
     // makes it feel earned rather than looked up.
-    var lead = copy.score_lead || "";
+    var lead = copy.kicker || "";
     if (lead) card.appendChild(elm("p", "br-score-lead", lead));
     var big = elm("p", "br-age");
     big.appendChild(elm("span", "br-age-word", "Your brain is"));
@@ -250,11 +318,6 @@
     card.appendChild(big);
     var line = ageLine(copy, data);
     if (line) card.appendChild(elm("p", "br-age-note", line));
-    // The four rounds, on the arm that draws no bars. Inside the hero rather
-    // than under it: they are what the number was made of, and a screen
-    // between the figure and its own working is a screen too many.
-    var chips = lean ? chipRow(ctx, data) : null;
-    if (chips) card.appendChild(chips);
     return card;
   }
 
@@ -350,16 +413,6 @@
   // ahead of their group, one on it, and one behind. None of the three is
   // told anything is wrong with them — the one furthest behind is told they
   // have the most to gain, which is both kinder and true.
-  function urgeLine(copy, data) {
-    if (!data || data.delta === null) {
-      return copy.urge_level || "";
-    }
-    if (data.delta <= -LEVEL_BAND) return copy.urge_younger || "";
-    if (data.delta >= LEVEL_BAND) {
-      return fill(copy.urge_older || "", { n: Math.abs(data.delta) });
-    }
-    return copy.urge_level || "";
-  }
 
   // The offer card, by id, at the moment the button is pressed rather than
   // when it is built: the card is drawn after this block and holding a
@@ -367,11 +420,15 @@
   // button that does nothing on the one render where an earlier section threw.
   var OFFER_ID = "br-offer";
 
-  function urge(ctx, copy, data) {
-    var line = urgeLine(copy, data);
-    if (!line) return null;
+  // v10 dropped the line this block used to open with. It said the same thing
+  // three ways — for a reader ahead of, on, or behind their age group — which
+  // meant printing the age delta on the page whose whole job is now to make
+  // the age worth paying for. Those three sentences are the report's, under
+  // the number they are about; here the line under the score has already said
+  // what the run left on the table, and this block is the way to act on it.
+  function urge(ctx, copy) {
+    if (!copy.improve_cta) return null;
     var block = elm("section", "br-urge");
-    block.appendChild(elm("p", "br-urge-line", line));
     var button = elm("button", "br-urge-cta",
                      copy.improve_cta || "Improve now");
     button.type = "button";
@@ -430,7 +487,11 @@
   function share(ctx, data) {
     var table = profileCopy(ctx);
     if (!table.share_cta || !table.share_line || !data) return null;
-    var text = fill(table.share_line, { n: data.age });
+    // The score, not the age. This is the free page's control and the free
+    // page does not know the age out loud — and a number out of a hundred is
+    // the one a friend can be beaten on, which is what the line asks for.
+    if (typeof data.score !== "number") return null;
+    var text = fill(table.share_line, { n: data.score });
     var url = shareUrl(ctx);
 
     var block = elm("section", "br-share");
@@ -1036,10 +1097,10 @@
     // minimal layout adds hangs off one class and the plain page keeps its
     // stylesheet without matching any of them.
     root.classList.toggle("is-minimal", lean);
-    root.appendChild(kicker(copy, lean));
-    // The order this page argues in: the number, what it means against their
-    // own age group, which rounds produced it, who that makes them, the
-    // frames they tapped, and then the price.
+    root.appendChild(kicker(copy, lean, copy.score_kicker));
+    // The order this page argues in: the score, what it says about the run,
+    // which rounds produced it, the frames they tapped, and then the price —
+    // where the age is the first thing named.
     //
     // On the minimal arm the four bars are gone — the chips inside the hero
     // are the same four numbers, and a page whose argument is brevity cannot
@@ -1047,7 +1108,16 @@
     // doing the offer's job above the offer. What the report contains is said
     // once, on the offer card, next to the price.
     if (data) {
-      root.appendChild(score(ctx, copy, data, lean));
+      // v10: the score, not the age. The age is what the report opens on, and
+      // a free page that has already printed it has nothing left to reveal.
+      // Nothing on this page draws it — not the hero, not the closing line,
+      // not the share text.
+      //
+      // A config with no score table has no score to show, and gets the page
+      // it had before this: the funnel this file was written for has one.
+      var head = scoreCard(ctx, copy, data, lean)
+        || score(ctx, copy, data, lean);
+      root.appendChild(head);
       if (!lean) root.appendChild(bars(ctx, copy, data));
       // The one thing on this page somebody would say out loud, and the way
       // to say it. Above the reason to buy, because a reader who has just
@@ -1058,7 +1128,7 @@
       // What the number is worth doing something about, and the way down to
       // the offer. Straight under the figure, because everything between a
       // number and the reason to act on it is a reason to stop reading.
-      var push = urge(ctx, copy, data);
+      var push = urge(ctx, copy);
       if (push) root.appendChild(push);
     }
     // The type card is gone from this page. It is still computed — the report
@@ -1100,7 +1170,14 @@
       scored: stored.scored || 16,
       counts: counts,
       age_mid: typeof stored.age_mid === "number" ? stored.age_mid : null,
-      delta: typeof stored.delta === "number" ? stored.delta : null
+      delta: typeof stored.delta === "number" ? stored.delta : null,
+      // Off the report, never recomputed here: the stored row is the single
+      // record of what this run scored, and a page that worked it out again
+      // would be a second opinion about a number somebody paid for.
+      score: typeof stored.score === "number" ? stored.score : null,
+      room_rounds: typeof stored.room_rounds === "number"
+        ? stored.room_rounds : 0,
+      elite: !!stored.elite
     };
   }
 
@@ -1247,11 +1324,20 @@
     root.classList.toggle("is-minimal", lean);
     var note = deliveryNote(ctx, copy);
     if (note) root.appendChild(note);
-    root.appendChild(kicker(copy, lean));
+    // The score's kicker here too, because the score is the first card under
+    // it. The age has its own lead on its own card, one card further down,
+    // which is where the reveal belongs.
+    root.appendChild(kicker(copy, lean, copy.score_kicker));
     // The same head as before the money, off the block the report carries.
     // The reader paid on this page and the thing they bought has to open as
     // the same document, so the arm travels with it.
     if (data) {
+      // The page the reader last saw, and then the thing they bought. The
+      // score first because it is what they were looking at when they paid,
+      // and the age straight under it because it is the answer to the
+      // question the whole funnel asked.
+      var top = scoreCard(ctx, copy, data, lean);
+      if (top) root.appendChild(top);
       root.appendChild(score(ctx, copy, data, lean));
       if (!lean) root.appendChild(bars(ctx, copy, data));
     }
