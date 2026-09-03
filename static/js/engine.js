@@ -878,16 +878,24 @@
   }
 
   // "ROUND 2 · SPATIAL · 3/4" is two things: where in the walk this is, and
-  // how far through that round. The split is on the LAST separator rather
-  // than the first, because the round's own name has one in it — and a
-  // kicker with no separator at all is all label and no counter, which is
-  // what the two warm-up steps would be if they were written that way.
+  // how far through that round. The split is on the LAST separator, because
+  // the round's own name has one in it.
+  //
+  // What follows that separator becomes the badge only if it LOOKS like a
+  // counter. The rule used to be "whatever follows it", which was right for
+  // every kicker a step carries and wrong for every kicker a screen between
+  // rounds carries: "ROUND 4 · FOCUS" would have put the word FOCUS in the
+  // badge. Both that and "COMPUTING" are all label and no counter now, which
+  // is also what the two warm-up steps would be if they were written that way.
+  var PILL_COUNT_RE = /^\d+\/\d+$/;
+
   function pillParts(text) {
     var cut = text.lastIndexOf("·");
-    return {
-      label: (cut < 0 ? text : text.slice(0, cut)).trim(),
-      count: (cut < 0 ? "" : text.slice(cut + 1)).trim()
-    };
+    var tail = cut < 0 ? "" : text.slice(cut + 1).trim();
+    if (!PILL_COUNT_RE.test(tail)) {
+      return { label: text.trim(), count: "" };
+    }
+    return { label: text.slice(0, cut).trim(), count: tail };
   }
 
   function fillPill(node, text) {
@@ -912,14 +920,25 @@
   // Everything here is gated on `swipe.round_pill`. A funnel that does not
   // ask for the pill never builds the layer, and nothing in this section can
   // reach it.
-  var PILL_GLIDE_MS = 350;
+  var PILL_GLIDE_MS = 450;
   var PILL_PULSE_MS = 400;
+  // The travel's own curve: slow to leave, slow to arrive, and no overshoot
+  // at either end. The pill is not a thing being thrown across the screen,
+  // it is a label following the reader, and a springy curve reads as a
+  // notification rather than as the same object moving.
+  var PILL_EASE = "cubic-bezier(0.25, 0.1, 0.25, 1)";
+  // A correction after the glide has landed. Short, because it is a few
+  // pixels; eased, because a few pixels jumping under the reader's eye is
+  // the one thing the correction pass exists to avoid.
+  var PILL_SETTLE_MS = 140;
   var pillText = "";          // what it should say, set by whoever owns it
   var pillShown = null;       // what it is actually saying now
   var pillPos = null;         // where it is now, in the layer's coordinates
   var pillRound = null;       // the round it last named, for the pulse
   var pillPulse = null;
   var pillSettle = null;
+  var pillLands = 0;          // when the glide in flight is due to finish
+  var pillIdle = null;
   // How many frames after a move the pill keeps checking where its slot
   // actually ended up. Half a second: long enough to cover the entrance the
   // screen it landed on is playing, short enough to be over before the next
@@ -1014,12 +1033,27 @@
     // nothing else. Animating a zero-length move is a pause with no movement
     // in it, which reads as the page having stalled.
     el.pillFloat.style.transition = moved
-      ? "transform " + PILL_GLIDE_MS + "ms cubic-bezier(0.22, 0.61, 0.36, 1)"
+      ? "transform " + PILL_GLIDE_MS + "ms " + PILL_EASE
       : "none";
     el.pillFloat.style.transform = "translate(" + x + "px, " + y + "px)";
     pillPos = { x: x, y: y };
+    // Promoted for the length of the move and put back down after it. Left on
+    // permanently it is a compositor layer held for a walk the pill spends
+    // most of standing still, which is the cost this hint is supposed to buy
+    // its way out of.
+    liftPill(moved ? PILL_GLIDE_MS : 0);
+    pillLands = moved ? nowMs() + PILL_GLIDE_MS : 0;
     beatPill(pillParts(pillText).label, moved ? PILL_GLIDE_MS : 0);
     settlePill(PILL_SETTLE_FRAMES);
+  }
+
+  function liftPill(travel) {
+    if (!el.pillFloat) return;
+    el.pillFloat.style.willChange = "transform";
+    clearTimeout(pillIdle);
+    pillIdle = setTimeout(function () {
+      if (el.pillFloat) el.pillFloat.style.willChange = "auto";
+    }, travel + PILL_SETTLE_MS + 120);
   }
 
   // Where a slot ends up is not known on the frame the move starts. The
@@ -1044,6 +1078,16 @@
         var y = box.top - base.top;
         if (!pillPos || Math.abs(pillPos.x - x) > 0.5
             || Math.abs(pillPos.y - y) > 0.5) {
+          // Mid-glide the correction rides the glide's own transition, so the
+          // pill simply arrives somewhere slightly different and the reader
+          // sees one movement. Once it has landed the correction gets a short
+          // ease of its own rather than being written straight in, because a
+          // transform assigned with no transition is a jump.
+          if (nowMs() >= pillLands) {
+            el.pillFloat.style.transition =
+              "transform " + PILL_SETTLE_MS + "ms " + PILL_EASE;
+          }
+          liftPill(0);
           el.pillFloat.style.transform =
             "translate(" + x + "px, " + y + "px)";
           pillPos = { x: x, y: y };
@@ -1051,6 +1095,22 @@
       }
       settlePill(left - 1);
     });
+  }
+
+  // The round a pill is naming, as the reader sees it. The stylesheet sets
+  // the pill in capitals, so a screen writing "Round 4 · Focus" and a step
+  // writing "ROUND 4 · FOCUS" are the same round on the page and have to be
+  // the same round here — otherwise the round that first appears on the
+  // screen between rounds beats twice, once there and once on the step after.
+  function roundKey(label) {
+    return label.replace(/\s+/g, " ").trim().toUpperCase();
+  }
+
+  // A beat says a new round starts now. The screen that comes up after the
+  // last step starts nothing: it changes the words on the pill and says
+  // nothing about them.
+  function pillBeats() {
+    return step < ((cfg && cfg.swipe && cfg.swipe.pairs_count) || 0);
   }
 
   // One beat when the round changes, and only then: the counter moving from
@@ -1062,13 +1122,15 @@
   // Played after the glide has landed rather than with it, so the two read as
   // one movement: it arrives, then it announces itself.
   function beatPill(label, delay) {
+    var key = roundKey(label);
     // The same round again — a counter tick, or the pill re-placed because a
     // screen settled under it — leaves whatever beat is already pending
     // alone. Only a change cancels one and schedules another.
-    if (label === pillRound) return;
-    pillRound = label;
+    if (key === pillRound) return;
+    pillRound = key;
     clearTimeout(pillPulse);
     if (el.pill) el.pill.classList.remove("is-pulse");
+    if (!pillBeats()) return;
     pillPulse = setTimeout(function () {
       if (!el.pill) return;
       // Removed, reflowed, added: the class may still be on the node from the
@@ -1622,18 +1684,21 @@
     return Math.max(AUTO_MIN_MS, Math.min(want, ceiling));
   }
 
-  // The line over an interstitial's headline. A memorise screen on a funnel
-  // that asked for the pill draws the pill — the same component the step
-  // screen draws, parsed the same way, so the counter a flash before step 3
-  // shows is the round's own 1/4. Every other interstitial, and every funnel
-  // without `swipe.round_pill`, renders exactly the line it always did.
-  function setMidKicker(entry, flash) {
+  // The line over an interstitial's headline. On a funnel that asked for the
+  // pill, EVERY interstitial draws it — the same component the step screen
+  // draws, parsed the same way — so that moving between a step and a screen
+  // between rounds is the pill moving and nothing else. A screen that names a
+  // round with no counter in it gets a pill with no badge in it.
+  //
+  // Every funnel without `swipe.round_pill` renders exactly the line it
+  // always did.
+  function setMidKicker(entry) {
     var text = (entry && entry.kicker) || "";
     var host = el.midKicker;
     if (!host) return;
     host.textContent = "";
     host.classList.remove("is-pill-host");
-    if (!(flash && roundPill() && text)) {
+    if (!(roundPill() && text)) {
       host.textContent = text;
       return;
     }
@@ -1655,7 +1720,7 @@
     // first screen's dismiss running against the second one's copy.
     clearTimeout(midTimer);
     midTimer = null;
-    setMidKicker(entry, flash);
+    setMidKicker(entry);
     el.midLine.textContent = fillTokens(entry.line || "");
     el.midSub.textContent = fillTokens(entry.sub || "");
     el.midSub.hidden = !entry.sub;
@@ -1688,12 +1753,10 @@
     // layout to start from and arrives at its end value in one frame, which
     // is a bar that is simply already drawn.
     show("screen-interstitial");
-    // With the screen on, so there is a box to measure. A memorise screen is
-    // part of the round it interrupts and carries the round's pill; every
-    // other interstitial is a beat between rounds and carries none, so the
-    // pill leaves rather than following the reader onto a screen it has
-    // nothing to say about.
-    if (flash && roundPill() && entry.kicker) {
+    // With the screen on, so there is a box to measure. Every screen this
+    // funnel draws names where in the walk the reader is, so the pill follows
+    // them onto all of them rather than leaving and coming back.
+    if (roundPill() && entry.kicker) {
       pillText = entry.kicker;
       movePill();
     } else {

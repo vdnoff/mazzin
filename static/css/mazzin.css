@@ -4834,12 +4834,16 @@ body.is-locked { overflow: hidden; }
 }
 
 /* Two nodes rather than one, because a single element has one transform and
-   this needs two: the carrier travels, the pill inside it beats. */
+   this needs two: the carrier travels, the pill inside it beats.
+
+   No `will-change` here either: engine.js puts it on for the length of a move
+   and takes it off again. Left on permanently it holds a compositor layer for
+   a walk the pill spends most of standing still, which is the cost the hint
+   is supposed to be buying its way out of. */
 .pill-float {
   position: absolute;
   left: 0;
   top: 0;
-  will-change: transform;
 }
 
 .pill-float .step-kicker.is-pill { margin: 0; }
@@ -4937,6 +4941,66 @@ body.theme-brain .mz-timer-fill {
 }
 
 body.theme-brain .mid.is-flash .mz-prepare-count { color: var(--brain-line); }
+
+/* --- the card before the first question, in the game's own blue -------------- */
+
+/* The intro is the first thing anybody sees of this funnel and it was the last
+   screen still arguing with itself: an orange kicker, orange chips and an
+   orange button over a blue brain, with a blue pill waiting one tap away.
+
+   The three things that were the platform's accent are the game's blue now.
+   What is NOT in this block is as deliberate: the headline and the subline
+   keep the funnel's ink and muted greys, because they are prose rather than
+   chrome, and the wordmark and the progress bar keep the platform's accent
+   because they say the same thing on every funnel. Nothing here repaints
+   `--accent`, which is what would reach them. */
+body.theme-brain .intro-kicker { color: var(--brain-ink); }
+
+body.theme-brain .intro-kicker .intro-mark { color: var(--brain-line); }
+
+body.theme-brain .intro-chip {
+  border-color: var(--brain-line);
+  color: var(--brain-ink);
+}
+
+body.theme-brain .intro-cta {
+  background: var(--brain-line);
+  color: #fff;
+}
+
+/* --- the pill sits in one place, on every screen ----------------------------- */
+
+/* v9. It used to land 14px under the progress bar on a step and anywhere
+   between 100 and 320px under it on a screen between rounds, because there it
+   was the first line of a block centred in the column. So the one piece of
+   chrome that is supposed to be the same object on every screen travelled a
+   third of the page each time the screen changed, which is a lot of movement
+   to say "still round two".
+
+   Pinned at one distance from the bar instead, everywhere. The glide is then
+   a few pixels and a change of words, which is what it was always for.
+
+   `display: contents` on the block, so its first line can be spaced against
+   the bar while everything under it keeps the centring it had: the auto
+   margin on the headline takes the space above the rest of the screen, and
+   the empty item at the end takes the space below it. */
+
+/* The step screen's own copy — the one that holds the space. Named by its id
+   rather than by its classes, because the pill that TRAVELS carries the same
+   classes and must keep the zero margin the layer gives it: spaced twice, it
+   would be drawn 24px below the slot it is supposed to be sitting on. */
+body.theme-brain #step-kicker.is-pill { margin-top: 24px; }
+
+body.theme-brain #screen-interstitial .mid-body { display: contents; }
+
+body.theme-brain #screen-interstitial .mid-kicker { margin: 24px 0 0; }
+
+body.theme-brain #screen-interstitial .mid-line { margin-top: auto; }
+
+body.theme-brain #screen-interstitial.is-active::after {
+  content: "";
+  margin-top: auto;
+}
 
 /* Breathing room. The column a round is played in is pill, question, clock,
    cards, and the four of them arrived at four different distances from each
