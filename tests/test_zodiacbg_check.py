@@ -2205,16 +2205,21 @@ check("  so a forced page still reports the arm it drew",
 print("\n--- the boxes arm's own copy ---")
 BOXES = cfg["result_copy"]["boxes"]
 check("the funnel carries the block", isinstance(BOXES, dict))
-for key in ("head", "sub", "locked", "hero_kicker", "hero_line", "boxes"):
+for key in ("locked", "hero_kicker", "hero_line", "boxes"):
     check("  boxes.%-12s is filled" % key, bool(BOXES.get(key)),
           repr(BOXES.get(key)))
-check("the headline and its sub are Bulgarian",
-      CYRILLIC.search(BOXES["head"]) and CYRILLIC.search(BOXES["sub"]),
-      "%s | %s" % (BOXES["head"], BOXES["sub"]))
-check("  and the sub names the reader's own subtype",
-      "{subtype}" in BOXES["sub"], BOXES["sub"])
-check("  in the guillemets this funnel sets a name in",
-      "\u00ab{subtype}\u00bb" in BOXES["sub"], BOXES["sub"])
+# FORCED TEST EDIT. `head` and `sub` are gone. The arm shipped with a
+# headline and a "Ти си «X»" line of its own, above a hero that already names
+# the subtype, the sign and the chips — the page said the same thing twice
+# before asking for money. The block is the locked card and the tiles now, and
+# the keys that existed only for those two lines are out of the config.
+check("it heads nothing — the hero above already does",
+      "head" not in BOXES and "sub" not in BOXES, str(sorted(BOXES)))
+check("  and the module carries no default for either",
+      "zr-boxes-title" not in RESULT_JS and "zr-boxes-sub" not in RESULT_JS
+      and "function boxesHead(" not in RESULT_JS)
+check("  nor does the sheet style one",
+      ".zr-boxes-title" not in CSS and ".zr-boxes-head" not in CSS)
 check("the locked hero reads the step the reader actually tapped",
       BOXES["hero_step"] in {s["id"] for s in steps},
       "%s not a step" % BOXES["hero_step"])
@@ -2274,8 +2279,7 @@ check("    which start at this month, as reports.py's twelve do",
       and reports._months_for(profile)[0].startswith(
           reports.MONTH_ABBR_BG[reports.datetime.datetime.now(
               reports.datetime.timezone.utc).date().month - 1]))
-NEW_STRINGS = ([BOXES[k] for k in ("head", "sub", "locked", "hero_kicker",
-                                   "hero_line")]
+NEW_STRINGS = ([BOXES[k] for k in ("locked", "hero_kicker", "hero_line")]
                + [t["title"] for t in TILES]
                + [t["sub"] for t in TILES if t["sub"] != "{range}"])
 for text in NEW_STRINGS:
@@ -2292,8 +2296,6 @@ print("\n--- and every one of them has an English default in the module ---")
 # real English, not a hole and not a transliteration.
 DEFAULTS = [
     'hero_step: "bond"',
-    'head: "Your cosmic profile, assembled from your 18 taps"',
-    'sub: "You are \u00ab{subtype}\u00bb. The full map is inside."',
     'locked: "Locked"',
     'hero_kicker: "LOVE & COMPATIBILITY"',
     'hero_line: "{works} or {avoid} \u2014 for every sign, on the first page."',
@@ -2320,10 +2322,36 @@ check("  off result_copy.boxes and nowhere else",
       'var own = ((ctx.cfg && ctx.cfg.result_copy) || {}).boxes;'
       in RESULT_JS)
 
-print("\n--- the arm replaces the pitch and nothing under it ---")
-check("the boxes branch draws its own pitch",
-      'if (data && template === "boxes") {' in RESULT_JS
-      and "root.appendChild(boxesPitch(ctx, data));" in RESULT_JS)
+print("\n--- the arm swaps one block and shares everything else ---")
+# FORCED TEST EDIT (this block). The arm used to replace the whole page above
+# the money — kicker, hero, taps and the rarity card all gone — which is the
+# bug this branch fixes. It is the minimal page with its pitch list swapped
+# now, so what is asserted is the sharing rather than the replacing.
+#
+# One code path, not a copy: the same `kicker`, the same `richHero` with the
+# same lean flag, the same `taps`, the same `rarityBadge`. A second copy of
+# those four calls under an `if` would drift the first time one of them moved.
+check("both lean arms are one flag, and one call each",
+      'var lean = template === "minimal" || template === "boxes";'
+      in RESULT_JS
+      and "root.appendChild(kicker(copy, lean));" in RESULT_JS
+      and "richHero(ctx, glyph(ctx.picks.sign), data, { lean: lean })"
+      in RESULT_JS
+      and RESULT_JS.count("var strip = taps(ctx, copy);") == 1
+      and RESULT_JS.count(
+          "var rare = rarityBadge(data, profileBlock(ctx) || {});") == 1)
+check("  so the whole top is the minimal top, node for node",
+      RESULT_JS.count("root.appendChild(kicker(copy, lean));") == 1
+      and "if (data && lean) {" in RESULT_JS)
+check("the swap happens after the rarity card and before the offer",
+      RESULT_JS.index("if (rare) root.appendChild(rare);")
+      < RESULT_JS.index(
+          'if (template === "boxes") root.appendChild(boxesPitch(ctx));')
+      < RESULT_JS.index("root.appendChild(offer(ctx, copy, data, template));"))
+check("  and the block it swaps in is the locked card and the tiles, only",
+      "function boxesPitch(ctx) {" in RESULT_JS
+      and RESULT_JS.split("function boxesPitch(ctx) {")[1]
+                   .split("\n  }")[0].count("appendChild") == 2)
 check("  and then the same offer card every arm draws",
       RESULT_JS.count("root.appendChild(offer(ctx, copy, data, template));")
       == 1)
@@ -2331,10 +2359,13 @@ check("  so nothing about the money is branched on the arm",
       "function offer(ctx, copy, data, template)" in RESULT_JS
       and RESULT_JS.split("function offer(ctx, copy, data, template)")[1]
                    .split("\n  }\n")[0].count('"boxes"') == 0)
-check("the root carries the arm, so the sheet can reach it",
-      'root.classList.toggle("is-boxes", template === "boxes");' in RESULT_JS)
-check("  and is-minimal is still set for minimal alone",
-      'root.classList.toggle("is-minimal", template === "minimal");'
+check("minimal keeps its pitch inside the offer, and boxes gets none",
+      'if (data && template === "minimal") {\n      var list = checklist('
+      in RESULT_JS)
+check("both lean arms wear is-minimal, so the sheet reaches both",
+      'root.classList.toggle("is-minimal", lean);' in RESULT_JS)
+check("  and is-boxes is added on top, for the two blocks that differ",
+      'root.classList.toggle("is-boxes", template === "boxes");'
       in RESULT_JS)
 NEW_RULES = re.findall(r"^\.[\w.\- ]+(?= \{)",
                        CSS.split("--- the boxes arm")[1], re.M)
@@ -2351,6 +2382,46 @@ check("every new rule in the sheet is scoped to the new arm",
 check("  and nothing above it mentions the arm at all",
       "is-boxes" not in CSS.split("--- the boxes arm")[0]
       and ".zr-box" not in CSS.split("--- the boxes arm")[0])
+
+print("\n--- the tiles are read at arm's length, not squinted at ---")
+# They shipped at a 17px icon over 13px titles and 12px subs, floating in
+# 13px of padding — small type in a big box, which is what "starved" meant.
+# The sizes are pinned here because they are the fix, and a silent drift back
+# is the same defect again.
+BOXES_CSS = CSS.split("--- the boxes arm")[1]
+
+
+def rule(sel):
+    """One declaration block out of the arm's own section of the sheet."""
+    head = BOXES_CSS.index("\n" + sel + " {")
+    return BOXES_CSS[head:BOXES_CSS.index("}", head)]
+
+
+for sel, want in ((".zr-box-icon svg", ("width: 28px", "height: 28px",
+                                        "stroke: var(--zr-gold)")),
+                  (".zr-box-title", ("font-size: 17px", "font-weight: 600",
+                                     "line-height: 1.3")),
+                  (".zr-box-sub", ("font-size: 14px", "line-height: 1.3")),
+                  (".zr-boxes-kicker", ("font-size: 12px",)),
+                  (".zr-boxes-line", ("font-size: 15px",))):
+    block = rule(sel)
+    check("  %-18s %s" % (sel, ", ".join(want)),
+          all(w in block for w in want),
+          str([w for w in want if w not in block]))
+check("the icon box is the drawing and nothing more",
+      "display: flex;" in rule(".zr-box-icon")
+      and "display: block;" in rule(".zr-box-icon svg"),
+      rule(".zr-box-icon"))
+check("  so no dead band sits between the glyph and the title",
+      "margin: 0 0 9px;" in rule(".zr-box-icon"), rule(".zr-box-icon"))
+check("  and the title and its sub read as one block",
+      "margin: 3px 0 0;" in rule(".zr-box-sub"), rule(".zr-box-sub"))
+check("the tiles take their height from the grid, not from padding",
+      "grid-template-columns: 1fr 1fr;" in rule(".zr-boxes-grid")
+      and "height" not in rule(".zr-box"),
+      rule(".zr-box"))
+check("  and the grid is capped by nothing the offer is not",
+      "max-width" not in rule(".zr-boxes-grid"), rule(".zr-boxes-grid"))
 
 print("\n--- the sale, and what it is allowed to claim ---")
 BEFORE_END = reports.datetime.datetime(2026, 8, 27,

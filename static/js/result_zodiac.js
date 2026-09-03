@@ -1080,8 +1080,6 @@
     // code because it is a claim about one funnel's walk, not about the
     // layout: the card is the chapter the reader is closest to wanting.
     hero_step: "bond",
-    head: "Your cosmic profile, assembled from your 18 taps",
-    sub: "You are «{subtype}». The full map is inside.",
     locked: "Locked",
     hero_kicker: "LOVE & COMPATIBILITY",
     // The two verdicts are filled from `labels.verdicts`, so the page and the
@@ -1143,15 +1141,6 @@
     return null;
   }
 
-  function boxesHead(ctx, data) {
-    var wrap = elm("header", "zr-boxes-head");
-    wrap.appendChild(elm("h1", "zr-boxes-title", boxesText(ctx, "head")));
-    var sub = fill(boxesText(ctx, "sub"), (data && data.words) || {})
-      .replace(/\{\w+\}/g, "").replace(/\s{2,}/g, " ").trim();
-    if (sub) wrap.appendChild(elm("p", "zr-boxes-sub", sub));
-    return wrap;
-  }
-
   // The one accented element on the page: a chapter shown rather than
   // described, with the lock over the corner of it.
   function lockedHero(ctx) {
@@ -1202,12 +1191,13 @@
     return grid.childNodes.length ? grid : null;
   }
 
-  // The whole pitch above the money, in one fragment. Below it the offer is
-  // the same card every arm draws — this template replaces the argument, not
-  // the payment.
-  function boxesPitch(ctx, data) {
+  // The one block this arm swaps in, between the rarity card and the offer.
+  //
+  // No headline and no "you are X" line: the hero four blocks up already
+  // carries the subtype, the sign and the chips, and repeating them here was
+  // the page saying the same thing twice before asking for money.
+  function boxesPitch(ctx) {
     var frag = document.createDocumentFragment();
-    frag.appendChild(boxesHead(ctx, data));
     frag.appendChild(lockedHero(ctx));
     var grid = boxGrid(ctx);
     if (grid) frag.appendChild(grid);
@@ -1568,47 +1558,48 @@
     // facelift adds hangs off this, and `#result-module`'s own class is not
     // part of the subtree the variants fixture compares — so the control arm
     // stays byte-identical while its stylesheet gains rules it never matches.
-    root.classList.toggle("is-minimal", template === "minimal");
+    // The two lean arms are one page with one block swapped, so they wear one
+    // class and read the whole of this sheet: the framed kicker, the lux
+    // hero, the taps strip and the rarity card are the same nodes with the
+    // same rules on both. `is-boxes` is added on top and scopes nothing but
+    // the two blocks that differ.
+    var lean = template === "minimal" || template === "boxes";
+    root.classList.toggle("is-minimal", lean);
     root.classList.toggle("is-boxes", template === "boxes");
-    // The boxes arm replaces the whole argument above the money and nothing
-    // below it. Gated on `data` as well as on the name: without a profile
-    // table there is no subtype to head the page with, and the page every
-    // other arm falls back to is a better answer than a headline with a hole
-    // in it.
-    if (data && template === "boxes") {
-      root.appendChild(boxesPitch(ctx, data));
+    root.appendChild(kicker(copy, lean));
+    // The rich card, or the one this page drew before there was a table to
+    // draw it from. Below the hero the two pages differ entirely, which is
+    // why the branch is the whole body rather than one node.
+    root.appendChild(data
+      ? richHero(ctx, glyph(ctx.picks.sign), data, { lean: lean })
+      : hero(ctx, copy, elements, top));
+    var strip = taps(ctx, copy);
+    if (strip) root.appendChild(strip);
+    if (data && lean) {
+      // The short way down the page: the picture, the evidence it was read
+      // from, how rare the reading is, and then the price. No locked bullets
+      // doing the offer's job above the offer, and no bridge line.
+      //
+      // The four element tiles are gone too. They restated the hero's split
+      // bar one for one — the same four numbers, in the same order, a screen
+      // apart — and a page whose argument is brevity cannot afford to say a
+      // thing twice. The bar keeps it; `balance` still draws for the funnels
+      // that have no rich hero to put it in.
+      var rare = rarityBadge(data, profileBlock(ctx) || {});
+      if (rare) root.appendChild(rare);
+      // And where the two lean arms part: minimal carries its pitch as a
+      // checklist inside the offer card, boxes puts a locked chapter and four
+      // tiles here instead. Everything above this line and everything below
+      // it is the same page.
+      if (template === "boxes") root.appendChild(boxesPitch(ctx));
+    } else if (data) {
+      var free = freeStrength(ctx, copy);
+      if (free) root.appendChild(free);
+      var line = bridge(ctx, data);
+      if (line) root.appendChild(line);
+      root.appendChild(questions(ctx, data));
     } else {
-      root.appendChild(kicker(copy, template === "minimal"));
-      // The rich card, or the one this page drew before there was a table to
-      // draw it from. Below the hero the two pages differ entirely, which is
-      // why the branch is the whole body rather than one node.
-      root.appendChild(data
-        ? richHero(ctx, glyph(ctx.picks.sign), data,
-                   { lean: template === "minimal" })
-        : hero(ctx, copy, elements, top));
-      var strip = taps(ctx, copy);
-      if (strip) root.appendChild(strip);
-      if (data && template === "minimal") {
-        // The short way down the page: the picture, the evidence it was read
-        // from, how rare the reading is, and then the price. No locked bullets
-        // doing the offer's job above the offer, and no bridge line.
-        //
-        // The four element tiles are gone too. They restated the hero's split
-        // bar one for one — the same four numbers, in the same order, a screen
-        // apart — and a page whose argument is brevity cannot afford to say a
-        // thing twice. The bar keeps it; `balance` still draws for the funnels
-        // that have no rich hero to put it in.
-        var rare = rarityBadge(data, profileBlock(ctx) || {});
-        if (rare) root.appendChild(rare);
-      } else if (data) {
-        var free = freeStrength(ctx, copy);
-        if (free) root.appendChild(free);
-        var line = bridge(ctx, data);
-        if (line) root.appendChild(line);
-        root.appendChild(questions(ctx, data));
-      } else {
-        root.appendChild(path(ctx, copy, elements));
-      }
+      root.appendChild(path(ctx, copy, elements));
     }
     root.appendChild(offer(ctx, copy, data, template));
 

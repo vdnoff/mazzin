@@ -244,9 +244,15 @@ check("  the old page is what a missing template renders",
       re.search(r'if \(data && template === "minimal"\) \{', ZODIAC)
       is not None
       and re.search(r'\} else if \(data\) \{', ZODIAC) is not None)
+# FORCED TEST EDIT. The hero used to take `template === "minimal"` inline.
+# There are two lean arms now — minimal and the boxes arm beside it — and they
+# render the same top, so the comparison is made once into `lean` and the hero
+# is handed that. The claim is unchanged: the flag is resolved before the node
+# that branches on it.
 check("  and the flag is read before the hero that branches on it",
-      ZODIAC.index("var template = (variant") <
-      ZODIAC.index("{ lean: template ==="))
+      ZODIAC.index("var template = (variant")
+      < ZODIAC.index('var lean = template === "minimal"')
+      < ZODIAC.index("{ lean: lean }"))
 for slug in ("zodiac", "kitchen", "zodiac-ro"):
     other = json.load(open(os.path.join(REPO, "funnels", slug + ".json"),
                            encoding="utf-8"))
