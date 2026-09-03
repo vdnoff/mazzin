@@ -564,3 +564,6 @@ bottom.
 
 ## 2026-09-03 — claude/brain-funnel-10
 - brain v10: pill fixes + score model + age reveal in report
+
+## 2026-09-03 — claude/brain-funnel-11
+- brain v11: variety + difficulty + new brain + offer redesign
