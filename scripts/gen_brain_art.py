@@ -871,21 +871,23 @@ def og_card():
 # funnel's blues, facing left. It is the only picture on the intro screen and
 # it is displayed about 200px wide, so the silhouette does the work — the
 # frontal bulge, the temporal lobe hanging forward under its notch, the
-# cerebellum as a striated wedge inside the back-lower edge. The folds are
-# texture, not anatomy, and the rule they follow is that they never cross:
-# each family is one curve stepped along a direction, and the families are
-# clipped to regions that do not overlap.
+# cerebellum as a small striated wedge inside the back-lower edge.
+#
+# v9 redraws it. The first version was busy: forty-four short broken folds
+# that wandered, which at 200px is texture rather than an illustration and at
+# any size reads as scratches. This one is calmer and darker — a dozen or so
+# long, evenly spaced folds of one uniform width, each following the lobe it
+# is in, on a fill strong enough that they are read as grooves rather than as
+# marks on paper.
+#
+# Three of them, because "calmer and more premium" is a judgement and the way
+# to make a judgement is to look at the options side by side. They differ only
+# in the numbers in VARIANTS below; everything under it is shared.
 
-# Drawn well over the ~200px it is shown at, so a 3x screen still
-# gets a clean edge, and no further: it carries an alpha channel,
-# which costs more per pixel than every other file here.
 INTRO = (680, 527)
-BRAIN_FILL = (214, 232, 249)
-BRAIN_FOLD = (55, 138, 221)     # #378ADD, the pill's border
-BRAIN_EDGE = (26, 86, 155)
 
 
-def curve_bez(p0, p1, p2, p3, n=44):
+def curve_bez(p0, p1, p2, p3, n=48):
     """A cubic through four control points, as a list of points."""
     out = []
     for i in range(n + 1):
@@ -907,56 +909,107 @@ def curve_path(w, h, spec):
     return pts
 
 
+# The silhouette. Eight cubics and no corners: every join carries on in the
+# direction the last one ended, so what the eye follows is one line rather
+# than eight. The two features that make it a brain and not an ovoid are the
+# waist on the left, where the frontal lobe sits over the temporal one, and
+# the dip at the bottom between the temporal lobe and the cerebellum.
 CEREBRUM = [
-    [(.08, .44), (.09, .19), (.28, .06), (.47, .06)],
-    [(.47, .06), (.70, .06), (.90, .19), (.92, .42)],
-    [(.92, .42), (.94, .60), (.86, .74), (.74, .79)],
-    [(.74, .79), (.66, .82), (.58, .81), (.52, .76)],
-    [(.52, .76), (.47, .72), (.45, .79), (.38, .81)],
-    [(.38, .81), (.29, .83), (.21, .77), (.19, .69)],
-    [(.19, .69), (.18, .63), (.20, .59), (.17, .555)],
-    [(.17, .555), (.13, .53), (.085, .50), (.08, .44)],
+    [(.085, .445), (.095, .185), (.285, .055), (.470, .055)],
+    [(.470, .055), (.700, .055), (.900, .190), (.920, .420)],
+    [(.920, .420), (.940, .600), (.860, .740), (.740, .790)],
+    [(.740, .790), (.660, .820), (.580, .812), (.520, .762)],
+    [(.520, .762), (.470, .720), (.448, .790), (.380, .812)],
+    [(.380, .812), (.292, .834), (.212, .772), (.192, .690)],
+    [(.192, .690), (.180, .632), (.202, .590), (.172, .556)],
+    [(.172, .556), (.132, .528), (.088, .500), (.085, .445)],
 ]
+
+# The cerebellum's wedge, tucked inside the back-lower edge. It is the same
+# material as everything else — no second fill and no border — and what marks
+# it is that its folds are tighter and all run one way.
 CEREBELLUM = [
-    [(.60, .58), (.72, .58), (.78, .65), (.72, .73)],
-    [(.72, .73), (.64, .78), (.56, .75), (.55, .68)],
-    [(.55, .68), (.55, .62), (.57, .58), (.60, .58)],
+    [(.600, .580), (.720, .580), (.780, .650), (.720, .730)],
+    [(.720, .730), (.640, .780), (.560, .750), (.550, .680)],
+    [(.550, .680), (.550, .620), (.570, .580), (.600, .580)],
 ]
-SYLVIAN = [[(.175, .555), (.26, .625), (.34, .625), (.41, .655)]]
-TUCK = [[(.55, .62), (.60, .57), (.70, .57), (.78, .63)]]
 
-# Each family: the first fold, the direction the rest of it steps in, how
-# many, how much the ends pull in as it steps, and the region it is clipped
-# to. The regions tile the silhouette, so no fold of one family can ever meet
-# a fold of another.
+# The fissure the temporal lobe hangs under, and the line the cerebellum
+# tucks along. Both are grooves rather than edges, so both are drawn in the
+# fold colour at the fold's own width.
+SYLVIAN = [[(.205, .580), (.278, .638), (.345, .636), (.400, .662)]]
+TUCK = [[(.550, .620), (.600, .570), (.700, .570), (.780, .630)]]
+
+# The folds, as families. Each family is ONE curve stepped along a direction,
+# so no two folds of a family can cross; each is clipped to a region of its
+# own, so no fold of one family can meet a fold of another. What comes out is
+# a dozen or so long grooves, evenly spaced, each following the lobe it is in.
+#
+# `squeeze` pulls a fold's ends in as the family steps down, so a family
+# narrows with the shape instead of running out of it.
+# `trim` is what keeps a family from reading as tree rings. Four folds cut to
+# the same length nest inside one another and the eye reads a shell; the same
+# four, each starting and stopping somewhere else, read as four separate
+# grooves that happen to run the same way — which is what they are.
 FOLD_FAMILIES = [
-    dict(pts=[(.20, .30), (.34, .16), (.55, .15), (.70, .24)],
-         step=(.000, .060), count=6, squeeze=.03,
-         region=[(.28, .00), (.70, .00), (.70, .58), (.28, .52)]),
-    dict(pts=[(.13, .26), (.23, .32), (.28, .42), (.25, .49)],
-         step=(.048, -.008), count=4, squeeze=.00,
-         region=[(.05, .00), (.28, .00), (.28, .52), (.05, .48)]),
-    dict(pts=[(.22, .66), (.32, .72), (.44, .69), (.54, .74)],
-         step=(.000, .036), count=3, squeeze=.02,
-         region=[(.10, .55), (.58, .60), (.58, .95), (.10, .95)]),
-    dict(pts=[(.72, .18), (.85, .28), (.87, .44), (.80, .56)],
-         step=(-.048, .004), count=5, squeeze=.00,
-         region=[(.70, .00), (1.0, .00), (1.0, .58), (.70, .58)]),
+    # the dome: the long ones, arcing back over the top
+    dict(pts=[(.215, .330), (.350, .155), (.565, .145), (.720, .245)],
+         step=(.000, .100), count=4, squeeze=.050, wave=.0115, cycles=1.7,
+         trim=[(.00, .82), (.16, 1.0), (.00, .70), (.26, .96)],
+         region=[(.250, .00), (.730, .00), (.730, .600), (.250, .545)]),
+    # the frontal pole: two, curving down the front of the head
+    dict(pts=[(.255, .190), (.145, .265), (.118, .380), (.170, .470)],
+         step=(.038, .010), count=2, squeeze=.00, wave=.0085, cycles=1.2,
+         trim=[(.06, .94), (.00, .78)],
+         region=[(.040, .00), (.252, .00), (.252, .545), (.040, .505)]),
+    # the temporal lobe: a couple running along it
+    dict(pts=[(.225, .672), (.320, .734), (.430, .700), (.525, .744)],
+         step=(.000, .048), count=3, squeeze=.020, wave=.0090, cycles=1.4,
+         trim=[(.00, .88), (.14, 1.0), (.06, .80)],
+         region=[(.100, .560), (.560, .612), (.560, .950), (.100, .950)]),
+    # the occipital: turning down the back of the head
+    dict(pts=[(.740, .195), (.868, .292), (.884, .445), (.808, .556)],
+         step=(-.078, .006), count=3, squeeze=.00, wave=.0105, cycles=1.5,
+         trim=[(.10, 1.0), (.00, .84), (.20, .96)],
+         region=[(.730, .00), (1.00, .00), (1.00, .600), (.730, .600)]),
 ]
 
-# Where each fold breaks. A gyrus is not a contour line: it stops, and
-# another one starts beside it. Read as (start, run) along the curve.
-FOLD_CUTS = [((.00, .46), (.52, .48)),
-             ((.00, .30), (.36, .28), (.70, .30)),
-             ((.06, .40), (.52, .44)),
-             ((.00, .34), (.40, .32), (.78, .22)),
-             ((.10, .44), (.60, .38)),
-             ((.00, .26), (.32, .34), (.72, .26))]
+# Three sets of numbers, and nothing else between them. `folds` is the stroke
+# a groove is drawn at, `edge` the outline's (0 draws none), `fill` and `ink`
+# the two tones.
+# Which of the three below the funnel ships.
+INTRO_VARIANT = "engraved"
+
+VARIANTS = {
+    # Broad, quiet grooves and no outline at all: the shape is the fill, and
+    # at 200px it reads as one solid object.
+    "calm": dict(fill=(133, 183, 235), ink=(24, 95, 165),
+                 fold=0.0155, edge=0.000, cere=0.0075, cere_lines=7,
+                 gap=1.00),
+    # The same drawing with a line around it and finer grooves — closer to an
+    # engraving, and the version that survives being made small the best.
+    "engraved": dict(fill=(133, 183, 235), ink=(24, 95, 165),
+                     fold=0.0115, edge=0.0125, cere=0.0060, cere_lines=8,
+                     gap=0.92),
+    # Thicker grooves, wider apart, a hairline edge: the softest of the three
+    # and the one that holds up at the smallest sizes.
+    "soft": dict(fill=(140, 189, 238), ink=(21, 88, 156),
+                 fold=0.0195, edge=0.0070, cere=0.0090, cere_lines=6,
+                 gap=1.14),
+}
 
 
-def fold_wander(curve, amp, period, phase):
-    """A curve pushed off its own line by a slow sine along its normals, so
-    that two folds of a family stay apart without staying parallel."""
+def fold_wave(curve, amp, cycles, phase):
+    """A fold pushed off its own arc by a slow sine along its normals.
+
+    This is the difference between a brain and a shell. Four smooth arcs
+    following the outline are tree rings whatever their lengths; the same four
+    with a gentle wave in them are grooves in something soft — and the wave is
+    slow and small enough that they are still four calm lines rather than the
+    forty-four scratches this drawing used to carry.
+    """
+    if not amp:
+        return curve
     out = []
     n = len(curve)
     for i, (x, y) in enumerate(curve):
@@ -964,41 +1017,34 @@ def fold_wander(curve, amp, period, phase):
         nx, ny = curve[min(n - 1, i + 1)]
         tx, ty = nx - px, ny - py
         length = math.hypot(tx, ty) or 1.0
-        k = amp * math.sin(i / float(n) * period * math.tau + phase)
+        k = amp * math.sin(i / float(n) * cycles * math.tau + phase)
         out.append((x + (ty / length) * k, y - (tx / length) * k))
     return out
 
 
-def fold_snip(curve, cuts):
-    """One fold broken into the two or three `cuts` name, with gaps."""
-    n = len(curve)
+def fold_family(w, h, fam, gap):
+    """Every stroke one family contributes: one curve, stepped and cut."""
     out = []
-    for start, run in cuts:
-        a = int(start * n)
-        b = min(n, a + int(run * n))
-        if b - a > 3:
-            out.append(curve[a:b])
-    return out
-
-
-def fold_family(w, h, pts, step, count, squeeze):
-    """Every stroke one family contributes, already broken and wandering."""
-    out = []
-    for k in range(count):
+    for k in range(fam["count"]):
         moved = []
-        for i, (x, y) in enumerate(pts):
+        for i, (x, y) in enumerate(fam["pts"]):
             f = i / 3.0
-            sx = x + step[0] * k + squeeze * k * (0.5 - abs(f - 0.5)) * \
-                (1 if x > 0.5 else -1)
-            sy = y + step[1] * k
+            sx = x + fam["step"][0] * k * gap \
+                + fam["squeeze"] * k * (0.5 - abs(f - 0.5)) \
+                * (1 if x > 0.5 else -1)
+            sy = y + fam["step"][1] * k * gap
             moved.append((sx * w, sy * h))
-        curve = fold_wander(curve_bez(*moved), 0.011 * h,
-                            2.4 + (k % 3) * 0.7, k * 1.6)
-        out += fold_snip(curve, FOLD_CUTS[k % len(FOLD_CUTS)])
+        curve = fold_wave(curve_bez(*moved), fam.get("wave", 0.0) * h,
+                          fam.get("cycles", 1.6), k * 1.7)
+        a, b = fam["trim"][k % len(fam["trim"])]
+        cut = curve[int(a * (len(curve) - 1)):int(b * (len(curve) - 1)) + 1]
+        if len(cut) > 3:
+            out.append(cut)
     return out
 
 
-def brain_intro():
+def brain_intro(variant="calm"):
+    spec = VARIANTS[variant]
     card = Card(INTRO[0], INTRO[1])
     # The one card with no ground of its own. Every other file here is a
     # square the reader compares against another square, so it carries the
@@ -1011,58 +1057,61 @@ def brain_intro():
     mask = Image.new("L", (w, h), 0)
     ImageDraw.Draw(mask).polygon(poly, fill=255)
 
-    body = Image.new("RGB", (w, h), BRAIN_FILL)
+    body = Image.new("RGB", (w, h), spec["fill"])
     cere = curve_path(w, h, CEREBELLUM)
 
     # The folds go on their own layer so they can be kept off the outline,
     # out of the cerebellum's wedge and off the fissure in one stamp.
     folds = Image.new("L", (w, h), 0)
-    stroke = max(3, int(0.0105 * h))
-    for spec in FOLD_FAMILIES:
+    stroke = max(3, int(spec["fold"] * h))
+    drawn = 0
+    for fam in FOLD_FAMILIES:
         layer = Image.new("L", (w, h), 0)
         ld = ImageDraw.Draw(layer)
-        for curve in fold_family(w, h, spec["pts"], spec["step"],
-                                 spec["count"], spec["squeeze"]):
+        for curve in fold_family(w, h, fam, spec["gap"]):
             ld.line(curve, fill=255, width=stroke, joint="curve")
+            drawn += 1
         region = Image.new("L", (w, h), 0)
         ImageDraw.Draw(region).polygon(
-            [(x * w, y * h) for x, y in spec["region"]], fill=255)
+            [(x * w, y * h) for x, y in fam["region"]], fill=255)
         folds = ImageChops.lighter(folds, ImageChops.multiply(layer, region))
 
     keep = Image.new("L", (w, h), 255)
     ImageDraw.Draw(keep).polygon(cere, fill=0)
     ImageDraw.Draw(keep).line(curve_path(w, h, SYLVIAN), fill=0,
-                              width=int(0.030 * h), joint="curve")
+                              width=int(0.036 * h), joint="curve")
     inner = mask.copy()
     ImageDraw.Draw(inner).line(poly + [poly[0]], fill=0,
-                               width=int(0.026 * h), joint="curve")
+                               width=int(0.030 * h), joint="curve")
     folds = ImageChops.multiply(ImageChops.multiply(folds, keep), inner)
-    body.paste(Image.new("RGB", (w, h), BRAIN_FOLD), (0, 0), folds)
+    body.paste(Image.new("RGB", (w, h), spec["ink"]), (0, 0), folds)
 
-    # The cerebellum's own striations: tighter than a fold, and all one way.
+    # The cerebellum's own grooves: tighter than a fold, and all one way.
     cmask = Image.new("L", (w, h), 0)
     ImageDraw.Draw(cmask).polygon(cere, fill=255)
     strip = body.copy()
     sd = ImageDraw.Draw(strip)
-    for i in range(11):
-        y = (0.576 + i * 0.0175) * h
+    lines = spec["cere_lines"]
+    for i in range(lines):
+        y = (0.588 + i * (0.150 / lines)) * h
         sd.line(curve_bez((0.50 * w, y + 0.015 * h),
                           (0.62 * w, y - 0.004 * h),
                           (0.74 * w, y - 0.004 * h),
                           (0.84 * w, y + 0.012 * h)),
-                fill=BRAIN_FOLD, width=max(2, int(0.0046 * h)),
+                fill=spec["ink"], width=max(2, int(spec["cere"] * h)),
                 joint="curve")
     body.paste(strip, (0, 0), cmask)
 
     card.img.paste(body, (0, 0), mask)
-    card.d.line(poly + [poly[0]], fill=BRAIN_EDGE, width=int(0.013 * h),
-                joint="curve")
-    card.d.line(curve_path(w, h, SYLVIAN), fill=BRAIN_FOLD,
-                width=int(0.009 * h), joint="curve")
-    # The cerebellum is the same material as everything else: no second
-    # colour and no border, only the line where it tucks under the occipital.
-    card.d.line(curve_path(w, h, TUCK), fill=BRAIN_EDGE,
-                width=int(0.008 * h), joint="curve")
+    if spec["edge"]:
+        card.d.line(poly + [poly[0]], fill=spec["ink"],
+                    width=int(spec["edge"] * h), joint="curve")
+    card.d.line(curve_path(w, h, SYLVIAN), fill=spec["ink"],
+                width=stroke, joint="curve")
+    # The cerebellum is the same material as everything else: no second colour
+    # and no border, only the line where it tucks under the occipital.
+    card.d.line(curve_path(w, h, TUCK), fill=spec["ink"],
+                width=max(2, int(stroke * 0.8)), joint="curve")
     return card
 
 
@@ -1127,7 +1176,11 @@ def main():
     for style_id, name, form, colour in TYPES:
         put(share_card(name, form, colour), "share_" + style_id)
 
-    put(brain_intro(), "brain_intro", quality=72)
+    # The one that reads best at the ~200px the intro card shows it at: the
+    # outline holds the silhouette and the finer grooves do not blur into one
+    # another. `calm` (no outline, broader grooves) and `soft` (heavier
+    # grooves, hairline edge) are the other two — change the word to swap.
+    put(brain_intro(INTRO_VARIANT), "brain_intro", quality=80)
     put(og_card(), "og", quality=70)
 
     biggest = max(written,

@@ -719,9 +719,18 @@ check("it splits on the LAST separator, not the first",
 check("  the label in one span and the counter in another",
       'elm("span", "step-kicker-text"' in fill_fn
       and 'elm("span", "step-kicker-count"' in fill_fn)
-check("  and a kicker with no separator is all label and no counter",
-      "cut < 0 ? text : text.slice(0, cut)" in parts_fn
-      and "if (parts.count) {" in fill_fn)
+# v9. The counter is what follows the last separator AND looks like one. It
+# used to be whatever followed the last separator, which was right for every
+# kicker a step carries and wrong for every kicker a screen between rounds
+# carries — it would have put the word FOCUS in the badge.
+check("  and the badge is only ever a counter",
+      'var PILL_COUNT_RE = /^\\d+\\/\\d+$/;' in ENGINE
+      and "if (!PILL_COUNT_RE.test(tail)) {" in parts_fn
+      and "return { label: text.trim(), count: \"\" };" in parts_fn)
+check("  so a kicker naming a round and no more is all label",
+      "if (parts.count) {" in fill_fn
+      and 'return { label: text.slice(0, cut).trim(), count: tail };'
+      in parts_fn)
 check("  and the step screen still fills through it",
       "fillPill(node, text);" in pill_fn)
 check("the counter is a solid badge inside the pill",
@@ -848,10 +857,16 @@ check("it moves to whichever screen is up, and only to a real box",
 check("  by transform alone, so nothing on the page moves with it",
       'el.pillFloat.style.transform = "translate("' in move_fn
       and "style.width" not in move_fn and "style.left" not in move_fn)
-check("  over 350ms, on a curve rather than a linear ramp",
-      "var PILL_GLIDE_MS = 350;" in ENGINE
-      and '"transform " + PILL_GLIDE_MS + "ms cubic-bezier(0.22, 0.61, 0.36, 1)"'
-      in move_fn)
+check("  over 450ms, on a curve rather than a linear ramp",
+      "var PILL_GLIDE_MS = 450;" in ENGINE
+      and '"transform " + PILL_GLIDE_MS + "ms " + PILL_EASE' in move_fn
+      and 'var PILL_EASE = "cubic-bezier(0.25, 0.1, 0.25, 1)";' in ENGINE)
+check("  and it is promoted for the length of the move, not for the walk",
+      "liftPill(moved ? PILL_GLIDE_MS : 0);" in move_fn
+      and 'el.pillFloat.style.willChange = "transform";' in body("liftPill")
+      and 'style.willChange = "auto";' in body("liftPill")
+      and "will-change: transform;" not in
+      re.search(r"\.pill-float \{(.*?)\n\}", CSS, re.S).group(1))
 check("two screens that put it in the same place swap the text and nothing else",
       "Math.abs(pillPos.x - x) <= 1 && Math.abs(pillPos.y - y) <= 1"
       in move_fn
@@ -881,7 +896,10 @@ check("where the slot ends up is re-read over the frames after a move",
       and "requestAnimationFrame(" in settle_fn)
 check("  and a target that moves mid-glide is re-aimed, never replayed",
       "style.transform =" in settle_fn
-      and "style.transition" not in settle_fn)
+      and "if (nowMs() >= pillLands) {" in settle_fn)
+check("  a correction after it has landed is eased, never written straight in",
+      '"transform " + PILL_SETTLE_MS + "ms " + PILL_EASE' in settle_fn
+      and "var PILL_SETTLE_MS = 140;" in ENGINE)
 check("  and it stops the moment the pill is away",
       "if (!el.pillLayer || el.pillLayer.hidden) return;" in settle_fn)
 check("a memorise screen changing shape re-places it too",
@@ -891,11 +909,23 @@ check("a memorise screen changing shape re-places it too",
 print("\n--- v7: the beat, once a round ---")
 beat_fn = body("beatPill")
 check("it fires when the round changes and never when the counter does",
-      "if (label === pillRound) return;" in beat_fn
+      "if (key === pillRound) return;" in beat_fn
       and "pillParts(pillText).label" in move_fn)
 check("  and a re-place mid-round leaves a pending beat alone",
-      beat_fn.index("if (label === pillRound) return;")
+      beat_fn.index("if (key === pillRound) return;")
       < beat_fn.index("clearTimeout(pillPulse);"))
+# v9. The round a screen between rounds names is the round the step after it
+# names, however the two are written: the stylesheet sets the pill in capitals,
+# so "Round 4 · Focus" and "ROUND 4 · FOCUS" are one round on the page and have
+# to be one round here, or it beats twice.
+check("  and the same round written two ways is one round",
+      "function roundKey(" in ENGINE
+      and ".toUpperCase()" in body("roundKey")
+      and "var key = roundKey(label);" in beat_fn)
+check("a beat announces a round somebody is about to play",
+      "if (!pillBeats()) return;" in beat_fn
+      and "step < ((cfg && cfg.swipe && cfg.swipe.pairs_count) || 0)"
+      in body("pillBeats"))
 check("  the class comes off when the beat ends, so it means beating now",
       'node.addEventListener("animationend", function () {' in body("pillNode")
       and 'node.classList.remove("is-pulse");' in body("pillNode"))
@@ -935,18 +965,25 @@ check("  and never between two steps of the same round",
 
 print("\n--- v7: the memorise screen draws the same pill ---")
 mid_fn = body("setMidKicker")
-check("only a memorise screen takes it, and only where a funnel asked",
-      "if (!(flash && roundPill() && text)) {" in mid_fn
+# v9. Every interstitial takes it, not only the memorise screens: the pill is
+# one piece of chrome that follows the reader through the whole walk, and a
+# screen it left and came back to was a screen it jumped on and off.
+check("every interstitial takes it, and only where a funnel asked",
+      "if (!(roundPill() && text)) {" in mid_fn
       and "host.textContent = text;" in mid_fn)
 check("  built from the same parse the step pill is built from",
       "fillPill(slot, text);" in mid_fn
       and 'elm("span", "step-kicker is-pill is-slot")' in mid_fn)
 check("  and placed once the screen is on",
-      "if (flash && roundPill() && entry.kicker) {" in body("openInterstitial")
+      "if (roundPill() && entry.kicker) {" in body("openInterstitial")
       and body("openInterstitial").index('show("screen-interstitial");')
       < body("openInterstitial").index("pillText = entry.kicker;"))
-check("every other interstitial sends the pill away rather than carrying it",
+check("a screen that names no round still sends the pill away",
       "hidePill();" in body("openInterstitial"))
+check("  and every screen this funnel draws names one",
+      all(e.get("kicker") for e in CONFIGS[OWNER]["interstitials"]),
+      str([e["after_step"] for e in CONFIGS[OWNER]["interstitials"]
+           if not e.get("kicker")]))
 check("  and so does the result, because the walk is over",
       "hidePill();" in body("startResult"))
 
@@ -1139,6 +1176,115 @@ check("no other funnel names a slot to stand in for a round",
       str([n for n, c in CONFIGS.items()
            for e in (c.get("interstitials") or [])
            if (e.get("reveal") or {}).get("open_slot") is not None]))
+
+print("\n--- v9: the pill sits in one place, on every screen ---")
+check("one distance from the progress bar, and it is 24",
+      "body.theme-brain #step-kicker.is-pill { margin-top: 24px; }" in CSS
+      and "body.theme-brain #screen-interstitial .mid-kicker { margin: 24px 0 0; }"
+      in CSS)
+check("  which needs the block it is in to stop being a box",
+      "body.theme-brain #screen-interstitial .mid-body { display: contents; }"
+      in CSS)
+check("  and the pill that travels is not spaced a second time",
+      re.search(r"\.pill-float \.step-kicker\.is-pill \{ margin: 0; \}", CSS)
+      is not None
+      and not [r for r in RULES if r.startswith("body.theme-brain")
+               and ".step-kicker.is-pill" in r and "#step-kicker" not in r
+               and "margin" in re.search(re.escape(r) + r"\s*\{([^}]*)\}",
+                                         CSS, re.S).group(1)])
+check("  and everything under it keeps the centring it had",
+      "body.theme-brain #screen-interstitial .mid-line { margin-top: auto; }"
+      in CSS
+      and re.search(r"body\.theme-brain #screen-interstitial\.is-active::after"
+                    r" \{[^}]*margin-top: auto;", CSS, re.S) is not None)
+# The two `.mid-body` rules that are not scoped are the ones that were here
+# before: its own auto margin and the centring the auto-advance mode gives it.
+# What v9 adds to that element is scoped, and it is the only thing that can
+# turn the block into a non-box.
+check("every rule v9 adds to that block is under the funnel's theme class",
+      [r for r in RULES if "mid-body" in r and "display: contents"
+       in re.search(re.escape(r) + r"\s*\{([^}]*)\}", CSS, re.S).group(1)]
+      == ["body.theme-brain #screen-interstitial .mid-body"],
+      str([r for r in RULES if "mid-body" in r]))
+
+print("\n--- v9: the intro card, in the game's blue ---")
+intro_rules = [r for r in RULES if ".intro-" in r]
+check("the kicker, the chips and the button are blue",
+      "body.theme-brain .intro-kicker { color: var(--brain-ink); }" in CSS
+      and re.search(r"body\.theme-brain \.intro-chip \{[^}]*"
+                    r"border-color: var\(--brain-line\);", CSS, re.S)
+      is not None
+      and re.search(r"body\.theme-brain \.intro-cta \{[^}]*"
+                    r"background: var\(--brain-line\);", CSS, re.S)
+      is not None)
+check("  the chips read in the deep blue, the button in white",
+      re.search(r"body\.theme-brain \.intro-chip \{[^}]*"
+                r"color: var\(--brain-ink\);", CSS, re.S) is not None
+      and re.search(r"body\.theme-brain \.intro-cta \{[^}]*color: #fff;",
+                    CSS, re.S) is not None)
+check("  and every blue intro rule is under the theme class",
+      all(r.startswith("body.theme-brain ")
+          for r in intro_rules if "theme-" in r)
+      and [r for r in intro_rules if r.startswith("body.theme-brain ")],
+      str([r for r in intro_rules if "theme-" in r
+           and not r.startswith("body.theme-brain ")]))
+check("the headline and the subline keep the funnel's own ink",
+      not [r for r in intro_rules
+           if r.startswith("body.theme-brain")
+           and ("intro-head" in r or "intro-sub" in r or "intro-foot" in r)],
+      str(intro_rules))
+check("  and nothing in the block repaints the accent the header reads",
+      not [r for r in RULES if r.startswith("body.theme-brain")
+           and re.search(re.escape(r) + r"\s*\{[^}]*--accent\s*:", CSS,
+                         re.S)])
+check("no other funnel is on this theme",
+      [n for n, c in CONFIGS.items() if c.get("theme") == "brain"] == [OWNER])
+
+print("\n--- v9: the walk beats five times, and where ---")
+# The screens between rounds carry the pill now, so a round can first appear
+# on one of them. ROUND 4 does: the confirm sits after fourteen steps, which
+# is before the first step of that round, so the beat belongs there and must
+# not fire again on the step behind it.
+BRAIN = CONFIGS[OWNER]
+order = []
+for i, st in enumerate(BRAIN["swipe"]["steps"]):
+    for e in BRAIN["interstitials"]:
+        if e["after_step"] == i and e.get("kicker"):
+            order.append(("mid", e["kicker"]))
+    order.append(("step", st["kicker"]))
+for e in BRAIN["interstitials"]:
+    if e["after_step"] >= len(BRAIN["swipe"]["steps"]) and e.get("kicker"):
+        order.append(("after", e["kicker"]))
+
+
+def label_of(text):
+    """`pillParts` and `roundKey`, restated: the label, upper-cased."""
+    cut = text.rfind("·")
+    tail = text[cut + 1:].strip() if cut >= 0 else ""
+    body_text = text[:cut] if re.match(r"^\d+/\d+$", tail) else text
+    return re.sub(r"\s+", " ", body_text).strip().upper()
+
+
+beats = []
+last = None
+for kind, text in order:
+    lab = label_of(text)
+    if lab != last:
+        last = lab
+        if kind != "after":
+            beats.append((kind, lab))
+check("the walk changes round five times before its last step",
+      len(beats) == 5, str(beats))
+check("  starting on the warm-up and ending on round four",
+      beats[0][1] == "WARM-UP" and beats[-1][1] == "ROUND 4 · FOCUS",
+      str(beats))
+check("  and round four's is on the screen before its first step",
+      beats[-1][0] == "mid", str(beats[-1]))
+check("the screen after the last step changes the words and beats on none",
+      [t for k, t in order if k == "after"] == ["Computing"],
+      str([t for k, t in order if k == "after"]))
+check("  which is what pillBeats is for",
+      "function pillBeats(" in ENGINE)
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for f in fails:

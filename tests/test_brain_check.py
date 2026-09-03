@@ -423,7 +423,31 @@ check("  under twenty-five kilobytes",
 GEN = open(os.path.join(ROOT, "scripts/gen_brain_art.py"),
            encoding="utf-8").read()
 check("  and the generator is what draws it",
-      "def brain_intro(" in GEN and 'put(brain_intro(), "brain_intro"' in GEN)
+      "def brain_intro(" in GEN
+      and 'put(brain_intro(INTRO_VARIANT), "brain_intro"' in GEN)
+# v9. Three of them, because "calmer and more premium" is a judgement, and the
+# way to settle a judgement is to look at the options beside one another. The
+# check is that the three exist and that the shipped one is one of them —
+# swapping which is a one-word edit.
+VARIANTS = re.search(r"^VARIANTS = \{(.*?)^\}", GEN, re.S | re.M).group(1)
+NAMES = re.findall(r'^    "(\w+)": dict\(', VARIANTS, re.M)
+check("the drawing ships in three, and one of them is picked",
+      len(NAMES) == 3
+      and re.search(r'^INTRO_VARIANT = "(\w+)"', GEN, re.M).group(1) in NAMES,
+      str(NAMES))
+check("  they differ in their numbers and nothing else",
+      GEN.count("def brain_intro(") == 1
+      and 'spec = VARIANTS[variant]' in GEN)
+check("the folds are a dozen or so, not forty",
+      12 <= sum(int(n) for n in re.findall(r"count=(\d+),", GEN)) <= 16,
+      str(sum(int(n) for n in re.findall(r"count=(\d+),", GEN))))
+check("  every one of them one uniform width",
+      'stroke = max(3, int(spec["fold"] * h))' in GEN
+      and GEN.count('width=stroke') >= 1)
+check("  and waved rather than arced, which is what keeps it off a shell",
+      "def fold_wave(" in GEN and 'fam.get("wave", 0.0)' in GEN)
+check("the two tones are the strong pair the review asked for",
+      "(133, 183, 235)" in GEN and "(24, 95, 165)" in GEN)
 
 print("\n--- v7: a memorise screen carries the round's own pill ---")
 flashes = [e for e in cfg["interstitials"] if e.get("template") == "flash"]
