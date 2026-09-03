@@ -555,3 +555,6 @@ bottom.
 
 ## 2026-09-02 — claude/brain-funnel-7
 - brain v7: gliding pill + blue styling + intro brain + timed_out purchase
+
+## 2026-09-03 — claude/brain-funnel-8
+- brain v8: check selection + unified tiles + harder pattern
