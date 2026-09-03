@@ -739,6 +739,115 @@ check("  and nothing but /brain reaches the score at all",
       and "score" not in reports._brain_numbers(
           {"brain_age": {"scored": 16}}, CFG["styles"][0], {"mem_hit": 4}))
 
+print("\n--- v12: every promise the offer makes, and what delivers it ---")
+#
+# The offer card names five things. A promise on a sales card that no chapter
+# of the document keeps is the one kind of copy this funnel cannot afford, so
+# each of the five is tied here to the section that answers it — in the prompt
+# the model is given AND in the stub that ships when there is no key, because
+# the reader who gets the stub paid the same money.
+SHAPES = reports._BRAIN_SHAPES
+STUBS = reports.BRAIN_STUBS
+OFFER = CFG["result_copy"]["profile"]
+CARDS = {row["title"]: row for row in OFFER["offer_cards"]}
+
+print("  (a) the brain age, revealed on the first page")
+check("    the offer sells the reveal as the first thing in the report",
+      OFFER["offer_hero_kicker"] == "Your brain age"
+      and "first page" in OFFER["offer_hero_line"],
+      OFFER["offer_hero_line"])
+check("    the chapter the report opens on opens on the number",
+      "THE NUMBER, AND WHAT THEY RUN ON" in SHAPES["dna"]
+      and "first time they meet the age" in SHAPES["dna"])
+check("    and so does the one written when there is no key",
+      "your brain age" in STUBS["dna"]["narrative"][0].lower()
+      and STUBS["dna"]["narrative"][0].lower().index("brain age") < 80,
+      STUBS["dna"]["narrative"][0][:60])
+check("    with no figure invented in a stub every reader shares",
+      not re.search(r"\d", STUBS["dna"]["narrative"][0]),
+      STUBS["dna"]["narrative"][0][:80])
+check("    and the page puts the age above the chapters, not inside one",
+      "root.appendChild(score(ctx, copy, data, lean));"
+      in module_body("delivered")
+      and module_body("delivered").index("score(ctx, copy, data, lean)")
+      < module_body("delivered").index("firstly(ctx.sections"))
+
+print("  (b) the weakest round's drill: two minutes a day, from tomorrow")
+check("    the offer says a day, and says it starts tomorrow",
+      CARDS["Weakest-round drill"]["sub"]
+      == "2 minutes a day, starts tomorrow")
+check("    the chapter is asked for the round with the most room",
+      "THE ROUND WITH THE MOST ROOM" in SHAPES["materials"]
+      and "scored lowest" in SHAPES["materials"])
+check("    and for a drill that is two minutes, every day, from tomorrow",
+      "two-minute drill" in SHAPES["materials"]
+      and "two minutes every day" in SHAPES["materials"]
+      and "starts tomorrow" in SHAPES["materials"],
+      SHAPES["materials"][SHAPES["materials"].index("THE DRILL"):][:180])
+check("    the stub delivers the same thing without a key",
+      "Two minutes, every morning" in STUBS["materials"]["rule"],
+      STUBS["materials"]["rule"][-80:])
+
+print("  (c) seven days, one small thing on each")
+check("    the offer says one small thing a day",
+      CARDS["7-day plan"]["sub"] == "One small thing each day — the score "
+      "climbs")
+check("    the chapter is asked for seven days and an eighth that replays",
+      SHAPES["shopping"].count('"Day') >= 8
+      and '"Day 8 - Play again"' in SHAPES["shopping"]
+      and "DAY EIGHT IS THE POINT OF THE OTHER SEVEN" in SHAPES["shopping"])
+check("    each day small enough to do",
+      "Under five minutes, start to finish" in SHAPES["shopping"])
+check("    and the stub ships eight days, the last of them the replay",
+      len(STUBS["shopping"]["items"]) == 8
+      and STUBS["shopping"]["items"][-1]["name"] == "Day 8 - Play again",
+      str([i["name"] for i in STUBS["shopping"]["items"]]))
+
+print("  (d) five strengths and two habits")
+check("    the offer counts them",
+      "5 strengths · 2 habits" in CARDS
+      and CARDS["5 strengths · 2 habits"]["sub"]
+      == "What to lean on, what to swap")
+check("    the chapter is asked for five and then two, in that order",
+      "SEVEN items under the single key `items`" in SHAPES["mistakes"]
+      and "five strengths, then" in SHAPES["mistakes"]
+      and "two habits." in SHAPES["mistakes"]
+      and "the first HABIT holding them back" in SHAPES["mistakes"])
+check("    and the stub ships seven, the last two of them habits",
+      len(STUBS["mistakes"]["items"]) == 7
+      and all("habit" in i["title"].lower() or "fix" in i
+              for i in STUBS["mistakes"]["items"][5:]),
+      str([i["title"] for i in STUBS["mistakes"]["items"]]))
+check("    which the schema allows through",
+      reports.SHAPE["mistakes"]["items"][1] <= 7
+      <= reports.SHAPE["mistakes"]["items"][2],
+      str(reports.SHAPE["mistakes"]["items"][1:3]))
+
+print("  (e) fuel: a plate, on one of the days")
+check("    the offer sells a plate",
+      CARDS["Fuel"]["sub"] == "The plate that feeds a sharp brain")
+check("    one of the seven days is asked to be food on a plate",
+      "ONE OF THE REMAINING DAYS IS FUEL" in SHAPES["shopping"]
+      and "a day about food" in SHAPES["shopping"]
+      and "on a plate" in SHAPES["shopping"])
+check("    and it is food, never a supplement",
+      "Nothing out of a bottle and nothing measured" in SHAPES["shopping"])
+check("    the stub gives that day a name and a plate",
+      [i for i in STUBS["shopping"]["items"] if i["name"].endswith("Fuel")]
+      and "plate" in [i for i in STUBS["shopping"]["items"]
+                      if i["name"].endswith("Fuel")][0]["priority_note"],
+      str([i["name"] for i in STUBS["shopping"]["items"]]))
+
+check("no other profile was touched by any of it",
+      reports.KITCHEN_PROFILE["stubs"] is not STUBS
+      and reports.ZODIAC_PROFILE["stubs"] is not STUBS
+      and reports.PERSONA_PROFILE["stubs"] is not STUBS
+      and reports._BRAIN_SHAPES is not reports.SHAPE)
+check("  and the four prompts are this profile's alone",
+      all(SHAPES[key] not in json.dumps(
+          {k: str(v) for k, v in reports.KITCHEN_PROFILE.items()})
+          for key in SHAPES))
+
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for line in fails:
     print("  FAIL " + line)

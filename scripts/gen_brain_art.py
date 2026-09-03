@@ -403,37 +403,48 @@ MEMORY_VARIANTS = {
 # which way the chain runs. The landing slot is worked out by running the
 # chain rather than written down, so a variant cannot claim a landing its own
 # swaps do not produce.
+# v12 pins the object to the STEP. It was on the variant in v11, and the
+# step's own question is not — so two runs out of three asked "where is the
+# key now?" over a box that had a moon in it. The object is the thing the
+# question names, so it belongs where the question does.
+#
+# What a variant varies is the only thing it safely can: which slot the box
+# was open in, and which way the chain runs. The length and the speed are the
+# round's difficulty and are the same across its three.
+SPATIAL_OBJECT = {"spa1": "key", "spa2": "cup", "spa3": "star",
+                  "spa4": "moon"}
+
 SPATIAL_VARIANTS = {
     "spa1": [
-        {"object": "key", "open_slot": 2, "swap_ms": 800,
+        {"open_slot": 2, "swap_ms": 800,
          "swaps": [[2, 5], [0, 3], [5, 1], [3, 4]]},
-        {"object": "leaf", "open_slot": 0, "swap_ms": 800,
+        {"open_slot": 0, "swap_ms": 800,
          "swaps": [[0, 4], [1, 3], [4, 2], [5, 0]]},
-        {"object": "bell", "open_slot": 5, "swap_ms": 800,
+        {"open_slot": 5, "swap_ms": 800,
          "swaps": [[5, 1], [2, 4], [1, 0], [3, 5]]},
     ],
     "spa2": [
-        {"object": "cup", "open_slot": 5, "swap_ms": 600,
+        {"open_slot": 5, "swap_ms": 600,
          "swaps": [[5, 2], [0, 4], [2, 3], [1, 5], [4, 0]]},
-        {"object": "star", "open_slot": 1, "swap_ms": 600,
+        {"open_slot": 1, "swap_ms": 600,
          "swaps": [[1, 4], [3, 0], [4, 2], [5, 1], [0, 3]]},
-        {"object": "key", "open_slot": 3, "swap_ms": 600,
+        {"open_slot": 3, "swap_ms": 600,
          "swaps": [[3, 0], [2, 5], [0, 4], [1, 3], [5, 2]]},
     ],
     "spa3": [
-        {"object": "star", "open_slot": 0, "swap_ms": 450,
+        {"open_slot": 0, "swap_ms": 450,
          "swaps": [[0, 4], [1, 2], [4, 5], [0, 3], [5, 2], [3, 1]]},
-        {"object": "bell", "open_slot": 4, "swap_ms": 450,
+        {"open_slot": 4, "swap_ms": 450,
          "swaps": [[4, 1], [0, 5], [1, 3], [2, 4], [5, 0], [3, 2]]},
-        {"object": "moon", "open_slot": 2, "swap_ms": 450,
+        {"open_slot": 2, "swap_ms": 450,
          "swaps": [[2, 5], [3, 1], [5, 0], [4, 2], [1, 3], [0, 4]]},
     ],
     "spa4": [
-        {"object": "moon", "open_slot": 3, "swap_ms": 350,
+        {"open_slot": 3, "swap_ms": 350,
          "swaps": [[3, 1], [0, 5], [1, 4], [2, 3], [4, 0], [5, 1], [0, 2]]},
-        {"object": "leaf", "open_slot": 1, "swap_ms": 350,
+        {"open_slot": 1, "swap_ms": 350,
          "swaps": [[1, 5], [2, 0], [5, 3], [4, 1], [0, 2], [3, 4], [2, 5]]},
-        {"object": "cup", "open_slot": 4, "swap_ms": 350,
+        {"open_slot": 4, "swap_ms": 350,
          "swaps": [[4, 0], [3, 5], [0, 2], [1, 4], [5, 3], [2, 1], [4, 5]]},
     ],
 }
@@ -714,7 +725,20 @@ def box(open_on=None):
         card.d.polygon(spin(pts, 0.5 * CARD * SS, 0.215 * CARD * SS, -9.0),
                        fill=INK)
         card.rect(body, (223, 218, 206), radius=0.05)
-        object_glyph(card, open_on)
+        # The object is drawn on its own layer and stamped through the box's
+        # interior, so nothing it does can reach past the sides: a crescent is
+        # a disc with a disc bitten out of it, and the biting disc has to be
+        # allowed to sit off the top of the object without taking a piece of
+        # the box's lip with it.
+        glyph = Card()
+        glyph.img = Image.new("RGBA", glyph.img.size, (0, 0, 0, 0))
+        glyph.d = ImageDraw.Draw(glyph.img)
+        object_glyph(glyph, open_on)
+        inside = Image.new("L", glyph.img.size, 0)
+        ImageDraw.Draw(inside).rounded_rectangle(
+            [v * CARD * SS for v in body], int(0.05 * CARD * SS), fill=255)
+        card.img.paste(glyph.img, (0, 0),
+                       ImageChops.multiply(glyph.img.split()[3], inside))
     else:
         card.rect(body, (223, 218, 206), radius=0.05)
         card.rect(lid, INK, radius=0.03)
@@ -722,65 +746,69 @@ def box(open_on=None):
 
 
 def object_glyph(card, name):
-    """The four things a box can be hiding, drawn at the same weight."""
+    """The four things a box can be hiding.
+
+    v12 redrew all four. They are seen inside a box for three seconds and then
+    remembered for the length of a shuffle, and at the size a card is on a
+    phone the old key was a red bar with two bumps on it — a reader who cannot
+    name what they saw cannot hold it. So each one is now the fewest, boldest
+    marks that make it unmistakable, sized against the open box's interior
+    rather than against the card, and drawn in one colour per object so the
+    colour is a second way of telling them apart.
+    """
     unit = CARD * SS
-    cx, cy = 0.5 * unit, 0.60 * unit
+    cx, cy = 0.5 * unit, 0.585 * unit
+
+    def px(v):
+        return v * unit
+
     if name == "star":
-        card.shape("star", AMBER, cx=0.5, cy=0.60, r=0.19)
+        # Five points, and big: a star has nothing to confuse it with, so the
+        # only way to get this wrong is to draw it small.
+        card.shape("star", AMBER, cx=0.5, cy=0.585, r=0.215)
     elif name == "moon":
-        # A crescent: one disc, then the ground bitten out of it.
-        r = 0.19 * unit
+        # A crescent with horns that come to a point. Cut by a disc offset up
+        # and across rather than straight across, which is what turns a bitten
+        # circle into a moon.
+        r = px(0.215)
         card.d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=VIOLET)
-        card.d.ellipse([cx - r * 0.45, cy - r * 1.05,
-                        cx + r * 1.55, cy + r * 1.05], fill=(223, 218, 206))
+        card.d.ellipse([cx - r * 0.30, cy - r * 1.30,
+                        cx + r * 1.62, cy + r * 0.98],
+                       fill=(0, 0, 0, 0) if card.img.mode == "RGBA"
+                       else (223, 218, 206))
     elif name == "cup":
-        card.d.polygon([(cx - 0.13 * unit, cy - 0.14 * unit),
-                        (cx + 0.13 * unit, cy - 0.14 * unit),
-                        (cx + 0.09 * unit, cy + 0.15 * unit),
-                        (cx - 0.09 * unit, cy + 0.15 * unit)], fill=TEAL)
-        card.d.ellipse([cx + 0.09 * unit, cy - 0.10 * unit,
-                        cx + 0.24 * unit, cy + 0.05 * unit],
-                       outline=TEAL, width=int(0.028 * unit))
-    elif name == "leaf":
-        # A leaf: two arcs meeting at a tip, one vein and a stem.
-        card.d.pieslice([cx - 0.20 * unit, cy - 0.20 * unit,
-                         cx + 0.14 * unit, cy + 0.14 * unit],
-                        270, 90, fill=GREEN)
-        card.d.pieslice([cx - 0.14 * unit, cy - 0.14 * unit,
-                         cx + 0.20 * unit, cy + 0.20 * unit],
-                        90, 270, fill=GREEN)
-        card.d.line([(cx - 0.15 * unit, cy + 0.15 * unit),
-                     (cx + 0.16 * unit, cy - 0.16 * unit)],
-                    fill=(223, 218, 206), width=int(0.020 * unit))
-        card.d.line([(cx - 0.15 * unit, cy + 0.15 * unit),
-                     (cx - 0.24 * unit, cy + 0.24 * unit)],
-                    fill=GREEN, width=int(0.026 * unit))
-    elif name == "bell":
-        # A bell: a dome on a lip, with the clapper under it.
-        card.d.pieslice([cx - 0.17 * unit, cy - 0.22 * unit,
-                         cx + 0.17 * unit, cy + 0.12 * unit],
-                        180, 360, fill=AMBER)
-        card.d.rectangle([cx - 0.17 * unit, cy - 0.05 * unit,
-                          cx + 0.17 * unit, cy + 0.08 * unit], fill=AMBER)
-        card.d.rounded_rectangle([cx - 0.22 * unit, cy + 0.08 * unit,
-                                  cx + 0.22 * unit, cy + 0.15 * unit],
-                                 int(0.035 * unit), fill=AMBER)
-        card.d.ellipse([cx - 0.045 * unit, cy + 0.16 * unit,
-                        cx + 0.045 * unit, cy + 0.25 * unit], fill=AMBER)
+        # A mug: straight sides, a heavy handle off the right, and a base line
+        # so it sits rather than floats.
+        card.d.rounded_rectangle([cx - px(0.155), cy - px(0.165),
+                                  cx + px(0.105), cy + px(0.175)],
+                                 px(0.028), fill=TEAL)
+        card.d.ellipse([cx + px(0.055), cy - px(0.115),
+                        cx + px(0.245), cy + px(0.075)],
+                       outline=TEAL, width=int(px(0.046)))
+        card.d.rounded_rectangle([cx - px(0.185), cy + px(0.175),
+                                  cx + px(0.135), cy + px(0.215)],
+                                 px(0.020), fill=TEAL)
     else:
-        # The key: a ringed head, a stem, and two teeth.
-        r = 0.10 * unit
-        card.d.ellipse([cx - 0.20 * unit - r, cy - r,
-                        cx - 0.20 * unit + r, cy + r], fill=RED)
-        card.d.ellipse([cx - 0.20 * unit - r * 0.42, cy - r * 0.42,
-                        cx - 0.20 * unit + r * 0.42, cy + r * 0.42],
-                       fill=(223, 218, 206))
-        card.d.rectangle([cx - 0.20 * unit, cy - 0.035 * unit,
-                          cx + 0.22 * unit, cy + 0.035 * unit], fill=RED)
-        for at in (0.10, 0.17):
-            card.d.rectangle([cx + at * unit, cy + 0.035 * unit,
-                              cx + (at + 0.045) * unit, cy + 0.13 * unit],
-                             fill=RED)
+        # The key: a round bow with a hole you can see through it, a straight
+        # shaft, and two square teeth that hang off the end of it. The old one
+        # put the teeth mid-shaft at a third of this weight and it read as a
+        # spanner.
+        bow = px(0.122)
+        bx = cx - px(0.190)
+        card.d.ellipse([bx - bow, cy - bow, bx + bow, cy + bow], fill=RED)
+        card.d.rounded_rectangle([bx, cy - px(0.048),
+                                  cx + px(0.255), cy + px(0.048)],
+                                 px(0.016), fill=RED)
+        for at in (0.100, 0.190):
+            card.d.rounded_rectangle([cx + px(at), cy + px(0.048),
+                                      cx + px(at + 0.058), cy + px(0.180)],
+                                     px(0.013), fill=RED)
+        # The hole last, so the shaft cannot close it. Drawn before, it left
+        # the bow reading as a lollipop with a nick out of it.
+        card.d.ellipse([bx - bow * 0.46, cy - bow * 0.46,
+                        bx + bow * 0.46, cy + bow * 0.46],
+                       fill=(0, 0, 0, 0) if card.img.mode == "RGBA"
+                       else (223, 218, 206))
 
 
 # --- round three: letters ---------------------------------------------------
@@ -1368,8 +1396,7 @@ def main():
                     put(plain(colour, form), name)
 
     put(box(), "box_closed")
-    for name in sorted({v["object"] for vs in SPATIAL_VARIANTS.values()
-                        for v in vs}):
+    for name in sorted(set(SPATIAL_OBJECT.values())):
         put(box(name), "box_open_" + name)
 
     # Every letter a round draws, its own name on it. The unchanged three

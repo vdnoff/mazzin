@@ -3233,7 +3233,7 @@ out loud once, the first time you hear it" is.''',
     {"combo": "the third round from the list, exactly", "verdict": "its verdict, exactly", "why": "one line"},
     {"combo": "the fourth round from the list, exactly", "verdict": "its verdict, exactly", "why": "one line"}
   ],
-  "rule": "THE DRILL: 2-3 sentences spelling out one two-minute drill for the round with the most room in it. What to do, with what, and how many times. Somebody has to be able to do it tomorrow morning from this paragraph alone (max %(rule)d chars)"
+  "rule": "THE DRILL: 2-3 sentences spelling out one two-minute drill for the round with the most room in it. What to do, with what, and how many times. Somebody has to be able to do it tomorrow morning from this paragraph alone. It is a DAILY drill and the offer sells it as one, so say plainly that it is two minutes every day and that it starts tomorrow (max %(rule)d chars)"
 }
 
 THE FOUR ROUNDS ARE NOT YOURS TO CHOOSE. All four are given above, each with
@@ -3383,10 +3383,20 @@ BRAIN_WORDS = dict(
 BRAIN_STUBS = {
     "dna": {
         "narrative": [
-            "You hold what you have just been shown for a beat longer than "
-            "most people do, and it turns up everywhere: the name you catch "
-            "the first time, the aisle you walk back to without checking, "
-            "the instruction you only need once.",
+            # v12. The offer sells the age as the thing the first page
+            # reveals, and the keyed chapter opens on it. This is the same
+            # chapter written when there is no key, and it opened on the
+            # strongest round instead — which breaks that promise on the one
+            # path where nothing else can make up for it. It cannot name the
+            # figure, because a stub is the same words for every reader, so
+            # it names where the figure is.
+            "The number at the top of this page is your brain age, and it is "
+            "a reading of your eighteen rounds and of nothing else. It "
+            "moves. What holds it where it is: you hold what you have just "
+            "been shown for a beat longer than most people do, and it turns "
+            "up everywhere — the name you catch the first time, the aisle "
+            "you walk back to without checking, the instruction you only "
+            "need once.",
             "That holding pairs with how quickly you spot a difference. "
             "Together they make you the one who notices that something moved "
             "before anybody else has looked up, and the one who can say what "

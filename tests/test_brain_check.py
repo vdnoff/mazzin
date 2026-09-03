@@ -1010,9 +1010,26 @@ for sid in ("spa1", "spa2", "spa3", "spa4"):
               all(len(p) == 2 and p[0] != p[1]
                   and all(isinstance(v, int) and 0 <= v < 6 for v in p)
                   for p in rule["swaps"]))
-    check("  and its three versions hide three different objects",
-          len({e["flash"]["images"][e["reveal"]["open_slot"]]["img"]
-               for e in step["pool"]}) == 3)
+    # v12: the SAME object in all three, because the step's question names it.
+    # v11 varied it per version, so two runs in three asked "where is the key
+    # now?" over a box that had a moon in it — the object is the thing the
+    # question names, so it belongs to the step, and what a version varies is
+    # the slot it started in and the way the chain runs.
+    shown = {e["flash"]["images"][e["reveal"]["open_slot"]]["img"]
+             for e in step["pool"]}
+    want = "/static/galleries/brain/box_open_%s.webp" % GEN.SPATIAL_OBJECT[sid]
+    check("  and all three versions hide the object the question names",
+          shown == {want}, str(sorted(shown)))
+    check("    which is the word the step's own question uses",
+          GEN.SPATIAL_OBJECT[sid] in step["question"].lower(),
+          "%s / %s" % (GEN.SPATIAL_OBJECT[sid], step["question"]))
+    check("    and the memorise screen in front of it names the same thing",
+          GEN.SPATIAL_OBJECT[sid]
+          in mid_by_after[SCORED[sid][1] - 1][0]["line"].lower(),
+          mid_by_after[SCORED[sid][1] - 1][0]["line"])
+    check("    while the three still start it in three different slots",
+          len({e["reveal"]["open_slot"] for e in step["pool"]}) == 3,
+          str([e["reveal"]["open_slot"] for e in step["pool"]]))
 
 print("\n--- v11: the change rounds change one thing, by their own amount ---")
 KIND = {"chg1": "letter", "chg2": "colour", "chg3": "size",
@@ -1610,6 +1627,55 @@ check("and nothing on the new card claims anything about anybody else",
       not [w for w in CROWD_OFFER if w in OFFER_TEXT]
       and not re.search(r"\d+\s*%", OFFER_TEXT),
       str([w for w in CROWD_OFFER if w in OFFER_TEXT]))
+
+print("\n--- v12: the four things a box can be hiding ---")
+OBJECTS = sorted(set(GEN.SPATIAL_OBJECT.values()))
+check("there are four of them, one per spatial round",
+      OBJECTS == ["cup", "key", "moon", "star"], str(OBJECTS))
+check("  and each round owns exactly one, for the length of the funnel",
+      len(GEN.SPATIAL_OBJECT) == 4
+      and len(set(GEN.SPATIAL_OBJECT.values())) == 4,
+      str(GEN.SPATIAL_OBJECT))
+check("  which is on the STEP now, not on the version",
+      "SPATIAL_OBJECT = {" in ART
+      and not re.search(r'\{"object":', ART),
+      str(re.findall(r'\{"object":[^,]*', ART)[:2]))
+for name in OBJECTS:
+    path = os.path.join(GALLERY, "box_open_%s.webp" % name)
+    check("  box_open_%s is drawn and on disk" % name, os.path.exists(path))
+    check("    under twelve kilobytes",
+          os.path.exists(path) and os.path.getsize(path) < 12 * 1024,
+          str(os.path.getsize(path)) if os.path.exists(path) else "-")
+check("  and the two v11 drew for versions that no longer vary are gone",
+      not [n for n in os.listdir(GALLERY)
+           if n.startswith("box_open_")
+           and n[len("box_open_"):-len(".webp")] not in OBJECTS],
+      str(sorted(n for n in os.listdir(GALLERY)
+                 if n.startswith("box_open_"))))
+check("every reference to an object anywhere points at the four",
+      not [p for p in sorted(set(paths))
+           if "box_open_" in p
+           and p.split("box_open_")[-1][:-5] not in OBJECTS],
+      str(sorted({p for p in paths if "box_open_" in p})))
+# v12 redrew all four: at the size a card is on a phone the key was a red bar
+# with two bumps on it, and a reader who cannot name what they saw cannot hold
+# it for the length of a shuffle.
+check("the key is a bow with a hole in it, a shaft and two teeth",
+      "The key: a round bow with a hole you can see through it" in ART
+      and "bow = px(0.122)" in ART
+      and ART.count("card.d.rounded_rectangle([cx + px(at)") == 1)
+check("  and the hole is cut last, so the shaft cannot close it",
+      ART.index("The hole last, so the shaft cannot close it")
+      > ART.index("bow = px(0.122)"))
+check("the cup is a mug with a handle and a base",
+      "A mug: straight sides, a heavy handle off the right" in ART)
+check("the star is five points and big",
+      'card.shape("star", AMBER, cx=0.5, cy=0.585, r=0.215)' in ART)
+check("the moon is a disc bitten by a disc set up and across",
+      "A crescent with horns that come to a point" in ART)
+check("and none of the four can paint over the box it is inside",
+      "ImageChops.multiply(glyph.img.split()[3], inside)" in ART
+      and "stamped through the box\u2019s" in ART.replace("'", "\u2019"))
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for line in fails:
