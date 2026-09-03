@@ -573,3 +573,6 @@ bottom.
 
 ## 2026-09-03 — claude/zodiac-bg-boxes
 - zodiac-bg: boxes paywall template, A/B 50/50 vs minimal
+
+## 2026-09-03 — claude/zodiac-bg-boxes-scope
+- boxes: full minimal top, boxes below rarity, denser tiles
