@@ -570,3 +570,6 @@ bottom.
 
 ## 2026-09-03 — claude/brain-funnel-12
 - brain v12: spatial fixes + report alignment
+
+## 2026-09-03 — claude/zodiac-bg-boxes
+- zodiac-bg: boxes paywall template, A/B 50/50 vs minimal
