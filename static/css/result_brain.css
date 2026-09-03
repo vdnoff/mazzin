@@ -589,31 +589,8 @@ body:has(.result-module) {
   color: var(--br-faint);
 }
 
-.br-badges {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-  margin: 10px 0 0;
-  padding: 0;
-  list-style: none;
-}
 
-.br-badge {
-  padding: 4px 10px;
-  border: 1px solid var(--br-line);
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--br-muted);
-}
 
-.br-offer-sub {
-  margin: 12px 0 0;
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--br-muted);
-}
 
 .br-variant {
   margin: 14px 0 0;
@@ -849,50 +826,12 @@ body:has(.result-module) {
 /* What is in the report, above the price. Tight on purpose: it is a list to
    scan, not to read. A tick, never a padlock — a lock over the price is the
    page arguing with its own button. */
-.br-checklist {
-  margin: 0 0 14px;
-  padding: 0;
-  list-style: none;
-  text-align: left;
-}
 
-.br-check {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  margin-top: 8px;
-}
 
-.br-check:first-child { margin-top: 0; }
 
-.br-check-mark {
-  flex: none;
-  width: 16px;
-  height: 16px;
-  margin-top: 3px;
-  color: var(--br-spa);
-}
 
-.br-check-mark svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-}
 
-.br-check-line {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--br-muted);
-}
 
-.br-check-key {
-  font-weight: 700;
-  color: var(--br-ink);
-}
 
 /* The regular price, beside the one they are being offered. Small, muted and
    struck: it is the reference the discount is measured against, not a second
@@ -1039,34 +978,11 @@ body:has(.result-module) {
    the sentence turns rather than where the box happens to end. */
 .result-module.is-minimal .br-type-note-line { display: block; }
 
-.result-module.is-minimal .br-unlock { margin: 0 0 18px; }
 
-.result-module.is-minimal .br-unlock-head {
-  margin: 0 0 12px;
-  text-align: center;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--br-lux);
-}
 
-.result-module.is-minimal .br-checklist { margin: 0 0 16px; }
 
-.result-module.is-minimal .br-check-line {
-  font-size: 15.5px;
-  line-height: 1.45;
-  color: var(--br-ink);
-}
 
-.result-module.is-minimal .br-check-key {
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--br-lux);
-}
 
-.result-module.is-minimal .br-check-mark { color: var(--br-lux); }
 
 /* Drawn rather than declared. `line-through` is one hairline in the type's
    own colour, which beside a 40px figure reads as a rendering artefact rather
@@ -1100,3 +1016,170 @@ body:has(.result-module) {
 @media (min-width: 520px) {
   .result-module { margin: 0 auto; max-width: 520px; }
 }
+
+/* --- v11: the offer card ---------------------------------------------------- */
+
+/* It used to be a list of five ticked rows on the card and the same five
+   again as a manifest under the button — the same promise in two voices, in
+   two places, neither of which said which round THIS reader dropped points
+   in. What replaces it argues in one order: what the plan is, what this run
+   left on the table, the number it is holding back, the four things it
+   contains, the price, the button, what it is not, and one comparison at the
+   very bottom. */
+
+/* One line about this run, straight under the head. The round it names is the
+   only bolded word on the card that is not a price. */
+.br-offer-personal {
+  margin: 0 0 14px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--br-muted);
+}
+
+.br-offer-round { color: var(--br-ink); font-weight: 700; }
+
+/* The thing being sold, as a tile of what it is NOT showing: two hashes where
+   the number goes, and the word LOCKED riding the bottom edge of the tile so
+   it reads as a state rather than as a caption under a picture. */
+.br-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 16px;
+  padding: 14px;
+  border: 1.5px solid var(--br-lux);
+  border-radius: 14px;
+  background: rgba(59, 125, 216, 0.06);
+  text-align: left;
+}
+
+.br-hero-tile {
+  position: relative;
+  flex: 0 0 74px;
+  width: 74px;
+  height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--br-line);
+  border-radius: 12px;
+  background: var(--br-card);
+}
+
+.br-hero-hash {
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--br-faint);
+}
+
+.br-hero-lock {
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  transform: translateX(-50%);
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--br-lux);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+
+.br-hero-words { flex: 1 1 auto; min-width: 0; }
+
+.br-hero-kicker {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--br-lux);
+}
+
+.br-hero-line {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--br-ink);
+}
+
+/* Four of them, two by two: the shortest way to say what a plan contains
+   without writing a list somebody has to read. */
+.br-benefits {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.br-benefit {
+  padding: 12px 11px 11px;
+  border: 1px solid var(--br-line);
+  border-radius: 12px;
+  background: var(--br-card);
+}
+
+/* The icons are stroked in `currentColor`, so the colour is set once here and
+   the four paths in the module carry none of their own. */
+.br-benefit-icon {
+  display: block;
+  width: 30px;
+  height: 30px;
+  margin: 0 0 8px;
+  color: var(--br-lux);
+}
+
+.br-benefit-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+}
+
+.br-benefit-title {
+  margin: 0 0 3px;
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: var(--br-ink);
+}
+
+.br-benefit-sub {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--br-muted);
+}
+
+/* What it is not, in three. Under the button, because that is where the
+   question they answer gets asked. */
+.br-offer-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.br-offer-chip {
+  padding: 4px 10px;
+  border: 1px solid var(--br-line);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--br-muted);
+}
+
+/* Last on the card, and the quietest thing on it. */
+.br-offer .br-anchor { margin: 12px 0 0; }

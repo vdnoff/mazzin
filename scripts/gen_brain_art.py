@@ -280,33 +280,322 @@ def crescent(card, colour, r=0.30, cx=0.5, cy=0.5):
 # cards the reader has to tell it apart from afterwards. `seen` is the slot
 # of the flash card that comes back — a different one every round, so nobody
 # can learn a position instead of a picture.
-MEMORY = [
-    {"seen": 1,
-     "flash": [("red", "circle"), ("blue", "triangle"),
-               ("amber", "square"), ("green", "star")],
-     "decoys": [("violet", "hexagon"), ("teal", "diamond"),
-                ("amber", "cross")]},
-    {"seen": 3,
-     "flash": [("violet", "square"), ("green", "hexagon"),
-               ("red", "star"), ("blue", "diamond")],
-     "decoys": [("amber", "triangle"), ("teal", "circle"),
-                ("red", "pentagon")]},
-    {"seen": 4,
-     "flash": [("amber", "circle"), ("violet", "triangle"),
-               ("teal", "square"), ("red", "hexagon"),
-               ("green", "diamond"), ("blue", "cross")],
-     "decoys": [("blue", "star"), ("red", "circle"),
-                ("violet", "pentagon")]},
-    # The last memory round answers on a six-up rather than a four, which is
-    # the whole of what makes it the hardest one: six frames held for two and
-    # a half seconds, and then one of six to find rather than one of four.
-    {"seen": 2,
-     "flash": [("green", "square"), ("teal", "star"),
-               ("blue", "pentagon"), ("amber", "diamond"),
-               ("violet", "circle"), ("red", "triangle")],
-     "decoys": [("teal", "hexagon"), ("amber", "cross"),
-                ("green", "circle"), ("violet", "diamond"),
-                ("blue", "hexagon")]},
+# --- v11: every scored round has three versions of itself -------------------
+#
+# A reader who plays this twice should not be answering the same sixteen
+# questions. Every scored step carries three variants and the engine draws one
+# per run, so what changes between two walks is the content and never the
+# shape: a variant of a round keeps that round's own difficulty — how many
+# frames, how long they are held, how big the change is — and differs only in
+# which shapes, letters, colours or objects it uses.
+#
+# Files are named by WHAT THEY ARE rather than by which round uses them, so
+# three variants of a memory round share one library of shape cards instead of
+# writing three copies of the same picture. `plain_red_circle.webp` is a red
+# circle wherever it turns up, which is also what lets a check read a round
+# off its filenames.
+
+
+def shape_name(colour, form):
+    return "plain_%s_%s" % (colour, form)
+
+
+# The memory rounds. `flash` is what is held up, `decoys` are the cards that
+# come back with the answer, and `seen` is which of the flashed frames is the
+# answer. The four rounds get harder in how the round is played rather than in
+# what it is made of: four frames then six, three seconds then two and a half,
+# and the last round's decoys are colour neighbours of the answer.
+MEMORY_VARIANTS = {
+    "mem1": [
+        {"seen": 1, "hold": 3000,
+         "flash": [("red", "circle"), ("blue", "triangle"),
+                   ("amber", "square"), ("green", "star")],
+         "decoys": [("violet", "hexagon"), ("teal", "diamond"),
+                    ("amber", "cross")]},
+        {"seen": 3, "hold": 3000,
+         "flash": [("teal", "pentagon"), ("amber", "diamond"),
+                   ("violet", "circle"), ("red", "square")],
+         "decoys": [("blue", "star"), ("green", "cross"),
+                    ("teal", "triangle")]},
+        {"seen": 0, "hold": 3000,
+         "flash": [("green", "hexagon"), ("red", "star"),
+                   ("blue", "cross"), ("amber", "pentagon")],
+         "decoys": [("violet", "square"), ("teal", "circle"),
+                    ("red", "diamond")]},
+    ],
+    "mem2": [
+        {"seen": 3, "hold": 3000,
+         "flash": [("violet", "square"), ("green", "hexagon"),
+                   ("red", "star"), ("blue", "diamond"),
+                   ("amber", "circle"), ("teal", "cross")],
+         "decoys": [("amber", "triangle"), ("teal", "circle"),
+                    ("red", "pentagon"), ("green", "star"),
+                    ("blue", "square")]},
+        {"seen": 5, "hold": 3000,
+         "flash": [("teal", "star"), ("red", "hexagon"),
+                   ("amber", "cross"), ("violet", "triangle"),
+                   ("green", "diamond"), ("blue", "pentagon")],
+         "decoys": [("violet", "star"), ("green", "cross"),
+                    ("red", "circle"), ("amber", "square"),
+                    ("teal", "diamond")]},
+        {"seen": 1, "hold": 3000,
+         "flash": [("blue", "circle"), ("amber", "star"),
+                   ("green", "square"), ("teal", "hexagon"),
+                   ("red", "triangle"), ("violet", "cross")],
+         "decoys": [("blue", "diamond"), ("red", "pentagon"),
+                    ("teal", "square"), ("violet", "hexagon"),
+                    ("green", "circle")]},
+    ],
+    "mem3": [
+        {"seen": 4, "hold": 2500,
+         "flash": [("amber", "circle"), ("violet", "triangle"),
+                   ("teal", "square"), ("red", "hexagon"),
+                   ("green", "diamond"), ("blue", "cross")],
+         "decoys": [("blue", "star"), ("red", "circle"),
+                    ("violet", "pentagon"), ("amber", "hexagon"),
+                    ("teal", "star")]},
+        {"seen": 2, "hold": 2500,
+         "flash": [("red", "pentagon"), ("blue", "square"),
+                   ("green", "star"), ("violet", "diamond"),
+                   ("amber", "hexagon"), ("teal", "triangle")],
+         "decoys": [("teal", "cross"), ("amber", "circle"),
+                    ("blue", "hexagon"), ("red", "triangle"),
+                    ("green", "pentagon")]},
+        {"seen": 5, "hold": 2500,
+         "flash": [("green", "cross"), ("teal", "diamond"),
+                   ("violet", "star"), ("amber", "triangle"),
+                   ("blue", "hexagon"), ("red", "square")],
+         "decoys": [("violet", "cross"), ("green", "square"),
+                    ("amber", "star"), ("blue", "circle"),
+                    ("teal", "pentagon")]},
+    ],
+    # The hardest of the four: the decoys are the answer's own shape in the
+    # colour next to it, so "I remember a green one" is not enough.
+    "mem4": [
+        {"seen": 2, "hold": 2500,
+         "flash": [("green", "square"), ("teal", "star"),
+                   ("blue", "pentagon"), ("amber", "diamond"),
+                   ("violet", "circle"), ("red", "triangle")],
+         "decoys": [("teal", "pentagon"), ("green", "pentagon"),
+                    ("violet", "pentagon"), ("blue", "hexagon"),
+                    ("blue", "diamond")]},
+        {"seen": 0, "hold": 2500,
+         "flash": [("red", "hexagon"), ("blue", "cross"),
+                   ("amber", "star"), ("green", "circle"),
+                   ("teal", "square"), ("violet", "diamond")],
+         "decoys": [("amber", "hexagon"), ("violet", "hexagon"),
+                    ("red", "pentagon"), ("red", "diamond"),
+                    ("green", "hexagon")]},
+        {"seen": 4, "hold": 2500,
+         "flash": [("amber", "triangle"), ("violet", "square"),
+                   ("green", "diamond"), ("red", "cross"),
+                   ("teal", "hexagon"), ("blue", "star")],
+         "decoys": [("green", "hexagon"), ("blue", "hexagon"),
+                    ("teal", "pentagon"), ("teal", "circle"),
+                    ("violet", "hexagon")]},
+    ],
+}
+
+# The spatial rounds. Six identical closed boxes, one of which was open on the
+# flash, and then a chain of swaps. Every variant of a round runs a chain of
+# the SAME length at the SAME speed — that is the round's difficulty — and
+# differs in which object was under the lid, which slot it started in and
+# which way the chain runs. The landing slot is worked out by running the
+# chain rather than written down, so a variant cannot claim a landing its own
+# swaps do not produce.
+SPATIAL_VARIANTS = {
+    "spa1": [
+        {"object": "key", "open_slot": 2, "swap_ms": 800,
+         "swaps": [[2, 5], [0, 3], [5, 1], [3, 4]]},
+        {"object": "leaf", "open_slot": 0, "swap_ms": 800,
+         "swaps": [[0, 4], [1, 3], [4, 2], [5, 0]]},
+        {"object": "bell", "open_slot": 5, "swap_ms": 800,
+         "swaps": [[5, 1], [2, 4], [1, 0], [3, 5]]},
+    ],
+    "spa2": [
+        {"object": "cup", "open_slot": 5, "swap_ms": 600,
+         "swaps": [[5, 2], [0, 4], [2, 3], [1, 5], [4, 0]]},
+        {"object": "star", "open_slot": 1, "swap_ms": 600,
+         "swaps": [[1, 4], [3, 0], [4, 2], [5, 1], [0, 3]]},
+        {"object": "key", "open_slot": 3, "swap_ms": 600,
+         "swaps": [[3, 0], [2, 5], [0, 4], [1, 3], [5, 2]]},
+    ],
+    "spa3": [
+        {"object": "star", "open_slot": 0, "swap_ms": 450,
+         "swaps": [[0, 4], [1, 2], [4, 5], [0, 3], [5, 2], [3, 1]]},
+        {"object": "bell", "open_slot": 4, "swap_ms": 450,
+         "swaps": [[4, 1], [0, 5], [1, 3], [2, 4], [5, 0], [3, 2]]},
+        {"object": "moon", "open_slot": 2, "swap_ms": 450,
+         "swaps": [[2, 5], [3, 1], [5, 0], [4, 2], [1, 3], [0, 4]]},
+    ],
+    "spa4": [
+        {"object": "moon", "open_slot": 3, "swap_ms": 350,
+         "swaps": [[3, 1], [0, 5], [1, 4], [2, 3], [4, 0], [5, 1], [0, 2]]},
+        {"object": "leaf", "open_slot": 1, "swap_ms": 350,
+         "swaps": [[1, 5], [2, 0], [5, 3], [4, 1], [0, 2], [3, 4], [2, 5]]},
+        {"object": "cup", "open_slot": 4, "swap_ms": 350,
+         "swaps": [[4, 0], [3, 5], [0, 2], [1, 4], [5, 3], [2, 1], [4, 5]]},
+    ],
+}
+
+SPATIAL_OPEN_MS = 3000
+SPATIAL_CLOSE_MS = 600
+
+
+def spatial_landing(open_slot, swaps):
+    """Where the object ends up after a chain, by running the chain.
+
+    The same walk the engine's own reveal does: each swap exchanges the
+    contents of two slots, and the object goes wherever the slot it is in is
+    sent. Written here so the config and the check can both be built from the
+    chain rather than from somebody's arithmetic about it.
+    """
+    at = open_slot
+    for a, b in swaps:
+        if at == a:
+            at = b
+        elif at == b:
+            at = a
+    return at
+
+
+# The change rounds. One of four letters comes back different, and what makes
+# the four rounds four is the KIND of difference and how small it is: a letter
+# that could be mistaken for the one it replaced, then a colour one shade
+# over, then a fifth off the size, then ten degrees of tilt. Every variant of
+# a round keeps its round's kind and magnitude.
+#
+# The letter pairs are chosen for silhouette — E and F, C and G, P and R — so
+# a reader who held "there was a letter with a bar" is not helped by any of
+# them.
+CHANGE_VARIANTS = {
+    "chg1": [
+        {"changed": 1, "kind": "letter",
+         "flash": [("A", "red", "lg", 0), ("E", "blue", "lg", 0),
+                   ("R", "green", "lg", 0), ("M", "amber", "lg", 0)],
+         "after": ("F", "blue", "lg", 0)},
+        {"changed": 3, "kind": "letter",
+         "flash": [("K", "violet", "lg", 0), ("S", "teal", "lg", 0),
+                   ("T", "amber", "lg", 0), ("C", "red", "lg", 0)],
+         "after": ("G", "red", "lg", 0)},
+        {"changed": 0, "kind": "letter",
+         "flash": [("P", "green", "lg", 0), ("W", "amber", "lg", 0),
+                   ("B", "blue", "lg", 0), ("Z", "violet", "lg", 0)],
+         "after": ("R", "green", "lg", 0)},
+    ],
+    # Neighbours on the palette: amber next to red, teal next to green,
+    # violet next to blue. One shade over, never one colour over.
+    "chg2": [
+        {"changed": 3, "kind": "colour",
+         "flash": [("S", "violet", "lg", 0), ("T", "teal", "lg", 0),
+                   ("B", "blue", "lg", 0), ("G", "green", "lg", 0)],
+         "after": ("G", "teal", "lg", 0)},
+        {"changed": 1, "kind": "colour",
+         "flash": [("D", "green", "lg", 0), ("K", "red", "lg", 0),
+                   ("N", "blue", "lg", 0), ("V", "teal", "lg", 0)],
+         "after": ("K", "amber", "lg", 0)},
+        {"changed": 2, "kind": "colour",
+         "flash": [("H", "amber", "lg", 0), ("F", "teal", "lg", 0),
+                   ("L", "blue", "lg", 0), ("Y", "red", "lg", 0)],
+         "after": ("L", "violet", "lg", 0)},
+    ],
+    # A fifth off, which at this size is about eleven pixels of cap height and
+    # not a card anybody spots without having held the row.
+    "chg3": [
+        {"changed": 0, "kind": "size",
+         "flash": [("W", "green", "lg", 0), ("F", "blue", "lg", 0),
+                   ("N", "amber", "lg", 0), ("Z", "violet", "lg", 0)],
+         "after": ("W", "green", "md", 0)},
+        {"changed": 2, "kind": "size",
+         "flash": [("Q", "red", "lg", 0), ("J", "teal", "lg", 0),
+                   ("A", "violet", "lg", 0), ("E", "amber", "lg", 0)],
+         "after": ("A", "violet", "md", 0)},
+        {"changed": 3, "kind": "size",
+         "flash": [("B", "blue", "lg", 0), ("X", "green", "lg", 0),
+                   ("T", "red", "lg", 0), ("M", "teal", "lg", 0)],
+         "after": ("M", "teal", "md", 0)},
+    ],
+    # Ten degrees. Fifteen was already the hardest of the four; this is the
+    # round the plan is most often built around.
+    "chg4": [
+        {"changed": 2, "kind": "rotation",
+         "flash": [("D", "amber", "lg", 0), ("P", "teal", "lg", 0),
+                   ("Y", "red", "lg", 0), ("H", "blue", "lg", 0)],
+         "after": ("Y", "red", "lg", 10)},
+        {"changed": 0, "kind": "rotation",
+         "flash": [("L", "violet", "lg", 0), ("C", "green", "lg", 0),
+                   ("U", "blue", "lg", 0), ("K", "amber", "lg", 0)],
+         "after": ("L", "violet", "lg", 10)},
+        {"changed": 3, "kind": "rotation",
+         "flash": [("R", "teal", "lg", 0), ("S", "red", "lg", 0),
+                   ("E", "amber", "lg", 0), ("N", "green", "lg", 0)],
+         "after": ("N", "green", "lg", 10)},
+    ],
+}
+
+# The odd one out. Five umbrellas the same and one whose hook is SHORTER
+# rather than mirrored: a hook that curls the other way is a card anybody
+# finds in a second, and this round is meant to be the one that catches a
+# reader who is skimming. Every variant hides it in a different slot and
+# draws the six in a different colour.
+ODD_SHORT = 0.62          # the odd hook's share of the others' curve
+ODD_VARIANTS = [
+    {"set": "a", "colour": "red", "odd": 4},
+    {"set": "b", "colour": "teal", "odd": 2},
+    {"set": "c", "colour": "violet", "odd": 6},
+]
+
+# The word, and the ink it is set in. v11 pairs near misses: a word in the
+# colour NEXT to the one it names, so a reader has to read rather than
+# glance. Exactly one card tells the truth, and it is the one whose word and
+# ink are the same colour.
+#
+# The near misses are red/amber and blue/violet, and NOT teal/green. Teal is
+# a shade of green in ordinary speech, so "GREEN" set in teal is not an
+# attention test — it is a disagreement about what the colour is called, and
+# a reader who taps it is right by their own naming. The change round pairs
+# teal with green happily, because there the reader is comparing two cards
+# rather than naming one.
+INK_NEAR = {("red", "amber"), ("amber", "red"),
+            ("blue", "violet"), ("violet", "blue")}
+INK_VARIANTS = [
+    {"set": "a", "cards": [("RED", "amber"), ("BLUE", "blue"),
+                           ("VIOLET", "blue"), ("AMBER", "red")]},
+    {"set": "b", "cards": [("AMBER", "red"), ("VIOLET", "blue"),
+                           ("TEAL", "teal"), ("RED", "amber")]},
+    {"set": "c", "cards": [("BLUE", "violet"), ("RED", "amber"),
+                           ("GREEN", "green"), ("AMBER", "red")]},
+]
+
+# The counting round. Uneven scatters — a frame carrying two spots next to a
+# frame carrying five — so the total cannot be reached by pattern, and a true
+# count that changes between variants so the answer is never in the same place
+# twice. The four numbers offered are the true count with two below and one
+# above, which is the shape a reader who miscounts by one lands in.
+COUNT_VARIANTS = [
+    {"set": "a", "total": 11, "answers": ["9", "10", "11", "12"],
+     "spots": [
+         [(0.26, 0.30), (0.66, 0.22), (0.44, 0.63)],
+         [(0.31, 0.24), (0.71, 0.44), (0.22, 0.66), (0.55, 0.75)],
+         [(0.50, 0.28), (0.28, 0.62)],
+         [(0.24, 0.35), (0.62, 0.28)],
+     ]},
+    {"set": "b", "total": 12, "answers": ["10", "11", "12", "13"],
+     "spots": [
+         [(0.30, 0.26), (0.62, 0.35), (0.45, 0.70), (0.74, 0.66),
+          (0.22, 0.58)],
+         [(0.52, 0.24), (0.26, 0.45)],
+         [(0.35, 0.30), (0.70, 0.28), (0.28, 0.70)],
+         [(0.60, 0.55), (0.30, 0.35)],
+     ]},
+    {"set": "c", "total": 13, "answers": ["11", "12", "13", "14"],
+     "spots": [
+         [(0.28, 0.32), (0.68, 0.26)],
+         [(0.24, 0.28), (0.55, 0.40), (0.75, 0.62), (0.34, 0.68),
+          (0.62, 0.22), (0.44, 0.55)],
+         [(0.50, 0.30), (0.26, 0.60), (0.72, 0.48)],
+         [(0.32, 0.38), (0.66, 0.62)],
+     ]},
 ]
 
 # The age groups: the bracket, and a tree at the stage that group is at. The
@@ -332,10 +621,6 @@ MOODS = ("mood_sharp", "mood_ok", "mood_foggy", "mood_fumes")
 MOOD_WORDS = {"mood_sharp": "Sharp", "mood_ok": "Okay",
               "mood_foggy": "Foggy", "mood_fumes": "Running on fumes"}
 
-# The word, and the ink it is set in. Exactly one card tells the truth.
-INKS = [("ink_1", "RED", BLUE), ("ink_2", "BLUE", BLUE),
-        ("ink_3", "GREEN", AMBER), ("ink_4", "AMBER", RED)]
-
 # --- the pattern round: a dial with two hands -------------------------------
 #
 # A violet ring with one notch cut out of it, and an amber dot inside. TWO
@@ -351,39 +636,51 @@ INKS = [("ink_1", "RED", BLUE), ("ink_2", "BLUE", BLUE),
 # started — which is what makes the last distractor work. The first frame
 # redrawn has the right notch and the wrong dot, and cannot be dismissed by
 # anybody who only held one of the two.
-DIAL_ROT_STEP = 120        # degrees the notch turns per frame, clockwise
-DIAL_DOTS = 4              # places the dot steps through, clockwise from 12
 DIAL_FRAMES = 3            # frames shown before the question mark
 
-
-def dial_name(rot, dot):
-    """The file's name states both attributes, so the round can be checked
-    off the manifest and the filenames without anybody opening a picture."""
-    return "dial_r%d_d%d" % (rot % 360, dot % DIAL_DOTS)
-
-
-# The three frames the flash shows.
-DIAL_SEQUENCE = [(i * DIAL_ROT_STEP, i) for i in range(DIAL_FRAMES)]
-
-# The one card that continues BOTH progressions — the notch turned once more,
-# the dot stepped once more.
-DIAL_NEXT = (DIAL_FRAMES * DIAL_ROT_STEP, DIAL_FRAMES)
-
-# And the three that continue exactly one of them. Every one of these is a
-# card somebody who held half the pattern would tap.
-DIAL_WRONG = [
-    # the notch continued, the dot left two places back
-    (DIAL_NEXT[0], DIAL_NEXT[1] - 2),
-    # the dot continued, the notch left where the last frame had it
-    (DIAL_NEXT[0] - DIAL_ROT_STEP, DIAL_NEXT[1]),
-    # the first frame, redrawn: right notch, wrong dot
-    DIAL_SEQUENCE[0],
+# v11: three versions of the round, and the two hands turn at a different rate
+# in each. The structure is the same every time — one card continues BOTH
+# progressions, three continue exactly one, and one of those three is a frame
+# the flash already showed — but which attribute the repeated frame shares
+# changes with the numbers, which is what stops a second run being the same
+# puzzle with new pictures.
+#
+# `rot` is degrees the notch turns per frame and `dots` how many places the
+# dot steps through. For the repeat to share exactly one attribute, one of the
+# two has to come back where it started after three frames and the other must
+# not: (120, 4) brings the notch home, (90, 3) and (72, 3) bring the dot home.
+DIAL_VARIANTS = [
+    {"rot": 120, "dots": 4},
+    {"rot": 90, "dots": 3},
+    {"rot": 72, "dots": 3},
 ]
 
-# Which candidate carries `foc_hit`, and which of the wrong three the clock
-# presses when it runs out. Stated here so the config and the art cannot
-# disagree about which picture is the right answer.
-DIAL_ANSWERS = [DIAL_NEXT] + DIAL_WRONG
+
+def dial_name(rot, dot, dots):
+    """The file's name states both attributes, so the round can be checked
+    off the manifest and the filenames without anybody opening a picture."""
+    return "dial_r%d_d%d" % (rot % 360, dot % dots)
+
+
+def dial_round(spec):
+    """One version of the round: the frames, the answer, and the three wrong.
+
+    Everything is derived from the two numbers rather than written out, so a
+    variant cannot claim a distractor its own progressions do not produce.
+    """
+    rot, dots = spec["rot"], spec["dots"]
+    seq = [((i * rot) % 360, i % dots) for i in range(DIAL_FRAMES)]
+    right = ((DIAL_FRAMES * rot) % 360, DIAL_FRAMES % dots)
+    wrong = [
+        # the notch continued, the dot two places back
+        (right[0], (right[1] - 2) % dots),
+        # the dot continued, the notch left where the last frame had it
+        ((right[0] - rot) % 360, right[1]),
+        # a frame the flash showed, which shares exactly one of the two
+        seq[0],
+    ]
+    return {"seq": seq, "right": right, "wrong": wrong,
+            "answers": [right] + wrong, "dots": dots, "rot": rot}
 
 # Eleven circles across four frames, and not in the same place twice. The
 # grid of neat spots the round used to draw could be counted by pattern
@@ -392,15 +689,6 @@ DIAL_ANSWERS = [DIAL_NEXT] + DIAL_WRONG
 # here rather than rolled, so the same card is drawn every time.
 #
 #   (x, y) in fractions of the card, per frame
-COUNT_SPOTS = [
-    [(0.26, 0.30), (0.66, 0.22), (0.44, 0.63)],
-    [(0.31, 0.24), (0.71, 0.44), (0.22, 0.66)],
-    [(0.50, 0.28), (0.28, 0.62)],
-    [(0.24, 0.35), (0.62, 0.28), (0.75, 0.65)],
-]
-COUNT_TOTAL = 11
-COUNT_ANSWERS = ["9", "10", "11", "12"]
-
 # One card per brain type: the name, and the form the domain is drawn as
 # everywhere else on the funnel.
 TYPES = [("memory_mind", "The Recorder", "circle", BLUE),
@@ -453,6 +741,32 @@ def object_glyph(card, name):
         card.d.ellipse([cx + 0.09 * unit, cy - 0.10 * unit,
                         cx + 0.24 * unit, cy + 0.05 * unit],
                        outline=TEAL, width=int(0.028 * unit))
+    elif name == "leaf":
+        # A leaf: two arcs meeting at a tip, one vein and a stem.
+        card.d.pieslice([cx - 0.20 * unit, cy - 0.20 * unit,
+                         cx + 0.14 * unit, cy + 0.14 * unit],
+                        270, 90, fill=GREEN)
+        card.d.pieslice([cx - 0.14 * unit, cy - 0.14 * unit,
+                         cx + 0.20 * unit, cy + 0.20 * unit],
+                        90, 270, fill=GREEN)
+        card.d.line([(cx - 0.15 * unit, cy + 0.15 * unit),
+                     (cx + 0.16 * unit, cy - 0.16 * unit)],
+                    fill=(223, 218, 206), width=int(0.020 * unit))
+        card.d.line([(cx - 0.15 * unit, cy + 0.15 * unit),
+                     (cx - 0.24 * unit, cy + 0.24 * unit)],
+                    fill=GREEN, width=int(0.026 * unit))
+    elif name == "bell":
+        # A bell: a dome on a lip, with the clapper under it.
+        card.d.pieslice([cx - 0.17 * unit, cy - 0.22 * unit,
+                         cx + 0.17 * unit, cy + 0.12 * unit],
+                        180, 360, fill=AMBER)
+        card.d.rectangle([cx - 0.17 * unit, cy - 0.05 * unit,
+                          cx + 0.17 * unit, cy + 0.08 * unit], fill=AMBER)
+        card.d.rounded_rectangle([cx - 0.22 * unit, cy + 0.08 * unit,
+                                  cx + 0.22 * unit, cy + 0.15 * unit],
+                                 int(0.035 * unit), fill=AMBER)
+        card.d.ellipse([cx - 0.045 * unit, cy + 0.16 * unit,
+                        cx + 0.045 * unit, cy + 0.25 * unit], fill=AMBER)
     else:
         # The key: a ringed head, a stem, and two teeth.
         r = 0.10 * unit
@@ -481,7 +795,10 @@ def object_glyph(card, name):
 # four came back different", and a filename that states the four things a card
 # can differ in is a claim a check can hold the config to without opening a
 # single pixel.
-LETTER_SIZES = {"lg": 300, "sm": 190}
+# `md` is v11's change-round size: a fifth off `lg` rather than the third
+# `sm` took off, which is the difference between a card that is obviously
+# smaller and one somebody has to have held the row to notice.
+LETTER_SIZES = {"lg": 300, "md": 240, "sm": 190}
 
 # A serif, and a bold one. The quiz's own face is a sans and every other card
 # on the funnel is a flat shape; a heavy serif letter is the one thing on this
@@ -546,29 +863,6 @@ def letter_card(letter, colour, size="lg", rot=0):
 # nothing that pairs off as I and l, or O and Q.
 #
 #   (letter, colour, size, degrees)
-LETTERS = [
-    {"changed": 1, "kind": "letter",
-     "flash": [("A", "red", "lg", 0), ("K", "blue", "lg", 0),
-               ("R", "green", "lg", 0), ("M", "amber", "lg", 0)],
-     "after": ("E", "blue", "lg", 0)},
-    {"changed": 3, "kind": "colour",
-     "flash": [("S", "violet", "lg", 0), ("T", "teal", "lg", 0),
-               ("B", "red", "lg", 0), ("G", "green", "lg", 0)],
-     "after": ("G", "amber", "lg", 0)},
-    {"changed": 0, "kind": "size",
-     "flash": [("W", "green", "lg", 0), ("F", "blue", "lg", 0),
-               ("N", "amber", "lg", 0), ("Z", "violet", "lg", 0)],
-     "after": ("W", "green", "sm", 0)},
-    # Fifteen degrees rather than twenty-five. At twenty-five the round was
-    # the easiest of the four and it is meant to be the hardest: a letter
-    # that has plainly fallen over is not a change anybody has to look for.
-    {"changed": 2, "kind": "rotation",
-     "flash": [("D", "amber", "lg", 0), ("P", "teal", "lg", 0),
-               ("Y", "red", "lg", 0), ("H", "blue", "lg", 0)],
-     "after": ("Y", "red", "lg", 15)},
-]
-
-
 # --- the odd one out: umbrellas ---------------------------------------------
 #
 # Six of them, and one has its handle hooked the other way. Written as six
@@ -578,10 +872,7 @@ LETTERS = [
 # anybody can win with the inspector open. Five of the six are byte for byte
 # the same drawing; only the sixth is a different picture.
 UMBRELLA_SLOTS = 6
-UMBRELLA_ODD = 4          # one-based, the slot whose handle turns the other way
-
-
-def umbrella_card(flipped=False):
+def umbrella_card(flipped=False, colour=None, short=False):
     """A canopy, a pole, and a hook that curves one way or the other."""
     card = Card()
     unit = card.w * SS
@@ -591,7 +882,7 @@ def umbrella_card(flipped=False):
     # The canopy: a half disc, notched along its rim so it reads as panels
     # rather than as a semicircle.
     card.d.pieslice([cx - span, rim - span, cx + span, rim + span],
-                    180, 360, fill=RED)
+                    180, 360, fill=colour or RED)
     for offset in (-0.20, 0.0, 0.20):
         notch = 0.078 * unit
         card.d.ellipse([cx + offset * unit - notch, rim - notch,
@@ -601,17 +892,27 @@ def umbrella_card(flipped=False):
     pole = 0.017 * unit
     card.d.rectangle([cx - pole, rim - 0.02 * unit, cx + pole, 0.74 * unit],
                      fill=INK)
-    # The hook. A half turn either to the left or to the right, which is the
-    # only difference between the odd card and the other five.
+    # The hook. v11 makes the odd card's hook SHORTER rather than mirrored: a
+    # hook that curls the other way is a card anybody finds at a glance, and
+    # this is the round that is supposed to catch a reader who is skimming.
+    # `flipped` is kept for the funnels drawn before that change.
+    #
+    # The arc runs clockwise from three o'clock and its box is placed so the
+    # pole meets it at 180 degrees, so a shorter hook is trimmed from the
+    # START — trimmed from the end it comes away from the pole and reads as a
+    # comma rather than as a handle.
     hook = 0.075 * unit
     side = -1 if flipped else 1
     left = cx if side > 0 else cx - 2 * hook
+    sweep = 180 * (ODD_SHORT if short else 1.0)
     card.d.arc([left, 0.74 * unit - hook, left + 2 * hook, 0.74 * unit + hook],
-               0, 180, fill=INK, width=int(2 * pole))
+               180 - sweep if side > 0 else 0,
+               180 if side > 0 else sweep,
+               fill=INK, width=int(2 * pole))
     return card
 
 
-def dial_card(rot, dot):
+def dial_card(rot, dot, dots=4):
     """One frame of the pattern round: a notched ring and an inner dot.
 
     Both angles are measured clockwise from twelve, which is how a reader
@@ -635,7 +936,7 @@ def dial_card(rot, dot):
     # The dot, on its own smaller circle. Amber, because the two attributes
     # have to be told apart at a glance under a five-second clock, and two
     # violet marks on one card is one mark the eye has to resolve.
-    step = 360.0 / DIAL_DOTS
+    step = 360.0 / dots
     angle = math.radians(dot * step)
     inner = 0.155
     card.shape("circle", AMBER,
@@ -867,27 +1168,35 @@ def og_card():
 
 # --- the intro brain --------------------------------------------------------
 #
-# One illustration, drawn rather than traced: a flat side-profile brain in the
-# funnel's blues, facing left. It is the only picture on the intro screen and
-# it is displayed about 200px wide, so the silhouette does the work — the
-# frontal bulge, the temporal lobe hanging forward under its notch, the
-# cerebellum as a small striated wedge inside the back-lower edge.
+# v11 draws the picture the funnel is actually about: a head in profile with
+# the brain inside it, in line art. The versions before it were a brain on its
+# own, and a brain on its own is a diagram — this is a person, which is what
+# the reader is being asked about.
 #
-# v9 redraws it. The first version was busy: forty-four short broken folds
-# that wandered, which at 200px is texture rather than an illustration and at
-# any size reads as scratches. This one is calmer and darker — a dozen or so
-# long, evenly spaced folds of one uniform width, each following the lobe it
-# is in, on a fill strong enough that they are read as grooves rather than as
-# marks on paper.
+# Everything is one weight of line with round caps and round joins. There are
+# no fills except the pale tint inside the skull, no facial detail beyond the
+# profile itself, and nothing crosses anything: the folds are one family of
+# ribbons running the way the lobe does, because two families is a net and a
+# net is not a brain.
 #
-# Three of them, because "calmer and more premium" is a judgement and the way
-# to make a judgement is to look at the options side by side. They differ only
-# in the numbers in VARIANTS below; everything under it is shared.
+# Two of it, facing each way. `INTRO_FACING` says which ships.
 
-INTRO = (680, 527)
+# Drawn at 3x the ~200px the card shows it at, which covers the densest
+# screen this funnel meets. It carries an alpha channel, which costs more per
+# pixel than every other file here, so it is not drawn larger than that.
+INTRO = (600, 465)
+INTRO_FACING = "left"
+
+# ~2% of the width. Thicker and the eight ribbons merge into a block at the
+# two hundred pixels the intro card shows this at; thinner and the whole
+# drawing disappears there.
+INTRO_STROKE = 0.019
+INTRO_FACE = (24, 95, 165)      # the head's own line
+INTRO_FOLD = (55, 138, 221)     # the brain's
+INTRO_TINT = (230, 241, 251)    # the only fill in the picture
 
 
-def curve_bez(p0, p1, p2, p3, n=48):
+def curve_bez(p0, p1, p2, p3, n=34):
     """A cubic through four control points, as a list of points."""
     out = []
     for i in range(n + 1):
@@ -900,151 +1209,99 @@ def curve_bez(p0, p1, p2, p3, n=48):
     return out
 
 
-def curve_path(w, h, spec):
+def curve_path(w, h, spec, close=False):
     """Several cubics, written in fractions, joined into one point list."""
     pts = []
     for i, seg in enumerate(spec):
         got = curve_bez(*[(p[0] * w, p[1] * h) for p in seg])
         pts += got if i == 0 else got[1:]
+    if close:
+        pts.append(pts[0])
     return pts
 
 
-# The silhouette. Eight cubics and no corners: every join carries on in the
-# direction the last one ended, so what the eye follows is one line rather
-# than eight. The two features that make it a brain and not an ovoid are the
-# waist on the left, where the frontal lobe sits over the temporal one, and
-# the dip at the bottom between the temporal lobe and the cerebellum.
-CEREBRUM = [
-    [(.085, .445), (.095, .185), (.285, .055), (.470, .055)],
-    [(.470, .055), (.700, .055), (.900, .190), (.920, .420)],
-    [(.920, .420), (.940, .600), (.860, .740), (.740, .790)],
-    [(.740, .790), (.660, .820), (.580, .812), (.520, .762)],
-    [(.520, .762), (.470, .720), (.448, .790), (.380, .812)],
-    [(.380, .812), (.292, .834), (.212, .772), (.192, .690)],
-    [(.192, .690), (.180, .632), (.202, .590), (.172, .556)],
-    [(.172, .556), (.132, .528), (.088, .500), (.085, .445)],
-]
+def stroke_path(d, line, colour, width):
+    """One path at one weight, with round caps and round joins.
 
-# The cerebellum's wedge, tucked inside the back-lower edge. It is the same
-# material as everything else — no second fill and no border — and what marks
-# it is that its folds are tighter and all run one way.
-CEREBELLUM = [
-    [(.600, .580), (.720, .580), (.780, .650), (.720, .730)],
-    [(.720, .730), (.640, .780), (.560, .750), (.550, .680)],
-    [(.550, .680), (.550, .620), (.570, .580), (.600, .580)],
-]
-
-# The fissure the temporal lobe hangs under, and the line the cerebellum
-# tucks along. Both are grooves rather than edges, so both are drawn in the
-# fold colour at the fold's own width.
-SYLVIAN = [[(.205, .580), (.278, .638), (.345, .636), (.400, .662)]]
-TUCK = [[(.550, .620), (.600, .570), (.700, .570), (.780, .630)]]
-
-# The folds, as families. Each family is ONE curve stepped along a direction,
-# so no two folds of a family can cross; each is clipped to a region of its
-# own, so no fold of one family can meet a fold of another. What comes out is
-# a dozen or so long grooves, evenly spaced, each following the lobe it is in.
-#
-# `squeeze` pulls a fold's ends in as the family steps down, so a family
-# narrows with the shape instead of running out of it.
-# `trim` is what keeps a family from reading as tree rings. Four folds cut to
-# the same length nest inside one another and the eye reads a shell; the same
-# four, each starting and stopping somewhere else, read as four separate
-# grooves that happen to run the same way — which is what they are.
-FOLD_FAMILIES = [
-    # the dome: the long ones, arcing back over the top
-    dict(pts=[(.215, .330), (.350, .155), (.565, .145), (.720, .245)],
-         step=(.000, .100), count=4, squeeze=.050, wave=.0115, cycles=1.7,
-         trim=[(.00, .82), (.16, 1.0), (.00, .70), (.26, .96)],
-         region=[(.250, .00), (.730, .00), (.730, .600), (.250, .545)]),
-    # the frontal pole: two, curving down the front of the head
-    dict(pts=[(.255, .190), (.145, .265), (.118, .380), (.170, .470)],
-         step=(.038, .010), count=2, squeeze=.00, wave=.0085, cycles=1.2,
-         trim=[(.06, .94), (.00, .78)],
-         region=[(.040, .00), (.252, .00), (.252, .545), (.040, .505)]),
-    # the temporal lobe: a couple running along it
-    dict(pts=[(.225, .672), (.320, .734), (.430, .700), (.525, .744)],
-         step=(.000, .048), count=3, squeeze=.020, wave=.0090, cycles=1.4,
-         trim=[(.00, .88), (.14, 1.0), (.06, .80)],
-         region=[(.100, .560), (.560, .612), (.560, .950), (.100, .950)]),
-    # the occipital: turning down the back of the head
-    dict(pts=[(.740, .195), (.868, .292), (.884, .445), (.808, .556)],
-         step=(-.078, .006), count=3, squeeze=.00, wave=.0105, cycles=1.5,
-         trim=[(.10, 1.0), (.00, .84), (.20, .96)],
-         region=[(.730, .00), (1.00, .00), (1.00, .600), (.730, .600)]),
-]
-
-# Three sets of numbers, and nothing else between them. `folds` is the stroke
-# a groove is drawn at, `edge` the outline's (0 draws none), `fill` and `ink`
-# the two tones.
-# Which of the three below the funnel ships.
-INTRO_VARIANT = "engraved"
-
-VARIANTS = {
-    # Broad, quiet grooves and no outline at all: the shape is the fill, and
-    # at 200px it reads as one solid object.
-    "calm": dict(fill=(133, 183, 235), ink=(24, 95, 165),
-                 fold=0.0155, edge=0.000, cere=0.0075, cere_lines=7,
-                 gap=1.00),
-    # The same drawing with a line around it and finer grooves — closer to an
-    # engraving, and the version that survives being made small the best.
-    "engraved": dict(fill=(133, 183, 235), ink=(24, 95, 165),
-                     fold=0.0115, edge=0.0125, cere=0.0060, cere_lines=8,
-                     gap=0.92),
-    # Thicker grooves, wider apart, a hairline edge: the softest of the three
-    # and the one that holds up at the smallest sizes.
-    "soft": dict(fill=(140, 189, 238), ink=(21, 88, 156),
-                 fold=0.0195, edge=0.0070, cere=0.0090, cere_lines=6,
-                 gap=1.14),
-}
-
-
-def fold_wave(curve, amp, cycles, phase):
-    """A fold pushed off its own arc by a slow sine along its normals.
-
-    This is the difference between a brain and a shell. Four smooth arcs
-    following the outline are tree rings whatever their lengths; the same four
-    with a gentle wave in them are grooves in something soft — and the wave is
-    slow and small enough that they are still four calm lines rather than the
-    forty-four scratches this drawing used to carry.
+    Pillow draws a wide polyline as a rectangle per segment plus a join, and
+    at this weight the seams show as fringe along the edge. A disc stamped at
+    every vertex fills them — which is what a round join is.
     """
-    if not amp:
-        return curve
+    d.line(line, fill=colour, width=width, joint="curve")
+    r = width / 2.0
+    for x, y in line:
+        d.ellipse([x - r, y - r, x + r, y + r], fill=colour)
+
+
+# The face, facing left: one line from the crown down the forehead, over the
+# brow, out to the nose, in to the lip, out over the chin and down the jaw to
+# the neck — and off the bottom of the picture rather than closing, because a
+# closed outline draws a bar across the throat.
+HEAD_FACE = [
+    [(.500, .075), (.310, .075), (.215, .190), (.212, .300)],
+    [(.212, .300), (.210, .355), (.196, .375), (.196, .400)],
+    [(.196, .400), (.196, .430), (.128, .500), (.140, .530)],
+    [(.140, .530), (.150, .552), (.205, .548), (.214, .566)],
+    [(.214, .566), (.222, .582), (.196, .600), (.200, .620)],
+    [(.200, .620), (.204, .642), (.244, .646), (.252, .668)],
+    [(.252, .668), (.262, .700), (.236, .742), (.286, .790)],
+    [(.286, .790), (.330, .832), (.404, .846), (.470, .848)],
+    [(.470, .848), (.468, .900), (.466, .960), (.466, 1.04)],
+]
+
+# And the back of it, from the nape up over the skull to the crown.
+HEAD_BACK = [
+    [(.752, 1.04), (.752, .900), (.744, .845), (.740, .800)],
+    [(.740, .800), (.736, .700), (.790, .620), (.800, .520)],
+    [(.800, .520), (.812, .330), (.690, .075), (.500, .075)],
+]
+
+# The brain, inside the cranium with air between it and the skull.
+HEAD_BRAIN = [
+    [(.296, .192), (.404, .142), (.578, .144), (.680, .210)],
+    [(.680, .210), (.764, .268), (.776, .398), (.718, .476)],
+    [(.718, .476), (.664, .546), (.508, .570), (.398, .538)],
+    [(.398, .538), (.308, .510), (.264, .408), (.270, .300)],
+    [(.270, .300), (.272, .244), (.280, .210), (.296, .192)],
+]
+
+# Eight folds, and each one snakes: a fold under a dome does not run straight
+# across, and eight straight ones inside a head is a ruled notepad. Two cubics
+# per ribbon, bending one way and then the other, with the bend alternating
+# from ribbon to ribbon so no two lie parallel.
+RIBBON_N = 8
+RIBBON_X0 = .262
+RIBBON_X1 = .786
+RIBBON_TOP_Y = .268
+RIBBON_STEP = .0375
+RIBBON_BEND = .0225
+RIBBON_ARCH = .048          # how much the top ones follow the crown
+
+
+def ribbons():
+    """Every fold: two cubics that bend one way and then the other.
+
+    The arch is the dome the fold is under and it eases off as the family
+    steps down; the bend is the snake in the fold itself.
+    """
     out = []
-    n = len(curve)
-    for i, (x, y) in enumerate(curve):
-        px, py = curve[max(0, i - 1)]
-        nx, ny = curve[min(n - 1, i + 1)]
-        tx, ty = nx - px, ny - py
-        length = math.hypot(tx, ty) or 1.0
-        k = amp * math.sin(i / float(n) * cycles * math.tau + phase)
-        out.append((x + (ty / length) * k, y - (tx / length) * k))
+    for k in range(RIBBON_N):
+        y = RIBBON_TOP_Y + RIBBON_STEP * k
+        arch = RIBBON_ARCH * (1.0 - k / float(RIBBON_N))
+        bend = RIBBON_BEND * (1 if k % 2 == 0 else -1)
+        mid = (RIBBON_X0 + RIBBON_X1) / 2.0
+        q = (mid - RIBBON_X0) / 3.0
+        out.append([
+            [(RIBBON_X0, y), (RIBBON_X0 + q, y - arch - bend),
+             (mid - q, y - arch + bend), (mid, y - arch * 0.75)],
+            [(mid, y - arch * 0.75), (mid + q, y - arch - bend),
+             (RIBBON_X1 - q, y - arch * 0.4 + bend), (RIBBON_X1, y)],
+        ])
     return out
 
 
-def fold_family(w, h, fam, gap):
-    """Every stroke one family contributes: one curve, stepped and cut."""
-    out = []
-    for k in range(fam["count"]):
-        moved = []
-        for i, (x, y) in enumerate(fam["pts"]):
-            f = i / 3.0
-            sx = x + fam["step"][0] * k * gap \
-                + fam["squeeze"] * k * (0.5 - abs(f - 0.5)) \
-                * (1 if x > 0.5 else -1)
-            sy = y + fam["step"][1] * k * gap
-            moved.append((sx * w, sy * h))
-        curve = fold_wave(curve_bez(*moved), fam.get("wave", 0.0) * h,
-                          fam.get("cycles", 1.6), k * 1.7)
-        a, b = fam["trim"][k % len(fam["trim"])]
-        cut = curve[int(a * (len(curve) - 1)):int(b * (len(curve) - 1)) + 1]
-        if len(cut) > 3:
-            out.append(cut)
-    return out
-
-
-def brain_intro(variant="calm"):
-    spec = VARIANTS[variant]
+def brain_intro(facing=None):
+    facing = facing or INTRO_FACING
     card = Card(INTRO[0], INTRO[1])
     # The one card with no ground of its own. Every other file here is a
     # square the reader compares against another square, so it carries the
@@ -1053,65 +1310,32 @@ def brain_intro(variant="calm"):
     card.img = Image.new("RGBA", card.img.size, (0, 0, 0, 0))
     card.d = ImageDraw.Draw(card.img)
     w, h = card.w * SS, card.h * SS
-    poly = curve_path(w, h, CEREBRUM)
-    mask = Image.new("L", (w, h), 0)
-    ImageDraw.Draw(mask).polygon(poly, fill=255)
+    width = max(3, int(INTRO_STROKE * w))
+    mirror = facing == "right"
 
-    body = Image.new("RGB", (w, h), spec["fill"])
-    cere = curve_path(w, h, CEREBELLUM)
+    def pts(spec, close=False):
+        got = curve_path(w, h, spec, close)
+        return [((w - x) if mirror else x, y) for x, y in got]
 
-    # The folds go on their own layer so they can be kept off the outline,
-    # out of the cerebellum's wedge and off the fissure in one stamp.
-    folds = Image.new("L", (w, h), 0)
-    stroke = max(3, int(spec["fold"] * h))
-    drawn = 0
-    for fam in FOLD_FAMILIES:
-        layer = Image.new("L", (w, h), 0)
-        ld = ImageDraw.Draw(layer)
-        for curve in fold_family(w, h, fam, spec["gap"]):
-            ld.line(curve, fill=255, width=stroke, joint="curve")
-            drawn += 1
-        region = Image.new("L", (w, h), 0)
-        ImageDraw.Draw(region).polygon(
-            [(x * w, y * h) for x, y in fam["region"]], fill=255)
-        folds = ImageChops.lighter(folds, ImageChops.multiply(layer, region))
+    brain = pts(HEAD_BRAIN, True)
+    card.d.polygon(brain, fill=INTRO_TINT)
+    for spec in (HEAD_FACE, HEAD_BACK):
+        stroke_path(card.d, pts(spec), INTRO_FACE, width)
+    stroke_path(card.d, brain, INTRO_FOLD, width)
 
-    keep = Image.new("L", (w, h), 255)
-    ImageDraw.Draw(keep).polygon(cere, fill=0)
-    ImageDraw.Draw(keep).line(curve_path(w, h, SYLVIAN), fill=0,
-                              width=int(0.036 * h), joint="curve")
-    inner = mask.copy()
-    ImageDraw.Draw(inner).line(poly + [poly[0]], fill=0,
-                               width=int(0.030 * h), joint="curve")
-    folds = ImageChops.multiply(ImageChops.multiply(folds, keep), inner)
-    body.paste(Image.new("RGB", (w, h), spec["ink"]), (0, 0), folds)
-
-    # The cerebellum's own grooves: tighter than a fold, and all one way.
-    cmask = Image.new("L", (w, h), 0)
-    ImageDraw.Draw(cmask).polygon(cere, fill=255)
-    strip = body.copy()
-    sd = ImageDraw.Draw(strip)
-    lines = spec["cere_lines"]
-    for i in range(lines):
-        y = (0.588 + i * (0.150 / lines)) * h
-        sd.line(curve_bez((0.50 * w, y + 0.015 * h),
-                          (0.62 * w, y - 0.004 * h),
-                          (0.74 * w, y - 0.004 * h),
-                          (0.84 * w, y + 0.012 * h)),
-                fill=spec["ink"], width=max(2, int(spec["cere"] * h)),
-                joint="curve")
-    body.paste(strip, (0, 0), cmask)
-
-    card.img.paste(body, (0, 0), mask)
-    if spec["edge"]:
-        card.d.line(poly + [poly[0]], fill=spec["ink"],
-                    width=int(spec["edge"] * h), joint="curve")
-    card.d.line(curve_path(w, h, SYLVIAN), fill=spec["ink"],
-                width=stroke, joint="curve")
-    # The cerebellum is the same material as everything else: no second colour
-    # and no border, only the line where it tucks under the occipital.
-    card.d.line(curve_path(w, h, TUCK), fill=spec["ink"],
-                width=max(2, int(stroke * 0.8)), joint="curve")
+    # The folds go on their own layer and are stamped through the brain's own
+    # shape, pulled in by the line's width: a ribbon running past the edge
+    # would be a fold outside the skull.
+    layer = Image.new("L", (w, h), 0)
+    ld = ImageDraw.Draw(layer)
+    for ribbon in ribbons():
+        stroke_path(ld, pts(ribbon), 255, width)
+    inside = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(inside).polygon(brain, fill=255)
+    ImageDraw.Draw(inside).line(brain, fill=0, width=int(width * 2.4),
+                                joint="curve")
+    card.img.paste(Image.new("RGBA", (w, h), INTRO_FOLD + (255,)), (0, 0),
+                   ImageChops.multiply(layer, inside))
     return card
 
 
@@ -1133,54 +1357,71 @@ def main():
     for card_id in MOODS:
         put(mood_card(card_id), card_id)
 
-    for r, round_spec in enumerate(MEMORY, start=1):
-        for i, (colour, form) in enumerate(round_spec["flash"], start=1):
-            put(plain(colour, form), "mem%d_f%d" % (r, i))
-        for i, (colour, form) in enumerate(round_spec["decoys"], start=1):
-            put(plain(colour, form), "mem%d_m%d" % (r, i))
+    # v11: the shape library the memory rounds share. Named by what the card
+    # is, so three versions of a round draw on one set of pictures instead of
+    # writing three copies of a red circle.
+    for variants in MEMORY_VARIANTS.values():
+        for variant in variants:
+            for colour, form in variant["flash"] + variant["decoys"]:
+                name = shape_name(colour, form)
+                if name not in written:
+                    put(plain(colour, form), name)
 
     put(box(), "box_closed")
-    for name in ("key", "cup", "star", "moon"):
+    for name in sorted({v["object"] for vs in SPATIAL_VARIANTS.values()
+                        for v in vs}):
         put(box(name), "box_open_" + name)
 
     # Every letter a round draws, its own name on it. The unchanged three
     # slots of a step are the same files their flash held, so a round writes
-    # five files rather than eight.
-    for round_spec in LETTERS:
-        for spec in round_spec["flash"] + [round_spec["after"]]:
-            name = letter_name(*spec)
+    # five files rather than eight — and two versions that happen to share a
+    # letter share its file too.
+    for variants in CHANGE_VARIANTS.values():
+        for variant in variants:
+            for spec in variant["flash"] + [variant["after"]]:
+                name = letter_name(*spec)
+                if name not in written:
+                    put(letter_card(*spec), name)
+
+    # Six umbrellas per version, written as six files rather than as one used
+    # five times and a second used once: five identical `src` attributes and
+    # one that is not would be a round anybody wins with the inspector open.
+    for variant in ODD_VARIANTS:
+        for slot in range(1, UMBRELLA_SLOTS + 1):
+            put(umbrella_card(colour=PALETTE[variant["colour"]],
+                              short=(slot == variant["odd"])),
+                "umb_%s_s%d" % (variant["set"], slot))
+
+    for variant in INK_VARIANTS:
+        for i, (text, ink) in enumerate(variant["cards"], start=1):
+            put(word(text, 76, PALETTE[ink]),
+                "ink_%s_%d" % (variant["set"], i))
+
+    # The dials. Deduplicated by name, because the last of each version's
+    # three wrong cards IS its first frame and the round works precisely
+    # because it is the same picture.
+    for spec in DIAL_VARIANTS:
+        plan = dial_round(spec)
+        for rot, dot in plan["seq"] + plan["answers"]:
+            name = dial_name(rot, dot, plan["dots"])
             if name not in written:
-                put(letter_card(*spec), name)
-
-    for slot in range(1, UMBRELLA_SLOTS + 1):
-        put(umbrella_card(slot == UMBRELLA_ODD), "umb_s%d" % slot)
-
-    for card_id, text, colour in INKS:
-        put(word(text, 76, colour), card_id)
-
-    # The dials: the three the flash shows, the one that continues both of
-    # their progressions, and the three that continue one. Deduplicated by
-    # name, because the last of the three wrong ones IS the first frame and
-    # the round works precisely because it is the same picture.
-    for rot, dot in DIAL_SEQUENCE + DIAL_ANSWERS:
-        name = dial_name(rot, dot)
-        if name not in written:
-            put(dial_card(rot, dot), name)
+                put(dial_card(rot, dot, plan["dots"]), name)
     put(word("?", 150, (150, 152, 158)), "nxt_qm")
 
-    for i, spots in enumerate(COUNT_SPOTS, start=1):
-        put(circles(spots), "cnt_f%d" % i)
-    for text in COUNT_ANSWERS:
+    for variant in COUNT_VARIANTS:
+        for i, spots in enumerate(variant["spots"], start=1):
+            put(circles(spots), "cnt_%s_f%d" % (variant["set"], i))
+    for text in sorted({n for v in COUNT_VARIANTS for n in v["answers"]},
+                       key=int):
         put(word(text, 130), "cnt_" + text)
 
     for style_id, name, form, colour in TYPES:
         put(share_card(name, form, colour), "share_" + style_id)
 
-    # The one that reads best at the ~200px the intro card shows it at: the
-    # outline holds the silhouette and the finer grooves do not blur into one
-    # another. `calm` (no outline, broader grooves) and `soft` (heavier
-    # grooves, hairline edge) are the other two — change the word to swap.
-    put(brain_intro(INTRO_VARIANT), "brain_intro", quality=80)
+    # Facing left, which is where the funnel's own picture has always faced
+    # and where a reader's eye enters the card. `INTRO_FACING = "right"` draws
+    # the mirror of it.
+    put(brain_intro(), "brain_intro", quality=74)
     put(og_card(), "og", quality=70)
 
     biggest = max(written,

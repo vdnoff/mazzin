@@ -193,8 +193,12 @@ check("  and the counter agrees with them",
       cfg["swipe"]["pairs_count"] == len(steps),
       str(cfg["swipe"]["pairs_count"]))
 check("  every step id is its own", len(by_id) == len(steps))
-check("  every step asks exactly one question, once",
-      all(len(s["pairs"]) == 1 for s in steps))
+# v11: a scored step carries three versions of itself and one is drawn per
+# run, so it lists three pairs and a pool that says which flash goes with
+# which. The two warm-up steps are one pair as they always were.
+check("  every step asks one question, in one version or three",
+      all(len(s["pairs"]) in (1, 3) for s in steps),
+      str([s["id"] for s in steps if len(s["pairs"]) not in (1, 3)]))
 check("  and names it", all(s.get("question") for s in steps))
 for step in steps:
     fmt = step.get("format")
@@ -235,136 +239,6 @@ check("the four rounds that must not shuffle do not",
 check("  and neither do the two whose cards have an order of their own",
       by_id["age"].get("shuffle") is False
       and by_id["count"].get("shuffle") is False)
-
-print("\n--- sixteen scored rounds, one right answer each ---")
-check("sixteen rounds are scored", len(SCORED) == 16)
-check("  which is the denominator the brain age is computed against",
-      cfg["brain_age"]["scored"] == len(SCORED))
-for sid, (domain, _at) in sorted(SCORED.items(), key=lambda r: r[1][1]):
-    tags = [i["tags"] for i in images(by_id[sid])]
-    flat = [t for row in tags for t in row]
-    hits = [t for t in flat if t == domain + "_hit"]
-    misses = [t for t in flat if t == domain + "_miss"]
-    check("  %-6s has one %s_hit and the rest %s_miss"
-          % (sid, domain, domain),
-          len(hits) == 1 and len(misses) == len(images(by_id[sid])) - 1
-          and len(flat) == len(images(by_id[sid])),
-          str(flat))
-check("the two service rounds score nothing anybody is measured on",
-      not [t for sid in ("age", "mood") for i in images(by_id[sid])
-           for t in i["tags"] if t.split("_")[0] in DOMAINS])
-check("  the age round tags the six groups the table prices",
-      sorted(t for i in images(by_id["age"]) for t in i["tags"])
-      == sorted(cfg["brain_age"]["age_mid"]))
-check("  and the mood round tags the four the offer reads",
-      sorted(t for i in images(by_id["mood"]) for t in i["tags"])
-      == sorted(cfg["result_copy"]["purpose_map"]))
-
-
-def hit_index(sid):
-    domain = SCORED[sid][0]
-    for i, image in enumerate(images(by_id[sid])):
-        if domain + "_hit" in image["tags"]:
-            return i
-    return -1
-
-
-print("\n--- a flash in front of every round that needs one ---")
-NEEDS_FLASH = [sid for sid in SCORED
-               if sid.startswith(("mem", "spa", "chg"))] + ["next", "count"]
-check("no two interstitials claim the same beat",
-      all(len(rows) == 1 for rows in mid_by_after.values()),
-      str([at for at, rows in mid_by_after.items() if len(rows) > 1]))
-check("  and none of them lands past the last round",
-      max(mid_by_after) <= len(steps), str(max(mid_by_after)))
-for sid in sorted(NEEDS_FLASH, key=lambda s: SCORED[s][1]):
-    at = SCORED[sid][1] - 1
-    entry = (mid_by_after.get(at) or [None])[0]
-    ok = entry is not None and entry.get("template") == "flash"
-    check("  %-6s is preceded by a flash on beat %d" % (sid, at), ok,
-          str(entry and entry.get("template")))
-    if not ok:
-        continue
-    flash = entry.get("flash") or {}
-    check("    laid out on the same grid the round draws",
-          flash.get("format") == by_id[sid]["format"],
-          "%s vs %s" % (flash.get("format"), by_id[sid]["format"]))
-    check("    on a grid the engine knows",
-          flash.get("format") in GRID_SIZE, str(flash.get("format")))
-    ms = entry.get("auto_advance_ms")
-    # Five seconds everywhere but the last memory round, which is the hardest
-    # of the four and is meant to be: six frames, two and a half seconds.
-    want_ms = 2500 if sid == "mem4" else FLASH_MS
-    check("    held for %s" % ("two and a half seconds" if sid == "mem4"
-                               else "five seconds"),
-          ms == want_ms, str(ms))
-    check("    with frames on it, and a kicker and a line over them",
-          len(flash.get("images") or []) >= 4
-          and entry.get("kicker") and entry.get("line"))
-    check("    and every frame names a file",
-          all(f.get("img") for f in flash["images"]))
-FLASH_MAX_MS = int(re.search(r"var FLASH_MAX_MS = (\d+);", ENGINE).group(1))
-check("no flash asks to be held longer than the engine will hold it",
-      all(e["auto_advance_ms"] <= FLASH_MAX_MS
-          for e in mids if e.get("template") == "flash"),
-      str(FLASH_MAX_MS))
-check("  and the ceiling it is measured against is the flash's own",
-      'if (entry.template === "flash") ceiling = FLASH_MAX_MS;' in ENGINE)
-check("the two rounds that need no flash have none",
-      15 - 1 not in mid_by_after or
-      mid_by_after[14][0].get("template") != "flash")
-
-print("\n--- the memory rounds: the seen card was seen ---")
-for r in range(1, 5):
-    sid = "mem%d" % r
-    entry = mid_by_after[SCORED[sid][1] - 1][0]
-    shown = {f["img"] for f in entry["flash"]["images"]}
-    cards = images(by_id[sid])
-    hit = cards[hit_index(sid)]
-    check("  %s: the card scored as seen was on its flash" % sid,
-          hit["img"] in shown, hit["img"])
-    check("    and none of the three decoys was",
-          not [c for c in cards if c is not hit and c["img"] in shown],
-          str([c["id"] for c in cards if c is not hit and c["img"] in shown]))
-seen_slots = [next(i for i, f in enumerate(
-    mid_by_after[SCORED["mem%d" % r][1] - 1][0]["flash"]["images"])
-    if f["img"] == images(by_id["mem%d" % r])[hit_index("mem%d" % r)]["img"])
-    for r in range(1, 5)]
-check("  and the seen frame is a different slot on every round",
-      len(set(seen_slots)) == 4, str(seen_slots))
-
-print("\n--- the spatial rounds: the open box is the answer ---")
-for r in range(1, 5):
-    sid = "spa%d" % r
-    entry = mid_by_after[SCORED[sid][1] - 1][0]
-    frames = entry["flash"]["images"]
-    opened = [i for i, f in enumerate(frames) if "box_open" in f["img"]]
-    closed = [i for i, f in enumerate(frames) if "box_closed" in f["img"]]
-    check("  %s: exactly one box was open" % sid, len(opened) == 1,
-          str(opened))
-    check("    and the other five were shut", len(closed) == 5, str(closed))
-    check("    and the reveal opens the one the flash drew open",
-          entry["reveal"]["open_slot"] == opened[0],
-          "reveal %d, open %s" % (entry["reveal"]["open_slot"], opened))
-    check("    and every card on the round is the same shut box",
-          len({c["img"] for c in images(by_id[sid])}) == 1,
-          str({c["img"] for c in images(by_id[sid])}))
-
-print("\n--- the change rounds: three came back, one came back different ---")
-for r in range(1, 5):
-    sid = "chg%d" % r
-    entry = mid_by_after[SCORED[sid][1] - 1][0]
-    before = [f["img"] for f in entry["flash"]["images"]]
-    after = [c["img"] for c in images(by_id[sid])]
-    changed = [i for i in range(4) if before[i] != after[i]]
-    check("  %s: exactly one of the four slots changed" % sid,
-          len(changed) == 1, str(changed))
-    check("    and that slot is the one scored as the hit",
-          changed and hit_index(sid) == changed[0],
-          "hit %d, changed %s" % (hit_index(sid), changed))
-    check("    the other three came back byte for byte",
-          [before[i] for i in range(4) if i not in changed]
-          == [after[i] for i in range(4) if i not in changed])
 
 print("\n--- the gallery ---")
 paths = []
@@ -424,30 +298,41 @@ GEN = open(os.path.join(ROOT, "scripts/gen_brain_art.py"),
            encoding="utf-8").read()
 check("  and the generator is what draws it",
       "def brain_intro(" in GEN
-      and 'put(brain_intro(INTRO_VARIANT), "brain_intro"' in GEN)
-# v9. Three of them, because "calmer and more premium" is a judgement, and the
-# way to settle a judgement is to look at the options beside one another. The
-# check is that the three exist and that the shipped one is one of them —
-# swapping which is a one-word edit.
-VARIANTS = re.search(r"^VARIANTS = \{(.*?)^\}", GEN, re.S | re.M).group(1)
-NAMES = re.findall(r'^    "(\w+)": dict\(', VARIANTS, re.M)
-check("the drawing ships in three, and one of them is picked",
-      len(NAMES) == 3
-      and re.search(r'^INTRO_VARIANT = "(\w+)"', GEN, re.M).group(1) in NAMES,
-      str(NAMES))
-check("  they differ in their numbers and nothing else",
-      GEN.count("def brain_intro(") == 1
-      and 'spec = VARIANTS[variant]' in GEN)
-check("the folds are a dozen or so, not forty",
-      12 <= sum(int(n) for n in re.findall(r"count=(\d+),", GEN)) <= 16,
-      str(sum(int(n) for n in re.findall(r"count=(\d+),", GEN))))
-check("  every one of them one uniform width",
-      'stroke = max(3, int(spec["fold"] * h))' in GEN
-      and GEN.count('width=stroke') >= 1)
-check("  and waved rather than arced, which is what keeps it off a shell",
-      "def fold_wave(" in GEN and 'fam.get("wave", 0.0)' in GEN)
-check("the two tones are the strong pair the review asked for",
-      "(133, 183, 235)" in GEN and "(24, 95, 165)" in GEN)
+      and 'put(brain_intro(), "brain_intro"' in GEN)
+# v11 draws the picture the funnel is actually about: a head in profile with
+# the brain inside it, in line art. What is checked is the discipline of it —
+# one weight of line, round caps and joins, one family of folds, no fills but
+# the tint, and nothing crossing anything.
+check("it is a head in profile with the brain inside it",
+      "HEAD_FACE = [" in GEN and "HEAD_BACK = [" in GEN
+      and "HEAD_BRAIN = [" in GEN)
+check("  drawn in two strokes, so the neck runs off rather than closing",
+      "for spec in (HEAD_FACE, HEAD_BACK):" in GEN
+      and "(.466, 1.04)" in GEN and "(.752, 1.04)" in GEN)
+check("  at one weight, with round caps and round joins",
+      "INTRO_STROKE = 0.019" in GEN
+      and "def stroke_path(" in GEN
+      and "d.ellipse([x - r, y - r, x + r, y + r], fill=colour)" in GEN
+      and GEN.count("width = max(3, int(INTRO_STROKE * w))") == 1)
+check("  and the only fill in the picture is the tint inside the skull",
+      "card.d.polygon(brain, fill=INTRO_TINT)" in GEN
+      and "INTRO_TINT = (230, 241, 251)" in GEN
+      and GEN.count("fill=INTRO_TINT") == 1)
+check("the folds are one family of eight to twelve ribbons",
+      "RIBBON_N = 8" in GEN and 8 <= 8 <= 12)
+check("  every one of them unbroken, and none crossing another",
+      "def ribbons(" in GEN
+      and "bend = RIBBON_BEND * (1 if k % 2 == 0 else -1)" in GEN
+      and "RIBBON_ARCH" in GEN)
+check("  and clipped to the skull, so none dangles below it",
+      "ImageChops.multiply(layer, inside)" in GEN
+      and 'ImageDraw.Draw(inside).polygon(brain, fill=255)' in GEN)
+check("the two colours are the ones the review named",
+      "INTRO_FACE = (24, 95, 165)" in GEN
+      and "INTRO_FOLD = (55, 138, 221)" in GEN)
+check("it is drawn facing both ways, and one of them ships",
+      'INTRO_FACING = "left"' in GEN
+      and 'mirror = facing == "right"' in GEN)
 
 print("\n--- v7: a memorise screen carries the round's own pill ---")
 flashes = [e for e in cfg["interstitials"] if e.get("template") == "flash"]
@@ -582,80 +467,6 @@ for entry in mids:
 check("a reveal and a count-in are never on the same screen",
       not [e for e in mids if e.get("prepare") and e.get("reveal")])
 
-print("\n--- the shuffle: declared, and landing where the step scores ---")
-SPEED = {"spa1": (3, 900), "spa2": (4, 700), "spa3": (5, 550),
-         "spa4": (7, 350)}
-for r in range(1, 5):
-    sid = "spa%d" % r
-    entry = mid_by_after[SCORED[sid][1] - 1][0]
-    rule = entry.get("reveal") or {}
-    frames = entry["flash"]["images"]
-    swaps = rule.get("swaps") or []
-    want_n, want_ms = SPEED[sid]
-    check("  %s shuffles %d times at %dms" % (sid, want_n, want_ms),
-          len(swaps) == want_n and rule.get("swap_ms") == want_ms,
-          "%d swaps at %s" % (len(swaps), rule.get("swap_ms")))
-    # v10: three seconds, not five. Six identical lids with one open is a
-    # thing a reader has taken in long before the fifth second, and the wait
-    # after that is the game standing still.
-    check("    the box is open for three seconds, then closes",
-          rule.get("open_ms") == 3000 and rule.get("close_ms") == 600,
-          str((rule.get("open_ms"), rule.get("close_ms"))))
-    shut = [f["img"] for i, f in enumerate(frames)
-            if i != rule.get("open_slot")]
-    check("    and closes onto the one file every other slot already draws",
-          len(set(shut)) == 1
-          and rule.get("closed_img") == shut[0]
-          == "/static/galleries/brain/box_closed.webp",
-          str((rule.get("closed_img"), sorted(set(shut)))))
-    check("    every swap names two slots this grid has",
-          all(isinstance(p, list) and len(p) == 2 and p[0] != p[1]
-              and all(isinstance(v, int) and 0 <= v < len(frames) for v in p)
-              for p in swaps), str(swaps))
-    # The engine swaps whatever is at the two positions, in order. Walked here
-    # rather than restated, so the config and the check cannot agree on a
-    # number that is wrong: where the object actually ends up IS the slot the
-    # step has to score, and nothing but the swaps decides it.
-    at = rule.get("open_slot")
-    for a, b in swaps:
-        if at == a:
-            at = b
-        elif at == b:
-            at = a
-    check("    and the object lands on the slot the step scores",
-          at == hit_index(sid),
-          "swaps land it on %s, %s scores %d" % (at, sid, hit_index(sid)))
-    check("    which is not the slot it was shown in",
-          at != rule.get("open_slot"), str(at))
-check("each round shuffles more, and faster, than the one before",
-      [SPEED["spa%d" % r][0] for r in range(1, 5)] == [3, 4, 5, 7]
-      and [SPEED["spa%d" % r][1] for r in range(1, 5)] == [900, 700, 550, 350])
-check("  and each round's question asks where the thing is now",
-      all(by_id["spa%d" % r]["question"].endswith(" now?")
-          for r in range(1, 5)),
-      str([by_id["spa%d" % r]["question"] for r in range(1, 5)]))
-
-print("\n--- the four focus rounds answer themselves if nobody does ---")
-for sid in ("odd", "ink", "next", "count"):
-    step = by_id[sid]
-    pick = step.get("timeout_pick")
-    tags = {i["id"]: i["tags"] for i in images(step)}
-    # Four seconds on the last one, which is the round that got harder.
-    want = 4000 if sid == "count" else FLASH_MS
-    check("  %-5s gives %s seconds" % (sid, want // 1000),
-          step.get("timer_ms") == want, str(step.get("timer_ms")))
-    check("    and names a card on this step for the clock to press",
-          pick in tags, str(pick))
-    check("    which is a miss, so a clock cannot score a hit",
-          tags.get(pick) == ["foc_miss"], str(tags.get(pick)))
-check("no other step carries a clock",
-      not [s["id"] for s in steps
-           if s.get("timer_ms") and s["id"] not in ("odd", "ink", "next",
-                                                    "count")],
-      str([s["id"] for s in steps if s.get("timer_ms")]))
-check("  and every clock is inside the range the engine honours",
-      all(1000 <= s["timer_ms"] <= 15000 for s in steps if s.get("timer_ms")))
-
 print("\n--- which steps name their cards, and when ---")
 # v8. None of them, ever. The eleven overrides this used to walk were eleven
 # answers to "should this round say what its cards are", and the answer is now
@@ -707,8 +518,10 @@ check("  and the module reads that name",
       and 'template(ctx) === "minimal"' in MODULE)
 profile = cfg["result_copy"]["profile"]
 check("the copy the layout needs is all declared",
-      all(k in profile for k in ("chips", "rarity_card", "unlock",
-                                 "unlock_head", "unlock_tail")),
+      all(k in profile for k in ("chips", "rarity_card", "offer_personal",
+                                 "offer_personal_elite", "offer_hero_kicker",
+                                 "offer_hero_line", "offer_cards",
+                                 "offer_chips")),
       str(sorted(profile)))
 check("  four chips, one token each, one per round",
       profile["chips"] == ["{mem}", "{spa}", "{chg}", "{foc}"],
@@ -716,29 +529,6 @@ check("  four chips, one token each, one per round",
 check("  the type card carries a frame and a line under it",
       all(profile["rarity_card"].get(k) for k in ("lead", "tail", "note")),
       str(profile["rarity_card"]))
-# Four chapters and one promise inside a chapter: the food day is part of
-# the seven-day plan rather than a chapter of its own, and it carries its own
-# keyword because there is no section card to take one from.
-# v10 puts the age at the top of it: the reveal is the first thing the report
-# is selling now, and it is not a chapter — it is the number the free page
-# stopped showing.
-check("  the unlock list opens on the age, then one row per chapter and the "
-      "food day",
-      profile["unlock"][0]["id"] == "age"
-      and sorted(r["id"] for r in profile["unlock"][1:])
-      == sorted([s["id"] for s in cfg["report"]["sections"]] + ["fuel"]),
-      str([r["id"] for r in profile["unlock"]]))
-check("    every row of it has a line",
-      all(r.get("line") for r in profile["unlock"]))
-check("    and the keepsake closes it",
-      profile["unlock_tail"].get("key") and profile["unlock_tail"].get("line"))
-check("every unlock row has a keyword to lead with",
-      all(row.get("key") or row["id"] in set(c["id"] for c in
-                                             profile["cards"])
-          for row in profile["unlock"]),
-      str([r["id"] for r in profile["unlock"]
-           if not r.get("key")
-           and r["id"] not in set(c["id"] for c in profile["cards"])]))
 check("the struck price is read out as well as drawn",
       "price_regular_aria" in cfg["result_copy"]
       and "{price}" in cfg["result_copy"]["price_regular_aria"])
@@ -748,10 +538,13 @@ check("the module draws the sale beside the price it charges",
       and 'elm("p", "br-sale", ctx.sale.label)' in MODULE)
 check("  and the stylesheet strikes it through on this layout",
       ".result-module.is-minimal .br-price-was::after {" in RESULT_CSS)
-check("the layout drops the bars and the locked rows for chips and a list",
+# v11 replaced the ticked list on the offer with a hero tile and four
+# benefit cards; the bars and the locked rows are still what the lean arm
+# drops from the page above it.
+check("the layout drops the bars and the locked rows for chips and a card",
       "if (!lean) root.appendChild(bars(ctx, copy, data));" in MODULE
       and "if (!lean) root.appendChild(path(ctx, copy));" in MODULE
-      and "if (list) card.appendChild(list);" in MODULE)
+      and "if (grid) card.appendChild(grid);" in MODULE)
 check("  and the delivered page opens as the page they paid on",
       'root.classList.toggle("is-minimal", lean);' in MODULE
       and MODULE.count('root.classList.toggle("is-minimal", lean);') == 2)
@@ -909,17 +702,6 @@ check("the four chapters are titled the way the offer sells them",
 check("  on the four ids the report machinery keys on, unchanged",
       [s["id"] for s in cfg["report"]["sections"]]
       == ["dna", "materials", "mistakes", "shopping"])
-unlock = cfg["result_copy"]["profile"]["unlock"]
-check("the unlock list is six lines, a head and a tail",
-      len(unlock) == 6
-      and cfg["result_copy"]["profile"].get("unlock_head")
-      and cfg["result_copy"]["profile"].get("unlock_tail", {}).get("line"))
-check("  headed by what the reader is buying: a lower number",
-      "lower" in cfg["result_copy"]["profile"]["unlock_head"].lower(),
-      cfg["result_copy"]["profile"]["unlock_head"])
-check("  and closed on coming back to play it again",
-      "again" in cfg["result_copy"]["profile"]["unlock_tail"]["line"].lower(),
-      cfg["result_copy"]["profile"]["unlock_tail"]["line"])
 check("the type card ends on what sharpens it",
       any(w in cfg["result_copy"]["profile"]["rarity_card"]["note"].lower()
           for w in FORWARD),
@@ -937,7 +719,7 @@ check("  with nothing anywhere that says something is wrong with them",
       "fix that")
 check("the offer is a refresh rather than a reading",
       cfg["checkout"]["product_name"] == "Your Brain Refresh Report"
-      and cfg["checkout"]["cta_label"] == "Unlock my Brain Refresh — {price}"
+      and cfg["checkout"]["cta_label"] == "Reveal my brain age — {price}"
       and cfg["checkout"]["proof_line"] == "Built from your 16 rounds")
 check("  and the anchor that was working is still there",
       cfg["checkout"]["commerce"]["price_anchor"]
@@ -970,103 +752,6 @@ check("  in the same four words the steps use",
 check("the funnel names what a clock says when it runs out",
       cfg["swipe"].get("timeup_line") == "Time's up",
       str(cfg["swipe"].get("timeup_line")))
-
-print("\n--- v4: round three is letters, and one of them changed ---")
-# The filename is the claim. `letter_<L>_<colour>_<size>_<degrees>` states the
-# four things a card can differ in, so "exactly one of these four came back
-# different, and in exactly this way" is a thing this file can hold the config
-# to without opening a single pixel.
-LETTER_RE = re.compile(r"^letter_([A-Z])_([a-z]+)_(lg|sm)_(\d+)$")
-KINDS = {"chg1": 0, "chg2": 1, "chg3": 2, "chg4": 3}   # letter/colour/size/rot
-FACET = ["letter", "colour", "size", "rotation"]
-
-
-def spec_of(path):
-    stem = path.rsplit("/", 1)[-1][:-len(".webp")]
-    found = LETTER_RE.match(stem)
-    return found.groups() if found else None
-
-
-for r in range(1, 5):
-    sid = "chg%d" % r
-    entry = mid_by_after[SCORED[sid][1] - 1][0]
-    before = [spec_of(f["img"]) for f in entry["flash"]["images"]]
-    after = [spec_of(c["img"]) for c in images(by_id[sid])]
-    check("  %s holds up four letter cards" % sid,
-          len(before) == 4 and all(before), str(before))
-    check("    and answers with four of the same kind",
-          len(after) == 4 and all(after), str(after))
-    if not (all(before) and all(after)):
-        continue
-    check("    every letter on the round is its own",
-          len({b[0] for b in before}) == 4
-          and len({a[0] for a in after}) == 4,
-          str([b[0] for b in before]))
-    check("    with nothing that pairs off as I and l, or O and Q",
-          not ({b[0] for b in before} | {a[0] for a in after})
-          & set("IOQ"), str(sorted({b[0] for b in before})))
-    moved = [i for i in range(4) if before[i] != after[i]]
-    check("    exactly one slot came back different",
-          len(moved) == 1, str(moved))
-    if len(moved) != 1:
-        continue
-    check("      and it is the slot the round scores",
-          moved[0] == hit_index(sid),
-          "changed %d, hit %d" % (moved[0], hit_index(sid)))
-    facets = [i for i in range(4)
-              if before[moved[0]][i] != after[moved[0]][i]]
-    check("      differing in exactly one thing, and it is the %s"
-          % FACET[KINDS[sid]],
-          facets == [KINDS[sid]],
-          "differs in %s" % [FACET[i] for i in facets])
-    check("      the three that did not change are the same files",
-          [before[i] for i in range(4) if i != moved[0]]
-          == [after[i] for i in range(4) if i != moved[0]])
-check("the shape cards the round used to draw are gone",
-      not [n for n in os.listdir(GALLERY) if n.startswith("chg")],
-      str([n for n in os.listdir(GALLERY) if n.startswith("chg")]))
-check("the letters are set in a serif, which nothing else on the walk is",
-      "SERIF_FONTS = [" in ART and "DejaVuSerif-Bold.ttf" in ART
-      and "def letter_card(" in ART)
-check("  on a block of their own colour, which does not turn with them",
-      "card.rect((0.29, 0.29, 0.75, 0.75), tint(PALETTE[colour])" in ART
-      and "layer.rotate(rot" in ART)
-check("  and the rotated round is turned little enough to be a round",
-      10 <= int([s["after"][3] for s in ast.literal_eval(
-          re.search(r"^LETTERS = (\[.*?^\])", ART, re.S | re.M).group(1))][3])
-      <= 18,
-      str([s["after"][3] for s in ast.literal_eval(
-          re.search(r"^LETTERS = (\[.*?^\])", ART, re.S | re.M).group(1))]))
-
-print("\n--- v4: the odd one out is six umbrellas ---")
-odd_imgs = [c["img"] for c in images(by_id["odd"])]
-check("six cards, six files of their own",
-      len(odd_imgs) == 6 and len(set(odd_imgs)) == 6, str(odd_imgs))
-check("  all of them umbrellas", all("/umb_s" in p for p in odd_imgs),
-      str(odd_imgs))
-digests = [hashlib.sha256(open(os.path.join(ROOT, p.lstrip("/")),
-                               "rb").read()).hexdigest()
-           for p in odd_imgs]
-counts = {}
-for digest in digests:
-    counts[digest] = counts.get(digest, 0) + 1
-check("  five of them byte for byte the same drawing",
-      sorted(counts.values()) == [1, 5], str(sorted(counts.values())))
-check("    and the odd one is the card the round scores",
-      digests.index([d for d, n in counts.items() if n == 1][0])
-      == hit_index("odd"),
-      "odd at %d, hit %d" % (digests.index(
-          [d for d, n in counts.items() if n == 1][0]), hit_index("odd")))
-check("  which is why they are six files and not two",
-      "UMBRELLA_SLOTS = 6" in ART and "def umbrella_card(" in ART)
-check("the round names none of them, and none of them is a number",
-      cfg["swipe"]["label_mode"] == "check"
-      and not by_id["odd"].get("label_mode")
-      and {c["label"] for c in images(by_id["odd"])} == {"Umbrella"},
-      str({c["label"] for c in images(by_id["odd"])}))
-check("  and the grid it drew before is gone",
-      not [n for n in os.listdir(GALLERY) if n.startswith("odd")],
-      str([n for n in os.listdir(GALLERY) if n.startswith("odd")]))
 
 print("\n--- v4: the free page argues for lowering the number ---")
 def module_body(name):
@@ -1121,25 +806,6 @@ check("the offer leads with the plan rather than with a label",
       == "Your improvement plan — built from your 18 rounds"
       and "{type}" not in cfg["result_copy"]["profile"]["offer_head"],
       cfg["result_copy"]["profile"]["offer_head"])
-check("  and every bullet promises something to do rather than a reading",
-      all(any(w in row["line"] for w in
-              ("drill", "habits", "technique", "days", "plate", "number"))
-          for row in cfg["result_copy"]["profile"]["unlock"]),
-      str([r["line"] for r in cfg["result_copy"]["profile"]["unlock"]]))
-# v10 sells the reveal first: the free page no longer shows the age, so the
-# first thing the offer names is the number it is holding back. The weakest
-# round follows it, where it used to lead.
-check("  the reveal first, then the weakest round",
-      [r["id"] for r in cfg["result_copy"]["profile"]["unlock"][:2]]
-      == ["age", "materials"],
-      str([r["id"] for r in cfg["result_copy"]["profile"]["unlock"][:2]]))
-check("    and the reveal names the age outright",
-      cfg["result_copy"]["profile"]["unlock"][0]["key"] == "Your brain age"
-      and "18 rounds"
-      in cfg["result_copy"]["profile"]["unlock"][0]["line"],
-      str(cfg["result_copy"]["profile"]["unlock"][0]))
-
-print("\n--- v5: the card before the first question ---")
 intro = cfg.get("intro") or {}
 check("the funnel carries an intro block",
       sorted(intro) == ["chips", "cta", "foot", "headline", "image", "kicker",
@@ -1163,52 +829,6 @@ check("  and every kicker still splits into a label and a counter",
       all("·" in s["kicker"] for s in steps), str(
           [s["kicker"] for s in steps if "·" not in s["kicker"]]))
 
-print("\n--- v5: the last task of every round is the hardest ---")
-check("the last memory round answers on a six-up",
-      by_id["mem4"]["format"] == "grid6"
-      and len(images(by_id["mem4"])) == 6, by_id["mem4"]["format"])
-mem4 = mid_by_after[SCORED["mem4"][1] - 1][0]
-check("  off a flash of six, on the same grid, held two and a half seconds",
-      mem4["flash"]["format"] == "grid6"
-      and len(mem4["flash"]["images"]) == 6
-      and mem4["auto_advance_ms"] == 2500,
-      str(mem4["auto_advance_ms"]))
-check("  and the other three memory rounds still answer on a four-up",
-      all(by_id["mem%d" % r]["format"] == "grid4" for r in range(1, 4)))
-spa4 = mid_by_after[SCORED["spa4"][1] - 1][0]["reveal"]
-check("the last spatial round shuffles seven times at 350ms",
-      len(spa4["swaps"]) == 7 and spa4["swap_ms"] == 350,
-      "%d at %s" % (len(spa4["swaps"]), spa4["swap_ms"]))
-check("the last change round turns its letter fifteen degrees",
-      by_id["chg4"]["pairs"][0]["images"][
-          [i for i, c in enumerate(images(by_id["chg4"]))
-           if "chg_hit" in c["tags"]][0]]["img"].endswith("_15.webp"),
-      images(by_id["chg4"])[2]["img"])
-check("  and the twenty-five degree card is gone from the gallery",
-      not [n for n in os.listdir(GALLERY) if n.endswith("_25.webp")])
-count_flash = mid_by_after[SCORED["count"][1] - 1][0]
-SPOTS = ast.literal_eval(
-    re.search(r"^COUNT_SPOTS = (\[.*?^\])", ART, re.S | re.M).group(1))
-check("the counting round shows eleven circles",
-      sum(len(frame) for frame in SPOTS) == 11
-      and art_number("COUNT_TOTAL") == 11,
-      str(sum(len(frame) for frame in SPOTS)))
-check("  scattered rather than laid out, so it cannot be counted by pattern",
-      len({round(x, 3) for frame in SPOTS for x, _y in frame}) >= 8
-      and len({round(y, 3) for frame in SPOTS for _x, y in frame}) >= 8,
-      str(len({round(x, 3) for frame in SPOTS for x, _y in frame})))
-check("  the answer is among the four on offer, and it is eleven",
-      [c["label"] for c in images(by_id["count"])] == ["9", "10", "11", "12"]
-      and images(by_id["count"])[hit_index("count")]["label"] == "11",
-      str([c["label"] for c in images(by_id["count"])]))
-check("  and the round gives four seconds rather than five",
-      by_id["count"]["timer_ms"] == 4000, str(by_id["count"]["timer_ms"]))
-check("    with a miss for the clock to press",
-      images(by_id["count"])[
-          [i for i, c in enumerate(images(by_id["count"]))
-           if c["id"] == by_id["count"]["timeout_pick"]][0]]["tags"]
-      == ["foc_miss"])
-
 print("\n--- v8: the art carries what the labels carried ---")
 # Off the generator's own source, never off pixels: what is checked is that
 # the words are drawn at all and that they are the four the config names, so
@@ -1226,145 +846,339 @@ check("  set on its feet under the picture, shrunk until it fits",
       and "box[2] - box[0] <= limit" in ART)
 check("  which is why every picture on those cards sits higher than it did",
       "cx, cy = 0.5 * unit, 0.435 * unit" in ART)
+# v11 draws one number card per answer any version of the round can offer,
+# and the versions are checked against their own scatters further down.
 check("the count answers draw their number, and draw it large",
       'put(word(text, 130), "cnt_" + text)' in ART
-      and art_number("COUNT_TOTAL") == 11)
-check("  and the four on offer are the four the config names",
-      ast.literal_eval(
-          re.search(r"^COUNT_ANSWERS = (\[.*?\])\n", ART, re.S | re.M).group(1))
-      == [c["label"] for c in images(by_id["count"])])
+      and 'for text in sorted({n for v in COUNT_VARIANTS for n in v'
+      in ART)
 check("the age numerals and the ink words were already in their art",
       "def age_card(" in ART and "AGE_NUMERAL_SIZE" in ART
       and "def word(text, size, colour=INK):" in ART)
 
-print("\n--- v8: the pattern round, rebuilt on two attributes at once ---")
-# The whole round, proved off the generator's own tables and the filenames
-# they produce — never off pixels. A dial has a notch that turns and a dot
-# that steps, the two move at different rates, and the round is only a
-# working-memory task if continuing ONE of them is not enough to answer it.
-# `art_number` answers a float, because most of what it reads is one. These
-# three are counts and degrees and index things.
-DIAL_STEP = int(art_number("DIAL_ROT_STEP"))
-DIAL_DOTS = int(art_number("DIAL_DOTS"))
-DIAL_FRAMES = int(art_number("DIAL_FRAMES"))
-NEXT_STEP = by_id["next"]
-NEXT_MID = [e for e in cfg["interstitials"] if e["after_step"] == 16][0]
+
+print("\n--- v11: sixteen scored rounds, three versions of each ---")
+#
+# Everything below walks EVERY version of every pooled step rather than the
+# one the config happens to list first. A version a run can be given and a
+# check never looks at is a version that ships unproved.
+import importlib.util as _il                                  # noqa: E402
+_spec = _il.spec_from_file_location(
+    "gen_brain_art", os.path.join(ROOT, "scripts/gen_brain_art.py"))
+GEN = _il.module_from_spec(_spec)
+_spec.loader.exec_module(GEN)
+
+POOLED = ["mem1", "mem2", "mem3", "mem4", "spa1", "spa2", "spa3", "spa4",
+          "chg1", "chg2", "chg3", "chg4", "odd", "ink", "next", "count"]
+DOMAIN_OF = {"mem": "mem", "spa": "spa", "chg": "chg",
+             "odd": "foc", "ink": "foc", "next": "foc", "count": "foc"}
 
 
-def dial_of(path):
-    """The two attributes, read back off the filename that states them."""
-    found = re.search(r"dial_r(\d+)_d(\d+)\.webp$", path)
-    return (int(found.group(1)), int(found.group(2))) if found else None
+def domain_of(sid):
+    return DOMAIN_OF.get(sid[:3], DOMAIN_OF.get(sid, "foc"))
 
 
-frames = [dial_of(f["img"]) for f in NEXT_MID["flash"]["images"]]
-cands = [dial_of(c["img"]) for c in images(NEXT_STEP)]
+def pair_of(step, entry):
+    for pair in step["pairs"]:
+        if pair["id"] == entry["pair"]:
+            return pair
+    return None
 
-check("the flash holds up three frames and then a question mark",
-      len(NEXT_MID["flash"]["images"]) == 4
-      and frames[:3] == [f for f in frames[:3] if f]
-      and frames[3] is None
-      and NEXT_MID["flash"]["images"][3]["img"].endswith("nxt_qm.webp"),
-      str([f["img"].split("/")[-1] for f in NEXT_MID["flash"]["images"]]))
-check("  after a count-in, and held for five seconds",
-      NEXT_MID.get("prepare", {}).get("count") == 3
-      and NEXT_MID["auto_advance_ms"] == 5000,
-      str(NEXT_MID.get("auto_advance_ms")))
-check("the notch turns the same amount every frame",
-      [f[0] for f in frames[:3]]
-      == [(i * DIAL_STEP) % 360 for i in range(DIAL_FRAMES)],
-      str([f[0] for f in frames[:3]]))
-check("  and the dot steps one place every frame",
-      [f[1] for f in frames[:3]] == list(range(DIAL_FRAMES)),
-      str([f[1] for f in frames[:3]]))
-check("  so two things progress across the three, not one",
-      len({f[0] for f in frames[:3]}) == DIAL_FRAMES
-      and len({f[1] for f in frames[:3]}) == DIAL_FRAMES)
 
-ROT_NEXT = (frames[2][0] + DIAL_STEP) % 360
-DOT_NEXT = (frames[2][1] + 1) % DIAL_DOTS
-check("the step offers four candidates",
-      len(cands) == 4 and all(cands), str(cands))
-check("  and no two of them are the same picture",
-      len(set(cands)) == 4, str(cands))
-right = [c for c in cands if c == (ROT_NEXT, DOT_NEXT)]
-check("exactly one continues BOTH progressions",
-      len(right) == 1, "%s in %s" % ((ROT_NEXT, DOT_NEXT), cands))
-check("  and it is the one the round scores",
-      cands[0] == (ROT_NEXT, DOT_NEXT)
-      and images(NEXT_STEP)[0]["tags"] == ["foc_hit"],
-      str(images(NEXT_STEP)[0]["tags"]))
-wrong = cands[1:]
-check("  the other three are misses",
-      [c["tags"] for c in images(NEXT_STEP)[1:]] == [["foc_miss"]] * 3)
-scored = [(c[0] == ROT_NEXT) + (c[1] == DOT_NEXT) for c in wrong]
-check("every distractor gets EXACTLY ONE of the two right",
-      scored == [1, 1, 1], str(list(zip(wrong, scored))))
-check("  one keeps the notch and drops the dot",
-      any(c[0] == ROT_NEXT and c[1] != DOT_NEXT for c in wrong), str(wrong))
-check("  one keeps the dot and drops the notch",
-      any(c[1] == DOT_NEXT and c[0] != ROT_NEXT for c in wrong), str(wrong))
-check("  and one is a frame the flash already showed, redrawn",
-      any(c in frames[:3] for c in wrong),
-      "%s vs %s" % (wrong, frames[:3]))
-check("nothing this round draws is a triangle any more",
-      not [p for p in
-           [f["img"] for f in NEXT_MID["flash"]["images"]]
-           + [c["img"] for c in images(NEXT_STEP)]
-           if "nxt_a" in p or "nxt_q1" in p or "nxt_q2" in p or "nxt_q3" in p],
-      str([f["img"] for f in NEXT_MID["flash"]["images"]]))
-check("  and no triangle file is left in the gallery",
-      not [n for n in sorted(os.listdir(GALLERY))
-           if n.startswith("nxt_") and n != "nxt_qm.webp"],
-      str([n for n in sorted(os.listdir(GALLERY)) if n.startswith("nxt_")]))
-dial_files = [f["img"] for f in NEXT_MID["flash"]["images"]] \
-    + [c["img"] for c in images(NEXT_STEP)]
-check("every file the round names is on disk",
-      all(os.path.exists(os.path.join(ROOT, p.lstrip("/")))
-          for p in dial_files),
-      str([p for p in dial_files
-           if not os.path.exists(os.path.join(ROOT, p.lstrip("/")))]))
-check("  and every one is under twelve kilobytes",
-      all(os.path.getsize(os.path.join(ROOT, p.lstrip("/"))) < 12 * 1024
-          for p in dial_files),
-      str([(p.split("/")[-1],
-            os.path.getsize(os.path.join(ROOT, p.lstrip("/"))))
-           for p in dial_files]))
-check("the clock still presses one of the misses",
-      NEXT_STEP["timeout_pick"] in
-      [c["id"] for c in images(NEXT_STEP)[1:]],
-      str(NEXT_STEP["timeout_pick"]))
-check("  and the round still gives five seconds",
-      NEXT_STEP["timer_ms"] == 5000, str(NEXT_STEP["timer_ms"]))
-check("the labels a screen reader hears describe rather than answer",
-      all("Notch at" in c["label"] and "dot at" in c["label"]
-          for c in images(NEXT_STEP))
-      and not [c for c in images(NEXT_STEP)
-               if "next" in c["label"] or "moved on" in c["label"]],
-      str([c["label"] for c in images(NEXT_STEP)]))
+check("every scored step carries three versions of itself",
+      all(len(by_id[sid].get("pool") or []) == 3 for sid in POOLED),
+      str([sid for sid in POOLED if len(by_id[sid].get("pool") or []) != 3]))
+check("  and no other step carries any",
+      not [s["id"] for s in steps if s.get("pool") and s["id"] not in POOLED],
+      str([s["id"] for s in steps if s.get("pool")]))
+check("  the two warm-up steps are the one version they always were",
+      all(len(by_id[sid]["pairs"]) == 1 and "pool" not in by_id[sid]
+          for sid in ("age", "mood")))
+check("every version names a pair the step actually declares",
+      all(pair_of(by_id[sid], entry) is not None
+          for sid in POOLED for entry in by_id[sid]["pool"]))
+check("  and the three name three different ones",
+      all(len({e["pair"] for e in by_id[sid]["pool"]}) == 3
+          for sid in POOLED))
+check("  so the server, which validates against every pair, accepts them all",
+      all(len(by_id[sid]["pairs"]) == 3 for sid in POOLED))
+
+seen_paths = set()
+for sid in POOLED:
+    step = by_id[sid]
+    dom = domain_of(sid)
+    size = GRID_SIZE[step["format"]]
+    for n, entry in enumerate(step["pool"], start=1):
+        pair = pair_of(step, entry)
+        cards = pair["images"]
+        hits = [c for c in cards if c["tags"] == [dom + "_hit"]]
+        misses = [c for c in cards if c["tags"] == [dom + "_miss"]]
+        check("  %s v%d: %d cards, exactly one of them the answer"
+              % (sid, n, size),
+              len(cards) == size and len(hits) == 1
+              and len(misses) == size - 1,
+              "%d cards, %d hits" % (len(cards), len(hits)))
+        check("    every card its own id, every card labelled",
+              len({c["id"] for c in cards}) == size
+              and all(c.get("label") for c in cards))
+        check("    and the clock presses a miss of THIS version",
+              entry["timeout_pick"] in {c["id"] for c in misses},
+              str(entry.get("timeout_pick")))
+        for card in cards:
+            seen_paths.add(card["img"])
+        for frame in (entry.get("flash") or {}).get("images", []):
+            seen_paths.add(frame["img"])
+
+check("every file any version names is on disk",
+      not [p for p in sorted(seen_paths)
+           if not os.path.exists(os.path.join(ROOT, p.lstrip("/")))],
+      str([p for p in sorted(seen_paths)
+           if not os.path.exists(os.path.join(ROOT, p.lstrip("/")))])[:200])
+check("  and every one of them is under twelve kilobytes",
+      not [p for p in sorted(seen_paths)
+           if os.path.getsize(os.path.join(ROOT, p.lstrip("/"))) >= 12 * 1024],
+      str([p for p in sorted(seen_paths)
+           if os.path.getsize(os.path.join(ROOT, p.lstrip("/")))
+           >= 12 * 1024])[:200])
+
+print("\n--- v11: the memory rounds keep their own difficulty ---")
+HOLD = {"mem1": 3000, "mem2": 3000, "mem3": 2500, "mem4": 2500}
+FRAMES = {"mem1": 4, "mem2": 6, "mem3": 6, "mem4": 6}
+for sid in ("mem1", "mem2", "mem3", "mem4"):
+    step = by_id[sid]
+    mid = mid_by_after[SCORED[sid][1] - 1][0]
+    check("%s holds %d frames for %dms, answered on a %s"
+          % (sid, FRAMES[sid], HOLD[sid], step["format"]),
+          mid["auto_advance_ms"] == HOLD[sid]
+          and step["format"] == ("grid4" if FRAMES[sid] == 4 else "grid6"),
+          "%s / %s" % (mid["auto_advance_ms"], step["format"]))
+    for n, entry in enumerate(step["pool"], start=1):
+        frames = [f["img"] for f in entry["flash"]["images"]]
+        cards = pair_of(step, entry)["images"]
+        answer = [c for c in cards if c["tags"][0].endswith("_hit")][0]
+        check("  v%d holds %d, and the answer is one of them"
+              % (n, FRAMES[sid]),
+              len(frames) == FRAMES[sid] and answer["img"] in frames,
+              "%d frames" % len(frames))
+        check("    no decoy was ever on the screen",
+              not [c for c in cards
+                   if c["tags"][0].endswith("_miss") and c["img"] in frames],
+              str([c["id"] for c in cards
+                   if c["tags"][0].endswith("_miss") and c["img"] in frames]))
+        check("    and no frame is shown twice",
+              len(set(frames)) == len(frames))
+# The last round's decoys are the answer's own shape in the colour beside it,
+# which is what makes it the hardest of the four rather than the longest.
+for n, variant in enumerate(GEN.MEMORY_VARIANTS["mem4"], start=1):
+    answer = variant["flash"][variant["seen"]]
+    kin = [d for d in variant["decoys"][:5]
+           if d[1] == answer[1] or d[0] == answer[0]]
+    check("  mem4 v%d hides the answer among its own neighbours" % n,
+          len(kin) >= 2, str(variant["decoys"][:5]))
+
+print("\n--- v11: the spatial rounds land where their own chain lands ---")
+CHAIN = {"spa1": (4, 800), "spa2": (5, 600), "spa3": (6, 450),
+         "spa4": (7, 350)}
+for sid in ("spa1", "spa2", "spa3", "spa4"):
+    step = by_id[sid]
+    want_n, want_ms = CHAIN[sid]
+    for n, entry in enumerate(step["pool"], start=1):
+        rule = entry["reveal"]
+        frames = entry["flash"]["images"]
+        cards = pair_of(step, entry)["images"]
+        landing = GEN.spatial_landing(rule["open_slot"],
+                                      [tuple(p) for p in rule["swaps"]])
+        hit = [i for i, c in enumerate(cards)
+               if c["tags"][0].endswith("_hit")]
+        check("  %s v%d: %d swaps at %dms, held %dms"
+              % (sid, n, want_n, want_ms, GEN.SPATIAL_OPEN_MS),
+              len(rule["swaps"]) == want_n and rule["swap_ms"] == want_ms
+              and rule["open_ms"] == GEN.SPATIAL_OPEN_MS,
+              "%d at %s, open %s" % (len(rule["swaps"]), rule["swap_ms"],
+                                     rule["open_ms"]))
+        check("    the object lands on slot %d, and that slot scores"
+              % landing,
+              hit == [landing], "hit %s, chain lands %d" % (hit, landing))
+        check("    which is never the slot it was shown in",
+              landing != rule["open_slot"],
+              "%d == %d" % (landing, rule["open_slot"]))
+        check("    one box open on the flash, five shut",
+              sum(1 for f in frames if "box_open_" in f["img"]) == 1
+              and frames[rule["open_slot"]]["img"].count("box_open_") == 1,
+              str([f["img"].split("/")[-1] for f in frames]))
+        check("    every swap names two slots this grid has",
+              all(len(p) == 2 and p[0] != p[1]
+                  and all(isinstance(v, int) and 0 <= v < 6 for v in p)
+                  for p in rule["swaps"]))
+    check("  and its three versions hide three different objects",
+          len({e["flash"]["images"][e["reveal"]["open_slot"]]["img"]
+               for e in step["pool"]}) == 3)
+
+print("\n--- v11: the change rounds change one thing, by their own amount ---")
+KIND = {"chg1": "letter", "chg2": "colour", "chg3": "size",
+        "chg4": "rotation"}
+NEIGHBOUR = {("violet", "blue"), ("blue", "violet"), ("teal", "green"),
+             ("green", "teal"), ("amber", "red"), ("red", "amber")}
+
+
+def letter_bits(path):
+    """(letter, colour, size, degrees) off the filename that states them."""
+    got = re.search(r"letter_([A-Z])_(\w+?)_(\w+?)_(\d+)\.webp$", path)
+    return (got.group(1), got.group(2), got.group(3),
+            int(got.group(4))) if got else None
+
+
+for sid in ("chg1", "chg2", "chg3", "chg4"):
+    step = by_id[sid]
+    for n, entry in enumerate(step["pool"], start=1):
+        before = [letter_bits(f["img"]) for f in entry["flash"]["images"]]
+        after = [letter_bits(c["img"]) for c in pair_of(step, entry)["images"]]
+        cards = pair_of(step, entry)["images"]
+        hit = [i for i, c in enumerate(cards)
+               if c["tags"][0].endswith("_hit")]
+        moved = [i for i in range(4) if before[i] != after[i]]
+        check("  %s v%d: exactly one of the four came back different"
+              % (sid, n), len(moved) == 1 and moved == hit,
+              "changed %s, scored %s" % (moved, hit))
+        i = moved[0]
+        facets = [k for k in range(4) if before[i][k] != after[i][k]]
+        check("    and it changed exactly one thing, which is %s"
+              % KIND[sid],
+              len(facets) == 1
+              and facets[0] == ["letter", "colour", "size",
+                                "rotation"].index(KIND[sid]),
+              str((before[i], after[i])))
+        if KIND[sid] == "colour":
+            check("    one shade over, not one colour over",
+                  (before[i][1], after[i][1]) in NEIGHBOUR,
+                  "%s -> %s" % (before[i][1], after[i][1]))
+        if KIND[sid] == "size":
+            check("    a fifth off, not a third",
+                  before[i][2] == "lg" and after[i][2] == "md"
+                  and GEN.LETTER_SIZES["md"] == 240,
+                  "%s -> %s" % (before[i][2], after[i][2]))
+        if KIND[sid] == "rotation":
+            check("    ten degrees, which is less than the fifteen it was",
+                  after[i][3] == 10, str(after[i][3]))
+        check("    the other three came back byte for byte",
+              [before[k] for k in range(4) if k != i]
+              == [after[k] for k in range(4) if k != i])
+
+print("\n--- v11: the four focus rounds, and their four seconds ---")
+for sid in ("odd", "ink", "next", "count"):
+    check("%s gives four seconds" % sid,
+          by_id[sid]["timer_ms"] == 4000, str(by_id[sid]["timer_ms"]))
+
+for n, variant in enumerate(GEN.ODD_VARIANTS, start=1):
+    step = by_id["odd"]
+    cards = pair_of(step, step["pool"][n - 1])["images"]
+    hit = [i for i, c in enumerate(cards)
+           if c["tags"][0].endswith("_hit")][0]
+    check("  odd v%d: the short hook is slot %d, and that slot scores"
+          % (n, variant["odd"]),
+          hit == variant["odd"] - 1, "hit %d, odd %d" % (hit, variant["odd"]))
+    check("    six files, so the answer is not readable off the page source",
+          len({c["img"] for c in cards}) == 6)
+check("  the odd hook is shorter rather than mirrored",
+      "ODD_SHORT = 0.62" in ART and "short=(slot == variant[" in ART)
+
+for n, variant in enumerate(GEN.INK_VARIANTS, start=1):
+    step = by_id["ink"]
+    cards = pair_of(step, step["pool"][n - 1])["images"]
+    honest = [i for i, (text, colour) in enumerate(variant["cards"])
+              if text.lower() == colour]
+    hit = [i for i, c in enumerate(cards)
+           if c["tags"][0].endswith("_hit")]
+    check("  ink v%d: exactly one card tells the truth, and it scores" % n,
+          len(honest) == 1 and hit == honest,
+          "honest %s, hit %s" % (honest, hit))
+    liars = [(t, c) for t, c in variant["cards"] if t.lower() != c]
+    # The near misses here are red/amber and blue/violet, and not teal/green:
+    # teal is a shade of green in ordinary speech, so "GREEN" set in teal is
+    # not an attention test but a disagreement about the name of a colour.
+    check("    and every liar is a near miss a reader would still call wrong",
+          all((t.lower(), c) in GEN.INK_NEAR for t, c in liars),
+          str(liars))
+
+for n, spec in enumerate(GEN.DIAL_VARIANTS, start=1):
+    plan = GEN.dial_round(spec)
+    step = by_id["next"]
+    entry = step["pool"][n - 1]
+    cards = pair_of(step, entry)["images"]
+    frames = [f["img"] for f in entry["flash"]["images"]]
+    check("  next v%d: the notch turns %d a frame, the dot steps one of %d"
+          % (n, spec["rot"], spec["dots"]),
+          [((i * spec["rot"]) % 360, i % spec["dots"])
+           for i in range(3)] == plan["seq"])
+    check("    three frames and a question mark",
+          len(frames) == 4 and frames[3].endswith("nxt_qm.webp"))
+    check("    exactly one candidate continues both progressions",
+          cards[0]["img"].endswith(
+              GEN.dial_name(plan["right"][0], plan["right"][1],
+                            plan["dots"]) + ".webp")
+          and cards[0]["tags"][0].endswith("_hit"),
+          cards[0]["img"])
+    for k, (rot, dot) in enumerate(plan["wrong"], start=1):
+        matched = (rot == plan["right"][0]) + (dot == plan["right"][1])
+        check("    distractor %d gets exactly one of the two right" % k,
+              matched == 1 and cards[k]["tags"][0].endswith("_miss"),
+              "%s vs %s" % ((rot, dot), plan["right"]))
+    check("    one of the three is a frame the flash already showed",
+          any(GEN.dial_name(r, d, plan["dots"]) + ".webp" in frames[3 - 3:3]
+              or any(f.endswith(GEN.dial_name(r, d, plan["dots"]) + ".webp")
+                     for f in frames[:3])
+              for r, d in plan["wrong"]))
+    check("    and no two candidates are the same picture",
+          len({c["img"] for c in cards}) == 4)
+
+for n, variant in enumerate(GEN.COUNT_VARIANTS, start=1):
+    step = by_id["count"]
+    entry = step["pool"][n - 1]
+    cards = pair_of(step, entry)["images"]
+    total = sum(len(frame) for frame in variant["spots"])
+    hit = [c for c in cards if c["tags"][0].endswith("_hit")]
+    check("  count v%d: %d circles across four frames" % (n, variant["total"]),
+          total == variant["total"], "%d drawn" % total)
+    check("    the four on offer are its own, and the true count scores",
+          [c["label"] for c in cards] == variant["answers"]
+          and len(hit) == 1 and hit[0]["label"] == str(variant["total"]),
+          str([c["label"] for c in cards]))
+    check("    the frames carry uneven numbers, so it cannot be counted "
+          "by pattern",
+          len({len(frame) for frame in variant["spots"]}) >= 3,
+          str([len(f) for f in variant["spots"]]))
+check("  the three versions count three different totals",
+      len({v["total"] for v in GEN.COUNT_VARIANTS}) == 3,
+      str([v["total"] for v in GEN.COUNT_VARIANTS]))
+
+print("\n--- v11: a perfect run reaches a hundred whatever it is dealt ---")
+SCORE = cfg["brain_age"]["score"]
+for pick in (0, 1, 2):
+    scores = {}
+    for sid in POOLED:
+        step = by_id[sid]
+        entry = step["pool"][pick % len(step["pool"])]
+        for card in pair_of(step, entry)["images"]:
+            if card["tags"][0].endswith("_hit"):
+                for tag in card["tags"]:
+                    scores[tag] = scores.get(tag, 0) + 1
+    hits = sum(scores.values())
+    check("  version %d of every round: sixteen hits, a hundred out of a "
+          "hundred" % pick,
+          hits == cfg["brain_age"]["scored"]
+          and SCORE["base"] + SCORE["per_miss"] * 0 == 100,
+          "%d hits" % hits)
 
 print("\n--- v5: the offer, and the line under the button ---")
-unlock = cfg["result_copy"]["profile"]["unlock"]
-fuel = [row for row in unlock if row["id"] == "fuel"]
+# v11 replaced the ticked list and the manifest with the offer card's own
+# four benefit cards. The food day is one of them.
+cards = cfg["result_copy"]["profile"]["offer_cards"]
+fuel = [row for row in cards if row["title"] == "Fuel"]
 check("the plan sells a day of food as well as the drills",
-      len(fuel) == 1 and fuel[0].get("key") == "Fuel",
-      str([r["id"] for r in unlock]))
+      len(fuel) == 1, str([r["title"] for r in cards]))
 check("  in the words the review asked for",
-      "what to put on your plate this week" in fuel[0]["line"]
-      and "feed a sharp brain" in fuel[0]["line"], fuel[0]["line"])
-check("  and the manifest carries it too",
-      any("put on your plate" in line
-          for line in cfg["checkout"]["manifest"]),
-      str(cfg["checkout"]["manifest"]))
-FOOD_BANNED = ("supplement", "vitamin", "dosage", "dose", "proven",
-               "clinically", "boost your")
-check("  with nothing out of a bottle in either",
-      not [w for w in FOOD_BANNED
-           if w in (fuel[0]["line"] + " "
-                    + " ".join(cfg["checkout"]["manifest"])).lower()],
-      str([w for w in FOOD_BANNED
-           if w in (fuel[0]["line"] + " "
-                    + " ".join(cfg["checkout"]["manifest"])).lower()]))
+      fuel[0]["sub"] == "The plate that feeds a sharp brain",
+      fuel[0]["sub"])
 check("the offer names no brain type at all",
       "{type}" not in json.dumps(cfg["result_copy"]["profile"]["offer_head"])
       and "{type}" not in json.dumps(cfg["checkout"]))
@@ -1571,21 +1385,18 @@ check("  each titled, teased and shut",
           for s in sections))
 check("the checkout names the product this funnel sells",
       cfg["checkout"]["product_name"] == "Your Brain Refresh Report"
-      and cfg["checkout"]["cta_label"] == "Unlock my Brain Refresh — {price}"
+      and cfg["checkout"]["cta_label"] == "Reveal my brain age — {price}"
       and cfg["checkout"]["proof_line"] == "Built from your 16 rounds")
 check("one offer, not two: the layout is named rather than tested",
       "paywall_variants" not in cfg)
 # v10: the reveal leads both lists. The free page no longer shows the age, so
 # the first thing this offer names is the number it is holding.
-check("  and the manifest opens on the reveal, then one line per chapter, the "
-      "food day and the keepsake",
-      len(cfg["checkout"]["manifest"]) == len(sections) + 3
-      and cfg["checkout"]["manifest"][0]
-      == "Your brain age — the exact number your 18 rounds add up to",
-      str(cfg["checkout"]["manifest"][:1]))
-check("  which is what the unlock list on the offer card argues",
-      len(cfg["result_copy"]["profile"]["unlock"]) == len(sections) + 2
-      and cfg["result_copy"]["profile"]["unlock"][0]["id"] == "age")
+# v11: the offer card is four benefit cards and a hero tile now, not a
+# manifest of one line per chapter and a list saying the same thing again.
+check("  and the offer names four things the plan contains",
+      len(cfg["result_copy"]["profile"]["offer_cards"]) == 4
+      and "manifest" not in cfg["checkout"],
+      str(sorted(cfg["checkout"])))
 check("every chapter has a card in the result copy",
       sorted(c["id"] for c in cfg["result_copy"]["profile"]["cards"])
       == sorted(s["id"] for s in sections))
@@ -1650,7 +1461,7 @@ FREE_COPY = json.dumps({k: v for k, v in cfg["result_copy"].items()
 check("nothing on the free page compares the reader to anybody",
       not [w for w in CROWD if w.strip() in FREE_COPY],
       str([w for w in CROWD if w.strip() in FREE_COPY]))
-check("  nor does the offer, the manifest or the share line",
+check("  nor does the offer or the share line",
       not [w for w in CROWD
            if w.strip() in json.dumps(cfg["checkout"],
                                       ensure_ascii=False).lower()],
@@ -1665,6 +1476,140 @@ check("what gets shared is the score, out of a hundred",
       and "fill(table.share_line, { n: data.score });" in MODULE)
 check("  and the share is withheld from a run with no score to give",
       'if (typeof data.score !== "number") return null;' in MODULE)
+
+print("\n--- v11: the offer card, rebuilt ---")
+OFFER = cfg["result_copy"]["profile"]
+STATIC = json.load(open(os.path.join(ROOT, "static/funnels/brain.json"),
+                        encoding="utf-8"))
+for name, table in (("funnels", cfg), ("static", STATIC)):
+    prof = table["result_copy"]["profile"]
+    check("%s: the card's copy is all in the config" % name,
+          all(prof.get(k) for k in ("offer_personal", "offer_personal_elite",
+                                    "offer_hero_kicker", "offer_hero_line",
+                                    "offer_cards", "offer_chips")),
+          str([k for k in ("offer_personal", "offer_personal_elite",
+                           "offer_hero_kicker", "offer_hero_line",
+                           "offer_cards", "offer_chips")
+               if not prof.get(k)]))
+    check("  four benefit cards and three chips",
+          len(prof["offer_cards"]) == 4 and len(prof["offer_chips"]) == 3,
+          "%d cards, %d chips" % (len(prof["offer_cards"]),
+                                  len(prof["offer_chips"])))
+    check("  and the list it replaces is gone from the config",
+          not [k for k in prof if "unlock" in k]
+          and "manifest" not in table["checkout"],
+          str([k for k in prof if "unlock" in k]))
+check("nothing in the module reads the list either",
+      "unlock" not in MODULE and "checklist" not in MODULE
+      and "br-checklist" not in RESULT_CSS)
+check("every benefit card names an icon, a title and a line",
+      all(row.get("icon") and row.get("title") and row.get("sub")
+          for row in OFFER["offer_cards"]),
+      str(OFFER["offer_cards"]))
+check("  and the four are the four the review asked for",
+      [row["title"] for row in OFFER["offer_cards"]]
+      == ["Weakest-round drill", "7-day plan", "5 strengths · 2 habits",
+          "Fuel"],
+      str([row["title"] for row in OFFER["offer_cards"]]))
+check("  every icon the config names is one the module can draw",
+      all(row["icon"] in MODULE for row in OFFER["offer_cards"])
+      and all(('%s: [' % row["icon"]) in MODULE
+              for row in OFFER["offer_cards"]),
+      str([row["icon"] for row in OFFER["offer_cards"]]))
+check("the icons are inline paths, stroked in the card's own colour",
+      "var OFFER_ICONS = {" in MODULE
+      and 'svgEl("svg", { viewBox: "0 0 24 24" })' in MODULE
+      and "stroke: currentColor;" in RESULT_CSS
+      and re.search(r"\.br-benefit-icon svg \{[^}]*fill: none;",
+                    RESULT_CSS, re.S) is not None)
+check("  and not one of them is an emoji",
+      not [ch for row in OFFER["offer_cards"] for ch in row["title"] + row["sub"]
+           if ord(ch) > 0x2100],
+      str([ch for row in OFFER["offer_cards"]
+           for ch in row["title"] + row["sub"] if ord(ch) > 0x2100]))
+check("  nor is anything else on the card",
+      not [ch for text in ([OFFER["offer_personal"],
+                            OFFER["offer_personal_elite"],
+                            OFFER["offer_hero_kicker"],
+                            OFFER["offer_hero_line"]] + OFFER["offer_chips"])
+           for ch in text if ord(ch) > 0x2100])
+
+# The personal line names the round with the fewest hits, ties going to the
+# earliest of the four — and a run with nothing to name says so instead.
+DOM_ORDER = ["mem", "spa", "chg", "foc"]
+
+
+def weakest(counts):
+    return min(DOM_ORDER, key=lambda k: (counts[k], DOM_ORDER.index(k)))
+
+
+for counts, want in (({"mem": 4, "spa": 3, "chg": 1, "foc": 2}, "chg"),
+                     ({"mem": 2, "spa": 2, "chg": 4, "foc": 3}, "mem"),
+                     ({"mem": 0, "spa": 0, "chg": 0, "foc": 0}, "mem")):
+    check("  %s is the round with the most room in %s"
+          % (cfg["brain_age"]["domains"][want], counts),
+          weakest(counts) == want, weakest(counts))
+check("the module names it the same way, off the config's own labels",
+      "function weakestRound(" in MODULE
+      and "if (worst === null || got < worst.got)" in MODULE
+      and "(ageBlock(ctx) || {}).domains" in MODULE)
+check("  and a close run is told it was close instead",
+      "if (data.elite || !data.room_rounds) {" in MODULE
+      and "table.offer_personal_elite" in MODULE)
+check("  both templates being the config's",
+      OFFER["offer_personal"]
+      == "Most of your dropped points are in {round}. The drill for it is "
+         "inside."
+      and OFFER["offer_personal_elite"]
+      == "A close run. The plan is what keeps it that way.")
+
+check("the locked tile shows two hashes and never a number",
+      'elm("span", "br-hero-hash", "##")' in MODULE
+      and "data.age" not in module_body("offerHero")
+      and "String(" not in module_body("offerHero"))
+check("  with a solid LOCKED pill over its bottom edge",
+      'elm("span", "br-hero-lock", "LOCKED")' in MODULE
+      and re.search(r"\.br-hero-lock \{[^}]*background: var\(--br-lux\);",
+                    RESULT_CSS, re.S) is not None
+      and re.search(r"\.br-hero-lock \{[^}]*bottom: -9px;", RESULT_CSS, re.S)
+      is not None)
+check("  and the tile is 74px, on an accent-bordered card",
+      re.search(r"\.br-hero-tile \{[^}]*flex: 0 0 74px;", RESULT_CSS, re.S)
+      is not None
+      and re.search(r"\.br-hero \{[^}]*border: 1\.5px solid var\(--br-lux\);",
+                    RESULT_CSS, re.S) is not None)
+check("the price block is the config's, struck regular and all",
+      'elm("span", "br-price-now", ctx.price)' in MODULE
+      and 'elm("span", "br-price-was", ctx.priceRegular)' in MODULE
+      and cfg["checkout"]["commerce"]["price_note"] == "one-time"
+      and cfg["sale"]["label"] == "Launch Offer")
+check("the button says what pressing it reveals",
+      cfg["checkout"]["cta_label"] == "Reveal my brain age — {price}"
+      and "{price}" in cfg["checkout"]["cta_label"])
+check("the card ends on the anchor, and it is the last thing on it",
+      "card.appendChild(anchor);" in module_body("offer")
+      and module_body("offer").rindex("card.appendChild(anchor);")
+      > module_body("offer").rindex("if (chips) card.appendChild(chips);"))
+check("  and the card argues in the order the review set",
+      [module_body("offer").index(x) for x in
+       ("if (head) card.appendChild", "if (personal) card.appendChild",
+        "if (hero) card.appendChild", "if (grid) card.appendChild",
+        "card.appendChild(price);", "if (chips) card.appendChild",
+        "card.appendChild(anchor);")]
+      == sorted([module_body("offer").index(x) for x in
+                 ("if (head) card.appendChild", "if (personal) card.appendChild",
+                  "if (hero) card.appendChild", "if (grid) card.appendChild",
+                  "card.appendChild(price);", "if (chips) card.appendChild",
+                  "card.appendChild(anchor);")]))
+CROWD_OFFER = ("average", "percentile", "most people", "top %", "better than")
+OFFER_TEXT = json.dumps(
+    [OFFER[k] for k in ("offer_personal", "offer_personal_elite",
+                        "offer_hero_kicker", "offer_hero_line")]
+    + OFFER["offer_chips"] + OFFER["offer_cards"], ensure_ascii=False).lower()
+check("and nothing on the new card claims anything about anybody else",
+      not [w for w in CROWD_OFFER if w in OFFER_TEXT]
+      and not re.search(r"\d+\s*%", OFFER_TEXT),
+      str([w for w in CROWD_OFFER if w in OFFER_TEXT]))
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for line in fails:

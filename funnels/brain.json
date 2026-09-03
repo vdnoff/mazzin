@@ -151,41 +151,180 @@
         "format": "grid4",
         "pairs": [
           {
-            "id": "p1",
+            "id": "v1",
             "images": [
               {
-                "id": "mem1_hit",
-                "img": "/static/galleries/brain/mem1_f2.webp",
+                "id": "mem1_v1_c1",
+                "img": "/static/galleries/brain/plain_blue_triangle.webp",
                 "label": "Blue triangle",
                 "tags": [
                   "mem_hit"
                 ]
               },
               {
-                "id": "mem1_m1",
-                "img": "/static/galleries/brain/mem1_m1.webp",
+                "id": "mem1_v1_c2",
+                "img": "/static/galleries/brain/plain_violet_hexagon.webp",
                 "label": "Violet hexagon",
                 "tags": [
                   "mem_miss"
                 ]
               },
               {
-                "id": "mem1_m2",
-                "img": "/static/galleries/brain/mem1_m2.webp",
+                "id": "mem1_v1_c3",
+                "img": "/static/galleries/brain/plain_teal_diamond.webp",
                 "label": "Teal diamond",
                 "tags": [
                   "mem_miss"
                 ]
               },
               {
-                "id": "mem1_m3",
-                "img": "/static/galleries/brain/mem1_m3.webp",
+                "id": "mem1_v1_c4",
+                "img": "/static/galleries/brain/plain_amber_cross.webp",
                 "label": "Amber cross",
                 "tags": [
                   "mem_miss"
                 ]
               }
             ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "mem1_v2_c1",
+                "img": "/static/galleries/brain/plain_red_square.webp",
+                "label": "Red square",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem1_v2_c2",
+                "img": "/static/galleries/brain/plain_blue_star.webp",
+                "label": "Blue star",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem1_v2_c3",
+                "img": "/static/galleries/brain/plain_green_cross.webp",
+                "label": "Green cross",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem1_v2_c4",
+                "img": "/static/galleries/brain/plain_teal_triangle.webp",
+                "label": "Teal triangle",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "mem1_v3_c1",
+                "img": "/static/galleries/brain/plain_green_hexagon.webp",
+                "label": "Green hexagon",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem1_v3_c2",
+                "img": "/static/galleries/brain/plain_violet_square.webp",
+                "label": "Violet square",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem1_v3_c3",
+                "img": "/static/galleries/brain/plain_teal_circle.webp",
+                "label": "Teal circle",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem1_v3_c4",
+                "img": "/static/galleries/brain/plain_red_diamond.webp",
+                "label": "Red diamond",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/plain_red_circle.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_blue_triangle.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_amber_square.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_green_star.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem1_v1_c4"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/plain_teal_pentagon.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_amber_diamond.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_violet_circle.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_red_square.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem1_v2_c4"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/plain_green_hexagon.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_red_star.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_blue_cross.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_amber_pentagon.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem1_v3_c4"
           }
         ]
       },
@@ -193,44 +332,249 @@
         "id": "mem2",
         "kicker": "ROUND 1 · MEMORY · 2/4",
         "question": "Which one did you just see?",
-        "format": "grid4",
+        "format": "grid6",
         "pairs": [
           {
-            "id": "p1",
+            "id": "v1",
             "images": [
               {
-                "id": "mem2_hit",
-                "img": "/static/galleries/brain/mem2_f4.webp",
+                "id": "mem2_v1_c1",
+                "img": "/static/galleries/brain/plain_blue_diamond.webp",
                 "label": "Blue diamond",
                 "tags": [
                   "mem_hit"
                 ]
               },
               {
-                "id": "mem2_m1",
-                "img": "/static/galleries/brain/mem2_m1.webp",
+                "id": "mem2_v1_c2",
+                "img": "/static/galleries/brain/plain_amber_triangle.webp",
                 "label": "Amber triangle",
                 "tags": [
                   "mem_miss"
                 ]
               },
               {
-                "id": "mem2_m2",
-                "img": "/static/galleries/brain/mem2_m2.webp",
+                "id": "mem2_v1_c3",
+                "img": "/static/galleries/brain/plain_teal_circle.webp",
                 "label": "Teal circle",
                 "tags": [
                   "mem_miss"
                 ]
               },
               {
-                "id": "mem2_m3",
-                "img": "/static/galleries/brain/mem2_m3.webp",
+                "id": "mem2_v1_c4",
+                "img": "/static/galleries/brain/plain_red_pentagon.webp",
                 "label": "Red pentagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_v1_c5",
+                "img": "/static/galleries/brain/plain_green_star.webp",
+                "label": "Green star",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_v1_c6",
+                "img": "/static/galleries/brain/plain_blue_square.webp",
+                "label": "Blue square",
                 "tags": [
                   "mem_miss"
                 ]
               }
             ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "mem2_v2_c1",
+                "img": "/static/galleries/brain/plain_blue_pentagon.webp",
+                "label": "Blue pentagon",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem2_v2_c2",
+                "img": "/static/galleries/brain/plain_violet_star.webp",
+                "label": "Violet star",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_v2_c3",
+                "img": "/static/galleries/brain/plain_green_cross.webp",
+                "label": "Green cross",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_v2_c4",
+                "img": "/static/galleries/brain/plain_red_circle.webp",
+                "label": "Red circle",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_v2_c5",
+                "img": "/static/galleries/brain/plain_amber_square.webp",
+                "label": "Amber square",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_v2_c6",
+                "img": "/static/galleries/brain/plain_teal_diamond.webp",
+                "label": "Teal diamond",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "mem2_v3_c1",
+                "img": "/static/galleries/brain/plain_amber_star.webp",
+                "label": "Amber star",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem2_v3_c2",
+                "img": "/static/galleries/brain/plain_blue_diamond.webp",
+                "label": "Blue diamond",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_v3_c3",
+                "img": "/static/galleries/brain/plain_red_pentagon.webp",
+                "label": "Red pentagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_v3_c4",
+                "img": "/static/galleries/brain/plain_teal_square.webp",
+                "label": "Teal square",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_v3_c5",
+                "img": "/static/galleries/brain/plain_violet_hexagon.webp",
+                "label": "Violet hexagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_v3_c6",
+                "img": "/static/galleries/brain/plain_green_circle.webp",
+                "label": "Green circle",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/plain_violet_square.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_green_hexagon.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_red_star.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_blue_diamond.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_amber_circle.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_teal_cross.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem2_v1_c6"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/plain_teal_star.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_red_hexagon.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_amber_cross.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_violet_triangle.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_green_diamond.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_blue_pentagon.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem2_v2_c6"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/plain_blue_circle.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_amber_star.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_green_square.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_teal_hexagon.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_red_triangle.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_violet_cross.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem2_v3_c6"
           }
         ]
       },
@@ -238,44 +582,249 @@
         "id": "mem3",
         "kicker": "ROUND 1 · MEMORY · 3/4",
         "question": "Which one did you just see?",
-        "format": "grid4",
+        "format": "grid6",
         "pairs": [
           {
-            "id": "p1",
+            "id": "v1",
             "images": [
               {
-                "id": "mem3_hit",
-                "img": "/static/galleries/brain/mem3_f5.webp",
+                "id": "mem3_v1_c1",
+                "img": "/static/galleries/brain/plain_green_diamond.webp",
                 "label": "Green diamond",
                 "tags": [
                   "mem_hit"
                 ]
               },
               {
-                "id": "mem3_m1",
-                "img": "/static/galleries/brain/mem3_m1.webp",
+                "id": "mem3_v1_c2",
+                "img": "/static/galleries/brain/plain_blue_star.webp",
                 "label": "Blue star",
                 "tags": [
                   "mem_miss"
                 ]
               },
               {
-                "id": "mem3_m2",
-                "img": "/static/galleries/brain/mem3_m2.webp",
+                "id": "mem3_v1_c3",
+                "img": "/static/galleries/brain/plain_red_circle.webp",
                 "label": "Red circle",
                 "tags": [
                   "mem_miss"
                 ]
               },
               {
-                "id": "mem3_m3",
-                "img": "/static/galleries/brain/mem3_m3.webp",
+                "id": "mem3_v1_c4",
+                "img": "/static/galleries/brain/plain_violet_pentagon.webp",
                 "label": "Violet pentagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_v1_c5",
+                "img": "/static/galleries/brain/plain_amber_hexagon.webp",
+                "label": "Amber hexagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_v1_c6",
+                "img": "/static/galleries/brain/plain_teal_star.webp",
+                "label": "Teal star",
                 "tags": [
                   "mem_miss"
                 ]
               }
             ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "mem3_v2_c1",
+                "img": "/static/galleries/brain/plain_green_star.webp",
+                "label": "Green star",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem3_v2_c2",
+                "img": "/static/galleries/brain/plain_teal_cross.webp",
+                "label": "Teal cross",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_v2_c3",
+                "img": "/static/galleries/brain/plain_amber_circle.webp",
+                "label": "Amber circle",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_v2_c4",
+                "img": "/static/galleries/brain/plain_blue_hexagon.webp",
+                "label": "Blue hexagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_v2_c5",
+                "img": "/static/galleries/brain/plain_red_triangle.webp",
+                "label": "Red triangle",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_v2_c6",
+                "img": "/static/galleries/brain/plain_green_pentagon.webp",
+                "label": "Green pentagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "mem3_v3_c1",
+                "img": "/static/galleries/brain/plain_red_square.webp",
+                "label": "Red square",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem3_v3_c2",
+                "img": "/static/galleries/brain/plain_violet_cross.webp",
+                "label": "Violet cross",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_v3_c3",
+                "img": "/static/galleries/brain/plain_green_square.webp",
+                "label": "Green square",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_v3_c4",
+                "img": "/static/galleries/brain/plain_amber_star.webp",
+                "label": "Amber star",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_v3_c5",
+                "img": "/static/galleries/brain/plain_blue_circle.webp",
+                "label": "Blue circle",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_v3_c6",
+                "img": "/static/galleries/brain/plain_teal_pentagon.webp",
+                "label": "Teal pentagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/plain_amber_circle.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_violet_triangle.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_teal_square.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_red_hexagon.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_green_diamond.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_blue_cross.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem3_v1_c6"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/plain_red_pentagon.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_blue_square.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_green_star.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_violet_diamond.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_amber_hexagon.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_teal_triangle.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem3_v2_c6"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/plain_green_cross.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_teal_diamond.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_violet_star.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_amber_triangle.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_blue_hexagon.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_red_square.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem3_v3_c6"
           }
         ]
       },
@@ -286,57 +835,246 @@
         "format": "grid6",
         "pairs": [
           {
-            "id": "p1",
+            "id": "v1",
             "images": [
               {
-                "id": "mem4_hit",
-                "img": "/static/galleries/brain/mem4_f3.webp",
+                "id": "mem4_v1_c1",
+                "img": "/static/galleries/brain/plain_blue_pentagon.webp",
                 "label": "Blue pentagon",
                 "tags": [
                   "mem_hit"
                 ]
               },
               {
-                "id": "mem4_m1",
-                "img": "/static/galleries/brain/mem4_m1.webp",
-                "label": "Teal hexagon",
+                "id": "mem4_v1_c2",
+                "img": "/static/galleries/brain/plain_teal_pentagon.webp",
+                "label": "Teal pentagon",
                 "tags": [
                   "mem_miss"
                 ]
               },
               {
-                "id": "mem4_m2",
-                "img": "/static/galleries/brain/mem4_m2.webp",
-                "label": "Amber cross",
+                "id": "mem4_v1_c3",
+                "img": "/static/galleries/brain/plain_green_pentagon.webp",
+                "label": "Green pentagon",
                 "tags": [
                   "mem_miss"
                 ]
               },
               {
-                "id": "mem4_m3",
-                "img": "/static/galleries/brain/mem4_m3.webp",
-                "label": "Green circle",
+                "id": "mem4_v1_c4",
+                "img": "/static/galleries/brain/plain_violet_pentagon.webp",
+                "label": "Violet pentagon",
                 "tags": [
                   "mem_miss"
                 ]
               },
               {
-                "id": "mem4_m4",
-                "img": "/static/galleries/brain/mem4_m4.webp",
-                "label": "Violet diamond",
-                "tags": [
-                  "mem_miss"
-                ]
-              },
-              {
-                "id": "mem4_m5",
-                "img": "/static/galleries/brain/mem4_m5.webp",
+                "id": "mem4_v1_c5",
+                "img": "/static/galleries/brain/plain_blue_hexagon.webp",
                 "label": "Blue hexagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_v1_c6",
+                "img": "/static/galleries/brain/plain_blue_diamond.webp",
+                "label": "Blue diamond",
                 "tags": [
                   "mem_miss"
                 ]
               }
             ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "mem4_v2_c1",
+                "img": "/static/galleries/brain/plain_red_hexagon.webp",
+                "label": "Red hexagon",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem4_v2_c2",
+                "img": "/static/galleries/brain/plain_amber_hexagon.webp",
+                "label": "Amber hexagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_v2_c3",
+                "img": "/static/galleries/brain/plain_violet_hexagon.webp",
+                "label": "Violet hexagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_v2_c4",
+                "img": "/static/galleries/brain/plain_red_pentagon.webp",
+                "label": "Red pentagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_v2_c5",
+                "img": "/static/galleries/brain/plain_red_diamond.webp",
+                "label": "Red diamond",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_v2_c6",
+                "img": "/static/galleries/brain/plain_green_hexagon.webp",
+                "label": "Green hexagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "mem4_v3_c1",
+                "img": "/static/galleries/brain/plain_teal_hexagon.webp",
+                "label": "Teal hexagon",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem4_v3_c2",
+                "img": "/static/galleries/brain/plain_green_hexagon.webp",
+                "label": "Green hexagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_v3_c3",
+                "img": "/static/galleries/brain/plain_blue_hexagon.webp",
+                "label": "Blue hexagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_v3_c4",
+                "img": "/static/galleries/brain/plain_teal_pentagon.webp",
+                "label": "Teal pentagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_v3_c5",
+                "img": "/static/galleries/brain/plain_teal_circle.webp",
+                "label": "Teal circle",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_v3_c6",
+                "img": "/static/galleries/brain/plain_violet_hexagon.webp",
+                "label": "Violet hexagon",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/plain_green_square.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_teal_star.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_blue_pentagon.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_amber_diamond.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_violet_circle.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_red_triangle.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem4_v1_c6"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/plain_red_hexagon.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_blue_cross.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_amber_star.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_green_circle.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_teal_square.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_violet_diamond.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem4_v2_c6"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/plain_amber_triangle.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_violet_square.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_green_diamond.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_red_cross.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_teal_hexagon.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/plain_blue_star.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem4_v3_c6"
           }
         ]
       },
@@ -348,57 +1086,321 @@
         "shuffle": false,
         "pairs": [
           {
-            "id": "p1",
+            "id": "v1",
             "images": [
               {
-                "id": "spa1_s1",
+                "id": "spa1_v1_s1",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "1",
+                "label": "Box 1",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
-                "id": "spa1_s2",
+                "id": "spa1_v1_s2",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "2",
+                "label": "Box 2",
                 "tags": [
                   "spa_hit"
                 ]
               },
               {
-                "id": "spa1_s3",
+                "id": "spa1_v1_s3",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "3",
+                "label": "Box 3",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
-                "id": "spa1_s4",
+                "id": "spa1_v1_s4",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "4",
+                "label": "Box 4",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
-                "id": "spa1_s5",
+                "id": "spa1_v1_s5",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "5",
+                "label": "Box 5",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
-                "id": "spa1_s6",
+                "id": "spa1_v1_s6",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "6",
+                "label": "Box 6",
                 "tags": [
                   "spa_miss"
                 ]
               }
             ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "spa1_v2_s1",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 1",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa1_v2_s2",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 2",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa1_v2_s3",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 3",
+                "tags": [
+                  "spa_hit"
+                ]
+              },
+              {
+                "id": "spa1_v2_s4",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 4",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa1_v2_s5",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 5",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa1_v2_s6",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 6",
+                "tags": [
+                  "spa_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "spa1_v3_s1",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 1",
+                "tags": [
+                  "spa_hit"
+                ]
+              },
+              {
+                "id": "spa1_v3_s2",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 2",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa1_v3_s3",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 3",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa1_v3_s4",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 4",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa1_v3_s5",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 5",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa1_v3_s6",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 6",
+                "tags": [
+                  "spa_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_open_key.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                }
+              ]
+            },
+            "reveal": {
+              "open_slot": 2,
+              "open_ms": 3000,
+              "close_ms": 600,
+              "closed_img": "/static/galleries/brain/box_closed.webp",
+              "swap_ms": 800,
+              "swaps": [
+                [
+                  2,
+                  5
+                ],
+                [
+                  0,
+                  3
+                ],
+                [
+                  5,
+                  1
+                ],
+                [
+                  3,
+                  4
+                ]
+              ]
+            },
+            "timeout_pick": "spa1_v1_s6"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/box_open_leaf.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                }
+              ]
+            },
+            "reveal": {
+              "open_slot": 0,
+              "open_ms": 3000,
+              "close_ms": 600,
+              "closed_img": "/static/galleries/brain/box_closed.webp",
+              "swap_ms": 800,
+              "swaps": [
+                [
+                  0,
+                  4
+                ],
+                [
+                  1,
+                  3
+                ],
+                [
+                  4,
+                  2
+                ],
+                [
+                  5,
+                  0
+                ]
+              ]
+            },
+            "timeout_pick": "spa1_v2_s6"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_open_bell.webp"
+                }
+              ]
+            },
+            "reveal": {
+              "open_slot": 5,
+              "open_ms": 3000,
+              "close_ms": 600,
+              "closed_img": "/static/galleries/brain/box_closed.webp",
+              "swap_ms": 800,
+              "swaps": [
+                [
+                  5,
+                  1
+                ],
+                [
+                  2,
+                  4
+                ],
+                [
+                  1,
+                  0
+                ],
+                [
+                  3,
+                  5
+                ]
+              ]
+            },
+            "timeout_pick": "spa1_v3_s6"
           }
         ]
       },
@@ -410,57 +1412,333 @@
         "shuffle": false,
         "pairs": [
           {
-            "id": "p1",
+            "id": "v1",
             "images": [
               {
-                "id": "spa2_s1",
+                "id": "spa2_v1_s1",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "1",
+                "label": "Box 1",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
-                "id": "spa2_s2",
+                "id": "spa2_v1_s2",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "2",
+                "label": "Box 2",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
-                "id": "spa2_s3",
+                "id": "spa2_v1_s3",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "3",
+                "label": "Box 3",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
-                "id": "spa2_s4",
+                "id": "spa2_v1_s4",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "4",
+                "label": "Box 4",
                 "tags": [
                   "spa_hit"
                 ]
               },
               {
-                "id": "spa2_s5",
+                "id": "spa2_v1_s5",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "5",
+                "label": "Box 5",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
-                "id": "spa2_s6",
+                "id": "spa2_v1_s6",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "6",
+                "label": "Box 6",
                 "tags": [
                   "spa_miss"
                 ]
               }
             ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "spa2_v2_s1",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 1",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_v2_s2",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 2",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_v2_s3",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 3",
+                "tags": [
+                  "spa_hit"
+                ]
+              },
+              {
+                "id": "spa2_v2_s4",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 4",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_v2_s5",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 5",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_v2_s6",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 6",
+                "tags": [
+                  "spa_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "spa2_v3_s1",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 1",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_v3_s2",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 2",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_v3_s3",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 3",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_v3_s4",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 4",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_v3_s5",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 5",
+                "tags": [
+                  "spa_hit"
+                ]
+              },
+              {
+                "id": "spa2_v3_s6",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 6",
+                "tags": [
+                  "spa_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_open_cup.webp"
+                }
+              ]
+            },
+            "reveal": {
+              "open_slot": 5,
+              "open_ms": 3000,
+              "close_ms": 600,
+              "closed_img": "/static/galleries/brain/box_closed.webp",
+              "swap_ms": 600,
+              "swaps": [
+                [
+                  5,
+                  2
+                ],
+                [
+                  0,
+                  4
+                ],
+                [
+                  2,
+                  3
+                ],
+                [
+                  1,
+                  5
+                ],
+                [
+                  4,
+                  0
+                ]
+              ]
+            },
+            "timeout_pick": "spa2_v1_s6"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_open_star.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                }
+              ]
+            },
+            "reveal": {
+              "open_slot": 1,
+              "open_ms": 3000,
+              "close_ms": 600,
+              "closed_img": "/static/galleries/brain/box_closed.webp",
+              "swap_ms": 600,
+              "swaps": [
+                [
+                  1,
+                  4
+                ],
+                [
+                  3,
+                  0
+                ],
+                [
+                  4,
+                  2
+                ],
+                [
+                  5,
+                  1
+                ],
+                [
+                  0,
+                  3
+                ]
+              ]
+            },
+            "timeout_pick": "spa2_v2_s6"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_open_key.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                }
+              ]
+            },
+            "reveal": {
+              "open_slot": 3,
+              "open_ms": 3000,
+              "close_ms": 600,
+              "closed_img": "/static/galleries/brain/box_closed.webp",
+              "swap_ms": 600,
+              "swaps": [
+                [
+                  3,
+                  0
+                ],
+                [
+                  2,
+                  5
+                ],
+                [
+                  0,
+                  4
+                ],
+                [
+                  1,
+                  3
+                ],
+                [
+                  5,
+                  2
+                ]
+              ]
+            },
+            "timeout_pick": "spa2_v3_s6"
           }
         ]
       },
@@ -472,57 +1750,345 @@
         "shuffle": false,
         "pairs": [
           {
-            "id": "p1",
+            "id": "v1",
             "images": [
               {
-                "id": "spa3_s1",
+                "id": "spa3_v1_s1",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "1",
+                "label": "Box 1",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
-                "id": "spa3_s2",
+                "id": "spa3_v1_s2",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "2",
+                "label": "Box 2",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
-                "id": "spa3_s3",
+                "id": "spa3_v1_s3",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "3",
+                "label": "Box 3",
                 "tags": [
                   "spa_hit"
                 ]
               },
               {
-                "id": "spa3_s4",
+                "id": "spa3_v1_s4",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "4",
+                "label": "Box 4",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
-                "id": "spa3_s5",
+                "id": "spa3_v1_s5",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "5",
+                "label": "Box 5",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
-                "id": "spa3_s6",
+                "id": "spa3_v1_s6",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "6",
+                "label": "Box 6",
                 "tags": [
                   "spa_miss"
                 ]
               }
             ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "spa3_v2_s1",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 1",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa3_v2_s2",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 2",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa3_v2_s3",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 3",
+                "tags": [
+                  "spa_hit"
+                ]
+              },
+              {
+                "id": "spa3_v2_s4",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 4",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa3_v2_s5",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 5",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa3_v2_s6",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 6",
+                "tags": [
+                  "spa_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "spa3_v3_s1",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 1",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa3_v3_s2",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 2",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa3_v3_s3",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 3",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa3_v3_s4",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 4",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa3_v3_s5",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 5",
+                "tags": [
+                  "spa_hit"
+                ]
+              },
+              {
+                "id": "spa3_v3_s6",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 6",
+                "tags": [
+                  "spa_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/box_open_star.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                }
+              ]
+            },
+            "reveal": {
+              "open_slot": 0,
+              "open_ms": 3000,
+              "close_ms": 600,
+              "closed_img": "/static/galleries/brain/box_closed.webp",
+              "swap_ms": 450,
+              "swaps": [
+                [
+                  0,
+                  4
+                ],
+                [
+                  1,
+                  2
+                ],
+                [
+                  4,
+                  5
+                ],
+                [
+                  0,
+                  3
+                ],
+                [
+                  5,
+                  2
+                ],
+                [
+                  3,
+                  1
+                ]
+              ]
+            },
+            "timeout_pick": "spa3_v1_s6"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_open_bell.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                }
+              ]
+            },
+            "reveal": {
+              "open_slot": 4,
+              "open_ms": 3000,
+              "close_ms": 600,
+              "closed_img": "/static/galleries/brain/box_closed.webp",
+              "swap_ms": 450,
+              "swaps": [
+                [
+                  4,
+                  1
+                ],
+                [
+                  0,
+                  5
+                ],
+                [
+                  1,
+                  3
+                ],
+                [
+                  2,
+                  4
+                ],
+                [
+                  5,
+                  0
+                ],
+                [
+                  3,
+                  2
+                ]
+              ]
+            },
+            "timeout_pick": "spa3_v2_s6"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_open_moon.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                }
+              ]
+            },
+            "reveal": {
+              "open_slot": 2,
+              "open_ms": 3000,
+              "close_ms": 600,
+              "closed_img": "/static/galleries/brain/box_closed.webp",
+              "swap_ms": 450,
+              "swaps": [
+                [
+                  2,
+                  5
+                ],
+                [
+                  3,
+                  1
+                ],
+                [
+                  5,
+                  0
+                ],
+                [
+                  4,
+                  2
+                ],
+                [
+                  1,
+                  3
+                ],
+                [
+                  0,
+                  4
+                ]
+              ]
+            },
+            "timeout_pick": "spa3_v3_s6"
           }
         ]
       },
@@ -534,57 +2100,357 @@
         "shuffle": false,
         "pairs": [
           {
-            "id": "p1",
+            "id": "v1",
             "images": [
               {
-                "id": "spa4_s1",
+                "id": "spa4_v1_s1",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "1",
+                "label": "Box 1",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
-                "id": "spa4_s2",
+                "id": "spa4_v1_s2",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "2",
+                "label": "Box 2",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
-                "id": "spa4_s3",
+                "id": "spa4_v1_s3",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "3",
+                "label": "Box 3",
                 "tags": [
                   "spa_hit"
                 ]
               },
               {
-                "id": "spa4_s4",
+                "id": "spa4_v1_s4",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "4",
+                "label": "Box 4",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
-                "id": "spa4_s5",
+                "id": "spa4_v1_s5",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "5",
+                "label": "Box 5",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
-                "id": "spa4_s6",
+                "id": "spa4_v1_s6",
                 "img": "/static/galleries/brain/box_closed.webp",
-                "label": "6",
+                "label": "Box 6",
                 "tags": [
                   "spa_miss"
                 ]
               }
             ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "spa4_v2_s1",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 1",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa4_v2_s2",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 2",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa4_v2_s3",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 3",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa4_v2_s4",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 4",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa4_v2_s5",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 5",
+                "tags": [
+                  "spa_hit"
+                ]
+              },
+              {
+                "id": "spa4_v2_s6",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 6",
+                "tags": [
+                  "spa_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "spa4_v3_s1",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 1",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa4_v3_s2",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 2",
+                "tags": [
+                  "spa_hit"
+                ]
+              },
+              {
+                "id": "spa4_v3_s3",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 3",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa4_v3_s4",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 4",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa4_v3_s5",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 5",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa4_v3_s6",
+                "img": "/static/galleries/brain/box_closed.webp",
+                "label": "Box 6",
+                "tags": [
+                  "spa_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_open_moon.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                }
+              ]
+            },
+            "reveal": {
+              "open_slot": 3,
+              "open_ms": 3000,
+              "close_ms": 600,
+              "closed_img": "/static/galleries/brain/box_closed.webp",
+              "swap_ms": 350,
+              "swaps": [
+                [
+                  3,
+                  1
+                ],
+                [
+                  0,
+                  5
+                ],
+                [
+                  1,
+                  4
+                ],
+                [
+                  2,
+                  3
+                ],
+                [
+                  4,
+                  0
+                ],
+                [
+                  5,
+                  1
+                ],
+                [
+                  0,
+                  2
+                ]
+              ]
+            },
+            "timeout_pick": "spa4_v1_s6"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_open_leaf.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                }
+              ]
+            },
+            "reveal": {
+              "open_slot": 1,
+              "open_ms": 3000,
+              "close_ms": 600,
+              "closed_img": "/static/galleries/brain/box_closed.webp",
+              "swap_ms": 350,
+              "swaps": [
+                [
+                  1,
+                  5
+                ],
+                [
+                  2,
+                  0
+                ],
+                [
+                  5,
+                  3
+                ],
+                [
+                  4,
+                  1
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  3,
+                  4
+                ],
+                [
+                  2,
+                  5
+                ]
+              ]
+            },
+            "timeout_pick": "spa4_v2_s6"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_open_cup.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/box_closed.webp"
+                }
+              ]
+            },
+            "reveal": {
+              "open_slot": 4,
+              "open_ms": 3000,
+              "close_ms": 600,
+              "closed_img": "/static/galleries/brain/box_closed.webp",
+              "swap_ms": 350,
+              "swaps": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  3,
+                  5
+                ],
+                [
+                  0,
+                  2
+                ],
+                [
+                  1,
+                  4
+                ],
+                [
+                  5,
+                  3
+                ],
+                [
+                  2,
+                  1
+                ],
+                [
+                  4,
+                  5
+                ]
+              ]
+            },
+            "timeout_pick": "spa4_v3_s6"
           }
         ]
       },
@@ -596,41 +2462,180 @@
         "shuffle": false,
         "pairs": [
           {
-            "id": "p1",
+            "id": "v1",
             "images": [
               {
-                "id": "chg1_s1",
+                "id": "chg1_v1_c1",
                 "img": "/static/galleries/brain/letter_A_red_lg_0.webp",
-                "label": "1",
+                "label": "A in red",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
-                "id": "chg1_s2",
-                "img": "/static/galleries/brain/letter_E_blue_lg_0.webp",
-                "label": "2",
+                "id": "chg1_v1_c2",
+                "img": "/static/galleries/brain/letter_F_blue_lg_0.webp",
+                "label": "F in blue",
                 "tags": [
                   "chg_hit"
                 ]
               },
               {
-                "id": "chg1_s3",
+                "id": "chg1_v1_c3",
                 "img": "/static/galleries/brain/letter_R_green_lg_0.webp",
-                "label": "3",
+                "label": "R in green",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
-                "id": "chg1_s4",
+                "id": "chg1_v1_c4",
                 "img": "/static/galleries/brain/letter_M_amber_lg_0.webp",
-                "label": "4",
+                "label": "M in amber",
                 "tags": [
                   "chg_miss"
                 ]
               }
             ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "chg1_v2_c1",
+                "img": "/static/galleries/brain/letter_K_violet_lg_0.webp",
+                "label": "K in violet",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_v2_c2",
+                "img": "/static/galleries/brain/letter_S_teal_lg_0.webp",
+                "label": "S in teal",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_v2_c3",
+                "img": "/static/galleries/brain/letter_T_amber_lg_0.webp",
+                "label": "T in amber",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_v2_c4",
+                "img": "/static/galleries/brain/letter_G_red_lg_0.webp",
+                "label": "G in red",
+                "tags": [
+                  "chg_hit"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "chg1_v3_c1",
+                "img": "/static/galleries/brain/letter_R_green_lg_0.webp",
+                "label": "R in green",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg1_v3_c2",
+                "img": "/static/galleries/brain/letter_W_amber_lg_0.webp",
+                "label": "W in amber",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_v3_c3",
+                "img": "/static/galleries/brain/letter_B_blue_lg_0.webp",
+                "label": "B in blue",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_v3_c4",
+                "img": "/static/galleries/brain/letter_Z_violet_lg_0.webp",
+                "label": "Z in violet",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/letter_A_red_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_E_blue_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_R_green_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_M_amber_lg_0.webp"
+                }
+              ]
+            },
+            "timeout_pick": "chg1_v1_c4"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/letter_K_violet_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_S_teal_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_T_amber_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_C_red_lg_0.webp"
+                }
+              ]
+            },
+            "timeout_pick": "chg1_v2_c3"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/letter_P_green_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_W_amber_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_B_blue_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_Z_violet_lg_0.webp"
+                }
+              ]
+            },
+            "timeout_pick": "chg1_v3_c4"
           }
         ]
       },
@@ -642,41 +2647,180 @@
         "shuffle": false,
         "pairs": [
           {
-            "id": "p1",
+            "id": "v1",
             "images": [
               {
-                "id": "chg2_s1",
+                "id": "chg2_v1_c1",
                 "img": "/static/galleries/brain/letter_S_violet_lg_0.webp",
-                "label": "1",
+                "label": "S in violet",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
-                "id": "chg2_s2",
+                "id": "chg2_v1_c2",
                 "img": "/static/galleries/brain/letter_T_teal_lg_0.webp",
-                "label": "2",
+                "label": "T in teal",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
-                "id": "chg2_s3",
-                "img": "/static/galleries/brain/letter_B_red_lg_0.webp",
-                "label": "3",
+                "id": "chg2_v1_c3",
+                "img": "/static/galleries/brain/letter_B_blue_lg_0.webp",
+                "label": "B in blue",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
-                "id": "chg2_s4",
-                "img": "/static/galleries/brain/letter_G_amber_lg_0.webp",
-                "label": "4",
+                "id": "chg2_v1_c4",
+                "img": "/static/galleries/brain/letter_G_teal_lg_0.webp",
+                "label": "G in teal",
                 "tags": [
                   "chg_hit"
                 ]
               }
             ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "chg2_v2_c1",
+                "img": "/static/galleries/brain/letter_D_green_lg_0.webp",
+                "label": "D in green",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_v2_c2",
+                "img": "/static/galleries/brain/letter_K_amber_lg_0.webp",
+                "label": "K in amber",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg2_v2_c3",
+                "img": "/static/galleries/brain/letter_N_blue_lg_0.webp",
+                "label": "N in blue",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_v2_c4",
+                "img": "/static/galleries/brain/letter_V_teal_lg_0.webp",
+                "label": "V in teal",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "chg2_v3_c1",
+                "img": "/static/galleries/brain/letter_H_amber_lg_0.webp",
+                "label": "H in amber",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_v3_c2",
+                "img": "/static/galleries/brain/letter_F_teal_lg_0.webp",
+                "label": "F in teal",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_v3_c3",
+                "img": "/static/galleries/brain/letter_L_violet_lg_0.webp",
+                "label": "L in violet",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg2_v3_c4",
+                "img": "/static/galleries/brain/letter_Y_red_lg_0.webp",
+                "label": "Y in red",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/letter_S_violet_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_T_teal_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_B_blue_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_G_green_lg_0.webp"
+                }
+              ]
+            },
+            "timeout_pick": "chg2_v1_c3"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/letter_D_green_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_K_red_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_N_blue_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_V_teal_lg_0.webp"
+                }
+              ]
+            },
+            "timeout_pick": "chg2_v2_c4"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/letter_H_amber_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_F_teal_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_L_blue_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_Y_red_lg_0.webp"
+                }
+              ]
+            },
+            "timeout_pick": "chg2_v3_c4"
           }
         ]
       },
@@ -688,41 +2832,180 @@
         "shuffle": false,
         "pairs": [
           {
-            "id": "p1",
+            "id": "v1",
             "images": [
               {
-                "id": "chg3_s1",
-                "img": "/static/galleries/brain/letter_W_green_sm_0.webp",
-                "label": "1",
+                "id": "chg3_v1_c1",
+                "img": "/static/galleries/brain/letter_W_green_md_0.webp",
+                "label": "W in green",
                 "tags": [
                   "chg_hit"
                 ]
               },
               {
-                "id": "chg3_s2",
+                "id": "chg3_v1_c2",
                 "img": "/static/galleries/brain/letter_F_blue_lg_0.webp",
-                "label": "2",
+                "label": "F in blue",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
-                "id": "chg3_s3",
+                "id": "chg3_v1_c3",
                 "img": "/static/galleries/brain/letter_N_amber_lg_0.webp",
-                "label": "3",
+                "label": "N in amber",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
-                "id": "chg3_s4",
+                "id": "chg3_v1_c4",
                 "img": "/static/galleries/brain/letter_Z_violet_lg_0.webp",
-                "label": "4",
+                "label": "Z in violet",
                 "tags": [
                   "chg_miss"
                 ]
               }
             ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "chg3_v2_c1",
+                "img": "/static/galleries/brain/letter_Q_red_lg_0.webp",
+                "label": "Q in red",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_v2_c2",
+                "img": "/static/galleries/brain/letter_J_teal_lg_0.webp",
+                "label": "J in teal",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_v2_c3",
+                "img": "/static/galleries/brain/letter_A_violet_md_0.webp",
+                "label": "A in violet",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg3_v2_c4",
+                "img": "/static/galleries/brain/letter_E_amber_lg_0.webp",
+                "label": "E in amber",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "chg3_v3_c1",
+                "img": "/static/galleries/brain/letter_B_blue_lg_0.webp",
+                "label": "B in blue",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_v3_c2",
+                "img": "/static/galleries/brain/letter_X_green_lg_0.webp",
+                "label": "X in green",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_v3_c3",
+                "img": "/static/galleries/brain/letter_T_red_lg_0.webp",
+                "label": "T in red",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_v3_c4",
+                "img": "/static/galleries/brain/letter_M_teal_md_0.webp",
+                "label": "M in teal",
+                "tags": [
+                  "chg_hit"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/letter_W_green_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_F_blue_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_N_amber_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_Z_violet_lg_0.webp"
+                }
+              ]
+            },
+            "timeout_pick": "chg3_v1_c4"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/letter_Q_red_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_J_teal_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_A_violet_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_E_amber_lg_0.webp"
+                }
+              ]
+            },
+            "timeout_pick": "chg3_v2_c4"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/letter_B_blue_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_X_green_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_T_red_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_M_teal_lg_0.webp"
+                }
+              ]
+            },
+            "timeout_pick": "chg3_v3_c3"
           }
         ]
       },
@@ -734,41 +3017,180 @@
         "shuffle": false,
         "pairs": [
           {
-            "id": "p1",
+            "id": "v1",
             "images": [
               {
-                "id": "chg4_s1",
+                "id": "chg4_v1_c1",
                 "img": "/static/galleries/brain/letter_D_amber_lg_0.webp",
-                "label": "1",
+                "label": "D in amber",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
-                "id": "chg4_s2",
+                "id": "chg4_v1_c2",
                 "img": "/static/galleries/brain/letter_P_teal_lg_0.webp",
-                "label": "2",
+                "label": "P in teal",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
-                "id": "chg4_s3",
-                "img": "/static/galleries/brain/letter_Y_red_lg_15.webp",
-                "label": "3",
+                "id": "chg4_v1_c3",
+                "img": "/static/galleries/brain/letter_Y_red_lg_10.webp",
+                "label": "Y in red",
                 "tags": [
                   "chg_hit"
                 ]
               },
               {
-                "id": "chg4_s4",
+                "id": "chg4_v1_c4",
                 "img": "/static/galleries/brain/letter_H_blue_lg_0.webp",
-                "label": "4",
+                "label": "H in blue",
                 "tags": [
                   "chg_miss"
                 ]
               }
             ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "chg4_v2_c1",
+                "img": "/static/galleries/brain/letter_L_violet_lg_10.webp",
+                "label": "L in violet",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg4_v2_c2",
+                "img": "/static/galleries/brain/letter_C_green_lg_0.webp",
+                "label": "C in green",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v2_c3",
+                "img": "/static/galleries/brain/letter_U_blue_lg_0.webp",
+                "label": "U in blue",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v2_c4",
+                "img": "/static/galleries/brain/letter_K_amber_lg_0.webp",
+                "label": "K in amber",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "chg4_v3_c1",
+                "img": "/static/galleries/brain/letter_R_teal_lg_0.webp",
+                "label": "R in teal",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v3_c2",
+                "img": "/static/galleries/brain/letter_S_red_lg_0.webp",
+                "label": "S in red",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v3_c3",
+                "img": "/static/galleries/brain/letter_E_amber_lg_0.webp",
+                "label": "E in amber",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v3_c4",
+                "img": "/static/galleries/brain/letter_N_green_lg_10.webp",
+                "label": "N in green",
+                "tags": [
+                  "chg_hit"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/letter_D_amber_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_P_teal_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_Y_red_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_H_blue_lg_0.webp"
+                }
+              ]
+            },
+            "timeout_pick": "chg4_v1_c4"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/letter_L_violet_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_C_green_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_U_blue_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_K_amber_lg_0.webp"
+                }
+              ]
+            },
+            "timeout_pick": "chg4_v2_c4"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/letter_R_teal_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_S_red_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_E_amber_lg_0.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/letter_N_green_lg_0.webp"
+                }
+              ]
+            },
+            "timeout_pick": "chg4_v3_c3"
           }
         ]
       },
@@ -779,61 +3201,180 @@
         "format": "grid6",
         "pairs": [
           {
-            "id": "p1",
+            "id": "v1",
             "images": [
               {
-                "id": "odd_s1",
-                "img": "/static/galleries/brain/umb_s1.webp",
+                "id": "odd_v1_s1",
+                "img": "/static/galleries/brain/umb_a_s1.webp",
                 "label": "Umbrella",
                 "tags": [
                   "foc_miss"
                 ]
               },
               {
-                "id": "odd_s2",
-                "img": "/static/galleries/brain/umb_s2.webp",
+                "id": "odd_v1_s2",
+                "img": "/static/galleries/brain/umb_a_s2.webp",
                 "label": "Umbrella",
                 "tags": [
                   "foc_miss"
                 ]
               },
               {
-                "id": "odd_s3",
-                "img": "/static/galleries/brain/umb_s3.webp",
+                "id": "odd_v1_s3",
+                "img": "/static/galleries/brain/umb_a_s3.webp",
                 "label": "Umbrella",
                 "tags": [
                   "foc_miss"
                 ]
               },
               {
-                "id": "odd_s4",
-                "img": "/static/galleries/brain/umb_s4.webp",
+                "id": "odd_v1_s4",
+                "img": "/static/galleries/brain/umb_a_s4.webp",
                 "label": "Umbrella",
                 "tags": [
                   "foc_hit"
                 ]
               },
               {
-                "id": "odd_s5",
-                "img": "/static/galleries/brain/umb_s5.webp",
+                "id": "odd_v1_s5",
+                "img": "/static/galleries/brain/umb_a_s5.webp",
                 "label": "Umbrella",
                 "tags": [
                   "foc_miss"
                 ]
               },
               {
-                "id": "odd_s6",
-                "img": "/static/galleries/brain/umb_s6.webp",
+                "id": "odd_v1_s6",
+                "img": "/static/galleries/brain/umb_a_s6.webp",
                 "label": "Umbrella",
                 "tags": [
                   "foc_miss"
                 ]
               }
             ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "odd_v2_s1",
+                "img": "/static/galleries/brain/umb_b_s1.webp",
+                "label": "Umbrella",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "odd_v2_s2",
+                "img": "/static/galleries/brain/umb_b_s2.webp",
+                "label": "Umbrella",
+                "tags": [
+                  "foc_hit"
+                ]
+              },
+              {
+                "id": "odd_v2_s3",
+                "img": "/static/galleries/brain/umb_b_s3.webp",
+                "label": "Umbrella",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "odd_v2_s4",
+                "img": "/static/galleries/brain/umb_b_s4.webp",
+                "label": "Umbrella",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "odd_v2_s5",
+                "img": "/static/galleries/brain/umb_b_s5.webp",
+                "label": "Umbrella",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "odd_v2_s6",
+                "img": "/static/galleries/brain/umb_b_s6.webp",
+                "label": "Umbrella",
+                "tags": [
+                  "foc_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "odd_v3_s1",
+                "img": "/static/galleries/brain/umb_c_s1.webp",
+                "label": "Umbrella",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "odd_v3_s2",
+                "img": "/static/galleries/brain/umb_c_s2.webp",
+                "label": "Umbrella",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "odd_v3_s3",
+                "img": "/static/galleries/brain/umb_c_s3.webp",
+                "label": "Umbrella",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "odd_v3_s4",
+                "img": "/static/galleries/brain/umb_c_s4.webp",
+                "label": "Umbrella",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "odd_v3_s5",
+                "img": "/static/galleries/brain/umb_c_s5.webp",
+                "label": "Umbrella",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "odd_v3_s6",
+                "img": "/static/galleries/brain/umb_c_s6.webp",
+                "label": "Umbrella",
+                "tags": [
+                  "foc_hit"
+                ]
+              }
+            ]
           }
         ],
-        "timer_ms": 5000,
-        "timeout_pick": "odd_s1"
+        "timer_ms": 4000,
+        "pool": [
+          {
+            "pair": "v1",
+            "timeout_pick": "odd_v1_s6"
+          },
+          {
+            "pair": "v2",
+            "timeout_pick": "odd_v2_s6"
+          },
+          {
+            "pair": "v3",
+            "timeout_pick": "odd_v3_s5"
+          }
+        ]
       },
       {
         "id": "ink",
@@ -842,36 +3383,110 @@
         "format": "grid4",
         "pairs": [
           {
-            "id": "p1",
+            "id": "v1",
             "images": [
               {
-                "id": "ink_s1",
-                "img": "/static/galleries/brain/ink_1.webp",
-                "label": "1",
+                "id": "ink_v1_c1",
+                "img": "/static/galleries/brain/ink_a_1.webp",
+                "label": "RED in amber",
                 "tags": [
                   "foc_miss"
                 ]
               },
               {
-                "id": "ink_s2",
-                "img": "/static/galleries/brain/ink_2.webp",
-                "label": "2",
+                "id": "ink_v1_c2",
+                "img": "/static/galleries/brain/ink_a_2.webp",
+                "label": "BLUE in blue",
                 "tags": [
                   "foc_hit"
                 ]
               },
               {
-                "id": "ink_s3",
-                "img": "/static/galleries/brain/ink_3.webp",
-                "label": "3",
+                "id": "ink_v1_c3",
+                "img": "/static/galleries/brain/ink_a_3.webp",
+                "label": "VIOLET in blue",
                 "tags": [
                   "foc_miss"
                 ]
               },
               {
-                "id": "ink_s4",
-                "img": "/static/galleries/brain/ink_4.webp",
-                "label": "4",
+                "id": "ink_v1_c4",
+                "img": "/static/galleries/brain/ink_a_4.webp",
+                "label": "AMBER in red",
+                "tags": [
+                  "foc_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "ink_v2_c1",
+                "img": "/static/galleries/brain/ink_b_1.webp",
+                "label": "AMBER in red",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "ink_v2_c2",
+                "img": "/static/galleries/brain/ink_b_2.webp",
+                "label": "VIOLET in blue",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "ink_v2_c3",
+                "img": "/static/galleries/brain/ink_b_3.webp",
+                "label": "TEAL in teal",
+                "tags": [
+                  "foc_hit"
+                ]
+              },
+              {
+                "id": "ink_v2_c4",
+                "img": "/static/galleries/brain/ink_b_4.webp",
+                "label": "RED in amber",
+                "tags": [
+                  "foc_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "ink_v3_c1",
+                "img": "/static/galleries/brain/ink_c_1.webp",
+                "label": "BLUE in violet",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "ink_v3_c2",
+                "img": "/static/galleries/brain/ink_c_2.webp",
+                "label": "RED in amber",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "ink_v3_c3",
+                "img": "/static/galleries/brain/ink_c_3.webp",
+                "label": "GREEN in green",
+                "tags": [
+                  "foc_hit"
+                ]
+              },
+              {
+                "id": "ink_v3_c4",
+                "img": "/static/galleries/brain/ink_c_4.webp",
+                "label": "AMBER in red",
                 "tags": [
                   "foc_miss"
                 ]
@@ -879,8 +3494,21 @@
             ]
           }
         ],
-        "timer_ms": 5000,
-        "timeout_pick": "ink_s1"
+        "timer_ms": 4000,
+        "pool": [
+          {
+            "pair": "v1",
+            "timeout_pick": "ink_v1_c4"
+          },
+          {
+            "pair": "v2",
+            "timeout_pick": "ink_v2_c4"
+          },
+          {
+            "pair": "v3",
+            "timeout_pick": "ink_v3_c4"
+          }
+        ]
       },
       {
         "id": "next",
@@ -889,10 +3517,10 @@
         "format": "grid4",
         "pairs": [
           {
-            "id": "p1",
+            "id": "v1",
             "images": [
               {
-                "id": "next_a1",
+                "id": "next_v1_a1",
                 "img": "/static/galleries/brain/dial_r0_d3.webp",
                 "label": "Notch at the top, dot at the left",
                 "tags": [
@@ -900,7 +3528,7 @@
                 ]
               },
               {
-                "id": "next_a2",
+                "id": "next_v1_a2",
                 "img": "/static/galleries/brain/dial_r0_d1.webp",
                 "label": "Notch at the top, dot at the right",
                 "tags": [
@@ -908,7 +3536,7 @@
                 ]
               },
               {
-                "id": "next_a3",
+                "id": "next_v1_a3",
                 "img": "/static/galleries/brain/dial_r240_d3.webp",
                 "label": "Notch at the lower left, dot at the left",
                 "tags": [
@@ -916,7 +3544,81 @@
                 ]
               },
               {
-                "id": "next_a4",
+                "id": "next_v1_a4",
+                "img": "/static/galleries/brain/dial_r0_d0.webp",
+                "label": "Notch at the top, dot at the top",
+                "tags": [
+                  "foc_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "next_v2_a1",
+                "img": "/static/galleries/brain/dial_r270_d0.webp",
+                "label": "Notch at the left, dot at the top",
+                "tags": [
+                  "foc_hit"
+                ]
+              },
+              {
+                "id": "next_v2_a2",
+                "img": "/static/galleries/brain/dial_r270_d1.webp",
+                "label": "Notch at the left, dot at the lower right",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "next_v2_a3",
+                "img": "/static/galleries/brain/dial_r180_d0.webp",
+                "label": "Notch at the bottom, dot at the top",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "next_v2_a4",
+                "img": "/static/galleries/brain/dial_r0_d0.webp",
+                "label": "Notch at the top, dot at the top",
+                "tags": [
+                  "foc_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "next_v3_a1",
+                "img": "/static/galleries/brain/dial_r216_d0.webp",
+                "label": "Notch at the lower left, dot at the top",
+                "tags": [
+                  "foc_hit"
+                ]
+              },
+              {
+                "id": "next_v3_a2",
+                "img": "/static/galleries/brain/dial_r216_d1.webp",
+                "label": "Notch at the lower left, dot at the lower right",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "next_v3_a3",
+                "img": "/static/galleries/brain/dial_r144_d0.webp",
+                "label": "Notch at the lower right, dot at the top",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "next_v3_a4",
                 "img": "/static/galleries/brain/dial_r0_d0.webp",
                 "label": "Notch at the top, dot at the top",
                 "tags": [
@@ -926,8 +3628,84 @@
             ]
           }
         ],
-        "timer_ms": 5000,
-        "timeout_pick": "next_a2"
+        "timer_ms": 4000,
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/dial_r0_d0.webp",
+                  "label": "Notch at the top, dot at the top"
+                },
+                {
+                  "img": "/static/galleries/brain/dial_r120_d1.webp",
+                  "label": "Notch at the lower right, dot at the right"
+                },
+                {
+                  "img": "/static/galleries/brain/dial_r240_d2.webp",
+                  "label": "Notch at the lower left, dot at the bottom"
+                },
+                {
+                  "img": "/static/galleries/brain/nxt_qm.webp",
+                  "label": "?"
+                }
+              ]
+            },
+            "timeout_pick": "next_v1_a4"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/dial_r0_d0.webp",
+                  "label": "Notch at the top, dot at the top"
+                },
+                {
+                  "img": "/static/galleries/brain/dial_r90_d1.webp",
+                  "label": "Notch at the right, dot at the lower right"
+                },
+                {
+                  "img": "/static/galleries/brain/dial_r180_d2.webp",
+                  "label": "Notch at the bottom, dot at the lower left"
+                },
+                {
+                  "img": "/static/galleries/brain/nxt_qm.webp",
+                  "label": "?"
+                }
+              ]
+            },
+            "timeout_pick": "next_v2_a4"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/dial_r0_d0.webp",
+                  "label": "Notch at the top, dot at the top"
+                },
+                {
+                  "img": "/static/galleries/brain/dial_r72_d1.webp",
+                  "label": "Notch at the upper right, dot at the lower right"
+                },
+                {
+                  "img": "/static/galleries/brain/dial_r144_d2.webp",
+                  "label": "Notch at the lower right, dot at the lower left"
+                },
+                {
+                  "img": "/static/galleries/brain/nxt_qm.webp",
+                  "label": "?"
+                }
+              ]
+            },
+            "timeout_pick": "next_v3_a4"
+          }
+        ]
       },
       {
         "id": "count",
@@ -937,10 +3715,10 @@
         "shuffle": false,
         "pairs": [
           {
-            "id": "p1",
+            "id": "v1",
             "images": [
               {
-                "id": "count_9",
+                "id": "count_v1_9",
                 "img": "/static/galleries/brain/cnt_9.webp",
                 "label": "9",
                 "tags": [
@@ -948,7 +3726,7 @@
                 ]
               },
               {
-                "id": "count_10",
+                "id": "count_v1_10",
                 "img": "/static/galleries/brain/cnt_10.webp",
                 "label": "10",
                 "tags": [
@@ -956,7 +3734,7 @@
                 ]
               },
               {
-                "id": "count_11",
+                "id": "count_v1_11",
                 "img": "/static/galleries/brain/cnt_11.webp",
                 "label": "11",
                 "tags": [
@@ -964,9 +3742,83 @@
                 ]
               },
               {
-                "id": "count_12",
+                "id": "count_v1_12",
                 "img": "/static/galleries/brain/cnt_12.webp",
                 "label": "12",
+                "tags": [
+                  "foc_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "count_v2_10",
+                "img": "/static/galleries/brain/cnt_10.webp",
+                "label": "10",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "count_v2_11",
+                "img": "/static/galleries/brain/cnt_11.webp",
+                "label": "11",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "count_v2_12",
+                "img": "/static/galleries/brain/cnt_12.webp",
+                "label": "12",
+                "tags": [
+                  "foc_hit"
+                ]
+              },
+              {
+                "id": "count_v2_13",
+                "img": "/static/galleries/brain/cnt_13.webp",
+                "label": "13",
+                "tags": [
+                  "foc_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "count_v3_11",
+                "img": "/static/galleries/brain/cnt_11.webp",
+                "label": "11",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "count_v3_12",
+                "img": "/static/galleries/brain/cnt_12.webp",
+                "label": "12",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "count_v3_13",
+                "img": "/static/galleries/brain/cnt_13.webp",
+                "label": "13",
+                "tags": [
+                  "foc_hit"
+                ]
+              },
+              {
+                "id": "count_v3_14",
+                "img": "/static/galleries/brain/cnt_14.webp",
+                "label": "14",
                 "tags": [
                   "foc_miss"
                 ]
@@ -975,7 +3827,71 @@
           }
         ],
         "timer_ms": 4000,
-        "timeout_pick": "count_9"
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/cnt_a_f1.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/cnt_a_f2.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/cnt_a_f3.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/cnt_a_f4.webp"
+                }
+              ]
+            },
+            "timeout_pick": "count_v1_12"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/cnt_b_f1.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/cnt_b_f2.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/cnt_b_f3.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/cnt_b_f4.webp"
+                }
+              ]
+            },
+            "timeout_pick": "count_v2_13"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/brain/cnt_c_f1.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/cnt_c_f2.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/cnt_c_f3.webp"
+                },
+                {
+                  "img": "/static/galleries/brain/cnt_c_f4.webp"
+                }
+              ]
+            },
+            "timeout_pick": "count_v3_14"
+          }
+        ]
       }
     ]
   },
@@ -985,7 +3901,7 @@
       "template": "flash",
       "kicker": "ROUND 1 · MEMORY · 1/4",
       "line": "Memorise these",
-      "auto_advance_ms": 5000,
+      "auto_advance_ms": 3000,
       "prepare": {
         "line": "Prepare to memorize",
         "count": 3
@@ -994,20 +3910,16 @@
         "format": "grid4",
         "images": [
           {
-            "img": "/static/galleries/brain/mem1_f1.webp",
-            "label": "Red circle"
+            "img": "/static/galleries/brain/plain_red_circle.webp"
           },
           {
-            "img": "/static/galleries/brain/mem1_f2.webp",
-            "label": "Blue triangle"
+            "img": "/static/galleries/brain/plain_blue_triangle.webp"
           },
           {
-            "img": "/static/galleries/brain/mem1_f3.webp",
-            "label": "Amber square"
+            "img": "/static/galleries/brain/plain_amber_square.webp"
           },
           {
-            "img": "/static/galleries/brain/mem1_f4.webp",
-            "label": "Green star"
+            "img": "/static/galleries/brain/plain_green_star.webp"
           }
         ]
       }
@@ -1017,29 +3929,31 @@
       "template": "flash",
       "kicker": "ROUND 1 · MEMORY · 2/4",
       "line": "Memorise these",
-      "auto_advance_ms": 5000,
+      "auto_advance_ms": 3000,
       "prepare": {
         "line": "Prepare to memorize",
         "count": 3
       },
       "flash": {
-        "format": "grid4",
+        "format": "grid6",
         "images": [
           {
-            "img": "/static/galleries/brain/mem2_f1.webp",
-            "label": "Violet square"
+            "img": "/static/galleries/brain/plain_violet_square.webp"
           },
           {
-            "img": "/static/galleries/brain/mem2_f2.webp",
-            "label": "Green hexagon"
+            "img": "/static/galleries/brain/plain_green_hexagon.webp"
           },
           {
-            "img": "/static/galleries/brain/mem2_f3.webp",
-            "label": "Red star"
+            "img": "/static/galleries/brain/plain_red_star.webp"
           },
           {
-            "img": "/static/galleries/brain/mem2_f4.webp",
-            "label": "Blue diamond"
+            "img": "/static/galleries/brain/plain_blue_diamond.webp"
+          },
+          {
+            "img": "/static/galleries/brain/plain_amber_circle.webp"
+          },
+          {
+            "img": "/static/galleries/brain/plain_teal_cross.webp"
           }
         ]
       }
@@ -1049,37 +3963,31 @@
       "template": "flash",
       "kicker": "ROUND 1 · MEMORY · 3/4",
       "line": "Memorise these",
-      "auto_advance_ms": 5000,
+      "auto_advance_ms": 2500,
       "prepare": {
         "line": "Prepare to memorize",
         "count": 3
       },
       "flash": {
-        "format": "grid4",
+        "format": "grid6",
         "images": [
           {
-            "img": "/static/galleries/brain/mem3_f1.webp",
-            "label": "Amber circle"
+            "img": "/static/galleries/brain/plain_amber_circle.webp"
           },
           {
-            "img": "/static/galleries/brain/mem3_f2.webp",
-            "label": "Violet triangle"
+            "img": "/static/galleries/brain/plain_violet_triangle.webp"
           },
           {
-            "img": "/static/galleries/brain/mem3_f3.webp",
-            "label": "Teal square"
+            "img": "/static/galleries/brain/plain_teal_square.webp"
           },
           {
-            "img": "/static/galleries/brain/mem3_f4.webp",
-            "label": "Red hexagon"
+            "img": "/static/galleries/brain/plain_red_hexagon.webp"
           },
           {
-            "img": "/static/galleries/brain/mem3_f5.webp",
-            "label": "Green diamond"
+            "img": "/static/galleries/brain/plain_green_diamond.webp"
           },
           {
-            "img": "/static/galleries/brain/mem3_f6.webp",
-            "label": "Blue cross"
+            "img": "/static/galleries/brain/plain_blue_cross.webp"
           }
         ]
       }
@@ -1098,28 +4006,22 @@
         "format": "grid6",
         "images": [
           {
-            "img": "/static/galleries/brain/mem4_f1.webp",
-            "label": "Green square"
+            "img": "/static/galleries/brain/plain_green_square.webp"
           },
           {
-            "img": "/static/galleries/brain/mem4_f2.webp",
-            "label": "Teal star"
+            "img": "/static/galleries/brain/plain_teal_star.webp"
           },
           {
-            "img": "/static/galleries/brain/mem4_f3.webp",
-            "label": "Blue pentagon"
+            "img": "/static/galleries/brain/plain_blue_pentagon.webp"
           },
           {
-            "img": "/static/galleries/brain/mem4_f4.webp",
-            "label": "Amber diamond"
+            "img": "/static/galleries/brain/plain_amber_diamond.webp"
           },
           {
-            "img": "/static/galleries/brain/mem4_f5.webp",
-            "label": "Violet circle"
+            "img": "/static/galleries/brain/plain_violet_circle.webp"
           },
           {
-            "img": "/static/galleries/brain/mem4_f6.webp",
-            "label": "Red triangle"
+            "img": "/static/galleries/brain/plain_red_triangle.webp"
           }
         ]
       }
@@ -1158,7 +4060,7 @@
         "open_ms": 3000,
         "close_ms": 600,
         "closed_img": "/static/galleries/brain/box_closed.webp",
-        "swap_ms": 900,
+        "swap_ms": 800,
         "swaps": [
           [
             2,
@@ -1171,6 +4073,10 @@
           [
             5,
             1
+          ],
+          [
+            3,
+            4
           ]
         ]
       }
@@ -1209,7 +4115,7 @@
         "open_ms": 3000,
         "close_ms": 600,
         "closed_img": "/static/galleries/brain/box_closed.webp",
-        "swap_ms": 700,
+        "swap_ms": 600,
         "swaps": [
           [
             5,
@@ -1226,6 +4132,10 @@
           [
             1,
             5
+          ],
+          [
+            4,
+            0
           ]
         ]
       }
@@ -1264,7 +4174,7 @@
         "open_ms": 3000,
         "close_ms": 600,
         "closed_img": "/static/galleries/brain/box_closed.webp",
-        "swap_ms": 550,
+        "swap_ms": 450,
         "swaps": [
           [
             0,
@@ -1285,6 +4195,10 @@
           [
             5,
             2
+          ],
+          [
+            3,
+            1
           ]
         ]
       }
@@ -1373,7 +4287,7 @@
             "img": "/static/galleries/brain/letter_A_red_lg_0.webp"
           },
           {
-            "img": "/static/galleries/brain/letter_K_blue_lg_0.webp"
+            "img": "/static/galleries/brain/letter_E_blue_lg_0.webp"
           },
           {
             "img": "/static/galleries/brain/letter_R_green_lg_0.webp"
@@ -1404,7 +4318,7 @@
             "img": "/static/galleries/brain/letter_T_teal_lg_0.webp"
           },
           {
-            "img": "/static/galleries/brain/letter_B_red_lg_0.webp"
+            "img": "/static/galleries/brain/letter_B_blue_lg_0.webp"
           },
           {
             "img": "/static/galleries/brain/letter_G_green_lg_0.webp"
@@ -1542,16 +4456,16 @@
         "format": "grid4",
         "images": [
           {
-            "img": "/static/galleries/brain/cnt_f1.webp"
+            "img": "/static/galleries/brain/cnt_a_f1.webp"
           },
           {
-            "img": "/static/galleries/brain/cnt_f2.webp"
+            "img": "/static/galleries/brain/cnt_a_f2.webp"
           },
           {
-            "img": "/static/galleries/brain/cnt_f3.webp"
+            "img": "/static/galleries/brain/cnt_a_f3.webp"
           },
           {
-            "img": "/static/galleries/brain/cnt_f4.webp"
+            "img": "/static/galleries/brain/cnt_a_f4.webp"
           }
         ]
       }
@@ -1579,29 +4493,29 @@
   ],
   "preview_gallery": [
     {
-      "id": "mem1_f1",
-      "img": "/static/galleries/brain/mem1_f1.webp",
+      "id": "plain_red_circle",
+      "img": "/static/galleries/brain/plain_red_circle.webp",
       "tags": [
         "mem_hit"
       ]
     },
     {
-      "id": "mem1_f2",
-      "img": "/static/galleries/brain/mem1_f2.webp",
+      "id": "plain_blue_triangle",
+      "img": "/static/galleries/brain/plain_blue_triangle.webp",
       "tags": [
         "mem_hit"
       ]
     },
     {
-      "id": "mem1_f3",
-      "img": "/static/galleries/brain/mem1_f3.webp",
+      "id": "plain_amber_square",
+      "img": "/static/galleries/brain/plain_amber_square.webp",
       "tags": [
         "mem_hit"
       ]
     },
     {
-      "id": "mem1_f4",
-      "img": "/static/galleries/brain/mem1_f4.webp",
+      "id": "plain_green_star",
+      "img": "/static/galleries/brain/plain_green_star.webp",
       "tags": [
         "mem_hit"
       ]
@@ -1642,8 +4556,8 @@
       ]
     },
     {
-      "id": "letter_K_blue_lg_0",
-      "img": "/static/galleries/brain/letter_K_blue_lg_0.webp",
+      "id": "letter_K_violet_lg_0",
+      "img": "/static/galleries/brain/letter_K_violet_lg_0.webp",
       "tags": [
         "chg_hit"
       ]
@@ -1670,22 +4584,22 @@
       ]
     },
     {
-      "id": "umb_s4",
-      "img": "/static/galleries/brain/umb_s4.webp",
+      "id": "umb_a_s4",
+      "img": "/static/galleries/brain/umb_a_s4.webp",
       "tags": [
         "foc_hit"
       ]
     },
     {
-      "id": "ink_2",
-      "img": "/static/galleries/brain/ink_2.webp",
+      "id": "ink_a_2",
+      "img": "/static/galleries/brain/ink_a_2.webp",
       "tags": [
         "foc_hit"
       ]
     },
     {
-      "id": "cnt_f2",
-      "img": "/static/galleries/brain/cnt_f2.webp",
+      "id": "cnt_a_f2",
+      "img": "/static/galleries/brain/cnt_a_f2.webp",
       "tags": [
         "foc_hit"
       ]
@@ -1696,31 +4610,31 @@
     "subline": "Recognised from your taps — read in full in your report.",
     "items": [
       {
-        "id": "mem1_f1",
+        "id": "plain_red_circle",
         "label": "Red circle",
         "spec": "Memory — the round that holds what it saw",
-        "image": "mem1_f1",
-        "img": "/static/galleries/brain/mem1_f1.webp",
+        "image": "plain_red_circle",
+        "img": "/static/galleries/brain/plain_red_circle.webp",
         "tags": [
           "mem_hit"
         ]
       },
       {
-        "id": "mem1_f2",
+        "id": "plain_blue_triangle",
         "label": "Blue triangle",
         "spec": "Memory — the round that holds what it saw",
-        "image": "mem1_f2",
-        "img": "/static/galleries/brain/mem1_f2.webp",
+        "image": "plain_blue_triangle",
+        "img": "/static/galleries/brain/plain_blue_triangle.webp",
         "tags": [
           "mem_hit"
         ]
       },
       {
-        "id": "mem2_f3",
+        "id": "plain_red_star",
         "label": "Red star",
         "spec": "Memory — the round that holds what it saw",
-        "image": "mem2_f3",
-        "img": "/static/galleries/brain/mem2_f3.webp",
+        "image": "plain_red_star",
+        "img": "/static/galleries/brain/plain_red_star.webp",
         "tags": [
           "mem_hit"
         ]
@@ -1786,21 +4700,21 @@
         ]
       },
       {
-        "id": "umb_s4",
+        "id": "umb_a_s4",
         "label": "The odd umbrella",
         "spec": "Focus — the round that goes straight at it",
-        "image": "umb_s4",
-        "img": "/static/galleries/brain/umb_s4.webp",
+        "image": "umb_a_s4",
+        "img": "/static/galleries/brain/umb_a_s4.webp",
         "tags": [
           "foc_hit"
         ]
       },
       {
-        "id": "ink_2",
+        "id": "ink_a_2",
         "label": "The honest word",
         "spec": "Focus — the round that goes straight at it",
-        "image": "ink_2",
-        "img": "/static/galleries/brain/ink_2.webp",
+        "image": "ink_a_2",
+        "img": "/static/galleries/brain/ink_a_2.webp",
         "tags": [
           "foc_hit"
         ]
@@ -2229,22 +5143,13 @@
     },
     "title": "Your {style} Refresh",
     "proof_line": "Built from your 16 rounds",
-    "manifest": [
-      "Your brain age — the exact number your 18 rounds add up to",
-      "The two-minute drill that lifts your weakest round first",
-      "The two habits to swap, and the five strengths to train first",
-      "The technique that turns the round you already win into the other three",
-      "What to put on your plate this week — the foods that feed a sharp brain",
-      "Seven days, one drill each, in the order that moves the number",
-      "Yours to keep — the whole plan, as a PDF"
-    ],
     "manifest_hero": "strengths",
     "manifest_head": "What's inside — {n} sections, yours forever",
     "anchor_head": "A {price} plan built from your own sixteen rounds",
     "anchor": "A puzzle book about nobody in particular costs more. Your complete report — {price}, once.",
     "reframe": "Less than a coffee. Yours forever.",
     "price_suffix": "one-time",
-    "cta_label": "Unlock my Brain Refresh — {price}",
+    "cta_label": "Reveal my brain age — {price}",
     "consent_prechecked": true,
     "trust": [
       "Secure payment via Stripe",
@@ -2374,6 +5279,37 @@
     "profile": {
       "bridge": "Your plan, written for {type}:",
       "offer_head": "Your improvement plan — built from your 18 rounds",
+      "offer_personal": "Most of your dropped points are in {round}. The drill for it is inside.",
+      "offer_personal_elite": "A close run. The plan is what keeps it that way.",
+      "offer_hero_kicker": "Your brain age",
+      "offer_hero_line": "The exact number your 18 rounds add up to — revealed on the first page.",
+      "offer_cards": [
+        {
+          "icon": "target",
+          "title": "Weakest-round drill",
+          "sub": "2 minutes a day, starts tomorrow"
+        },
+        {
+          "icon": "calendar",
+          "title": "7-day plan",
+          "sub": "One small thing each day — the score climbs"
+        },
+        {
+          "icon": "bolt",
+          "title": "5 strengths · 2 habits",
+          "sub": "What to lean on, what to swap"
+        },
+        {
+          "icon": "plate",
+          "title": "Fuel",
+          "sub": "The plate that feeds a sharp brain"
+        }
+      ],
+      "offer_chips": [
+        "One-time",
+        "No subscription, ever",
+        "Instant + email copy"
+      ],
       "share_cta": "Challenge a friend",
       "share_line": "I scored {n}/100. Beat me?",
       "share_copied": "Copied — send it",
@@ -2424,39 +5360,6 @@
         "lead": "Your brain type",
         "tail": "on this run",
         "note": "Every type sharpens on a different drill — yours is the first page of your plan."
-      },
-      "unlock_head": "What lowers your brain age:",
-      "unlock": [
-        {
-          "id": "age",
-          "key": "Your brain age",
-          "line": "the exact number your 18 rounds add up to"
-        },
-        {
-          "id": "materials",
-          "line": "the two-minute drill that lifts your weakest round — start it tomorrow"
-        },
-        {
-          "id": "mistakes",
-          "line": "the two habits to swap, and the five strengths to train first"
-        },
-        {
-          "id": "dna",
-          "line": "the technique that turns the round you already win into the other three"
-        },
-        {
-          "id": "fuel",
-          "key": "Fuel",
-          "line": "what to put on your plate this week — the foods that feed a sharp brain"
-        },
-        {
-          "id": "shopping",
-          "line": "seven days, one drill each, in the order that moves the number"
-        }
-      ],
-      "unlock_tail": {
-        "key": "+ Play again",
-        "line": "play it again in a week — the number moves"
       }
     },
     "improve_foot": "Follow the 7-day plan, play again — the score climbs."
