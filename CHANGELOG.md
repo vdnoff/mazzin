@@ -558,3 +558,6 @@ bottom.
 
 ## 2026-09-03 — claude/brain-funnel-8
 - brain v8: check selection + unified tiles + harder pattern
+
+## 2026-09-03 — claude/brain-funnel-9
+- brain v9: pill polish, blue intro, new brain
