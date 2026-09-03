@@ -42,7 +42,12 @@ def check(label, ok, detail=""):
 # The two files whose English defaults this funnel is the exception to.
 JS = os.path.join(ROOT, "static", "js")
 ENGINE_JS = open(os.path.join(JS, "engine.js"), encoding="utf-8").read()
-RESULT_JS = open(os.path.join(JS, "result_zodiac.js"), encoding="utf-8").read()
+RESULT_JS = open(os.path.join(JS, "result_zodiac.js"),
+                 encoding="utf-8").read()
+# The arm's stylesheet, for the claim that every rule it adds is scoped
+# to it and nothing above it was touched.
+CSS = open(os.path.join(ROOT, "static/css/result_zodiac.css"),
+           encoding="utf-8").read()
 
 # Imported here rather than beside the Terms checks that first needed it:
 # the price block below reads `_price_paid` and the module's own source, and
@@ -126,7 +131,10 @@ def shape(node):
 # English-default block at the end proves against the sources themselves. So
 # the comparison drops them rather than being weakened: everything outside
 # this list is still pinned to the twin, key for key and value for value.
-ADDED = ("delivery_line", "delivery_line_bare", "labels")
+# FORCED TEST EDIT. `boxes` joins them: the second paywall arm's own
+# copy, optional in result_zodiac.js exactly as the other three are —
+# a funnel that declares none renders that module's English.
+ADDED = ("delivery_line", "delivery_line_bare", "labels", "boxes")
 ADDED_BLOCKS = {
     "checkout": ("unlock_note", "number_words", "redirecting",
                  "error_checkout", "error_payment", "error_consent"),
@@ -194,8 +202,12 @@ check("  and `pricing` is the only block they disagree on",
       "%s vs %s" % (cfg["pricing"], twin["pricing"]))
 import payments  # noqa: E402
 
-check("  and it runs no layout experiment",
-      not cfg.get("paywall_variants"), str(cfg.get("paywall_variants")))
+# FORCED TEST EDIT. This funnel ran no experiment and runs one now: a 50/50
+# split between the minimal arm it has been serving and the new boxes arm.
+# Asserted in full in its own section at the end of this file.
+ARMS = cfg.get("paywall_variants") or []
+check("  and it runs a layout experiment of its own",
+      [a["id"] for a in ARMS] == ["minimal", "boxes"], str(ARMS))
 ARM_ONLY = {"rarity_card", "chips", "unlock", "unlock_head", "unlock_tail"}
 check("    it carries the minimal layout's copy, all of it",
       ARM_ONLY <= set(cfg["result_copy"]["profile"]),
@@ -639,7 +651,19 @@ TOKEN_ONLY = re.compile(r"^(?:\{\w+\}|\d+|[\s.,·—–\-+#%€↓→]+)+$")
 # read by somebody.
 MACHINE = {"/slug", "/funnel_id", "/locale", "/result_template",
            "/pricing/currency", "/pricing/price_format",
-           "/pricing/decimal_mark", "/sale/ends"}
+           "/pricing/decimal_mark", "/sale/ends",
+           # Which step's frame the boxes hero shows, and which section and
+           # which glyph each tile names. Keys the module dispatches on, not
+           # words anybody reads.
+           "/result_copy/boxes/hero_step"}
+MACHINE |= {"/result_copy/boxes/boxes/%d/%s" % (i, key)
+            for i in range(4) for key in ("id", "icon")}
+# An arm's id, its template and the name it is written down under. The name is
+# an internal label for whoever reads the split — zodiac30's are English too —
+# and nothing on the page ever prints one.
+MACHINE |= {"/paywall_variants/%d/%s" % (i, key)
+            for i in range(4)
+            for key in ("id", "name", "template", "note")}
 VISIBLE = [(p, v) for p, v in STRINGS
            if p not in MACHINE
            and (p not in TWIN_STRINGS or TWIN_STRINGS[p] != v)]
@@ -652,7 +676,11 @@ tokens_only = [(p, v) for p, v in VISIBLE if not CYRILLIC.search(v)]
 check("  and the ones that carry no letters carry only figures and slots",
       sorted(p for p, _v in tokens_only)
       == ["/checkout/commerce/anchor_head_accent",
-          "/checkout/commerce/price_anchor_accent"],
+          "/checkout/commerce/price_anchor_accent",
+          # The year tile's whole sub is the span the page computes: twelve
+          # months from this one, in this funnel's own month names. A literal
+          # here would be a month that goes stale on the first of next month.
+          "/result_copy/boxes/boxes/3/sub"],
       str(tokens_only))
 check("  the ъ is in there, which no Latin transliteration produces",
       "ъ" in RAW)
@@ -2109,6 +2137,220 @@ for text in NEW_MINIMAL:
           reports._banned_hit(text, reports.ZODIAC_BG_BANNED))
 check("and every one of them is walked by the config-wide banned scan",
       all(any(v == text for _p, v in STRINGS) for text in NEW_MINIMAL))
+
+print("\n--- the layout split, and the arm that rides on the events ---")
+# The same mechanism zodiac30 runs, config and all. An arm is
+# {id, enabled, weight, name, template}; assignment reads the session id and
+# nothing else, so a reader who reloads sees the same page; and the arm is
+# reported once as `paywall_variant`, which joins to every later event —
+# paywall_view, pay_tap, and the purchase the webhook writes — on that same
+# session id. Nothing about the money moves between the arms.
+check("two arms, both live",
+      len(ARMS) == 2 and all(a.get("enabled") is True for a in ARMS),
+      str(ARMS))
+check("  a fifty-fifty split",
+      [a.get("weight") for a in ARMS] == [1, 1],
+      str([a.get("weight") for a in ARMS]))
+check("  the arm it has been serving, and the new one",
+      [(a["id"], a.get("template")) for a in ARMS]
+      == [("minimal", "minimal"), ("boxes", "boxes")],
+      str([(a["id"], a.get("template")) for a in ARMS]))
+ARM_KEYS = {"id", "enabled", "weight", "name", "template", "note"}
+check("  and each arm is a layout, not a second offer",
+      all(set(a) <= ARM_KEYS for a in ARMS),
+      str([sorted(set(a) - ARM_KEYS) for a in ARMS]))
+check("  each one named, for whoever reads the split",
+      all(a.get("name") for a in ARMS))
+check("the funnel still names a template for a reader nothing assigns",
+      cfg.get("result_template") == "minimal", str(cfg.get("result_template")))
+check("  which an assigned arm outranks, as the module reads them",
+      RESULT_JS.index("(variant && variant.template)")
+      < RESULT_JS.index("ctx.cfg.result_template"))
+check("the arm is reported before anything is drawn",
+      RESULT_JS.index("reportVariant(ctx, variant);")
+      < RESULT_JS.index('root.innerHTML = "";'))
+check("  as the event zodiac30's arms already ride on",
+      'ctx.track("paywall_variant", { variant: variant.id });' in RESULT_JS)
+check("  and zodiac30's own arms are untouched",
+      [a["id"] for a in twin.get("paywall_variants") or []]
+      == ["control", "minimal"],
+      str([a["id"] for a in twin.get("paywall_variants") or []]))
+check("  while zodiac and zodiac-ro still declare none",
+      not english.get("paywall_variants")
+      and not romanian.get("paywall_variants"))
+# QA on a real phone. Assignment is untouched — this can only pick an arm the
+# pool already carries, and it is read once per load and stored nowhere.
+check("a named arm can be forced for a walk",
+      "function forcedVariant(pool)" in RESULT_JS
+      and "[?&]arm=([^&#]+)" in RESULT_JS)
+check("  and only ever one the config carries",
+      "if (pool[i].id === want) return pool[i];" in RESULT_JS
+      and "return null;" in RESULT_JS.split("function forcedVariant")[1]
+                                     .split("function assignedVariant")[0])
+check("  handed the config's own pool, so it cannot conjure a layout",
+      "forcedVariant(variantPool(ctx.cfg))" in RESULT_JS
+      and "|| assignedVariant(ctx.cfg);" in RESULT_JS)
+# Assignment itself is untouched, and has to be: tests/test_variants.py holds
+# this block byte-identical against result_persona.js's copy, so the override
+# lives at the call site rather than inside it.
+MECH = RESULT_JS[RESULT_JS.index("  // engine.js's own session key."):
+                 RESULT_JS.index("  // One event, once, when the offer")]
+check("  and assignment itself never learned about it",
+      "forcedVariant" not in MECH and "location" not in MECH,
+      MECH[:60])
+check("  so a forced page still reports the arm it drew",
+      RESULT_JS.index("var variant = forcedVariant(variantPool(ctx.cfg))")
+      < RESULT_JS.index("reportVariant(ctx, variant);"))
+
+print("\n--- the boxes arm's own copy ---")
+BOXES = cfg["result_copy"]["boxes"]
+check("the funnel carries the block", isinstance(BOXES, dict))
+for key in ("head", "sub", "locked", "hero_kicker", "hero_line", "boxes"):
+    check("  boxes.%-12s is filled" % key, bool(BOXES.get(key)),
+          repr(BOXES.get(key)))
+check("the headline and its sub are Bulgarian",
+      CYRILLIC.search(BOXES["head"]) and CYRILLIC.search(BOXES["sub"]),
+      "%s | %s" % (BOXES["head"], BOXES["sub"]))
+check("  and the sub names the reader's own subtype",
+      "{subtype}" in BOXES["sub"], BOXES["sub"])
+check("  in the guillemets this funnel sets a name in",
+      "\u00ab{subtype}\u00bb" in BOXES["sub"], BOXES["sub"])
+check("the locked hero reads the step the reader actually tapped",
+      BOXES["hero_step"] in {s["id"] for s in steps},
+      "%s not a step" % BOXES["hero_step"])
+check("  and the module falls back to that step's first frame",
+      "function bondPick(ctx)" in RESULT_JS
+      and "pairs[0] && pairs[0].images && pairs[0].images[0]" in RESULT_JS)
+# The verdicts are the funnel's own, so the tile and the delivered page call a
+# pairing the same thing — the whole reason `labels.verdicts` exists.
+check("the hero line fills both verdicts from labels, not from prose",
+      "{works}" in BOXES["hero_line"] and "{avoid}" in BOXES["hero_line"],
+      BOXES["hero_line"])
+FILLED_LINE = (BOXES["hero_line"].replace("{works}", LABELS["verdicts"]["works"])
+               .replace("{avoid}", LABELS["verdicts"]["avoid"]))
+check("  which fills to this funnel's own two words",
+      LABELS["verdicts"]["works"] in FILLED_LINE
+      and LABELS["verdicts"]["avoid"] in FILLED_LINE, FILLED_LINE)
+check("  and neither word is written into the copy",
+      LABELS["verdicts"]["works"] not in BOXES["hero_line"]
+      and LABELS["verdicts"]["avoid"] not in BOXES["hero_line"],
+      BOXES["hero_line"])
+TILES = BOXES["boxes"]
+check("four tiles", len(TILES) == 4, str(len(TILES)))
+check("  each naming a chapter this funnel delivers",
+      [t["id"] for t in TILES] == ["palette", "mistakes", "dna", "shopping"]
+      and {t["id"] for t in TILES} <= {s["id"] for s in
+                                       cfg["report"]["sections"]},
+      str([t["id"] for t in TILES]))
+check("  each with a glyph the module draws",
+      all(('%s: [' % t["icon"]) in RESULT_JS for t in TILES),
+      str([t["icon"] for t in TILES]))
+check("  titles and subs in Bulgarian",
+      all(CYRILLIC.search(t["title"]) for t in TILES)
+      and all(CYRILLIC.search(t["sub"]) or t["sub"] == "{range}"
+              for t in TILES),
+      str([(t["title"], t["sub"]) for t in TILES]))
+# The year tile. A month written into the copy is a month that is wrong on the
+# first of the next one, so the whole span is computed at render out of the
+# same twelve labels the year map counts in.
+check("the year tile names no month of its own",
+      TILES[3]["sub"] == "{range}", TILES[3]["sub"])
+check("  and no tile hardcodes one either",
+      not [t for t in TILES
+           if any(m.rstrip(".") in t["title"] + t["sub"]
+                  for m in LABELS["months"])],
+      str([(t["title"], t["sub"]) for t in TILES]))
+check("  the span is built from the funnel's own month names",
+      "function monthRange(ctx)" in RESULT_JS
+      and "var year = yearOf(ctx);" in RESULT_JS
+      # The en dash as the source spells it, so a raw character cannot drift
+      # in unnoticed under a font that renders the two alike.
+      and r'year[0] + " \u2013 " + year[11]' in RESULT_JS)
+check("    off the same twelve the year map runs on",
+      "function yearOf(ctx)" in RESULT_JS
+      and 'yearLabels(null, label(ctx, "months"))' in RESULT_JS)
+check("    which start at this month, as reports.py's twelve do",
+      list(reports.MONTH_ABBR_BG) == LABELS["months"]
+      and reports._months_for(profile)[0].startswith(
+          reports.MONTH_ABBR_BG[reports.datetime.datetime.now(
+              reports.datetime.timezone.utc).date().month - 1]))
+NEW_STRINGS = ([BOXES[k] for k in ("head", "sub", "locked", "hero_kicker",
+                                   "hero_line")]
+               + [t["title"] for t in TILES]
+               + [t["sub"] for t in TILES if t["sub"] != "{range}"])
+for text in NEW_STRINGS:
+    check("  %-42s passes both Terms checks" % ('"%s"' % text[:40]),
+          reports._banned_hit(text, reports.ZODIAC_BG_BANNED) is None,
+          reports._banned_hit(text, reports.ZODIAC_BG_BANNED))
+check("and every one of them is walked by the config-wide scans",
+      all(any(v == text for _p, v in STRINGS) for text in NEW_STRINGS))
+check("no boxes string carries a straight double quote",
+      not [t for t in NEW_STRINGS if '"' in t])
+
+print("\n--- and every one of them has an English default in the module ---")
+# The rule the other funnels rest on: a funnel that declares no block renders
+# real English, not a hole and not a transliteration.
+DEFAULTS = [
+    'hero_step: "bond"',
+    'head: "Your cosmic profile, assembled from your 18 taps"',
+    'sub: "You are \u00ab{subtype}\u00bb. The full map is inside."',
+    'locked: "Locked"',
+    'hero_kicker: "LOVE & COMPATIBILITY"',
+    'hero_line: "{works} or {avoid} \u2014 for every sign, on the first page."',
+    'title: "Your power palette", sub: "Colours and talismans"',
+    'title: "5 hidden strengths", sub: "And 2 blind spots"',
+    'title: "Your cosmic blueprint", sub: "Career and money"',
+    'title: "The next 12 months", sub: "{range}"',
+]
+for literal in DEFAULTS:
+    check("  default in the file: %s" % literal[:46],
+          literal in RESULT_JS, literal)
+check("every key the config sets has a default behind it",
+      set(BOXES) <= set(re.findall(r"^\s{4}(\w+):",
+                                   RESULT_JS.split("BOXES_FALLBACK = {")[1]
+                                   .split("\n  };")[0], re.M)),
+      str(sorted(set(BOXES))))
+check("  and the defaults are English, not this funnel's words",
+      not CYRILLIC.search(RESULT_JS.split("BOXES_FALLBACK = {")[1]
+                          .split("\n  };")[0]))
+check("the module reads them through one accessor, as labels are read",
+      "function boxesText(ctx, key)" in RESULT_JS
+      and "BOXES_FALLBACK[key] : own" in RESULT_JS)
+check("  off result_copy.boxes and nowhere else",
+      'var own = ((ctx.cfg && ctx.cfg.result_copy) || {}).boxes;'
+      in RESULT_JS)
+
+print("\n--- the arm replaces the pitch and nothing under it ---")
+check("the boxes branch draws its own pitch",
+      'if (data && template === "boxes") {' in RESULT_JS
+      and "root.appendChild(boxesPitch(ctx, data));" in RESULT_JS)
+check("  and then the same offer card every arm draws",
+      RESULT_JS.count("root.appendChild(offer(ctx, copy, data, template));")
+      == 1)
+check("  so nothing about the money is branched on the arm",
+      "function offer(ctx, copy, data, template)" in RESULT_JS
+      and RESULT_JS.split("function offer(ctx, copy, data, template)")[1]
+                   .split("\n  }\n")[0].count('"boxes"') == 0)
+check("the root carries the arm, so the sheet can reach it",
+      'root.classList.toggle("is-boxes", template === "boxes");' in RESULT_JS)
+check("  and is-minimal is still set for minimal alone",
+      'root.classList.toggle("is-minimal", template === "minimal");'
+      in RESULT_JS)
+NEW_RULES = re.findall(r"^\.[\w.\- ]+(?= \{)",
+                       CSS.split("--- the boxes arm")[1], re.M)
+
+
+def own_rule(sel):
+    return (sel.startswith(".zr-box")
+            or sel.startswith(".result-module.is-boxes"))
+
+
+check("every new rule in the sheet is scoped to the new arm",
+      NEW_RULES and all(own_rule(sel) for sel in NEW_RULES),
+      str([sel for sel in NEW_RULES if not own_rule(sel)]))
+check("  and nothing above it mentions the arm at all",
+      "is-boxes" not in CSS.split("--- the boxes arm")[0]
+      and ".zr-box" not in CSS.split("--- the boxes arm")[0])
 
 print("\n--- the sale, and what it is allowed to claim ---")
 BEFORE_END = reports.datetime.datetime(2026, 8, 27,

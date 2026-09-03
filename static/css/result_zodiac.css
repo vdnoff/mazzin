@@ -1525,3 +1525,190 @@ body:has(.result-module) {
   text-align: center;
   color: var(--zr-faint);
 }
+
+/* --- the boxes arm ---------------------------------------------------------
+ *
+ * The second paywall layout, live on /zodiac-bg against `minimal`. Every rule
+ * below is new and every selector is new: nothing here reaches a node the
+ * other arms draw, so a funnel that never lands on this template renders the
+ * page it always did, byte for byte.
+ *
+ * The argument is a table of contents rather than a reading — one chapter
+ * shown at full size with the lock on it, four more as tiles — and the money
+ * block underneath is the same `.zr-offer` card every arm builds.
+ */
+
+.result-module.is-boxes { text-align: left; }
+
+.zr-boxes-head { margin: 0 0 20px; text-align: center; }
+
+.zr-boxes-title {
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--zr-text);
+}
+
+.zr-boxes-sub {
+  margin: 10px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--zr-muted);
+}
+
+/* The one accented element on the page. A single gold hairline, because a
+   second one anywhere below would make this a list of equals — which is the
+   whole thing this layout is not. */
+.zr-boxes-hero {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin: 0 0 18px;
+  padding: 14px;
+  border: 1.5px solid var(--zr-gold);
+  border-radius: 16px;
+  background: var(--zr-panel);
+}
+
+/* `position: relative` for the pill, and a fixed square so the frame is the
+   same size whichever step's picture lands in it. */
+.zr-boxes-shot {
+  position: relative;
+  flex: none;
+  width: 96px;
+  height: 96px;
+  border-radius: 12px;
+  overflow: visible;
+}
+
+.zr-boxes-shot img {
+  display: block;
+  width: 96px;
+  height: 96px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+/* Over the bottom edge rather than inside it: the picture is the chapter and
+   the lock is what is between the reader and it, so it reads as laid on top.
+   One line, always — a wrapped padlock label looks like a rendering fault. */
+.zr-boxes-lock {
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--zr-gold);
+  color: var(--zr-ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.zr-boxes-lock-icon {
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: var(--zr-ink);
+  stroke-width: 1.6;
+}
+
+.zr-boxes-hero-text { min-width: 0; }
+
+.zr-boxes-kicker {
+  margin: 0 0 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--zr-gold);
+}
+
+.zr-boxes-line {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--zr-text);
+}
+
+/* Two by two. `grid` rather than flex because the two rows have to align on
+   the taller of their cells, and a 2x2 of unequal text is exactly the case
+   flex gets wrong. */
+.zr-boxes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0 0 22px;
+  padding: 0;
+  list-style: none;
+}
+
+.zr-box {
+  padding: 13px 12px;
+  border: 1px solid var(--zr-line);
+  border-radius: 13px;
+  background: var(--zr-panel);
+  min-width: 0;
+}
+
+.zr-box-icon {
+  display: block;
+  margin: 0 0 8px;
+}
+
+.zr-box-icon svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: var(--zr-gold);
+  stroke-width: 1.4;
+}
+
+.zr-box-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--zr-text);
+}
+
+.zr-box-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--zr-muted);
+}
+
+/* The struck regular price, drawn the way the minimal arm draws it.
+ *
+ * A copy of those two rules rather than a second selector added to them: the
+ * arms that exist are live and take real money, and a shared selector is a
+ * shared blast radius. Nothing above `.zr-offer` differs between the arms, so
+ * the whole of the money block is inherited unscoped and only this one
+ * treatment has to be restated. */
+.result-module.is-boxes .zr-price-was {
+  position: relative;
+  font-size: 29px;
+  font-weight: 700;
+  color: #9AA3C4;
+  text-decoration: none;
+}
+
+.result-module.is-boxes .zr-price-was::after {
+  content: "";
+  position: absolute;
+  left: -3px;
+  right: -3px;
+  top: 52%;
+  height: 3px;
+  border-radius: 3px;
+  background: #E27870;
+  transform: rotate(-6deg);
+}

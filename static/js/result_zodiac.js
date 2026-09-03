@@ -920,7 +920,11 @@
     // The offer's checklist. A tick rather than a padlock: this list is what
     // is in the report, and a row of locks over the price is the page arguing
     // with the button under it.
-    check: ["M3.2 8.4 6.4 11.6 12.8 4.8"]
+    check: ["M3.2 8.4 6.4 11.6 12.8 4.8"],
+    // The one place a padlock belongs: over the chapter the boxes arm shows
+    // and does not open.
+    lock: ["M4.6 7.2V5.4a3.4 3.4 0 0 1 6.8 0v1.8",
+           "M3.4 7.2h9.2v6.4H3.4z"]
   };
 
   function drawn(paths, cls) {
@@ -1057,6 +1061,157 @@
       if (cards[i].id === section_id) return cards[i].key || "";
     }
     return "";
+  }
+
+  // --- d4) the boxes arm -----------------------------------------------------
+  //
+  // The second way of laying this page out. Where `minimal` argues from the
+  // reading itself — the card, the taps it was read from, how rare it is —
+  // this one argues from the table of contents: one locked chapter shown at
+  // full size and the other four as tiles, then the same money block.
+  //
+  // Every string here ships as English and is overridden per funnel from
+  // `result_copy.boxes`, exactly as `result_copy.labels` overrides the words
+  // the page prints itself. A funnel that declares no block renders this
+  // English — and nothing in this file knows which funnel does either, which
+  // is the property that lets the next one adopt the arm with a config edit.
+  var BOXES_FALLBACK = {
+    // Which step's frame the locked card shows. Named in copy rather than in
+    // code because it is a claim about one funnel's walk, not about the
+    // layout: the card is the chapter the reader is closest to wanting.
+    hero_step: "bond",
+    head: "Your cosmic profile, assembled from your 18 taps",
+    sub: "You are «{subtype}». The full map is inside.",
+    locked: "Locked",
+    hero_kicker: "LOVE & COMPATIBILITY",
+    // The two verdicts are filled from `labels.verdicts`, so the page and the
+    // document call a pairing the same thing.
+    hero_line: "{works} or {avoid} — for every sign, on the first page.",
+    boxes: [
+      { id: "palette", icon: "palette",
+        title: "Your power palette", sub: "Colours and talismans" },
+      { id: "mistakes", icon: "eye",
+        title: "5 hidden strengths", sub: "And 2 blind spots" },
+      { id: "dna", icon: "map",
+        title: "Your cosmic blueprint", sub: "Career and money" },
+      { id: "shopping", icon: "calendar",
+        title: "The next 12 months", sub: "{range}" }
+    ]
+  };
+
+  function boxesCopy(ctx) {
+    var own = ((ctx.cfg && ctx.cfg.result_copy) || {}).boxes;
+    return (own && typeof own === "object") ? own : {};
+  }
+
+  function boxesText(ctx, key) {
+    var own = boxesCopy(ctx)[key];
+    return (own === undefined || own === null) ? BOXES_FALLBACK[key] : own;
+  }
+
+  // The twelve the rest of this page counts in, as one span. `yearOf` is the
+  // same function the year map reads, so the tile can never name a window the
+  // report does not open on: both start at this month and run twelve.
+  function monthRange(ctx) {
+    var year = yearOf(ctx);
+    if (!year || year.length !== 12) return "";
+    return year[0] + " \u2013 " + year[11];
+  }
+
+  // A verdict in the funnel's own word, or the tag upper-cased — which is
+  // what every funnel that declares no `verdicts` has always printed.
+  function verdictWord(ctx, tag) {
+    var set = label(ctx, "verdicts");
+    return (set && set[tag]) ? set[tag] : tag.toUpperCase();
+  }
+
+  // The frame they actually tapped on the step this card is about, or that
+  // step's first frame when there is no run to read — which is every page
+  // reached by reloading the URL directly. No new bytes either way: both are
+  // images this browser decoded during the quiz.
+  function bondPick(ctx) {
+    var want = boxesText(ctx, "hero_step");
+    var pick = ctx.picks && ctx.picks[want];
+    if (pick && pick.img) return pick;
+    var steps = (ctx.cfg && ctx.cfg.swipe && ctx.cfg.swipe.steps) || [];
+    for (var i = 0; i < steps.length; i++) {
+      if (steps[i].id !== want) continue;
+      var pairs = steps[i].pairs || [];
+      var first = pairs[0] && pairs[0].images && pairs[0].images[0];
+      if (first && first.img) return first;
+    }
+    return null;
+  }
+
+  function boxesHead(ctx, data) {
+    var wrap = elm("header", "zr-boxes-head");
+    wrap.appendChild(elm("h1", "zr-boxes-title", boxesText(ctx, "head")));
+    var sub = fill(boxesText(ctx, "sub"), (data && data.words) || {})
+      .replace(/\{\w+\}/g, "").replace(/\s{2,}/g, " ").trim();
+    if (sub) wrap.appendChild(elm("p", "zr-boxes-sub", sub));
+    return wrap;
+  }
+
+  // The one accented element on the page: a chapter shown rather than
+  // described, with the lock over the corner of it.
+  function lockedHero(ctx) {
+    var card = elm("section", "zr-boxes-hero");
+    var shot = elm("div", "zr-boxes-shot");
+    var pick = bondPick(ctx);
+    if (pick) {
+      var img = document.createElement("img");
+      img.src = pick.img;
+      img.alt = "";
+      img.decoding = "async";
+      shot.appendChild(img);
+    }
+    var pill = elm("span", "zr-boxes-lock");
+    pill.appendChild(drawn(ICONS.lock, "zr-boxes-lock-icon"));
+    pill.appendChild(elm("span", "zr-boxes-lock-text",
+                         boxesText(ctx, "locked")));
+    shot.appendChild(pill);
+    card.appendChild(shot);
+    var text = elm("div", "zr-boxes-hero-text");
+    text.appendChild(elm("p", "zr-boxes-kicker",
+                         boxesText(ctx, "hero_kicker")));
+    text.appendChild(elm("p", "zr-boxes-line",
+                         fillLabel(boxesText(ctx, "hero_line"), {
+                           works: verdictWord(ctx, "works"),
+                           avoid: verdictWord(ctx, "avoid")
+                         })));
+    card.appendChild(text);
+    return card;
+  }
+
+  function boxGrid(ctx) {
+    var want = boxesText(ctx, "boxes") || [];
+    var grid = elm("ul", "zr-boxes-grid");
+    want.forEach(function (box) {
+      if (!box || !box.title) return;
+      var cell = elm("li", "zr-box");
+      var icon = elm("span", "zr-box-icon");
+      icon.setAttribute("aria-hidden", "true");
+      icon.appendChild(drawn(ICONS[box.icon] || ICONS.check));
+      cell.appendChild(icon);
+      cell.appendChild(elm("p", "zr-box-title", box.title));
+      var sub = fillLabel(box.sub || "", { range: monthRange(ctx) })
+        .replace(/\{\w+\}/g, "").trim();
+      if (sub) cell.appendChild(elm("p", "zr-box-sub", sub));
+      grid.appendChild(cell);
+    });
+    return grid.childNodes.length ? grid : null;
+  }
+
+  // The whole pitch above the money, in one fragment. Below it the offer is
+  // the same card every arm draws — this template replaces the argument, not
+  // the payment.
+  function boxesPitch(ctx, data) {
+    var frag = document.createDocumentFragment();
+    frag.appendChild(boxesHead(ctx, data));
+    frag.appendChild(lockedHero(ctx));
+    var grid = boxGrid(ctx);
+    if (grid) frag.appendChild(grid);
+    return frag;
   }
 
   // --- e) the offer ----------------------------------------------------------
@@ -1323,6 +1478,39 @@
     } catch (e) { /* an arm is not worth losing the page to */ }
   }
 
+  // The one way to see a named arm on a real phone: ?arm=boxes.
+  //
+  // Outside `assignedVariant` on purpose, twice over. That block is held
+  // byte-identical against the other module's copy of it — the whole subject
+  // of tests/test_variants.py — so nothing may be added inside it; and
+  // assignment reading the session id and nothing else is what makes the
+  // split stable and honest, so nothing should be.
+  //
+  // It can only return an arm the pool already carries, so it cannot conjure
+  // a layout the config does not name, and it is read once per load and
+  // written nowhere: no cookie, no storage, nothing that could leak a forced
+  // arm into a later session's numbers.
+  //
+  // A forced page still reports the arm it drew, because that is what the
+  // reader saw. A QA walk therefore lands in the split like any other
+  // session — a handful of loads against numbers read over thousands — and
+  // an event naming an arm nobody was shown would be worse than that.
+  function forcedVariant(pool) {
+    var want = "";
+    try {
+      want = (new RegExp("[?&]arm=([^&#]+)").exec(
+        window.location.search) || [])[1] || "";
+      want = decodeURIComponent(want);
+    } catch (e) {
+      return null;
+    }
+    if (!want) return null;
+    for (var i = 0; i < pool.length; i++) {
+      if (pool[i].id === want) return pool[i];
+    }
+    return null;
+  }
+
   function render(root, ctx) {
     var copy = (ctx.cfg && ctx.cfg.result_copy) || {};
     var elements = ctx.tally(ELEMENTS);
@@ -1345,7 +1533,8 @@
     // variants, and the control arm carries no template — so both of those
     // take the branch below exactly as it has always been, node for node.
     // Only an arm that names a template takes the other one.
-    var variant = assignedVariant(ctx.cfg);
+    var variant = forcedVariant(variantPool(ctx.cfg))
+      || assignedVariant(ctx.cfg);
     // A funnel may also name a template outright, with no A/B behind it. That
     // is a layout decision already made rather than one being measured: no
     // variants block, nothing assigned, and `reportVariant` below is handed
@@ -1380,36 +1569,46 @@
     // part of the subtree the variants fixture compares — so the control arm
     // stays byte-identical while its stylesheet gains rules it never matches.
     root.classList.toggle("is-minimal", template === "minimal");
-    root.appendChild(kicker(copy, template === "minimal"));
-    // The rich card, or the one this page drew before there was a table to
-    // draw it from. Below the hero the two pages differ entirely, which is
-    // why the branch is the whole body rather than one node.
-    root.appendChild(data
-      ? richHero(ctx, glyph(ctx.picks.sign), data,
-                 { lean: template === "minimal" })
-      : hero(ctx, copy, elements, top));
-    var strip = taps(ctx, copy);
-    if (strip) root.appendChild(strip);
-    if (data && template === "minimal") {
-      // The short way down the page: the picture, the evidence it was read
-      // from, how rare the reading is, and then the price. No locked bullets
-      // doing the offer's job above the offer, and no bridge line.
-      //
-      // The four element tiles are gone too. They restated the hero's split
-      // bar one for one — the same four numbers, in the same order, a screen
-      // apart — and a page whose argument is brevity cannot afford to say a
-      // thing twice. The bar keeps it; `balance` still draws for the funnels
-      // that have no rich hero to put it in.
-      var rare = rarityBadge(data, profileBlock(ctx) || {});
-      if (rare) root.appendChild(rare);
-    } else if (data) {
-      var free = freeStrength(ctx, copy);
-      if (free) root.appendChild(free);
-      var line = bridge(ctx, data);
-      if (line) root.appendChild(line);
-      root.appendChild(questions(ctx, data));
+    root.classList.toggle("is-boxes", template === "boxes");
+    // The boxes arm replaces the whole argument above the money and nothing
+    // below it. Gated on `data` as well as on the name: without a profile
+    // table there is no subtype to head the page with, and the page every
+    // other arm falls back to is a better answer than a headline with a hole
+    // in it.
+    if (data && template === "boxes") {
+      root.appendChild(boxesPitch(ctx, data));
     } else {
-      root.appendChild(path(ctx, copy, elements));
+      root.appendChild(kicker(copy, template === "minimal"));
+      // The rich card, or the one this page drew before there was a table to
+      // draw it from. Below the hero the two pages differ entirely, which is
+      // why the branch is the whole body rather than one node.
+      root.appendChild(data
+        ? richHero(ctx, glyph(ctx.picks.sign), data,
+                   { lean: template === "minimal" })
+        : hero(ctx, copy, elements, top));
+      var strip = taps(ctx, copy);
+      if (strip) root.appendChild(strip);
+      if (data && template === "minimal") {
+        // The short way down the page: the picture, the evidence it was read
+        // from, how rare the reading is, and then the price. No locked bullets
+        // doing the offer's job above the offer, and no bridge line.
+        //
+        // The four element tiles are gone too. They restated the hero's split
+        // bar one for one — the same four numbers, in the same order, a screen
+        // apart — and a page whose argument is brevity cannot afford to say a
+        // thing twice. The bar keeps it; `balance` still draws for the funnels
+        // that have no rich hero to put it in.
+        var rare = rarityBadge(data, profileBlock(ctx) || {});
+        if (rare) root.appendChild(rare);
+      } else if (data) {
+        var free = freeStrength(ctx, copy);
+        if (free) root.appendChild(free);
+        var line = bridge(ctx, data);
+        if (line) root.appendChild(line);
+        root.appendChild(questions(ctx, data));
+      } else {
+        root.appendChild(path(ctx, copy, elements));
+      }
     }
     root.appendChild(offer(ctx, copy, data, template));
 
