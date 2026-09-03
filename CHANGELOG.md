@@ -561,3 +561,6 @@ bottom.
 
 ## 2026-09-03 — claude/brain-funnel-9
 - brain v9: pill polish, blue intro, new brain
+
+## 2026-09-03 — claude/brain-funnel-10
+- brain v10: pill fixes + score model + age reveal in report
