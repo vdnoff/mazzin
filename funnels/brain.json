@@ -1304,7 +1304,7 @@
               "format": "grid6",
               "images": [
                 {
-                  "img": "/static/galleries/brain/box_open_leaf.webp"
+                  "img": "/static/galleries/brain/box_open_key.webp"
                 },
                 {
                   "img": "/static/galleries/brain/box_closed.webp"
@@ -1371,7 +1371,7 @@
                   "img": "/static/galleries/brain/box_closed.webp"
                 },
                 {
-                  "img": "/static/galleries/brain/box_open_bell.webp"
+                  "img": "/static/galleries/brain/box_open_key.webp"
                 }
               ]
             },
@@ -1637,7 +1637,7 @@
                   "img": "/static/galleries/brain/box_closed.webp"
                 },
                 {
-                  "img": "/static/galleries/brain/box_open_star.webp"
+                  "img": "/static/galleries/brain/box_open_cup.webp"
                 },
                 {
                   "img": "/static/galleries/brain/box_closed.webp"
@@ -1699,7 +1699,7 @@
                   "img": "/static/galleries/brain/box_closed.webp"
                 },
                 {
-                  "img": "/static/galleries/brain/box_open_key.webp"
+                  "img": "/static/galleries/brain/box_open_cup.webp"
                 },
                 {
                   "img": "/static/galleries/brain/box_closed.webp"
@@ -1988,7 +1988,7 @@
                   "img": "/static/galleries/brain/box_closed.webp"
                 },
                 {
-                  "img": "/static/galleries/brain/box_open_bell.webp"
+                  "img": "/static/galleries/brain/box_open_star.webp"
                 },
                 {
                   "img": "/static/galleries/brain/box_closed.webp"
@@ -2042,7 +2042,7 @@
                   "img": "/static/galleries/brain/box_closed.webp"
                 },
                 {
-                  "img": "/static/galleries/brain/box_open_moon.webp"
+                  "img": "/static/galleries/brain/box_open_star.webp"
                 },
                 {
                   "img": "/static/galleries/brain/box_closed.webp"
@@ -2333,7 +2333,7 @@
                   "img": "/static/galleries/brain/box_closed.webp"
                 },
                 {
-                  "img": "/static/galleries/brain/box_open_leaf.webp"
+                  "img": "/static/galleries/brain/box_open_moon.webp"
                 },
                 {
                   "img": "/static/galleries/brain/box_closed.webp"
@@ -2406,7 +2406,7 @@
                   "img": "/static/galleries/brain/box_closed.webp"
                 },
                 {
-                  "img": "/static/galleries/brain/box_open_cup.webp"
+                  "img": "/static/galleries/brain/box_open_moon.webp"
                 },
                 {
                   "img": "/static/galleries/brain/box_closed.webp"
