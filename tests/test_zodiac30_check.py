@@ -1001,8 +1001,13 @@ check("  which is what separates it from the draw's own leaderOf",
       "function leaderOf(" in engine
       and "level" not in re.search(r"function leaderOf\([^)]*\)\s*\{"
                                    r"(.*?)\n  \}", engine, re.S).group(1))
+# The entry is now resolved to the version of the round this run is playing
+# before it is personalised — a step may carry more than one version of
+# itself, and the screen anchored before it has to match the one being
+# played. Nothing about that reaches this funnel: it names no pools, so
+# `variantEntry` hands the entry straight back.
 check("the token check runs against the sentence that will be shown",
-      "var shown = personalised(entry);" in engine
+      "var shown = personalised(variantEntry(entry));" in engine
       and "return canFill(shown) ? shown : null;" in engine)
 check("  which is the same check it always was",
       "function canFill(entry)" in engine)

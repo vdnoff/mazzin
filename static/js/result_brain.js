@@ -873,68 +873,134 @@
     if (box) box.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
-  // --- f2) what the price buys, above the price ------------------------------
+
+  // --- e) the offer ----------------------------------------------------------
   //
-  // The arm that takes the locked rows off the page above has to say what the
-  // report contains somewhere, and it says it here rather than as four blocks
-  // the reader scrolls past to reach the button. Every line is a clause of a
-  // promise the funnel already makes: the keyword is the section card's own
-  // `key` and the text is the config's short form of that card's promise, so
-  // this list cannot offer a chapter something the chapter does not claim.
-  // Reordered by what the run said they came for, exactly as the locked rows
-  // are, and only the first match moves.
+  // v11 rebuilt it. It used to be a list of five ticked rows on the card and
+  // the same five again as a manifest under the button — the same promise in
+  // two voices, in two places, neither of which said which round THIS reader
+  // dropped points in.
+  //
+  // Now it argues in one order: what the plan is, what this run left on the
+  // table, the number it is holding back, the four things it contains, the
+  // price, the button, what it is not, and one comparison at the very bottom.
 
-  var CHECK_ICON = "M3.2 8.4 6.4 11.6 12.8 4.8";
+  // The four things the plan is, as four marks. Inline paths rather than
+  // files: they are four shapes at one weight in one colour, and a request
+  // per icon on the screen that decides a sale is a request too many.
+  // Stroked in `currentColor`, so the card's own colour reaches them.
+  var OFFER_ICONS = {
+    // a ring with its own centre: the round with the most room in it
+    target: ["M12 4.2a7.8 7.8 0 1 0 0 15.6 7.8 7.8 0 0 0 0-15.6z",
+             "M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z"],
+    // seven days with a bar across the top
+    calendar: ["M4.6 6.8h14.8v12.4H4.6z", "M4.6 10.6h14.8",
+               "M8.6 4.4v3.2", "M15.4 4.4v3.2"],
+    // the bolt this funnel already draws on its sharpest mood card
+    bolt: ["M13.4 3.6 6.8 13.2h4.3l-.9 7.2 6.8-9.8h-4.3z"],
+    // a plate seen from above: the rim, the well inside it, and a leaf
+    plate: ["M12 4.2a7.8 7.8 0 1 0 0 15.6 7.8 7.8 0 0 0 0-15.6z",
+            "M12 7.4a4.6 4.6 0 1 0 0 9.2 4.6 4.6 0 0 0 0-9.2z",
+            "M9.9 14.1c-.5-2.3.9-4.2 3.6-4.6.5 2.4-.9 4.3-3.6 4.6z",
+            "M9.9 14.1 13.9 9.9"]
+  };
 
-  function checklist(ctx) {
-    var table = profileCopy(ctx);
-    var rows = table.unlock || [];
-    if (!rows.length) return null;
-    var keys = {};
-    (table.cards || []).forEach(function (card) {
-      keys[card.id] = card.key || "";
+  function offerIcon(name) {
+    var chip = elm("span", "br-benefit-icon");
+    chip.setAttribute("aria-hidden", "true");
+    var svg = svgEl("svg", { viewBox: "0 0 24 24" });
+    (OFFER_ICONS[name] || OFFER_ICONS.bolt).forEach(function (d) {
+      svg.appendChild(svgEl("path", {
+        d: d, "stroke-linecap": "round", "stroke-linejoin": "round"
+      }));
     });
-    var block = elm("div", "br-unlock");
-    if (table.unlock_head) {
-      block.appendChild(elm("p", "br-unlock-head", table.unlock_head));
+    chip.appendChild(svg);
+    return chip;
+  }
+
+  // The round this reader dropped the most points in, by name. Fewest hits
+  // wins, and a tie goes to the earliest of the four — so the same run always
+  // names the same round, here and in the report.
+  function weakestRound(ctx, data) {
+    var names = (ageBlock(ctx) || {}).domains || {};
+    var worst = null;
+    DOMAINS.forEach(function (key) {
+      var got = (data.counts || {})[key] || 0;
+      if (worst === null || got < worst.got) worst = { key: key, got: got };
+    });
+    return worst ? (names[worst.key] || worst.key) : "";
+  }
+
+  // The line under the head. A run with room in it is told where the room is;
+  // a run without is told it was close. Neither is told anything about
+  // anybody else — there is nobody else.
+  function offerPersonal(ctx, data) {
+    var table = profileCopy(ctx);
+    if (!data) return null;
+    if (data.elite || !data.room_rounds) {
+      var close = table.offer_personal_elite || "";
+      return close ? elm("p", "br-offer-personal", close) : null;
     }
-    var list = elm("ul", "br-checklist");
-    firstly(rows.slice(), emphasised(purposeRule(ctx))).forEach(
-      function (row) {
-        // Its own keyword first, then the section card's. Most rows are a
-        // chapter and take the word that chapter is sold under; a row that
-        // is a promise inside a chapter rather than a chapter of its own —
-        // the food day inside the seven-day plan — carries its word here.
-        list.appendChild(checkRow(row.key || keys[row.id] || "",
-                                  row.line || ""));
-      });
-    var tail = table.unlock_tail;
-    if (tail && tail.key) {
-      list.appendChild(checkRow(tail.key, tail.line || ""));
+    var text = table.offer_personal || "";
+    if (!text) return null;
+    var round = weakestRound(ctx, data);
+    var line = elm("p", "br-offer-personal");
+    var cut = text.split("{round}");
+    line.appendChild(document.createTextNode(cut[0]));
+    line.appendChild(elm("strong", "br-offer-round", round));
+    line.appendChild(document.createTextNode(cut.slice(1).join(round)));
+    return line;
+  }
+
+  // The thing being sold, as a tile of what it is not showing. The number is
+  // two hashes and never a computed age: this page does not know the age out
+  // loud, and a placeholder that happened to be the real figure would be the
+  // reveal given away on the card selling it.
+  function offerHero(ctx) {
+    var table = profileCopy(ctx);
+    if (!table.offer_hero_line) return null;
+    var block = elm("div", "br-hero");
+    var tile = elm("div", "br-hero-tile");
+    tile.setAttribute("aria-hidden", "true");
+    tile.appendChild(elm("span", "br-hero-hash", "##"));
+    tile.appendChild(elm("span", "br-hero-lock", "LOCKED"));
+    block.appendChild(tile);
+    var words = elm("div", "br-hero-words");
+    if (table.offer_hero_kicker) {
+      words.appendChild(elm("p", "br-hero-kicker", table.offer_hero_kicker));
     }
-    block.appendChild(list);
+    words.appendChild(elm("p", "br-hero-line", table.offer_hero_line));
+    block.appendChild(words);
     return block;
   }
 
-  function checkRow(key, text) {
-    var item = elm("li", "br-check");
-    var tick = elm("span", "br-check-mark");
-    tick.setAttribute("aria-hidden", "true");
-    var svg = svgEl("svg", { viewBox: "0 0 16 16" });
-    svg.appendChild(svgEl("path", {
-      d: CHECK_ICON, "stroke-linecap": "round", "stroke-linejoin": "round"
-    }));
-    tick.appendChild(svg);
-    item.appendChild(tick);
-    // The keyword and the description in one paragraph beside the tick, so a
-    // row that runs to two lines wraps under its own text rather than under
-    // the icon.
-    var line = elm("p", "br-check-line");
-    if (key) line.appendChild(elm("span", "br-check-key", key + " "));
-    line.appendChild(document.createTextNode(text));
-    item.appendChild(line);
-    return item;
+  // What the plan is, in four. Each one a mark, a name and a line — the same
+  // four the report's own chapters are, said in the fewest words that still
+  // say what a reader gets to DO.
+  function offerBenefits(ctx) {
+    var rows = profileCopy(ctx).offer_cards || [];
+    if (!rows.length) return null;
+    var grid = elm("ul", "br-benefits");
+    rows.forEach(function (row) {
+      var cell = elm("li", "br-benefit");
+      cell.appendChild(offerIcon(row.icon));
+      cell.appendChild(elm("p", "br-benefit-title", row.title || ""));
+      cell.appendChild(elm("p", "br-benefit-sub", row.sub || ""));
+      grid.appendChild(cell);
+    });
+    return grid;
   }
+
+  function offerChips(ctx) {
+    var rows = profileCopy(ctx).offer_chips || [];
+    if (!rows.length) return null;
+    var row = elm("ul", "br-offer-chips");
+    rows.forEach(function (text) {
+      row.appendChild(elm("li", "br-offer-chip", text));
+    });
+    return row;
+  }
+
 
   // --- g) the offer ----------------------------------------------------------
   //
@@ -952,13 +1018,19 @@
                                   { type: ctx.style.name || "" }));
     if (head) card.appendChild(elm("p", "br-offer-head", head));
 
-    // Between the headline and the anchor, on the arm that took the locked
-    // rows off the page above. Those rows were the answer to "what am I
-    // buying"; without them the offer has to carry it.
-    if (lean) {
-      var list = checklist(ctx);
-      if (list) card.appendChild(list);
-    }
+    // v11: the card argues in one order, top to bottom. The head says what
+    // the plan is; one line says what THIS run left on the table; the hero
+    // tile says what is being held back; four marks say what the plan
+    // contains; then the price, the button, what it is not, and the anchor.
+    //
+    // It replaces a list of ticked rows and a manifest that said the same
+    // five things twice, in two places, in two voices.
+    var personal = offerPersonal(ctx, data);
+    if (personal) card.appendChild(personal);
+    var hero = offerHero(ctx);
+    if (hero) card.appendChild(hero);
+    var grid = offerBenefits(ctx);
+    if (grid) card.appendChild(grid);
 
     // The price, and the order of the argument around it. The reader's own
     // price is the thing they are deciding about, so it is the loudest text
@@ -978,7 +1050,6 @@
     } else {
       anchor.textContent = anchorText;
     }
-    card.appendChild(anchor);
 
     // `ctx.price` is already whatever the checkout is about to charge —
     // engine.js resolves the sale before it fills a single {price} — so the
@@ -1012,21 +1083,10 @@
       card.appendChild(elm("p", "br-sale", ctx.sale.label));
     }
 
-    var badges = ctx.commerce.badges || [];
-    if (badges.length) {
-      var row = elm("ul", "br-badges");
-      badges.forEach(function (text) {
-        row.appendChild(elm("li", "br-badge", text));
-      });
-      card.appendChild(row);
-    }
 
     // The one line under the anchor, in the reader's own terms when the run
     // said which round they thought they were on. Everything else on this card
     // — the price, the button, the trust row, the consent — is untouched by it.
-    var rule = purposeRule(ctx);
-    card.appendChild(elm("p", "br-offer-sub",
-                         (rule && rule.offer_sub) || copy.offer_sub || ""));
 
     var frame = variantBlock(variant);
     if (frame) card.appendChild(frame);
@@ -1053,11 +1113,16 @@
      nodes.payButton, nodes.payError]
       .forEach(function (n) { if (n) card.appendChild(n); });
 
+    var chips = offerChips(ctx);
+    if (chips) card.appendChild(chips);
     var trust = (ctx.commerce.trust || ctx.cfg.checkout.trust || []);
     if (trust.length) {
       card.appendChild(elm("p", "br-trust", trust.join(" · ")));
     }
     if (nodes.legal) card.appendChild(nodes.legal);
+    // Last, and quietest: the one comparison on the card, and the only line
+    // on it about anything other than this reader's own run.
+    card.appendChild(anchor);
 
     // The rows this layout does not use. Hidden rather than removed: they are
     // the same elements the paid view and the two-screen flow still want.

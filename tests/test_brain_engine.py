@@ -1204,13 +1204,13 @@ check("  a round the clock answered has no picture",
       'if (late && stepId && late.indexOf(stepId) !== -1) return { img: null };'
       in tile_fn)
 check("  a round played on identical frames shows the one that was open",
-      "openFrame(index) || (item && item.img)" in tile_fn
+      "openFrame(index, item) || (item && item.img)" in tile_fn
       and "entry.reveal && entry.reveal.open_slot" in open_fn
       and "frames[open].img" in open_fn)
 check("  and everything else is the card that was tapped",
       "(item && item.img) || null" in tile_fn)
 check("both gates are config, so no other funnel's rows move",
-      'entry.after_step !== index' in open_fn
+      "raw.after_step !== index" in open_fn
       and "return timedOutSteps;" in body("lateSteps"))
 check("the row between rounds reads it",
       "out.push(stepTile(index, id, item, late));" in body("echoPicks"))
@@ -1362,6 +1362,66 @@ check("the screen after the last step changes the words and beats on none",
       str([t for k, t in order if k == "after"]))
 check("  which is what pillBeats is for",
       "function pillBeats(" in ENGINE)
+
+print("\n--- v11: a step with more than one version of itself ---")
+pool_fn = body("variantOf")
+pairs_fn = body("pairsOf")
+entry_fn = body("variantEntry")
+check("nothing happens unless a step names a pool",
+      "var list = st && st.pool;" in body("poolOf")
+      and "return (list && list.length) ? list : null;" in body("poolOf")
+      and "if (!list || !id) return null;" in pool_fn)
+check("  and a step that names none reads exactly as it always did",
+      'if (st.pairs && st.pairs.length) return st.pairs;' in pairs_fn
+      and 'if (st.images && st.images.length >= 2) {' in pairs_fn)
+check("one version is drawn per step and kept for the walk",
+      "if (!Object.prototype.hasOwnProperty.call(poolPicks, id)) {" in pool_fn
+      and "Math.floor(Math.random() * list.length)" in pool_fn
+      and "return list[poolPicks[id]] || list[0];" in pool_fn)
+check("  and the cards it asks with are that version's pair",
+      "var pair = variantPair(st, variantOf(st));" in pairs_fn
+      and "if (pair) return [pair];" in pairs_fn
+      and "if (pairs[i].id === want) return pairs[i];"
+      in body("variantPair"))
+check("the cards themselves stay where the server looks for them",
+      "the server validates a tapped id against every pair" in ENGINE)
+check("the screen anchored before it draws that version's frames",
+      "if (variant.flash) out.flash = variant.flash;" in entry_fn
+      and "if (variant.reveal) out.reveal = variant.reveal;" in entry_fn)
+check("  and it is a copy, never a rewrite of the shared config",
+      "var out = {};" in entry_fn
+      and "for (var key in entry) {" in entry_fn)
+check("  every reader of an interstitial goes through it",
+      "personalised(variantEntry(entry))" in body("interstitialAfter")
+      and "return variantEntry(entry);" in body("flashAt"))
+check("the clock presses a miss of the version being played",
+      "var variant = variantOf(st);" in body("timeoutPick")
+      and "(variant && variant.timeout_pick)" in body("timeoutPick"))
+check("the paid page finds the version from the card that was tapped",
+      "function playedEntry(" in ENGINE
+      and "if (cards[k].id !== id) continue;" in body("playedEntry")
+      and "openFrame(index, item)" in body("stepTile"))
+check("a pick can be forced, for a walk or a check",
+      "function poolForced(" in ENGINE
+      and '(new URLSearchParams(location.search).get("pool") || "")'
+      in body("poolForced")
+      and 'poolWanted["*"] = parseInt(raw, 10);' in body("poolForced")
+      and 'poolWanted[bits[0].trim()] = parseInt(bits[1], 10);'
+      in body("poolForced"))
+check("  and a forced pick out of range falls back to the roll",
+      "forced === null || forced < 0 || forced >= list.length" in pool_fn)
+check("no funnel but the memory game names a pool",
+      [n for n, c in CONFIGS.items()
+       if [s for s in (c.get("swipe") or {}).get("steps", []) if s.get("pool")]]
+      == [OWNER],
+      str([n for n, c in CONFIGS.items()
+           if [s for s in (c.get("swipe") or {}).get("steps", [])
+               if s.get("pool")]]))
+check("  and every other funnel's steps are one pair as they were",
+      not [n for n, c in CONFIGS.items() if n != OWNER
+           for s in (c.get("swipe") or {}).get("steps", [])
+           if len(s.get("pairs") or [1]) > 3],
+      "")
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for f in fails:

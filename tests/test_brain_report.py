@@ -395,7 +395,11 @@ check("  and the body names the four promises",
 print("\n--- the timing keys the client has been holding back ---")
 step = STEPS[2]
 images = [i["id"] for i in step["pairs"][0]["images"]]
-BASE = {"pair": step["id"] + ":p1", "shown": images, "chosen": images[0]}
+# v11: a scored step names its pairs after the versions of itself it can
+# play, so the pair this event reports is the one the cards came from rather
+# than a fixed "p1".
+BASE = {"pair": step["id"] + ":" + step["pairs"][0]["id"],
+        "shown": images, "chosen": images[0]}
 
 
 def clean(extra):

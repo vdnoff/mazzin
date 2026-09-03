@@ -388,13 +388,126 @@
   // pair. engine.js and the funnel JSON are separate files behind a CDN, so
   // the two can be cached a version apart for a while after a deploy; the
   // fallback is what stops that window breaking the quiz.
+  // --- a step with more than one version of itself ---------------------------
+  //
+  // A step may carry `pool`: a list of variants, each naming everything about
+  // that version of the round that has to agree with everything else — which
+  // of the step's pairs it asks with, and, where a memorise screen is
+  // anchored before it, the frames that screen holds up and the reveal it
+  // plays.
+  //
+  // The cards themselves stay in `pairs`, where they have always been. That
+  // is not tidiness: the server validates a tapped id against every pair of
+  // every step and has done since a step could have more than one, so a
+  // variant whose cards lived somewhere else would be a variant whose
+  // choices the checkout threw away.
+  //
+  // One is drawn per pooled step at the start of a walk and kept for the
+  // length of it, so the frames somebody memorised are the frames the step
+  // asks about. Reloading before the end rolls again, which is the same
+  // answer this file already gives for which pair a multi-pair step shows.
+  //
+  // Everything downstream is untouched: the cards are cards, their tags are
+  // tags, and the server validates whatever the config declares. A step with
+  // no `pool` reads exactly as it always did — `pairs` first, then `images`.
+  var poolPicks = {};
+
+  function poolOf(st) {
+    var list = st && st.pool;
+    return (list && list.length) ? list : null;
+  }
+
+  // Which variant this run plays. Rolled once per step, remembered, and
+  // overridable for a walk or a check by naming the picks in the query
+  // string: `?pool=1` takes the second version of every pooled step and
+  // `?pool=mem1:0,spa2:2` takes them per step. Nothing reads it unless
+  // somebody types it, and every variant it can name is a version of the
+  // round the config already declares.
+  function poolForced(id) {
+    if (poolWanted === null) {
+      poolWanted = {};
+      var raw = "";
+      try {
+        raw = (new URLSearchParams(location.search).get("pool") || "").trim();
+      } catch (e) {
+        raw = "";
+      }
+      if (raw) {
+        if (/^\d+$/.test(raw)) {
+          poolWanted["*"] = parseInt(raw, 10);
+        } else {
+          raw.split(",").forEach(function (part) {
+            var bits = part.split(":");
+            if (bits.length === 2 && /^\d+$/.test(bits[1])) {
+              poolWanted[bits[0].trim()] = parseInt(bits[1], 10);
+            }
+          });
+        }
+      }
+    }
+    if (Object.prototype.hasOwnProperty.call(poolWanted, id)) {
+      return poolWanted[id];
+    }
+    return Object.prototype.hasOwnProperty.call(poolWanted, "*")
+      ? poolWanted["*"] : null;
+  }
+
+  var poolWanted = null;
+
+  function variantOf(st) {
+    var list = poolOf(st);
+    var id = st && st.id;
+    if (!list || !id) return null;
+    if (!Object.prototype.hasOwnProperty.call(poolPicks, id)) {
+      var forced = poolForced(id);
+      poolPicks[id] = (forced === null || forced < 0 || forced >= list.length)
+        ? Math.floor(Math.random() * list.length)
+        : forced;
+    }
+    return list[poolPicks[id]] || list[0];
+  }
+
+  // The pair one variant names, out of the step's own list.
+  function variantPair(st, variant) {
+    var want = variant && variant.pair;
+    var pairs = (st && st.pairs) || [];
+    for (var i = 0; want && i < pairs.length; i++) {
+      if (pairs[i].id === want) return pairs[i];
+    }
+    return null;
+  }
+
   function pairsOf(st) {
     if (!st) return [];
+    var pair = variantPair(st, variantOf(st));
+    if (pair) return [pair];
     if (st.pairs && st.pairs.length) return st.pairs;
     if (st.images && st.images.length >= 2) {
       return [{ id: "p1", images: st.images }];
     }
     return [];
+  }
+
+  // The screen anchored before a pooled step shows that step's chosen
+  // version. One place answers it, and everything that reads an interstitial
+  // — the open, the preload a step ahead, the tile the result strip stands in
+  // for a round — goes through here rather than reading `entry.flash` raw.
+  //
+  // A shallow copy: the entry in the config is shared by every run in the tab
+  // and must not be rewritten by one of them.
+  function variantEntry(entry) {
+    if (!entry) return entry;
+    var variant = variantOf(stepAt(entry.after_step));
+    if (!variant || (!variant.flash && !variant.reveal)) return entry;
+    var out = {};
+    for (var key in entry) {
+      if (Object.prototype.hasOwnProperty.call(entry, key)) {
+        out[key] = entry[key];
+      }
+    }
+    if (variant.flash) out.flash = variant.flash;
+    if (variant.reveal) out.reveal = variant.reveal;
+    return out;
   }
 
   // A step shows two images side by side, four in a grid, six in three rows
@@ -1382,7 +1495,12 @@
   // than in the config's own list: a step deals shuffled, and an id that is
   // not in this run's draw is an id nobody could have tapped either.
   function timeoutPick(st) {
-    var want = st && st.timeout_pick;
+    // A step with versions of itself names the card per version: the clock
+    // has to press a card that is on the screen, and the miss it presses
+    // belongs to the version being played.
+    var variant = variantOf(st);
+    var want = (variant && variant.timeout_pick)
+      || (st && st.timeout_pick);
     if (!want) return null;
     for (var i = 0; i < pair.length; i++) {
       if (pair[i].id === want) return pair[i];
@@ -1725,8 +1843,8 @@
       if (entry && entry.after_step === completed && !midSeen[completed]) {
         // Personalised first, so the token check below is run against the
         // sentence that will actually be shown rather than the one it
-        // replaced.
-        var shown = personalised(entry);
+        // replaced — and on the version of the screen this run is playing.
+        var shown = personalised(variantEntry(entry));
         return canFill(shown) ? shown : null;
       }
     }
@@ -1958,22 +2076,53 @@
   // `ctx.tile` rather than keeping a second copy that agrees today.
   function stepTile(index, stepId, item, late) {
     if (late && stepId && late.indexOf(stepId) !== -1) return { img: null };
-    return { img: openFrame(index) || (item && item.img) || null };
+    return { img: openFrame(index, item) || (item && item.img) || null };
   }
 
   // The frame that stands for a step, or null to draw the tapped card. Read
   // off the interstitial anchored on the step before this one, and the slot
   // that entry's reveal says was open.
-  function openFrame(index) {
+  //
+  // Where the step has versions of itself, the one that matters is the one
+  // the reader actually played — and on the paid page, opened a week later
+  // from a link, this tab never ran the walk at all. So the version is found
+  // from the card they tapped rather than from the run: a card belongs to
+  // exactly one version, which makes the tapped id the record of which one
+  // was played without anything having to store it.
+  function openFrame(index, item) {
     var list = (cfg && cfg.interstitials) || [];
     for (var i = 0; i < list.length; i++) {
-      var entry = list[i];
-      if (!entry || entry.after_step !== index) continue;
+      var raw = list[i];
+      if (!raw || raw.after_step !== index) continue;
+      var entry = playedEntry(raw, item);
       var open = entry.reveal && entry.reveal.open_slot;
       var frames = (entry.flash && entry.flash.images) || [];
       if (typeof open === "number" && frames[open]) return frames[open].img;
     }
     return null;
+  }
+
+  function playedEntry(entry, item) {
+    var st = stepAt(entry.after_step);
+    var list = poolOf(st);
+    var id = item && item.id;
+    for (var i = 0; list && id && i < list.length; i++) {
+      var pair = variantPair(st, list[i]);
+      var cards = (pair && pair.images) || [];
+      for (var k = 0; k < cards.length; k++) {
+        if (cards[k].id !== id) continue;
+        var out = {};
+        for (var key in entry) {
+          if (Object.prototype.hasOwnProperty.call(entry, key)) {
+            out[key] = entry[key];
+          }
+        }
+        if (list[i].flash) out.flash = list[i].flash;
+        if (list[i].reveal) out.reveal = list[i].reveal;
+        return out;
+      }
+    }
+    return variantEntry(entry);
   }
 
   // Which steps the clock answered, for the rule above. The same list the
@@ -2172,7 +2321,7 @@
     for (var i = 0; i < list.length; i++) {
       var entry = list[i];
       if (entry && entry.after_step === completed && isFlash(entry)) {
-        return entry;
+        return variantEntry(entry);
       }
     }
     return null;
