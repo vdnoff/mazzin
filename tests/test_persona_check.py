@@ -1215,7 +1215,15 @@ check("  and not from the delivered page",
 # still declares none, and that is the claim worth keeping: a funnel gets
 # variants by asking for them, and the list of funnels that asked is spelled
 # out here so that growing it is a decision somebody makes rather than a drift.
-VARIANT_FUNNELS = {"zodiac30"}
+# FORCED TEST EDIT. /zodiac-bg asked for them: a 50/50 split between the
+# minimal arm it has been serving and a second paywall layout. The claim
+# this list makes is unchanged — a funnel gets variants by asking, and
+# growing the list is a decision somebody makes rather than a drift.
+VARIANT_FUNNELS = {"zodiac30", "zodiac-bg",
+                   # A twin is its source with three fields changed, so
+                   # it carries the arms too — which is the point: the
+                   # sandbox walks the same split the live funnel does.
+                   "zodiac-bg-test"}
 check("only the funnel that asked for them has variants",
       set(s for s in NEIGHBOUR_SLUGS
           if json.load(open(os.path.join(ROOT, "funnels", s + ".json"),

@@ -3418,9 +3418,59 @@
       "saves_head": "От какво да се откажеш",
       "scale_aria": "от {left} към {right} — {at} от 100 към {right}",
       "price_regular_aria": "Редовна цена {price}"
+    },
+    "boxes": {
+      "hero_step": "bond",
+      "head": "Твоят космичен профил — сглобен от 18-те ти докосвания",
+      "sub": "Ти си «{subtype}». Пълната карта е вътре.",
+      "locked": "Заключено",
+      "hero_kicker": "ЛЮБОВ И СЪВМЕСТИМОСТ",
+      "hero_line": "{works} или {avoid} — за всеки знак, на първата страница.",
+      "boxes": [
+        {
+          "id": "palette",
+          "icon": "palette",
+          "title": "Палитра на силата",
+          "sub": "Цветове и талисмани"
+        },
+        {
+          "id": "mistakes",
+          "icon": "eye",
+          "title": "5 скрити сили",
+          "sub": "И 2 слепи петна"
+        },
+        {
+          "id": "dna",
+          "icon": "map",
+          "title": "Космичният план",
+          "sub": "Кариера и пари"
+        },
+        {
+          "id": "shopping",
+          "icon": "calendar",
+          "title": "Следващите 12 месеца",
+          "sub": "{range}"
+        }
+      ]
     }
   },
   "result_template": "minimal",
+  "paywall_variants": [
+    {
+      "id": "minimal",
+      "enabled": true,
+      "weight": 1,
+      "name": "The reading first",
+      "template": "minimal"
+    },
+    {
+      "id": "boxes",
+      "enabled": true,
+      "weight": 1,
+      "name": "The chapters first",
+      "template": "boxes"
+    }
+  ],
   "sale": {
     "active": true,
     "price_cents": 199,
