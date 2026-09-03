@@ -1395,9 +1395,16 @@ check("the element tiles are gone from the minimal branch",
 check("  but balance still exists for the funnels that draw it",
       "function balance(ctx, copy, elements)" in minimal_js
       and "list.appendChild(balance(ctx, copy, elements));" in minimal_js)
+# FORCED TEST EDIT. There are two lean arms now — minimal, and a second one
+# beside it that renders this same top and swaps only the block between the
+# rarity card and the offer — so the class is set for both and the comparison
+# is made once into `lean`. Every rule below still hangs off `is-minimal`, and
+# zodiac30 only ever reaches it through `template === "minimal"`: this funnel
+# declares no other arm, which the block above already asserts.
 check("the arm is named on the container",
-      'root.classList.toggle("is-minimal", template === "minimal")'
-      in minimal_js)
+      'var lean = template === "minimal" || template === "boxes";'
+      in minimal_js
+      and 'root.classList.toggle("is-minimal", lean)' in minimal_js)
 check("  and every facelift rule hangs off it",
       all(rule.strip().startswith(".result-module.is-minimal")
           for rule in re.findall(r"^[^\s@}/][^{}]*(?=\{)",
