@@ -567,3 +567,6 @@ bottom.
 
 ## 2026-09-03 — claude/brain-funnel-11
 - brain v11: variety + difficulty + new brain + offer redesign
+
+## 2026-09-03 — claude/brain-funnel-12
+- brain v12: spatial fixes + report alignment
