@@ -935,9 +935,13 @@ echo_fn = re.search(r"function setEcho\([^)]*\)\s*\{(.*?)\n  \}",
                     engine, re.S).group(1)
 check("the row is drawn from the images this run actually tapped",
       "function echoPicks(" in engine
-      and "imageById(chosenOnStep(want[i]))" in engine)
+      and "imageById(chosenOnStep(id))" in engine)
+# The row hands its cells to the same tile rule the result strip reads, which
+# is where the two substitutions one funnel makes now live. Neither can reach
+# this one: a stand-in needs `reveal.open_slot` in the config and a cross needs
+# a step the clock answered, and this funnel has no clock and names no slot.
 check("  a step with no answer is dropped, never drawn as a gap",
-      "if (item && item.img) out.push(item);" in engine)
+      "if (!item || !item.img) continue;" in engine)
 check("  and the row is only built for a screen that advances itself",
       "var picks = auto ? echoPicks(entry) : [];" in echo_fn)
 check("the stagger is an animation delay, not eight live timers",

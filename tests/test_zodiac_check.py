@@ -1643,10 +1643,14 @@ check("engine.js draws a permanent label only when a funnel asks for one",
       and 'cfg.swipe.label_mode' in engine)
 check("  and the flag is absent by default rather than off",
       'label_mode) || ""' in engine)
-check("  badge is the only mode there is",
+# One other mode reads the flag now — `check`, which draws no label at all and
+# answers a tap with a mark instead. What matters here is unchanged: `badge` is
+# still the only value that puts a word on a card, and it is still read once.
+check("  badge is the only mode that draws a label",
       "labelMode() ===" in engine
-      and len(re.findall(r'labelMode\(\) === "(\w+)"', engine)) == 1
-      and re.findall(r'labelMode\(\) === "(\w+)"', engine) == ["badge"],
+      and re.findall(r'labelMode\(\) === "(\w+)"', engine).count("badge") == 1
+      and set(re.findall(r'labelMode\(\) === "(\w+)"', engine))
+      <= {"badge", "check"},
       str(re.findall(r'labelMode\(\) === "(\w+)"', engine)))
 check("mazzin.css styles that label under its own class",
       ".card-name {" in css and ".cards.is-grid12 .card-name {" in css)

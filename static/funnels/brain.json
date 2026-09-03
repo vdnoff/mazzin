@@ -33,7 +33,7 @@
     "subtext_accent": "No sign-up.",
     "hint": "Tap fast. Trust your gut.",
     "timeup_line": "Time's up",
-    "label_mode": "badge",
+    "label_mode": "check",
     "round_pill": true,
     "analyzing_fade_to": "#F4F1EA",
     "steps": [
@@ -97,8 +97,7 @@
               }
             ]
           }
-        ],
-        "label_mode": "none"
+        ]
       },
       {
         "id": "mood",
@@ -188,8 +187,7 @@
               }
             ]
           }
-        ],
-        "label_mode": "on_tap"
+        ]
       },
       {
         "id": "mem2",
@@ -234,8 +232,7 @@
               }
             ]
           }
-        ],
-        "label_mode": "on_tap"
+        ]
       },
       {
         "id": "mem3",
@@ -280,8 +277,7 @@
               }
             ]
           }
-        ],
-        "label_mode": "on_tap"
+        ]
       },
       {
         "id": "mem4",
@@ -342,8 +338,7 @@
               }
             ]
           }
-        ],
-        "label_mode": "on_tap"
+        ]
       },
       {
         "id": "spa1",
@@ -405,8 +400,7 @@
               }
             ]
           }
-        ],
-        "label_mode": "none"
+        ]
       },
       {
         "id": "spa2",
@@ -468,8 +462,7 @@
               }
             ]
           }
-        ],
-        "label_mode": "none"
+        ]
       },
       {
         "id": "spa3",
@@ -531,8 +524,7 @@
               }
             ]
           }
-        ],
-        "label_mode": "none"
+        ]
       },
       {
         "id": "spa4",
@@ -594,8 +586,7 @@
               }
             ]
           }
-        ],
-        "label_mode": "none"
+        ]
       },
       {
         "id": "chg1",
@@ -842,8 +833,7 @@
           }
         ],
         "timer_ms": 5000,
-        "timeout_pick": "odd_s1",
-        "label_mode": "none"
+        "timeout_pick": "odd_s1"
       },
       {
         "id": "ink",
@@ -895,7 +885,7 @@
       {
         "id": "next",
         "kicker": "ROUND 4 · FOCUS · 3/4",
-        "question": "Which shape comes next?",
+        "question": "Which dial comes next?",
         "format": "grid4",
         "pairs": [
           {
@@ -903,32 +893,32 @@
             "images": [
               {
                 "id": "next_a1",
-                "img": "/static/galleries/brain/nxt_a1.webp",
-                "label": "1",
+                "img": "/static/galleries/brain/dial_r0_d3.webp",
+                "label": "Notch at the top, dot at the left",
                 "tags": [
                   "foc_hit"
                 ]
               },
               {
                 "id": "next_a2",
-                "img": "/static/galleries/brain/nxt_a2.webp",
-                "label": "2",
+                "img": "/static/galleries/brain/dial_r0_d1.webp",
+                "label": "Notch at the top, dot at the right",
                 "tags": [
                   "foc_miss"
                 ]
               },
               {
                 "id": "next_a3",
-                "img": "/static/galleries/brain/nxt_a3.webp",
-                "label": "3",
+                "img": "/static/galleries/brain/dial_r240_d3.webp",
+                "label": "Notch at the lower left, dot at the left",
                 "tags": [
                   "foc_miss"
                 ]
               },
               {
                 "id": "next_a4",
-                "img": "/static/galleries/brain/nxt_a4.webp",
-                "label": "4",
+                "img": "/static/galleries/brain/dial_r0_d0.webp",
+                "label": "Notch at the top, dot at the top",
                 "tags": [
                   "foc_miss"
                 ]
@@ -985,8 +975,7 @@
           }
         ],
         "timer_ms": 4000,
-        "timeout_pick": "count_9",
-        "label_mode": "on_tap"
+        "timeout_pick": "count_9"
       }
     ]
   },
@@ -1511,7 +1500,7 @@
       "after_step": 16,
       "template": "flash",
       "kicker": "ROUND 4 · FOCUS · 3/4",
-      "line": "Remember the pattern:",
+      "line": "Remember the dial:",
       "auto_advance_ms": 5000,
       "prepare": {
         "line": "Prepare to memorize",
@@ -1521,16 +1510,16 @@
         "format": "grid4",
         "images": [
           {
-            "img": "/static/galleries/brain/nxt_q1.webp",
-            "label": "1"
+            "img": "/static/galleries/brain/dial_r0_d0.webp",
+            "label": "Notch at the top, dot at the top"
           },
           {
-            "img": "/static/galleries/brain/nxt_q2.webp",
-            "label": "2"
+            "img": "/static/galleries/brain/dial_r120_d1.webp",
+            "label": "Notch at the lower right, dot at the right"
           },
           {
-            "img": "/static/galleries/brain/nxt_q3.webp",
-            "label": "3"
+            "img": "/static/galleries/brain/dial_r240_d2.webp",
+            "label": "Notch at the lower left, dot at the bottom"
           },
           {
             "img": "/static/galleries/brain/nxt_qm.webp",
@@ -1674,8 +1663,8 @@
       ]
     },
     {
-      "id": "nxt_a1",
-      "img": "/static/galleries/brain/nxt_a1.webp",
+      "id": "dial_r0_d3",
+      "img": "/static/galleries/brain/dial_r0_d3.webp",
       "tags": [
         "foc_hit"
       ]
@@ -1817,11 +1806,11 @@
         ]
       },
       {
-        "id": "nxt_a1",
-        "label": "The next shape",
+        "id": "dial_r0_d3",
+        "label": "The dial that carried on",
         "spec": "Focus — the round that goes straight at it",
-        "image": "nxt_a1",
-        "img": "/static/galleries/brain/nxt_a1.webp",
+        "image": "dial_r0_d3",
+        "img": "/static/galleries/brain/dial_r0_d3.webp",
         "tags": [
           "foc_hit"
         ]

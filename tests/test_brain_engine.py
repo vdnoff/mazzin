@@ -140,8 +140,10 @@ check("the row carries the swipe screen's own classes",
       '"mid-flash-grid cards is-" + flashFormat(entry)' in set_fn)
 check("  which the stylesheet already lays out",
       ".cards.is-grid4 {" in CSS and ".cards.is-grid6 {" in CSS)
+# v8 adds the second half of the condition: a walk that shows no words at all
+# does not show one here either. See the check on it further down.
 check("labels are drawn only when the frame carries one",
-      "if (frame.label) {" in set_fn
+      'if (frame.label && labels !== "check") {' in set_fn
       and 'elm("span", "mid-flash-label", frame.label)' in set_fn)
 
 print("\n--- the frames are warm before the screen paints ---")
@@ -426,7 +428,7 @@ check("on_tap draws the badge after the tap, on the card that was chosen",
       and 'elm("span", "card-name is-late", item.label)' in body("revealLabel"))
 check("  and the chip that would say the same word stands down",
       re.search(r'if \(labels === "on_tap"\) \{\s*revealLabel\(item, card\);'
-                r'\s*\} else \{', body("choose"), re.S) is not None)
+                r'\s*\} else if', body("choose"), re.S) is not None)
 check("  the mode is read before the counter moves",
       body("choose").index("var labels = labelMode();")
       < body("choose").index("step += 1;"))
@@ -464,8 +466,8 @@ check("the auto-advance mode's keyframes are still exactly the five it had",
       str(sorted(re.findall(r"@keyframes (mid-[\w-]+)", CSS))))
 check("  and every keyframe these branches added is in their own family",
       sorted(re.findall(r"@keyframes (mz-[\w-]+)", CSS))
-      == ["mz-count-in", "mz-label-in", "mz-lid", "mz-pill-pulse",
-          "mz-timeup-in"],
+      == ["mz-check-pop", "mz-count-in", "mz-label-in", "mz-lid",
+          "mz-pill-pulse", "mz-timeup-in"],
       str(sorted(re.findall(r"@keyframes (mz-[\w-]+)", CSS))))
 
 print("\n--- 2. the domain axes ---")
@@ -790,7 +792,11 @@ check("  and the funnel that does names every one of them",
       [e for e in own["interstitials"] if e.get("prepare")]
       and [e for e in own["interstitials"] if e.get("reveal")]
       and [s for s in own["swipe"]["steps"] if s.get("timer_ms")]
-      and [s for s in own["swipe"]["steps"] if s.get("label_mode")])
+      # v8: the labels are one answer for the whole walk now — no words on any
+      # card — so it is named once on the funnel rather than eleven times on
+      # the steps.
+      and own["swipe"].get("label_mode") == "check"
+      and not [s for s in own["swipe"]["steps"] if s.get("label_mode")])
 check("no funnel but the memory game asks for reaction times",
       [n for n, c in CONFIGS.items() if c.get("track_timing")] == [OWNER],
       str([n for n, c in CONFIGS.items() if c.get("track_timing")]))
@@ -1013,6 +1019,126 @@ check("  and the memorise screens are spaced the same way",
 check("no other funnel names this theme",
       [n for n, c in CONFIGS.items() if c.get("theme") == "brain"] == [OWNER],
       str([n for n, c in CONFIGS.items() if c.get("theme") == "brain"]))
+
+print("\n--- v8: a tap answered with a mark rather than a word ---")
+choose_fn = body("choose")
+mark_fn = body("markChosen")
+check("the mode is one more branch on the same read, not a new read",
+      'labels === "check"' in choose_fn
+      and "markChosen(card);" in choose_fn
+      and ENGINE.count('labelMode() === "check"') == 1)
+check("  so a funnel on any other mode falls through exactly as it did",
+      choose_fn.index('labels === "on_tap"')
+      < choose_fn.index('labels === "check"')
+      and "showReaction(item.label" in choose_fn)
+check("the mark is drawn, not typed",
+      mark_fn.count('mark.appendChild(elm("i"));') == 2
+      and "\u2713" not in mark_fn and "&check" not in mark_fn)
+check("  once per card, and announced to nobody",
+      'card.querySelector(".card-check")' in mark_fn
+      and 'mark.setAttribute("aria-hidden", "true");' in mark_fn)
+check("a run the clock answered gets no mark at all",
+      "if (!card || card.querySelector" in mark_fn
+      and "choose(item, null);" in body("timeOut")
+      and "if (card) {" in choose_fn
+      and choose_fn.index("if (card) {")
+      < choose_fn.index("markChosen(card);"))
+check("  which is the same guard every other confirmation is behind",
+      choose_fn.index("if (card) {") < choose_fn.index("revealLabel(item"))
+check("it is a circle over the middle of the art",
+      re.search(r"\.card-check \{[^}]*top: 50%;", CSS, re.S) is not None
+      and re.search(r"\.card-check \{[^}]*left: 50%;", CSS, re.S) is not None
+      and re.search(r"\.card-check \{[^}]*border-radius: 50%;", CSS, re.S)
+      is not None)
+check("  solid in the game's blue, 44px across",
+      re.search(r"\.card-check \{[^}]*background: #378ADD;", CSS, re.S)
+      is not None
+      and re.search(r"\.card-check \{[^}]*width: 44px;", CSS, re.S)
+      is not None
+      and re.search(r"\.card-check \{[^}]*height: 44px;", CSS, re.S)
+      is not None)
+check("  with the tick's two strokes in white",
+      re.search(r"\.card-check i \{[^}]*background: #fff;", CSS, re.S)
+      is not None
+      and ".card-check i:first-child {" in CSS
+      and ".card-check i:last-child {" in CSS)
+pop = re.search(r"@keyframes mz-check-pop \{(.*?)\n\}", CSS, re.S)
+check("it pops in by scale, over 200ms",
+      pop is not None and "transform: scale(0)" in pop.group(1)
+      and "scale(1.12)" in pop.group(1)
+      and "animation: mz-check-pop 200ms" in CSS)
+check("  and opting out of motion places it rather than plays it",
+      re.search(r"@media \(prefers-reduced-motion: reduce\) \{\s*"
+                r"\.card-check \{ animation: none;", CSS, re.S) is not None)
+check("one confirmation per tap: the corner badge stands down",
+      ".cards.is-check .check { display: none; }" in CSS
+      and 'el.cards.classList.toggle("is-check", labelMode() === "check");'
+      in body("renderStep"))
+check("a memorise screen draws no caption under its frames either",
+      'if (frame.label && labels !== "check") {' in body("setFlash")
+      and "var labels = labelMode();" in body("setFlash"))
+check("  and the label is still there for the reader who cannot see them",
+      all(f.get("label") for e in CONFIGS[OWNER]["interstitials"]
+          if e["after_step"] == 16
+          for f in e["flash"]["images"]))
+check("no other funnel asks for the mode",
+      [n for n, c in CONFIGS.items()
+       if (c.get("swipe") or {}).get("label_mode") == "check"] == [OWNER],
+      str([n for n, c in CONFIGS.items()
+           if (c.get("swipe") or {}).get("label_mode") == "check"]))
+check("  and none of them names it on a step either",
+      not [n for n, c in CONFIGS.items()
+           for st in (c.get("swipe") or {}).get("steps", [])
+           if st.get("label_mode") == "check"])
+
+print("\n--- v8: one tile rule, three places that draw tiles ---")
+MODULE = open(os.path.join(ROOT, "static/js/result_brain.js"),
+              encoding="utf-8").read()
+tile_fn = body("stepTile")
+open_fn = body("openFrame")
+check("the rule is one function",
+      "function stepTile(index, stepId, item, late)" in ENGINE)
+check("  a round the clock answered has no picture",
+      'if (late && stepId && late.indexOf(stepId) !== -1) return { img: null };'
+      in tile_fn)
+check("  a round played on identical frames shows the one that was open",
+      "openFrame(index) || (item && item.img)" in tile_fn
+      and "entry.reveal && entry.reveal.open_slot" in open_fn
+      and "frames[open].img" in open_fn)
+check("  and everything else is the card that was tapped",
+      "(item && item.img) || null" in tile_fn)
+check("both gates are config, so no other funnel's rows move",
+      'entry.after_step !== index' in open_fn
+      and "return timedOutSteps;" in body("lateSteps"))
+check("the row between rounds reads it",
+      "out.push(stepTile(index, id, item, late));" in body("echoPicks"))
+check("  and so does the grid on the analysing screen",
+      "out.push(stepTile(i, st && st.id, item, late));" in body("gridPicks"))
+check("  and both draw a tile through one filler",
+      "fillTile(cell, tile);" in body("setEcho")
+      and "fillTile(cell, tile);" in body("startGrid"))
+fill_fn = body("fillTile")
+check("the cross is the same mark the strip and the cover draw",
+      'cell.classList.add("is-out");' in fill_fn
+      and fill_fn.count('mark.appendChild(elm("i"));') == 2
+      and ".tile-out i:first-child { transform: rotate(45deg); }" in CSS
+      and ".tile-out i:last-child { transform: rotate(-45deg); }" in CSS)
+check("  and no cross node exists on a run with no clock in it",
+      "if (!tile || !tile.img) {" in fill_fn)
+check("the result module reads the same rule off the context",
+      "tile: stepTile," in ENGINE
+      and ENGINE.count("tile: stepTile,") == 2
+      and 'typeof ctx.tile === "function"' in MODULE)
+check("  rather than keeping a second copy of it",
+      "function standIn(" not in MODULE
+      and "after_step !== index" not in MODULE)
+check("no other funnel names a slot to stand in for a round",
+      [n for n, c in CONFIGS.items()
+       for e in (c.get("interstitials") or [])
+       if (e.get("reveal") or {}).get("open_slot") is not None] == [OWNER] * 4,
+      str([n for n, c in CONFIGS.items()
+           for e in (c.get("interstitials") or [])
+           if (e.get("reveal") or {}).get("open_slot") is not None]))
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for f in fails:

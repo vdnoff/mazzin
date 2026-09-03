@@ -491,20 +491,19 @@
   // And a round the clock answered is not a round anybody played. It gets a
   // cross rather than a picture of a card nobody chose.
 
-  // Which frame stands for one step, or null to draw the tapped card. Read off
-  // the config's own interstitials: the entry anchored on the step before this
-  // one, and the slot its reveal says was open.
-  function standIn(cfg, index) {
-    var list = (cfg && cfg.interstitials) || [];
-    for (var i = 0; i < list.length; i++) {
-      var entry = list[i];
-      if (!entry || entry.after_step !== index) continue;
-      var rule = entry.reveal;
-      var frames = (entry.flash && entry.flash.images) || [];
-      var open = rule && rule.open_slot;
-      if (typeof open === "number" && frames[open]) return frames[open].img;
+  // Both of those substitutions are the engine's rule, not this page's. It
+  // draws the same tiles between rounds and on the analysing screen, and two
+  // copies of "what does this round show" would be two answers the moment one
+  // of them was edited. `ctx.tile` is that rule; this reads it.
+  //
+  // The fallback is for an engine.js cached from before it shipped: a tile of
+  // the card that was tapped, which is what this strip drew before the
+  // stand-ins were added and is never wrong, only less interesting.
+  function tileOf(ctx, index, stepId, item, late) {
+    if (typeof ctx.tile === "function") {
+      return ctx.tile(index, stepId, item, late);
     }
-    return null;
+    return { img: (item && item.img) || null };
   }
 
   function tapsGrid(cells) {
@@ -554,11 +553,7 @@
     steps.forEach(function (step, index) {
       var pick = ctx.picks[step.id];
       if (!pick || !pick.img) return;
-      if (late.indexOf(step.id) !== -1) {
-        out.push({ img: null });
-        return;
-      }
-      out.push({ img: standIn(ctx.cfg, index) || pick.img });
+      out.push(tileOf(ctx, index, step.id, pick, late));
     });
     return tapsBlock(copy, out);
   }
@@ -575,11 +570,7 @@
       var pick = ctx.images[id];
       if (!pick || !pick.img) return;
       var step = steps[index];
-      if (step && late.indexOf(step.id) !== -1) {
-        out.push({ img: null });
-        return;
-      }
-      out.push({ img: standIn(ctx.cfg, index) || pick.img });
+      out.push(tileOf(ctx, index, step && step.id, pick, late));
     });
     return tapsBlock(copy, out);
   }
