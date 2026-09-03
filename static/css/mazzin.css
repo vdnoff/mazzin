@@ -4985,17 +4985,32 @@ body.theme-brain .intro-cta {
    margin on the headline takes the space above the rest of the screen, and
    the empty item at the end takes the space below it. */
 
-/* The step screen's own copy — the one that holds the space. Named by its id
-   rather than by its classes, because the pill that TRAVELS carries the same
-   classes and must keep the zero margin the layer gives it: spaced twice, it
-   would be drawn 24px below the slot it is supposed to be sitting on. */
-body.theme-brain #step-kicker.is-pill { margin-top: 24px; }
+/* v10 makes the air symmetric rather than fixed. The pill's slot is the whole
+   band between the progress bar and the first thing under it, and the pill
+   sits in the middle of that band — equal air above and below — whether the
+   band is fifty pixels on a step or three hundred on a screen between rounds.
+
+   Which is a layout, not a number. On a step the band is the pill's own two
+   margins, so ONE value states both halves and they cannot drift apart. On a
+   screen between rounds the band is whatever is left over, so the halves are
+   auto margins and the browser divides it: an auto above the pill, an auto
+   below it, and one more at the end of the column for the space under the
+   content. Three equal shares, and the pill is centred in the first two by
+   construction at any screen height. */
+body.theme-brain #step-kicker.is-pill { margin: 25px auto; }
 
 body.theme-brain #screen-interstitial .mid-body { display: contents; }
 
-body.theme-brain #screen-interstitial .mid-kicker { margin: 24px 0 0; }
-
-body.theme-brain #screen-interstitial .mid-line { margin-top: auto; }
+/* A flex row rather than a line of text, so the two halves of the band really
+   are equal: an inline pill sits on its line's BASELINE, which leaves the
+   descender's worth of space under it and none above, and the air the reader
+   sees comes out fourteen pixels lopsided. As a flex item it fills the box
+   it is centred in and the measurement matches the intent. */
+body.theme-brain #screen-interstitial .mid-kicker.is-pill-host {
+  display: flex;
+  justify-content: center;
+  margin: auto 0;
+}
 
 body.theme-brain #screen-interstitial.is-active::after {
   content: "";
@@ -5007,13 +5022,21 @@ body.theme-brain #screen-interstitial.is-active::after {
    other because each was spaced against what it used to sit next to. Stated
    once, here, as one rhythm: 26 under the pill, 18 under the question, 16
    under the clock. */
-body.theme-brain .caption { margin: 26px 0 18px; }
+/* The pill's own bottom margin is the air under it now, so the question adds
+   none of its own on top. The rest of the rhythm is unchanged: 18 under the
+   question, 16 under the clock. */
+body.theme-brain .caption { margin: 0 0 18px; }
 
 body.theme-brain .step.is-timed .mz-timer { margin: 0 0 16px; }
 
-/* The same rhythm on the memorise screens, so that moving between a step and
-   a flash is the pill moving and nothing else. */
-body.theme-brain .mid.is-flash .mid-line { margin-top: 26px; }
+/* The headline adds no top margin of its own: the air over it is the pill's
+   half of the band, and a fixed twelve pixels on top of that is twelve pixels
+   the auto margins cannot see and cannot balance.
+
+   This replaces a v7 rule that aimed at `.mid.is-flash .mid-line` — a
+   headline inside the flash host, which is a sibling of the headline rather
+   than its parent, so that rule matched nothing on any screen. */
+body.theme-brain #screen-interstitial .mid-line { margin-top: 0; }
 
 body.theme-brain .mid.is-flash .mz-timer { margin: 18px auto 16px; }
 

@@ -838,7 +838,11 @@ print("\n--- v7: one pill, and it follows the reader ---")
 # and hides it, and that copy is only ever a box to move to — which is why it
 # is hidden with opacity and not with `display`, and why the travelling node
 # lives outside both screens rather than being moved between them.
-move_fn = body("movePill")
+# v10. `movePill` is a request now, not the act: everything that wants the
+# pill moved goes through one rAF-debounced aimer, and `placePill` is the one
+# thing that ever measures or writes.
+move_fn = body("placePill")
+aim_fn = body("aimPill")
 node_fn = body("pillNode")
 check("the travelling pill is built once, outside every screen",
       "if (el.pill) return el.pill;" in node_fn
@@ -850,13 +854,24 @@ check("  as two nodes, because a glide and a beat are two transforms",
 check("  and read out by nobody: the slot under it is the one in the order",
       'layer.setAttribute("aria-hidden", "true");' in node_fn)
 check("nothing here can reach a funnel that did not ask for a pill",
-      "if (!roundPill() || !pillText) return;" in move_fn)
+      "if (!roundPill() || !pillText) return;" in move_fn
+      and "if (!roundPill()) return;" in aim_fn)
+check("every request for a move is one measurement on one frame",
+      "if (pillAim || !window.requestAnimationFrame) {" in aim_fn
+      and "pillAim = requestAnimationFrame(function () {" in aim_fn
+      and "placePill();" in aim_fn
+      and "aimPill(instant);" in body("movePill"))
+check("  and nothing else in the file measures or writes the transform",
+      ENGINE.count("el.pillFloat.style.transform =") == 1)
 check("it moves to whichever screen is up, and only to a real box",
       '".screen.is-active .step-kicker.is-slot"' in body("pillSlot")
       and "node && node.offsetWidth ? node : null" in body("pillSlot"))
 check("  by transform alone, so nothing on the page moves with it",
       'el.pillFloat.style.transform = "translate("' in move_fn
       and "style.width" not in move_fn and "style.left" not in move_fn)
+check("  and it comes to rest on whole pixels",
+      "var x = Math.round(box.left - base.left);" in move_fn
+      and "var y = Math.round(box.top - base.top);" in move_fn)
 check("  over 450ms, on a curve rather than a linear ramp",
       "var PILL_GLIDE_MS = 450;" in ENGINE
       and '"transform " + PILL_GLIDE_MS + "ms " + PILL_EASE' in move_fn
@@ -867,9 +882,70 @@ check("  and it is promoted for the length of the move, not for the walk",
       and 'style.willChange = "auto";' in body("liftPill")
       and "will-change: transform;" not in
       re.search(r"\.pill-float \{(.*?)\n\}", CSS, re.S).group(1))
+
+print("\n--- v10: it never glides in from nowhere ---")
+ground_fn = body("pillGrounded")
+far_fn = body("pillFar")
+check("a glide needs somewhere honest to start from",
+      "var moved = !snap && !fresh && pillGrounded() && !still "
+      "&& !pillFar(x, y);" in move_fn)
+check("  which means a position this run measured, on a layer that is up",
+      "if (!pillPos || !el.pillLayer || el.pillLayer.hidden) return false;"
+      in ground_fn)
+check("  and a box the reader can actually see",
+      "box.right > 0 && box.bottom > 0" in ground_fn
+      and "box.left < (window.innerWidth || 0)" in ground_fn
+      and "box.top < (window.innerHeight || 0)" in ground_fn)
+check("  so a first appearance and a return are placed, never played",
+      "var fresh = el.pillLayer.hidden;" in move_fn
+      and "pillPos = null;" in body("hidePill"))
+check("a travel longer than the screen could honestly need is placed",
+      "var PILL_MAX_TRAVEL = 0.6;" in ENGINE
+      and "Math.sqrt(w * w + h * h) * PILL_MAX_TRAVEL" in far_fn
+      and "return Math.sqrt(dx * dx + dy * dy) > far;" in far_fn)
+check("a placement is committed before anything can transition it",
+      "void el.pillFloat.offsetWidth;" in move_fn
+      and move_fn.index('style.transform = "translate("')
+      < move_fn.index("void el.pillFloat.offsetWidth;"))
+check("the target is read after the browser has laid the screen out",
+      "requestAnimationFrame" in aim_fn
+      and "getBoundingClientRect" not in aim_fn)
+
+print("\n--- v10: one glide and at most one settle ---")
+quiet_fn = body("quietPill")
+check("a re-aim while the glide is in the air is refused",
+      "if (pillFlight && !snap) return;" in move_fn
+      and "pillFlight = moved;" in move_fn)
+check("  and the end of the glide is what lets the next one through",
+      'carrier.addEventListener("transitionend"' in node_fn
+      and 'ev.propertyName !== "transform"' in node_fn
+      and "pillFlight = false;" in node_fn
+      and "aimPill();" in node_fn)
+check("the screen settling under it is waited for, not polled",
+      "function quietPill(" in ENGINE
+      and "var PILL_QUIET_MS = 250;" in ENGINE
+      and 'screen.addEventListener("animationend", done)' in quiet_fn
+      and "pillQuiet = setTimeout(done, PILL_QUIET_MS);" in quiet_fn)
+check("  and it settles through the same aimer as everything else",
+      "aimPill();" in quiet_fn
+      and "function settlePill(" not in ENGINE
+      and "PILL_SETTLE_FRAMES" not in ENGINE)
+# v10 watches the screen for CHANGES rather than one box for a resize: the
+# block the kicker sits in is `display: contents` on this funnel and so has no
+# box to observe, and what actually moves the slot is a class going on and a
+# grid being appended.
+check("the memorise screen's own phases go through it too",
+      "new MutationObserver(function () { aimPill(); }).observe(mid, {"
+      in node_fn
+      and "childList: true, subtree: true," in node_fn
+      and 'attributeFilter: ["class", "hidden"]' in node_fn)
+check("  and a glide whose end is never reported does not lock it out",
+      "pillLanded = setTimeout(function () {" in body("placePill")
+      and "pillFlight = false;" in body("placePill"))
+check("  and so does a rotation, which places rather than plays",
+      "movePill(true);" in ENGINE and "if (instant) pillSnap = true;" in aim_fn)
 check("two screens that put it in the same place swap the text and nothing else",
-      "Math.abs(pillPos.x - x) <= 1 && Math.abs(pillPos.y - y) <= 1"
-      in move_fn
+      "var still = !!pillPos && pillPos.x === x && pillPos.y === y;" in move_fn
       and "el.pillFloat.style.transition = moved" in move_fn
       and re.search(r"el\.pillFloat\.style\.transition = moved.*?: \"none\";",
                     move_fn, re.S) is not None)
@@ -885,26 +961,12 @@ check("the move happens after the screen it belongs to is on",
       < body("advance").index("movePill();"))
 check("  and a screen with no pill is left alone rather than emptied",
       "if (!slot) return;" in move_fn)
-check("a pill arriving is placed rather than played",
-      "var moved = !instant && !!pillPos && !still;" in move_fn)
+# v10 states the same three rules where they now live: see the "never glides
+# in from nowhere" and "one glide and at most one settle" blocks below.
 check("  and the second call a step change makes is a no-op",
       "if (still && pillText === pillShown) return;" in move_fn)
-settle_fn = body("settlePill")
-check("where the slot ends up is re-read over the frames after a move",
-      "settlePill(PILL_SETTLE_FRAMES);" in move_fn
-      and "var PILL_SETTLE_FRAMES = 30;" in ENGINE
-      and "requestAnimationFrame(" in settle_fn)
-check("  and a target that moves mid-glide is re-aimed, never replayed",
-      "style.transform =" in settle_fn
-      and "if (nowMs() >= pillLands) {" in settle_fn)
-check("  a correction after it has landed is eased, never written straight in",
-      '"transform " + PILL_SETTLE_MS + "ms " + PILL_EASE' in settle_fn
-      and "var PILL_SETTLE_MS = 140;" in ENGINE)
-check("  and it stops the moment the pill is away",
-      "if (!el.pillLayer || el.pillLayer.hidden) return;" in settle_fn)
-check("a memorise screen changing shape re-places it too",
-      "new ResizeObserver(function () { movePill(); }).observe(body);"
-      in body("pillNode"))
+check("  and the correction the glide's end allows is a short one",
+      "var PILL_SETTLE_MS = 140;" in ENGINE)
 
 print("\n--- v7: the beat, once a round ---")
 beat_fn = body("beatPill")
@@ -1045,12 +1107,15 @@ check("the clock is in the same family",
           "color: var(--brain-line); }" in CSS)
 check("  and the last two seconds keep their red, which is not decoration",
       not [r for r in theme_rules if "is-warn" in r], str(theme_rules))
+# v10: the air over the question is the pill's own bottom margin now, so the
+# question adds none of its own. What is left of the rhythm is unchanged.
 check("the column has one rhythm rather than four spacings",
-      "body.theme-brain .caption { margin: 26px 0 18px; }" in CSS
+      "body.theme-brain .caption { margin: 0 0 18px; }" in CSS
       and "body.theme-brain .step.is-timed .mz-timer { margin: 0 0 16px; }"
       in CSS)
 check("  and the memorise screens are spaced the same way",
-      "body.theme-brain .mid.is-flash .mid-line { margin-top: 26px; }" in CSS
+      "body.theme-brain #screen-interstitial .mid-line { margin-top: 0; }"
+      in CSS
       and "body.theme-brain .mid.is-flash .mz-timer { margin: 18px auto 16px; }"
       in CSS)
 check("no other funnel names this theme",
@@ -1178,10 +1243,23 @@ check("no other funnel names a slot to stand in for a round",
            if (e.get("reveal") or {}).get("open_slot") is not None]))
 
 print("\n--- v9: the pill sits in one place, on every screen ---")
-check("one distance from the progress bar, and it is 24",
-      "body.theme-brain #step-kicker.is-pill { margin-top: 24px; }" in CSS
-      and "body.theme-brain #screen-interstitial .mid-kicker { margin: 24px 0 0; }"
-      in CSS)
+# v10 replaces the one distance with one rule: the pill is centred in the band
+# between the progress bar and the first thing under it, whatever that band
+# turns out to be. Layout, not pixels — a single value states both halves on a
+# step, and auto margins divide the leftover on a screen between rounds.
+check("the pill is centred in its band, by layout rather than by pixels",
+      "body.theme-brain #step-kicker.is-pill { margin: 25px auto; }" in CSS
+      and re.search(r"body\.theme-brain #screen-interstitial "
+                    r"\.mid-kicker\.is-pill-host \{[^}]*margin: auto 0;",
+                    CSS, re.S) is not None)
+check("  and the host is a flex row, so the halves are not thrown by a "
+      "baseline",
+      re.search(r"body\.theme-brain #screen-interstitial "
+                r"\.mid-kicker\.is-pill-host \{[^}]*display: flex;",
+                CSS, re.S) is not None
+      and re.search(r"body\.theme-brain #screen-interstitial "
+                    r"\.mid-kicker\.is-pill-host \{[^}]*"
+                    r"justify-content: center;", CSS, re.S) is not None)
 check("  which needs the block it is in to stop being a box",
       "body.theme-brain #screen-interstitial .mid-body { display: contents; }"
       in CSS)
@@ -1192,11 +1270,10 @@ check("  and the pill that travels is not spaced a second time",
                and ".step-kicker.is-pill" in r and "#step-kicker" not in r
                and "margin" in re.search(re.escape(r) + r"\s*\{([^}]*)\}",
                                          CSS, re.S).group(1)])
-check("  and everything under it keeps the centring it had",
-      "body.theme-brain #screen-interstitial .mid-line { margin-top: auto; }"
-      in CSS
-      and re.search(r"body\.theme-brain #screen-interstitial\.is-active::after"
-                    r" \{[^}]*margin-top: auto;", CSS, re.S) is not None)
+check("  and the leftover is divided in three: over it, under it, and below",
+      re.search(r"body\.theme-brain #screen-interstitial\.is-active::after"
+                r" \{[^}]*margin-top: auto;", CSS, re.S) is not None
+      and CSS.count("margin: auto 0;") >= 1)
 # The two `.mid-body` rules that are not scoped are the ones that were here
 # before: its own auto margin and the centring the auto-advance mode gives it.
 # What v9 adds to that element is scoped, and it is the only thing that can

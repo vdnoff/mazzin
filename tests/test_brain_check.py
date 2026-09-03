@@ -503,7 +503,7 @@ print("\n--- the brain age, walked ---")
 block = cfg["brain_age"]
 check("the table is the one the module and the report both read",
       set(block) == {"base", "per_miss", "min", "max", "scored", "domains",
-                     "age_mid"}, str(sorted(block)))
+                     "age_mid", "score"}, str(sorted(block)))
 check("  naming all four rounds", sorted(block["domains"]) == sorted(DOMAINS),
       str(sorted(block["domains"])))
 
@@ -595,8 +595,11 @@ for r in range(1, 5):
     check("  %s shuffles %d times at %dms" % (sid, want_n, want_ms),
           len(swaps) == want_n and rule.get("swap_ms") == want_ms,
           "%d swaps at %s" % (len(swaps), rule.get("swap_ms")))
-    check("    the box is open for five seconds, then closes",
-          rule.get("open_ms") == FLASH_MS and rule.get("close_ms") == 600,
+    # v10: three seconds, not five. Six identical lids with one open is a
+    # thing a reader has taken in long before the fifth second, and the wait
+    # after that is the game standing still.
+    check("    the box is open for three seconds, then closes",
+          rule.get("open_ms") == 3000 and rule.get("close_ms") == 600,
           str((rule.get("open_ms"), rule.get("close_ms"))))
     shut = [f["img"] for i, f in enumerate(frames)
             if i != rule.get("open_slot")]
@@ -716,8 +719,13 @@ check("  the type card carries a frame and a line under it",
 # Four chapters and one promise inside a chapter: the food day is part of
 # the seven-day plan rather than a chapter of its own, and it carries its own
 # keyword because there is no section card to take one from.
-check("  the unlock list is one row per chapter, plus the food day",
-      sorted(r["id"] for r in profile["unlock"])
+# v10 puts the age at the top of it: the reveal is the first thing the report
+# is selling now, and it is not a chapter — it is the number the free page
+# stopped showing.
+check("  the unlock list opens on the age, then one row per chapter and the "
+      "food day",
+      profile["unlock"][0]["id"] == "age"
+      and sorted(r["id"] for r in profile["unlock"][1:])
       == sorted([s["id"] for s in cfg["report"]["sections"]] + ["fuel"]),
       str([r["id"] for r in profile["unlock"]]))
 check("    every row of it has a line",
@@ -902,8 +910,8 @@ check("  on the four ids the report machinery keys on, unchanged",
       [s["id"] for s in cfg["report"]["sections"]]
       == ["dna", "materials", "mistakes", "shopping"])
 unlock = cfg["result_copy"]["profile"]["unlock"]
-check("the unlock list is five lines, a head and a tail",
-      len(unlock) == 5
+check("the unlock list is six lines, a head and a tail",
+      len(unlock) == 6
       and cfg["result_copy"]["profile"].get("unlock_head")
       and cfg["result_copy"]["profile"].get("unlock_tail", {}).get("line"))
 check("  headed by what the reader is buying: a lower number",
@@ -1075,22 +1083,21 @@ check("the type card is not drawn before the money",
 check("  though the type is still computed, and still on the paid page",
       "ctx.style.name" in MODULE and "function typeCard(" in MODULE)
 check("the urgency block sits straight under the number",
-      "var push = urge(ctx, copy, data);" in MODULE
-      and MODULE.index("var push = urge(ctx, copy, data);")
+      "var push = urge(ctx, copy);" in MODULE
+      and MODULE.index("var push = urge(ctx, copy);")
       < MODULE.index("var strip = taps(ctx, copy);"))
-urge_fn = re.search(r"function urgeLine\(copy, data\)\s*\{(.*?)\n  \}",
-                    MODULE, re.S).group(1)
-check("  and says one of three things, by where they sit against their group",
-      "copy.urge_younger" in urge_fn and "copy.urge_level" in urge_fn
-      and "copy.urge_older" in urge_fn and "LEVEL_BAND" in urge_fn)
-for key, must in (("urge_older", "easiest number to lower"),
-                  ("urge_level", "pushes it under"),
-                  ("urge_younger", "Keep it there")):
-    check("  %s is written in the improvement voice" % key,
-          must in cfg["result_copy"].get(key, ""),
-          cfg["result_copy"].get(key))
-check("  and the one for a reader above their group counts the years",
-      "{n}" in cfg["result_copy"]["urge_older"])
+# v10. The block used to open on a line that said the same thing three ways,
+# by where the reader sat against their age group — which meant printing the
+# age delta on the page whose whole job is now to make the age worth paying
+# for. The line under the score has already said what the run left on the
+# table; those three sentences are the report's.
+check("  and no line above the button says anything about an age",
+      "br-urge-line" not in MODULE
+      and "urge_younger" not in MODULE and "urge_older" not in MODULE
+      and "urge_level" not in MODULE)
+check("  nor is one left in the config for it to read",
+      not [k for k in cfg["result_copy"] if k.startswith("urge")],
+      str([k for k in cfg["result_copy"] if k.startswith("urge")]))
 check("the control under it moves the page, and takes no money",
       'elm("button", "br-urge-cta"' in MODULE
       and 'card.scrollIntoView({ behavior: "smooth", block: "start" });'
@@ -1101,7 +1108,7 @@ check("  it resolves the offer at the tap rather than holding a node",
       "document.getElementById(OFFER_ID)" in MODULE)
 check("  it is not the pay button, and does not touch it",
       "ctx.checkout" not in MODULE
-      and re.search(r"function urge\(ctx, copy, data\)(.*?)\n  \}",
+      and re.search(r"function urge\(ctx, copy\)(.*?)\n  \}",
                     MODULE, re.S).group(1).count("payButton") == 0)
 check("  and it is named in the funnel's own words",
       cfg["result_copy"].get("improve_cta") == "Improve now")
@@ -1116,12 +1123,21 @@ check("the offer leads with the plan rather than with a label",
       cfg["result_copy"]["profile"]["offer_head"])
 check("  and every bullet promises something to do rather than a reading",
       all(any(w in row["line"] for w in
-              ("drill", "habits", "technique", "days", "plate"))
+              ("drill", "habits", "technique", "days", "plate", "number"))
           for row in cfg["result_copy"]["profile"]["unlock"]),
       str([r["line"] for r in cfg["result_copy"]["profile"]["unlock"]]))
-check("  weakest round first",
-      cfg["result_copy"]["profile"]["unlock"][0]["id"] == "materials",
-      cfg["result_copy"]["profile"]["unlock"][0]["id"])
+# v10 sells the reveal first: the free page no longer shows the age, so the
+# first thing the offer names is the number it is holding back. The weakest
+# round follows it, where it used to lead.
+check("  the reveal first, then the weakest round",
+      [r["id"] for r in cfg["result_copy"]["profile"]["unlock"][:2]]
+      == ["age", "materials"],
+      str([r["id"] for r in cfg["result_copy"]["profile"]["unlock"][:2]]))
+check("    and the reveal names the age outright",
+      cfg["result_copy"]["profile"]["unlock"][0]["key"] == "Your brain age"
+      and "18 rounds"
+      in cfg["result_copy"]["profile"]["unlock"][0]["line"],
+      str(cfg["result_copy"]["profile"]["unlock"][0]))
 
 print("\n--- v5: the card before the first question ---")
 intro = cfg.get("intro") or {}
@@ -1354,7 +1370,7 @@ check("the offer names no brain type at all",
       and "{type}" not in json.dumps(cfg["checkout"]))
 check("the button carries a line saying what following the plan does",
       cfg["result_copy"].get("improve_foot")
-      == "Follow the 7-day plan, play again — the number moves.",
+      == "Follow the 7-day plan, play again — the score climbs.",
       str(cfg["result_copy"].get("improve_foot")))
 check("  with no percentage and no number nobody has measured",
       not re.search(r"\d", cfg["result_copy"]["improve_foot"]
@@ -1408,8 +1424,13 @@ for key in ("share_cta", "share_line", "share_copied", "retest_line"):
           str(share.get(key)))
 check("what gets shared carries the reader's own number",
       "{n}" in share["share_line"], share["share_line"])
-check("  and no other number at all",
-      not re.search(r"\d", share["share_line"].replace("{n}", "")),
+# v10 shares a score out of a hundred, so the denominator is a number the
+# line has to carry. It is the only one: no price, no percentage, and nothing
+# about anybody else.
+check("  out of a hundred, and no other number at all",
+      "100" in share["share_line"]
+      and not re.search(r"\d", share["share_line"]
+                        .replace("{n}", "").replace("100", "")),
       share["share_line"])
 check("  nor a price, a percentage or anything about anybody else",
       "{price}" not in share["share_line"]
@@ -1434,7 +1455,7 @@ check("  and hardcodes none of them",
                              share["retest_line"]) if line in MODULE]))
 check("the share control sits under the number and above the offer",
       MODULE.index("var hand = share(ctx, data);")
-      < MODULE.index("var push = urge(ctx, copy, data);"))
+      < MODULE.index("var push = urge(ctx, copy);"))
 check("  it is the quieter of the two, outlined against a solid one",
       re.search(r"\.br-share-cta \{[^}]*background: transparent;",
                 RESULT_CSS, re.S) is not None
@@ -1466,9 +1487,10 @@ check("the delivered page ends on the retest line",
 check("  as a link back to the funnel's own path",
       'link.href = "/" + slug;' in MODULE
       and 'elm("a", "br-retest-link"' in MODULE)
-check("  and the free page keeps the line it already had",
+# v10: the same sentence about the number the page now shows.
+check("  and the free page closes on the score it just gave",
       cfg["result_copy"].get("improve_foot")
-      == "Follow the 7-day plan, play again — the number moves."
+      == "Follow the 7-day plan, play again — the score climbs."
       and "copy.improve_foot" in MODULE)
 
 print("\n--- v6: the paid page draws every shape the report writes ---")
@@ -1553,18 +1575,96 @@ check("the checkout names the product this funnel sells",
       and cfg["checkout"]["proof_line"] == "Built from your 16 rounds")
 check("one offer, not two: the layout is named rather than tested",
       "paywall_variants" not in cfg)
-check("  and the manifest offers one line per chapter, the food day and the "
-      "keepsake",
-      len(cfg["checkout"]["manifest"]) == len(sections) + 2,
-      str(len(cfg["checkout"]["manifest"])))
+# v10: the reveal leads both lists. The free page no longer shows the age, so
+# the first thing this offer names is the number it is holding.
+check("  and the manifest opens on the reveal, then one line per chapter, the "
+      "food day and the keepsake",
+      len(cfg["checkout"]["manifest"]) == len(sections) + 3
+      and cfg["checkout"]["manifest"][0]
+      == "Your brain age — the exact number your 18 rounds add up to",
+      str(cfg["checkout"]["manifest"][:1]))
 check("  which is what the unlock list on the offer card argues",
-      len(cfg["result_copy"]["profile"]["unlock"]) == len(sections) + 1)
+      len(cfg["result_copy"]["profile"]["unlock"]) == len(sections) + 2
+      and cfg["result_copy"]["profile"]["unlock"][0]["id"] == "age")
 check("every chapter has a card in the result copy",
       sorted(c["id"] for c in cfg["result_copy"]["profile"]["cards"])
       == sorted(s["id"] for s in sections))
 check("  and every mood the offer personalises on names a real chapter",
       all(rule["emphasized_section"] in {s["id"] for s in sections}
           for rule in cfg["result_copy"]["purpose_map"].values()))
+
+print("\n--- v10: the free page shows a score, and no age at all ---")
+SCORE = block["score"]
+check("the score block is exactly the five constants both readers need",
+      set(SCORE) == {"base", "per_miss", "elite_min", "floor",
+                     "room_round_max_hits"}, str(sorted(SCORE)))
+check("  a hundred down six a miss, floored, and elite at ninety",
+      SCORE == {"base": 100, "per_miss": -6, "elite_min": 90, "floor": 5,
+                "room_round_max_hits": 2}, str(SCORE))
+check("the module reads every one of them rather than holding its own",
+      all(("rule." + key) in MODULE for key in
+          ("base", "per_miss", "floor", "elite_min", "room_round_max_hits"))
+      and "var rule = (block && block.score) || null;" in MODULE)
+check("  and the free page draws the score where the age used to be",
+      "scoreCard(ctx, copy, data, lean)" in module_body("render")
+      and "br-age-word" not in MODULE.split("function scoreCard(")[1]
+      .split("\n  }")[0])
+check("  falling back to the page it had on a config with no score table",
+      'if (typeof data.score !== "number") return null;'
+      in module_body("scoreCard")
+      and "|| score(ctx, copy, data, lean);" in module_body("render"))
+check("  under the score's own kicker",
+      "kicker(copy, lean, copy.score_kicker)" in module_body("render")
+      and cfg["result_copy"]["score_kicker"] == "Your score")
+check("  as a figure out of what the table says a clean run is worth",
+      '"/" + (typeof top === "number" ? top : 100)' in MODULE
+      and 'elm("span", "br-age-number", String(data.score))' in MODULE)
+check("no brain age is drawn on the free page at all",
+      "data.age" not in module_body("render")
+      and "br-age-word" not in module_body("scoreCard")
+      and "ageLine(" not in module_body("scoreCard"))
+check("  and the age hero is the delivered page's",
+      "root.appendChild(score(ctx, copy, data, lean));"
+      in module_body("delivered")
+      and module_body("delivered").index("scoreCard(ctx, copy, data, lean)")
+      < module_body("delivered").index("score(ctx, copy, data, lean)"))
+check("the line under the score counts rounds with room, or says it was close",
+      cfg["result_copy"]["score_room"]
+      == "Clear room in {k} of your 4 rounds."
+      and cfg["result_copy"]["score_room_none"]
+      == "Close run — the points you dropped are all in the details."
+      and cfg["result_copy"]["score_elite"]
+      == "Elite run. See what's behind it inside.")
+check("  and the module chooses between them off the run alone",
+      "if (data.elite) return copy.score_elite" in MODULE
+      and "if (!data.room_rounds) return copy.score_room_none" in MODULE
+      and "{ k: data.room_rounds }" in MODULE)
+
+# Nobody else has taken this. Every word the free page says about the number
+# is about this run, and a page that reached for a population would be
+# reaching for one that does not exist.
+CROWD = ("average", " avg", "percentile", "top %", "better than",
+         "most people", "than others", "worldwide", "users")
+FREE_COPY = json.dumps({k: v for k, v in cfg["result_copy"].items()
+                        if k != "purpose_map"}, ensure_ascii=False).lower()
+check("nothing on the free page compares the reader to anybody",
+      not [w for w in CROWD if w.strip() in FREE_COPY],
+      str([w for w in CROWD if w.strip() in FREE_COPY]))
+check("  nor does the offer, the manifest or the share line",
+      not [w for w in CROWD
+           if w.strip() in json.dumps(cfg["checkout"],
+                                      ensure_ascii=False).lower()],
+      str([w for w in CROWD
+           if w.strip() in json.dumps(cfg["checkout"],
+                                      ensure_ascii=False).lower()]))
+check("  and no invented statistic is printed anywhere near the number",
+      not re.search(r"\d+\s*%", FREE_COPY), FREE_COPY[:80])
+check("what gets shared is the score, out of a hundred",
+      cfg["result_copy"]["profile"]["share_line"]
+      == "I scored {n}/100. Beat me?"
+      and "fill(table.share_line, { n: data.score });" in MODULE)
+check("  and the share is withheld from a run with no score to give",
+      'if (typeof data.score !== "number") return null;' in MODULE)
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for line in fails:
