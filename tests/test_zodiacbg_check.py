@@ -460,9 +460,9 @@ def long(pricing):
 check("  which renders as 4,99\u00a0€, short form and long",
       short(cfg["pricing"]) == long(cfg["pricing"]) == "4,99\u00a0\u20ac",
       "%r / %r" % (short(cfg["pricing"]), long(cfg["pricing"])))
-check("  and the sale price renders as 1,99\u00a0€ through the same formatter",
+check("  and the sale price renders as 0,99\u00a0€ through the same formatter",
       short(dict(cfg["pricing"], amount_cents=cfg["sale"]["price_cents"]))
-      == "1,99\u00a0\u20ac",
+      == "0,99\u00a0\u20ac",
       repr(short(dict(cfg["pricing"],
                       amount_cents=cfg["sale"]["price_cents"]))))
 check("    so the no-break space survives into every {price} slot",
@@ -493,8 +493,8 @@ check("    and reports.py fills it the same way, for the mail and the PDF",
       and _bought("zodiac-bg", 499)[0] == "4,99\u00a0\u20ac",
       repr(_bought("zodiac-bg", 499)[0]))
 check("    the sale price through that same format, nbsp and all",
-      _bought("zodiac-bg", 199)[0] == "1,99\u00a0\u20ac",
-      repr(_bought("zodiac-bg", 199)[0]))
+      _bought("zodiac-bg", 99)[0] == "0,99\u00a0\u20ac",
+      repr(_bought("zodiac-bg", 99)[0]))
 for slug in ("zodiac", "zodiac30", "kitchen", "kitchen-visualizer"):
     en = json.load(open(os.path.join(ROOT, "funnels", slug + ".json"),
                         encoding="utf-8"))["pricing"]
@@ -559,9 +559,9 @@ check("  70 is the only figure the anchor states outright",
           v for p, v in STRINGS if "€" in v
           and p != "/pricing/price_format"))))))
 # The reframe is static copy on a page whose price moves: it reads at the
-# regular 4,99 € and it has to still read at the sale's 1,99 €. Two coffees is
-# the claim that survives both — one coffee would be false at neither price,
-# and "less than one" would be a claim this funnel cannot make at 4,99 €.
+# regular 4,99 € and it has to still read at the sale's 0,99 €. Two coffees is
+# the claim that survives both — the sale is under one coffee as well now,
+# but the regular price is not, and this line is the same line either way.
 check("the coffee reframe is two coffees, which both prices are under",
       "две кафета" in cfg["checkout"]["commerce"]["mid_line"]
       and "две кафета" in cfg["checkout"]["reframe"],
@@ -1492,20 +1492,20 @@ check("the opening line is Bulgarian and names the price that was paid",
       and "4,99\u00a0\u20ac" in _bought("zodiac-bg", 499)[1],
       _bought("zodiac-bg", 499)[1])
 check("  and the sale price when that is what the card was charged",
-      "1,99\u00a0\u20ac" in _bought("zodiac-bg", 199)[1],
-      _bought("zodiac-bg", 199)[1])
+      "0,99\u00a0\u20ac" in _bought("zodiac-bg", 99)[1],
+      _bought("zodiac-bg", 99)[1])
 # The one place the ACT of reading is meant rather than the thing sold, and
 # the word for it is "прочит" — never "четене", which is the product noun this
 # funnel does not use.
 check("  and it calls that a прочит, not a четене",
-      "прочит" in _bought("zodiac-bg", 199)[1]
-      and "чете" not in _bought("zodiac-bg", 199)[1],
-      _bought("zodiac-bg", 199)[1])
+      "прочит" in _bought("zodiac-bg", 99)[1]
+      and "чете" not in _bought("zodiac-bg", 99)[1],
+      _bought("zodiac-bg", 99)[1])
 check("  read off the purchase rather than written into the mail",
-      _bought("zodiac-bg", 199)[0] == "1,99\u00a0\u20ac"
+      _bought("zodiac-bg", 99)[0] == "0,99\u00a0\u20ac"
       and _bought("zodiac30", 199, "usd")[0] == "$1.99"
       and _bought("zodiac-ro", 499, "ron")[0] == "4,99 lei",
-      "%s / %s" % (_bought("zodiac-bg", 199)[0],
+      "%s / %s" % (_bought("zodiac-bg", 99)[0],
                    _bought("zodiac30", 199, "usd")[0]))
 check("  and no number at all when the purchase cannot be read",
       reports._price_paid({"funnel": "zodiac-bg"}) is None,
@@ -2462,8 +2462,8 @@ ONE_SEC = reports.datetime.timedelta(seconds=1)
 twin_cfg = json.load(open(os.path.join(ROOT, "funnels/zodiac-bg-test.json"),
                           encoding="utf-8"))
 SALE = cfg["sale"]
-check("it is active at 199 against a regular 499",
-      SALE["active"] is True and SALE["price_cents"] == 199
+check("it is active at 99 against a regular 499",
+      SALE["active"] is True and SALE["price_cents"] == 99
       and SALE["regular_price_cents"] == 499, str(SALE))
 check("  and the struck figure is what this funnel actually charges",
       SALE["regular_price_cents"] == cfg["pricing"]["amount_cents"],
@@ -2475,6 +2475,14 @@ check("  which is the guard payments.py enforces, not a coincidence",
 check("  a sale that is not a discount does not run either",
       payments._sale(dict(cfg, sale=dict(SALE, price_cents=499)),
                      BEFORE_END) is None)
+# 0,99 € is the smallest figure this funnel has ever charged, so the floor
+# under it is worth naming: Stripe refuses a euro charge below 50 cents, and
+# what it is handed is the sale's amount, not the regular price beside it.
+check("  and the amount the checkout hands Stripe clears its 0,50 € floor",
+      cfg["pricing"]["currency"] == "eur"
+      and payments._effective_price(cfg, BEFORE_END)[0] >= 50,
+      "%s %s" % (payments._effective_price(cfg, BEFORE_END)[0],
+                 cfg["pricing"]["currency"]))
 check("the label names the offer and no date",
       SALE["label"] == "Лятно намаление"
       and not re.search(r"\d", SALE["label"]), SALE["label"])
@@ -2490,14 +2498,14 @@ check("  on a clock, with an offset, so the end is an instant not a guess",
       ENDS.tzinfo is not None, SALE["ends"])
 check("  and it is not open-ended in disguise", ENDS.year == 2026, str(ENDS))
 for label, when, want in (
-        ("today", BEFORE_END, 199),
-        ("one second before the end", ENDS - ONE_SEC, 199),
+        ("today", BEFORE_END, 99),
+        ("one second before the end", ENDS - ONE_SEC, 99),
         ("at the end", ENDS, 499),
         ("one second after", ENDS + ONE_SEC, 499),
         ("a week after", ENDS + reports.datetime.timedelta(days=7), 499)):
     cents, live = payments._effective_price(cfg, when)
     check("  %-26s charges %d" % (label, want),
-          cents == want and bool(live) == (want == 199),
+          cents == want and bool(live) == (want == 99),
           "%s / %s" % (cents, bool(live)))
 check("expiry leaves no residue: the page reverts with the charge",
       payments._effective_price(cfg, ENDS + ONE_SEC) == (499, None))
@@ -2522,7 +2530,7 @@ check("  and byte-identical to funnels/",
       == open(os.path.join(ROOT, "funnels/zodiac-bg-test.json"),
               encoding="utf-8").read())
 check("  it runs the same sale, on test keys",
-      payments._effective_price(twin_cfg, BEFORE_END)[0] == 199)
+      payments._effective_price(twin_cfg, BEFORE_END)[0] == 99)
 check("  and it reads this funnel's report profile, not kitchen's",
       reports._profile(twin_cfg["slug"]) is profile)
 
