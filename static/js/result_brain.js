@@ -651,7 +651,10 @@
     var mark = elm("span", "br-node-mark");
     mark.setAttribute("aria-hidden", "true");
     if (kind === "open") {
-      mark.textContent = "◆";
+      // A rule in the accent, the same mark the printed chapter opens on. It
+      // was a filled lozenge, which is a bullet, and a bullet in front of a
+      // chapter heading says the heading is one item in a list.
+      mark.className = "br-node-mark is-rule";
     } else {
       var svg = svgEl("svg", { viewBox: "0 0 16 16" });
       svg.appendChild(svgEl("path", {
@@ -1321,29 +1324,12 @@
     });
 
     var items = data.items || data.implications || [];
-    if (items.length) {
-      var list = elm("ol", "br-list");
-      items.forEach(function (item) {
-        var row = elm("li", "br-item");
-        if (typeof item === "string") {
-          row.appendChild(elm("p", "br-body", item));
-        } else {
-          // Two row shapes, one list: a strength is a title, a body and a
-          // fix; a day is a name and what to do on it. Neither is the other's
-          // fallback — a row is whichever of the two it carries.
-          var title = item.title || item.name;
-          if (title) row.appendChild(elm("h3", "br-item-title", title));
-          var body = item.body || item.priority_note;
-          if (body) row.appendChild(elm("p", "br-body", body));
-          if (item.fix) row.appendChild(elm("p", "br-fix", "→ " + item.fix));
-        }
-        list.appendChild(row);
-      });
-      frag.appendChild(list);
-    }
+    if (items.length) frag.appendChild(itemList(items));
     // The drill the weakest-round chapter closes on, and the one paragraph on
-    // it that the reader is meant to act on tomorrow morning.
-    if (data.rule) frag.appendChild(elm("p", "br-callout", data.rule));
+    // it that the reader is meant to act on tomorrow morning. A card with a
+    // clock on it: under a shared left rule it read as one more closing line,
+    // and it is the thing the whole plan is built on.
+    if (data.rule) frag.appendChild(drillCard(data.rule));
     (data.skip || []).forEach(function (row) {
       frag.appendChild(elm("p", "br-note",
                            [row.name, row.why].filter(Boolean).join(" — ")));
@@ -1354,6 +1340,124 @@
     return frag;
   }
 
+  function drillCard(text) {
+    var card = elm("div", "br-drill");
+    var head = elm("p", "br-drill-head");
+    var mark = elm("span", "br-drill-glyph");
+    mark.setAttribute("aria-hidden", "true");
+    var svg = svgEl("svg", { viewBox: "0 0 16 16" });
+    svg.appendChild(svgEl("circle", { cx: "8", cy: "8", r: "6.3" }));
+    svg.appendChild(svgEl("path", {
+      d: GLYPH_CLOCK, "stroke-linecap": "round"
+    }));
+    mark.appendChild(svg);
+    head.appendChild(mark);
+    head.appendChild(document.createTextNode("The two-minute drill"));
+    card.appendChild(head);
+    card.appendChild(elm("p", "br-drill-body", text));
+    return card;
+  }
+
+  // The words a day about food is written in, and the same two-hit rule the
+  // document uses: one is a coincidence, and a memory drill about a shopping
+  // list says "list" and "shop" and never says anybody ate anything.
+  var FUEL_WORDS = ["eat", "eating", "ate", "breakfast", "lunch", "dinner",
+                    "snack", "plate", "meal", "food", "supermarket", "toast",
+                    "fish", "sardines", "walnuts", "nuts", "eggs", "yoghurt",
+                    "yogurt", "fruit", "cheese", "porridge", "oats", "beans",
+                    "supper"];
+
+  function isFuel(text) {
+    var words = String(text || "").toLowerCase().match(/[a-z]+/g) || [];
+    var seen = {};
+    var hits = 0;
+    words.forEach(function (word) {
+      if (FUEL_WORDS.indexOf(word) === -1 || seen[word]) return;
+      seen[word] = true;
+      hits += 1;
+    });
+    return hits >= 2;
+  }
+
+  var DAY_NAME = /^\s*Day\s+(\d+)\s*[-\u2013\u2014:]\s*(.+)$/;
+
+  // A day, as a card. Eight numbered paragraphs is a wall of text, and the
+  // day is the unit somebody reads a week in.
+  function dayCard(item, index, last) {
+    var got = DAY_NAME.exec(item.name || "");
+    var fuel = isFuel((item.name || "") + " " + (item.priority_note || ""));
+    var card = elm("li", "br-day"
+                   + (index === last ? " is-last" : (fuel ? " is-fuel" : "")));
+    var head = elm("p", "br-day-head");
+    head.appendChild(elm("span", "br-day-n",
+                         got ? got[1] : String(index + 1)));
+    head.appendChild(elm("span", "br-day-name", got ? got[2] : item.name));
+    if (fuel) head.appendChild(plateGlyph());
+    card.appendChild(head);
+    if (item.priority_note) {
+      card.appendChild(elm("p", "br-body", item.priority_note));
+    }
+    return card;
+  }
+
+  function plateGlyph() {
+    var mark = elm("span", "br-day-glyph");
+    mark.setAttribute("aria-hidden", "true");
+    var svg = svgEl("svg", { viewBox: "0 0 20 16" });
+    svg.appendChild(svgEl("circle", { cx: "12.4", cy: "8", r: "5.6" }));
+    svg.appendChild(svgEl("circle", { cx: "12.4", cy: "8", r: "2.5" }));
+    svg.appendChild(svgEl("path", {
+      d: GLYPH_PLATE, "stroke-linecap": "round"
+    }));
+    svg.appendChild(svgEl("path", {
+      d: "M3 2.4v2.4M6 2.4v2.4", "stroke-linecap": "round"
+    }));
+    mark.appendChild(svg);
+    return mark;
+  }
+
+  // A strength, or one of the two habits. They arrive as one list of seven
+  // and they rendered as one list of seven, which reads as seven faults with
+  // the first five miscounted. The split is the chapter's own.
+  function traitCard(item, index, habit) {
+    var card = elm("li", "br-trait" + (habit ? " is-habit" : ""));
+    var head = elm("p", "br-trait-head");
+    if (!habit) head.appendChild(elm("span", "br-trait-n", String(index + 1)));
+    head.appendChild(elm("span", "br-trait-title", item.title || ""));
+    if (habit) head.appendChild(elm("span", "br-swap", "SWAP THIS"));
+    card.appendChild(head);
+    if (item.body) card.appendChild(elm("p", "br-body", item.body));
+    if (item.fix) {
+      card.appendChild(elm("p", "br-do",
+                           (habit ? "Swap: " : "Spend it: ") + item.fix));
+    }
+    return card;
+  }
+
+  // One list, three row shapes: an arrow line, a day, a strength or a habit.
+  // Which one a row is, is which one it carries — none of the three is a
+  // fallback for another.
+  function itemList(items) {
+    var traits = items.length === 7 && items[0] && items[0].title;
+    var list = elm("ul", "br-list");
+    var last = items.length - 1;
+    items.forEach(function (item, index) {
+      if (typeof item === "string") {
+        list.appendChild(elm("li", "br-item", item));
+        return;
+      }
+      if (item.name || item.priority_note) {
+        list.appendChild(dayCard(item, index, last));
+        return;
+      }
+      if (traits && index === 5) {
+        list.appendChild(elm("li", "br-habits-head", "Two habits to swap"));
+      }
+      list.appendChild(traitCard(item, index, traits && index >= 5));
+    });
+    return list;
+  }
+
   // What a verdict is called on this page. The schema's word is `works` or
   // `avoid`; what the reader sees is the funnel's, because one of the two
   // marks a round they are being told to practise.
@@ -1361,6 +1465,209 @@
 
   function verdictWord(verdict) {
     return VERDICT_WORDS[verdict] || String(verdict || "").toUpperCase();
+  }
+
+  // --- the delivered page, as four blocks ------------------------------------
+  //
+  // What the reader bought is a document, and it was rendering as a column of
+  // paragraphs with the number they paid for four screens down it. These are
+  // the four blocks it is now: the two numbers, the run, the sixteen rounds,
+  // and the chapters. The free page is not one of them and does not change.
+
+  // The three marks a round wears. The same three shapes the PDF draws, from
+  // the same paths — drawn rather than typed, because a report opened in a
+  // browser with one font and printed from another cannot rely on a glyph.
+  var MARK_CHECK = "M4.6 8.3 6.9 10.7 11.5 5.6";
+  var MARK_CROSS = "M5.5 5.5 10.5 10.5M10.5 5.5 5.5 10.5";
+  var GLYPH_CLOCK = "M8 4.3V8l2.5 1.5";
+  var GLYPH_PLATE = "M3 2.4v3.2a1.5 1.5 0 0 0 3 0V2.4M4.5 5.6V13.6";
+
+  function markFor(status) {
+    if (!status) return null;
+    var mark = elm("span", "br-mark is-" + status);
+    mark.setAttribute("aria-hidden", "true");
+    var svg = svgEl("svg", { viewBox: "0 0 16 16" });
+    if (status === "miss") {
+      svg.appendChild(svgEl("circle", { cx: "8", cy: "8", r: "3.4" }));
+    } else {
+      svg.appendChild(svgEl("path", {
+        d: status === "hit" ? MARK_CHECK : MARK_CROSS,
+        "stroke-linecap": "round", "stroke-linejoin": "round"
+      }));
+    }
+    mark.appendChild(svg);
+    return mark;
+  }
+
+  // The record of the run, off the report rather than off the tab: this page
+  // is opened from a link in a mail, in a browser that never played a round.
+  function stored(ctx) {
+    return (ctx.visuals && ctx.visuals.brain) || {};
+  }
+
+  // Block 1. The two numbers the whole funnel was asking for, the line that
+  // gives the second one a meaning, and the four rounds it was read off.
+  function heroBlock(ctx, copy, data) {
+    var wrap = elm("section", "br-dhero");
+    wrap.appendChild(elm("p", "br-dhero-lead",
+                         copy.head_title || "Your brain type"));
+    wrap.appendChild(elm("h1", "br-dhero-name", ctx.style.name || ""));
+    // The type's one line, and then the type's paragraph. They were on a card
+    // of their own between the numbers and the run, which put a paragraph
+    // between the reader and the thing they had just paid to see; they belong
+    // to the name, so they sit under it.
+    var essence = (profileCopy(ctx).essence || {})[ctx.style.id] || "";
+    if (essence) wrap.appendChild(elm("p", "br-dhero-essence", essence));
+    var nums = elm("div", "br-dhero-nums");
+    if (typeof data.score === "number") {
+      var left = elm("div", "br-dhero-cell is-score");
+      left.appendChild(elm("span", "br-dhero-cap",
+                           copy.score_kicker || "Your score"));
+      var points = elm("p", "br-dhero-figure");
+      points.appendChild(elm("span", "br-dhero-n", String(data.score)));
+      var top = ((ageBlock(ctx) || {}).score || {}).base;
+      points.appendChild(elm("span", "br-dhero-of",
+                             "/" + (typeof top === "number" ? top : 100)));
+      left.appendChild(points);
+      nums.appendChild(left);
+    }
+    var right = elm("div", "br-dhero-cell is-age");
+    right.appendChild(elm("span", "br-dhero-cap",
+                          copy.kicker || "Your brain age"));
+    var age = elm("p", "br-dhero-figure");
+    age.appendChild(elm("span", "br-dhero-n is-big", String(data.age)));
+    right.appendChild(age);
+    nums.appendChild(right);
+    wrap.appendChild(nums);
+    var line = ageLine(copy, data);
+    if (line) wrap.appendChild(elm("p", "br-dhero-delta", line));
+    wrap.appendChild(heroBars(ctx, data));
+    if (ctx.style.blurb) {
+      wrap.appendChild(elm("p", "br-dhero-blurb", ctx.style.blurb));
+    }
+    return wrap;
+  }
+
+  // The four rounds, filled. The fill is scaled rather than widened, so the
+  // growth is one CSS animation on first paint and nothing in here has to
+  // watch the viewport to start it.
+  function heroBars(ctx, data) {
+    var names = (ageBlock(ctx) || {}).domains || {};
+    var totals = roundTotals(ctx);
+    var chart = elm("ul", "br-dbars");
+    DOMAINS.forEach(function (key) {
+      var total = totals[key] || PER_DOMAIN;
+      var got = Math.min(total, (data.counts || {})[key] || 0);
+      var row = elm("li", "br-dbar");
+      row.appendChild(elm("span", "br-dbar-name", names[key] || key));
+      var track = elm("span", "br-dbar-track");
+      var bar = elm("span", "br-dbar-fill");
+      bar.style.width = Math.max(4, Math.round(100 * got / total)) + "%";
+      track.appendChild(bar);
+      row.appendChild(track);
+      row.appendChild(elm("span", "br-dbar-count", got + "/" + total));
+      chart.appendChild(row);
+    });
+    return chart;
+  }
+
+  // How many rounds each of the four is out of, counted off the record where
+  // there is one so a funnel that adds a round is not drawn out of four.
+  function roundTotals(ctx) {
+    var out = {};
+    (stored(ctx).rounds || []).forEach(function (row) {
+      if (row.domain) out[row.domain] = (out[row.domain] || 0) + 1;
+    });
+    return out;
+  }
+
+  // Block 2. The whole run, six across, every scored round marked. The two
+  // warm-up rounds carry no mark: there was nothing to get right on them.
+  function runStrip(ctx, copy) {
+    var strip = stored(ctx).strip || [];
+    if (strip.length < TAPS_MIN) return deliveredTaps(ctx, copy);
+    var block = elm("section", "br-strip");
+    block.appendChild(elm("p", "br-strip-cap",
+                          (copy.taps_caption || "Your run")
+                            .replace(/:\s*$/, "")));
+    var grid = elm("ul", "br-strip-grid");
+    strip.forEach(function (entry) {
+      var cell = elm("li", "br-strip-cell"
+                     + (entry.status ? " is-" + entry.status : ""));
+      if (entry.img) {
+        var img = document.createElement("img");
+        img.src = entry.img;
+        img.alt = "";
+        img.loading = "lazy";
+        img.decoding = "async";
+        cell.appendChild(img);
+      }
+      var mark = markFor(entry.status);
+      if (mark) cell.appendChild(mark);
+      grid.appendChild(cell);
+    });
+    block.appendChild(grid);
+    return block;
+  }
+
+  // Block 3. Every scored round, grouped by which of the four it belongs to.
+  // A list rather than a table element: this is read on a phone 390 points
+  // wide, and a table with four columns on it is a table you scroll sideways.
+  function roundsTable(ctx) {
+    var rows = stored(ctx).rounds || [];
+    if (!rows.length) return null;
+    var names = (ageBlock(ctx) || {}).domains || {};
+    var totals = roundTotals(ctx);
+    var counts = storedProfile(ctx) || { counts: {} };
+    var block = elm("section", "br-rounds-table");
+    block.appendChild(elm("h2", "br-rt-title",
+                          "Your " + rows.length + " scored rounds"));
+    block.appendChild(elm("p", "br-rt-lead",
+                          "Every round you played, what it asked of you, "
+                          + "and how it went."));
+    DOMAINS.forEach(function (key) {
+      var mine = rows.filter(function (row) { return row.domain === key; });
+      if (!mine.length) return;
+      var head = elm("p", "br-rt-group");
+      head.appendChild(elm("span", "br-rt-group-name", names[key] || key));
+      head.appendChild(elm("span", "br-rt-group-score",
+                           ((counts.counts || {})[key] || 0) + "/"
+                           + (totals[key] || mine.length)));
+      block.appendChild(head);
+      var list = elm("ul", "br-rt-list");
+      mine.forEach(function (row) {
+        list.appendChild(roundRow(row));
+      });
+      block.appendChild(list);
+    });
+    return block;
+  }
+
+  var CHIP_WORDS = { hit: "HIT", miss: "MISS", out: "TIME'S UP" };
+
+  function roundRow(row) {
+    var item = elm("li", "br-rt-row");
+    var shot = elm("span", "br-rt-shot"
+                   + (row.img ? "" : " is-out"));
+    if (row.img) {
+      var img = document.createElement("img");
+      img.src = row.img;
+      img.alt = "";
+      img.loading = "lazy";
+      img.decoding = "async";
+      shot.appendChild(img);
+    } else {
+      var mark = markFor("out");
+      if (mark) shot.appendChild(mark);
+    }
+    item.appendChild(shot);
+    var text = elm("span", "br-rt-text");
+    text.appendChild(elm("span", "br-rt-task", row.task || ""));
+    text.appendChild(elm("span", "br-rt-asks", row.asks || ""));
+    item.appendChild(text);
+    item.appendChild(elm("span", "br-rt-chip is-" + (row.status || "miss"),
+                         CHIP_WORDS[row.status] || ""));
+    return item;
   }
 
   function deliveredNode(ctx, section) {
@@ -1389,26 +1696,23 @@
     root.classList.toggle("is-minimal", lean);
     var note = deliveryNote(ctx, copy);
     if (note) root.appendChild(note);
-    // The score's kicker here too, because the score is the first card under
-    // it. The age has its own lead on its own card, one card further down,
-    // which is where the reveal belongs.
-    root.appendChild(kicker(copy, lean, copy.score_kicker));
-    // The same head as before the money, off the block the report carries.
-    // The reader paid on this page and the thing they bought has to open as
-    // the same document, so the arm travels with it.
+    // Four blocks, in this order, and the reason for the order is that it is
+    // the order somebody asks in: what did I get, what did I play, how did
+    // each round go, and what do I do about it.
+    //
+    // What was here instead was the free page's three cards stacked, then the
+    // strip, then a column of prose — so the number the reader had just paid
+    // to be told was the third card down and the sixteen rounds behind it
+    // were not on the page at all.
     if (data) {
-      // The page the reader last saw, and then the thing they bought. The
-      // score first because it is what they were looking at when they paid,
-      // and the age straight under it because it is the answer to the
-      // question the whole funnel asked.
-      var top = scoreCard(ctx, copy, data, lean);
-      if (top) root.appendChild(top);
-      root.appendChild(score(ctx, copy, data, lean));
-      if (!lean) root.appendChild(bars(ctx, copy, data));
+      root.appendChild(heroBlock(ctx, copy, data));
+    } else {
+      root.appendChild(typeCard(ctx, copy, lean));
     }
-    root.appendChild(typeCard(ctx, copy, lean));
-    var strip = deliveredTaps(ctx, copy);
+    var strip = runStrip(ctx, copy);
     if (strip) root.appendChild(strip);
+    var table = roundsTable(ctx);
+    if (table) root.appendChild(table);
     // Same reorder after the money as before it: the section they came for is
     // the first one they meet. `ctx.purpose` is the tag off the stored report
     // — this tab may never have run the quiz — and a report without one

@@ -484,6 +484,7 @@ check("the mood round asks the question the review asked for",
 print("\n--- the launch offer ---")
 import payments                                             # noqa: E402
 import tracking                                             # noqa: E402
+import reports                                              # noqa: E402
 sale = cfg["sale"]
 check("the block is the shape payments.py reads",
       sorted(sale) == ["active", "ends", "label", "price_cents",
@@ -1311,6 +1312,113 @@ check("one event on the tap, and nothing about the reader in it",
       and not re.search(r'track\("share_tap",', MODULE))
 check("  which the server already allows",
       "share_tap" in tracking.ALLOWED_EVENTS)
+print("\n--- v13: the delivered page, as four blocks ---")
+#
+# What the reader bought was rendering as the free page's three cards, then
+# the strip, then a column of prose — the number they had just paid for was
+# the third card down and the sixteen rounds behind it were not on the page at
+# all. It is four blocks now, in the order somebody asks in.
+DELIVERED = module_body("delivered")
+
+
+def order(*names):
+    """True when the page appends these in this order and all of them."""
+    at = [DELIVERED.find(name) for name in names]
+    return -1 not in at and at == sorted(at)
+
+
+check("it draws the hero, the run, the rounds and then the chapters",
+      order("heroBlock(ctx, copy, data)", "runStrip(ctx, copy)",
+            "roundsTable(ctx)", "firstly(ctx.sections"),
+      str([DELIVERED.find(n) for n in ("heroBlock(ctx, copy, data)",
+                                       "runStrip(ctx, copy)",
+                                       "roundsTable(ctx)",
+                                       "firstly(ctx.sections")]))
+check("  and still ends on the retest line",
+      order("firstly(ctx.sections", "var again = retest(ctx);"))
+check("the free page is not one of them",
+      "heroBlock" not in module_body("render")
+      and "runStrip" not in module_body("render")
+      and "roundsTable" not in module_body("render"))
+check("  and draws the cards it always drew",
+      "scoreCard(ctx, copy, data, lean)" in module_body("render")
+      and "bars(ctx, copy, data)" in module_body("render"))
+check("  while the type's own words travel into the hero with it",
+      "profileCopy(ctx).essence" in module_body("heroBlock")
+      and "ctx.style.blurb" in module_body("heroBlock")
+      # And the card they were on is still what a report with no stored
+      # figures falls back to.
+      and "typeCard(ctx, copy, lean)" in DELIVERED)
+
+print("  (a) the hero")
+HERO = module_body("heroBlock")
+check("both numbers are on it, the age the larger of the two",
+      "br-dhero-n is-big" in HERO and ".br-dhero-n.is-big {" in RESULT_CSS
+      and "String(data.score)" in HERO and "String(data.age)" in HERO)
+check("  with the line that says what the age means under them",
+      "ageLine(copy, data)" in HERO and ".br-dhero-delta {" in RESULT_CSS)
+check("the four rounds are bars, and they grow on first paint",
+      "heroBars(ctx, data)" in HERO
+      and "@keyframes br-grow" in RESULT_CSS
+      and "transform: scaleX(0)" in RESULT_CSS)
+check("  and hold still for anybody who asked them to",
+      "animation: none; transform: none;"
+      in RESULT_CSS[RESULT_CSS.index("@keyframes br-grow"):]
+      and "prefers-reduced-motion: reduce"
+      in RESULT_CSS[RESULT_CSS.index("@keyframes br-grow"):])
+check("  each bar out of what that round actually had in it",
+      "roundTotals(ctx)" in module_body("heroBars")
+      and "totals[key] || PER_DOMAIN" in module_body("heroBars"))
+
+print("  (b) the run")
+STRIP = module_body("runStrip")
+check("it is the stored record of the run, not a second opinion",
+      "stored(ctx).strip" in STRIP
+      and 'return (ctx.visuals && ctx.visuals.brain) || {}' in MODULE)
+check("  six across at 390, whatever the tile count",
+      "grid-template-columns: repeat(6, 1fr)" in RESULT_CSS)
+check("  and a report from before the record was stored still draws one",
+      "return deliveredTaps(ctx, copy)" in STRIP)
+check("every scored round wears one of three marks, drawn not typed",
+      "MARK_CHECK" in MODULE and "MARK_CROSS" in MODULE
+      and ".br-mark.is-hit {" in RESULT_CSS
+      and ".br-mark.is-miss {" in RESULT_CSS
+      and ".br-mark.is-out {" in RESULT_CSS)
+check("  and the round the clock answered is the crossed tile it always was",
+      ".br-strip-cell.is-out {" in RESULT_CSS
+      and ".br-strip-cell.is-out .br-mark {" in RESULT_CSS)
+
+print("  (c) the sixteen rounds")
+TABLE = module_body("roundsTable")
+check("one row per scored round, grouped under the four",
+      "stored(ctx).rounds" in TABLE and "DOMAINS.forEach" in TABLE
+      and 'elm("p", "br-rt-group")' in TABLE)
+check("  each row a thumbnail, what the round asked, and a chip",
+      'elm("span", "br-rt-task"' in MODULE
+      and 'elm("span", "br-rt-asks"' in MODULE
+      and 'CHIP_WORDS = { hit: "HIT", miss: "MISS", out: "TIME\'S UP" }'
+      in MODULE)
+check("  colour-coded, and readable at 390 without scrolling sideways",
+      ".br-rt-chip.is-hit {" in RESULT_CSS
+      and ".br-rt-chip.is-miss {" in RESULT_CSS
+      and ".br-rt-chip.is-out {" in RESULT_CSS
+      and "min-width: 0" in RESULT_CSS)
+check("  and what each round asks is the report's words, not the card's",
+      set(reports.BRAIN_TASKS) == set(
+          st["id"] for st in steps if st["id"] in reports.BRAIN_TASKS)
+      and len(reports.BRAIN_TASKS) == cfg["brain_age"]["scored"],
+      str(len(reports.BRAIN_TASKS)))
+
+print("  (d) no chapter carries a thumbnail of a card it did not choose")
+check("the module draws none",
+      "visuals.sections" not in MODULE and "figcaption" not in MODULE)
+check("  and the document draws none either",
+      reports.BRAIN_PROFILE.get("pdf_section_shots") is False)
+check("a chapter opens on a rule instead",
+      '.br-node-mark.is-rule {' in RESULT_CSS
+      and 'mark.className = "br-node-mark is-rule"' in MODULE
+      and 'mark.textContent = "◆"' not in MODULE)
+
 check("the delivered page ends on the retest line",
       "var again = retest(ctx);" in MODULE
       and MODULE.index("var again = retest(ctx);")
@@ -1329,9 +1437,25 @@ print("\n--- v6: the paid page draws every shape the report writes ---")
 # not being drawn: the plan's `{name, priority_note}` days came out as empty
 # numbers and the weakest-round table was not read at all — the paid half of
 # the document, missing from the paid page.
+# v13: the three shapes are three components now, and which one a row is, is
+# which one it carries — a day has a name and a note, a strength has a title
+# and a body, an implication is a string. None is a fallback for another.
 check("the day rows render their own two fields",
-      "item.title || item.name" in MODULE
-      and "item.body || item.priority_note" in MODULE)
+      "if (item.name || item.priority_note)" in MODULE
+      and "dayCard(item, index, last)" in MODULE
+      and 'elm("p", "br-body", item.priority_note)' in MODULE)
+check("  a day is a card with its own number on it",
+      'elm("span", "br-day-n"' in MODULE and ".br-day-n {" in RESULT_CSS
+      and ".br-day.is-last {" in RESULT_CSS)
+check("  and the day about food is marked as one, by a plate and not a word",
+      "function isFuel(text)" in MODULE and "FUEL_WORDS.indexOf(word)" in MODULE
+      and "hits >= 2" in MODULE and ".br-day.is-fuel {" in RESULT_CSS
+      and "GLYPH_PLATE" in MODULE)
+check("the five strengths and the two habits are told apart",
+      "items.length === 7 && items[0] && items[0].title" in MODULE
+      and 'elm("li", "br-habits-head", "Two habits to swap")' in MODULE
+      and 'elm("span", "br-swap", "SWAP THIS")' in MODULE
+      and ".br-trait.is-habit {" in RESULT_CSS)
 check("the four rounds render as a badged table",
       "(data.pairs || []).forEach" in MODULE
       and 'elm("span", "br-combo"' in MODULE
@@ -1344,8 +1468,11 @@ check("  and the class the colour hangs off is still the schema's word",
       ".br-badge-verdict.is-works {" in RESULT_CSS
       and ".br-badge-verdict.is-avoid {" in RESULT_CSS)
 check("the chapter closes on the drill, set apart from the prose",
-      "if (data.rule) frag.appendChild(elm(\"p\", \"br-callout\", data.rule));"
-      in MODULE and ".br-callout {" in RESULT_CSS)
+      "if (data.rule) frag.appendChild(drillCard(data.rule));" in MODULE
+      and ".br-drill {" in RESULT_CSS)
+check("  and the drill wears a clock, drawn rather than typed",
+      "GLYPH_CLOCK" in MODULE and "br-drill-glyph" in MODULE
+      and "\\u23f0" not in MODULE and "⏰" not in MODULE)
 
 print("\n--- the copy: a game, and nothing that sounds like anything else ---")
 BANNED = ("memory loss", "cognitive", "decline", "dementia", "test yourself",
@@ -1452,10 +1579,13 @@ check("no brain age is drawn on the free page at all",
       and "br-age-word" not in module_body("scoreCard")
       and "ageLine(" not in module_body("scoreCard"))
 check("  and the age hero is the delivered page's",
-      "root.appendChild(score(ctx, copy, data, lean));"
-      in module_body("delivered")
-      and module_body("delivered").index("scoreCard(ctx, copy, data, lean)")
-      < module_body("delivered").index("score(ctx, copy, data, lean)"))
+      "heroBlock(ctx, copy, data)" in module_body("delivered")
+      and 'elm("span", "br-dhero-n is-big", String(data.age))'
+      in module_body("heroBlock")
+      # The score first, because it is the number they were looking at when
+      # they paid; the age beside it, bigger, because it is the answer.
+      and module_body("heroBlock").index("copy.score_kicker")
+      < module_body("heroBlock").index("is-big"))
 check("the line under the score counts rounds with room, or says it was close",
       cfg["result_copy"]["score_room"]
       == "Clear room in {k} of your 4 rounds."

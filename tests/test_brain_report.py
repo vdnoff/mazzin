@@ -714,15 +714,16 @@ check("  and is told not to reach for a population that does not exist",
       in reports._BRAIN_SHAPES["dna"])
 check("  while the shape it must return is the one it always was",
       reports.SHAPE["dna"]["narrative"][1:3] == (1, 3))
-check("the page's kicker names the first card on it, which is the score",
-      "kicker(copy, lean, copy.score_kicker)" in module_body("delivered")
-      and MODULE.count("kicker(copy, lean, copy.score_kicker)") == 2)
-check("  and the age card carries its own lead, one card down",
-      'elm("p", "br-score-lead", lead)' in module_body("score")
-      and "var lead = copy.kicker" in module_body("score")
+check("the free page's kicker names the first card on it, which is the score",
+      "kicker(copy, lean, copy.score_kicker)" in module_body("render"))
+# v13: the delivered page is one hero rather than three stacked cards, so the
+# two numbers are on it together and each still carries its own label.
+check("  and the delivered hero labels both of its numbers",
+      "copy.score_kicker" in module_body("heroBlock")
+      and "copy.kicker" in module_body("heroBlock")
       and CFG["result_copy"]["kicker"] == "Your brain age")
 check("the age-delta lines are the delivered page's alone",
-      "ageLine(copy, data)" in module_body("score")
+      "ageLine(copy, data)" in module_body("heroBlock")
       and "ageLine(" not in module_body("scoreCard")
       and "ageLine(" not in module_body("render"))
 check("  and they are still the same three, chosen the same way",
@@ -767,9 +768,8 @@ check("    with no figure invented in a stub every reader shares",
       not re.search(r"\d", STUBS["dna"]["narrative"][0]),
       STUBS["dna"]["narrative"][0][:80])
 check("    and the page puts the age above the chapters, not inside one",
-      "root.appendChild(score(ctx, copy, data, lean));"
-      in module_body("delivered")
-      and module_body("delivered").index("score(ctx, copy, data, lean)")
+      "heroBlock(ctx, copy, data)" in module_body("delivered")
+      and module_body("delivered").index("heroBlock(ctx, copy, data)")
       < module_body("delivered").index("firstly(ctx.sections"))
 
 print("  (b) the weakest round's drill: two minutes a day, from tomorrow")
@@ -847,6 +847,238 @@ check("  and the four prompts are this profile's alone",
       all(SHAPES[key] not in json.dumps(
           {k: str(v) for k, v in reports.KITCHEN_PROFILE.items()})
           for key in SHAPES))
+
+print("\n--- v13: the document the money buys, and what is on page one ---")
+#
+# What was wrong with it was not the words. "Read from your rounds" rendered
+# ONE TILE PER PAGE, full width, across pages two, three and four, because
+# `.tapcell img` is sized in the zodiac sheet and this funnel had no sheet of
+# its own; four chapters opened on a marginal thumbnail captioned with the alt
+# text of the card it came from ("Box 2", "F in blue"); and page one carried a
+# title and a type name and nothing else, so the number the reader had just
+# paid to be told was four pages in.
+
+BRAIN_CHOICES, BRAIN_SCORES = run_of(3)
+LATE = ["ink"]
+
+
+def clock_answered(choices, scores, step_id):
+    """Rewrite a run so the clock, not the reader, answered one step.
+
+    Which card the clock presses is the config's — `timeout_pick` on the
+    step's version — and on every one of these steps it is a miss. A synthetic
+    run that declares a step timed out while still counting its hit is a run
+    that cannot happen, and a check built on one proves nothing.
+    """
+    index = next(i for i, st in enumerate(STEPS) if st["id"] == step_id)
+    step = STEPS[index]
+    want = (step.get("pool") or [{}])[0].get("timeout_pick")
+    was = next(im for pr in step["pairs"] for im in pr["images"]
+               if im["id"] == choices[index])
+    now = next(im for pr in step["pairs"] for im in pr["images"]
+               if im["id"] == want)
+    for tag in was["tags"]:
+        scores[tag] = scores.get(tag, 0) - 1
+    for tag in now["tags"]:
+        scores[tag] = scores.get(tag, 0) + 1
+    choices[index] = want
+    return choices, scores
+
+
+BRAIN_CHOICES, BRAIN_SCORES = clock_answered(BRAIN_CHOICES, BRAIN_SCORES,
+                                             LATE[0])
+DOC = reports.start_report(1, "brain", CFG["styles"][0]["id"], BRAIN_SCORES,
+                           choices=BRAIN_CHOICES, timed_out=LATE)
+BRAIN_NUM = (DOC.get("visuals") or {}).get("brain") or {}
+
+print("  (a) the run, worked out once and stored on the report")
+check("every scored round is on the row, with how it went",
+      len(BRAIN_NUM.get("rounds") or []) == BLOCK["scored"],
+      str(len(BRAIN_NUM.get("rounds") or [])))
+check("  and the strip is the whole walk, warm-ups and all",
+      len(BRAIN_NUM.get("strip") or []) == len(STEPS),
+      str(len(BRAIN_NUM.get("strip") or [])))
+check("  the two warm-ups carry no mark, because nothing was scored on them",
+      [e["status"] for e in BRAIN_NUM["strip"][:2]] == ["", ""],
+      str([e["status"] for e in BRAIN_NUM["strip"][:2]]))
+check("the round the clock answered is marked as the clock's",
+      [r["status"] for r in BRAIN_NUM["rounds"] if r["id"] == "ink"] == ["out"])
+check("  and it shows no card, because there was no tap to show",
+      not [r["img"] for r in BRAIN_NUM["rounds"] if r["id"] == "ink"][0]
+      and not [e for e in BRAIN_NUM["strip"] if e["status"] == "out"][0]["img"])
+check("  every other round shows one",
+      all(r["img"] for r in BRAIN_NUM["rounds"] if r["status"] != "out"))
+check("the hits and misses add up to what the score was worked out from",
+      sum(1 for r in BRAIN_NUM["rounds"] if r["status"] == "hit")
+      == BRAIN_NUM["hits"]
+      and sum(1 for r in BRAIN_NUM["rounds"] if r["status"] != "hit")
+      == BRAIN_NUM["misses"],
+      str((BRAIN_NUM["hits"], BRAIN_NUM["misses"])))
+check("  and the card the clock pressed was a miss, as the config says",
+      "foc_miss" in next(im for st in STEPS if st["id"] == "ink"
+                         for pr in st["pairs"] for im in pr["images"]
+                         if im["id"] == (st["pool"][0]["timeout_pick"]))["tags"])
+check("  and the four rounds are four rounds of four",
+      sorted(set(r["domain"] for r in BRAIN_NUM["rounds"])) == sorted(DOMAINS)
+      and all(sum(1 for r in BRAIN_NUM["rounds"] if r["domain"] == key) == 4
+              for key in DOMAINS))
+check("a spatial round stands for itself with the box its memorise screen "
+      "had open",
+      all("box_open_" in r["img"]
+          for r in BRAIN_NUM["rounds"] if r["domain"] == "spa"),
+      str([r["img"].rsplit("/", 1)[-1]
+           for r in BRAIN_NUM["rounds"] if r["domain"] == "spa"]))
+
+print("  (b) page one")
+HTML = reports._pdf_html(DOC)
+COVER = HTML.split('<section class="taps">')[0]
+check("the score is on it",
+      '<span class="n">%d</span>' % BRAIN_NUM["score"] in COVER,
+      str(BRAIN_NUM["score"]))
+check("  and so is the age, which is the thing that was bought",
+      '<span class="n">%d</span>' % BRAIN_NUM["age"] in COVER,
+      str(BRAIN_NUM["age"]))
+check("  with the line that says what the age means beside it",
+      'class="hero-delta"' in COVER
+      and reports._brain_delta_line(CFG, BRAIN_NUM) in COVER)
+check("  and the same line the page draws, off the same band",
+      reports.BRAIN_LEVEL_BAND == 3
+      and "LEVEL_BAND = 3" in MODULE)
+check("the four rounds are on it as four bars",
+      COVER.count('class="bar-fill"') == 4
+      and all(('>%s</td>' % name) in COVER
+              for name in BLOCK["domains"].values()))
+check("  each labelled with what it was out of",
+      COVER.count('class="bar-n"') == 4
+      and '>%d/4<' % BRAIN_NUM["counts"]["mem"] in COVER)
+check("the whole run is on it too, as a marked contact sheet",
+      '<section class="taps">' in HTML
+      and HTML.count('class="tapcell"') >= len(STEPS))
+check("  every scored round wearing one of the three marks",
+      HTML.count('class="mark"')
+      == sum(1 for e in BRAIN_NUM["strip"] if e["status"] and e["img"]))
+
+print("  (c) the strip is a grid, not a poster")
+check("the funnel has a print sheet of its own now",
+      isinstance(reports.BRAIN_PROFILE.get("pdf_css"), str)
+      and ".tapcell img" in reports.BRAIN_PROFILE["pdf_css"])
+check("  which sizes the cells, which is the whole of the bug",
+      "height: 22mm" in reports.BRAIN_PROFILE["pdf_css"]
+      and "width: 100%" in reports.BRAIN_PROFILE["pdf_css"])
+# A5 across is 174mm of text on this page; a sixth of it is 29mm and a tile
+# has to be well inside that or six will not sit on a row.
+check("  a tile is a small fraction of the page, never most of one",
+      22.0 / 174.0 < 0.15, "%.2f" % (22.0 / 174.0))
+check("  and the shared contact sheet is off, so the run is not drawn twice",
+      reports.BRAIN_PROFILE.get("pdf_taps") is False
+      and HTML.count('<section class="taps">') == 1)
+
+print("  (d) the marginal thumbnails are gone")
+check("no chapter carries a picture of a card it did not choose",
+      reports.BRAIN_PROFILE.get("pdf_section_shots") is False
+      and '<figure class="tap"' not in HTML)
+check("  so no alt text is printed as though it were a caption",
+      "<figcaption>" not in HTML)
+check("  and the labels that were leaking are still only labels",
+      all(item.get("label")
+          for item in reports._images_by_id(CFG).values()
+          if item.get("id") in ((DOC.get("visuals") or {})
+                                .get("sections") or {}).values()))
+check("  the page draws none either",
+      "br-node-shot" not in MODULE and 'figcaption' not in MODULE)
+
+print("  (e) the sixteen rounds, as a table")
+check("the funnel puts one after its cover",
+      reports.BRAIN_PROFILE.get("pdf_after_cover") is not None
+      and '<section class="rounds">' in HTML)
+check("  with one row per scored round",
+      HTML.count('class="rtask"') == BLOCK["scored"],
+      str(HTML.count('class="rtask"')))
+check("  grouped under the four, each with its own tally",
+      HTML.count('class="rgroup"') == len(DOMAINS)
+      and '<td class="rscore">%d/4</td>' % BRAIN_NUM["counts"]["foc"] in HTML)
+check("  and every row chipped with how it went",
+      HTML.count('class="chip hit"')
+      == sum(1 for r in BRAIN_NUM["rounds"] if r["status"] == "hit")
+      and HTML.count('class="chip miss"')
+      == sum(1 for r in BRAIN_NUM["rounds"] if r["status"] == "miss")
+      and HTML.count('class="chip out"') == 1)
+check("    including the one the clock answered",
+      ">TIME&#x27;S UP<" in HTML or ">TIME'S UP<" in HTML)
+
+print("  (f) the chapters, as components rather than paragraphs")
+check("the drill is a card with a clock on it",
+      '<div class="drill">' in HTML and "The two-minute drill" in HTML)
+check("the week is eight day cards",
+      HTML.count('class="day-n"') == 8
+      and HTML.count('class="day is-last"') == 1)
+check("  and the day about food is marked with a plate",
+      HTML.count('class="day is-fuel"') == 1
+      and HTML.count('class="day-glyph"') == 1)
+check("the five strengths and the two habits are told apart",
+      HTML.count('class="trait habit"') == 2
+      and HTML.count('class="swap"') == 2
+      and "Two habits to swap" in HTML)
+check("nothing in any of it is an emoji",
+      not [c for c in HTML if ord(c) > 0x2100])
+
+def pdf_pages(raw):
+    """How many pages a rendered PDF has, with nothing but the stdlib.
+
+    WeasyPrint puts the page tree in a compressed object stream, so the count
+    is not readable off the bytes — every stream is inflated and the page
+    objects counted out of what comes back. zlib rather than a PDF library
+    because no suite here may need one installed to run.
+    """
+    import zlib
+    body = b""
+    for match in re.finditer(rb"stream\r?\n", raw):
+        start = match.end()
+        end = raw.find(b"endstream", start)
+        try:
+            body += zlib.decompress(raw[start:end])
+        except zlib.error:
+            pass
+    return body.count(b"/Type /Page") - body.count(b"/Type /Pages")
+
+
+print("  (g) the whole document, rendered")
+PDF = reports.build_pdf(DOC)
+check("it renders", bool(PDF) and PDF[:4] == b"%PDF")
+if PDF:
+    check("  and it is a document somebody will read, not a slideshow",
+          0 < pdf_pages(PDF) <= 10, str(pdf_pages(PDF)))
+
+print("  (h) every other funnel's document, unchanged")
+# PDF bytes carry a creation timestamp, so two renders of the same report are
+# never byte-equal and a hash of them proves nothing. The document is the HTML
+# and the sheet it is rendered from, and that is what is compared.
+OTHERS = {
+    "kitchen": "modern_rustic",
+    "zodiac": None,
+    "zodiac30": None,
+    "zodiac-ro": None,
+    "zodiac-bg": None,
+    "persona": None,
+}
+import config as _config                                    # noqa: E402
+for slug in sorted(OTHERS):
+    other = _config.load_funnel(slug)
+    picks = [step["pairs"][0]["images"][0]["id"]
+             for step in other["swipe"]["steps"]]
+    row = reports.start_report(1, slug, other["styles"][0]["id"],
+                               {"water": 9, "moon": 6}, choices=picks)
+    doc = reports._pdf_html(row)
+    check("  %-11s draws no brain component" % slug,
+          not [name for name in ('class="hero"', 'class="rounds"',
+                                 'class="drill"', 'class="day-n"',
+                                 'class="trait habit"', 'class="mark"')
+               if name in doc])
+    check("    and keeps its own sheet and its own cover",
+          (reports._profile(slug).get("pdf_css") or "")
+          is not reports.BRAIN_PROFILE["pdf_css"]
+          and reports._profile(slug).get("pdf_taps") is not False
+          and reports._profile(slug).get("pdf_section_shots") is not False)
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for line in fails:

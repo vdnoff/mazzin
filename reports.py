@@ -3216,7 +3216,8 @@ paragraphs and three lines.
 
 THE SCORES ARE GIVEN ABOVE AND THEY ARE NOT YOURS TO CHANGE. Name the rounds
 by the words used for them there. Never print a score, a percentage or the
-number itself — the reader has all three on the page this chapter sits in.
+number itself — the reader has all three on the first page of this report,
+which is where this chapter points them.
 
 Every `implications` line is an ACTION, not an observation: something that
 happens in a minute or two, in a real week, that uses the strength you have
@@ -3390,7 +3391,8 @@ BRAIN_STUBS = {
             # path where nothing else can make up for it. It cannot name the
             # figure, because a stub is the same words for every reader, so
             # it names where the figure is.
-            "The number at the top of this page is your brain age, and it is "
+            "The number on the first page of this report is your brain age, "
+            "and it is "
             "a reading of your eighteen rounds and of nothing else. It "
             "moves. What holds it where it is: you hold what you have just "
             "been shown for a beat longer than most people do, and it turns "
@@ -5309,6 +5311,148 @@ def _brain_score(block, counts, misses):
     }
 
 
+# What each round asks of somebody, in the fewest words that are still true.
+# Report copy rather than config: the funnel's own words are the question on
+# the card, which is written to be read under a clock and is the wrong length
+# for a table.
+BRAIN_TASKS = {
+    "mem1": ("Four frames", "Holding a small set and finding one again"),
+    "mem2": ("Six frames", "The same, with half again as much to hold"),
+    "mem3": ("Six frames, faster", "Holding a set that was up for less time"),
+    "mem4": ("Six, close colours", "Holding the colour as well as the shape"),
+    "spa1": ("One box, four moves", "Following a thing you cannot see"),
+    "spa2": ("Five moves", "The same, one move longer and faster"),
+    "spa3": ("Six moves", "Keeping track when the moves outpace you"),
+    "spa4": ("Seven moves", "The longest chain, at the shortest interval"),
+    "chg1": ("A letter swapped", "Noticing a shape that changed for another"),
+    "chg2": ("A colour moved", "Noticing one shade of difference"),
+    "chg3": ("A size moved", "Noticing a fifth off something you just saw"),
+    "chg4": ("A tilt", "Noticing ten degrees nobody pointed out"),
+    "odd": ("The odd one", "Finding the one that does not match, quickly"),
+    "ink": ("Word against colour", "Reading the word and not the colour"),
+    "next": ("What comes next", "Holding two patterns at once"),
+    "count": ("Count them", "Counting past a glance, under a clock"),
+}
+
+# The four rounds, in the order every surface of this product draws them.
+BRAIN_GROUPS = ("mem", "spa", "chg", "foc")
+
+
+def _brain_status(cfg, step, image_id, late):
+    """How one round went: a hit, a miss, or the clock answering it."""
+    if step.get("id") in late:
+        return "out"
+    for pair in (step.get("pairs") or []):
+        for item in (pair.get("images") or []):
+            if item.get("id") != image_id:
+                continue
+            tags = item.get("tags") or []
+            return "hit" if any(str(t).endswith("_hit") for t in tags) \
+                else "miss"
+    return "miss"
+
+
+def _brain_frame(cfg, index, step, item):
+    """The picture that stands for one round.
+
+    The same substitution the page and the strip already make: a spatial
+    round was answered on six identical shut lids, so what stands for it is
+    the box its own memorise screen had OPEN. Read off the version that was
+    played, which is the version whose pair holds the card they tapped.
+    """
+    want = (item or {}).get("id")
+    for entry in ((cfg.get("interstitials") or [])):
+        if entry.get("after_step") != index:
+            continue
+        flash = entry.get("flash")
+        reveal = entry.get("reveal")
+        for variant in (step.get("pool") or []):
+            pair = next((p for p in (step.get("pairs") or [])
+                         if p.get("id") == variant.get("pair")), None)
+            if not pair:
+                continue
+            if any(c.get("id") == want for c in (pair.get("images") or [])):
+                flash = variant.get("flash") or flash
+                reveal = variant.get("reveal") or reveal
+                break
+        slot = (reveal or {}).get("open_slot")
+        frames = (flash or {}).get("images") or []
+        if isinstance(slot, int) and 0 <= slot < len(frames):
+            return frames[slot].get("img") or ""
+    return (item or {}).get("img") or ""
+
+
+def _brain_cards(cfg, choices):
+    """(step, tapped item, index) for every round the reader answered."""
+    steps = ((cfg.get("swipe") or {}).get("steps") or [])
+    by_id = {}
+    for step in steps:
+        for pair in (step.get("pairs") or []):
+            for item in (pair.get("images") or []):
+                if item.get("id"):
+                    by_id[item["id"]] = item
+    out = []
+    for index, step in enumerate(steps):
+        got = by_id.get(choices[index]) if index < len(choices or []) else None
+        out.append((index, step, got))
+    return out
+
+
+def _brain_rounds(cfg, choices, timed_out):
+    """The sixteen scored rounds, each with what it was and how it went."""
+    if not choices:
+        return []
+    late = set(timed_out or [])
+    rows = []
+    for index, step, item in _brain_cards(cfg, choices):
+        task = BRAIN_TASKS.get(step.get("id"))
+        if not task or not item:
+            continue
+        status = _brain_status(cfg, step, item.get("id"), late)
+        rows.append({
+            "id": step["id"],
+            "domain": step["id"][:3] if step["id"][:3] in BRAIN_GROUPS
+            else "foc",
+            "task": task[0],
+            "asks": task[1],
+            # Same rule as the strip: a round the clock answered has no card
+            # of the reader's to show, and the card it landed on is not one.
+            "img": "" if status == "out" else _brain_frame(cfg, index, step,
+                                                           item),
+            "status": status,
+        })
+    return rows
+
+
+def _brain_strip(cfg, choices, timed_out):
+    """Every round of the walk in order, with the mark each one earned.
+
+    Eighteen, not sixteen: the two warm-up steps are part of the run and they
+    are in the strip the reader saw before they paid. They carry no mark,
+    because there was nothing to get right.
+    """
+    if not choices:
+        return []
+    late = set(timed_out or [])
+    out = []
+    for index, step, item in _brain_cards(cfg, choices):
+        if not item:
+            continue
+        scored = step.get("id") in BRAIN_TASKS
+        status = _brain_status(cfg, step, item.get("id"), late) \
+            if scored else ""
+        out.append({
+            # Nothing, where the clock answered it. There was no tap, and the
+            # card the clock happened to land on is not the reader's — the
+            # page they saw before they paid draws a crossed tile there and
+            # so does this.
+            "img": "" if status == "out" else _brain_frame(cfg, index, step,
+                                                           item),
+            "status": status,
+        })
+    return out
+
+
 def _brain_round_name(numbers, key):
     """What this funnel calls one round, or the bare key."""
     return (numbers.get("domains") or {}).get(key) or key
@@ -6743,6 +6887,14 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
         numbers = _brain_numbers(cfg, style, tag_scores)
         if numbers:
             visuals = dict(visuals or {})
+            # How every round actually went, worked out here while the run
+            # still exists and stored once. Both surfaces read it: the page
+            # is opened in a tab that never played, and the PDF is built on a
+            # server that never had one either, so neither of them can look
+            # this up and neither of them should be working it out twice.
+            numbers = dict(numbers)
+            numbers["rounds"] = _brain_rounds(cfg, choices, timed_out)
+            numbers["strip"] = _brain_strip(cfg, choices, timed_out)
             visuals["brain"] = numbers
         # The rounds the clock answered, beside them. Written only where they
         # were handed over: an empty list and a missing key are the same
@@ -7788,6 +7940,185 @@ PERSONA_PDF_CSS = ZODIAC_PDF_CSS + """
 PERSONA_PROFILE["pdf_css"] = PERSONA_PDF_CSS
 
 
+# The memory game's PDF. An override sheet like the two above, and for the
+# same reason: the page furniture, the break rules and the section flow are
+# shared and correct, and what is different here is a document that has to
+# carry numbers, a contact sheet and a sixteen-row table without any of the
+# three turning into a poster.
+#
+# The first thing it does is size `.tapcell img`. That rule lives in the
+# zodiac sheet, which this funnel never had, so eighteen frames rendered at
+# their natural resolution — one to a page, across pages two, three and four.
+# A width in millimetres is the whole of that bug.
+BRAIN_PDF_CSS = """
+/* The funnel's own blue, over the platform's orange, everywhere the base
+   sheet paints an accent. Listed rather than inherited: the base rules are
+   the layout and only their ink changes. */
+.rule, .section-title .bar, .callout { border-color: #3B7DD8; }
+.rule, .section-title .bar { background: #3B7DD8; }
+.num, .fix, .meta { color: #3B7DD8; }
+
+/* --- page one: the hero ------------------------------------------------- */
+
+/* The cover carries three blocks now and no longer wants 48mm of air above
+   them. */
+@page :first { margin-top: 20mm; }
+
+.cover-name { margin-bottom: 3mm; font-size: 30pt; }
+.cover-essence { margin: 0 0 8mm; font-size: 12pt; color: #6b7280; }
+.cover-note { margin: 7mm 0 0; }
+
+/* Score and age side by side, in a fixed table: this is the one pair of
+   numbers the reader paid for, and a float or an inline-block pair is what
+   wraps when a three-digit score meets a two-digit age. */
+.hero { width: 100%%; table-layout: fixed; border-collapse: collapse;
+        margin: 0 0 9mm; }
+.hero td { vertical-align: bottom; padding: 0; }
+.hero-cap { display: block; margin: 0 0 1mm; font-size: 8.5pt;
+            font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase;
+            color: #9aa0a6; }
+.hero-score .n { font-family: %(serif)s; font-size: 30pt; font-weight: 600;
+                 line-height: 1; color: #16181d; }
+.hero-score .of { font-family: %(serif)s; font-size: 15pt; color: #9aa0a6; }
+.hero-age { text-align: right; }
+.hero-age .n { font-family: %(serif)s; font-size: 54pt; font-weight: 600;
+               line-height: 0.9; letter-spacing: -0.02em; color: #3B7DD8; }
+.hero-delta { margin: 0 0 9mm; padding: 2.5mm 4mm;
+              border-left: 0.9mm solid #3B7DD8; background: #F2F6FD;
+              font-size: 10.5pt; color: #16181d; }
+
+/* The four rounds, as bars. A table again, and fixed, so the tracks all
+   start at the same x whatever the round is called. */
+.bars { width: 100%%; table-layout: fixed; border-collapse: collapse;
+        margin: 0 0 10mm; }
+.bars td { padding: 0 0 2.6mm; vertical-align: middle; }
+.bar-name { width: 26mm; font-size: 10pt; color: #16181d; }
+.bar-track { height: 3.4mm; background: #E8EBF0; border-radius: 1.7mm; }
+.bar-fill { height: 3.4mm; background: #3B7DD8; border-radius: 1.7mm; }
+.bar-n { width: 12mm; padding-left: 3mm !important; text-align: right;
+         font-size: 9.5pt; font-weight: 600; color: #6b7280; }
+
+/* --- page one: the run, as a contact sheet ------------------------------ */
+
+.taps { margin: 0; }
+.taps-cap { margin: 0 0 3mm; font-size: 8.5pt; font-weight: 600;
+            letter-spacing: 0.10em; text-transform: uppercase; color: #9aa0a6; }
+/* The width is the whole of the bug this sheet exists to fix. A fixed table
+   takes its column widths from the row, so six cells are a sixth each and
+   cannot round their way down to five — but only once the table itself has a
+   width to divide. Without it the six columns shrink to their content and
+   eighteen frames come out in a 20mm ribbon down the left margin. */
+.tapgrid { width: 100%%; table-layout: fixed; border-collapse: separate;
+           border-spacing: 1.6mm; margin: 0 -1.6mm; }
+.tapcell { padding: 0; vertical-align: top; }
+.tapcell .tile { position: relative; }
+/* 24mm tall, which is a hundredth of the area the unsized rule gave it. */
+.tapcell img, .tile-blank {
+  display: block; width: 100%%; height: 22mm; object-fit: cover;
+  border: 0.2mm solid rgba(22, 24, 29, 0.10);
+  border-radius: 1.5mm; background: #fff;
+}
+.tile-blank { border-style: dashed; border-color: rgba(226, 87, 76, 0.35);
+              background: #FDF4F3; text-align: center; }
+.tile-blank svg { display: inline-block; width: 6.5mm; height: 6.5mm;
+                  margin-top: 7.5mm; }
+.tapcell .mark { position: absolute; right: -1.6mm; bottom: -1.6mm;
+                 width: 5.6mm; height: 5.6mm; }
+.tapcell .mark svg { display: block; width: 5.6mm; height: 5.6mm; }
+
+/* --- page two: the sixteen rounds --------------------------------------- */
+
+.rounds { break-after: page; margin: 0; }
+.rounds-title { margin: 0 0 1.5mm; font-family: %(serif)s; font-size: 15pt;
+                font-weight: 600; color: #16181d; }
+.rounds-lead { margin: 0 0 3.5mm; font-size: 10pt; color: #6b7280; }
+/* The whole table on one page is the point of it: sixteen rounds you can put
+   a thumb down the side of. Every size below was cut until it fitted. */
+.rtable { width: 100%%; border-collapse: collapse; }
+.rtable td { padding: 1.2mm 0; border-bottom: 0.2mm solid #EDEFF2;
+             vertical-align: middle; }
+.rgroup td { padding: 2.8mm 0 1.2mm; border-bottom: 0.5mm solid #3B7DD8;
+             font-size: 8.5pt; font-weight: 600; letter-spacing: 0.10em;
+             text-transform: uppercase; color: #3B7DD8; }
+.rgroup .rscore { text-align: right; letter-spacing: 0; color: #6b7280; }
+.rshot { width: 11mm; }
+.rshot img { display: block; width: 8.4mm; height: 8.4mm; object-fit: cover;
+             border: 0.2mm solid rgba(22, 24, 29, 0.10); border-radius: 1mm;
+             background: #fff; }
+.rshot-out { display: block; width: 8.4mm; height: 8.4mm; padding: 1.5mm;
+             border: 0.2mm dashed rgba(226, 87, 76, 0.35); border-radius: 1mm;
+             background: #FDF4F3; }
+.rshot-out svg { display: block; width: 5.2mm; height: 5.2mm; }
+.rtask { font-size: 10pt; line-height: 1.28; color: #16181d; }
+.rasks { display: block; font-size: 8.5pt; line-height: 1.3; color: #6b7280; }
+.rchip { width: 26mm; text-align: right; }
+.chip { display: inline-block; padding: 0.8mm 2.2mm; border-radius: 1mm;
+        font-size: 7.5pt; font-weight: 600; letter-spacing: 0.08em; }
+.chip.hit { background: #E8F5EE; color: #1F7A4C; }
+.chip.miss { background: #FBEAE9; color: #B3261E; }
+.chip.out { background: #FDF1E7; color: #B25317; }
+
+/* --- the chapters ------------------------------------------------------- */
+
+/* The drill is the thing the whole plan is built on, so it gets a card
+   rather than a left rule shared with every other closing line. */
+.drill { margin: 5mm 0 0; padding: 4mm 4.5mm; border: 0.3mm solid #3B7DD8;
+         border-radius: 2mm; background: #F7FAFE; break-inside: avoid-page; }
+.drill-head { margin: 0 0 1.5mm; font-size: 8.5pt; font-weight: 600;
+              letter-spacing: 0.10em; text-transform: uppercase;
+              color: #3B7DD8; }
+.drill-head svg { width: 4mm; height: 4mm; vertical-align: -0.9mm;
+                  margin-right: 1.5mm; }
+.drill p { margin: 0; color: #16181d; }
+
+/* The four rounds in the materials chapter read as rows, not paragraphs. */
+.verdict { padding: 2.4mm 0; margin: 0; border-bottom: 0.2mm solid #EDEFF2; }
+.verdict b { color: #16181d; }
+/* The instruction, not a footnote to the badge: this line is what to do
+   about the round beside it, and it was the palest thing on the page. */
+.verdict p { margin: 0.8mm 0 0; font-size: 10pt; color: #3d424c; }
+.badge.works { background: #E8F5EE; color: #1F7A4C; }
+.badge.avoid { background: #F2F6FD; color: #2C5FA8; }
+
+/* The week, as seven cards and an eighth. */
+.day { margin: 0 0 3mm; padding: 3mm 4mm 3mm 0; break-inside: avoid-page;
+       border-left: 0.9mm solid #E8EBF0; padding-left: 4mm; }
+.day.is-last { border-left-color: #3B7DD8; background: #F7FAFE;
+               padding-right: 4mm; }
+.day-n { display: inline-block; min-width: 6mm; padding: 0.6mm 1.6mm;
+         margin-right: 2.5mm; border-radius: 1mm; background: #3B7DD8;
+         font-size: 8pt; font-weight: 600; letter-spacing: 0.06em;
+         color: #fff; text-align: center; vertical-align: 0.6mm; }
+.day-name { font-family: %(serif)s; font-size: 12pt; font-weight: 600;
+            color: #16181d; }
+.day.is-fuel { border-left-color: #B8791F; background: #FDF9F2;
+                padding-right: 4mm; }
+.day-glyph { display: inline-block; margin-left: 2.4mm; color: #B8791F; }
+.day-glyph svg { width: 7mm; height: 5.6mm; vertical-align: -1.1mm; }
+.day p { margin: 1.4mm 0 0; }
+
+/* Five strengths, then two habits that have to look like something else. */
+.trait { margin: 0 0 4mm; break-inside: avoid-page; }
+.trait b { color: #16181d; }
+.trait p { margin: 0.8mm 0 0; }
+.trait .do { color: #3B7DD8; }
+.habit { padding: 3.5mm 4mm; border-radius: 2mm; background: #FDF6EA;
+         border: 0.2mm solid rgba(184, 121, 31, 0.28); }
+.habit .do { color: #B8791F; }
+.swap { display: inline-block; padding: 0.6mm 1.8mm; margin-left: 2mm;
+        border-radius: 1mm; background: #F6E7CE; font-size: 7.5pt;
+        font-weight: 600; letter-spacing: 0.08em; color: #8A5A12;
+        vertical-align: 0.5mm; }
+.habits-head { margin: 6mm 0 3mm; break-after: avoid-page;
+               font-size: 8.5pt; font-weight: 600;
+               letter-spacing: 0.10em; text-transform: uppercase;
+               color: #B8791F; }
+
+.implication { color: #16181d; }
+"""
+
+
+
 PDF_FACES = """
 @font-face { font-family: "Mazzin Sans"; src: url("fonts/inter-latin-var.woff2"); }
 @font-face { font-family: "Mazzin Serif"; src: url("fonts/fraunces-latin-var.woff2"); }
@@ -7797,6 +8128,10 @@ PDF_FONTS = {
     "sans": '"Mazzin Sans", "Helvetica Neue", Helvetica, Arial, sans-serif',
     "serif": '"Mazzin Serif", Georgia, "Times New Roman", serif',
 }
+
+# Interpolated here rather than beside the sheet: the two font stacks are
+# declared below it, and a stylesheet that names them has to wait for them.
+BRAIN_PROFILE["pdf_css"] = BRAIN_PDF_CSS % PDF_FONTS
 
 
 def _e(value):
@@ -7819,6 +8154,17 @@ def _pdf_visuals():
     if not hasattr(_pdf_state, "visuals"):
         _pdf_state.visuals = {}
     return _pdf_state.visuals
+
+
+def _pdf_profile():
+    """The profile this document is being built for. Set by _pdf_html.
+
+    Same channel as the photographs and the words, and for the same reason:
+    two of the shared builders now have a per-profile answer — which body
+    builder runs, and whether a section carries a picture at all — and those
+    are the document's business rather than any one section's.
+    """
+    return getattr(_pdf_state, "profile", None) or {}
 
 
 def _pdf_words():
@@ -8063,12 +8409,17 @@ def _pdf_section_body(section, structured, head=""):
     # rather than in the six builders: which picture belongs to a section is
     # the config's business, and threading it through every builder would put
     # kitchen's board and this in the same place for no reason.
+    profile = _pdf_profile()
     shot = _pdf_image(
         (_pdf_visuals().get("sections") or {}).get(section.get("id")),
-        "tap", True)
+        "tap", True) if profile.get("pdf_section_shots", True) else ""
     if structured:
         data = section.get("data")
-        builder = PDF_BODY.get(section.get("id"))
+        # The funnel's own builder for this section where it declares one,
+        # and the shared one everywhere else — which is every funnel but the
+        # memory game, all of them printing what they always printed.
+        builder = (profile.get("pdf_body") or {}).get(section.get("id")) \
+            or PDF_BODY.get(section.get("id"))
         if builder and isinstance(data, dict):
             try:
                 return _pdf_opening(head, shot, builder(data))
@@ -8627,6 +8978,382 @@ def _pdf_taps(cfg):
             % (_e(caption), "".join(rows)))
 
 
+# --- the memory game's document ---------------------------------------------
+
+# The marks a round wears, drawn rather than typed. No emoji: a report is
+# printed, mailed and opened in a viewer that has whatever fonts it has, and a
+# glyph that resolves to a black-and-white outline on one machine and a
+# coloured sticker on another is not a design. These are the same three shapes
+# the delivered page draws, and the paths are the same paths.
+BRAIN_MARKS = {
+    "hit": ('<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.4" '
+            'fill="#2E9E5B"/><path d="M4.6 8.3 6.9 10.7 11.5 5.6" fill="none" '
+            'stroke="#fff" stroke-width="2" stroke-linecap="round" '
+            'stroke-linejoin="round"/></svg>'),
+    "miss": ('<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.4" '
+             'fill="#fff" stroke="rgba(22,24,29,0.16)" stroke-width="0.8"/>'
+             '<circle cx="8" cy="8" r="3.4" fill="#C9736C"/></svg>'),
+    "out": ('<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="7.4" '
+            'fill="#E2574C"/><path d="M5.5 5.5 10.5 10.5M10.5 5.5 5.5 10.5" '
+            'stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>'),
+}
+
+# A clock over the drill, because the drill's whole promise is two minutes,
+# and a plate over the day that is about food. Both stroked in currentColor so
+# they take the ink of whatever they sit in.
+BRAIN_CLOCK = ('<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" '
+               'stroke-width="1.4"><circle cx="8" cy="8" r="6.3"/>'
+               '<path d="M8 4.3V8l2.5 1.5" stroke-linecap="round"/></svg>')
+BRAIN_PLATE = ('<svg viewBox="0 0 20 16" fill="none" stroke="currentColor" '
+               'stroke-width="1.25" stroke-linecap="round">'
+               '<circle cx="12.4" cy="8" r="5.6"/>'
+               '<circle cx="12.4" cy="8" r="2.5"/>'
+               '<path d="M3 2.4v3.2a1.5 1.5 0 0 0 3 0V2.4M4.5 5.6V13.6"/>'
+               '<path d="M3 2.4v2.4M6 2.4v2.4"/></svg>')
+
+# The document's own furniture. "Fix:" is the platform's word and it is the
+# wrong one over a strength — there is nothing wrong with it — so the two
+# halves of that chapter say what they actually are.
+BRAIN_LABELS = {
+    "rounds_title": "Your %d scored rounds",
+    "rounds_lead": ("Every round you played, what it asked of you, and how it "
+                    "went."),
+    "strip_cap": "Your run",
+    "score_cap": "Your score",
+    "age_cap": "Your brain age",
+    "drill": "The two-minute drill",
+    "habits": "Two habits to swap",
+    "spend": "Spend it:",
+    "swap": "Swap:",
+    "swap_chip": "SWAP THIS",
+    "chips": {"hit": "HIT", "miss": "MISS", "out": "TIME'S UP"},
+}
+
+# The words a day about food is written in. Two of them have to turn up before
+# a day gets the plate, because one is a coincidence — a memory drill about a
+# shopping list is not the fuel day, and it says "list" and "shop" and never
+# says anybody ate anything.
+BRAIN_FUEL_WORDS = (
+    "eat", "eating", "ate", "breakfast", "lunch", "dinner", "snack", "plate",
+    "meal", "food", "supermarket", "toast", "fish", "sardines", "walnuts",
+    "nuts", "eggs", "yoghurt", "yogurt", "fruit", "cheese", "porridge",
+    "oats", "beans", "supper",
+)
+
+
+def _brain_src(path):
+    """A stored gallery path as the PDF should read it, or "".
+
+    Relative, because build_pdf renders with base_url=STATIC_DIR, and checked
+    on disk, because a broken image box on a paid page is worse than a tile
+    that is simply not there. No print variant is looked for: this funnel's
+    art is flat WebP of a few kilobytes, and there is nothing to shrink.
+    """
+    rel = (path or "")
+    if rel.startswith("/static/"):
+        rel = rel[len("/static/"):]
+    return _pdf_asset(rel)
+
+
+def _brain_bar_totals(numbers):
+    """How many rounds each of the four is out of.
+
+    Counted off the record where there is one, so a funnel that adds a fifth
+    memory round prints four bars out of five without anything here changing.
+    """
+    totals = {}
+    for row in (numbers.get("rounds") or []):
+        key = row.get("domain")
+        if key:
+            totals[key] = totals.get(key, 0) + 1
+    if totals:
+        return totals
+    even = int(numbers.get("scored") or 0) // len(BRAIN_DOMAINS)
+    return dict((key, even) for key in BRAIN_DOMAINS)
+
+
+# Inside this many years of their own age group is "level". The module's own
+# LEVEL_BAND, restated: the page and the document draw the same sentence under
+# the same number, and a document that calls two years "younger" where the page
+# the reader bought from called it "level" is the two of them disagreeing about
+# the one figure the whole funnel was for. Three rather than one, because the
+# age moves in steps of `per_miss` and a single round either way should not
+# flip the sentence.
+BRAIN_LEVEL_BAND = 3
+
+
+def _brain_delta_line(cfg, numbers):
+    """The one sentence under the age, in the funnel's own words.
+
+    The same three lines the free page picks between, read off the config
+    rather than restated here — the page and the document have to agree about
+    what a delta of zero means.
+    """
+    copy = ((cfg or {}).get("result_copy") or {})
+    delta = numbers.get("delta")
+    if delta is None:
+        return copy.get("age_line_bare") or ""
+    if delta <= -BRAIN_LEVEL_BAND:
+        return (copy.get("younger_line") or "").replace("{n}", str(-delta))
+    if delta >= BRAIN_LEVEL_BAND:
+        return (copy.get("older_line") or "").replace("{n}", str(delta))
+    return copy.get("level_line") or ""
+
+
+def _brain_bars(numbers):
+    """The four rounds as filled bars, hits over total."""
+    counts = numbers.get("counts") or {}
+    labels = numbers.get("domains") or {}
+    totals = _brain_bar_totals(numbers)
+    rows = []
+    for key in BRAIN_DOMAINS:
+        total = int(totals.get(key) or 0)
+        got = int(counts.get(key) or 0)
+        if not total:
+            continue
+        share = max(0, min(100, int(round(100.0 * got / total))))
+        rows.append(
+            '<tr><td class="bar-name">%s</td><td>'
+            '<div class="bar-track"><div class="bar-fill" style="width: %d%%">'
+            '</div></div></td><td class="bar-n">%d/%d</td></tr>'
+            % (_e(labels.get(key) or key.upper()), share, got, total))
+    if not rows:
+        return ""
+    return '<table class="bars">%s</table>' % "".join(rows)
+
+
+def _brain_sheet(cfg, numbers):
+    """The whole run as a contact sheet, six across, every round marked.
+
+    Eighteen tiles and not five: the claim over it is that the reading was
+    read off these rounds, and a sample is not a record. A round the clock
+    answered draws no picture, exactly as it draws none on the page the
+    reader saw before they paid — there was no tap to show.
+    """
+    strip = numbers.get("strip") or []
+    if len(strip) < 4:
+        return ""
+    caption = (((cfg or {}).get("result_copy") or {}).get("taps_caption")
+               or BRAIN_LABELS["strip_cap"]).rstrip(":")
+    cells = []
+    for entry in strip:
+        src = _brain_src(entry.get("img"))
+        status = entry.get("status") or ""
+        if not src:
+            cells.append('<td class="tapcell"><div class="tile">'
+                         '<div class="tile-blank">%s</div></div></td>'
+                         % (BRAIN_MARKS["out"] if status == "out" else ""))
+            continue
+        mark = BRAIN_MARKS.get(status) or ""
+        cells.append(
+            '<td class="tapcell"><div class="tile"><img src="%s" alt="">%s'
+            "</div></td>"
+            % (_e(src), ('<span class="mark">%s</span>' % mark)
+               if mark else ""))
+    while len(cells) % TAP_COLUMNS:
+        cells.append('<td class="tapcell"></td>')
+    rows = ["<tr>%s</tr>" % "".join(cells[n:n + TAP_COLUMNS])
+            for n in range(0, len(cells), TAP_COLUMNS)]
+    return ('<section class="taps"><p class="taps-cap">%s</p>'
+            '<table class="tapgrid">%s</table></section>'
+            % (_e(caption), "".join(rows)))
+
+
+def _brain_cover(content, profile, cfg):
+    """Page one: the two numbers, the four rounds, and the run itself.
+
+    What was on this page before was the title and the type name, on an
+    otherwise empty sheet — a reader who paid to be told a number opened the
+    document and was not told it until page four. The number goes first.
+    """
+    numbers = _pdf_visuals().get("brain") or {}
+    name = _e(content.get("style_name") or _pdf_words()["style_fallback"])
+    essence = ((((cfg or {}).get("result_copy") or {}).get("profile") or {})
+               .get("essence") or {}).get(content.get("style_id")) or ""
+    score = numbers.get("score")
+    age = numbers.get("age")
+    delta = _brain_delta_line(cfg, numbers)
+    hero = ""
+    if isinstance(age, int):
+        hero = (
+            '<table class="hero"><tr>'
+            '<td class="hero-score">%s<span class="n">%s</span>'
+            '<span class="of">/100</span></td>'
+            '<td class="hero-age">%s<span class="n">%s</span></td>'
+            "</tr></table>"
+            % (('<span class="hero-cap">%s</span>' % _e(
+                ((cfg or {}).get("result_copy") or {}).get("score_kicker")
+                or BRAIN_LABELS["score_cap"])) if isinstance(score, int)
+               else "",
+               _e(str(score)) if isinstance(score, int) else "&mdash;",
+               '<span class="hero-cap">%s</span>' % _e(
+                   ((cfg or {}).get("result_copy") or {}).get("kicker")
+                   or BRAIN_LABELS["age_cap"]),
+               _e(str(age))))
+    return [
+        '<section class="cover">',
+        '<img class="cover-logo" src="%s" alt="Mazzin">'
+        % _e(profile.get("pdf_logo") or "brand/logo.svg"),
+        '<p class="cover-lead">%s</p>' % _e(profile["pdf_lead"]),
+        '<h1 class="cover-name">%s</h1>' % name,
+        # The type's one line, under the type's name. It is the funnel's own
+        # copy for this style and it is what the name means; without it the
+        # cover names a thing and explains nothing until page four.
+        ('<p class="cover-essence">%s</p>' % _e(essence)) if essence else "",
+        hero,
+        ('<p class="hero-delta">%s</p>' % _e(delta)) if delta and hero else "",
+        _brain_bars(numbers),
+        _brain_sheet(cfg, numbers),
+        '<p class="cover-note">%s</p>' % _e(profile.get("pdf_note") or ""),
+        "</section>",
+    ]
+
+
+def _brain_table(content, profile, cfg):
+    """Page two: the sixteen scored rounds, grouped by which of the four.
+
+    One page, whole: the table is the thing somebody who paid two dollars for
+    a reading of their own run will actually look at twice, and a table split
+    across a page boundary is a table you have to hold in your head.
+    """
+    numbers = _pdf_visuals().get("brain") or {}
+    rows = numbers.get("rounds") or []
+    if not rows:
+        return ""
+    labels = numbers.get("domains") or {}
+    counts = numbers.get("counts") or {}
+    totals = _brain_bar_totals(numbers)
+    chips = BRAIN_LABELS["chips"]
+    out = []
+    for key in BRAIN_DOMAINS:
+        mine = [row for row in rows if row.get("domain") == key]
+        if not mine:
+            continue
+        out.append(
+            '<tr class="rgroup"><td colspan="2">%s</td>'
+            '<td class="rscore">%d/%d</td></tr>'
+            % (_e(labels.get(key) or key.upper()),
+               int(counts.get(key) or 0), int(totals.get(key) or 0)))
+        for row in mine:
+            src = _brain_src(row.get("img"))
+            status = row.get("status") or "miss"
+            out.append(
+                '<tr><td class="rshot">%s</td>'
+                '<td class="rtask">%s<span class="rasks">%s</span></td>'
+                '<td class="rchip"><span class="chip %s">%s</span></td></tr>'
+                % (('<img src="%s" alt="">' % _e(src)) if src
+                   else ('<span class="rshot-out">%s</span>'
+                         % BRAIN_MARKS["out"]),
+                   _e(row.get("task")), _e(row.get("asks")),
+                   _e(status), _e(chips.get(status) or status.upper())))
+    return ('<section class="rounds"><h2 class="rounds-title">%s</h2>'
+            '<p class="rounds-lead">%s</p><table class="rtable">%s</table>'
+            "</section>"
+            % (_e(BRAIN_LABELS["rounds_title"] % len(rows)),
+               _e(BRAIN_LABELS["rounds_lead"]), "".join(out)))
+
+
+def _brain_pdf_materials(d):
+    """The four rounds and the drill.
+
+    The four read as rows with a badge, which is what the prompt writes them
+    as. The drill gets a card of its own with a clock on it, because it is the
+    one paragraph in the document somebody is meant to act on tomorrow, and
+    under a left rule shared with every other closing line it read as one.
+    """
+    badges = _pdf_words()["verdicts"]
+    rows = "".join(
+        '<div class="verdict"><b>%s</b> <span class="badge %s">%s</span>'
+        "<p>%s</p></div>"
+        % (_e(p["combo"]), p["verdict"],
+           _e(badges.get(p["verdict"]) or p["verdict"].upper()), _e(p["why"]))
+        for p in d["pairs"])
+    return ('<p class="intro">%s</p>%s'
+            '<div class="drill"><p class="drill-head">%s%s</p><p>%s</p></div>'
+            % (_e(d["intro"]), rows, BRAIN_CLOCK,
+               _e(BRAIN_LABELS["drill"]), _e(d["rule"])))
+
+
+def _brain_is_fuel(text):
+    """True where a day is the day about food."""
+    words = set(re.findall(r"[a-z]+", (text or "").lower()))
+    return len(words & set(BRAIN_FUEL_WORDS)) >= 2
+
+
+def _brain_pdf_shopping(d):
+    """The week, as eight cards.
+
+    A numbered list is what this was, and eight numbered paragraphs is a wall
+    of text — the day is the unit somebody reads this in, so the day is the
+    card. The last one is the second run, which is the point of the other
+    seven, so it is the one that is coloured.
+    """
+    items = d["items"]
+    cards = []
+    for index, item in enumerate(items):
+        name = item.get("name") or ""
+        got = re.match(r"^\s*Day\s+(\d+)\s*[-\u2013\u2014:]\s*(.+)$", name)
+        number = got.group(1) if got else str(index + 1)
+        title = got.group(2) if got else name
+        note = item.get("priority_note") or ""
+        fuel = _brain_is_fuel(name + " " + note)
+        cards.append(
+            '<div class="day%s"><span class="day-n">%s</span>'
+            '<span class="day-name">%s%s</span><p>%s</p></div>'
+            % (" is-last" if index == len(items) - 1
+               else (" is-fuel" if fuel else ""),
+               _e(number), _e(title),
+               ('<span class="day-glyph">%s</span>' % BRAIN_PLATE)
+               if fuel else "", _e(note)))
+    return "".join(cards)
+
+
+def _brain_pdf_mistakes(d):
+    """Five strengths, then two habits that have to look like something else.
+
+    They arrive as one list of seven and they printed as one list of seven,
+    which read as seven faults with the first five miscounted. The split is
+    the chapter's own — the shape names it — so the document draws it.
+    """
+    items = d["items"]
+    strengths = items[:5] if len(items) == 7 else items
+    habits = items[5:] if len(items) == 7 else []
+    out = ["".join(
+        '<div class="numbered"><span class="num">%d</span>'
+        '<div class="trait"><b>%s</b><p>%s</p>'
+        '<p class="do">%s %s</p></div></div>'
+        % (i + 1, _e(m["title"]), _e(m["body"]),
+           _e(BRAIN_LABELS["spend"]), _e(m["fix"]))
+        for i, m in enumerate(strengths))]
+    if habits:
+        out.append('<p class="habits-head">%s</p>' % _e(BRAIN_LABELS["habits"]))
+        out.append("".join(
+            '<div class="trait habit"><b>%s</b>'
+            '<span class="swap">%s</span><p>%s</p>'
+            '<p class="do">%s %s</p></div>'
+            % (_e(m["title"]), _e(BRAIN_LABELS["swap_chip"]), _e(m["body"]),
+               _e(BRAIN_LABELS["swap"]), _e(m["fix"]))
+            for m in habits))
+    return "".join(out)
+
+
+BRAIN_PROFILE["pdf_cover"] = _brain_cover
+# The cover draws the run itself, so the shared contact sheet would be the
+# same eighteen frames twice.
+BRAIN_PROFILE["pdf_taps"] = False
+# And the marginal thumbnail beside each chapter heading is off. It was a
+# chosen card with its alt text under it, so four chapters opened on a
+# postage stamp captioned "Box 2" and "F in blue" — a label written to be
+# read out by a screen reader, printed as though it meant something.
+BRAIN_PROFILE["pdf_section_shots"] = False
+BRAIN_PROFILE["pdf_after_cover"] = _brain_table
+BRAIN_PROFILE["pdf_body"] = {
+    "materials": _brain_pdf_materials,
+    "shopping": _brain_pdf_shopping,
+    "mistakes": _brain_pdf_mistakes,
+}
+
+
 def _pdf_html(content):
     structured = _is_schema2(content.get("version"))
     profile = _profile(content.get("funnel"))
@@ -8634,6 +9361,7 @@ def _pdf_html(content):
     # before anything is built, because the cover reads it too.
     words = _words(profile)
     _pdf_state.words = words
+    _pdf_state.profile = profile
     name = _e(content.get("style_name") or words["style_fallback"])
     # Same sheet, then the funnel's own ink over it. A funnel with no override
     # renders the document it always did, character for character.
@@ -8660,6 +9388,10 @@ def _pdf_html(content):
         state["hero"] = dict(visuals.get("hero") or {})
         state["profile"] = dict(visuals.get("profile") or {})
         state["taps"] = list(visuals.get("taps") or [])
+        # The memory game's figures and its round-by-round record, worked out
+        # while the run existed and stored with the report. Nothing here can
+        # recompute them: this process never saw the run.
+        state["brain"] = dict(visuals.get("brain") or {})
 
     if cover:
         blocks = [block for block in cover(content, profile, cfg) if block]
@@ -8684,9 +9416,19 @@ def _pdf_html(content):
         ]
     # Only where the run stored one, which is only where the funnel asked for
     # it. Kitchen stores no tap order and prints the document it always did.
-    grid = _pdf_taps(cfg)
+    grid = _pdf_taps(cfg) if profile.get("pdf_taps", True) else ""
     if grid:
         blocks.append(grid)
+    # And whatever else the funnel puts between its cover and its chapters.
+    # One funnel declares one — a table of its own rounds — and every other
+    # profile declares none and renders exactly what it rendered before.
+    after = profile.get("pdf_after_cover")
+    if after:
+        try:
+            blocks.append(after(content, profile, cfg) or "")
+        except Exception:
+            log.exception("pdf after-cover failed for %s",
+                          content.get("funnel"))
     node = profile.get("pdf_node")
     for index, section in enumerate(content.get("sections") or [], 1):
         mark = ('<span class="node">%d</span>' % index) if node else ""

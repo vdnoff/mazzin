@@ -699,28 +699,33 @@ body:has(.result-module) {
   color: var(--br-muted);
 }
 
+/* The chapters' one list, whichever of the three shapes its rows are. No
+   marker of its own: a day carries a numbered chip, a strength carries a
+   number, and an arrow line draws its own arrow. */
 .br-list {
-  margin: 10px 0 0;
-  padding: 0 0 0 18px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
 }
 
-.br-item { margin: 0 0 12px; }
-
-.br-item-title {
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.3;
-  font-weight: 700;
+/* An arrow line — one thing to do this week, from the profile chapter. */
+.br-item {
+  position: relative;
+  margin: 0 0 10px;
+  padding-left: 18px;
+  font-size: 15px;
+  line-height: 1.55;
   color: var(--br-ink);
 }
 
-.br-fix {
-  margin: 6px 0 0;
-  font-size: 14px;
-  line-height: 1.5;
-  font-weight: 600;
-  color: var(--br-spa);
+.br-item::before {
+  content: "\2192";
+  position: absolute;
+  left: 0;
+  color: var(--br-lux);
 }
+
+
 
 .br-note {
   margin: 10px 0 0;
@@ -769,19 +774,6 @@ body:has(.result-module) {
 .br-badge-verdict.is-works { background: var(--br-spa); }
 .br-badge-verdict.is-avoid { background: var(--br-chg); color: var(--br-ink); }
 
-/* The drill the weakest-round chapter closes on. It is the one paragraph in
-   the report a reader is meant to do something with tomorrow morning, so it
-   is set apart from the ones they only read. */
-.br-callout {
-  margin: 16px 0 0;
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: var(--br-lux-soft, rgba(59, 125, 216, 0.10));
-  font-size: 15px;
-  line-height: 1.55;
-  font-weight: 600;
-  color: var(--br-ink);
-}
 
 .br-footnote {
   margin: 18px 0 0;
@@ -1183,3 +1175,560 @@ body:has(.result-module) {
 
 /* Last on the card, and the quietest thing on it. */
 .br-offer .br-anchor { margin: 12px 0 0; }
+
+/* --- the delivered document ------------------------------------------------- */
+/*
+ * What the reader bought, as four blocks: the two numbers, the run, the
+ * sixteen rounds, and the chapters. Nothing above this line moves — the free
+ * page is the page it always was, and every selector below is either new or
+ * scoped to `.is-delivered`.
+ */
+
+/* Block 1 — the two numbers, and what they were read off. */
+.br-dhero {
+  margin: 16px 0 0;
+  padding: 20px 18px 18px;
+  border: 1px solid var(--br-line);
+  border-radius: 18px;
+  background: var(--br-card);
+}
+
+.br-dhero-lead {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--br-faint);
+}
+
+.br-dhero-name {
+  margin: 4px 0 0;
+  font-size: 27px;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  color: var(--br-ink);
+}
+
+/* Side by side, and the age is the bigger of the two: it is the answer to the
+   question the whole funnel asked, and the score is the receipt for it. */
+.br-dhero-nums {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 18px 0 0;
+}
+
+.br-dhero-cell.is-age { text-align: right; }
+
+.br-dhero-cap {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--br-faint);
+}
+
+.br-dhero-figure { margin: 2px 0 0; }
+
+.br-dhero-n {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--br-ink);
+}
+
+.br-dhero-n.is-big {
+  font-size: 60px;
+  line-height: 0.92;
+  color: var(--br-lux);
+}
+
+.br-dhero-of {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--br-faint);
+}
+
+.br-dhero-delta {
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--br-lux);
+  border-radius: 0 10px 10px 0;
+  background: rgba(59, 125, 216, 0.07);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--br-ink);
+}
+
+.br-dbars {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.br-dbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+}
+
+.br-dbar:last-child { margin-bottom: 0; }
+
+.br-dbar-name {
+  flex: none;
+  width: 62px;
+  font-size: 13px;
+  color: var(--br-muted);
+}
+
+.br-dbar-track {
+  flex: 1 1 auto;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(44, 48, 56, 0.08);
+}
+
+/* Grown rather than widened: the width is the reader's own share and the
+   animation scales it in from nothing, so the whole thing is one CSS rule and
+   nothing has to watch the viewport to start it. */
+.br-dbar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--br-lux);
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: br-grow 900ms cubic-bezier(0.2, 0.7, 0.2, 1) 250ms forwards;
+}
+
+@keyframes br-grow { to { transform: scaleX(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .br-dbar-fill { animation: none; transform: none; }
+}
+
+.br-dbar-count {
+  flex: none;
+  width: 30px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--br-muted);
+}
+
+/* Block 2 — the whole run, six across, every scored round marked. */
+.br-strip { margin: 22px 0 0; }
+
+.br-strip-cap {
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--br-faint);
+}
+
+.br-strip-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 7px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.br-strip-cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--br-line);
+  border-radius: 10px;
+  background: var(--br-card);
+}
+
+.br-strip-cell img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 9px;
+}
+
+.br-strip-cell.is-out {
+  border-style: dashed;
+  border-color: rgba(226, 87, 76, 0.40);
+  background: rgba(226, 87, 76, 0.06);
+}
+
+/* The three marks, shared by the strip and the table. */
+.br-mark {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.br-mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.br-mark.is-hit { background: #2E9E5B; color: #fff; }
+.br-mark.is-out { background: #E2574C; color: #fff; }
+
+.br-mark.is-miss {
+  border: 1px solid rgba(44, 48, 56, 0.16);
+  background: var(--br-card);
+  color: #C9736C;
+}
+
+.br-mark.is-miss svg { fill: currentColor; stroke: none; }
+
+/* On a round the clock answered there is no card to badge, so the cross is
+   the tile. */
+.br-strip-cell.is-out .br-mark {
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  width: 20px;
+  height: 20px;
+  transform: translate(-50%, -50%);
+}
+
+/* Block 3 — every scored round, grouped by which of the four. */
+.br-rounds-table { margin: 26px 0 0; }
+
+.br-rt-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--br-ink);
+}
+
+.br-rt-lead {
+  margin: 5px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--br-muted);
+}
+
+.br-rt-group {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 0 0 6px;
+  border-bottom: 2px solid var(--br-lux);
+}
+
+.br-rt-group-name {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--br-lux);
+}
+
+.br-rt-group-score {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--br-muted);
+}
+
+.br-rt-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A list of rows rather than a table element, because this is read on a
+   phone: four real columns at 390px is a table you scroll sideways. */
+.br-rt-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--br-line);
+}
+
+.br-rt-shot {
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--br-line);
+  border-radius: 8px;
+  background: var(--br-card);
+}
+
+.br-rt-shot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 7px;
+}
+
+.br-rt-shot.is-out {
+  border-style: dashed;
+  border-color: rgba(226, 87, 76, 0.40);
+  background: rgba(226, 87, 76, 0.06);
+}
+
+.br-rt-shot .br-mark {
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+}
+
+.br-rt-text { flex: 1 1 auto; min-width: 0; }
+
+.br-rt-task {
+  display: block;
+  font-size: 14.5px;
+  line-height: 1.25;
+  font-weight: 600;
+  color: var(--br-ink);
+}
+
+.br-rt-asks {
+  display: block;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--br-muted);
+}
+
+.br-rt-chip {
+  flex: none;
+  padding: 3px 7px;
+  border-radius: 6px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.br-rt-chip.is-hit { background: rgba(46, 158, 91, 0.13); color: #1F7A4C; }
+.br-rt-chip.is-miss { background: rgba(226, 87, 76, 0.12); color: #B3261E; }
+.br-rt-chip.is-out { background: rgba(226, 87, 76, 0.14); color: #B25317; }
+
+/* Block 4 — the chapters. An accent rule over a title, the same header the
+   printed document opens each of them on. */
+.result-module.is-delivered .br-node {
+  display: block;
+  padding: 18px 16px;
+}
+
+.br-node-mark.is-rule {
+  display: block;
+  width: 32px;
+  height: 3px;
+  margin: 0 0 11px;
+  border-radius: 2px;
+  background: var(--br-lux);
+}
+
+.result-module.is-delivered .br-node-title {
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+/* The drill. The one paragraph in the report a reader is meant to do
+   something with tomorrow morning, so it is a card with a clock on it. */
+.br-drill {
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(59, 125, 216, 0.45);
+  border-radius: 12px;
+  background: rgba(59, 125, 216, 0.06);
+}
+
+.br-drill-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--br-lux);
+}
+
+.br-drill-glyph {
+  flex: none;
+  width: 15px;
+  height: 15px;
+}
+
+.br-drill-glyph svg,
+.br-day-glyph svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+
+.br-drill-body {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 600;
+  color: var(--br-ink);
+}
+
+/* The week, as eight cards. The last one is the second run, which is the
+   point of the other seven, so it is the one that is coloured. */
+.br-day {
+  margin: 0 0 10px;
+  padding: 12px 14px;
+  border-left: 3px solid rgba(44, 48, 56, 0.10);
+  border-radius: 0 12px 12px 0;
+  background: rgba(44, 48, 56, 0.025);
+}
+
+.br-day.is-fuel {
+  border-left-color: #B8791F;
+  background: rgba(184, 121, 31, 0.07);
+}
+
+.br-day.is-last {
+  border-left-color: var(--br-lux);
+  background: rgba(59, 125, 216, 0.07);
+}
+
+.br-day-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.br-day-n {
+  flex: none;
+  min-width: 22px;
+  padding: 2px 0;
+  border-radius: 6px;
+  background: var(--br-lux);
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+}
+
+.br-day-name {
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 800;
+  color: var(--br-ink);
+}
+
+.br-day-glyph {
+  flex: none;
+  width: 22px;
+  height: 18px;
+  color: #B8791F;
+}
+
+.br-day .br-body { margin: 7px 0 0; }
+
+/* Five strengths, then two habits that have to look like something else. */
+.br-trait { margin: 0 0 15px; }
+
+.br-trait-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+
+.br-trait-n {
+  flex: none;
+  width: 16px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--br-lux);
+}
+
+.br-trait-title {
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 800;
+  color: var(--br-ink);
+}
+
+.br-do {
+  margin: 7px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--br-lux);
+}
+
+.br-habits-head {
+  margin: 22px 0 10px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #B8791F;
+}
+
+/* A habit is not a fault, and it is not a sixth strength either. */
+.br-trait.is-habit {
+  padding: 14px;
+  border: 1px solid rgba(184, 121, 31, 0.28);
+  border-radius: 12px;
+  background: rgba(184, 121, 31, 0.06);
+}
+
+.br-trait.is-habit .br-do { color: #B8791F; }
+
+.br-swap {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(184, 121, 31, 0.16);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  color: #8A5A12;
+}
+
+.br-dhero-essence {
+  margin: 8px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--br-muted);
+}
+
+/* Last on the card, under the bars: what the type is, once the numbers it is
+   read off are already on the page. */
+.br-dhero-blurb {
+  margin: 18px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--br-line);
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--br-muted);
+}
