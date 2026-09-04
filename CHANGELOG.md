@@ -579,3 +579,6 @@ bottom.
 
 ## 2026-09-03 — claude/zodiac-bg-boxes-off
 - zodiac-bg: boxes A/B off, 100% minimal
+
+## 2026-09-04 — claude/brain-report-3
+- brain report v3: visual rebuild — web + PDF
