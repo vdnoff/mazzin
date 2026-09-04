@@ -582,3 +582,6 @@ bottom.
 
 ## 2026-09-04 — claude/brain-report-3
 - brain report v3: visual rebuild — web + PDF
+
+## 2026-09-04 — claude/zodiac-bg-price-099
+- zodiac-bg sale price 0,99 EUR
