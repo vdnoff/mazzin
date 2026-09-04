@@ -3472,7 +3472,7 @@
   ],
   "sale": {
     "active": true,
-    "price_cents": 199,
+    "price_cents": 99,
     "regular_price_cents": 499,
     "label": "Лятно намаление",
     "ends": "2026-09-30T23:59:59-12:00"
