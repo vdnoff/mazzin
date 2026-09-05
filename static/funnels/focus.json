@@ -1059,7 +1059,7 @@
         "kicker": "ROUND 2 · FOCUS · 3/4",
         "question": "Which board has the turned arrow?",
         "format": "grid4",
-        "timer_ms": 5000,
+        "timer_ms": 4000,
         "pairs": [
           {
             "id": "v1",
@@ -1077,7 +1077,7 @@
                 "img": "/static/galleries/focus/foc_c_2.webp",
                 "label": "Board 2",
                 "tags": [
-                  "foc_hit"
+                  "foc_miss"
                 ]
               },
               {
@@ -1093,7 +1093,7 @@
                 "img": "/static/galleries/focus/foc_c_4.webp",
                 "label": "Board 4",
                 "tags": [
-                  "foc_miss"
+                  "foc_hit"
                 ]
               }
             ]
@@ -1102,7 +1102,7 @@
         "pool": [
           {
             "pair": "v1",
-            "timeout_pick": "foc3_v1_b4"
+            "timeout_pick": "foc3_v1_b3"
           }
         ]
       },
@@ -1111,7 +1111,7 @@
         "kicker": "ROUND 2 · FOCUS · 4/4",
         "question": "Which board has the turned arrow?",
         "format": "grid4",
-        "timer_ms": 5000,
+        "timer_ms": 4000,
         "pairs": [
           {
             "id": "v1",
@@ -1129,7 +1129,7 @@
                 "img": "/static/galleries/focus/foc_d_2.webp",
                 "label": "Board 2",
                 "tags": [
-                  "foc_miss"
+                  "foc_hit"
                 ]
               },
               {
@@ -1145,7 +1145,7 @@
                 "img": "/static/galleries/focus/foc_d_4.webp",
                 "label": "Board 4",
                 "tags": [
-                  "foc_hit"
+                  "foc_miss"
                 ]
               }
             ]
@@ -1154,15 +1154,15 @@
         "pool": [
           {
             "pair": "v1",
-            "timeout_pick": "foc4_v1_b3"
+            "timeout_pick": "foc4_v1_b4"
           }
         ]
       },
       {
         "id": "chg1",
         "kicker": "ROUND 3 · SWITCHING · 1/4",
-        "question": "Tap the BLUE arrow",
-        "format": "grid4",
+        "question": "Tap the RED arrow",
+        "format": "grid6",
         "timer_ms": 4000,
         "pairs": [
           {
@@ -1170,24 +1170,24 @@
             "images": [
               {
                 "id": "chg1_v1_c1",
-                "img": "/static/galleries/focus/swi_up_blue.webp",
-                "label": "Blue arrow, pointing up",
+                "img": "/static/galleries/focus/swi_up_red.webp",
+                "label": "Red arrow, pointing up",
                 "tags": [
                   "chg_hit"
                 ]
               },
               {
                 "id": "chg1_v1_c2",
-                "img": "/static/galleries/focus/swi_left_red.webp",
-                "label": "Red arrow, pointing left",
+                "img": "/static/galleries/focus/swi_down_blue.webp",
+                "label": "Blue arrow, pointing down",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
                 "id": "chg1_v1_c3",
-                "img": "/static/galleries/focus/swi_down_green.webp",
-                "label": "Green arrow, pointing down",
+                "img": "/static/galleries/focus/swi_left_green.webp",
+                "label": "Green arrow, pointing left",
                 "tags": [
                   "chg_miss"
                 ]
@@ -1199,6 +1199,22 @@
                 "tags": [
                   "chg_miss"
                 ]
+              },
+              {
+                "id": "chg1_v1_c5",
+                "img": "/static/galleries/focus/swi_up_blue.webp",
+                "label": "Blue arrow, pointing up",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_v1_c6",
+                "img": "/static/galleries/focus/swi_down_green.webp",
+                "label": "Green arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
               }
             ]
           },
@@ -1207,8 +1223,8 @@
             "images": [
               {
                 "id": "chg1_v2_c1",
-                "img": "/static/galleries/focus/swi_left_blue.webp",
-                "label": "Blue arrow, pointing left",
+                "img": "/static/galleries/focus/swi_left_red.webp",
+                "label": "Red arrow, pointing left",
                 "tags": [
                   "chg_hit"
                 ]
@@ -1223,8 +1239,8 @@
               },
               {
                 "id": "chg1_v2_c3",
-                "img": "/static/galleries/focus/swi_right_red.webp",
-                "label": "Red arrow, pointing right",
+                "img": "/static/galleries/focus/swi_right_blue.webp",
+                "label": "Blue arrow, pointing right",
                 "tags": [
                   "chg_miss"
                 ]
@@ -1236,6 +1252,22 @@
                 "tags": [
                   "chg_miss"
                 ]
+              },
+              {
+                "id": "chg1_v2_c5",
+                "img": "/static/galleries/focus/swi_left_blue.webp",
+                "label": "Blue arrow, pointing left",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_v2_c6",
+                "img": "/static/galleries/focus/swi_up_green.webp",
+                "label": "Green arrow, pointing up",
+                "tags": [
+                  "chg_miss"
+                ]
               }
             ]
           },
@@ -1244,8 +1276,8 @@
             "images": [
               {
                 "id": "chg1_v3_c1",
-                "img": "/static/galleries/focus/swi_down_blue.webp",
-                "label": "Blue arrow, pointing down",
+                "img": "/static/galleries/focus/swi_down_red.webp",
+                "label": "Red arrow, pointing down",
                 "tags": [
                   "chg_hit"
                 ]
@@ -1260,8 +1292,8 @@
               },
               {
                 "id": "chg1_v3_c3",
-                "img": "/static/galleries/focus/swi_up_red.webp",
-                "label": "Red arrow, pointing up",
+                "img": "/static/galleries/focus/swi_up_blue.webp",
+                "label": "Blue arrow, pointing up",
                 "tags": [
                   "chg_miss"
                 ]
@@ -1273,6 +1305,22 @@
                 "tags": [
                   "chg_miss"
                 ]
+              },
+              {
+                "id": "chg1_v3_c5",
+                "img": "/static/galleries/focus/swi_down_amber.webp",
+                "label": "Amber arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_v3_c6",
+                "img": "/static/galleries/focus/swi_right_blue.webp",
+                "label": "Blue arrow, pointing right",
+                "tags": [
+                  "chg_miss"
+                ]
               }
             ]
           }
@@ -1280,23 +1328,23 @@
         "pool": [
           {
             "pair": "v1",
-            "timeout_pick": "chg1_v1_c4"
+            "timeout_pick": "chg1_v1_c6"
           },
           {
             "pair": "v2",
-            "timeout_pick": "chg1_v2_c4"
+            "timeout_pick": "chg1_v2_c6"
           },
           {
             "pair": "v3",
-            "timeout_pick": "chg1_v3_c4"
+            "timeout_pick": "chg1_v3_c6"
           }
         ]
       },
       {
         "id": "chg2",
         "kicker": "ROUND 3 · SWITCHING · 2/4",
-        "question": "Tap the AMBER arrow",
-        "format": "grid4",
+        "question": "Now — tap the arrow pointing UP",
+        "format": "grid6",
         "timer_ms": 4000,
         "pairs": [
           {
@@ -1304,32 +1352,48 @@
             "images": [
               {
                 "id": "chg2_v1_c1",
-                "img": "/static/galleries/focus/swi_right_amber.webp",
-                "label": "Amber arrow, pointing right",
+                "img": "/static/galleries/focus/swi_up_green.webp",
+                "label": "Green arrow, pointing up",
                 "tags": [
                   "chg_hit"
                 ]
               },
               {
                 "id": "chg2_v1_c2",
-                "img": "/static/galleries/focus/swi_up_blue.webp",
-                "label": "Blue arrow, pointing up",
+                "img": "/static/galleries/focus/swi_left_red.webp",
+                "label": "Red arrow, pointing left",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
                 "id": "chg2_v1_c3",
-                "img": "/static/galleries/focus/swi_left_green.webp",
-                "label": "Green arrow, pointing left",
+                "img": "/static/galleries/focus/swi_down_blue.webp",
+                "label": "Blue arrow, pointing down",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
                 "id": "chg2_v1_c4",
-                "img": "/static/galleries/focus/swi_down_red.webp",
-                "label": "Red arrow, pointing down",
+                "img": "/static/galleries/focus/swi_right_amber.webp",
+                "label": "Amber arrow, pointing right",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_v1_c5",
+                "img": "/static/galleries/focus/swi_left_blue.webp",
+                "label": "Blue arrow, pointing left",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_v1_c6",
+                "img": "/static/galleries/focus/swi_down_green.webp",
+                "label": "Green arrow, pointing down",
                 "tags": [
                   "chg_miss"
                 ]
@@ -1341,32 +1405,48 @@
             "images": [
               {
                 "id": "chg2_v2_c1",
-                "img": "/static/galleries/focus/swi_up_amber.webp",
-                "label": "Amber arrow, pointing up",
+                "img": "/static/galleries/focus/swi_up_blue.webp",
+                "label": "Blue arrow, pointing up",
                 "tags": [
                   "chg_hit"
                 ]
               },
               {
                 "id": "chg2_v2_c2",
-                "img": "/static/galleries/focus/swi_down_blue.webp",
-                "label": "Blue arrow, pointing down",
+                "img": "/static/galleries/focus/swi_down_red.webp",
+                "label": "Red arrow, pointing down",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
                 "id": "chg2_v2_c3",
-                "img": "/static/galleries/focus/swi_right_green.webp",
-                "label": "Green arrow, pointing right",
+                "img": "/static/galleries/focus/swi_left_green.webp",
+                "label": "Green arrow, pointing left",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
                 "id": "chg2_v2_c4",
-                "img": "/static/galleries/focus/swi_left_red.webp",
-                "label": "Red arrow, pointing left",
+                "img": "/static/galleries/focus/swi_right_blue.webp",
+                "label": "Blue arrow, pointing right",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_v2_c5",
+                "img": "/static/galleries/focus/swi_down_amber.webp",
+                "label": "Amber arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_v2_c6",
+                "img": "/static/galleries/focus/swi_left_amber.webp",
+                "label": "Amber arrow, pointing left",
                 "tags": [
                   "chg_miss"
                 ]
@@ -1378,32 +1458,48 @@
             "images": [
               {
                 "id": "chg2_v3_c1",
-                "img": "/static/galleries/focus/swi_left_amber.webp",
-                "label": "Amber arrow, pointing left",
+                "img": "/static/galleries/focus/swi_up_amber.webp",
+                "label": "Amber arrow, pointing up",
                 "tags": [
                   "chg_hit"
                 ]
               },
               {
                 "id": "chg2_v3_c2",
-                "img": "/static/galleries/focus/swi_up_green.webp",
-                "label": "Green arrow, pointing up",
+                "img": "/static/galleries/focus/swi_right_red.webp",
+                "label": "Red arrow, pointing right",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
                 "id": "chg2_v3_c3",
-                "img": "/static/galleries/focus/swi_down_blue.webp",
-                "label": "Blue arrow, pointing down",
+                "img": "/static/galleries/focus/swi_down_green.webp",
+                "label": "Green arrow, pointing down",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
                 "id": "chg2_v3_c4",
-                "img": "/static/galleries/focus/swi_right_red.webp",
-                "label": "Red arrow, pointing right",
+                "img": "/static/galleries/focus/swi_left_blue.webp",
+                "label": "Blue arrow, pointing left",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_v3_c5",
+                "img": "/static/galleries/focus/swi_right_green.webp",
+                "label": "Green arrow, pointing right",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_v3_c6",
+                "img": "/static/galleries/focus/swi_down_blue.webp",
+                "label": "Blue arrow, pointing down",
                 "tags": [
                   "chg_miss"
                 ]
@@ -1414,46 +1510,62 @@
         "pool": [
           {
             "pair": "v1",
-            "timeout_pick": "chg2_v1_c4"
+            "timeout_pick": "chg2_v1_c6"
           },
           {
             "pair": "v2",
-            "timeout_pick": "chg2_v2_c4"
+            "timeout_pick": "chg2_v2_c6"
           },
           {
             "pair": "v3",
-            "timeout_pick": "chg2_v3_c4"
+            "timeout_pick": "chg2_v3_c6"
           }
         ]
       },
       {
         "id": "chg3",
         "kicker": "ROUND 3 · SWITCHING · 3/4",
-        "question": "Now tap the arrow pointing UP",
-        "format": "grid4",
-        "timer_ms": 4000,
+        "question": "Tap the GREEN arrow",
+        "format": "grid6",
+        "timer_ms": 3000,
         "pairs": [
           {
             "id": "v1",
             "images": [
               {
                 "id": "chg3_v1_c1",
-                "img": "/static/galleries/focus/swi_up_green.webp",
-                "label": "Green arrow, pointing up",
+                "img": "/static/galleries/focus/swi_left_green.webp",
+                "label": "Green arrow, pointing left",
                 "tags": [
                   "chg_hit"
                 ]
               },
               {
                 "id": "chg3_v1_c2",
-                "img": "/static/galleries/focus/swi_left_amber.webp",
-                "label": "Amber arrow, pointing left",
+                "img": "/static/galleries/focus/swi_up_blue.webp",
+                "label": "Blue arrow, pointing up",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
                 "id": "chg3_v1_c3",
+                "img": "/static/galleries/focus/swi_down_red.webp",
+                "label": "Red arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_v1_c4",
+                "img": "/static/galleries/focus/swi_right_amber.webp",
+                "label": "Amber arrow, pointing right",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_v1_c5",
                 "img": "/static/galleries/focus/swi_down_blue.webp",
                 "label": "Blue arrow, pointing down",
                 "tags": [
@@ -1461,9 +1573,9 @@
                 ]
               },
               {
-                "id": "chg3_v1_c4",
-                "img": "/static/galleries/focus/swi_right_red.webp",
-                "label": "Red arrow, pointing right",
+                "id": "chg3_v1_c6",
+                "img": "/static/galleries/focus/swi_left_amber.webp",
+                "label": "Amber arrow, pointing left",
                 "tags": [
                   "chg_miss"
                 ]
@@ -1475,16 +1587,16 @@
             "images": [
               {
                 "id": "chg3_v2_c1",
-                "img": "/static/galleries/focus/swi_up_red.webp",
-                "label": "Red arrow, pointing up",
+                "img": "/static/galleries/focus/swi_down_green.webp",
+                "label": "Green arrow, pointing down",
                 "tags": [
                   "chg_hit"
                 ]
               },
               {
                 "id": "chg3_v2_c2",
-                "img": "/static/galleries/focus/swi_down_amber.webp",
-                "label": "Amber arrow, pointing down",
+                "img": "/static/galleries/focus/swi_up_red.webp",
+                "label": "Red arrow, pointing up",
                 "tags": [
                   "chg_miss"
                 ]
@@ -1499,8 +1611,24 @@
               },
               {
                 "id": "chg3_v2_c4",
-                "img": "/static/galleries/focus/swi_right_green.webp",
-                "label": "Green arrow, pointing right",
+                "img": "/static/galleries/focus/swi_right_red.webp",
+                "label": "Red arrow, pointing right",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_v2_c5",
+                "img": "/static/galleries/focus/swi_left_amber.webp",
+                "label": "Amber arrow, pointing left",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_v2_c6",
+                "img": "/static/galleries/focus/swi_right_blue.webp",
+                "label": "Blue arrow, pointing right",
                 "tags": [
                   "chg_miss"
                 ]
@@ -1512,16 +1640,16 @@
             "images": [
               {
                 "id": "chg3_v3_c1",
-                "img": "/static/galleries/focus/swi_up_blue.webp",
-                "label": "Blue arrow, pointing up",
+                "img": "/static/galleries/focus/swi_right_green.webp",
+                "label": "Green arrow, pointing right",
                 "tags": [
                   "chg_hit"
                 ]
               },
               {
                 "id": "chg3_v3_c2",
-                "img": "/static/galleries/focus/swi_right_amber.webp",
-                "label": "Amber arrow, pointing right",
+                "img": "/static/galleries/focus/swi_up_amber.webp",
+                "label": "Amber arrow, pointing up",
                 "tags": [
                   "chg_miss"
                 ]
@@ -1536,8 +1664,24 @@
               },
               {
                 "id": "chg3_v3_c4",
-                "img": "/static/galleries/focus/swi_left_green.webp",
-                "label": "Green arrow, pointing left",
+                "img": "/static/galleries/focus/swi_left_red.webp",
+                "label": "Red arrow, pointing left",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_v3_c5",
+                "img": "/static/galleries/focus/swi_down_amber.webp",
+                "label": "Amber arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_v3_c6",
+                "img": "/static/galleries/focus/swi_left_blue.webp",
+                "label": "Blue arrow, pointing left",
                 "tags": [
                   "chg_miss"
                 ]
@@ -1548,40 +1692,40 @@
         "pool": [
           {
             "pair": "v1",
-            "timeout_pick": "chg3_v1_c4"
+            "timeout_pick": "chg3_v1_c6"
           },
           {
             "pair": "v2",
-            "timeout_pick": "chg3_v2_c4"
+            "timeout_pick": "chg3_v2_c6"
           },
           {
             "pair": "v3",
-            "timeout_pick": "chg3_v3_c4"
+            "timeout_pick": "chg3_v3_c6"
           }
         ]
       },
       {
         "id": "chg4",
         "kicker": "ROUND 3 · SWITCHING · 4/4",
-        "question": "Now tap the arrow pointing LEFT",
-        "format": "grid4",
-        "timer_ms": 4000,
+        "question": "Now — tap the arrow NOT pointing DOWN",
+        "format": "grid6",
+        "timer_ms": 2500,
         "pairs": [
           {
             "id": "v1",
             "images": [
               {
                 "id": "chg4_v1_c1",
-                "img": "/static/galleries/focus/swi_left_red.webp",
-                "label": "Red arrow, pointing left",
+                "img": "/static/galleries/focus/swi_right_red.webp",
+                "label": "Red arrow, pointing right",
                 "tags": [
                   "chg_hit"
                 ]
               },
               {
                 "id": "chg4_v1_c2",
-                "img": "/static/galleries/focus/swi_up_amber.webp",
-                "label": "Amber arrow, pointing up",
+                "img": "/static/galleries/focus/swi_down_green.webp",
+                "label": "Green arrow, pointing down",
                 "tags": [
                   "chg_miss"
                 ]
@@ -1596,8 +1740,24 @@
               },
               {
                 "id": "chg4_v1_c4",
-                "img": "/static/galleries/focus/swi_right_green.webp",
-                "label": "Green arrow, pointing right",
+                "img": "/static/galleries/focus/swi_down_red.webp",
+                "label": "Red arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v1_c5",
+                "img": "/static/galleries/focus/swi_down_amber.webp",
+                "label": "Amber arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v1_c6",
+                "img": "/static/galleries/focus/swi_down_blue.webp",
+                "label": "Blue arrow, pointing down",
                 "tags": [
                   "chg_miss"
                 ]
@@ -1609,30 +1769,46 @@
             "images": [
               {
                 "id": "chg4_v2_c1",
-                "img": "/static/galleries/focus/swi_left_green.webp",
-                "label": "Green arrow, pointing left",
+                "img": "/static/galleries/focus/swi_left_blue.webp",
+                "label": "Blue arrow, pointing left",
                 "tags": [
                   "chg_hit"
                 ]
               },
               {
                 "id": "chg4_v2_c2",
-                "img": "/static/galleries/focus/swi_right_amber.webp",
-                "label": "Amber arrow, pointing right",
+                "img": "/static/galleries/focus/swi_down_green.webp",
+                "label": "Green arrow, pointing down",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
                 "id": "chg4_v2_c3",
-                "img": "/static/galleries/focus/swi_up_blue.webp",
-                "label": "Blue arrow, pointing up",
+                "img": "/static/galleries/focus/swi_down_red.webp",
+                "label": "Red arrow, pointing down",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
                 "id": "chg4_v2_c4",
+                "img": "/static/galleries/focus/swi_down_amber.webp",
+                "label": "Amber arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v2_c5",
+                "img": "/static/galleries/focus/swi_down_blue.webp",
+                "label": "Blue arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v2_c6",
                 "img": "/static/galleries/focus/swi_down_red.webp",
                 "label": "Red arrow, pointing down",
                 "tags": [
@@ -1646,14 +1822,38 @@
             "images": [
               {
                 "id": "chg4_v3_c1",
-                "img": "/static/galleries/focus/swi_left_blue.webp",
-                "label": "Blue arrow, pointing left",
+                "img": "/static/galleries/focus/swi_right_amber.webp",
+                "label": "Amber arrow, pointing right",
                 "tags": [
                   "chg_hit"
                 ]
               },
               {
                 "id": "chg4_v3_c2",
+                "img": "/static/galleries/focus/swi_down_green.webp",
+                "label": "Green arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v3_c3",
+                "img": "/static/galleries/focus/swi_down_blue.webp",
+                "label": "Blue arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v3_c4",
+                "img": "/static/galleries/focus/swi_down_red.webp",
+                "label": "Red arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v3_c5",
                 "img": "/static/galleries/focus/swi_down_amber.webp",
                 "label": "Amber arrow, pointing down",
                 "tags": [
@@ -1661,17 +1861,9 @@
                 ]
               },
               {
-                "id": "chg4_v3_c3",
-                "img": "/static/galleries/focus/swi_up_green.webp",
-                "label": "Green arrow, pointing up",
-                "tags": [
-                  "chg_miss"
-                ]
-              },
-              {
-                "id": "chg4_v3_c4",
-                "img": "/static/galleries/focus/swi_right_blue.webp",
-                "label": "Blue arrow, pointing right",
+                "id": "chg4_v3_c6",
+                "img": "/static/galleries/focus/swi_down_amber.webp",
+                "label": "Amber arrow, pointing down",
                 "tags": [
                   "chg_miss"
                 ]
@@ -1682,15 +1874,15 @@
         "pool": [
           {
             "pair": "v1",
-            "timeout_pick": "chg4_v1_c4"
+            "timeout_pick": "chg4_v1_c6"
           },
           {
             "pair": "v2",
-            "timeout_pick": "chg4_v2_c4"
+            "timeout_pick": "chg4_v2_c6"
           },
           {
             "pair": "v3",
-            "timeout_pick": "chg4_v3_c4"
+            "timeout_pick": "chg4_v3_c6"
           }
         ]
       },
@@ -2040,7 +2232,7 @@
       "template": "confirm",
       "kicker": "Round 2 · Focus",
       "line": "Next: find the turned arrow.",
-      "sub": "Four boards. One has an arrow turned. Tap that board.",
+      "sub": "One arrow on one board is turned, a little. Fast and right scores most.",
       "cta": "Continue",
       "auto_advance_ms": 2000,
       "echo_steps": [
@@ -2068,7 +2260,7 @@
       "template": "confirm",
       "kicker": "Round 3 · Switching",
       "line": "Now the rule changes.",
-      "sub": "Read each question. It will not stay the same.",
+      "sub": "Read every question. The rule flips each time, and the clock gets shorter.",
       "cta": "Continue",
       "auto_advance_ms": 2000,
       "echo_steps": [
@@ -2184,29 +2376,22 @@
       ]
     },
     {
-      "id": "foc_c_2",
-      "img": "/static/galleries/focus/foc_c_2.webp",
+      "id": "foc_c_4",
+      "img": "/static/galleries/focus/foc_c_4.webp",
       "tags": [
         "foc_hit"
       ]
     },
     {
-      "id": "foc_d_4",
-      "img": "/static/galleries/focus/foc_d_4.webp",
+      "id": "foc_d_2",
+      "img": "/static/galleries/focus/foc_d_2.webp",
       "tags": [
         "foc_hit"
       ]
     },
     {
-      "id": "swi_up_blue",
-      "img": "/static/galleries/focus/swi_up_blue.webp",
-      "tags": [
-        "chg_hit"
-      ]
-    },
-    {
-      "id": "swi_right_amber",
-      "img": "/static/galleries/focus/swi_right_amber.webp",
+      "id": "swi_up_red",
+      "img": "/static/galleries/focus/swi_up_red.webp",
       "tags": [
         "chg_hit"
       ]
@@ -2219,8 +2404,15 @@
       ]
     },
     {
-      "id": "swi_left_red",
-      "img": "/static/galleries/focus/swi_left_red.webp",
+      "id": "swi_left_green",
+      "img": "/static/galleries/focus/swi_left_green.webp",
+      "tags": [
+        "chg_hit"
+      ]
+    },
+    {
+      "id": "swi_right_red",
+      "img": "/static/galleries/focus/swi_right_red.webp",
       "tags": [
         "chg_hit"
       ]
@@ -2309,31 +2501,21 @@
         ]
       },
       {
-        "id": "foc_c_2",
+        "id": "foc_c_4",
         "label": "The turned arrow",
         "spec": "Focus — the round that finds the turned arrow",
-        "image": "foc_c_2",
-        "img": "/static/galleries/focus/foc_c_2.webp",
+        "image": "foc_c_4",
+        "img": "/static/galleries/focus/foc_c_4.webp",
         "tags": [
           "foc_hit"
         ]
       },
       {
-        "id": "swi_up_blue",
-        "label": "Blue arrow, pointing up",
+        "id": "swi_up_red",
+        "label": "Red arrow, pointing up",
         "spec": "Switching — the round that changes the rule",
-        "image": "swi_up_blue",
-        "img": "/static/galleries/focus/swi_up_blue.webp",
-        "tags": [
-          "chg_hit"
-        ]
-      },
-      {
-        "id": "swi_right_amber",
-        "label": "Amber arrow, pointing right",
-        "spec": "Switching — the round that changes the rule",
-        "image": "swi_right_amber",
-        "img": "/static/galleries/focus/swi_right_amber.webp",
+        "image": "swi_up_red",
+        "img": "/static/galleries/focus/swi_up_red.webp",
         "tags": [
           "chg_hit"
         ]
@@ -2344,6 +2526,16 @@
         "spec": "Switching — the round that changes the rule",
         "image": "swi_up_green",
         "img": "/static/galleries/focus/swi_up_green.webp",
+        "tags": [
+          "chg_hit"
+        ]
+      },
+      {
+        "id": "swi_left_green",
+        "label": "Green arrow, pointing left",
+        "spec": "Switching — the round that changes the rule",
+        "image": "swi_left_green",
+        "img": "/static/galleries/focus/swi_left_green.webp",
         "tags": [
           "chg_hit"
         ]
@@ -2613,17 +2805,35 @@
   },
   "analyzing_echo": true,
   "brain_age": {
-    "base": 100,
-    "per_miss": -6,
+    "base": 88,
+    "per_miss": -7,
     "min": 5,
     "max": 100,
     "scored": 16,
     "score": {
-      "base": 100,
-      "per_miss": -6,
+      "base": 88,
+      "per_miss": -7,
       "elite_min": 90,
       "floor": 5,
       "room_round_max_hits": 2
+    },
+    "speed": {
+      "steps": 12,
+      "point_per_step": 1,
+      "full_frac": 0.5,
+      "labels": [
+        {
+          "max_frac": 0.45,
+          "label": "Lightning"
+        },
+        {
+          "max_frac": 0.7,
+          "label": "Quick"
+        },
+        {
+          "label": "Steady"
+        }
+      ]
     },
     "domains": {
       "mem": "Memory",
@@ -2996,7 +3206,7 @@
         {
           "id": "shopping",
           "key": "Seven days",
-          "promise": "one small thing a day, in the order that moves the score"
+          "promise": "one small thing a day, to raise your score — and your speed"
         }
       ],
       "share": {
@@ -3019,7 +3229,7 @@
         "note": "Every profile lifts on a different drill — yours is the first page of your plan."
       }
     },
-    "improve_foot": "Follow the 7-day plan, play again — the score climbs."
+    "improve_foot": "Follow the 7-day plan, play again — the score climbs, and so does your speed."
   },
   "share_cards": [
     {
