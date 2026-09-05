@@ -588,3 +588,6 @@ bottom.
 
 ## 2026-09-05 — claude/focus-funnel-1
 - focus funnel phase 1: art generator + gallery
+
+## 2026-09-05 — claude/focus-funnel-2
+- focus funnel phase 2: config + result module + checks
