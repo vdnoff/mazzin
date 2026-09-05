@@ -594,3 +594,6 @@ bottom.
 
 ## 2026-09-05 — claude/focus-funnel-3
 - focus v3: harden FOC/SWI, speed scoring, score tune
+
+## 2026-09-05 — claude/focus-report
+- focus phase C: report profile, speed-aware payload, purchasable
