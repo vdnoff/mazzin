@@ -1463,6 +1463,12 @@
     return !!(cfg && cfg.track_timing);
   }
 
+  // Whether the times move the score: the number block names a speed table.
+  // A funnel that tracks without scoring — the memory game — is not one.
+  function speedScored() {
+    return !!(cfg && cfg.brain_age && cfg.brain_age.speed);
+  }
+
   // performance.now() where there is one, the wall clock where there is not.
   // Only ever read as a difference, so which of the two answered does not
   // matter to anything downstream.
@@ -4418,6 +4424,23 @@
     return /^#[0-9a-fA-F]{3,8}$/.test(to) ? to : "";
   }
 
+  // The colour the analysing copy is set in once the fade has run, if the
+  // funnel names one. The stylesheet's fade rules were written for a dark
+  // ground and turn the type light; a funnel whose result ground is light
+  // says so here and its copy stays readable on it. Absent on every funnel
+  // that does not, which leaves the stylesheet to decide as it always has.
+  function fadeInk() {
+    var ink = (cfg && cfg.analyzing && cfg.analyzing.ink) || "";
+    return /^#[0-9a-fA-F]{3,8}$/.test(ink) ? ink : "";
+  }
+
+  // Inline, on the node, which is the one thing the fade rule cannot
+  // outrank. A no-op on a funnel with no ink: nothing is written.
+  function paintInk(node) {
+    var ink = fadeInk();
+    if (ink && node) node.style.color = ink;
+  }
+
   // The variables go on the root element rather than on the body, because the
   // html element is painted too. `html, body { background: var(--bg) }` is
   // what left the arrival half white: the body is a 560px column centred in a
@@ -4438,6 +4461,7 @@
     if (!to) return;
     var ms = Math.max(400, (cfg.analyzing && cfg.analyzing.duration_ms) || 2500);
     fadeVars(to, ms);
+    paintInk(el.analyzingText);
     // Next frame, so the starting colour is painted before the transition.
     requestAnimationFrame(function () {
       document.body.classList.add("is-fading");
@@ -4452,6 +4476,7 @@
     var to = fadeTo();
     if (!to) return;
     fadeVars(to, 0);
+    paintInk(el.analyzingText);
     document.body.classList.add("is-fading", "is-arrived");
   }
 
@@ -5944,6 +5969,7 @@
       note = document.createElement("p");
       note.className = "analyzing-note";
       note.id = "analyzing-note";
+      paintInk(note);
       el.analyzing.insertBefore(note, el.analyzingDots);
       el.analyzingNote = note;
     }
@@ -5961,6 +5987,7 @@
     if (!node) {
       node = elm("p", "analyzing-status");
       node.id = "analyzing-status";
+      paintInk(node);
       el.analyzing.appendChild(node);
       el.analyzingStatus = node;
     }
@@ -6212,6 +6239,15 @@
     // something to send, so the payload on every funnel without a clock is
     // the one it has always been.
     if (timedOutSteps.length) payload.timed_out = timedOutSteps.slice();
+
+    // The reaction times, on the one kind of funnel whose score they move.
+    // Gated on the config SCORING speed rather than on tracking it: the
+    // memory game records times for analytics and its report is written
+    // from what was chosen alone, so its order stays exactly what it was.
+    // The server re-validates every entry against the step's own clock.
+    if (speedScored() && Object.keys(stepTimes).length) {
+      payload.reactions = JSON.parse(JSON.stringify(stepTimes));
+    }
 
     // The click identifiers travel with the order because this is the last
     // moment the browser is involved. The purchase itself is reported by the

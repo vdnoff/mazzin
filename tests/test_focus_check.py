@@ -204,12 +204,14 @@ def same_shape(a, b, at):
     return out
 
 
-# The number block is the one place this config carries a key brain's does
-# not: v3's `speed` table. Compared on its own further down.
+# Two places this config carries a key brain's does not: v3's `speed` table
+# in the number block, and the analysing ink. Both compared on their own
+# further down.
 drift = [d for d in same_shape(cfg, BRAIN, "cfg")
          if not d[0].startswith("cfg.swipe.steps")
          and not d[0].startswith("cfg.interstitials")
-         and not d[0].startswith("cfg.brain_age")]
+         and not d[0].startswith("cfg.brain_age")
+         and not d[0].startswith("cfg.analyzing")]
 check("  and so is every nested block, one level at a time", not drift,
       str(drift[:3]))
 PERSONA = json.load(open(os.path.join(ROOT, "funnels/persona.json"),
@@ -682,6 +684,27 @@ check("  and capped at what the table says the timed rounds are worth",
       "bonus: Math.min(most, bonus)" in MODULE
       and 'typeof rule.steps === "number" ? rule.steps : answered' in MODULE)
 
+print("\n--- the analysing copy is readable on this ground ---")
+# The stylesheet's fade rules were written for a dark result ground and turn
+# the analysing copy light. This funnel fades to linen, so the copy names its
+# own ink and engine.js paints it inline, where the fade rule cannot reach.
+check("the config names the ink the analysing copy is set in",
+      cfg["analyzing"].get("ink") == "#2C3038"
+      and list(cfg["analyzing"]) == list(BRAIN["analyzing"]) + ["ink"],
+      str(cfg["analyzing"].get("ink")))
+check("  which is the module's own ink, on the module's own ground",
+      "--br-ink: #2C3038;" in RESULT_CSS
+      and cfg["swipe"]["analyzing_fade_to"] == "#ECE6DA")
+check("engine.js reads it off the config, validated as a colour",
+      'var ink = (cfg && cfg.analyzing && cfg.analyzing.ink) || "";' in ENGINE
+      and "/^#[0-9a-fA-F]{3,8}$/.test(ink) ? ink : \"\"" in ENGINE)
+check("  and paints it on the copy as the fade starts, both ways in",
+      ENGINE.count("paintInk(el.analyzingText);") == 2
+      and "paintInk(note);" in ENGINE and "paintInk(node);" in ENGINE)
+check("  inline, and only where a funnel names one",
+      "if (ink && node) node.style.color = ink;" in ENGINE
+      and "ink" not in BRAIN["analyzing"])
+
 print("\n--- the reaction times reach the module ---")
 # v3 is the first result module to read them. engine.js records them on the
 # funnels that ask for reaction times, after the swipe event has been sent,
@@ -701,13 +724,14 @@ check("  and hands them over only on a funnel that records them",
 check("  which the module reads, with the steps the clock answered",
       "var times = (ctx && ctx.elapsed) || {};" in MODULE
       and "var late = (ctx && ctx.timed_out) || [];" in MODULE)
-check("  and nothing sends a time anywhere a step's score is decided",
-      "elapsed" not in re.search(r"function orderPayload\([^)]*\)\s*\{(.*?)\n  \}",
-                                 ENGINE, re.S).group(1))
+check("  and they travel with the order, on this funnel alone",
+      "payload.reactions = JSON.parse(JSON.stringify(stepTimes));" in ENGINE
+      and "if (speedScored() && Object.keys(stepTimes).length)" in ENGINE
+      and "speed" in cfg["brain_age"] and "speed" not in BRAIN["brain_age"])
 
 print("\n--- the speed line ---")
 check("one line under the score: the average and the word",
-      'elm("p", "br-age-note br-speed", text)' in MODULE
+      'elm("p", (cls || "br-age-note") + " br-speed", text)' in MODULE
       and '"Avg reaction: " + seconds + "s"' in MODULE
       and "(speed.avg_ms / 1000).toFixed(1)" in MODULE)
 check("  averaged over the timed rounds the reader answered",
