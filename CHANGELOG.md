@@ -591,3 +591,6 @@ bottom.
 
 ## 2026-09-05 — claude/focus-funnel-2
 - focus funnel phase 2: config + result module + checks
+
+## 2026-09-05 — claude/focus-funnel-3
+- focus v3: harden FOC/SWI, speed scoring, score tune
