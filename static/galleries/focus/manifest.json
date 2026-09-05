@@ -1,0 +1,763 @@
+{
+  "card": 600,
+  "cards": [
+    {
+      "file": "work_office.webp",
+      "group": "warmup_work",
+      "id": "work_office"
+    },
+    {
+      "file": "work_remote.webp",
+      "group": "warmup_work",
+      "id": "work_remote"
+    },
+    {
+      "file": "work_hybrid.webp",
+      "group": "warmup_work",
+      "id": "work_hybrid"
+    },
+    {
+      "file": "work_feet.webp",
+      "group": "warmup_work",
+      "id": "work_feet"
+    },
+    {
+      "file": "work_student.webp",
+      "group": "warmup_work",
+      "id": "work_student"
+    },
+    {
+      "file": "work_mixed.webp",
+      "group": "warmup_work",
+      "id": "work_mixed"
+    },
+    {
+      "file": "thief_phone.webp",
+      "group": "warmup_thief",
+      "id": "thief_phone"
+    },
+    {
+      "file": "thief_meetings.webp",
+      "group": "warmup_thief",
+      "id": "thief_meetings"
+    },
+    {
+      "file": "thief_notifications.webp",
+      "group": "warmup_thief",
+      "id": "thief_notifications"
+    },
+    {
+      "file": "thief_multitasking.webp",
+      "group": "warmup_thief",
+      "id": "thief_multitasking"
+    },
+    {
+      "file": "thief_fatigue.webp",
+      "group": "warmup_thief",
+      "id": "thief_fatigue"
+    },
+    {
+      "file": "thief_procrastination.webp",
+      "group": "warmup_thief",
+      "id": "thief_procrastination"
+    },
+    {
+      "file": "icon_clock_colorA.webp",
+      "group": "mem_icon",
+      "icon": "clock",
+      "id": "icon_clock_colorA",
+      "ink": "blue"
+    },
+    {
+      "file": "icon_clock_colorB.webp",
+      "group": "mem_icon",
+      "icon": "clock",
+      "id": "icon_clock_colorB",
+      "ink": "red"
+    },
+    {
+      "file": "icon_mug_colorA.webp",
+      "group": "mem_icon",
+      "icon": "mug",
+      "id": "icon_mug_colorA",
+      "ink": "blue"
+    },
+    {
+      "file": "icon_mug_colorB.webp",
+      "group": "mem_icon",
+      "icon": "mug",
+      "id": "icon_mug_colorB",
+      "ink": "red"
+    },
+    {
+      "file": "icon_folder_colorA.webp",
+      "group": "mem_icon",
+      "icon": "folder",
+      "id": "icon_folder_colorA",
+      "ink": "blue"
+    },
+    {
+      "file": "icon_folder_colorB.webp",
+      "group": "mem_icon",
+      "icon": "folder",
+      "id": "icon_folder_colorB",
+      "ink": "red"
+    },
+    {
+      "file": "icon_pencil_colorA.webp",
+      "group": "mem_icon",
+      "icon": "pencil",
+      "id": "icon_pencil_colorA",
+      "ink": "blue"
+    },
+    {
+      "file": "icon_pencil_colorB.webp",
+      "group": "mem_icon",
+      "icon": "pencil",
+      "id": "icon_pencil_colorB",
+      "ink": "red"
+    },
+    {
+      "file": "icon_phone_colorA.webp",
+      "group": "mem_icon",
+      "icon": "phone",
+      "id": "icon_phone_colorA",
+      "ink": "blue"
+    },
+    {
+      "file": "icon_phone_colorB.webp",
+      "group": "mem_icon",
+      "icon": "phone",
+      "id": "icon_phone_colorB",
+      "ink": "red"
+    },
+    {
+      "file": "icon_calendar_colorA.webp",
+      "group": "mem_icon",
+      "icon": "calendar",
+      "id": "icon_calendar_colorA",
+      "ink": "blue"
+    },
+    {
+      "file": "icon_calendar_colorB.webp",
+      "group": "mem_icon",
+      "icon": "calendar",
+      "id": "icon_calendar_colorB",
+      "ink": "red"
+    },
+    {
+      "file": "icon_key_colorA.webp",
+      "group": "mem_icon",
+      "icon": "key",
+      "id": "icon_key_colorA",
+      "ink": "blue"
+    },
+    {
+      "file": "icon_key_colorB.webp",
+      "group": "mem_icon",
+      "icon": "key",
+      "id": "icon_key_colorB",
+      "ink": "red"
+    },
+    {
+      "file": "icon_bulb_colorA.webp",
+      "group": "mem_icon",
+      "icon": "bulb",
+      "id": "icon_bulb_colorA",
+      "ink": "blue"
+    },
+    {
+      "file": "icon_bulb_colorB.webp",
+      "group": "mem_icon",
+      "icon": "bulb",
+      "id": "icon_bulb_colorB",
+      "ink": "red"
+    },
+    {
+      "file": "icon_flag_colorA.webp",
+      "group": "mem_icon",
+      "icon": "flag",
+      "id": "icon_flag_colorA",
+      "ink": "blue"
+    },
+    {
+      "file": "icon_flag_colorB.webp",
+      "group": "mem_icon",
+      "icon": "flag",
+      "id": "icon_flag_colorB",
+      "ink": "red"
+    },
+    {
+      "file": "icon_chart_colorA.webp",
+      "group": "mem_icon",
+      "icon": "chart",
+      "id": "icon_chart_colorA",
+      "ink": "blue"
+    },
+    {
+      "file": "icon_chart_colorB.webp",
+      "group": "mem_icon",
+      "icon": "chart",
+      "id": "icon_chart_colorB",
+      "ink": "red"
+    },
+    {
+      "direction": "up",
+      "file": "foc_a_1.webp",
+      "group": "foc_board",
+      "id": "foc_a_1",
+      "ink": "blue",
+      "odd": false,
+      "set": "a",
+      "variant": 1
+    },
+    {
+      "direction": "up",
+      "file": "foc_a_2.webp",
+      "group": "foc_board",
+      "id": "foc_a_2",
+      "ink": "blue",
+      "odd": false,
+      "set": "a",
+      "variant": 2
+    },
+    {
+      "direction": "up",
+      "file": "foc_a_3.webp",
+      "group": "foc_board",
+      "id": "foc_a_3",
+      "ink": "blue",
+      "odd": true,
+      "set": "a",
+      "variant": 3
+    },
+    {
+      "direction": "up",
+      "file": "foc_a_4.webp",
+      "group": "foc_board",
+      "id": "foc_a_4",
+      "ink": "blue",
+      "odd": false,
+      "set": "a",
+      "variant": 4
+    },
+    {
+      "direction": "right",
+      "file": "foc_b_1.webp",
+      "group": "foc_board",
+      "id": "foc_b_1",
+      "ink": "green",
+      "odd": true,
+      "set": "b",
+      "variant": 1
+    },
+    {
+      "direction": "right",
+      "file": "foc_b_2.webp",
+      "group": "foc_board",
+      "id": "foc_b_2",
+      "ink": "green",
+      "odd": false,
+      "set": "b",
+      "variant": 2
+    },
+    {
+      "direction": "right",
+      "file": "foc_b_3.webp",
+      "group": "foc_board",
+      "id": "foc_b_3",
+      "ink": "green",
+      "odd": false,
+      "set": "b",
+      "variant": 3
+    },
+    {
+      "direction": "right",
+      "file": "foc_b_4.webp",
+      "group": "foc_board",
+      "id": "foc_b_4",
+      "ink": "green",
+      "odd": false,
+      "set": "b",
+      "variant": 4
+    },
+    {
+      "direction": "down",
+      "file": "foc_c_1.webp",
+      "group": "foc_board",
+      "id": "foc_c_1",
+      "ink": "violet",
+      "odd": false,
+      "set": "c",
+      "variant": 1
+    },
+    {
+      "direction": "down",
+      "file": "foc_c_2.webp",
+      "group": "foc_board",
+      "id": "foc_c_2",
+      "ink": "violet",
+      "odd": true,
+      "set": "c",
+      "variant": 2
+    },
+    {
+      "direction": "down",
+      "file": "foc_c_3.webp",
+      "group": "foc_board",
+      "id": "foc_c_3",
+      "ink": "violet",
+      "odd": false,
+      "set": "c",
+      "variant": 3
+    },
+    {
+      "direction": "down",
+      "file": "foc_c_4.webp",
+      "group": "foc_board",
+      "id": "foc_c_4",
+      "ink": "violet",
+      "odd": false,
+      "set": "c",
+      "variant": 4
+    },
+    {
+      "direction": "left",
+      "file": "foc_d_1.webp",
+      "group": "foc_board",
+      "id": "foc_d_1",
+      "ink": "teal",
+      "odd": false,
+      "set": "d",
+      "variant": 1
+    },
+    {
+      "direction": "left",
+      "file": "foc_d_2.webp",
+      "group": "foc_board",
+      "id": "foc_d_2",
+      "ink": "teal",
+      "odd": false,
+      "set": "d",
+      "variant": 2
+    },
+    {
+      "direction": "left",
+      "file": "foc_d_3.webp",
+      "group": "foc_board",
+      "id": "foc_d_3",
+      "ink": "teal",
+      "odd": false,
+      "set": "d",
+      "variant": 3
+    },
+    {
+      "direction": "left",
+      "file": "foc_d_4.webp",
+      "group": "foc_board",
+      "id": "foc_d_4",
+      "ink": "teal",
+      "odd": true,
+      "set": "d",
+      "variant": 4
+    },
+    {
+      "direction": "up",
+      "file": "swi_up_red.webp",
+      "group": "swi_arrow",
+      "id": "swi_up_red",
+      "ink": "red"
+    },
+    {
+      "direction": "up",
+      "file": "swi_up_blue.webp",
+      "group": "swi_arrow",
+      "id": "swi_up_blue",
+      "ink": "blue"
+    },
+    {
+      "direction": "up",
+      "file": "swi_up_green.webp",
+      "group": "swi_arrow",
+      "id": "swi_up_green",
+      "ink": "green"
+    },
+    {
+      "direction": "up",
+      "file": "swi_up_amber.webp",
+      "group": "swi_arrow",
+      "id": "swi_up_amber",
+      "ink": "amber"
+    },
+    {
+      "direction": "down",
+      "file": "swi_down_red.webp",
+      "group": "swi_arrow",
+      "id": "swi_down_red",
+      "ink": "red"
+    },
+    {
+      "direction": "down",
+      "file": "swi_down_blue.webp",
+      "group": "swi_arrow",
+      "id": "swi_down_blue",
+      "ink": "blue"
+    },
+    {
+      "direction": "down",
+      "file": "swi_down_green.webp",
+      "group": "swi_arrow",
+      "id": "swi_down_green",
+      "ink": "green"
+    },
+    {
+      "direction": "down",
+      "file": "swi_down_amber.webp",
+      "group": "swi_arrow",
+      "id": "swi_down_amber",
+      "ink": "amber"
+    },
+    {
+      "direction": "left",
+      "file": "swi_left_red.webp",
+      "group": "swi_arrow",
+      "id": "swi_left_red",
+      "ink": "red"
+    },
+    {
+      "direction": "left",
+      "file": "swi_left_blue.webp",
+      "group": "swi_arrow",
+      "id": "swi_left_blue",
+      "ink": "blue"
+    },
+    {
+      "direction": "left",
+      "file": "swi_left_green.webp",
+      "group": "swi_arrow",
+      "id": "swi_left_green",
+      "ink": "green"
+    },
+    {
+      "direction": "left",
+      "file": "swi_left_amber.webp",
+      "group": "swi_arrow",
+      "id": "swi_left_amber",
+      "ink": "amber"
+    },
+    {
+      "direction": "right",
+      "file": "swi_right_red.webp",
+      "group": "swi_arrow",
+      "id": "swi_right_red",
+      "ink": "red"
+    },
+    {
+      "direction": "right",
+      "file": "swi_right_blue.webp",
+      "group": "swi_arrow",
+      "id": "swi_right_blue",
+      "ink": "blue"
+    },
+    {
+      "direction": "right",
+      "file": "swi_right_green.webp",
+      "group": "swi_arrow",
+      "id": "swi_right_green",
+      "ink": "green"
+    },
+    {
+      "direction": "right",
+      "file": "swi_right_amber.webp",
+      "group": "swi_arrow",
+      "id": "swi_right_amber",
+      "ink": "amber"
+    },
+    {
+      "count": 13,
+      "file": "dec_a_1.webp",
+      "group": "dec_dots",
+      "id": "dec_a_1",
+      "ink": "amber",
+      "most": true,
+      "set": "a",
+      "variant": 1
+    },
+    {
+      "count": 10,
+      "file": "dec_a_2.webp",
+      "group": "dec_dots",
+      "id": "dec_a_2",
+      "ink": "amber",
+      "most": false,
+      "set": "a",
+      "variant": 2
+    },
+    {
+      "count": 11,
+      "file": "dec_a_3.webp",
+      "group": "dec_dots",
+      "id": "dec_a_3",
+      "ink": "amber",
+      "most": false,
+      "set": "a",
+      "variant": 3
+    },
+    {
+      "count": 12,
+      "file": "dec_a_4.webp",
+      "group": "dec_dots",
+      "id": "dec_a_4",
+      "ink": "amber",
+      "most": false,
+      "set": "a",
+      "variant": 4
+    },
+    {
+      "count": 11,
+      "file": "dec_b_1.webp",
+      "group": "dec_dots",
+      "id": "dec_b_1",
+      "ink": "red",
+      "most": false,
+      "set": "b",
+      "variant": 1
+    },
+    {
+      "count": 12,
+      "file": "dec_b_2.webp",
+      "group": "dec_dots",
+      "id": "dec_b_2",
+      "ink": "red",
+      "most": false,
+      "set": "b",
+      "variant": 2
+    },
+    {
+      "count": 10,
+      "file": "dec_b_3.webp",
+      "group": "dec_dots",
+      "id": "dec_b_3",
+      "ink": "red",
+      "most": false,
+      "set": "b",
+      "variant": 3
+    },
+    {
+      "count": 13,
+      "file": "dec_b_4.webp",
+      "group": "dec_dots",
+      "id": "dec_b_4",
+      "ink": "red",
+      "most": true,
+      "set": "b",
+      "variant": 4
+    },
+    {
+      "count": 10,
+      "file": "dec_c_1.webp",
+      "group": "dec_dots",
+      "id": "dec_c_1",
+      "ink": "teal",
+      "most": false,
+      "set": "c",
+      "variant": 1
+    },
+    {
+      "count": 11,
+      "file": "dec_c_2.webp",
+      "group": "dec_dots",
+      "id": "dec_c_2",
+      "ink": "teal",
+      "most": false,
+      "set": "c",
+      "variant": 2
+    },
+    {
+      "count": 13,
+      "file": "dec_c_3.webp",
+      "group": "dec_dots",
+      "id": "dec_c_3",
+      "ink": "teal",
+      "most": true,
+      "set": "c",
+      "variant": 3
+    },
+    {
+      "count": 9,
+      "file": "dec_c_4.webp",
+      "group": "dec_dots",
+      "id": "dec_c_4",
+      "ink": "teal",
+      "most": false,
+      "set": "c",
+      "variant": 4
+    },
+    {
+      "count": 9,
+      "file": "dec_d_1.webp",
+      "group": "dec_dots",
+      "id": "dec_d_1",
+      "ink": "violet",
+      "most": false,
+      "set": "d",
+      "variant": 1
+    },
+    {
+      "count": 13,
+      "file": "dec_d_2.webp",
+      "group": "dec_dots",
+      "id": "dec_d_2",
+      "ink": "violet",
+      "most": true,
+      "set": "d",
+      "variant": 2
+    },
+    {
+      "count": 12,
+      "file": "dec_d_3.webp",
+      "group": "dec_dots",
+      "id": "dec_d_3",
+      "ink": "violet",
+      "most": false,
+      "set": "d",
+      "variant": 3
+    },
+    {
+      "count": 8,
+      "file": "dec_d_4.webp",
+      "group": "dec_dots",
+      "id": "dec_d_4",
+      "ink": "violet",
+      "most": false,
+      "set": "d",
+      "variant": 4
+    },
+    {
+      "file": "focus_intro.webp",
+      "group": "extra",
+      "id": "focus_intro"
+    },
+    {
+      "file": "og.webp",
+      "group": "extra",
+      "id": "og"
+    }
+  ],
+  "dec": {
+    "a": {
+      "counts": {
+        "1": 13,
+        "2": 10,
+        "3": 11,
+        "4": 12
+      },
+      "ink": "amber",
+      "most": 1
+    },
+    "b": {
+      "counts": {
+        "1": 11,
+        "2": 12,
+        "3": 10,
+        "4": 13
+      },
+      "ink": "red",
+      "most": 4
+    },
+    "c": {
+      "counts": {
+        "1": 10,
+        "2": 11,
+        "3": 13,
+        "4": 9
+      },
+      "ink": "teal",
+      "most": 3
+    },
+    "d": {
+      "counts": {
+        "1": 9,
+        "2": 13,
+        "3": 12,
+        "4": 8
+      },
+      "ink": "violet",
+      "most": 2
+    }
+  },
+  "foc": {
+    "a": {
+      "direction": "up",
+      "ink": "blue",
+      "odd": 3,
+      "odd_cell": 1
+    },
+    "b": {
+      "direction": "right",
+      "ink": "green",
+      "odd": 1,
+      "odd_cell": 4
+    },
+    "c": {
+      "direction": "down",
+      "ink": "violet",
+      "odd": 2,
+      "odd_cell": 2
+    },
+    "d": {
+      "direction": "left",
+      "ink": "teal",
+      "odd": 4,
+      "odd_cell": 2
+    }
+  },
+  "funnel": "focus",
+  "generator": "scripts/gen_focus_art.py",
+  "ground": [
+    236,
+    230,
+    218
+  ],
+  "icon_inks": {
+    "colorA": "blue",
+    "colorB": "red"
+  },
+  "og": [
+    1200,
+    630
+  ],
+  "palette": {
+    "amber": [
+      242,
+      179,
+      61
+    ],
+    "blue": [
+      59,
+      125,
+      216
+    ],
+    "green": [
+      76,
+      175,
+      125
+    ],
+    "red": [
+      226,
+      87,
+      76
+    ],
+    "teal": [
+      47,
+      168,
+      160
+    ],
+    "violet": [
+      142,
+      111,
+      216
+    ]
+  },
+  "seed": 20260905
+}
