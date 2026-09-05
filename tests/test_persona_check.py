@@ -1275,7 +1275,7 @@ check("the neighbours' call to action is exactly what it was",
 # count would go on passing if a third file — engine.js, a shared helper —
 # started writing the key, which is the case this check exists for: the label
 # belongs to the module of the funnel being rendered and to nothing else.
-CTA_WRITERS = {"result_persona.js", "result_brain.js"}
+CTA_WRITERS = {"result_persona.js", "result_brain.js", "result_focus.js"}
 check("  and only a funnel's own result module writes that key",
       {name for name in os.listdir(os.path.join(ROOT, "static/js"))
        if name.endswith(".js")
