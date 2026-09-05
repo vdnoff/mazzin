@@ -1253,6 +1253,10 @@ body:has(.result-module) {
   color: var(--br-faint);
 }
 
+/* The reaction line under the delivered number. Brain's delta rule, kept
+   under a name of its own: this funnel draws no age comparison, and a
+   class that said it did would be a lie a check could read. */
+.br-dhero-pace,
 .br-dhero-delta {
   margin: 16px 0 0;
   padding: 10px 12px;

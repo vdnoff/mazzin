@@ -2801,7 +2801,8 @@
       "Adding up your sixteen rounds…",
       "Weighing them against the four zones…",
       "Working out your Focus Score…"
-    ]
+    ],
+    "ink": "#2C3038"
   },
   "analyzing_echo": true,
   "brain_age": {

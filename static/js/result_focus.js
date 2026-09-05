@@ -342,7 +342,7 @@
   // The reaction, in one line: the average over the timed rounds the reader
   // actually answered, and the table's word for it. Nothing about anybody
   // else, and no line at all on a run that answered no timed round.
-  function speedLine(data) {
+  function speedLine(data, cls) {
     var speed = data && data.speed;
     if (!speed || !speed.answered || typeof speed.avg_ms !== "number") {
       return null;
@@ -350,7 +350,7 @@
     var seconds = (speed.avg_ms / 1000).toFixed(1);
     var text = "Avg reaction: " + seconds + "s";
     if (speed.label) text += " \u2014 " + speed.label;
-    return elm("p", "br-age-note br-speed", text);
+    return elm("p", (cls || "br-age-note") + " br-speed", text);
   }
 
   // What the score says about the run, in one line. Two sentences and no
@@ -1314,7 +1314,14 @@
       score: typeof stored.score === "number" ? stored.score : null,
       room_rounds: typeof stored.room_rounds === "number"
         ? stored.room_rounds : 0,
-      elite: !!stored.elite
+      elite: !!stored.elite,
+      // The reaction, as the report stored it: the average and the word
+      // were measured on the server from the times the order carried, and
+      // this page draws them back rather than working anything out — the
+      // tab it opens in never played a round. A report without one, or a
+      // purchase whose order carried no times, draws no line.
+      speed: (stored.speed && typeof stored.speed.avg_ms === "number"
+              && stored.speed.answered) ? stored.speed : null
     };
   }
 
@@ -1602,6 +1609,9 @@
     cell.appendChild(points);
     nums.appendChild(cell);
     wrap.appendChild(nums);
+    // The reaction line, off the stored block, where the report carried one.
+    var pace = speedLine(data, "br-dhero-pace");
+    if (pace) wrap.appendChild(pace);
     wrap.appendChild(heroBars(ctx, data));
     if (ctx.style.blurb) {
       wrap.appendChild(elm("p", "br-dhero-blurb", ctx.style.blurb));

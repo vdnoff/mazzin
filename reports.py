@@ -3566,11 +3566,469 @@ BRAIN_PROFILE = {
 }
 
 
+
+
+# --- /focus: the plan a two-minute productivity game buys -------------------
+#
+# The second game on the platform, cut from brain: sixteen scored rounds over
+# four zones — memory, focus, switching, speed — that end on a Focus Score
+# out of a hundred, with the twelve timed rounds paying for being answered
+# fast as well as right. Everything brain settled on holds here: every
+# section ends on an action, the zone somebody dropped is the zone with the
+# most room in it, and the number is theirs to move.
+#
+# What changes is the subject. Brain sells a memory refresh; this sells a
+# week of productivity — where the phone goes, how the morning is blocked,
+# one thing at a time — built around the time thief the reader named on the
+# second warm-up. The tag stems and the number block keep brain's names
+# because engine.js scores on them and the delivered page reads them.
+
+# The line this product must not cross. It puts a score on somebody's
+# attention, and the drift from there is towards a condition with a name.
+# None of these is a word a plan about a phone on a shelf needs.
+FOCUS_BANNED = tuple(re.compile(p, re.IGNORECASE) for p in (
+    r"\badhd\b",
+    r"\battention\s+deficit\b",
+    r"\bdisorders?\b",
+    r"\bdiagnos(?:e|es|ed|is|tic)\w*\b",
+    r"\bburn-?out\b",
+    r"\banxiety\b",
+    r"\banxious\b",
+    r"\bdepress(?:ion|ed|ive)\b",
+    r"\btherap(?:y|ies|ist|ists|eutic)\b",
+    r"\bmedicat(?:ion|ions|ed)\b",
+    r"\bmental\s+health\b",
+    r"\bsymptoms?\b",
+    r"\bclinical\w*\b",
+    r"\bIQ\b",
+    r"\bbrain\s+training\b",
+    r"\bpsychic\w*\b",
+    r"\bpredictions?\b",
+))
+
+
+FOCUS_SYSTEM = """You write improvement plans for people who have just \
+played a two-minute focus game and paid for the plan that comes after it.
+
+The game is sixteen scored rounds across four zones — memory, focus, \
+switching and speed — and it ends on a single Focus Score out of a hundred. \
+Twelve of the rounds run on a clock, and answering them fast as well as right \
+is part of the score, so the reader has also been told how quick they were. \
+What you write is what they do about that score this week, at work and at \
+their desk: where the phone goes, how the morning is blocked, how one task is \
+finished before the next is opened, when in the day the hard thing happens. \
+Every field has to give them something to DO: name the tactic, name when to \
+do it, name what it sharpens. A sentence that would read the same for a \
+different reader is a wasted sentence, and a sentence with nothing to do in \
+it is worse.
+
+Voice: an upbeat productivity coach who has just watched them play. Warm, \
+direct, second person, British-neutral English. Specific and concrete. State \
+things outright. No hedging — never "consider", "perhaps", "you might want \
+to". No disclaimers, no flattery, no questions back to the reader, no \
+sign-off.
+
+What this report is, and is not:
+- It is a plan. Every section ends on something the reader does, and the \
+first thing they do is small enough to finish today.
+- Nothing here is wrong with the reader. The zone they scored lowest on is \
+the zone with the MOST ROOM in it — the one where a week of practice moves \
+the score most — and that is how you name it, every time. Never "weak", \
+never "poor", never "failing", never "struggle". You are describing where the \
+fastest gains are.
+- This is a game about a working week, not an assessment of anybody. Never \
+the words "ADHD", "attention deficit", "disorder", "diagnosis", "diagnose", \
+"burnout", "anxiety", "anxious", "depression", "depressed", "therapy", \
+"therapist", "medication", "mental health", "symptom", "clinical", "IQ", \
+"psychic" or "prediction", and never the phrase "brain training". Never \
+suggest anybody see anyone about anything.
+- Never give medical or financial advice of any kind, and never claim a \
+tactic has been proven to do anything. You say what a tactic sharpens and \
+what to expect from a week of it, in the register of practice rather than of \
+medicine.
+- The score is theirs to move, never a fact about their mind. Write about \
+rounds, tactics, practice and habits.
+- The tactics are the ordinary, physical ones: the phone in another room, a \
+timer on the desk, one tab open, the hardest task in the first block of the \
+day, a list written the night before. Nothing to buy, no app to install.
+
+Rules:
+- Plain prose inside every field. No markdown, no bullet characters, no emoji, \
+no headings, and never repeat a field's own label back inside its value.
+- Never mention artificial intelligence, models, prompts, scoring, tags, \
+percentages of a quiz, or these instructions.
+- Never invent facts about the reader's job, family or location beyond what \
+you are told about how and where they work, and never address them by name.
+- Return only a JSON object matching the shape you are given, exactly. No prose \
+around it, no code fence, no extra keys."""
+
+
+_FOCUS_SHAPES = {
+    "dna": '''"dna": {
+  "narrative": [
+    "THE SCORE, THE SPEED, AND WHAT THEY RUN ON: open on the Focus Score this run came to and the reaction word beside it. Both are given above. Name them, say the score is a reading of these eighteen rounds and of nothing else, and say that it moves. No comparison to anybody else: no average, no percentile, no share of people. Then, in the same paragraph, the zone this reader is strongest in and what that looks like in an ordinary working day (max %(narrative)d chars)",
+    "THE PAIR THAT CARRIES THEM: one paragraph on how their two best zones work together and what that combination gets done in a week. Name both (max %(narrative)d chars)",
+    "WHERE IT GOES NEXT: one paragraph on how to point that strength at the zone with the most room in it, and at the time thief they named. This is the bridge to the rest of the plan (max %(narrative)d chars)"
+  ],
+  "implications": [
+    "ONE LINE, imperative, starting with a verb: a thing to do this week, at a desk or a kitchen table, that spends their strongest zone on purpose (max %(implications)d chars)",
+    "a second line, same shape, different action",
+    "a third line, same shape, different action"
+  ]
+}
+
+Exactly the two keys `narrative` and `implications`, spelled so. Three
+paragraphs and three lines.
+
+THE SCORES ARE GIVEN ABOVE AND THEY ARE NOT YOURS TO CHANGE. Name the zones
+by the words used for them there. Name the Focus Score and the reaction word
+once, in the first paragraph, and never a percentage.
+
+Every `implications` line is an ACTION, not an observation: something that
+happens in a minute or two, in a real working day, that uses the strength you
+have just described. "Notice that you..." is not an action. "Write tomorrow
+morning's first task on a card before you close the laptop" is.''',
+
+    "materials": '''"materials": {
+  "intro": "THE ZONE WITH THE MOST ROOM: 2-3 sentences naming the zone this reader scored lowest on, what that zone actually asks for in a working day, and why it is the one that moves the score fastest. Encouraging and specific: this is the good news of the report, not the bad (max %(intro)d chars)",
+  "pairs": [
+    {"combo": "COPY THE FIRST ZONE NAME FROM THE LIST ABOVE, EXACTLY (max %(combo)d chars)",
+     "verdict": "COPY ITS VERDICT FROM THE LIST ABOVE - the word works or the word avoid",
+     "why": "ONE LINE. What this zone asks for at work, and the single thing to do about it: either how to spend it, or the tactic that lifts it. Not a paragraph (max %(why)d chars)"},
+    {"combo": "the second zone from the list, exactly", "verdict": "its verdict, exactly", "why": "one line"},
+    {"combo": "the third zone from the list, exactly", "verdict": "its verdict, exactly", "why": "one line"},
+    {"combo": "the fourth zone from the list, exactly", "verdict": "its verdict, exactly", "why": "one line"}
+  ],
+  "rule": "THE TWO-MINUTE TACTIC: 2-3 sentences spelling out one two-minute practice for the zone with the most room in it, aimed at the time thief this reader named. What to do, with what, and how many times. Somebody has to be able to do it tomorrow morning from this paragraph alone. It is a DAILY practice and the offer sells it as one, so say plainly that it is two minutes every day and that it starts tomorrow (max %(rule)d chars)"
+}
+
+THE FOUR ZONES ARE NOT YOURS TO CHOOSE. All four are given above, each with
+its verdict. Reproduce all four, in that order, with `combo` and `verdict`
+exactly as written. Invent no zone and never change a verdict.
+
+`verdict` is the word "works" or the word "avoid" and nothing else. "avoid"
+here does not mean anything is wrong: it marks the zone with room in it,
+and the line beside it says what lifts it.
+
+This section is read as a table: a name, a badge, and one line. The paragraph
+at the end is `rule`, and it is the only paragraph here. It is also the most
+important thing in the report: it is the tactic the whole plan is built on,
+so it is specific enough to follow without thinking.''',
+
+    "mistakes": '''"mistakes": {
+  "items": [
+    {"title": "the sharp strength, as a short phrase (max %(title)d chars)",
+     "body": "EXACTLY TWO SENTENCES and no more. The first says what this productivity profile does better than most and where it shows up in an ordinary working week. The second says what it makes easy that other people find hard. No third sentence, and do not join two of them with a semicolon to get around that (max %(body)d chars)",
+     "fix": "ONE imperative sentence starting with a verb: how to spend this strength on purpose this week (max %(fix)d chars)"},
+    {"title": "the second strength", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the third strength", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the fourth strength", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the fifth strength", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the first HABIT to drop, as a short phrase", "body": "two sentences: what the habit is and when in the day it happens", "fix": "one imperative sentence: the swap that replaces it"},
+    {"title": "the second habit", "body": "two sentences", "fix": "one sentence"}
+  ]
+}
+
+SEVEN items under the single key `items`, in this order: five strengths, then
+two habits. Each is an object with `title`, `body` and `fix` spelled exactly
+so.
+
+The five strengths belong to this productivity profile and are genuinely good
+news: five things this reader does better than most people at work, named
+specifically enough to recognise. A strength nobody could fail to have is not
+a strength.
+
+The two habits are habits, not faults: things this profile does out of
+practice that cost it hours, each with the swap that replaces it. Never say a
+habit means something is wrong. `fix` on a habit is the replacement, in the
+imperative, and it is small enough to start today.
+
+All seven are the same shape and the same length: two sentences and one. This
+is read on a phone by somebody scrolling. Cut every clause that is
+scene-setting, every "which is why", and every restatement of the title.''',
+
+    "shopping": '''"shopping": {
+  "items": [
+    {"name": "Day 1 - <the tactic's name, two or three words> (max %(name)d chars)",
+     "priority_note": "What to do, in enough detail to do it without thinking, and what it sharpens. Two to three sentences. Under five minutes to set up, start to finish (max %(priority_note)d chars)"},
+    {"name": "Day 2 - <its tactic>", "priority_note": "what to do, and what it sharpens"},
+    {"name": "Day 3 - <its tactic>", "priority_note": "same"},
+    {"name": "Day 4 - <its tactic>", "priority_note": "same"},
+    {"name": "Day 5 - <its tactic>", "priority_note": "same"},
+    {"name": "Day 6 - <its tactic>", "priority_note": "same"},
+    {"name": "Day 7 - <its tactic>", "priority_note": "same"},
+    {"name": "Day 8 - Play again", "priority_note": "Go back and play the rounds from the top, and watch what the score does. Two to three sentences: what to expect from a second run, what to pay attention to while playing it, and what to do with whichever zone is lowest this time (max %(priority_note)d chars)"}
+  ],
+  "skip": []
+}
+
+Two keys, `items` and `skip`, spelled exactly so. EIGHT items under `items`,
+one per day, in order. `skip` is an empty list: send it, and put nothing in
+it.
+
+`name` opens with the day, exactly as "Day 1 - ", "Day 2 - " and so on,
+followed by a short name for that day's tactic. The last one is named exactly
+"Day 8 - Play again".
+
+DAY EIGHT IS THE POINT OF THE OTHER SEVEN. The week is not a week of
+exercises, it is a week between two runs, and the eighth day is the second
+run. Say so plainly and say nothing about how far the score will move: you
+do not know, nobody does, and a figure invented here is the one sentence in
+this document a reader can check against reality and catch out. What that day
+promises is the measurement, not the result.
+
+DAY ONE AND DAY FOUR BELONG TO THE ZONE WITH THE MOST ROOM, AND THE WEEK IS
+BUILT AROUND THE TIME THIEF THIS READER NAMED. Day one is the two-minute
+tactic from the chapter before this one, said again in the doing rather than
+in the explaining. Day four is a harder version of the same thing. The thief
+is named above; at least two days go straight at it, by name.
+
+ONE OF THE REMAINING DAYS IS FUEL, and it is a day about food and drink at
+a desk. Name three or four ordinary things, a breakfast that lasts until
+lunch, what replaces the third coffee, a snack that does not end in a slump,
+in the same register as every other day: specific, cheap, and buyable in any
+supermarket. Say what each one is FOR in the plainest possible terms and stop
+there. Nothing out of a bottle and nothing measured, and never claim that
+eating something has been shown to do anything.
+
+The days that are left spread across the remaining zones, and at least one of
+them spends the reader's strongest zone rather than training it.
+
+EVERY DAY IS A THING SOMEBODY DOES, ALONE, WITH WHAT THEY ALREADY HAVE. No
+apps, no equipment, no other people required, nothing to buy. Under five
+minutes to set up. If a day cannot be done at a kitchen table or a desk with
+a phone and a sheet of paper, it is the wrong day.
+
+The register, exactly:
+
+  BAD  "Day 3 - Mindfulness: take some time to be present."
+  BAD  "Day 5 - Focus work: try to concentrate for longer."
+  GOOD "Day 1 - Phone in the hall: before the first task, put the phone on
+        the shelf by the door, face down, and set a kitchen timer for
+        twenty-five minutes. Come back to it when the timer goes and not
+        before. Sharpens the zone with the most room in it."
+  GOOD "Day 6 - Tomorrow's card: before you close the laptop, write the
+        first task of tomorrow on a card and put it on the keyboard. Start
+        there, before mail, before anything."
+
+If a day would survive being moved to another reader with a different
+lowest zone and a different time thief, it is the wrong day.''',
+}
+
+FOCUS_SPEC = dict((section_id, _zodiac_spec(text, section_id))
+                  for section_id, text in _FOCUS_SHAPES.items())
+
+
+# The four zones, in the order they are PLAYED, which is also the order every
+# surface of this product draws them and the order a tie between two zones
+# with the same number of hits is broken in. Not brain's order: brain plays
+# spatial second and focus last, and a document that broke a tie in brain's
+# order would name a different "most room" zone from the page the reader
+# bought it on.
+FOCUS_DOMAINS = ("mem", "foc", "chg", "spa")
+
+
+FOCUS_WORDS = dict(
+    RENDER_WORDS,
+    verdicts={"works": "STRENGTH", "avoid": "ROOM TO GROW"},
+    pdf_note=("Keep this — your plan also stays available at the link you "
+              "were sent back to after checkout."),
+)
+
+
+# What a reader gets when there is no key. Same lengths, same structure, same
+# voice as the keyed chapters, and banned-clean, because this is the path
+# where nothing is checking.
+FOCUS_STUBS = {
+    "dna": {
+        "narrative": [
+            "The number on the first page of this report is your Focus "
+            "Score, and it is a reading of your eighteen rounds and of "
+            "nothing else. It moves. What holds it where it is: you keep "
+            "hold of what you were just shown for a beat longer than most "
+            "people do, and it turns up all day. The name you catch first "
+            "time, the task you go back to without re-reading the brief, the "
+            "list you only needed to write once.",
+            "That holding pairs with how quickly you decide. Together they "
+            "make you the one who has already started while everybody else "
+            "is still opening tabs, and the one who can say what the next "
+            "step is.",
+            "The zone with the most room in it is the one that asks you to "
+            "drop one thing and pick up the next on cue. Point the same "
+            "attention at the switch, closing the first task before the "
+            "second is opened, and the score climbs faster than anything "
+            "else in this plan will move it.",
+        ],
+        "implications": [
+            "Write tomorrow's first task on a card before you close the "
+            "laptop, and start there.",
+            "Put the phone in another room for the first twenty-five "
+            "minutes of the day.",
+            "When a plan changes, say the new version out loud before you "
+            "act on it.",
+        ],
+    },
+    "materials": {
+        "intro": "The zone with the most room in it is the one that asks "
+                 "you to change gear on cue: to close what you were doing "
+                 "and take up the next thing without carrying the last one "
+                 "with you. That is good news. It is the zone that responds "
+                 "fastest to practice, and two minutes a day moves it inside "
+                 "a week.",
+        "pairs": [
+            {"combo": "Memory", "verdict": "works",
+             "why": "You keep what you were shown. Spend it by reading a "
+                    "brief once, closing it, and starting."},
+            {"combo": "Focus", "verdict": "works",
+             "why": "You find the one thing that does not belong. Put it "
+                    "to work on the first task of the day, before mail."},
+            {"combo": "Switching", "verdict": "avoid",
+             "why": "Changing gear rewards a clean close. Finish the "
+                    "sentence, shut the tab, then open the next one."},
+            {"combo": "Speed", "verdict": "avoid",
+             "why": "Fast calls reward a written list. Decide the order "
+                    "the night before and the morning runs itself."},
+        ],
+        "rule": "Here is the tactic. Before you open the first task of the "
+                "day, put the phone on a shelf in another room, face down, "
+                "and set a kitchen timer for two minutes. Write the three "
+                "things you will do before you touch it, in order, on one "
+                "card. Two minutes, every morning, for a week, starting "
+                "tomorrow.",
+    },
+    "mistakes": {
+        "items": [
+            {"title": "You only need telling once",
+             "body": "A brief lands with you first time and stays there, "
+                     "which is why you are rarely the one asking for it "
+                     "again. It makes you fast at anything with steps in "
+                     "it.",
+             "fix": "Read the brief once, deliberately, then close it and "
+                    "start rather than re-reading."},
+            {"title": "You start before the room does",
+             "body": "You have the first task open while everybody else is "
+                     "still settling in. That head start is worth more than "
+                     "an extra hour at the end of the day.",
+             "fix": "Protect the first twenty-five minutes of the day for "
+                    "the hardest task, and nothing else."},
+            {"title": "You keep the plan in your head",
+             "body": "What was decided stays decided for you, so you do not "
+                     "spend the afternoon re-deciding it. It saves you "
+                     "minutes every day you never notice.",
+             "fix": "Write the plan down once anyway, so the evening does "
+                    "not have to carry it."},
+            {"title": "You spot the thing that does not belong",
+             "body": "One number in a column is off and you saw it before "
+                     "you could say why. In a room of people looking at the "
+                     "same page, you are the one who says so.",
+             "fix": "Say what is off out loud, once, as soon as you spot "
+                    "it, and then move on."},
+            {"title": "You finish what you start",
+             "body": "Once your attention is on a task it stays there until "
+                     "the task is done. Most people lose the thread and you "
+                     "simply do not.",
+             "fix": "Pick the one thing worth finishing before you start, "
+                    "not after."},
+            {"title": "You reopen the tab you just closed",
+             "body": "You go back to check a thing you already read, because "
+                     "going back feels like being careful. It costs a minute "
+                     "every time and buys nothing.",
+             "fix": "Read it once, close it, and write the one line you "
+                    "need on a card."},
+            {"title": "You answer the buzz",
+             "body": "When the phone lights up you look, because looking "
+                     "feels like nothing. The task you were on takes a "
+                     "minute to come back every time.",
+             "fix": "Put the phone in another room for the first block of "
+                    "the day."},
+        ],
+    },
+    "shopping": {
+        "items": [
+            {"name": "Day 1 - Phone in the hall",
+             "priority_note": "Before the first task, put the phone on a "
+                              "shelf in another room, face down, and set a "
+                              "kitchen timer for twenty-five minutes. Come "
+                              "back to it when the timer goes and not "
+                              "before. Sharpens the zone with the most room "
+                              "in it."},
+            {"name": "Day 2 - One tab",
+             "priority_note": "Close every tab but the one the task needs, "
+                              "and write the things you wanted to look up on "
+                              "a card instead of opening them. Look them up "
+                              "at the end of the block. Sharpens switching."},
+            {"name": "Day 3 - Tomorrow's card",
+             "priority_note": "Before you close the laptop, write the first "
+                              "task of tomorrow on a card and put it on the "
+                              "keyboard. Start there, before mail, before "
+                              "anything. Sharpens speed."},
+            {"name": "Day 4 - Phone in the hall, harder",
+             "priority_note": "The same as day one, with the timer set for "
+                              "fifty minutes and the phone switched off "
+                              "rather than face down. The first block of the "
+                              "day, nothing else in it."},
+            {"name": "Day 5 - Brief once",
+             "priority_note": "Read the next brief, mail or ticket once, "
+                              "close it, and write the one line you need "
+                              "from it before you start. Do not reopen it "
+                              "until the work is done. Sharpens memory."},
+            {"name": "Day 6 - Fuel",
+             "priority_note": "Porridge or eggs before the first block, so "
+                              "it lasts until lunch. A glass of water where "
+                              "the third coffee would have gone, and a "
+                              "handful of nuts at four o'clock instead of "
+                              "the biscuit. Ordinary food, bought anywhere, "
+                              "on the days you are doing the tactics."},
+            {"name": "Day 7 - The hard thing first",
+             "priority_note": "Put the task you have been carrying all week "
+                              "in the first block of the day, phone in the "
+                              "hall, one tab, timer on. Finish it before "
+                              "anything is opened. Spends focus."},
+            {"name": "Day 8 - Play again",
+             "priority_note": "Go back and play the rounds from the top. "
+                              "Watch which zone comes up lowest this time. "
+                              "It is often not the one that was lowest last "
+                              "week. Start the next seven days on that "
+                              "one."},
+        ],
+        "skip": [],
+    },
+}
+
+
+FOCUS_PROFILE = {
+    "system": FOCUS_SYSTEM,
+    "spec": FOCUS_SPEC,
+    "stubs": FOCUS_STUBS,
+    # The five strengths and the two habits belong to the profile rather
+    # than to the run, exactly as brain's do.
+    "cached": ("mistakes",),
+    # The other three are the run: the zones this reader scored on, the zone
+    # with the most room in it, and a week built around their own time thief.
+    "personal": ("dna", "materials", "shopping"),
+    "banned": FOCUS_BANNED,
+    "verify": None,
+    "retry_detail": True,
+    "words": FOCUS_WORDS,
+    "mail": None,           # filled below, once COPY_FOCUS exists
+    "mail_link": None,      # filled below, once the shared button exists
+    "pdf_lead": "Your 7-Day Productivity Boost Plan",
+    "pdf_note": ("Keep this — your plan also stays available at the link you "
+                 "were sent back to after checkout."),
+    "delivery_note": True,
+}
+
+# The two games' strengths chapters ship seven items with nothing given away
+# free, so the stub helper leaves both alone. See `_stub_for`.
+GAME_MISTAKE_STUBS = (BRAIN_STUBS["mistakes"], FOCUS_STUBS["mistakes"])
+
+
 PROFILES = {"zodiac": ZODIAC_PROFILE, "zodiac30": ZODIAC_PROFILE,
             "zodiac-ro": ZODIAC_RO_PROFILE,
             "zodiac-bg": ZODIAC_BG_PROFILE,
             "persona": PERSONA_PROFILE,
-            "brain": BRAIN_PROFILE}
+            "brain": BRAIN_PROFILE,
+            "focus": FOCUS_PROFILE}
 
 
 def _prompt_budget(profile):
@@ -3861,7 +4319,8 @@ def _stub_for(section_id, name, style=None, stubs=None, months=None,
     # free one off — so there is no promise here to keep; and its chapter is
     # five strengths AND two habits, so a list cut to five behind a prepended
     # first drops the two the title sells. Every other product is unchanged.
-    if section_id == "mistakes" and stub is not BRAIN_STUBS.get("mistakes"):
+    if section_id == "mistakes" \
+            and all(stub is not one for one in GAME_MISTAKE_STUBS):
         first = _mistake_one(style)
         if first:
             stub = dict(stub)
@@ -5398,14 +5857,19 @@ def _brain_cards(cfg, choices):
     return out
 
 
-def _brain_rounds(cfg, choices, timed_out):
-    """The sixteen scored rounds, each with what it was and how it went."""
+def _brain_rounds(cfg, choices, timed_out, tasks=None):
+    """The sixteen scored rounds, each with what it was and how it went.
+
+    `tasks` is the table that names them — brain's unless a game hands over
+    its own, which /focus does, keyed by its own step ids.
+    """
     if not choices:
         return []
+    tasks = BRAIN_TASKS if tasks is None else tasks
     late = set(timed_out or [])
     rows = []
     for index, step, item in _brain_cards(cfg, choices):
-        task = BRAIN_TASKS.get(step.get("id"))
+        task = tasks.get(step.get("id"))
         if not task or not item:
             continue
         status = _brain_status(cfg, step, item.get("id"), late)
@@ -5424,7 +5888,7 @@ def _brain_rounds(cfg, choices, timed_out):
     return rows
 
 
-def _brain_strip(cfg, choices, timed_out):
+def _brain_strip(cfg, choices, timed_out, tasks=None):
     """Every round of the walk in order, with the mark each one earned.
 
     Eighteen, not sixteen: the two warm-up steps are part of the run and they
@@ -5433,12 +5897,13 @@ def _brain_strip(cfg, choices, timed_out):
     """
     if not choices:
         return []
+    tasks = BRAIN_TASKS if tasks is None else tasks
     late = set(timed_out or [])
     out = []
     for index, step, item in _brain_cards(cfg, choices):
         if not item:
             continue
-        scored = step.get("id") in BRAIN_TASKS
+        scored = step.get("id") in tasks
         status = _brain_status(cfg, step, item.get("id"), late) \
             if scored else ""
         out.append({
@@ -5532,6 +5997,318 @@ def _brain_plan_block(numbers):
             "The remaining five days spread across the other three rounds, "
             "and at least one of them spends the round this reader is "
             "already strongest at rather than training it." % room)
+
+
+
+
+# --- /focus: the number the reader was already shown ------------------------
+#
+# Same contract as brain's block above, and one thing more: the twelve timed
+# rounds pay for being answered fast. The browser computed the score from the
+# run, with the reaction times engine.js recorded as it went; the order
+# carried those times through Stripe; and this rebuilds the same figure from
+# the same table with the same arithmetic — `_js_round` where a half can
+# land — so the delivered page prints what the free page printed.
+
+# The sixteen scored rounds, and what each one asks. Keyed by this funnel's
+# own step ids, in the same shape as BRAIN_TASKS, and read by the same table.
+FOCUS_TASKS = {
+    "mem1": ("Four icons", "Holding a small set and spotting the newcomer"),
+    "mem2": ("Six icons", "The same, with half again as much to hold"),
+    "mem3": ("Six icons, faster", "Holding a set that was up for less time"),
+    "mem4": ("Six, close colours", "Holding the colour as well as the object"),
+    "foc1": ("Nine arrows", "Finding the one arrow that is turned"),
+    "foc2": ("Nine arrows, subtler", "The same turn, smaller"),
+    "foc3": ("Sixteen arrows", "Finding one turned arrow among sixteen"),
+    "foc4": ("Sixteen, subtlest", "The smallest turn, on the shortest look"),
+    "chg1": ("Tap the colour", "Answering one rule under a clock"),
+    "chg2": ("Now the direction", "Dropping the last rule for the next one"),
+    "chg3": ("Back to colour", "Switching again, with less time"),
+    "chg4": ("Not that way", "Holding a negative rule on the shortest clock"),
+    "spa1": ("Most dots", "Weighing four cards at a glance"),
+    "spa2": ("Most dots, again", "The same call on a fresh scatter"),
+    "spa3": ("Most dots, closer", "Telling thirteen from twelve, fast"),
+    "spa4": ("Most dots, last", "The final call, under the clock"),
+}
+
+
+def _focus_speed_label(frac, rule):
+    """The word for an average, off the table's own rows.
+
+    The first row whose ceiling the average sits under, and the row with no
+    ceiling for everything past the last one. The module reads the same rows
+    the same way.
+    """
+    for row in ((rule or {}).get("labels") or []):
+        top = row.get("max_frac")
+        if not isinstance(top, (int, float)) or frac <= top:
+            return row.get("label") or ""
+    return ""
+
+
+def _focus_bonus(frac, rule):
+    """One step's speed point: full inside the fraction, linear to nothing.
+
+    The module's `bonusOf`, restated. A table without the fraction pays
+    nothing rather than guessing one.
+    """
+    full = rule.get("full_frac")
+    if isinstance(full, bool) or not isinstance(full, (int, float)):
+        return 0.0
+    if frac <= full:
+        return 1.0
+    if full >= 1:
+        return 0.0
+    return max(0.0, min(1.0, (1 - frac) / (1 - full)))
+
+
+def _focus_speed(cfg, choices, reactions, timed_out, rule):
+    """The speed bonus and the average reaction, or None on a table without
+    a speed rule.
+
+    Every step with a clock on it, in the config's order: a time is counted
+    only where the order carried one and the clock did not answer the step;
+    a point is paid only on a hit. A purchase that carried no times answers
+    zero bonus, no average and no word — the accuracy-only score — and never
+    a crash.
+    """
+    if not rule or isinstance(rule.get("point_per_step"), bool) \
+            or not isinstance(rule.get("point_per_step"), (int, float)):
+        return None
+    point = rule["point_per_step"]
+    times = reactions if isinstance(reactions, dict) else {}
+    late = set(step for step in (timed_out or []) if isinstance(step, str))
+    status = {}
+    for _index, step, item in _brain_cards(cfg, choices or []):
+        if item and step.get("id"):
+            status[step["id"]] = _brain_status(cfg, step, item.get("id"), late)
+    answered = 0
+    sum_ms = 0.0
+    sum_frac = 0.0
+    bonus = 0.0
+    for step in ((cfg.get("swipe") or {}).get("steps") or []):
+        clock = step.get("timer_ms")
+        step_id = step.get("id")
+        if isinstance(clock, bool) or not isinstance(clock, (int, float)) \
+                or clock <= 0 or not step_id:
+            continue
+        ms = times.get(step_id)
+        if isinstance(ms, bool) or not isinstance(ms, (int, float)) \
+                or step_id in late:
+            continue
+        frac = float(ms) / clock
+        answered += 1
+        sum_ms += ms
+        sum_frac += frac
+        if status.get(step_id) == "hit":
+            bonus += _focus_bonus(frac, rule) * point
+    steps_worth = rule.get("steps")
+    if isinstance(steps_worth, bool) or not isinstance(steps_worth,
+                                                       (int, float)):
+        steps_worth = answered
+    most = steps_worth * point
+    avg_frac = (sum_frac / answered) if answered else None
+    return {
+        "bonus": min(most, bonus),
+        "answered": answered,
+        "avg_ms": (sum_ms / answered) if answered else None,
+        "avg_frac": avg_frac,
+        "label": _focus_speed_label(avg_frac, rule) if answered else "",
+    }
+
+
+def _focus_numbers(cfg, style, tag_scores, choices=None, reactions=None,
+                   timed_out=None):
+    """The block the browser computed, rebuilt server-side, or None.
+
+    None on a funnel with no `brain_age` table and on a run with no tallies,
+    exactly as brain's. The zones are walked in PLAY order, which is the
+    order a tie for the most room is broken in on the page the reader bought
+    from; `age` is the block's own formula and keeps that name because the
+    delivered page reads it by that name — on this table it is the accuracy
+    half of the score.
+    """
+    block = (cfg or {}).get("brain_age") or {}
+    scored = block.get("scored")
+    if not block or not tag_scores or not isinstance(scored, int) \
+            or scored <= 0:
+        return None
+
+    counts = {}
+    hits = 0
+    for key in FOCUS_DOMAINS:
+        got = max(0, int(tag_scores.get(key + "_hit") or 0))
+        counts[key] = got
+        hits += got
+    misses = max(0, scored - hits)
+
+    age = _js_round((block.get("base") or 0)
+                    + (block.get("per_miss") or 0) * misses)
+    floor = block.get("min")
+    ceiling = block.get("max")
+    if isinstance(floor, (int, float)):
+        age = max(int(floor), age)
+    if isinstance(ceiling, (int, float)):
+        age = min(int(ceiling), age)
+
+    weakest = min(FOCUS_DOMAINS,
+                  key=lambda key: (counts[key], FOCUS_DOMAINS.index(key)))
+    speed = _focus_speed(cfg, choices, reactions, timed_out,
+                         block.get("speed"))
+
+    out = {
+        "age": age,
+        "hits": hits,
+        "misses": misses,
+        "scored": scored,
+        "counts": counts,
+        # Brain's two keys, carried empty: there is no age group on this
+        # funnel and the page never draws a comparison.
+        "age_mid": None,
+        "delta": None,
+        "weakest": weakest,
+        "domains": dict(block.get("domains") or {}),
+        "type": (style or {}).get("id") or "",
+        "type_name": (style or {}).get("name") or "",
+        "speed": speed,
+    }
+    rule = block.get("score") or {}
+    base = rule.get("base")
+    if isinstance(base, (int, float)):
+        raw = base + (rule.get("per_miss") or 0) * misses \
+            + (speed["bonus"] if speed else 0)
+        score = _js_round(raw)
+        floor = rule.get("floor")
+        if isinstance(floor, (int, float)):
+            score = max(int(floor), score)
+        top = ceiling if isinstance(ceiling, (int, float)) else base
+        score = min(int(top), score)
+        cap = rule.get("room_round_max_hits")
+        cap = int(cap) if isinstance(cap, (int, float)) else 2
+        elite_min = rule.get("elite_min")
+        out["score"] = score
+        out["room_rounds"] = sum(1 for key in FOCUS_DOMAINS
+                                 if counts[key] <= cap)
+        out["elite"] = isinstance(elite_min, (int, float)) \
+            and score >= elite_min
+    return out
+
+
+def _focus_warmups(cfg, tag_scores):
+    """(time thief, where they work), as the labels on the cards they tapped.
+
+    Either is None on a run that skipped its warm-up, and the blocks below
+    fall back cleanly on None.
+    """
+    labels = {}
+    for step in ((cfg or {}).get("swipe") or {}).get("steps") or []:
+        for pair in (step.get("pairs") or []):
+            for item in (pair.get("images") or []):
+                for tag in (item.get("tags") or []):
+                    if isinstance(tag, str) and tag.startswith(("thief_",
+                                                                "work_")):
+                        labels[tag] = item.get("label") or ""
+    scores = tag_scores or {}
+
+    def first(prefix):
+        for tag, label in labels.items():
+            if tag.startswith(prefix) and (scores.get(tag) or 0) > 0 and label:
+                return label
+        return None
+
+    return first("thief_"), first("work_")
+
+
+def _focus_speed_words(numbers):
+    """The reader's reaction, for the prompt, or a plain no."""
+    speed = (numbers or {}).get("speed") or {}
+    avg = speed.get("avg_ms")
+    if not speed.get("answered") or not isinstance(avg, (int, float)):
+        return ("No reaction times were recorded on this run. Write about "
+                "the score alone and name no speed.")
+    word = speed.get("label") or ""
+    line = ("Their average reaction over the timed rounds was %.1f seconds"
+            % (avg / 1000.0))
+    if word:
+        line += ", and the word this funnel uses for that is %s" % word
+    return line + "."
+
+
+def _focus_rounds_block(cfg, numbers, tag_scores):
+    """How this reader actually played, for the sections written for them."""
+    if not numbers:
+        return None
+    lines = ["- %s: %d of 4" % (_brain_round_name(numbers, key),
+                                min(4, numbers["counts"][key]))
+             for key in FOCUS_DOMAINS]
+    room = _brain_round_name(numbers, numbers["weakest"])
+    score = numbers.get("score")
+    tail = [
+        "THE ZONES THIS PERSON PLAYED, and how they scored:",
+        "\n".join(lines),
+        "The zone with the most room in it is %s. It is the one this plan "
+        "is built around, and it is named that way rather than as a weakness "
+        "— it is where a week of practice moves the score most." % room,
+    ]
+    if isinstance(score, int):
+        tail.append("Their Focus Score came to %d out of 100. %s"
+                    % (score, _focus_speed_words(numbers)))
+    thief, work = _focus_warmups(cfg, tag_scores)
+    if thief:
+        tail.append("The time thief they named, in their own words: %s. "
+                    "The plan is aimed at it, by name." % thief)
+    else:
+        tail.append("They named no time thief. Aim the plan at the phone and "
+                    "the inbox, which are everybody's.")
+    if work:
+        tail.append("Where they work, in their own words: %s. Let the "
+                    "tactics fit that where it is natural, and never invent "
+                    "anything else about the job." % work)
+    tail.append(
+        "Name the zones by the words above. The score and the reaction word "
+        "may be named once, in the first paragraph of the profile chapter, "
+        "and nowhere else — never a percentage, and never a comparison to "
+        "anybody.")
+    return "\n\n".join(tail)
+
+
+def _focus_pairs_block(numbers):
+    """The four zones and the badge each wears, from the run, not the model."""
+    if not numbers:
+        return None
+    rows = []
+    for key in FOCUS_DOMAINS:
+        verdict = "works" if numbers["counts"][key] >= 3 else "avoid"
+        rows.append("- %s — %s" % (_brain_round_name(numbers, key), verdict))
+    return ("REQUIRED — these are this reader's four zones and the verdict "
+            "each one carries, in this order:\n"
+            + "\n".join(rows)
+            + "\nReproduce all four as `pairs`, in this order, with `combo` "
+              "the zone's name exactly as written here and `verdict` the "
+              "word beside it. Invent no zone and never change a verdict.")
+
+
+def _focus_plan_block(cfg, numbers, tag_scores):
+    """Which zone the first day of the week belongs to, and what it beats."""
+    if not numbers:
+        return None
+    room = _brain_round_name(numbers, numbers["weakest"])
+    thief, _work = _focus_warmups(cfg, tag_scores)
+    text = ("REQUIRED — day one and day four of this plan are tactics for %s, "
+            "which is the zone with the most room in it for this reader. "
+            "Day one is the two-minute tactic the chapter before this one "
+            "spelled out, written as the doing rather than the explaining. "
+            "The remaining five days spread across the other three zones, "
+            "and at least one of them spends the zone this reader is "
+            "already strongest at rather than training it." % room)
+    if thief:
+        text += (" The week is built around beating %s — the time thief "
+                 "this reader named — so at least two days go straight at "
+                 "it and say so by name." % thief)
+    else:
+        text += (" This reader named no time thief, so the week is built "
+                 "around the phone and the inbox.")
+    return text
 
 
 def _profile_for(cfg, funnel_slug, style, tag_scores, choices):
@@ -5765,7 +6542,8 @@ def _zodiac_choice_block(cfg, choices, tag_scores=None):
 
 
 def _section_prompt(style, name, tag_scores, section_id, cfg=None,
-                    choices=None, funnel_slug=None, months=None):
+                    choices=None, funnel_slug=None, months=None,
+                    numbers=None):
     """One personalised section on its own.
 
     Each section is its own call now, so each carries the whole style and
@@ -5781,17 +6559,29 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
     zodiac = _is_zodiac(profile)
     persona = profile is PERSONA_PROFILE
     brain = profile is BRAIN_PROFILE
+    focus = profile is FOCUS_PROFILE
+    game = brain or focus
 
     parts = [_style_block(style, name)]
     # `_leaning_block` is kitchen's vocabulary — it asks the model to let the
     # pull change "which colours and materials you name" — and the memory
     # game has neither. Its rounds block below is this product's version of
     # the same idea, and it is stated in scores rather than in tag counts.
-    if not brain:
+    if not game:
         parts.append(_leaning_block(tag_scores))
-    numbers = _brain_numbers(cfg, style, tag_scores) if brain else None
+    # The game's own figures. Brain works them out here from the tallies;
+    # focus is handed the block start_report measured while the run existed,
+    # because its score carries the reaction times and those are not in the
+    # tallies — a caller that hands over none gets the accuracy-only block.
+    if brain:
+        numbers = _brain_numbers(cfg, style, tag_scores)
+    elif focus:
+        numbers = numbers or _focus_numbers(cfg, style, tag_scores, choices)
+    else:
+        numbers = None
     if numbers:
-        rounds = _brain_rounds_block(numbers)
+        rounds = (_focus_rounds_block(cfg, numbers, tag_scores) if focus
+                  else _brain_rounds_block(numbers))
         if rounds:
             parts.append(rounds)
 
@@ -5877,7 +6667,7 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
     # and nothing was promised. The block asks for "the finish, the material
     # or the fitting to ask a supplier for", which is a kitchen sentence in a
     # chapter about a round somebody played.
-    if section_id == "materials" and not zodiac and not brain \
+    if section_id == "materials" and not zodiac and not game \
             and cfg is not None and choices:
         specs = _element_specs(cfg, choices, tag_scores)
         if specs:
@@ -5898,11 +6688,13 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
     # chapter is read as a table and a table the model invented would not be
     # the reader's own.
     if numbers and section_id == "materials":
-        pairs = _brain_pairs_block(numbers)
+        pairs = (_focus_pairs_block(numbers) if focus
+                 else _brain_pairs_block(numbers))
         if pairs:
             parts.append(pairs)
     if numbers and section_id == "shopping":
-        plan = _brain_plan_block(numbers)
+        plan = (_focus_plan_block(cfg, numbers, tag_scores) if focus
+                else _brain_plan_block(numbers))
         if plan:
             parts.append(plan)
 
@@ -6812,7 +7604,7 @@ def _personal_order(cfg, funnel_slug=None):
 
 
 def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
-                 on_final=None, choices=None, timed_out=None):
+                 on_final=None, choices=None, reactions=None, timed_out=None):
     """Persist an empty report and generate into it in the background.
 
     Returns as soon as the row exists. Nothing here waits on a model, so the
@@ -6837,6 +7629,12 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     derived here because it cannot be derived: a reader may genuinely tap the
     card the clock would have pressed, and a run that guessed it is not a run
     that ran out.
+
+    `reactions` is how long each timed step took, by step id, for the one
+    funnel whose score moves on it. The order carries it through Stripe the
+    way it carries the choices, and it is None on every other purchase — and
+    on a focus purchase whose order carried none, which scores its accuracy
+    and nothing else.
 
     Raises if the funnel config is missing or the INSERT fails; the webhook
     treats that as non-fatal.
@@ -6883,8 +7681,18 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     # They travel for the same reason the hero card does and one more: the
     # delivered page prints the number the reader was shown before they paid,
     # and it opens in a tab that never played a round.
-    if profile is BRAIN_PROFILE:
-        numbers = _brain_numbers(cfg, style, tag_scores)
+    game_numbers = None
+    if profile is BRAIN_PROFILE or profile is FOCUS_PROFILE:
+        if profile is BRAIN_PROFILE:
+            numbers = _brain_numbers(cfg, style, tag_scores)
+            tasks = BRAIN_TASKS
+        else:
+            # The second game's block, with the reaction times the order
+            # carried. Stored under brain's key on purpose: the delivered
+            # page reads `visuals.brain` and this is that page's number.
+            numbers = _focus_numbers(cfg, style, tag_scores, choices,
+                                     reactions, timed_out)
+            tasks = FOCUS_TASKS
         if numbers:
             visuals = dict(visuals or {})
             # How every round actually went, worked out here while the run
@@ -6893,9 +7701,10 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
             # server that never had one either, so neither of them can look
             # this up and neither of them should be working it out twice.
             numbers = dict(numbers)
-            numbers["rounds"] = _brain_rounds(cfg, choices, timed_out)
-            numbers["strip"] = _brain_strip(cfg, choices, timed_out)
+            numbers["rounds"] = _brain_rounds(cfg, choices, timed_out, tasks)
+            numbers["strip"] = _brain_strip(cfg, choices, timed_out, tasks)
             visuals["brain"] = numbers
+            game_numbers = numbers
         # The rounds the clock answered, beside them. Written only where they
         # were handed over: an empty list and a missing key are the same
         # thing to the page that reads it, and writing an empty one on every
@@ -6944,7 +7753,8 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                 "future": pool.submit(
                     _generate, client,
                     _section_prompt(style, name, tag_scores, section_id,
-                                    cfg, choices, funnel_slug, months),
+                                    cfg, choices, funnel_slug, months,
+                                    numbers=game_numbers),
                     (section_id,), _section_tokens(section_id),
                     profile["system"], profile["banned"],
                     profile["retry_detail"],
@@ -8132,6 +8942,9 @@ PDF_FONTS = {
 # Interpolated here rather than beside the sheet: the two font stacks are
 # declared below it, and a stylesheet that names them has to wait for them.
 BRAIN_PROFILE["pdf_css"] = BRAIN_PDF_CSS % PDF_FONTS
+# The same sheet: the focus document is brain's layout with one number on the
+# cover instead of two.
+FOCUS_PROFILE["pdf_css"] = BRAIN_PROFILE["pdf_css"]
 
 
 def _e(value):
@@ -9100,13 +9913,13 @@ def _brain_delta_line(cfg, numbers):
     return copy.get("level_line") or ""
 
 
-def _brain_bars(numbers):
-    """The four rounds as filled bars, hits over total."""
+def _brain_bars(numbers, order=BRAIN_DOMAINS):
+    """The four rounds as filled bars, hits over total, in `order`."""
     counts = numbers.get("counts") or {}
     labels = numbers.get("domains") or {}
     totals = _brain_bar_totals(numbers)
     rows = []
-    for key in BRAIN_DOMAINS:
+    for key in order:
         total = int(totals.get(key) or 0)
         got = int(counts.get(key) or 0)
         if not total:
@@ -9209,7 +10022,7 @@ def _brain_cover(content, profile, cfg):
     ]
 
 
-def _brain_table(content, profile, cfg):
+def _brain_table(content, profile, cfg, order=BRAIN_DOMAINS):
     """Page two: the sixteen scored rounds, grouped by which of the four.
 
     One page, whole: the table is the thing somebody who paid two dollars for
@@ -9225,7 +10038,7 @@ def _brain_table(content, profile, cfg):
     totals = _brain_bar_totals(numbers)
     chips = BRAIN_LABELS["chips"]
     out = []
-    for key in BRAIN_DOMAINS:
+    for key in order:
         mine = [row for row in rows if row.get("domain") == key]
         if not mine:
             continue
@@ -9352,6 +10165,76 @@ BRAIN_PROFILE["pdf_body"] = {
     "shopping": _brain_pdf_shopping,
     "mistakes": _brain_pdf_mistakes,
 }
+
+
+def _focus_cover(content, profile, cfg):
+    """Page one of the focus plan: the score, the speed, the zones, the run.
+
+    Brain's cover with one number on it instead of two: there is no age to
+    reveal, so the Focus Score the reader saw before paying is the hero, the
+    reaction line sits under it, and the four zones follow in play order.
+    """
+    numbers = _pdf_visuals().get("brain") or {}
+    name = _e(content.get("style_name") or _pdf_words()["style_fallback"])
+    copy = (cfg or {}).get("result_copy") or {}
+    essence = (((copy.get("profile") or {}).get("essence") or {})
+               .get(content.get("style_id")) or "")
+    score = numbers.get("score")
+    hero = ""
+    if isinstance(score, int):
+        hero = (
+            '<table class="hero"><tr>'
+            '<td class="hero-score"><span class="hero-cap">%s</span>'
+            '<span class="n">%s</span><span class="of">/%s</span></td>'
+            "</tr></table>"
+            % (_e(copy.get("score_lead") or FOCUS_LABELS["score_cap"]),
+               _e(str(score)),
+               _e(str(((cfg or {}).get("brain_age") or {}).get("max")
+                      or 100))))
+    pace = _focus_speed_line(numbers)
+    return [
+        '<section class="cover">',
+        '<img class="cover-logo" src="%s" alt="Mazzin">'
+        % _e(profile.get("pdf_logo") or "brand/logo.svg"),
+        '<p class="cover-lead">%s</p>' % _e(profile["pdf_lead"]),
+        '<h1 class="cover-name">%s</h1>' % name,
+        ('<p class="cover-essence">%s</p>' % _e(essence)) if essence else "",
+        hero,
+        ('<p class="hero-delta">%s</p>' % _e(pace)) if pace and hero else "",
+        _brain_bars(numbers, FOCUS_DOMAINS),
+        _brain_sheet(cfg, numbers),
+        '<p class="cover-note">%s</p>' % _e(profile.get("pdf_note") or ""),
+        "</section>",
+    ]
+
+
+def _focus_speed_line(numbers):
+    """The reaction line the free page drew, in the same words, or empty."""
+    speed = (numbers or {}).get("speed") or {}
+    avg = speed.get("avg_ms")
+    if not speed.get("answered") or not isinstance(avg, (int, float)):
+        return ""
+    line = "%s %.1fs" % (FOCUS_LABELS["reaction"], avg / 1000.0)
+    if speed.get("label"):
+        line += " \u2014 %s" % speed["label"]
+    return line
+
+
+def _focus_table(content, profile, cfg):
+    """Page two: the sixteen rounds, grouped by zone in play order."""
+    return _brain_table(content, profile, cfg, FOCUS_DOMAINS)
+
+
+FOCUS_LABELS = {
+    "score_cap": "Focus score",
+    "reaction": "Avg reaction:",
+}
+
+FOCUS_PROFILE["pdf_cover"] = _focus_cover
+FOCUS_PROFILE["pdf_taps"] = False
+FOCUS_PROFILE["pdf_section_shots"] = False
+FOCUS_PROFILE["pdf_after_cover"] = _focus_table
+FOCUS_PROFILE["pdf_body"] = BRAIN_PROFILE["pdf_body"]
 
 
 def _pdf_html(content):
@@ -9713,6 +10596,16 @@ COPY_BRAIN = {
     "keep": "It stays available at that link, and the PDF is yours to keep.",
 }
 
+# The productivity game's own, for the same reason brain has one.
+COPY_FOCUS = {
+    "headline": "Your boost plan is ready.",
+    "subject": "%s — your 7-day productivity boost plan",
+    "body": "Your full plan as %s is attached: the zone with the most room "
+            "in it, the two-minute tactic that lifts it, five sharp strengths "
+            "to lean on, and seven days built around your own time thief.",
+    "keep": "It stays available at that link, and the PDF is yours to keep.",
+}
+
 # The fifth mail: the same product, to somebody who bought it in Bulgarian.
 #
 # The archetype name is a proper noun dropped into a Bulgarian sentence, and a
@@ -9735,10 +10628,12 @@ ZODIAC_RO_PROFILE["mail"] = COPY_ZODIAC_RO
 ZODIAC_BG_PROFILE["mail"] = COPY_ZODIAC_BG
 PERSONA_PROFILE["mail"] = COPY_PERSONA
 BRAIN_PROFILE["mail"] = COPY_BRAIN
+FOCUS_PROFILE["mail"] = COPY_FOCUS
 PERSONA_PROFILE["mail_link"] = ZODIAC_EMAIL_LINK
 # The same button, for the same reason: it is the one that says "open it in
 # the browser", and there is nothing product-specific in it.
 BRAIN_PROFILE["mail_link"] = ZODIAC_EMAIL_LINK
+FOCUS_PROFILE["mail_link"] = ZODIAC_EMAIL_LINK
 
 
 def _email_copy(content):
@@ -9922,6 +10817,11 @@ def _email_opening(content, purchase_id=None):
             return ("You just spent %s on the plan that moves the number you "
                     "were shown." % html.escape(price))
         return "The plan that moves the number you were shown."
+    if copy is COPY_FOCUS:
+        if price:
+            return ("You just spent %s on the week that raises the score you "
+                    "were shown." % html.escape(price))
+        return "The week that raises the score you were shown."
     if copy is COPY_VISUALIZER:
         if price:
             return ("Your own kitchen, redrawn in the style your choices "

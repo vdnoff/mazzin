@@ -545,6 +545,87 @@ def _read_timed_out(cfg, packed):
         return None
 
 
+# --- how long each timed step took --------------------------------------------
+#
+# The third thing a game's order carries about the run, and the same posture
+# as the tag scores rather than as the timeouts: it moves the number on the
+# report, so it is worth carrying, but a body that sends nonsense here costs
+# a speed bonus and nothing else. Dropped, never refused. Every entry is a
+# step this funnel actually times, and every time is held inside that step's
+# own clock — a figure past the clock is a step the clock answered, and the
+# timeouts already say which those were.
+#
+# Client data, and treated as such: capped in size, checked entry by entry,
+# and never logged.
+
+REACTIONS_MAX = 32
+
+
+def _timed_clocks(cfg):
+    """Step id to clock, for every step this funnel puts a clock on."""
+    out = {}
+    for step in ((cfg.get("swipe") or {}).get("steps") or []):
+        if not isinstance(step, dict):
+            continue
+        clock = step.get("timer_ms")
+        if isinstance(step.get("id"), str) and isinstance(clock, int) \
+                and not isinstance(clock, bool) and clock > 0:
+            out[step["id"]] = clock
+    return out
+
+
+def _clean_reactions(cfg, raw):
+    """Step id to whole milliseconds, or None when nothing usable was sent.
+
+    Unknown steps and steps without a clock are dropped; a time is a whole
+    number held to [0, that step's clock]; anything else is dropped. A map
+    with more entries than any walk could produce is dropped whole.
+    """
+    if not isinstance(raw, dict) or not raw or len(raw) > REACTIONS_MAX:
+        return None
+    clocks = _timed_clocks(cfg)
+    out = {}
+    for step_id, value in raw.items():
+        clock = clocks.get(step_id) if isinstance(step_id, str) else None
+        if clock is None:
+            continue
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            continue
+        out[step_id] = max(0, min(clock, int(value)))
+    return out or None
+
+
+def _reactions_metadata(reactions):
+    """The map as one short string, or None if there is nothing to carry.
+
+    `id:ms` pairs, comma-joined, in the funnel's own step order: the ids are
+    the funnel's and carry no punctuation, so this is well under Stripe's
+    500-character value limit for a walk of twelve clocks.
+    """
+    if not reactions:
+        return None
+    packed = ",".join("%s:%d" % (step_id, ms)
+                      for step_id, ms in reactions.items())
+    if len(packed) > METADATA_VALUE_MAX:
+        log.warning("reactions too large for metadata (%d chars) — dropped",
+                    len(packed))
+        return None
+    return packed
+
+
+def _read_reactions(cfg, packed):
+    """The map back out of Stripe metadata, re-validated from scratch."""
+    if not isinstance(packed, str) or not packed:
+        return None
+    raw = {}
+    for pair in packed.split(","):
+        step_id, _sep, value = pair.partition(":")
+        if not step_id or not value.isdigit():
+            continue
+        raw[step_id] = int(value)
+    return _clean_reactions(cfg, raw)
+
+
 # --- Meta click identifiers ------------------------------------------------
 
 # Meta's own formats: `fb.1.<ms>.<random>` for the browser cookie and the
@@ -575,7 +656,7 @@ def _clean_meta_ids(raw):
 
 
 def _metadata(slug, session_id, result_style, tag_scores, choices=None,
-              meta_ids=None, timed_out=None):
+              meta_ids=None, reactions=None, timed_out=None):
     """Metadata for whichever object starts the payment. Absent keys are
     absent, never empty strings.
 
@@ -593,6 +674,8 @@ def _metadata(slug, session_id, result_style, tag_scores, choices=None,
         data["choices"] = choices
     if timed_out:
         data["timed_out"] = timed_out
+    if reactions:
+        data["reactions"] = reactions
     for key, value in (meta_ids or {}).items():
         data[key] = value
     return data
@@ -1115,6 +1198,11 @@ def _validated_order(body):
         # `_clean_timed_out`.
         "timed_out": _timed_out_metadata(
             _clean_timed_out(cfg, body.get("timed_out"))),
+        # How long each timed step took, where the funnel's score moves on
+        # it. Dropped rather than refused when it is malformed — see the note
+        # over `_clean_reactions`.
+        "reactions": _reactions_metadata(
+            _clean_reactions(cfg, body.get("reactions"))),
         # Carried through Stripe so the server-side Purchase can be joined to
         # the click that produced it. Never used to decide anything.
         #
@@ -1209,6 +1297,7 @@ def checkout():
             cancel_url="%s/%s?canceled=1" % (config.BASE_URL, slug),
             metadata=_metadata(slug, session_id, result_style, tag_scores,
                                choices, meta_ids,
+                               reactions=order["reactions"],
                                timed_out=order["timed_out"]),
             customer_creation="if_required",
         )
@@ -1280,6 +1369,7 @@ def payment_intent():
             metadata=_metadata(slug, order["session_id"],
                                order["result_style"], order["tag_scores"],
                                order["choices"], order["meta_ids"],
+                               reactions=order["reactions"],
                                timed_out=order["timed_out"]),
         )
     except Exception:
@@ -1488,7 +1578,7 @@ def _claim_visualizer_photo(purchase_id, slug, session_id):
 
 def _record_side_effects(purchase_id, slug, session_id, result_style, tag_scores,
                          email=None, checkout_session=None, choices=None,
-                         timed_out=None):
+                         reactions=None, timed_out=None):
     """Report + emailed PDF + server-side purchase event.
 
     `start_report` persists an empty report row and returns; every model call
@@ -1514,6 +1604,7 @@ def _record_side_effects(purchase_id, slug, session_id, result_style, tag_scores
         reports.start_report(
             purchase_id, slug, result_style, tag_scores,
             on_final=deliver if email else None, choices=choices,
+            reactions=reactions,
             timed_out=timed_out,
         )
     except Exception:
@@ -1700,10 +1791,11 @@ def stripe_webhook():
     tag_scores = _read_tag_scores(cfg, metadata.get("tag_scores"))
     choices = _read_choices(cfg, metadata.get("choices"))
     timed_out = _read_timed_out(cfg, metadata.get("timed_out"))
+    reactions = _read_reactions(cfg, metadata.get("reactions"))
     _record_side_effects(
         purchase_id, slug, session_id, result_style, tag_scores,
         email=details.get("email"), checkout_session=checkout_session,
-        choices=choices, timed_out=timed_out,
+        choices=choices, reactions=reactions, timed_out=timed_out,
     )
     return jsonify({"status": "ok"}), 200
 
