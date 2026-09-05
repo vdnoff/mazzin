@@ -585,3 +585,6 @@ bottom.
 
 ## 2026-09-04 — claude/zodiac-bg-price-099
 - zodiac-bg sale price 0,99 EUR
+
+## 2026-09-05 — claude/focus-funnel-1
+- focus funnel phase 1: art generator + gallery
