@@ -180,6 +180,13 @@
   var stepTimer = null;         // a timed step's countdown, or null
   var timedOut = false;         // the clock answered this step, not the reader
   var timedOutSteps = [];       // ...and the ids of every step it did
+  // How long each step took, by step id, on the one kind of funnel that
+  // asked for reaction times. Filled from the swipe event's own figure
+  // after it has been sent, and handed to the result module and nowhere
+  // else: it is not in `choices`, not in `tag_scores`, and never reaches
+  // the checkout. Empty for the life of every funnel without
+  // `track_timing`, which is every funnel but the two games.
+  var stepTimes = {};
   var workingTimer = null;      // the interstitial's rotating micro-copy
   // Which of the three steps the reader is standing in: 0 while they are
   // choosing, 1 once the offer and the upload box are what is in front of
@@ -1617,8 +1624,14 @@
     var weight = (stepAt(step) || {}).scoring === "inverse" ? -0.5 : 1;
     item.tags.forEach(function (t) { scores[t] = (scores[t] || 0) + weight; });
     chosen.push(item.id);
+    var answered = (stepAt(step) || {}).id || "";
     step += 1;
     track("swipe", step, extra);
+    // Kept for the result page, off the figure the event just carried and
+    // only where the event carried one — so a funnel that sends no reaction
+    // time records none either. After the tracking call on purpose: the
+    // time is a fact about the run, never an input to what it scored.
+    if (extra && extra.elapsed_ms != null) stepTimes[answered] = extra.elapsed_ms;
     pair = [];
 
     // Show the choice landing, and hold it, before anything moves. Tracking
@@ -4069,7 +4082,7 @@
         };
       });
 
-    return {
+    var ctx = {
       cfg: cfg,
       style: {
         id: win.id, name: win.name, blurb: win.blurb || "",
@@ -4125,6 +4138,11 @@
       // when a hidden container does.
       watchOffer: watchOffer
     };
+    // The reaction times, on the funnels that record them and on no other:
+    // the key is added rather than left empty, so a funnel without
+    // `track_timing` hands its module exactly the context it always did.
+    if (timingTracked()) ctx.elapsed = JSON.parse(JSON.stringify(stepTimes));
+    return ctx;
   }
 
   // The delivered half of the same seam. Everything the pre-purchase page

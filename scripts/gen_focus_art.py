@@ -43,8 +43,9 @@ Written into static/galleries/focus/ as WebP, quality 80:
     thief_*.webp         6   what steals their attention
     icon_*_color*.webp  20   ten objects in two inks: the working-memory
                              round's flash boards and answer grids
-    foc_<set>_<n>.webp  16   four sets of four 3x3 arrow boards; one board
-                             per set has one arrow turned 45 degrees
+    foc_<set>_<n>.webp  16   four sets of four arrow boards, two sets of
+                             3x3 and two of 4x4; one board per set has one
+                             arrow turned, by less each set
     swi_<dir>_<ink>     16   one bold arrow, direction x ink fully crossed,
                              for the switching round
     dec_<set>_<n>.webp  16   four sets of four dot scatters; one card per
@@ -429,17 +430,26 @@ def icon_card(name, colour):
 
 # --- round FOC: find the turned arrow ---------------------------------------
 #
-# Four sets of four boards. Every board is nine small arrows all pointing the
-# set's way, and one board per set has one of its nine turned 45 degrees.
-# Which board, and which of its nine, comes from the seed; the set's own
-# direction and ink are fixed so the four sets are four pictures rather than
-# one picture four times.
+# Four sets of four boards. Every board is a grid of small arrows all pointing
+# the set's way, and one board per set has one of them turned. Which board,
+# and which cell, comes from the seed; the set's own direction and ink are
+# fixed so the four sets are four pictures rather than one picture four times.
+#
+# v3, after the phone review: a 45-degree turn on a three-by-three was found
+# first try with no effort. The sets now escalate — nine arrows then sixteen,
+# and the turn shrinks from 25 degrees to 15 — so the last board is a thing
+# the reader has to look for. The turn is stated per set, in degrees, and the
+# manifest carries it.
+#
+# The direction, the ink, how many arrows a side, and the turn.
 
-FOC_SETS = {"a": ("up", "blue"), "b": ("right", "green"),
-            "c": ("down", "violet"), "d": ("left", "teal")}
+FOC_SETS = {"a": ("up", "blue", 3, 25), "b": ("right", "green", 3, 20),
+            "c": ("down", "violet", 4, 18), "d": ("left", "teal", 4, 15)}
 DIRECTIONS = {"up": 0, "right": 90, "down": 180, "left": 270}
-FOC_GRID = (0.24, 0.50, 0.76)
-FOC_R = 0.085
+# Cell centres and arrow radius by how many arrows a side: the sixteen sit
+# closer and are drawn smaller so the grid breathes.
+FOC_LAYOUT = {3: ((0.24, 0.50, 0.76), 0.085),
+              4: ((0.20, 0.40, 0.60, 0.80), 0.062)}
 # Every arrow on every board is nudged by up to this much. It is invisible
 # — a pixel and a half at card size — and it is on every board alike, so
 # it is not a tell; what it does is make the four files of a set four
@@ -447,14 +457,15 @@ FOC_R = 0.085
 FOC_JITTER = 0.0025
 
 
-def foc_card(direction, colour, odd_cell, jitter):
+def foc_card(direction, colour, grid, turn, odd_cell, jitter):
     card = Card()
     angle = DIRECTIONS[direction]
-    for i in range(9):
-        cx = FOC_GRID[i % 3] + jitter[i][0]
-        cy = FOC_GRID[i // 3] + jitter[i][1]
-        turn = 45 if i == odd_cell else 0
-        card.arrow(cx, cy, FOC_R, angle + turn, PALETTE[colour])
+    centres, radius = FOC_LAYOUT[grid]
+    for i in range(grid * grid):
+        cx = centres[i % grid] + jitter[i][0]
+        cy = centres[i // grid] + jitter[i][1]
+        card.arrow(cx, cy, radius, angle + (turn if i == odd_cell else 0),
+                   PALETTE[colour])
     return card
 
 
@@ -511,19 +522,29 @@ def make_plan(rng):
 
     Kept apart from the drawing so the manifest and the pictures come from
     one table rather than from two walks over the generator.
+
+    v3 redrew the boards and nothing else. The dot scatters were drawn from
+    this generator as it stood after v1's boards had been drawn from it, and
+    they stay byte for byte what shipped: v1's draws are replayed first, to
+    hold the stream where the scatters expect it, and the new boards come
+    from a generator of their own, seeded off the same number.
     """
     plan = {"foc": {}, "dec": {}}
+    v1_boards(rng)
+    boards = random.Random("%d/foc-v3" % SEED)
     # One odd index per set, all four different, so a reader who has seen
     # one set has learned nothing about the next.
-    odd_indexes = rng.sample([1, 2, 3, 4], 4)
-    for (set_id, (direction, colour)), odd in zip(sorted(FOC_SETS.items()),
-                                                  odd_indexes):
+    odd_indexes = boards.sample([1, 2, 3, 4], 4)
+    for (set_id, (direction, colour, grid, turn)), odd in zip(
+            sorted(FOC_SETS.items()), odd_indexes):
+        cells = grid * grid
         plan["foc"][set_id] = {
             "direction": direction, "colour": colour,
-            "odd": odd, "odd_cell": rng.randrange(9),
-            "jitter": {n: [(round(rng.uniform(-FOC_JITTER, FOC_JITTER), 4),
-                            round(rng.uniform(-FOC_JITTER, FOC_JITTER), 4))
-                           for _ in range(9)] for n in range(1, 5)},
+            "grid": grid, "turn": turn,
+            "odd": odd, "odd_cell": boards.randrange(cells),
+            "jitter": {n: [(round(boards.uniform(-FOC_JITTER, FOC_JITTER), 4),
+                            round(boards.uniform(-FOC_JITTER, FOC_JITTER), 4))
+                           for _ in range(cells)] for n in range(1, 5)},
         }
     for set_id, colour in sorted(DEC_SETS.items()):
         counts = rng.sample(list(DEC_COUNTS), 4)
@@ -534,6 +555,22 @@ def make_plan(rng):
             "spots": {n: scatter(rng, c) for n, c in zip(range(1, 5), counts)},
         }
     return plan
+
+
+def v1_boards(rng):
+    """The draws v1's boards took, taken again and thrown away.
+
+    Four sets of four three-by-three boards: one sample of the odd indexes,
+    then per set one cell and thirty-six pairs of nudges. Nothing is drawn
+    from what comes back; what matters is where it leaves the generator.
+    """
+    rng.sample([1, 2, 3, 4], 4)
+    for _set in range(4):
+        rng.randrange(9)
+        for _board in range(4):
+            for _cell in range(9):
+                rng.uniform(-FOC_JITTER, FOC_JITTER)
+                rng.uniform(-FOC_JITTER, FOC_JITTER)
 
 
 # --- extras: the intro dial and the share image -----------------------------
@@ -605,12 +642,13 @@ def main():
     for set_id, spec in sorted(plan["foc"].items()):
         for n in range(1, 5):
             odd = n == spec["odd"]
-            put(foc_card(spec["direction"], spec["colour"],
-                         spec["odd_cell"] if odd else None,
+            put(foc_card(spec["direction"], spec["colour"], spec["grid"],
+                         spec["turn"], spec["odd_cell"] if odd else None,
                          spec["jitter"][n]),
                 "foc_%s_%d" % (set_id, n), "foc_board",
                 set=set_id, variant=n, odd=odd,
-                direction=spec["direction"], ink=spec["colour"])
+                direction=spec["direction"], ink=spec["colour"],
+                grid=spec["grid"], turn=spec["turn"])
 
     for direction in ("up", "down", "left", "right"):
         for ink in SWI_INKS:
@@ -637,6 +675,7 @@ def main():
         "palette": {k: list(v) for k, v in sorted(PALETTE.items())},
         "icon_inks": ICON_INKS,
         "foc": {s: {"direction": p["direction"], "ink": p["colour"],
+                    "grid": p["grid"], "turn": p["turn"],
                     "odd": p["odd"], "odd_cell": p["odd_cell"]}
                 for s, p in sorted(plan["foc"].items())},
         "dec": {s: {"ink": p["colour"], "most": p["most"],
@@ -659,7 +698,8 @@ def main():
           % (biggest["file"],
              os.path.getsize(os.path.join(OUT, biggest["file"]))))
     for s, p in sorted(plan["foc"].items()):
-        print("foc %s: odd board %d (cell %d)" % (s, p["odd"], p["odd_cell"]))
+        print("foc %s: %dx%d, turned %d degrees, odd board %d (cell %d)"
+              % (s, p["grid"], p["grid"], p["turn"], p["odd"], p["odd_cell"]))
     for s, p in sorted(plan["dec"].items()):
         print("dec %s: counts %s, most %d"
               % (s, [p["counts"][n] for n in range(1, 5)], p["most"]))

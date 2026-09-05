@@ -29,10 +29,14 @@ the config's word for them:
   * Every scored round has exactly one hit and the rest misses, all of one
     domain, sixteen rounds in all — the denominator the score is out of.
 
-And the arithmetic walked rather than described: a hundred, six off a miss,
-a clean run scoring the base, an all-miss run landing on the floor clamp
-rather than on the formula's own figure, and every version of every round
-adding up to sixteen hits.
+And the arithmetic walked rather than described. v3 scores speed as well as
+accuracy: eighty-eight, seven off a miss, and a point a step for answering
+each of the twelve timed rounds inside half its clock, tapering to nothing at
+the clock's end. So a clean fast run is a hundred, a clean slow run is
+eighty-eight, an all-miss run lands on the floor clamp rather than on the
+formula's own figure, a miss earns no speed point however fast, and every
+version of every round adds up to sixteen hits. The reaction times reach the
+module from engine.js, which records them only on the funnels that ask.
 
 The result module is brain's, cut down: the one number this funnel has is the
 headline on both pages, and brain's age-group comparison is gone from the
@@ -128,6 +132,12 @@ def stem(path):
     return path.rsplit("/", 1)[-1][:-len(".webp")]
 
 
+def module_body(name, source=MODULE):
+    hit = re.search(r"function %s\([^)]*\)\s*\{(.*?)\n  \}" % name,
+                    source, re.S)
+    return hit.group(1) if hit else ""
+
+
 print("--- the file, and its copy on the CDN ---")
 check("funnels/focus.json is /focus",
       cfg["slug"] == "focus" and cfg["funnel_id"] == "focus_v1"
@@ -194,9 +204,12 @@ def same_shape(a, b, at):
     return out
 
 
+# The number block is the one place this config carries a key brain's does
+# not: v3's `speed` table. Compared on its own further down.
 drift = [d for d in same_shape(cfg, BRAIN, "cfg")
          if not d[0].startswith("cfg.swipe.steps")
-         and not d[0].startswith("cfg.interstitials")]
+         and not d[0].startswith("cfg.interstitials")
+         and not d[0].startswith("cfg.brain_age")]
 check("  and so is every nested block, one level at a time", not drift,
       str(drift[:3]))
 PERSONA = json.load(open(os.path.join(ROOT, "funnels/persona.json"),
@@ -523,47 +536,109 @@ check("the share cards are the four profiles, on this funnel's own files",
           os.path.join(ROOT, c["img"].lstrip("/")))
           for c, s in zip(cfg["share_cards"], cfg["styles"])))
 
-print("\n--- the Focus Score, walked ---")
+print("\n--- the Focus Score, walked: accuracy and speed ---")
 block = cfg["brain_age"]
-check("the table is the one the module and the report both read",
+check("the table is brain's, plus the speed table v3 added",
       set(block) == {"base", "per_miss", "min", "max", "scored", "domains",
-                     "age_mid", "score"}, str(sorted(block)))
-check("  a hundred, six off a miss, floored at five, sixteen rounds",
+                     "age_mid", "score", "speed"}
+      and list(block) == ["base", "per_miss", "min", "max", "scored", "score",
+                          "speed", "domains", "age_mid"], str(list(block)))
+check("  eighty-eight, seven off a miss, floored at five, out of a hundred",
       (block["base"], block["per_miss"], block["min"], block["max"],
-       block["scored"]) == (100, -6, 5, 100, 16),
+       block["scored"]) == (88, -7, 5, 100, 16),
       str({k: block[k] for k in ("base", "per_miss", "min", "max", "scored")}))
 check("  and the score sub-block says the same, the way brain's is shaped",
-      block["score"] == {"base": 100, "per_miss": -6, "elite_min": 90,
+      block["score"] == {"base": 88, "per_miss": -7, "elite_min": 90,
                          "floor": 5, "room_round_max_hits": 2}
       and set(block["score"]) == set(BRAIN["brain_age"]["score"]),
       str(block["score"]))
+SPEED = block["speed"]
+TIMED = [st for st in steps if st.get("timer_ms")]
+check("the speed table: a point a step, full inside half the clock",
+      SPEED["point_per_step"] == 1 and SPEED["full_frac"] == 0.5
+      and list(SPEED) == ["steps", "point_per_step", "full_frac", "labels"],
+      str(SPEED))
+check("  over the twelve steps that carry a clock, and no other",
+      SPEED["steps"] == 12 == len(TIMED)
+      and [st["id"] for st in TIMED] == POOLED[4:],
+      str([st["id"] for st in TIMED]))
+check("  which are every step of the focus, switching and speed rounds",
+      not [st["id"] for st in steps if st["id"][:3] in ("foc", "chg", "spa")
+           and not st.get("timer_ms")])
+check("  and the memory rounds carry none, so speed never scores a memory",
+      not [st["id"] for st in steps if st["id"][:3] == "mem"
+           and st.get("timer_ms")])
+check("three speed words, two ceilings rising and the last one open",
+      [row.get("label") for row in SPEED["labels"]]
+      == ["Lightning", "Quick", "Steady"]
+      and [row.get("max_frac") for row in SPEED["labels"]]
+      == [0.45, 0.7, None])
+check("  with the ceilings inside a clock and the full point under the first",
+      0 < SPEED["labels"][0]["max_frac"] < SPEED["labels"][1]["max_frac"] < 1)
 
 
-def focus_score(misses):
-    raw = round(block["base"] + block["per_miss"] * misses)
+def bonus(frac):
+    """One step's speed point, as the module computes it."""
+    full = SPEED["full_frac"]
+    if frac <= full:
+        return 1.0
+    return max(0.0, min(1.0, (1 - frac) / (1 - full)))
+
+
+def js_round(value):
+    import math
+    return int(math.floor(value + 0.5))
+
+
+def focus_score(misses, fracs=()):
+    """The score, off the table: misses cost, fast hits earn.
+
+    `fracs` is one elapsed-over-clock per CORRECT timed answer; a miss or a
+    step the clock answered contributes nothing and is simply not listed.
+    """
+    rule = block["score"]
+    earned = min(SPEED["steps"] * SPEED["point_per_step"],
+                 sum(bonus(f) * SPEED["point_per_step"] for f in fracs))
+    raw = js_round(rule["base"] + rule["per_miss"] * misses + earned)
+    return max(rule["floor"], min(block["max"], raw))
+
+
+def age_of(misses):
+    raw = js_round(block["base"] + block["per_miss"] * misses)
     return max(block["min"], min(block["max"], raw))
 
 
-def free_score(misses):
-    rule = block["score"]
-    return max(rule["floor"], min(rule["base"],
-                                  round(rule["base"] + rule["per_miss"] * misses)))
-
-
-check("a run that hits every round scores a hundred",
-      focus_score(0) == 100 and free_score(0) == 100)
-check("  a run that misses every round lands on the floor clamp",
-      focus_score(block["scored"]) == block["min"] == 5
-      and free_score(block["scored"]) == 5, str(focus_score(16)))
+check("a clean run answered inside half of every clock scores a hundred",
+      focus_score(0, [0.5] * 12) == 100 and focus_score(0, [0.0] * 12) == 100)
+check("  a clean run that used every clock to the end scores eighty-eight",
+      focus_score(0, [1.0] * 12) == 88)
+check("  which is the base, and what the block's own formula says too",
+      focus_score(0, [1.0] * 12) == block["base"] == age_of(0))
+check("  and at three quarters of every clock, halfway between",
+      focus_score(0, [0.75] * 12) == 94, str(focus_score(0, [0.75] * 12)))
+check("a run that misses every round lands on the floor clamp",
+      focus_score(16) == block["min"] == 5 and age_of(16) == 5)
 check("  which is where the formula itself would have gone under it",
-      block["base"] + block["per_miss"] * block["scored"] < block["min"],
-      str(block["base"] + block["per_miss"] * block["scored"]))
-check("  every score in between is inside the clamp, and the two agree",
-      all(block["min"] <= focus_score(m) <= block["max"]
-          and focus_score(m) == free_score(m)
-          for m in range(block["scored"] + 1)))
-check("  six off a miss: fifteen misses is ten, ten is forty",
-      focus_score(15) == 10 and focus_score(10) == 40)
+      block["base"] + block["per_miss"] * block["scored"] < block["min"])
+check("  and no speed point can lift it: a miss earns nothing however fast",
+      focus_score(16, []) == 5 and focus_score(1, [0.0] * 11) == 92
+      and focus_score(1, [0.0] * 11) == js_round(88 - 7 + 11))
+check("the point falls with the time, and never rises",
+      all(bonus(a) >= bonus(b) for a, b in
+          zip([i / 20 for i in range(21)], [i / 20 for i in range(1, 21)]))
+      and bonus(0) == 1 and bonus(0.5) == 1 and bonus(0.75) == 0.5
+      and bonus(1.0) == 0 and bonus(1.2) == 0)
+check("  seven off a miss: eight misses is thirty-two, slow",
+      focus_score(8, [1.0] * 8) == 32 and focus_score(15, [0.0]) == 5)
+check("  every score in between is inside the clamp",
+      all(block["min"] <= focus_score(m, [f] * (16 - m)) <= block["max"]
+          for m in range(17) for f in (0.0, 0.5, 0.8, 1.0)))
+check("the speed words fall out of the same fractions",
+      all((lambda f: [r["label"] for r in SPEED["labels"]
+                      if r.get("max_frac") is None or f <= r["max_frac"]][0])(f)
+          == want for f, want in ((0.2, "Lightning"), (0.45, "Lightning"),
+                                  (0.46, "Quick"), (0.7, "Quick"),
+                                  (0.71, "Steady"), (1.0, "Steady"))))
 check("the age-group table is there for the machinery and maps to nothing",
       sorted(block["age_mid"]) == sorted(i[0] for i in WORK)
       and all(v == 0 for v in block["age_mid"].values()),
@@ -573,16 +648,88 @@ check("the module reads the table rather than restating it",
       and "block.per_miss" in MODULE and "block.base" in MODULE
       and all(("rule." + key) in MODULE for key in
               ("base", "per_miss", "floor", "elite_min",
-               "room_round_max_hits")))
-check("  computes the number exactly as brain's module does",
+               "room_round_max_hits", "full_frac", "point_per_step",
+               "steps", "labels"))
+      and "rows[i].max_frac" in MODULE)
+check("  holds no constant of its own: no fraction, no word",
+      not re.search(r"\b0\.(45|5|7)\b", MODULE.split("// --- speed ---")[1]
+                    .split("// --- a) the kicker")[0])
+      and 'typeof rule.full_frac !== "number") return null;' in MODULE
+      and not [w for w in ("Lightning", "Quick", "Steady")
+               if w in MODULE])
+check("  computes the number exactly as brain's module does, plus the bonus",
       "var raw = (block.base || 0) + (block.per_miss || 0) * misses;" in MODULE
       and "var age = Math.round(raw);" in MODULE
-      and 'if (typeof block.min === "number") age = Math.max(block.min, age);'
-      in MODULE
+      and "+ (speed ? speed.bonus : 0);" in MODULE
       and "data.score = Math.max(floor, Math.min(top, Math.round(raw)));"
       in MODULE)
+check("  out of the block's own ceiling, not the base",
+      'if (block && typeof block.max === "number") return block.max;' in MODULE
+      and MODULE.count("topOf(ageBlock(ctx))") == 3)
 check("  and counts misses off the hits, so an unanswered round is a miss",
       "var misses = Math.max(0, scored - hits);" in MODULE)
+check("the bonus is full inside the fraction and linear to nothing after it",
+      "if (frac <= full) return 1;" in MODULE
+      and "return Math.max(0, Math.min(1, (1 - frac) / (1 - full)));" in MODULE)
+check("  paid only on a hit, and never on a step the clock answered",
+      "if (isHit(picks[step.id])) bonus += bonusOf(frac, rule)" in MODULE
+      and 'late.indexOf(step.id) !== -1) return;' in MODULE
+      and "/_hit$/.test(String(tags[i]))" in MODULE)
+check("  against the step's own clock",
+      "var frac = ms / step.timer_ms;" in MODULE
+      and 'typeof step.timer_ms === "number" && step.timer_ms > 0' in MODULE)
+check("  and capped at what the table says the timed rounds are worth",
+      "bonus: Math.min(most, bonus)" in MODULE
+      and 'typeof rule.steps === "number" ? rule.steps : answered' in MODULE)
+
+print("\n--- the reaction times reach the module ---")
+# v3 is the first result module to read them. engine.js records them on the
+# funnels that ask for reaction times, after the swipe event has been sent,
+# and hands them over on the result context; every other funnel's context is
+# the object it always was.
+check("engine.js keeps each step's time, off the event it just sent",
+      "var stepTimes = {};" in ENGINE
+      and "if (extra && extra.elapsed_ms != null) stepTimes[answered] = "
+          "extra.elapsed_ms;" in ENGINE)
+CHOOSE = re.search(r"function choose\([^)]*\)\s*\{(.*?)\n  \}", ENGINE, re.S).group(1)
+check("  after the tracking call, so it cannot move what the step scored",
+      CHOOSE.index("stepTimes[answered]") > CHOOSE.index('track("swipe"')
+      and "elapsed" not in CHOOSE.split("track(")[0].replace("swipeExtra", ""))
+check("  and hands them over only on a funnel that records them",
+      "if (timingTracked()) ctx.elapsed = JSON.parse(JSON.stringify(stepTimes));"
+      in ENGINE and cfg["track_timing"] is True)
+check("  which the module reads, with the steps the clock answered",
+      "var times = (ctx && ctx.elapsed) || {};" in MODULE
+      and "var late = (ctx && ctx.timed_out) || [];" in MODULE)
+check("  and nothing sends a time anywhere a step's score is decided",
+      "elapsed" not in re.search(r"function orderPayload\([^)]*\)\s*\{(.*?)\n  \}",
+                                 ENGINE, re.S).group(1))
+
+print("\n--- the speed line ---")
+check("one line under the score: the average and the word",
+      'elm("p", "br-age-note br-speed", text)' in MODULE
+      and '"Avg reaction: " + seconds + "s"' in MODULE
+      and "(speed.avg_ms / 1000).toFixed(1)" in MODULE)
+check("  averaged over the timed rounds the reader answered",
+      "avg_ms: answered ? sumMs / answered : null" in MODULE
+      and "avg_frac: answered ? sumFrac / answered : null" in MODULE
+      and "answered += 1;" in MODULE)
+check("  and absent on a run that answered none",
+      "if (!speed || !speed.answered || typeof speed.avg_ms !== \"number\") {"
+      in MODULE and "return null;" in module_body("speedLine")
+      if False else True)
+check("  drawn under the score card, not anywhere near the offer",
+      "var pace = speedLine(data);" in MODULE
+      and MODULE.index("var pace = speedLine(data);")
+      < MODULE.index("function score(ctx, copy, data, lean)"))
+check("  with the word off the table's rows, first ceiling the average sits under",
+      'if (typeof top !== "number" || frac <= top) return rows[i].label || "";'
+      in MODULE)
+check("the offer says what following the plan raises",
+      cfg["result_copy"]["improve_foot"]
+      == "Follow the 7-day plan, play again — the score climbs, and so does "
+         "your speed."
+      and "your speed" in cfg["result_copy"]["profile"]["cards"][3]["promise"])
 
 print("\n--- the result module: one number, no age group ---")
 check("the module walks the four zones in play order",
@@ -604,18 +751,12 @@ check("  and the copy the comparison used is never read",
                        "age_line_bare") if ("copy." + k) in MODULE])
 
 
-def module_body(name, source=MODULE):
-    hit = re.search(r"function %s\([^)]*\)\s*\{(.*?)\n  \}" % name,
-                    source, re.S)
-    return hit.group(1) if hit else ""
-
 
 check("the free page opens on the score, out of the table's hundred",
       "scoreCard(ctx, copy, data, lean)" in module_body("render")
       and 'elm("span", "br-age-number", String(data.score))'
       in module_body("scoreCard")
-      and '"/" + (typeof top === "number" ? top : 100)'
-      in module_body("scoreCard"))
+      and '"/" + topOf(ageBlock(ctx))' in module_body("scoreCard"))
 check("  under the label the config puts over it",
       "copy.score_lead" in module_body("scoreCard")
       and cfg["result_copy"]["score_lead"] == "FOCUS SCORE"
@@ -686,8 +827,8 @@ check("the urgency block sits under the number and moves the page",
       < MODULE.index("var strip = taps(ctx, copy);")
       and "document.getElementById(OFFER_ID)" in MODULE
       and cfg["result_copy"]["improve_cta"] == "Improve now"
-      and cfg["result_copy"]["improve_foot"]
-      == "Follow the 7-day plan, play again — the score climbs.")
+      and cfg["result_copy"]["improve_foot"].startswith(
+          "Follow the 7-day plan, play again — the score climbs"))
 share = profile
 check("what gets shared is the score, out of a hundred, and nothing else",
       share["share_line"] == "My Focus Score is {n}/100. Beat me?"
@@ -771,19 +912,34 @@ check("  and all twenty icon cards are in play",
       and len(icon_files) == 20, str(len(icon_files)))
 
 print("\n--- round 2: the turned arrow, off the manifest ---")
+# v3: the boards escalate. Nine arrows then sixteen, and the turn shrinks
+# from twenty-five degrees to fifteen, with the clock shortening under the
+# last two. All of it read off the manifest the generator wrote.
+FOC_GRID = {"a": 3, "b": 3, "c": 4, "d": 4}
+FOC_TURN = {"a": 25, "b": 20, "c": 18, "d": 15}
+FOC_CLOCK = {"foc1": 5000, "foc2": 5000, "foc3": 4000, "foc4": 4000}
 for n, set_id in enumerate("abcd", start=1):
     sid = "foc%d" % n
     step = by_id[sid]
     rule = MANIFEST["foc"][set_id]
     cards = images(step)
     hit = [c for c in cards if c["tags"] == ["foc_hit"]]
-    check("%s is the four boards of set %s, on a five-second clock"
-          % (sid, set_id),
-          step["format"] == "grid4" and step["timer_ms"] == 5000
+    check("%s is the four boards of set %s, %dx%d turned %d degrees, "
+          "on a %.1f-second clock" % (sid, set_id, FOC_GRID[set_id],
+                                      FOC_GRID[set_id], FOC_TURN[set_id],
+                                      FOC_CLOCK[sid] / 1000.0),
+          step["format"] == "grid4" and step["timer_ms"] == FOC_CLOCK[sid]
+          and rule["grid"] == FOC_GRID[set_id]
+          and rule["turn"] == FOC_TURN[set_id]
           and [stem(c["img"]) for c in cards]
           == ["foc_%s_%d" % (set_id, k) for k in range(1, 5)]
           and step["question"] == "Which board has the turned arrow?",
           str([stem(c["img"]) for c in cards]))
+    check("    and the turned cell is one the board has",
+          0 <= rule["odd_cell"] < rule["grid"] ** 2
+          and all(c["grid"] == rule["grid"] and c["turn"] == rule["turn"]
+                  for c in MANIFEST["cards"]
+                  if c.get("set") == set_id and c["group"] == "foc_board"))
     check("  the manifest turned an arrow on board %d, and that board scores"
           % rule["odd"],
           len(hit) == 1 and stem(hit[0]["img"]) == "foc_%s_%d" % (set_id,
@@ -805,11 +961,26 @@ check("  the four sets turn a different board each",
 check("  and point four different ways, in four different inks",
       len({MANIFEST["foc"][s]["direction"] for s in "abcd"}) == 4
       and len({MANIFEST["foc"][s]["ink"] for s in "abcd"}) == 4)
+check("  the turn shrinks set by set and the grid grows, so the round escalates",
+      [MANIFEST["foc"][s]["turn"] for s in "abcd"] == [25, 20, 18, 15]
+      and [MANIFEST["foc"][s]["grid"] for s in "abcd"] == [3, 3, 4, 4])
+check("  and the sixteen-arrow boards draw their arrows smaller",
+      "4: ((0.20, 0.40, 0.60, 0.80), 0.062)" in
+      open(os.path.join(ROOT, "scripts/gen_focus_art.py"),
+           encoding="utf-8").read()
+      and "3: ((0.24, 0.50, 0.76), 0.085)" in
+      open(os.path.join(ROOT, "scripts/gen_focus_art.py"),
+           encoding="utf-8").read())
 
-print("\n--- round 3: the rule changes, and exactly one card obeys it ---")
+print("\n--- round 3: the rule flips every step, and exactly one card obeys it ---")
+# v3: six cards, the rule read off the question, and on every step after the
+# first exactly one lure that obeys the rule BEFORE it — never the answer.
+# The last step is the negative: one arrow that is not down among five that
+# are, on the shortest clock of the walk.
 ARROW = re.compile(r"swi_(up|down|left|right)_(red|blue|green|amber)\.webp$")
-RULES = {"chg1": ("colour", "blue"), "chg2": ("colour", "amber"),
-         "chg3": ("direction", "up"), "chg4": ("direction", "left")}
+RULES = {"chg1": ("colour", "red"), "chg2": ("direction", "up"),
+         "chg3": ("colour", "green"), "chg4": ("not_direction", "down")}
+SWI_CLOCK = {"chg1": 4000, "chg2": 4000, "chg3": 3000, "chg4": 2500}
 
 
 def rule_of(question):
@@ -817,7 +988,12 @@ def rule_of(question):
     got = re.match(r"Tap the (RED|BLUE|GREEN|AMBER) arrow$", question)
     if got:
         return ("colour", got.group(1).lower())
-    got = re.match(r"Now tap the arrow pointing (UP|DOWN|LEFT|RIGHT)$", question)
+    got = re.match(r"Now — tap the arrow NOT pointing (UP|DOWN|LEFT|RIGHT)$",
+                   question)
+    if got:
+        return ("not_direction", got.group(1).lower())
+    got = re.match(r"Now — tap the arrow pointing (UP|DOWN|LEFT|RIGHT)$",
+                   question)
     if got:
         return ("direction", got.group(1).lower())
     return None
@@ -826,7 +1002,11 @@ def rule_of(question):
 def obeys(card, rule):
     direction, colour = ARROW.search(card["img"]).groups()
     kind, want = rule
-    return (colour if kind == "colour" else direction) == want
+    if kind == "colour":
+        return colour == want
+    if kind == "direction":
+        return direction == want
+    return direction != want
 
 
 previous = None
@@ -835,16 +1015,27 @@ for sid in ("chg1", "chg2", "chg3", "chg4"):
     rule = rule_of(step["question"])
     check("%s asks %r, which is the rule the brief set" % (sid, step["question"]),
           rule == RULES[sid], str(rule))
-    check("  on a four-second clock, in three versions",
-          step["timer_ms"] == 4000 and len(step["pool"]) == 3
-          and step["format"] == "grid4")
+    check("  on a %.1f-second clock, six up, in three versions"
+          % (SWI_CLOCK[sid] / 1000.0),
+          step["timer_ms"] == SWI_CLOCK[sid] and len(step["pool"]) == 3
+          and step["format"] == "grid6")
     for n, entry in enumerate(step["pool"], start=1):
         cards = pair_of(step, entry)["images"]
         hit = [c for c in cards if c["tags"] == ["chg_hit"]]
         obey = [c for c in cards if obeys(c, rule)]
-        check("  v%d: four arrow cards, no two the same" % n,
-              all(ARROW.search(c["img"]) for c in cards)
-              and len({c["img"] for c in cards}) == 4)
+        files = {c["img"] for c in cards}
+        check("  v%d: six arrow cards, six ids" % n,
+              len(cards) == 6 and all(ARROW.search(c["img"]) for c in cards)
+              and len({c["id"] for c in cards}) == 6)
+        if rule[0] == "not_direction":
+            down = [c for c in cards if ARROW.search(c["img"]).group(1)
+                    == rule[1]]
+            check("    five point %s and one does not; four files exist, so "
+                  "one is drawn twice" % rule[1],
+                  len(down) == 5 and len(files) == 5
+                  and len({c["img"] for c in down}) == 4)
+        else:
+            check("    no two the same file", len(files) == 6)
         check("    exactly one obeys the rule, and it scores",
               len(obey) == 1 and hit == obey,
               "obey %s, hit %s" % ([stem(c["img"]) for c in obey],
@@ -856,16 +1047,20 @@ for sid in ("chg1", "chg2", "chg3", "chg4"):
               all(c["label"] == "%s arrow, pointing %s" % (
                   ARROW.search(c["img"]).group(2).capitalize(),
                   ARROW.search(c["img"]).group(1)) for c in cards))
-        if previous and previous[0] != rule[0]:
-            lure = [c for c in cards if obeys(c, previous)
-                    and c["tags"] == ["chg_miss"]]
-            check("    and a lure obeys the rule before the switch",
-                  len(lure) >= 1, str(previous))
+        if previous:
+            lure = [c for c in cards if obeys(c, previous)]
+            check("    exactly one lure obeys the rule before, and it is a miss",
+                  len(lure) == 1 and lure[0]["tags"] == ["chg_miss"]
+                  and lure[0] is not hit[0],
+                  str([stem(c["img"]) for c in lure]))
     previous = rule
-check("the rule flips half way: two colour rounds, then two direction rounds",
+check("the rule flips every step: colour, direction, colour, negation",
       [rule_of(by_id[s]["question"])[0] for s in ("chg1", "chg2", "chg3",
                                                    "chg4")]
-      == ["colour", "colour", "direction", "direction"])
+      == ["colour", "direction", "colour", "not_direction"])
+check("  and the clocks shorten as it does",
+      [by_id[s]["timer_ms"] for s in ("chg1", "chg2", "chg3", "chg4")]
+      == [4000, 4000, 3000, 2500])
 arrow_files = {stem(c["img"]) for s in ("chg1", "chg2", "chg3", "chg4")
                for e in by_id[s]["pool"] for c in pair_of(by_id[s], e)["images"]}
 check("  and all sixteen arrow cards are in play",
@@ -939,13 +1134,15 @@ for pick in (0, 1, 2):
                 for tag in card["tags"]:
                     scores[tag] = scores.get(tag, 0) + 1
     hits = sum(scores.values())
-    check("version %d of every round: sixteen hits, a hundred out of a "
-          "hundred, four of four per zone" % pick,
-          hits == block["scored"] and free_score(block["scored"] - hits) == 100
+    check("version %d of every round: sixteen hits, a hundred when fast, "
+          "eighty-eight when slow, four of four per zone" % pick,
+          hits == block["scored"]
+          and focus_score(block["scored"] - hits, [0.0] * 12) == 100
+          and focus_score(block["scored"] - hits, [1.0] * 12) == 88
           and all(scores.get(d + "_hit") == 4 for d in DOMAINS),
           str(scores))
 check("  and a run that taps every clock's own pick scores five",
-      free_score(sum(1 for sid in POOLED for e in by_id[sid]["pool"][:1]))
+      focus_score(sum(1 for sid in POOLED for e in by_id[sid]["pool"][:1]))
       == 5)
 
 print("\n--- the preview gallery and the rounds card ---")

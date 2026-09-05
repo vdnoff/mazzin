@@ -15,13 +15,15 @@
  * on either page compares the reader with anybody — the benchmark line brain
  * drew under its number is gone from this file, not hidden.
  *
- * The score is not a verdict about anybody. It is sixteen rounds, a base and
- * a per-miss, stated in `brain_age` in the config — the block keeps brain's
- * key because the report machinery reads it by that name — so the page, the
- * report and anybody reading the config all get the same figure from the same
- * table. This file computes it from the run; after the money there is no run
- * left in the tab, so the same block travels on the report as `visuals.brain`
- * and is read back rather than recomputed.
+ * The score is not a verdict about anybody. It is sixteen rounds, a base, a
+ * per-miss and — v3 — a point a step for answering the twelve timed rounds
+ * fast, all stated in `brain_age` in the config; the block keeps brain's key
+ * because the report machinery reads it by that name. Nothing in this file
+ * holds a constant of its own: the base, the cost of a miss, the clamp, the
+ * half-clock a full point needs and the three speed words all come off that
+ * table. The reaction times come off the run — engine.js hands them over on
+ * the funnels that record them — and after the money there is no run left in
+ * the tab, so what the report stored travels back as `visuals.brain`.
  *
  * A config with no `brain_age` block still renders: the type card and the
  * offer are drawn without the number, which is the page a reader gets in the
@@ -117,7 +119,9 @@
   // the same figure as the score. What is NOT here is brain's age group:
   // the age-group table maps every work tag to nothing, nothing is compared,
   // and no line on either page sets the reader against anybody.
-  function profileOf(scores, cfg) {
+  function profileOf(ctx) {
+    var cfg = ctx.cfg;
+    var scores = ctx.scores || {};
     var block = (cfg && cfg.brain_age) || null;
     if (!block) return null;
     var counts = {};
@@ -141,7 +145,94 @@
       scored: scored,
       counts: counts
     };
-    return scoreOf(out, block);
+    return scoreOf(out, block, speedOf(ctx, block));
+  }
+
+  // --- speed -----------------------------------------------------------------
+  //
+  // v3: the timed rounds pay for being answered fast as well as right. Every
+  // step with a clock on it is worth `point_per_step` for a correct answer
+  // inside `full_frac` of its own clock, and less than that, straight down to
+  // nothing, for a correct answer that used the rest of it. A miss earns
+  // nothing whatever the time; a step the clock answered earns nothing and is
+  // not counted as answered at all.
+  //
+  // Everything is read off the run and the config. The clock is the step's
+  // own `timer_ms`, the fractions are the block's, and the times are the ones
+  // engine.js recorded on the way through — a funnel that records none, or a
+  // run that reached this page from a reload with none, scores its accuracy
+  // and nothing else.
+
+  function timedSteps(cfg) {
+    var steps = (cfg && cfg.swipe && cfg.swipe.steps) || [];
+    return steps.filter(function (step) {
+      return typeof step.timer_ms === "number" && step.timer_ms > 0;
+    });
+  }
+
+  function isHit(pick) {
+    var tags = (pick && pick.tags) || [];
+    for (var i = 0; i < tags.length; i++) {
+      if (/_hit$/.test(String(tags[i]))) return true;
+    }
+    return false;
+  }
+
+  // One step's bonus, as a fraction of a point: full inside `full_frac` of
+  // the clock, then linear to nothing at the clock's end.
+  function bonusOf(frac, rule) {
+    var full = rule.full_frac;
+    if (frac <= full) return 1;
+    if (full >= 1) return 0;
+    return Math.max(0, Math.min(1, (1 - frac) / (1 - full)));
+  }
+
+  function speedOf(ctx, block) {
+    var rule = (block && block.speed) || null;
+    // No table, or a table missing either number, is no speed rule at all:
+    // the run scores its accuracy and the page draws no reaction line.
+    if (!rule || typeof rule.point_per_step !== "number"
+        || typeof rule.full_frac !== "number") return null;
+    var times = (ctx && ctx.elapsed) || {};
+    var late = (ctx && ctx.timed_out) || [];
+    var picks = (ctx && ctx.picks) || {};
+    var answered = 0;
+    var sumMs = 0;
+    var sumFrac = 0;
+    var bonus = 0;
+    timedSteps(ctx.cfg).forEach(function (step) {
+      var ms = times[step.id];
+      if (typeof ms !== "number" || late.indexOf(step.id) !== -1) return;
+      var frac = ms / step.timer_ms;
+      answered += 1;
+      sumMs += ms;
+      sumFrac += frac;
+      if (isHit(picks[step.id])) bonus += bonusOf(frac, rule) * rule.point_per_step;
+    });
+    // Never more than the table says the timed rounds are worth together,
+    // so a config that lists more clocks than it counts cannot pay past
+    // its own ceiling.
+    var most = (typeof rule.steps === "number" ? rule.steps : answered)
+      * rule.point_per_step;
+    return {
+      bonus: Math.min(most, bonus),
+      answered: answered,
+      avg_ms: answered ? sumMs / answered : null,
+      avg_frac: answered ? sumFrac / answered : null,
+      label: answered ? speedLabel(sumFrac / answered, rule) : ""
+    };
+  }
+
+  // The word for an average, off the table's own thresholds: the first row
+  // whose ceiling the average sits under, and the row with no ceiling for
+  // everything past the last one. No row means no word.
+  function speedLabel(frac, rule) {
+    var rows = rule.labels || [];
+    for (var i = 0; i < rows.length; i++) {
+      var top = rows[i].max_frac;
+      if (typeof top !== "number" || frac <= top) return rows[i].label || "";
+    }
+    return "";
   }
 
   // The score, out of a hundred, off the same misses the age is off. It is
@@ -154,12 +245,14 @@
   // nothing anywhere on this page compares the reader to anybody else: there
   // is no population behind this number, and a page that implied one would be
   // making it up.
-  function scoreOf(data, block) {
+  function scoreOf(data, block, speed) {
     var rule = (block && block.score) || null;
     if (!rule) return data;
-    var raw = (rule.base || 0) + (rule.per_miss || 0) * data.misses;
+    var raw = (rule.base || 0) + (rule.per_miss || 0) * data.misses
+      + (speed ? speed.bonus : 0);
     var floor = typeof rule.floor === "number" ? rule.floor : 0;
-    var top = typeof rule.base === "number" ? rule.base : 100;
+    var top = topOf(block);
+    data.speed = speed;
     data.score = Math.max(floor, Math.min(top, Math.round(raw)));
     // A round "has room" when it is one the reader dropped points in. The
     // line under the score counts them; it does not rank them.
@@ -173,6 +266,15 @@
     data.elite = typeof rule.elite_min === "number"
       && data.score >= rule.elite_min;
     return data;
+  }
+
+  // What a clean, fast run is worth, and the number the score is drawn out
+  // of: the block's own ceiling, falling back to the score table's base on a
+  // block that names none.
+  function topOf(block) {
+    if (block && typeof block.max === "number") return block.max;
+    var rule = (block && block.score) || {};
+    return typeof rule.base === "number" ? rule.base : 100;
   }
 
   // --- a) the kicker ---------------------------------------------------------
@@ -237,6 +339,20 @@
 
   // --- b) the number ---------------------------------------------------------
 
+  // The reaction, in one line: the average over the timed rounds the reader
+  // actually answered, and the table's word for it. Nothing about anybody
+  // else, and no line at all on a run that answered no timed round.
+  function speedLine(data) {
+    var speed = data && data.speed;
+    if (!speed || !speed.answered || typeof speed.avg_ms !== "number") {
+      return null;
+    }
+    var seconds = (speed.avg_ms / 1000).toFixed(1);
+    var text = "Avg reaction: " + seconds + "s";
+    if (speed.label) text += " \u2014 " + speed.label;
+    return elm("p", "br-age-note br-speed", text);
+  }
+
   // What the score says about the run, in one line. Two sentences and no
   // third: a run with room in it is told how many rounds have room, and a run
   // without is told it was close. Neither is told where it sits against
@@ -259,15 +375,15 @@
     if (lead) card.appendChild(elm("p", "br-score-lead", lead));
     var big = elm("p", "br-age br-points");
     big.appendChild(elm("span", "br-age-number", String(data.score)));
-    // Out of what the table says a clean run is worth, not out of a hundred
-    // this file decided on: the score is the config's arithmetic and so is
-    // the number it is out of.
-    var top = ((ageBlock(ctx) || {}).score || {}).base;
-    big.appendChild(elm("span", "br-points-of",
-                        "/" + (typeof top === "number" ? top : 100)));
+    // Out of what the table says a clean, fast run is worth, not out of a
+    // hundred this file decided on: the score is the config's arithmetic and
+    // so is the number it is out of.
+    big.appendChild(elm("span", "br-points-of", "/" + topOf(ageBlock(ctx))));
     card.appendChild(big);
     var line = scoreLine(copy, data);
     if (line) card.appendChild(elm("p", "br-age-note", line));
+    var pace = speedLine(data);
+    if (pace) card.appendChild(pace);
     var chips = lean ? chipRow(ctx, data) : null;
     if (chips) card.appendChild(chips);
     return card;
@@ -283,9 +399,7 @@
     if (lead) card.appendChild(elm("p", "br-score-lead", lead));
     var big = elm("p", "br-age br-points");
     big.appendChild(elm("span", "br-age-number", String(data.age)));
-    var top = (ageBlock(ctx) || {}).max;
-    big.appendChild(elm("span", "br-points-of",
-                        "/" + (typeof top === "number" ? top : 100)));
+    big.appendChild(elm("span", "br-points-of", "/" + topOf(ageBlock(ctx))));
     card.appendChild(big);
     return card;
   }
@@ -1106,7 +1220,7 @@
 
   function render(root, ctx) {
     var copy = copyOf(ctx);
-    var data = profileOf(ctx.scores || {}, ctx.cfg);
+    var data = profileOf(ctx);
 
     // Chosen before the offer is drawn, so the card and the button it contains
     // argue the same offer, and reported here, before a single node is built:
@@ -1484,9 +1598,7 @@
     // it did not, which on this table is the same figure.
     var figure = typeof data.score === "number" ? data.score : data.age;
     points.appendChild(elm("span", "br-dhero-n is-big", String(figure)));
-    var top = ((ageBlock(ctx) || {}).score || {}).base;
-    points.appendChild(elm("span", "br-dhero-of",
-                           "/" + (typeof top === "number" ? top : 100)));
+    points.appendChild(elm("span", "br-dhero-of", "/" + topOf(ageBlock(ctx))));
     cell.appendChild(points);
     nums.appendChild(cell);
     wrap.appendChild(nums);

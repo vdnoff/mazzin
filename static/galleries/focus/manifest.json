@@ -204,161 +204,193 @@
     {
       "direction": "up",
       "file": "foc_a_1.webp",
+      "grid": 3,
       "group": "foc_board",
       "id": "foc_a_1",
       "ink": "blue",
       "odd": false,
       "set": "a",
+      "turn": 25,
       "variant": 1
     },
     {
       "direction": "up",
       "file": "foc_a_2.webp",
+      "grid": 3,
       "group": "foc_board",
       "id": "foc_a_2",
       "ink": "blue",
       "odd": false,
       "set": "a",
+      "turn": 25,
       "variant": 2
     },
     {
       "direction": "up",
       "file": "foc_a_3.webp",
+      "grid": 3,
       "group": "foc_board",
       "id": "foc_a_3",
       "ink": "blue",
       "odd": true,
       "set": "a",
+      "turn": 25,
       "variant": 3
     },
     {
       "direction": "up",
       "file": "foc_a_4.webp",
+      "grid": 3,
       "group": "foc_board",
       "id": "foc_a_4",
       "ink": "blue",
       "odd": false,
       "set": "a",
+      "turn": 25,
       "variant": 4
     },
     {
       "direction": "right",
       "file": "foc_b_1.webp",
+      "grid": 3,
       "group": "foc_board",
       "id": "foc_b_1",
       "ink": "green",
       "odd": true,
       "set": "b",
+      "turn": 20,
       "variant": 1
     },
     {
       "direction": "right",
       "file": "foc_b_2.webp",
+      "grid": 3,
       "group": "foc_board",
       "id": "foc_b_2",
       "ink": "green",
       "odd": false,
       "set": "b",
+      "turn": 20,
       "variant": 2
     },
     {
       "direction": "right",
       "file": "foc_b_3.webp",
+      "grid": 3,
       "group": "foc_board",
       "id": "foc_b_3",
       "ink": "green",
       "odd": false,
       "set": "b",
+      "turn": 20,
       "variant": 3
     },
     {
       "direction": "right",
       "file": "foc_b_4.webp",
+      "grid": 3,
       "group": "foc_board",
       "id": "foc_b_4",
       "ink": "green",
       "odd": false,
       "set": "b",
+      "turn": 20,
       "variant": 4
     },
     {
       "direction": "down",
       "file": "foc_c_1.webp",
+      "grid": 4,
       "group": "foc_board",
       "id": "foc_c_1",
       "ink": "violet",
       "odd": false,
       "set": "c",
+      "turn": 18,
       "variant": 1
     },
     {
       "direction": "down",
       "file": "foc_c_2.webp",
+      "grid": 4,
       "group": "foc_board",
       "id": "foc_c_2",
       "ink": "violet",
-      "odd": true,
+      "odd": false,
       "set": "c",
+      "turn": 18,
       "variant": 2
     },
     {
       "direction": "down",
       "file": "foc_c_3.webp",
+      "grid": 4,
       "group": "foc_board",
       "id": "foc_c_3",
       "ink": "violet",
       "odd": false,
       "set": "c",
+      "turn": 18,
       "variant": 3
     },
     {
       "direction": "down",
       "file": "foc_c_4.webp",
+      "grid": 4,
       "group": "foc_board",
       "id": "foc_c_4",
       "ink": "violet",
-      "odd": false,
+      "odd": true,
       "set": "c",
+      "turn": 18,
       "variant": 4
     },
     {
       "direction": "left",
       "file": "foc_d_1.webp",
+      "grid": 4,
       "group": "foc_board",
       "id": "foc_d_1",
       "ink": "teal",
       "odd": false,
       "set": "d",
+      "turn": 15,
       "variant": 1
     },
     {
       "direction": "left",
       "file": "foc_d_2.webp",
+      "grid": 4,
       "group": "foc_board",
       "id": "foc_d_2",
       "ink": "teal",
-      "odd": false,
+      "odd": true,
       "set": "d",
+      "turn": 15,
       "variant": 2
     },
     {
       "direction": "left",
       "file": "foc_d_3.webp",
+      "grid": 4,
       "group": "foc_board",
       "id": "foc_d_3",
       "ink": "teal",
       "odd": false,
       "set": "d",
+      "turn": 15,
       "variant": 3
     },
     {
       "direction": "left",
       "file": "foc_d_4.webp",
+      "grid": 4,
       "group": "foc_board",
       "id": "foc_d_4",
       "ink": "teal",
-      "odd": true,
+      "odd": false,
       "set": "d",
+      "turn": 15,
       "variant": 4
     },
     {
@@ -689,27 +721,35 @@
   "foc": {
     "a": {
       "direction": "up",
+      "grid": 3,
       "ink": "blue",
       "odd": 3,
-      "odd_cell": 1
+      "odd_cell": 2,
+      "turn": 25
     },
     "b": {
       "direction": "right",
+      "grid": 3,
       "ink": "green",
       "odd": 1,
-      "odd_cell": 4
+      "odd_cell": 8,
+      "turn": 20
     },
     "c": {
       "direction": "down",
+      "grid": 4,
       "ink": "violet",
-      "odd": 2,
-      "odd_cell": 2
+      "odd": 4,
+      "odd_cell": 5,
+      "turn": 18
     },
     "d": {
       "direction": "left",
+      "grid": 4,
       "ink": "teal",
-      "odd": 4,
-      "odd_cell": 2
+      "odd": 2,
+      "odd_cell": 10,
+      "turn": 15
     }
   },
   "funnel": "focus",
