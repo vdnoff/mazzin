@@ -549,6 +549,11 @@ check("  so a swipe payload is still required to be the closed three",
       str(sorted(tracking.SWIPE_EXTRA_KEYS)))
 
 OWNER = "brain.json"
+# The funnels built on these features: brain, and the second game funnel
+# cut from it, with its sandbox twin. Every exclusivity check below reads
+# this list; the positive checks — "and the one that does names both" —
+# still read the one funnel the file was written against.
+OWNERS = ("brain.json", "focus-test.json", "focus.json")
 
 print("\n--- 6. a step that says which round it is ---")
 kick_fn = body("setStepKicker")
@@ -645,11 +650,11 @@ check("  and the one that reaches the shell is gated on the intro's class",
           for part in r.split(",")),
       str([r for r in own_rules if r.startswith("#screen-swipe")]))
 check("no funnel but the memory game names either key",
-      not [n for n, cfg in CONFIGS.items() if n != OWNER
+      not [n for n, cfg in CONFIGS.items() if n not in OWNERS
            and ([s for s in (cfg.get("swipe") or {}).get("steps", [])
                  if s.get("kicker")]
                 or (cfg.get("swipe") or {}).get("timeup_line"))],
-      str([n for n, cfg in CONFIGS.items() if n != OWNER
+      str([n for n, cfg in CONFIGS.items() if n not in OWNERS
            and ([s for s in (cfg.get("swipe") or {}).get("steps", [])
                  if s.get("kicker")]
                 or (cfg.get("swipe") or {}).get("timeup_line"))]))
@@ -748,11 +753,11 @@ check("nothing takes it down between the tap and the next step",
 
 print("\n--- and neither key reaches a funnel that did not ask ---")
 check("no funnel but the memory game carries an intro card",
-      [n for n, cfg in CONFIGS.items() if cfg.get("intro")] == [OWNER],
+      [n for n, cfg in CONFIGS.items() if cfg.get("intro")] == list(OWNERS),
       str([n for n, cfg in CONFIGS.items() if cfg.get("intro")]))
 check("  or asks for the round pill",
       [n for n, cfg in CONFIGS.items()
-       if (cfg.get("swipe") or {}).get("round_pill")] == [OWNER],
+       if (cfg.get("swipe") or {}).get("round_pill")] == list(OWNERS),
       str([n for n, cfg in CONFIGS.items()
            if (cfg.get("swipe") or {}).get("round_pill")]))
 check("  and the one that does carries both",
@@ -766,7 +771,7 @@ print("\n--- and only the funnel that asked for them can reach them ---")
 # spelled out rather than left as "none", so a fourth funnel growing a flash
 # by accident still fails.
 for name, cfg in CONFIGS.items():
-    if name == OWNER:
+    if name in OWNERS:
         continue
     entries = cfg.get("interstitials") or []
     check("  %-22s names no flash" % name,
@@ -784,7 +789,7 @@ check("  and the funnel that does is the one built on it",
 # them draws a count-in, a clock or a card it did not draw before.
 loud = []
 for name, cfg in CONFIGS.items():
-    if name == OWNER:
+    if name in OWNERS:
         continue
     for entry in cfg.get("interstitials") or []:
         for key in ("prepare", "reveal"):
@@ -807,13 +812,13 @@ check("  and the funnel that does names every one of them",
       and own["swipe"].get("label_mode") == "check"
       and not [s for s in own["swipe"]["steps"] if s.get("label_mode")])
 check("no funnel but the memory game asks for reaction times",
-      [n for n, c in CONFIGS.items() if c.get("track_timing")] == [OWNER],
+      [n for n, c in CONFIGS.items() if c.get("track_timing")] == list(OWNERS),
       str([n for n, c in CONFIGS.items() if c.get("track_timing")]))
 DOMAIN = {"%s_%s" % (a, s) for a in ("mem", "spa", "chg", "foc")
           for s in ("hit", "miss")}
 carried = set()
 for name, cfg in CONFIGS.items():
-    if name == OWNER:
+    if name in OWNERS:
         continue
     for st in (cfg.get("swipe") or {}).get("steps", []):
         for pairing in (st.get("pairs") or ([{"images": st["images"]}]
@@ -823,9 +828,9 @@ for name, cfg in CONFIGS.items():
 check("no other funnel's cards carry a domain tag", not carried,
       str(sorted(carried)))
 check("no other funnel keys an interstitial or a step on a domain axis",
-      not [n for n, c in CONFIGS.items() if n != OWNER
+      not [n for n, c in CONFIGS.items() if n not in OWNERS
            and re.search(r'"axis":\s*"(?:mem|spa|chg|foc)"', json.dumps(c))],
-      str([n for n, c in CONFIGS.items() if n != OWNER
+      str([n for n, c in CONFIGS.items() if n not in OWNERS
            and re.search(r'"axis":\s*"(?:mem|spa|chg|foc)"',
                          json.dumps(c))]))
 check("the funnels directory and its static copy still agree",
@@ -1119,7 +1124,7 @@ check("  and the memorise screens are spaced the same way",
       and "body.theme-brain .mid.is-flash .mz-timer { margin: 18px auto 16px; }"
       in CSS)
 check("no other funnel names this theme",
-      [n for n, c in CONFIGS.items() if c.get("theme") == "brain"] == [OWNER],
+      [n for n, c in CONFIGS.items() if c.get("theme") == "brain"] == list(OWNERS),
       str([n for n, c in CONFIGS.items() if c.get("theme") == "brain"]))
 
 print("\n--- v8: a tap answered with a mark rather than a word ---")
@@ -1185,7 +1190,7 @@ check("  and the label is still there for the reader who cannot see them",
           for f in e["flash"]["images"]))
 check("no other funnel asks for the mode",
       [n for n, c in CONFIGS.items()
-       if (c.get("swipe") or {}).get("label_mode") == "check"] == [OWNER],
+       if (c.get("swipe") or {}).get("label_mode") == "check"] == list(OWNERS),
       str([n for n, c in CONFIGS.items()
            if (c.get("swipe") or {}).get("label_mode") == "check"]))
 check("  and none of them names it on a step either",
@@ -1315,7 +1320,7 @@ check("  and nothing in the block repaints the accent the header reads",
            and re.search(re.escape(r) + r"\s*\{[^}]*--accent\s*:", CSS,
                          re.S)])
 check("no other funnel is on this theme",
-      [n for n, c in CONFIGS.items() if c.get("theme") == "brain"] == [OWNER])
+      [n for n, c in CONFIGS.items() if c.get("theme") == "brain"] == list(OWNERS))
 
 print("\n--- v9: the walk beats five times, and where ---")
 # The screens between rounds carry the pill now, so a round can first appear
@@ -1413,12 +1418,12 @@ check("  and a forced pick out of range falls back to the roll",
 check("no funnel but the memory game names a pool",
       [n for n, c in CONFIGS.items()
        if [s for s in (c.get("swipe") or {}).get("steps", []) if s.get("pool")]]
-      == [OWNER],
+      == list(OWNERS),
       str([n for n, c in CONFIGS.items()
            if [s for s in (c.get("swipe") or {}).get("steps", [])
                if s.get("pool")]]))
 check("  and every other funnel's steps are one pair as they were",
-      not [n for n, c in CONFIGS.items() if n != OWNER
+      not [n for n, c in CONFIGS.items() if n not in OWNERS
            for s in (c.get("swipe") or {}).get("steps", [])
            if len(s.get("pairs") or [1]) > 3],
       "")

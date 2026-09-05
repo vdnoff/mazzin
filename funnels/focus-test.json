@@ -1,0 +1,3114 @@
+{
+  "slug": "focus-test",
+  "funnel_id": "focus_v1_test",
+  "locale": "en",
+  "theme": "brain",
+  "stripe_mode": "test",
+  "track_timing": true,
+  "result_module": "/static/js/result_focus.js",
+  "result_css": "/static/css/result_focus.css",
+  "result_template": "minimal",
+  "meta": {
+    "title": "Focus Score Challenge",
+    "og_image": "/static/galleries/focus/og.webp"
+  },
+  "intro": {
+    "kicker": "FOCUS SCORE CHALLENGE",
+    "image": "/static/galleries/focus/focus_intro.webp",
+    "headline": "How sharp is your focus?",
+    "sub": "16 quick rounds of memory, focus and speed games. Get your Focus Score — and the plan to raise it.",
+    "chips": [
+      "2 MINUTES",
+      "NO SIGN-UP",
+      "NO SUBSCRIPTION",
+      "INSTANT RESULT"
+    ],
+    "cta": "START NOW",
+    "foot": "Self-discovery."
+  },
+  "swipe": {
+    "pairs_count": 18,
+    "headline": "How sharp is your focus?",
+    "subtext": "18 quick rounds. No sign-up.",
+    "subtext_accent": "No sign-up.",
+    "hint": "Tap fast. Trust your gut.",
+    "timeup_line": "Time's up",
+    "label_mode": "check",
+    "round_pill": true,
+    "analyzing_fade_to": "#ECE6DA",
+    "steps": [
+      {
+        "id": "work",
+        "kicker": "WARM-UP · 1/2",
+        "question": "First — where do you work?",
+        "format": "grid6",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "work_office",
+                "img": "/static/galleries/focus/work_office.webp",
+                "label": "Office",
+                "tags": [
+                  "work_office"
+                ]
+              },
+              {
+                "id": "work_remote",
+                "img": "/static/galleries/focus/work_remote.webp",
+                "label": "Remote",
+                "tags": [
+                  "work_remote"
+                ]
+              },
+              {
+                "id": "work_hybrid",
+                "img": "/static/galleries/focus/work_hybrid.webp",
+                "label": "Hybrid",
+                "tags": [
+                  "work_hybrid"
+                ]
+              },
+              {
+                "id": "work_feet",
+                "img": "/static/galleries/focus/work_feet.webp",
+                "label": "On my feet",
+                "tags": [
+                  "work_feet"
+                ]
+              },
+              {
+                "id": "work_student",
+                "img": "/static/galleries/focus/work_student.webp",
+                "label": "Student",
+                "tags": [
+                  "work_student"
+                ]
+              },
+              {
+                "id": "work_mixed",
+                "img": "/static/galleries/focus/work_mixed.webp",
+                "label": "Mixed",
+                "tags": [
+                  "work_mixed"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "thief",
+        "kicker": "WARM-UP · 2/2",
+        "question": "Your #1 time thief?",
+        "format": "grid6",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "thief_phone",
+                "img": "/static/galleries/focus/thief_phone.webp",
+                "label": "Phone",
+                "tags": [
+                  "thief_phone"
+                ]
+              },
+              {
+                "id": "thief_meetings",
+                "img": "/static/galleries/focus/thief_meetings.webp",
+                "label": "Meetings",
+                "tags": [
+                  "thief_meetings"
+                ]
+              },
+              {
+                "id": "thief_notifications",
+                "img": "/static/galleries/focus/thief_notifications.webp",
+                "label": "Notifications",
+                "tags": [
+                  "thief_notifications"
+                ]
+              },
+              {
+                "id": "thief_multitasking",
+                "img": "/static/galleries/focus/thief_multitasking.webp",
+                "label": "Multitasking",
+                "tags": [
+                  "thief_multitasking"
+                ]
+              },
+              {
+                "id": "thief_fatigue",
+                "img": "/static/galleries/focus/thief_fatigue.webp",
+                "label": "Fatigue",
+                "tags": [
+                  "thief_fatigue"
+                ]
+              },
+              {
+                "id": "thief_procrastination",
+                "img": "/static/galleries/focus/thief_procrastination.webp",
+                "label": "Procrastination",
+                "tags": [
+                  "thief_procrastination"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "mem1",
+        "kicker": "ROUND 1 · MEMORY · 1/4",
+        "question": "Which one was NOT on the board?",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "v1",
+            "images": [
+              {
+                "id": "mem1_v1_c1",
+                "img": "/static/galleries/focus/icon_key_colorA.webp",
+                "label": "Blue key",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem1_v1_c2",
+                "img": "/static/galleries/focus/icon_mug_colorB.webp",
+                "label": "Red mug",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem1_v1_c3",
+                "img": "/static/galleries/focus/icon_folder_colorA.webp",
+                "label": "Blue folder",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem1_v1_c4",
+                "img": "/static/galleries/focus/icon_flag_colorB.webp",
+                "label": "Red flag",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "mem1_v2_c1",
+                "img": "/static/galleries/focus/icon_phone_colorA.webp",
+                "label": "Blue phone",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem1_v2_c2",
+                "img": "/static/galleries/focus/icon_pencil_colorB.webp",
+                "label": "Red pencil",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem1_v2_c3",
+                "img": "/static/galleries/focus/icon_bulb_colorB.webp",
+                "label": "Red bulb",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem1_v2_c4",
+                "img": "/static/galleries/focus/icon_chart_colorA.webp",
+                "label": "Blue chart",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "mem1_v3_c1",
+                "img": "/static/galleries/focus/icon_calendar_colorB.webp",
+                "label": "Red calendar",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem1_v3_c2",
+                "img": "/static/galleries/focus/icon_key_colorB.webp",
+                "label": "Red key",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem1_v3_c3",
+                "img": "/static/galleries/focus/icon_phone_colorA.webp",
+                "label": "Blue phone",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem1_v3_c4",
+                "img": "/static/galleries/focus/icon_clock_colorB.webp",
+                "label": "Red clock",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/focus/icon_clock_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_mug_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_folder_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_flag_colorB.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem1_v1_c4"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/focus/icon_pencil_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_calendar_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_bulb_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_chart_colorA.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem1_v2_c4"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid4",
+              "images": [
+                {
+                  "img": "/static/galleries/focus/icon_key_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_phone_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_flag_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_clock_colorB.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem1_v3_c4"
+          }
+        ]
+      },
+      {
+        "id": "mem2",
+        "kicker": "ROUND 1 · MEMORY · 2/4",
+        "question": "Which one was NOT on the board?",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "v1",
+            "images": [
+              {
+                "id": "mem2_v1_c1",
+                "img": "/static/galleries/focus/icon_flag_colorA.webp",
+                "label": "Blue flag",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem2_v1_c2",
+                "img": "/static/galleries/focus/icon_pencil_colorA.webp",
+                "label": "Blue pencil",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_v1_c3",
+                "img": "/static/galleries/focus/icon_chart_colorB.webp",
+                "label": "Red chart",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_v1_c4",
+                "img": "/static/galleries/focus/icon_bulb_colorA.webp",
+                "label": "Blue bulb",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "mem2_v2_c1",
+                "img": "/static/galleries/focus/icon_bulb_colorB.webp",
+                "label": "Red bulb",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem2_v2_c2",
+                "img": "/static/galleries/focus/icon_clock_colorA.webp",
+                "label": "Blue clock",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_v2_c3",
+                "img": "/static/galleries/focus/icon_phone_colorB.webp",
+                "label": "Red phone",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_v2_c4",
+                "img": "/static/galleries/focus/icon_mug_colorB.webp",
+                "label": "Red mug",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "mem2_v3_c1",
+                "img": "/static/galleries/focus/icon_mug_colorA.webp",
+                "label": "Blue mug",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem2_v3_c2",
+                "img": "/static/galleries/focus/icon_bulb_colorB.webp",
+                "label": "Red bulb",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_v3_c3",
+                "img": "/static/galleries/focus/icon_key_colorA.webp",
+                "label": "Blue key",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_v3_c4",
+                "img": "/static/galleries/focus/icon_calendar_colorA.webp",
+                "label": "Blue calendar",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/focus/icon_mug_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_pencil_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_key_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_chart_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_bulb_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_folder_colorB.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem2_v1_c4"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/focus/icon_calendar_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_clock_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_phone_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_flag_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_mug_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_pencil_colorA.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem2_v2_c4"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/focus/icon_folder_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_bulb_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_chart_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_key_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_calendar_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_phone_colorA.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem2_v3_c4"
+          }
+        ]
+      },
+      {
+        "id": "mem3",
+        "kicker": "ROUND 1 · MEMORY · 3/4",
+        "question": "Which one was NOT on the board?",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "v1",
+            "images": [
+              {
+                "id": "mem3_v1_c1",
+                "img": "/static/galleries/focus/icon_pencil_colorB.webp",
+                "label": "Red pencil",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem3_v1_c2",
+                "img": "/static/galleries/focus/icon_flag_colorA.webp",
+                "label": "Blue flag",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_v1_c3",
+                "img": "/static/galleries/focus/icon_calendar_colorB.webp",
+                "label": "Red calendar",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_v1_c4",
+                "img": "/static/galleries/focus/icon_key_colorB.webp",
+                "label": "Red key",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "mem3_v2_c1",
+                "img": "/static/galleries/focus/icon_flag_colorB.webp",
+                "label": "Red flag",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem3_v2_c2",
+                "img": "/static/galleries/focus/icon_folder_colorB.webp",
+                "label": "Red folder",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_v2_c3",
+                "img": "/static/galleries/focus/icon_clock_colorB.webp",
+                "label": "Red clock",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_v2_c4",
+                "img": "/static/galleries/focus/icon_phone_colorA.webp",
+                "label": "Blue phone",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "mem3_v3_c1",
+                "img": "/static/galleries/focus/icon_chart_colorA.webp",
+                "label": "Blue chart",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem3_v3_c2",
+                "img": "/static/galleries/focus/icon_mug_colorB.webp",
+                "label": "Red mug",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_v3_c3",
+                "img": "/static/galleries/focus/icon_bulb_colorB.webp",
+                "label": "Red bulb",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem3_v3_c4",
+                "img": "/static/galleries/focus/icon_flag_colorB.webp",
+                "label": "Red flag",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/focus/icon_phone_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_flag_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_mug_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_calendar_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_chart_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_key_colorB.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem3_v1_c4"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/focus/icon_bulb_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_folder_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_clock_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_pencil_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_phone_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_chart_colorB.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem3_v2_c4"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/focus/icon_key_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_mug_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_calendar_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_bulb_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_flag_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_clock_colorA.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem3_v3_c4"
+          }
+        ]
+      },
+      {
+        "id": "mem4",
+        "kicker": "ROUND 1 · MEMORY · 4/4",
+        "question": "Which one was NOT on the board?",
+        "format": "grid4",
+        "pairs": [
+          {
+            "id": "v1",
+            "images": [
+              {
+                "id": "mem4_v1_c1",
+                "img": "/static/galleries/focus/icon_clock_colorB.webp",
+                "label": "Red clock",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem4_v1_c2",
+                "img": "/static/galleries/focus/icon_clock_colorA.webp",
+                "label": "Blue clock",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_v1_c3",
+                "img": "/static/galleries/focus/icon_key_colorA.webp",
+                "label": "Blue key",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_v1_c4",
+                "img": "/static/galleries/focus/icon_chart_colorB.webp",
+                "label": "Red chart",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "mem4_v2_c1",
+                "img": "/static/galleries/focus/icon_flag_colorB.webp",
+                "label": "Red flag",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem4_v2_c2",
+                "img": "/static/galleries/focus/icon_flag_colorA.webp",
+                "label": "Blue flag",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_v2_c3",
+                "img": "/static/galleries/focus/icon_calendar_colorB.webp",
+                "label": "Red calendar",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_v2_c4",
+                "img": "/static/galleries/focus/icon_mug_colorB.webp",
+                "label": "Red mug",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "mem4_v3_c1",
+                "img": "/static/galleries/focus/icon_key_colorA.webp",
+                "label": "Blue key",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem4_v3_c2",
+                "img": "/static/galleries/focus/icon_key_colorB.webp",
+                "label": "Red key",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_v3_c3",
+                "img": "/static/galleries/focus/icon_folder_colorA.webp",
+                "label": "Blue folder",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem4_v3_c4",
+                "img": "/static/galleries/focus/icon_bulb_colorB.webp",
+                "label": "Red bulb",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/focus/icon_clock_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_folder_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_key_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_chart_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_mug_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_phone_colorB.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem4_v1_c4"
+          },
+          {
+            "pair": "v2",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/focus/icon_pencil_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_bulb_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_flag_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_calendar_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_phone_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_mug_colorB.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem4_v2_c4"
+          },
+          {
+            "pair": "v3",
+            "flash": {
+              "format": "grid6",
+              "images": [
+                {
+                  "img": "/static/galleries/focus/icon_chart_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_key_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_folder_colorA.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_clock_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_bulb_colorB.webp"
+                },
+                {
+                  "img": "/static/galleries/focus/icon_pencil_colorA.webp"
+                }
+              ]
+            },
+            "timeout_pick": "mem4_v3_c4"
+          }
+        ]
+      },
+      {
+        "id": "foc1",
+        "kicker": "ROUND 2 · FOCUS · 1/4",
+        "question": "Which board has the turned arrow?",
+        "format": "grid4",
+        "timer_ms": 5000,
+        "pairs": [
+          {
+            "id": "v1",
+            "images": [
+              {
+                "id": "foc1_v1_b1",
+                "img": "/static/galleries/focus/foc_a_1.webp",
+                "label": "Board 1",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "foc1_v1_b2",
+                "img": "/static/galleries/focus/foc_a_2.webp",
+                "label": "Board 2",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "foc1_v1_b3",
+                "img": "/static/galleries/focus/foc_a_3.webp",
+                "label": "Board 3",
+                "tags": [
+                  "foc_hit"
+                ]
+              },
+              {
+                "id": "foc1_v1_b4",
+                "img": "/static/galleries/focus/foc_a_4.webp",
+                "label": "Board 4",
+                "tags": [
+                  "foc_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "timeout_pick": "foc1_v1_b4"
+          }
+        ]
+      },
+      {
+        "id": "foc2",
+        "kicker": "ROUND 2 · FOCUS · 2/4",
+        "question": "Which board has the turned arrow?",
+        "format": "grid4",
+        "timer_ms": 5000,
+        "pairs": [
+          {
+            "id": "v1",
+            "images": [
+              {
+                "id": "foc2_v1_b1",
+                "img": "/static/galleries/focus/foc_b_1.webp",
+                "label": "Board 1",
+                "tags": [
+                  "foc_hit"
+                ]
+              },
+              {
+                "id": "foc2_v1_b2",
+                "img": "/static/galleries/focus/foc_b_2.webp",
+                "label": "Board 2",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "foc2_v1_b3",
+                "img": "/static/galleries/focus/foc_b_3.webp",
+                "label": "Board 3",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "foc2_v1_b4",
+                "img": "/static/galleries/focus/foc_b_4.webp",
+                "label": "Board 4",
+                "tags": [
+                  "foc_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "timeout_pick": "foc2_v1_b4"
+          }
+        ]
+      },
+      {
+        "id": "foc3",
+        "kicker": "ROUND 2 · FOCUS · 3/4",
+        "question": "Which board has the turned arrow?",
+        "format": "grid4",
+        "timer_ms": 5000,
+        "pairs": [
+          {
+            "id": "v1",
+            "images": [
+              {
+                "id": "foc3_v1_b1",
+                "img": "/static/galleries/focus/foc_c_1.webp",
+                "label": "Board 1",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "foc3_v1_b2",
+                "img": "/static/galleries/focus/foc_c_2.webp",
+                "label": "Board 2",
+                "tags": [
+                  "foc_hit"
+                ]
+              },
+              {
+                "id": "foc3_v1_b3",
+                "img": "/static/galleries/focus/foc_c_3.webp",
+                "label": "Board 3",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "foc3_v1_b4",
+                "img": "/static/galleries/focus/foc_c_4.webp",
+                "label": "Board 4",
+                "tags": [
+                  "foc_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "timeout_pick": "foc3_v1_b4"
+          }
+        ]
+      },
+      {
+        "id": "foc4",
+        "kicker": "ROUND 2 · FOCUS · 4/4",
+        "question": "Which board has the turned arrow?",
+        "format": "grid4",
+        "timer_ms": 5000,
+        "pairs": [
+          {
+            "id": "v1",
+            "images": [
+              {
+                "id": "foc4_v1_b1",
+                "img": "/static/galleries/focus/foc_d_1.webp",
+                "label": "Board 1",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "foc4_v1_b2",
+                "img": "/static/galleries/focus/foc_d_2.webp",
+                "label": "Board 2",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "foc4_v1_b3",
+                "img": "/static/galleries/focus/foc_d_3.webp",
+                "label": "Board 3",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "foc4_v1_b4",
+                "img": "/static/galleries/focus/foc_d_4.webp",
+                "label": "Board 4",
+                "tags": [
+                  "foc_hit"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "timeout_pick": "foc4_v1_b3"
+          }
+        ]
+      },
+      {
+        "id": "chg1",
+        "kicker": "ROUND 3 · SWITCHING · 1/4",
+        "question": "Tap the BLUE arrow",
+        "format": "grid4",
+        "timer_ms": 4000,
+        "pairs": [
+          {
+            "id": "v1",
+            "images": [
+              {
+                "id": "chg1_v1_c1",
+                "img": "/static/galleries/focus/swi_up_blue.webp",
+                "label": "Blue arrow, pointing up",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg1_v1_c2",
+                "img": "/static/galleries/focus/swi_left_red.webp",
+                "label": "Red arrow, pointing left",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_v1_c3",
+                "img": "/static/galleries/focus/swi_down_green.webp",
+                "label": "Green arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_v1_c4",
+                "img": "/static/galleries/focus/swi_right_amber.webp",
+                "label": "Amber arrow, pointing right",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "chg1_v2_c1",
+                "img": "/static/galleries/focus/swi_left_blue.webp",
+                "label": "Blue arrow, pointing left",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg1_v2_c2",
+                "img": "/static/galleries/focus/swi_up_amber.webp",
+                "label": "Amber arrow, pointing up",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_v2_c3",
+                "img": "/static/galleries/focus/swi_right_red.webp",
+                "label": "Red arrow, pointing right",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_v2_c4",
+                "img": "/static/galleries/focus/swi_down_green.webp",
+                "label": "Green arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "chg1_v3_c1",
+                "img": "/static/galleries/focus/swi_down_blue.webp",
+                "label": "Blue arrow, pointing down",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg1_v3_c2",
+                "img": "/static/galleries/focus/swi_right_green.webp",
+                "label": "Green arrow, pointing right",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_v3_c3",
+                "img": "/static/galleries/focus/swi_up_red.webp",
+                "label": "Red arrow, pointing up",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_v3_c4",
+                "img": "/static/galleries/focus/swi_left_amber.webp",
+                "label": "Amber arrow, pointing left",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "timeout_pick": "chg1_v1_c4"
+          },
+          {
+            "pair": "v2",
+            "timeout_pick": "chg1_v2_c4"
+          },
+          {
+            "pair": "v3",
+            "timeout_pick": "chg1_v3_c4"
+          }
+        ]
+      },
+      {
+        "id": "chg2",
+        "kicker": "ROUND 3 · SWITCHING · 2/4",
+        "question": "Tap the AMBER arrow",
+        "format": "grid4",
+        "timer_ms": 4000,
+        "pairs": [
+          {
+            "id": "v1",
+            "images": [
+              {
+                "id": "chg2_v1_c1",
+                "img": "/static/galleries/focus/swi_right_amber.webp",
+                "label": "Amber arrow, pointing right",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg2_v1_c2",
+                "img": "/static/galleries/focus/swi_up_blue.webp",
+                "label": "Blue arrow, pointing up",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_v1_c3",
+                "img": "/static/galleries/focus/swi_left_green.webp",
+                "label": "Green arrow, pointing left",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_v1_c4",
+                "img": "/static/galleries/focus/swi_down_red.webp",
+                "label": "Red arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "chg2_v2_c1",
+                "img": "/static/galleries/focus/swi_up_amber.webp",
+                "label": "Amber arrow, pointing up",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg2_v2_c2",
+                "img": "/static/galleries/focus/swi_down_blue.webp",
+                "label": "Blue arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_v2_c3",
+                "img": "/static/galleries/focus/swi_right_green.webp",
+                "label": "Green arrow, pointing right",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_v2_c4",
+                "img": "/static/galleries/focus/swi_left_red.webp",
+                "label": "Red arrow, pointing left",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "chg2_v3_c1",
+                "img": "/static/galleries/focus/swi_left_amber.webp",
+                "label": "Amber arrow, pointing left",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg2_v3_c2",
+                "img": "/static/galleries/focus/swi_up_green.webp",
+                "label": "Green arrow, pointing up",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_v3_c3",
+                "img": "/static/galleries/focus/swi_down_blue.webp",
+                "label": "Blue arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_v3_c4",
+                "img": "/static/galleries/focus/swi_right_red.webp",
+                "label": "Red arrow, pointing right",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "timeout_pick": "chg2_v1_c4"
+          },
+          {
+            "pair": "v2",
+            "timeout_pick": "chg2_v2_c4"
+          },
+          {
+            "pair": "v3",
+            "timeout_pick": "chg2_v3_c4"
+          }
+        ]
+      },
+      {
+        "id": "chg3",
+        "kicker": "ROUND 3 · SWITCHING · 3/4",
+        "question": "Now tap the arrow pointing UP",
+        "format": "grid4",
+        "timer_ms": 4000,
+        "pairs": [
+          {
+            "id": "v1",
+            "images": [
+              {
+                "id": "chg3_v1_c1",
+                "img": "/static/galleries/focus/swi_up_green.webp",
+                "label": "Green arrow, pointing up",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg3_v1_c2",
+                "img": "/static/galleries/focus/swi_left_amber.webp",
+                "label": "Amber arrow, pointing left",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_v1_c3",
+                "img": "/static/galleries/focus/swi_down_blue.webp",
+                "label": "Blue arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_v1_c4",
+                "img": "/static/galleries/focus/swi_right_red.webp",
+                "label": "Red arrow, pointing right",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "chg3_v2_c1",
+                "img": "/static/galleries/focus/swi_up_red.webp",
+                "label": "Red arrow, pointing up",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg3_v2_c2",
+                "img": "/static/galleries/focus/swi_down_amber.webp",
+                "label": "Amber arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_v2_c3",
+                "img": "/static/galleries/focus/swi_left_blue.webp",
+                "label": "Blue arrow, pointing left",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_v2_c4",
+                "img": "/static/galleries/focus/swi_right_green.webp",
+                "label": "Green arrow, pointing right",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "chg3_v3_c1",
+                "img": "/static/galleries/focus/swi_up_blue.webp",
+                "label": "Blue arrow, pointing up",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg3_v3_c2",
+                "img": "/static/galleries/focus/swi_right_amber.webp",
+                "label": "Amber arrow, pointing right",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_v3_c3",
+                "img": "/static/galleries/focus/swi_down_red.webp",
+                "label": "Red arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg3_v3_c4",
+                "img": "/static/galleries/focus/swi_left_green.webp",
+                "label": "Green arrow, pointing left",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "timeout_pick": "chg3_v1_c4"
+          },
+          {
+            "pair": "v2",
+            "timeout_pick": "chg3_v2_c4"
+          },
+          {
+            "pair": "v3",
+            "timeout_pick": "chg3_v3_c4"
+          }
+        ]
+      },
+      {
+        "id": "chg4",
+        "kicker": "ROUND 3 · SWITCHING · 4/4",
+        "question": "Now tap the arrow pointing LEFT",
+        "format": "grid4",
+        "timer_ms": 4000,
+        "pairs": [
+          {
+            "id": "v1",
+            "images": [
+              {
+                "id": "chg4_v1_c1",
+                "img": "/static/galleries/focus/swi_left_red.webp",
+                "label": "Red arrow, pointing left",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg4_v1_c2",
+                "img": "/static/galleries/focus/swi_up_amber.webp",
+                "label": "Amber arrow, pointing up",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v1_c3",
+                "img": "/static/galleries/focus/swi_down_blue.webp",
+                "label": "Blue arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v1_c4",
+                "img": "/static/galleries/focus/swi_right_green.webp",
+                "label": "Green arrow, pointing right",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v2",
+            "images": [
+              {
+                "id": "chg4_v2_c1",
+                "img": "/static/galleries/focus/swi_left_green.webp",
+                "label": "Green arrow, pointing left",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg4_v2_c2",
+                "img": "/static/galleries/focus/swi_right_amber.webp",
+                "label": "Amber arrow, pointing right",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v2_c3",
+                "img": "/static/galleries/focus/swi_up_blue.webp",
+                "label": "Blue arrow, pointing up",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v2_c4",
+                "img": "/static/galleries/focus/swi_down_red.webp",
+                "label": "Red arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "v3",
+            "images": [
+              {
+                "id": "chg4_v3_c1",
+                "img": "/static/galleries/focus/swi_left_blue.webp",
+                "label": "Blue arrow, pointing left",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg4_v3_c2",
+                "img": "/static/galleries/focus/swi_down_amber.webp",
+                "label": "Amber arrow, pointing down",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v3_c3",
+                "img": "/static/galleries/focus/swi_up_green.webp",
+                "label": "Green arrow, pointing up",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg4_v3_c4",
+                "img": "/static/galleries/focus/swi_right_blue.webp",
+                "label": "Blue arrow, pointing right",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "timeout_pick": "chg4_v1_c4"
+          },
+          {
+            "pair": "v2",
+            "timeout_pick": "chg4_v2_c4"
+          },
+          {
+            "pair": "v3",
+            "timeout_pick": "chg4_v3_c4"
+          }
+        ]
+      },
+      {
+        "id": "spa1",
+        "kicker": "ROUND 4 · SPEED · 1/4",
+        "question": "Which card has the MOST dots?",
+        "format": "grid4",
+        "timer_ms": 4000,
+        "pairs": [
+          {
+            "id": "v1",
+            "images": [
+              {
+                "id": "spa1_v1_d1",
+                "img": "/static/galleries/focus/dec_a_1.webp",
+                "label": "Card 1",
+                "tags": [
+                  "spa_hit"
+                ]
+              },
+              {
+                "id": "spa1_v1_d2",
+                "img": "/static/galleries/focus/dec_a_2.webp",
+                "label": "Card 2",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa1_v1_d3",
+                "img": "/static/galleries/focus/dec_a_3.webp",
+                "label": "Card 3",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa1_v1_d4",
+                "img": "/static/galleries/focus/dec_a_4.webp",
+                "label": "Card 4",
+                "tags": [
+                  "spa_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "timeout_pick": "spa1_v1_d4"
+          }
+        ]
+      },
+      {
+        "id": "spa2",
+        "kicker": "ROUND 4 · SPEED · 2/4",
+        "question": "Which card has the MOST dots?",
+        "format": "grid4",
+        "timer_ms": 4000,
+        "pairs": [
+          {
+            "id": "v1",
+            "images": [
+              {
+                "id": "spa2_v1_d1",
+                "img": "/static/galleries/focus/dec_b_1.webp",
+                "label": "Card 1",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_v1_d2",
+                "img": "/static/galleries/focus/dec_b_2.webp",
+                "label": "Card 2",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_v1_d3",
+                "img": "/static/galleries/focus/dec_b_3.webp",
+                "label": "Card 3",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_v1_d4",
+                "img": "/static/galleries/focus/dec_b_4.webp",
+                "label": "Card 4",
+                "tags": [
+                  "spa_hit"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "timeout_pick": "spa2_v1_d3"
+          }
+        ]
+      },
+      {
+        "id": "spa3",
+        "kicker": "ROUND 4 · SPEED · 3/4",
+        "question": "Which card has the MOST dots?",
+        "format": "grid4",
+        "timer_ms": 4000,
+        "pairs": [
+          {
+            "id": "v1",
+            "images": [
+              {
+                "id": "spa3_v1_d1",
+                "img": "/static/galleries/focus/dec_c_1.webp",
+                "label": "Card 1",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa3_v1_d2",
+                "img": "/static/galleries/focus/dec_c_2.webp",
+                "label": "Card 2",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa3_v1_d3",
+                "img": "/static/galleries/focus/dec_c_3.webp",
+                "label": "Card 3",
+                "tags": [
+                  "spa_hit"
+                ]
+              },
+              {
+                "id": "spa3_v1_d4",
+                "img": "/static/galleries/focus/dec_c_4.webp",
+                "label": "Card 4",
+                "tags": [
+                  "spa_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "timeout_pick": "spa3_v1_d4"
+          }
+        ]
+      },
+      {
+        "id": "spa4",
+        "kicker": "ROUND 4 · SPEED · 4/4",
+        "question": "Which card has the MOST dots?",
+        "format": "grid4",
+        "timer_ms": 4000,
+        "pairs": [
+          {
+            "id": "v1",
+            "images": [
+              {
+                "id": "spa4_v1_d1",
+                "img": "/static/galleries/focus/dec_d_1.webp",
+                "label": "Card 1",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa4_v1_d2",
+                "img": "/static/galleries/focus/dec_d_2.webp",
+                "label": "Card 2",
+                "tags": [
+                  "spa_hit"
+                ]
+              },
+              {
+                "id": "spa4_v1_d3",
+                "img": "/static/galleries/focus/dec_d_3.webp",
+                "label": "Card 3",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa4_v1_d4",
+                "img": "/static/galleries/focus/dec_d_4.webp",
+                "label": "Card 4",
+                "tags": [
+                  "spa_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "pool": [
+          {
+            "pair": "v1",
+            "timeout_pick": "spa4_v1_d4"
+          }
+        ]
+      }
+    ]
+  },
+  "interstitials": [
+    {
+      "after_step": 2,
+      "template": "flash",
+      "kicker": "ROUND 1 · MEMORY · 1/4",
+      "line": "Memorise these",
+      "auto_advance_ms": 3000,
+      "prepare": {
+        "line": "Prepare to memorize",
+        "count": 3
+      },
+      "flash": {
+        "format": "grid4",
+        "images": [
+          {
+            "img": "/static/galleries/focus/icon_clock_colorA.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_mug_colorB.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_folder_colorA.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_flag_colorB.webp"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 3,
+      "template": "flash",
+      "kicker": "ROUND 1 · MEMORY · 2/4",
+      "line": "Memorise these",
+      "auto_advance_ms": 3000,
+      "prepare": {
+        "line": "Prepare to memorize",
+        "count": 3
+      },
+      "flash": {
+        "format": "grid6",
+        "images": [
+          {
+            "img": "/static/galleries/focus/icon_mug_colorA.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_pencil_colorA.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_key_colorB.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_chart_colorB.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_bulb_colorA.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_folder_colorB.webp"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 4,
+      "template": "flash",
+      "kicker": "ROUND 1 · MEMORY · 3/4",
+      "line": "Memorise these",
+      "auto_advance_ms": 2500,
+      "prepare": {
+        "line": "Prepare to memorize",
+        "count": 3
+      },
+      "flash": {
+        "format": "grid6",
+        "images": [
+          {
+            "img": "/static/galleries/focus/icon_phone_colorB.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_flag_colorA.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_mug_colorA.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_calendar_colorB.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_chart_colorA.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_key_colorB.webp"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 5,
+      "template": "flash",
+      "kicker": "ROUND 1 · MEMORY · 4/4",
+      "line": "Memorise these",
+      "auto_advance_ms": 2500,
+      "prepare": {
+        "line": "Prepare to memorize",
+        "count": 3
+      },
+      "flash": {
+        "format": "grid6",
+        "images": [
+          {
+            "img": "/static/galleries/focus/icon_clock_colorA.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_folder_colorB.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_key_colorA.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_chart_colorB.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_mug_colorA.webp"
+          },
+          {
+            "img": "/static/galleries/focus/icon_phone_colorB.webp"
+          }
+        ]
+      }
+    },
+    {
+      "after_step": 6,
+      "template": "confirm",
+      "kicker": "Round 2 · Focus",
+      "line": "Next: find the turned arrow.",
+      "sub": "Four boards. One has an arrow turned. Tap that board.",
+      "cta": "Continue",
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "mem1",
+        "mem2",
+        "mem3",
+        "mem4"
+      ],
+      "personal": {
+        "axis": "mem",
+        "lines": {
+          "mem_hit": {
+            "line": "Nothing slips off your board.",
+            "sub": "Working memory is your strong suit."
+          },
+          "mem_miss": {
+            "line": "Boards are slippery.",
+            "sub": "Memory is the zone with the most room."
+          }
+        }
+      }
+    },
+    {
+      "after_step": 10,
+      "template": "confirm",
+      "kicker": "Round 3 · Switching",
+      "line": "Now the rule changes.",
+      "sub": "Read each question. It will not stay the same.",
+      "cta": "Continue",
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "foc1",
+        "foc2",
+        "foc3",
+        "foc4"
+      ],
+      "personal": {
+        "axis": "foc",
+        "lines": {
+          "foc_hit": {
+            "line": "You go straight to it.",
+            "sub": "Deep focus is your strong suit."
+          },
+          "foc_miss": {
+            "line": "The odd one hides well.",
+            "sub": "Focus is the zone with the most room."
+          }
+        }
+      }
+    },
+    {
+      "after_step": 14,
+      "template": "confirm",
+      "kicker": "Round 4 · Speed",
+      "line": "Last four. Speed counts.",
+      "sub": "Four cards of dots. Tap the one with the most.",
+      "cta": "Continue",
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "chg1",
+        "chg2",
+        "chg3",
+        "chg4"
+      ],
+      "personal": {
+        "axis": "chg",
+        "lines": {
+          "chg_hit": {
+            "line": "You switch without a stumble.",
+            "sub": "Rule changes cost you nothing."
+          },
+          "chg_miss": {
+            "line": "Switching is sneaky.",
+            "sub": "Most people miss two of four."
+          }
+        }
+      }
+    },
+    {
+      "after_step": 18,
+      "template": "almost",
+      "kicker": "Computing",
+      "line": "All 16 rounds in.",
+      "sub": "Working out your Focus Score...",
+      "cta": "See my Focus Score",
+      "auto_advance_ms": 2400,
+      "echo_steps": [
+        "spa1",
+        "spa2",
+        "spa3",
+        "spa4"
+      ]
+    }
+  ],
+  "interstitial_working": [
+    "Scoring that round…",
+    "Lining it up against the others…",
+    "Working out where you land…"
+  ],
+  "preview_gallery": [
+    {
+      "id": "icon_key_colorA",
+      "img": "/static/galleries/focus/icon_key_colorA.webp",
+      "tags": [
+        "mem_hit"
+      ]
+    },
+    {
+      "id": "icon_flag_colorA",
+      "img": "/static/galleries/focus/icon_flag_colorA.webp",
+      "tags": [
+        "mem_hit"
+      ]
+    },
+    {
+      "id": "icon_pencil_colorB",
+      "img": "/static/galleries/focus/icon_pencil_colorB.webp",
+      "tags": [
+        "mem_hit"
+      ]
+    },
+    {
+      "id": "icon_clock_colorB",
+      "img": "/static/galleries/focus/icon_clock_colorB.webp",
+      "tags": [
+        "mem_hit"
+      ]
+    },
+    {
+      "id": "foc_a_3",
+      "img": "/static/galleries/focus/foc_a_3.webp",
+      "tags": [
+        "foc_hit"
+      ]
+    },
+    {
+      "id": "foc_b_1",
+      "img": "/static/galleries/focus/foc_b_1.webp",
+      "tags": [
+        "foc_hit"
+      ]
+    },
+    {
+      "id": "foc_c_2",
+      "img": "/static/galleries/focus/foc_c_2.webp",
+      "tags": [
+        "foc_hit"
+      ]
+    },
+    {
+      "id": "foc_d_4",
+      "img": "/static/galleries/focus/foc_d_4.webp",
+      "tags": [
+        "foc_hit"
+      ]
+    },
+    {
+      "id": "swi_up_blue",
+      "img": "/static/galleries/focus/swi_up_blue.webp",
+      "tags": [
+        "chg_hit"
+      ]
+    },
+    {
+      "id": "swi_right_amber",
+      "img": "/static/galleries/focus/swi_right_amber.webp",
+      "tags": [
+        "chg_hit"
+      ]
+    },
+    {
+      "id": "swi_up_green",
+      "img": "/static/galleries/focus/swi_up_green.webp",
+      "tags": [
+        "chg_hit"
+      ]
+    },
+    {
+      "id": "swi_left_red",
+      "img": "/static/galleries/focus/swi_left_red.webp",
+      "tags": [
+        "chg_hit"
+      ]
+    },
+    {
+      "id": "dec_a_1",
+      "img": "/static/galleries/focus/dec_a_1.webp",
+      "tags": [
+        "spa_hit"
+      ]
+    },
+    {
+      "id": "dec_b_4",
+      "img": "/static/galleries/focus/dec_b_4.webp",
+      "tags": [
+        "spa_hit"
+      ]
+    },
+    {
+      "id": "dec_c_3",
+      "img": "/static/galleries/focus/dec_c_3.webp",
+      "tags": [
+        "spa_hit"
+      ]
+    },
+    {
+      "id": "dec_d_2",
+      "img": "/static/galleries/focus/dec_d_2.webp",
+      "tags": [
+        "spa_hit"
+      ]
+    }
+  ],
+  "style_elements": {
+    "title": "Your Rounds",
+    "subline": "Read from your taps — the whole picture is in your plan.",
+    "items": [
+      {
+        "id": "icon_key_colorA",
+        "label": "Blue key",
+        "spec": "Memory — the round that holds the board",
+        "image": "icon_key_colorA",
+        "img": "/static/galleries/focus/icon_key_colorA.webp",
+        "tags": [
+          "mem_hit"
+        ]
+      },
+      {
+        "id": "icon_flag_colorA",
+        "label": "Blue flag",
+        "spec": "Memory — the round that holds the board",
+        "image": "icon_flag_colorA",
+        "img": "/static/galleries/focus/icon_flag_colorA.webp",
+        "tags": [
+          "mem_hit"
+        ]
+      },
+      {
+        "id": "icon_pencil_colorB",
+        "label": "Red pencil",
+        "spec": "Memory — the round that holds the board",
+        "image": "icon_pencil_colorB",
+        "img": "/static/galleries/focus/icon_pencil_colorB.webp",
+        "tags": [
+          "mem_hit"
+        ]
+      },
+      {
+        "id": "foc_a_3",
+        "label": "The turned arrow",
+        "spec": "Focus — the round that finds the turned arrow",
+        "image": "foc_a_3",
+        "img": "/static/galleries/focus/foc_a_3.webp",
+        "tags": [
+          "foc_hit"
+        ]
+      },
+      {
+        "id": "foc_b_1",
+        "label": "The turned arrow",
+        "spec": "Focus — the round that finds the turned arrow",
+        "image": "foc_b_1",
+        "img": "/static/galleries/focus/foc_b_1.webp",
+        "tags": [
+          "foc_hit"
+        ]
+      },
+      {
+        "id": "foc_c_2",
+        "label": "The turned arrow",
+        "spec": "Focus — the round that finds the turned arrow",
+        "image": "foc_c_2",
+        "img": "/static/galleries/focus/foc_c_2.webp",
+        "tags": [
+          "foc_hit"
+        ]
+      },
+      {
+        "id": "swi_up_blue",
+        "label": "Blue arrow, pointing up",
+        "spec": "Switching — the round that changes the rule",
+        "image": "swi_up_blue",
+        "img": "/static/galleries/focus/swi_up_blue.webp",
+        "tags": [
+          "chg_hit"
+        ]
+      },
+      {
+        "id": "swi_right_amber",
+        "label": "Amber arrow, pointing right",
+        "spec": "Switching — the round that changes the rule",
+        "image": "swi_right_amber",
+        "img": "/static/galleries/focus/swi_right_amber.webp",
+        "tags": [
+          "chg_hit"
+        ]
+      },
+      {
+        "id": "swi_up_green",
+        "label": "Green arrow, pointing up",
+        "spec": "Switching — the round that changes the rule",
+        "image": "swi_up_green",
+        "img": "/static/galleries/focus/swi_up_green.webp",
+        "tags": [
+          "chg_hit"
+        ]
+      },
+      {
+        "id": "dec_a_1",
+        "label": "The fullest card",
+        "spec": "Speed — the round that counts under a clock",
+        "image": "dec_a_1",
+        "img": "/static/galleries/focus/dec_a_1.webp",
+        "tags": [
+          "spa_hit"
+        ]
+      },
+      {
+        "id": "dec_b_4",
+        "label": "The fullest card",
+        "spec": "Speed — the round that counts under a clock",
+        "image": "dec_b_4",
+        "img": "/static/galleries/focus/dec_b_4.webp",
+        "tags": [
+          "spa_hit"
+        ]
+      },
+      {
+        "id": "dec_c_3",
+        "label": "The fullest card",
+        "spec": "Speed — the round that counts under a clock",
+        "image": "dec_c_3",
+        "img": "/static/galleries/focus/dec_c_3.webp",
+        "tags": [
+          "spa_hit"
+        ]
+      }
+    ]
+  },
+  "styles": [
+    {
+      "id": "architect",
+      "name": "The Architect",
+      "tags": [
+        "mem_hit"
+      ],
+      "accent": "#3B7DD8",
+      "blurb": "You hold the board. What was on the screen is still with you a beat after it goes, and most of what people call your organisation is really that you never put the last thing down. The Architect lifts fastest on one drill a day, and it is the shortest one in your plan — the zone with the most room is where your score climbs.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Blue Signal"
+            },
+            {
+              "name": "Deep Ink"
+            },
+            {
+              "name": "Warm Linen"
+            },
+            {
+              "name": "Slate"
+            }
+          ],
+          "line": "Blue is what you run on and slate is what you fall back to when the day gets loud.",
+          "talismans": [
+            "A notebook you actually finish",
+            "One playlist you never change",
+            "A desk with nothing on it but today"
+          ],
+          "lucky_days": "Wednesday and Sunday — the first for taking things in, the second for laying them out."
+        },
+        "dna": {
+          "setup": "Two of the four zones run on the same trick and you already own it, which is why one round felt easy — the plan aims that same trick at",
+          "trigger": "the zone it has never been pointed at,"
+        },
+        "materials": {
+          "setup": "The zone with the most room is the one that asks you to let go of what you were holding, and it lifts fastest with",
+          "trigger": "a two-minute drill you can do standing up,"
+        },
+        "mistakes": {
+          "setup": "Your first strength is the one you would have guessed. The habit worth dropping is quieter, and it turns up",
+          "trigger": "every time you are asked to start over,"
+        },
+        "shopping": {
+          "setup": "Seven days, one small thing each, and day one goes straight at the zone with the most room —",
+          "trigger": "it takes under a minute,"
+        },
+        "mistake_one": {
+          "title": "You trust the first version",
+          "body": "Whatever you took in first stays first, and a correction has to work twice as hard to replace it. That is a real strength on three of the four zones, and it is the one the plan aims at the fourth.",
+          "fix": "Say the new version out loud once. It files it as first."
+        }
+      }
+    },
+    {
+      "id": "deep_diver",
+      "name": "The Deep Diver",
+      "tags": [
+        "foc_hit"
+      ],
+      "accent": "#8E6FD8",
+      "blurb": "You go straight at it. Where other people scan the whole board, you land on the one thing that does not belong, and everything else stays out of focus until you are done with it. The Deep Diver sharpens by widening, which is the easiest gain in your plan and the one that lifts your score most.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Violet Beam"
+            },
+            {
+              "name": "Deep Indigo"
+            },
+            {
+              "name": "Warm Linen"
+            },
+            {
+              "name": "Slate"
+            }
+          ],
+          "line": "Violet is the narrow band you work in and indigo is the quiet you need either side of it.",
+          "talismans": [
+            "Headphones you do not listen to",
+            "A timer you can see",
+            "One list, one page"
+          ],
+          "lucky_days": "Thursday and Sunday — the first for going deep, the second for coming back up."
+        },
+        "dna": {
+          "setup": "A narrow beam beats a wide one on three of the four zones. The fourth is where widening it",
+          "trigger": "raises your score fastest,"
+        },
+        "materials": {
+          "setup": "The zone with the most room needs everything at once, and the drill that lifts it asks you to",
+          "trigger": "take the whole board in one look,"
+        },
+        "mistakes": {
+          "setup": "Your five strengths all come from the same habit. So do both habits worth dropping, which is why the first one",
+          "trigger": "changes more easily than you think,"
+        },
+        "shopping": {
+          "setup": "Seven days, and the hardest one asks you to widen rather than sharpen —",
+          "trigger": "which is where your score moves most,"
+        },
+        "mistake_one": {
+          "title": "You finish the wrong thing beautifully",
+          "body": "Once the beam is on something it stays there, which is why you finish what other people abandon. Choosing the target out loud first is the whole of the upgrade.",
+          "fix": "Pick the target out loud before you start. Then dive."
+        }
+      }
+    },
+    {
+      "id": "orchestrator",
+      "name": "The Orchestrator",
+      "tags": [
+        "chg_hit"
+      ],
+      "accent": "#F2B33D",
+      "blurb": "You change gear without a stumble. The rule moved and you moved with it, while most people were still answering the last question — the version in your head and the one in front of you never argue for long. The Orchestrator sharpens by holding one rule a beat longer, and that one habit raises the score on its own.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Signal Amber"
+            },
+            {
+              "name": "Burnt Ochre"
+            },
+            {
+              "name": "Warm Linen"
+            },
+            {
+              "name": "Slate"
+            }
+          ],
+          "line": "Amber is what you lead with and ochre is where you land once you have stopped double-checking.",
+          "talismans": [
+            "A pen that is always in the same pocket",
+            "One calendar, not three",
+            "A door you can close"
+          ],
+          "lucky_days": "Monday and Friday — the first for setting the rules, the second for changing them."
+        },
+        "dna": {
+          "setup": "Switching and holding are two different jobs and you are much better at one — the plan builds the other in",
+          "trigger": "under a week,"
+        },
+        "materials": {
+          "setup": "The zone with the most room rewards sitting still, and the one change that lifts it is",
+          "trigger": "staying on one thing a beat longer,"
+        },
+        "mistakes": {
+          "setup": "Your strengths are all quick reactions. Both habits worth dropping are what happens after the reaction, and one of them",
+          "trigger": "goes in a single day,"
+        },
+        "shopping": {
+          "setup": "Seven days built around the one thing you skip, which is not moving faster but",
+          "trigger": "staying a second longer,"
+        },
+        "mistake_one": {
+          "title": "You switch before you have finished",
+          "body": "You feel the next task a beat before the current one is done, which is the earliest anybody feels it. The second beat, the one where you close the first task, is what the plan adds.",
+          "fix": "Close the tab before you open the next. The beat costs nothing."
+        }
+      }
+    },
+    {
+      "id": "sprinter",
+      "name": "The Sprinter",
+      "tags": [
+        "spa_hit"
+      ],
+      "accent": "#4CAF7D",
+      "blurb": "You decide fast. Four cards, one clock, and you had the fullest one before the bar was half gone — where other people count, you weigh, and you are usually right. The Sprinter sharpens on its feet, and three of your seven days are about moving, which is where your score climbs.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Field Green"
+            },
+            {
+              "name": "Deep Pine"
+            },
+            {
+              "name": "Warm Linen"
+            },
+            {
+              "name": "Slate"
+            }
+          ],
+          "line": "Green is the register you think in and pine is what you reach for when the whole day is in front of you.",
+          "talismans": [
+            "A watch you can read at a glance",
+            "Shoes by the door",
+            "One decision made the night before"
+          ],
+          "lucky_days": "Tuesday and Saturday — the first for deciding, the second for running with it."
+        },
+        "dna": {
+          "setup": "You call it before the clock does, always, and the zone with the most room is the one that had no clock — the plan gives you one for",
+          "trigger": "the zone that has never had one,"
+        },
+        "materials": {
+          "setup": "The zone with the most room lifts fastest when the instruction is written down rather than held, which is why day two asks you to",
+          "trigger": "write it before you start,"
+        },
+        "mistakes": {
+          "setup": "Four of your five strengths are versions of the same one. The fifth is not, and it is the one that",
+          "trigger": "makes mornings easier for everybody in them,"
+        },
+        "shopping": {
+          "setup": "Seven days, and three of them are about moving rather than sitting, because the zone with the most room",
+          "trigger": "sharpens on your feet,"
+        },
+        "mistake_one": {
+          "title": "You answer before you have looked",
+          "body": "Given a list and a glance you take the glance every time, which is fast — and faster still once you start writing the list yourself instead of waiting for one.",
+          "fix": "Write it before you start. Two minutes buys the whole task."
+        }
+      }
+    }
+  ],
+  "analyzing": {
+    "duration_ms": 2500,
+    "text": "Scoring your rounds",
+    "messages": [
+      "Adding up your sixteen rounds…",
+      "Weighing them against the four zones…",
+      "Working out your Focus Score…"
+    ]
+  },
+  "analyzing_echo": true,
+  "brain_age": {
+    "base": 100,
+    "per_miss": -6,
+    "min": 5,
+    "max": 100,
+    "scored": 16,
+    "score": {
+      "base": 100,
+      "per_miss": -6,
+      "elite_min": 90,
+      "floor": 5,
+      "room_round_max_hits": 2
+    },
+    "domains": {
+      "mem": "Memory",
+      "foc": "Focus",
+      "chg": "Switching",
+      "spa": "Speed"
+    },
+    "age_mid": {
+      "work_office": 0,
+      "work_remote": 0,
+      "work_hybrid": 0,
+      "work_feet": 0,
+      "work_student": 0,
+      "work_mixed": 0
+    }
+  },
+  "report": {
+    "generating_messages": [
+      "Weighing your sixteen rounds against the four zones…",
+      "Working out which zone lifts fastest…",
+      "Picking the drill that moves your score most…",
+      "Almost there — writing your plan…"
+    ],
+    "sections": [
+      {
+        "id": "dna",
+        "title": "Your Productivity Profile & Your Edge",
+        "teaser_line": "Which zone you already run on, and how to make it carry more of your day.",
+        "enabled": true,
+        "preview": [
+          "Four scores off your own taps, and the pair of them doing most of the lifting.",
+          "It names the zone to lean on, the one to build next, and the quickest way to put the first to work on the second."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "materials",
+        "title": "Your Weakest Zone — and the Fastest Lift",
+        "teaser_line": "The zone with the most room, and the two-minute drill that moves it first.",
+        "enabled": true,
+        "preview": [
+          "It is never the zone itself. It is the one thing the zone asks for, and that thing trains quickly.",
+          "The chapter names the drill, when to do it, and what to expect by the end of the week."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "mistakes",
+        "title": "5 Sharp Strengths & 2 Habits to Drop",
+        "teaser_line": "Five things you already do well. And the two habits quietly costing you hours.",
+        "enabled": true,
+        "preview": [
+          "The first strength reads as obvious written down, and it is the one the rest of the plan builds on.",
+          "Both habits come with the swap that replaces them, and the easier one is first."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "shopping",
+        "title": "Your 7-Day Productivity Boost Plan",
+        "teaser_line": "One small thing a day for a week, aimed at the zone you want to lift.",
+        "enabled": true,
+        "preview": [
+          "Seven days, each a single thing under five minutes, chosen for the zone you scored lowest on.",
+          "Every day says what it sharpens, so you can watch the score you are moving."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      }
+    ],
+    "print_whole": true,
+    "mistake_one": {
+      "title": "Sharp Strength #1 of 5",
+      "locked_note": "Strengths 2–5 and both habits to drop — inside your full plan"
+    },
+    "also": {
+      "title": "Also in your plan",
+      "rows": [
+        {
+          "section": "dna",
+          "hook": "How your four zone scores split, and which pair to lean on."
+        },
+        {
+          "section": "materials",
+          "hook": "The drill that lifts your weakest zone, and when to do it."
+        },
+        {
+          "section": "shopping",
+          "hook": "Seven days, one small thing each, in the order that moves the score."
+        },
+        {
+          "title": "Your Round-by-Round Card",
+          "hook": "Every round you played, what it sharpens, and how you answered it."
+        }
+      ]
+    },
+    "visuals": {
+      "taps": true,
+      "hero": {
+        "glyph_step": "thief",
+        "band_step": "foc1"
+      },
+      "section_steps": {
+        "dna": "mem1",
+        "materials": "foc1",
+        "mistakes": "chg1",
+        "shopping": "spa1"
+      }
+    },
+    "hook_slots": {
+      "mood": {
+        "step": "thief",
+        "fallback": "your time thief"
+      },
+      "age": {
+        "step": "work",
+        "fallback": "your work"
+      }
+    }
+  },
+  "pricing": {
+    "amount_cents": 500,
+    "currency": "usd",
+    "cta": "Unlock my Boost Plan"
+  },
+  "sale": {
+    "active": true,
+    "price_cents": 199,
+    "regular_price_cents": 500,
+    "label": "Launch Offer",
+    "ends": "2026-12-31T23:59:59-12:00"
+  },
+  "checkout": {
+    "kicker": "Your boost plan is ready",
+    "product_name": "Your 7-Day Productivity Boost Plan",
+    "product_image": "/static/brand/icon-512.png",
+    "single_page": true,
+    "express": true,
+    "withdrawal_consent": false,
+    "commerce": {
+      "anchor_head": "A {price} plan built from your own sixteen rounds",
+      "anchor_head_accent": "built from your own sixteen rounds",
+      "price_anchor": "A productivity book about nobody in particular costs more",
+      "price_anchor_accent": "costs more",
+      "price_note": "one-time",
+      "badges": [
+        "One-time",
+        "No subscription, ever"
+      ],
+      "price_suffix": "one-time · no subscription",
+      "trust": [
+        "Secure via Stripe",
+        "PDF to your email"
+      ],
+      "mid_line": "Your complete boost plan, for less than a coffee.",
+      "mid_line_accent": "a coffee",
+      "mid_button": "See what's inside ↓",
+      "sticky_label": "Unlock my Boost Plan — {price}"
+    },
+    "title": "Your {style} Boost",
+    "proof_line": "Built from your 16 rounds",
+    "manifest_hero": "strengths",
+    "manifest_head": "What's inside — {n} sections, yours forever",
+    "anchor_head": "A {price} plan built from your own sixteen rounds",
+    "anchor": "A productivity book about nobody in particular costs more. Your complete plan — {price}, once.",
+    "reframe": "Less than a coffee. Yours forever.",
+    "price_suffix": "one-time",
+    "cta_label": "Unlock my Boost Plan — {price}",
+    "consent_prechecked": true,
+    "trust": [
+      "Secure payment via Stripe",
+      "Instant delivery",
+      "PDF copy to your email"
+    ],
+    "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right."
+  },
+  "pairings": {
+    "architect": {
+      "architect": {
+        "verdict": "avoid",
+        "line": "Two full boards and nobody willing to be wrong about Tuesday."
+      },
+      "deep_diver": {
+        "verdict": "avoid",
+        "line": "One keeps everything, one keeps one thing. Neither hands over."
+      },
+      "orchestrator": {
+        "verdict": "works",
+        "line": "One holds the plan, one changes it on time. That is the whole job."
+      },
+      "sprinter": {
+        "verdict": "works",
+        "line": "One remembers what was decided, one decides the next thing. Nothing gets lost."
+      }
+    },
+    "deep_diver": {
+      "architect": {
+        "verdict": "avoid",
+        "line": "One keeps everything, one keeps one thing. Neither hands over."
+      },
+      "deep_diver": {
+        "verdict": "avoid",
+        "line": "Two beams, two targets, one room."
+      },
+      "orchestrator": {
+        "verdict": "works",
+        "line": "One goes deep, one calls the switch. Fast, and it holds."
+      },
+      "sprinter": {
+        "verdict": "works",
+        "line": "One sees the whole board, one takes the square. Good division."
+      }
+    },
+    "orchestrator": {
+      "architect": {
+        "verdict": "works",
+        "line": "One holds the plan, one changes it on time. That is the whole job."
+      },
+      "deep_diver": {
+        "verdict": "works",
+        "line": "One goes deep, one calls the switch. Fast, and it holds."
+      },
+      "orchestrator": {
+        "verdict": "avoid",
+        "line": "Two people changing the rule, neither finishing under it."
+      },
+      "sprinter": {
+        "verdict": "avoid",
+        "line": "One is watching the rule, one the clock. You will not be looking at the same thing."
+      }
+    },
+    "sprinter": {
+      "architect": {
+        "verdict": "works",
+        "line": "One remembers what was decided, one decides the next thing. Nothing gets lost."
+      },
+      "deep_diver": {
+        "verdict": "works",
+        "line": "One sees the whole board, one takes the square. Good division."
+      },
+      "orchestrator": {
+        "verdict": "avoid",
+        "line": "One is watching the rule, one the clock. You will not be looking at the same thing."
+      },
+      "sprinter": {
+        "verdict": "avoid",
+        "line": "Two fast calls on the same card, both right, both first."
+      }
+    }
+  },
+  "result": {
+    "mistakes_teaser": "You have seen strength #1. The other four are what the plan builds on — and one of them lifts your weakest zone on its own.",
+    "value_banner": "Four chapters, a seven-day boost plan and your round-by-round card — built from your own taps, yours to keep."
+  },
+  "result_copy": {
+    "kicker": "Your Focus Score",
+    "score_kicker": "Your result",
+    "blend_note": "even split",
+    "taps_caption": "Read from your rounds:",
+    "balance_title": "Your four zones",
+    "head_title": "Your productivity profile",
+    "score_lead": "FOCUS SCORE",
+    "score_room": "Clear room in {k} of your 4 zones.",
+    "score_room_none": "Close run — the points you dropped are all in the details.",
+    "score_elite": "Elite run. See what's behind it inside.",
+    "head_caption": "Four zones, scored off your own taps.",
+    "strength_lead": "Time thief #1: {mood}. Here is where to start.",
+    "offer_sub": "Your complete boost plan — once, forever.",
+    "locked_note": "Locked",
+    "price_regular_aria": "Regular price {price}",
+    "delivered_note": "A PDF of this plan is in your inbox. This page stays at the link you were sent back to.",
+    "younger_line": "{n} points clear of your last run — keep it there",
+    "level_line": "right where your last run sat — one week of drills moves it",
+    "older_line": "{n} points under your last run — and this is the easiest number to raise",
+    "improve_cta": "Improve now",
+    "age_line_bare": "and this number moves with practice",
+    "purpose_map": {
+      "thief_phone": {
+        "emphasized_section": "mistakes",
+        "offer_sub": "Your phone is the loudest thing on your desk. The two habits to drop are inside."
+      },
+      "thief_meetings": {
+        "emphasized_section": "dna",
+        "offer_sub": "The zone to lean on between meetings, and the one to lift first — inside."
+      },
+      "thief_notifications": {
+        "emphasized_section": "materials",
+        "offer_sub": "The drill that keeps your focus when the badge lights up is inside."
+      },
+      "thief_multitasking": {
+        "emphasized_section": "materials",
+        "offer_sub": "The drill that lifts your weakest zone is built for one thing at a time. Inside."
+      },
+      "thief_fatigue": {
+        "emphasized_section": "shopping",
+        "offer_sub": "Seven days, one small thing each, none of them before coffee. It starts tomorrow."
+      },
+      "thief_procrastination": {
+        "emphasized_section": "shopping",
+        "offer_sub": "Seven days, one small thing each. Day one takes under a minute."
+      }
+    },
+    "profile": {
+      "bridge": "Your plan, written for {type}:",
+      "offer_head": "Your boost plan — built from your 18 rounds",
+      "offer_personal": "Most of your dropped points are in {round}. The drill for it is inside.",
+      "offer_personal_elite": "A close run. The plan is what keeps it that way.",
+      "offer_hero_kicker": "Your zone scores",
+      "offer_hero_line": "All four zones, ranked — and the one to lift first — on the first page.",
+      "offer_cards": [
+        {
+          "icon": "target",
+          "title": "Weakest-zone drill",
+          "sub": "2 minutes a day, starts tomorrow"
+        },
+        {
+          "icon": "calendar",
+          "title": "7-day plan",
+          "sub": "One small thing each day — the score climbs"
+        },
+        {
+          "icon": "bolt",
+          "title": "5 strengths · 2 habits",
+          "sub": "What to lean on, what to drop"
+        },
+        {
+          "icon": "plate",
+          "title": "Fuel",
+          "sub": "The plate that keeps an afternoon sharp"
+        }
+      ],
+      "offer_chips": [
+        "One-time",
+        "No subscription, ever",
+        "Instant + email copy"
+      ],
+      "share_cta": "Challenge a friend",
+      "share_line": "My Focus Score is {n}/100. Beat me?",
+      "share_copied": "Copied — send it",
+      "retest_line": "In one week: play it again. The number moves.",
+      "essence": {
+        "architect": "You hold the board. That is the zone that sharpens fastest.",
+        "deep_diver": "You go straight at it. Widening is your easiest gain.",
+        "orchestrator": "You change gear without a stumble. Holding is next.",
+        "sprinter": "You decide before the clock does. Now make it count."
+      },
+      "cards": [
+        {
+          "id": "dna",
+          "key": "Your zones",
+          "promise": "the zone you already run on — and how to lean on it harder"
+        },
+        {
+          "id": "materials",
+          "key": "Weakest zone",
+          "promise": "the drill that lifts your weakest zone first"
+        },
+        {
+          "id": "mistakes",
+          "key": "Sharp strengths",
+          "promise": "five strengths to build on, and the two habits to drop"
+        },
+        {
+          "id": "shopping",
+          "key": "Seven days",
+          "promise": "one small thing a day, in the order that moves the score"
+        }
+      ],
+      "share": {
+        "button": "Share your profile",
+        "title": "I'm {type}. What's your Focus Score?",
+        "text": "18 quick rounds. No sign-up.",
+        "url_base": "/focus/s/",
+        "copied": "Link copied",
+        "failed": "Could not share"
+      },
+      "chips": [
+        "{mem}",
+        "{foc}",
+        "{chg}",
+        "{spa}"
+      ],
+      "rarity_card": {
+        "lead": "Your productivity profile",
+        "tail": "on this run",
+        "note": "Every profile lifts on a different drill — yours is the first page of your plan."
+      }
+    },
+    "improve_foot": "Follow the 7-day plan, play again — the score climbs."
+  },
+  "share_cards": [
+    {
+      "id": "architect",
+      "img": "/static/galleries/focus/icon_folder_colorA.webp",
+      "persona": "The Architect",
+      "colors": [
+        {
+          "name": "Blue Signal",
+          "hex": "#3B7DD8",
+          "element": "form"
+        },
+        {
+          "name": "Deep Ink",
+          "hex": "#2C3038",
+          "element": "type"
+        },
+        {
+          "name": "Warm Linen",
+          "hex": "#ECE6DA",
+          "element": "ground"
+        }
+      ]
+    },
+    {
+      "id": "deep_diver",
+      "img": "/static/galleries/focus/focus_intro.webp",
+      "persona": "The Deep Diver",
+      "colors": [
+        {
+          "name": "Violet Beam",
+          "hex": "#8E6FD8",
+          "element": "form"
+        },
+        {
+          "name": "Deep Ink",
+          "hex": "#2C3038",
+          "element": "type"
+        },
+        {
+          "name": "Warm Linen",
+          "hex": "#ECE6DA",
+          "element": "ground"
+        }
+      ]
+    },
+    {
+      "id": "orchestrator",
+      "img": "/static/galleries/focus/work_mixed.webp",
+      "persona": "The Orchestrator",
+      "colors": [
+        {
+          "name": "Signal Amber",
+          "hex": "#F2B33D",
+          "element": "form"
+        },
+        {
+          "name": "Deep Ink",
+          "hex": "#2C3038",
+          "element": "type"
+        },
+        {
+          "name": "Warm Linen",
+          "hex": "#ECE6DA",
+          "element": "ground"
+        }
+      ]
+    },
+    {
+      "id": "sprinter",
+      "img": "/static/galleries/focus/icon_flag_colorB.webp",
+      "persona": "The Sprinter",
+      "colors": [
+        {
+          "name": "Field Green",
+          "hex": "#4CAF7D",
+          "element": "form"
+        },
+        {
+          "name": "Deep Ink",
+          "hex": "#2C3038",
+          "element": "type"
+        },
+        {
+          "name": "Warm Linen",
+          "hex": "#ECE6DA",
+          "element": "ground"
+        }
+      ]
+    }
+  ]
+}
