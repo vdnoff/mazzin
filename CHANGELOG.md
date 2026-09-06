@@ -603,3 +603,6 @@ bottom.
 
 ## 2026-09-06 — claude/love-lv11b
 - love gallery: lv11b prompt + per-frame luma floor
+
+## 2026-09-06 — claude/love-gallery-v2
+- love gallery v2: portrait, lighter, 4-choice steps
