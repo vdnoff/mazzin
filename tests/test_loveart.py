@@ -18,11 +18,14 @@ version exists to fix.
 
 The manifest makes reruns cheap and deletions meaningful. A frame whose file
 still hashes to what was recorded, drawn from a recipe that has not changed,
-is skipped; delete the file or edit the prompt and it is drawn again. v2
-bumps every recipe, so the whole v1 manifest is stale and nothing is skipped.
+is skipped; delete the file or edit the prompt and it is drawn again. The
+palette is versioned apart from the recipe: a record is current under the
+palette it was drawn with OR the one a draw uses now, so v3's new suffix
+invalidates nothing, and `--only` is what bumps the frames it names — the
+calibration mode, checked here against the real v2 manifest.
 
-The floor rejects the old gloom. The whole v1 gallery measured luma 25 to
-62; the default floor is above every one of those, and only the frames whose
+The band rejects both bad runs. v1's gloom measured luma 25 to 62; v2's wash
+measured 86 to 200, median 172, pale at the top. Only the frames whose
 subject is dark are judged under a floor of their own.
 
 And the key is read off ~/mazzin/.env as a literal line, never sourced, with
@@ -189,19 +192,30 @@ check("the price table knows the portrait size at the quality in use",
 
 
 print("\n--- what a frame is asked for ---")
-SUFFIX_TEXT = (", painterly dreamy style, soft luminous palette — dawn sky, "
-               "golden hour or airy pastel light — with warm gold accents, "
-               "gentle glow, {guidance}, no text, no watermark, no close-up "
-               "faces")
-check("the base suffix is the review's, with the crop guidance as its slot",
-      gen.STYLE_SUFFIX == SUFFIX_TEXT, repr(gen.STYLE_SUFFIX))
-check("  and it says nothing about a night or an indigo palette",
-      "indigo" not in gen.STYLE_SUFFIX and "night" not in gen.STYLE_SUFFIX)
+V2_SUFFIX = (", painterly dreamy style, soft luminous palette — dawn sky, "
+             "golden hour or airy pastel light — with warm gold accents, "
+             "gentle glow, {guidance}, no text, no watermark, no close-up "
+             "faces")
+V3_SUFFIX = (", painterly style with rich color depth, warm golden-hour "
+             "light, low sun, long soft shadows, deep saturated amber-and-teal "
+             "palette, luminous but moody, {guidance}, no text, no watermark, "
+             "no close-up faces")
+check("the draw palette is v3, the review's rich golden hour, verbatim",
+      gen.DRAW_PALETTE == "v3" and gen.PALETTES["v3"] == V3_SUFFIX
+      and gen.STYLE_SUFFIX == V3_SUFFIX, repr(gen.STYLE_SUFFIX))
+check("  and the v2 suffix is kept verbatim, because the manifest was drawn "
+      "under it",
+      gen.RECORDED_PALETTE == "v2" and gen.PALETTES["v2"] == V2_SUFFIX)
+check("  it says nothing about a night, an indigo or a pastel palette",
+      not any(w in gen.STYLE_SUFFIX for w in ("indigo", "night", "pastel")))
 check("  every prompt ends on it", all(
     f["prompt"].endswith(", no text, no watermark, no close-up faces")
-    and "soft luminous palette — dawn sky, golden hour or airy pastel light "
-        "— with warm gold accents, gentle glow" in f["prompt"]
+    and "deep saturated amber-and-teal palette, luminous but moody"
+        in f["prompt"]
     for f in plan))
+check("  and the scene words are v2's: the light framing did not move",
+      all(gen.prompt_for(f["subject"], f["kind"], "v2").startswith(
+          f["subject"] + ",") for f in plan))
 GUIDE = "single central subject, composed for a "
 check("  every prompt carries the composition guidance for its own crop",
       all(GUIDE + gen.KINDS[f["kind"]]["crop"] in f["prompt"]
@@ -265,6 +279,11 @@ check("  and carries the version, the prompt, the API size and the geometry",
       and all(r.startswith("v2|") for r in recipes)
       and all(f["prompt"] in gen.recipe(f) and f["api_size"] in gen.recipe(f)
               and "%dx%d" % f["size"] in gen.recipe(f) for f in plan))
+check("  the version did not move: a palette is not a geometry",
+      gen.RECIPE_VERSION == "v2")
+check("  under the recorded palette the recipe carries the v2 prompt",
+      all(gen.PALETTES["v2"].split("{")[0] in gen.recipe(f, "v2")
+          and gen.recipe(f, "v2") != gen.recipe(f) for f in plan))
 check("  so the same subject at another size is another recipe",
       gen.recipe(dict(plan[0], size=(360, 600)))
       != gen.recipe(plan[0]))
@@ -293,20 +312,43 @@ check("the manifest lives beside the script, not in the gallery",
       gen.MANIFEST == os.path.join(REPO, "scripts", "love_art.json"))
 entries = gen.load_manifest()
 if entries:
-    check("the v1 manifest is stale in full: nothing recorded is skipped",
-          not [i for i in entries if i in by_id
-               and gen.already_made(by_id[i], entries)],
-          str([i for i in entries if i in by_id
-               and gen.already_made(by_id[i], entries)][:3]))
-    check("  so a plain run redraws all forty-six",
-          len([f for f in plan if not gen.already_made(f, entries)]) == 46)
-    old = [float(m.group(1)) for e in entries.values()
-           for m in [re.search(r"luma ([\d.]+)", e.get("note", ""))] if m]
-    check("  and every frame v1 recorded sits under the new floor",
-          old and max(old) < gen.MIN_MEAN_LUMA,
-          "max recorded luma %.1f vs floor %.1f"
-          % (max(old) if old else -1, gen.MIN_MEAN_LUMA))
-    print("    %d v1 frames recorded, all invalidated" % len(entries))
+    # The real v2 manifest, and the whole point of calibration mode: the
+    # palette changed and nothing on disk went stale.
+    check("every recorded frame is current: a plain run draws nothing",
+          all(gen.already_made(f, entries) for f in plan),
+          str([f["id"] for f in plan if not gen.already_made(f, entries)][:4]))
+    check("  because each record is the frame's recipe under the palette it "
+          "was drawn with",
+          all(entries[f["id"]].get("recipe_sha")
+              == hashlib.sha256(gen.recipe(f, gen.RECORDED_PALETTE)
+                                .encode("utf-8")).hexdigest()
+              for f in plan))
+    check("  while under the draw palette alone every frame is stale — "
+          "which is what --only asks",
+          not any(gen.already_made(f, entries, (gen.DRAW_PALETTE,))
+                  for f in plan))
+    check("  and a record drawn under v3 is current for a plain run too",
+          gen.already_made(plan[0], {plan[0]["id"]: {
+              "sha256": gen.on_disk_sha(plan[0]["id"]),
+              "recipe_sha": hashlib.sha256(
+                  gen.recipe(plan[0]).encode("utf-8")).hexdigest()}}))
+    stats = {}
+    for i, e in entries.items():
+        m = re.search(r"luma ([\d.]+) sd ([\d.]+) sat ([\d.]+)",
+                      e.get("note", ""))
+        if m and i in by_id:
+            stats[i] = tuple(float(x) for x in m.groups())
+    rejected = [i for i, s in stats.items()
+                if not gen.verdict(s, by_id[i]["band"])[0]]
+    check("the band, read against v2's own numbers, rejects most of that run",
+          len(stats) == 46 and 30 <= len(rejected) <= 42,
+          "%d of %d rejected" % (len(rejected), len(stats)))
+    check("  and what it keeps is coloured: every survivor has saturation "
+          "over 100",
+          all(stats[i][2] > 100 for i in stats if i not in rejected),
+          str([(i, stats[i]) for i in stats if i not in rejected]))
+    print("    %d v2 frames recorded, all current; %d would fail the v3 band"
+          % (len(entries), len(rejected)))
 else:
     notes.append("no manifest on disk: the first run draws all 46")
     check("  with no manifest, nothing is skipped",
@@ -363,22 +405,36 @@ check("  and the only line the reader matches is the key's",
       and gen._ENV_LINE.pattern.count("=") == 1)
 
 
-print("\n--- the floor, raised against the old gloom ---")
-check("the default floor is 80, over every frame v1 drew",
-      gen.MIN_MEAN_LUMA == 80.0 and gen.BAND["min_luma"] == 80.0)
-check("  and the ceiling admits an airy pastel frame",
-      gen.MAX_MEAN_LUMA == 235.0)
-check("a dawn or golden-hour frame passes",
-      gen.verdict((132.0, 44.0, 70.0))[0]
-      and gen.verdict((96.0, 50.0, 90.0))[0])
-check("  a pale pastel frame passes too", gen.verdict((205.0, 30.0, 30.0))[0])
-check("a frame at v1's brightest, 62, is rejected now",
-      not gen.verdict((62.0, 40.0, 120.0))[0])
-check("  and v1's median, 41, is rejected", not gen.verdict((41.0, 40.0, 120.0))[0])
+print("\n--- the band: against v1's gloom and v2's wash ---")
+check("the band is 65 to 160 on luma, coloured past 130",
+      gen.BAND == {"min_luma": 65.0, "max_luma": 160.0, "min_sd": 12.0,
+                   "min_sat": 60.0, "wash_luma": 130.0, "wash_sat": 150.0},
+      str(gen.BAND))
+check("  the floor is over every frame v1 drew, which topped out at 62",
+      gen.MIN_MEAN_LUMA == 65.0 and gen.MIN_MEAN_LUMA > 61.8)
+check("  and the ceiling is under v2's median of 172",
+      gen.MAX_MEAN_LUMA == 160.0)
+check("a rich golden-hour frame passes",
+      gen.verdict((110.0, 40.0, 175.0))[0]
+      and gen.verdict((150.0, 35.0, 184.0))[0]
+      and gen.verdict((95.0, 30.0, 160.0))[0])
+check("  and so does a bright frame that is saturated — lv05c's own numbers",
+      gen.verdict((130.1, 56.9, 201.4))[0])
+check("v1's gloom is rejected: luma 40 and 62",
+      not gen.verdict((40.0, 40.0, 150.0))[0]
+      and not gen.verdict((62.0, 40.0, 150.0))[0])
+check("v2's wash is rejected: luma 172, the run's median",
+      not gen.verdict((172.0, 30.0, 140.0))[0])
+check("  and bright-but-pale, lv14b's and lv07b's own numbers",
+      not gen.verdict((156.4, 41.8, 132.5))[0]
+      and not gen.verdict((158.5, 43.7, 119.0))[0])
+check("    which the note names as washed",
+      gen.verdict((156.4, 41.8, 132.5))[1].endswith(" washed")
+      and not gen.verdict((110.0, 40.0, 175.0))[1].endswith(" washed"))
 check("a near-black render fails", not gen.verdict((6.0, 30.0, 150.0))[0])
-check("  a blown-out one fails", not gen.verdict((245.0, 30.0, 60.0))[0])
-check("  a flat wash fails", not gen.verdict((150.0, 3.0, 100.0))[0])
-check("  a greyscale one fails", not gen.verdict((150.0, 40.0, 5.0))[0])
+check("  a blown-out one fails", not gen.verdict((245.0, 30.0, 160.0))[0])
+check("  a flat wash fails", not gen.verdict((110.0, 3.0, 170.0))[0])
+check("  a greyscale one fails", not gen.verdict((110.0, 40.0, 5.0))[0])
 check("  and an unmeasurable frame is kept and says so",
       gen.verdict(None) == (True, "unmeasured"))
 
@@ -408,6 +464,9 @@ check("  embers at 22 pass lv11b's floor and fail lv17a's",
 check("  while a near-black render fails every dark floor too",
       not any(gen.verdict((6.0, 30.0, 150.0), by_id[i]["band"])[0]
               for i in gen.MIN_LUMA_BY_FRAME))
+check("  and a dark frame is still held to the ceiling and the wash rule",
+      not gen.verdict((172.0, 30.0, 140.0), by_id["lv18a"]["band"])[0]
+      and not gen.verdict((156.4, 41.8, 132.5), by_id["int1"]["band"])[0])
 check("the run judges each frame on its own band",
       'verdict(measure(img), frame["band"])' in gen_src
       and "verdict(measure(img))" not in gen_src)
@@ -434,15 +493,17 @@ if Image is None:
     notes.append("Pillow is not installed here, so the crop, the encoder "
                  "and the measure were not exercised")
 else:
-    def synthetic(size, noisy=False):
-        # A pale dawn sky with a gold sun: what a correct v2 frame is.
-        img = Image.new("RGB", size, (232, 222, 206))
+    def synthetic(size, noisy=False, ground=(168, 108, 48),
+                  hills=(48, 70, 78)):
+        # A low amber sun over teal hills: what a correct v3 frame is.
+        # Pass v2's pale ground to make the frame v2 rejected.
+        img = Image.new("RGB", size, ground)
         draw = ImageDraw.Draw(img)
         w, h = size
-        draw.ellipse((w * 0.3, h * 0.3, w * 0.7, h * 0.7), fill=(242, 194, 90))
-        # Soft hills along the bottom, so the frame has the spread a
-        # picture has and is not one flat wash with a disc on it.
-        draw.rectangle((0, h * 0.78, w, h), fill=(146, 128, 98))
+        draw.ellipse((w * 0.3, h * 0.3, w * 0.7, h * 0.7), fill=(245, 200, 90))
+        # Hills along the bottom, so the frame has the spread a picture
+        # has and is not one flat wash with a disc on it.
+        draw.rectangle((0, h * 0.78, w, h), fill=hills)
         if noisy:
             import random
             rng = random.Random(7)
@@ -472,12 +533,15 @@ else:
     stats = gen.measure(pair)
     check("the measure reads luma, spread and colour",
           stats is not None and len(stats) == 3 and stats[2] > 0)
-    check("  and the synthetic dawn frame passes the new floor",
+    check("  and the synthetic golden-hour frame passes the band",
           gen.verdict(stats)[0], str(stats))
     dusk = Image.new("RGB", (640, 960), (20, 28, 62))
     ImageDraw.Draw(dusk).ellipse((190, 290, 450, 670), fill=(242, 194, 90))
     check("  while v1's indigo night with a gold disc fails it",
           not gen.verdict(gen.measure(dusk))[0], str(gen.measure(dusk)))
+    pale = synthetic((640, 960), ground=(232, 222, 206), hills=(146, 128, 98))
+    check("  and so does v2's pale pastel with the same sun",
+          not gen.verdict(gen.measure(pale))[0], str(gen.measure(pale)))
     data, q = gen.encode(pair)
     check("a quiet frame encodes under the ceiling at full quality",
           data is not None and len(data) <= gen.MAX_BYTES and q == gen.QUALITY,
@@ -553,6 +617,19 @@ try:
                                          if not gen.already_made(
                                              f, gen.load_manifest())]),
           text.splitlines()[0])
+    check("  and names the palette it would draw under",
+          "palette v3" in text.splitlines()[0], text.splitlines()[0])
+    if gen.load_manifest():
+        check("  with the v2 manifest on disk that is nothing at all",
+              text.count("--- ") == 0, text.splitlines()[0])
+        code, text = run(["--only", "lv07a,lv18a", "--dry-run"])
+        check("--only redraws exactly the frames named, no --force needed",
+              code == 0 and text.count("--- ") == 2 and "lv07a" in text
+              and "lv18a" in text, text.splitlines()[0])
+        code, text = run([])
+        check("  and a plain run with nothing stale stops before the key",
+              code == 0 and not called and "nothing to draw" in text
+              and "--only" in text, text)
     code, text = run(["--only", "lv07a,nope"])
     check("an unknown frame id is refused, exit 2",
           code == 2 and "nope" in text and not called)
