@@ -225,6 +225,15 @@ if os.path.exists(gen.MANIFEST):
               for i, e in entries.items()),
           str([i for i, e in entries.items()
                if gen.on_disk_sha(i) != e.get("sha256")][:3]))
+    check("  every recorded frame is still skipped: the recipe change "
+          "touched none of them",
+          all(gen.already_made(by_id[i], entries) for i in entries
+              if i in by_id and i != "lv11b"),
+          str([i for i in entries if i in by_id and i != "lv11b"
+               and not gen.already_made(by_id[i], entries)][:3]))
+    check("  and lv11b, unrecorded, is what a plain run draws",
+          "lv11b" not in entries
+          or not gen.already_made(by_id["lv11b"], entries))
     print("    %d of %d frames recorded as drawn" % (len(entries), len(plan)))
 else:
     notes.append("no manifest yet: every frame is a placeholder and the "
@@ -296,6 +305,48 @@ check("  a flat wash fails", not gen.verdict((60.0, 3.0, 100.0))[0])
 check("  a greyscale one fails", not gen.verdict((60.0, 40.0, 5.0))[0])
 check("  and an unmeasurable frame is kept and says so",
       gen.verdict(None) == (True, "unmeasured"))
+
+print("\n--- one frame is deliberately dark, and judged on its own floor ---")
+# lv11b is embers in a hearth: it came back at about 15 three times, correct
+# and rejected against a floor written for an indigo night. It draws under
+# its own number now, and nothing else does.
+check("exactly one frame carries its own luma floor",
+      gen.MIN_LUMA_BY_FRAME == {"lv11b": 10.0}, str(gen.MIN_LUMA_BY_FRAME))
+check("  set under what an ember scene measures and above a black render",
+      6.0 < gen.MIN_LUMA_BY_FRAME["lv11b"] < 15.0 < gen.MIN_MEAN_LUMA)
+check("  and its prompt asks for the light the floor expects",
+      dict(gen.CARD_PROMPTS)["lv11b"]
+      == "glowing embers in a hearth, warm amber light radiating onto stone, "
+         "deep red and gold")
+check("its band is the shared band with only the luma floor moved",
+      by_id["lv11b"]["band"] == dict(gen.BAND, min_luma=10.0)
+      and by_id["lv11b"]["band"] is not gen.BAND, str(by_id["lv11b"]["band"]))
+check("  and every other frame is judged on the shared band, untouched",
+      all(f["band"] == gen.BAND for f in plan if f["id"] != "lv11b")
+      and gen.BAND["min_luma"] == gen.MIN_MEAN_LUMA == 18.0)
+EMBERS = (15.0, 38.0, 140.0)
+check("an ember frame at 15 passes lv11b's floor",
+      gen.verdict(EMBERS, by_id["lv11b"]["band"])[0])
+check("  and still fails the shared one, which is the point",
+      not gen.verdict(EMBERS, gen.BAND)[0]
+      and not gen.verdict(EMBERS, by_id["lv11a"]["band"])[0])
+check("  while a near-black render fails lv11b's floor too",
+      not gen.verdict((6.0, 30.0, 150.0), by_id["lv11b"]["band"])[0])
+check("  and its other three bounds still bite",
+      not gen.verdict((60.0, 3.0, 100.0), by_id["lv11b"]["band"])[0]
+      and not gen.verdict((60.0, 40.0, 5.0), by_id["lv11b"]["band"])[0]
+      and not gen.verdict((240.0, 30.0, 60.0), by_id["lv11b"]["band"])[0])
+check("the run judges each frame on its own band",
+      'verdict(measure(img), frame["band"])' in gen_src
+      and "verdict(measure(img))" not in gen_src)
+check("the floor is in lv11b's recipe, and in no other",
+      "|min_luma=10" in gen.recipe(by_id["lv11b"])
+      and not [f["id"] for f in plan
+               if f["id"] != "lv11b" and "min_luma" in gen.recipe(f)])
+check("  so moving it invalidates lv11b's record alone",
+      gen.recipe(dict(by_id["lv11b"], band=dict(gen.BAND, min_luma=12.0)))
+      != gen.recipe(by_id["lv11b"])
+      and gen.recipe(dict(plan[0], band=gen.BAND)) == gen.recipe(plan[0]))
 
 
 print("\n--- the frame mechanics, run for real ---")
@@ -400,21 +451,31 @@ gen.generate = lambda *a, **kw: called.append(a) or (_ for _ in ()).throw(
 was = gen.ENV_FILES
 gen.ENV_FILES = (os.path.join(SCRATCH, "absent"),)
 try:
-    code, text = run(["--dry-run"])
-    check("a dry run prints every prompt and calls nothing",
+    # Forced, so the plan is the whole set whether or not a manifest on disk
+    # has recorded most of it: the gallery is drawn now, and a plain dry run
+    # lists only what is left to draw.
+    code, text = run(["--dry-run", "--force"])
+    check("a forced dry run prints every prompt and calls nothing",
           code == 0 and not called and text.count("--- lv") == 36
           and text.count("--- int") == 2 and "nothing called" in text,
           "exit %s, %d calls" % (code, len(called)))
     check("  and states the count and the estimate first",
           re.search(r"38 frame\(s\) to draw, ~\$\d+\.\d\d estimated", text)
           is not None, text.splitlines()[0])
+    code, text = run(["--dry-run"])
+    check("a plain dry run lists only the frames not yet recorded",
+          code == 0 and not called
+          and text.count("--- ") == len([f for f in plan
+                                         if not gen.already_made(
+                                             f, gen.load_manifest())]),
+          text.splitlines()[0])
     code, text = run(["--only", "lv07a,nope"])
     check("an unknown frame id is refused, exit 2",
           code == 2 and "nope" in text and not called)
-    code, text = run(["--only", "lv07a"])
+    code, text = run(["--only", "lv07a", "--force"])
     check("with no key anywhere the run stops before calling, exit 1",
           code == 1 and not called and "nothing was called" in text, text)
-    code, text = run(["--only", "lv07a", "--dry-run"])
+    code, text = run(["--only", "lv07a", "--dry-run", "--force"])
     check("  --only narrows the dry run to the frames named",
           code == 0 and text.count("--- lv") == 1 and "lv07a" in text)
 finally:

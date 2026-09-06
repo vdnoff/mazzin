@@ -151,7 +151,8 @@ CARD_PROMPTS = [
     ("lv10a", "nest with two golden eggs in branches"),
     ("lv10b", "open door to a lit garden"),
     ("lv11a", "lightning over dark sea"),
-    ("lv11b", "embers in a hearth, deep red glow"),
+    ("lv11b", "glowing embers in a hearth, warm amber light radiating onto "
+              "stone, deep red and gold"),
     ("lv12a", "figure leaping toward an outstretched hand over a gap"),
     ("lv12b", "stone bridge over calm river, double railing"),
     ("lv13a", "glass globe with a snowy memory inside"),
@@ -211,10 +212,11 @@ def frames(cfg):
     funnel's, not this file's.
     """
     plan = [{"id": i, "kind": "card", "prompt": prompt_for(s),
-             "size": FRAME, "api_size": API_SQUARE}
+             "size": FRAME, "api_size": API_SQUARE, "band": band_for(i)}
             for i, s in CARD_PROMPTS]
     plan += [{"id": i, "kind": "interstitial", "prompt": prompt_for(s, True),
-              "size": FRAME_TALL, "api_size": API_PORTRAIT}
+              "size": FRAME_TALL, "api_size": API_PORTRAIT,
+              "band": band_for(i)}
              for i, s in TALL_PROMPTS]
     planned = [f["id"] for f in plan]
     if len(set(planned)) != len(planned):
@@ -386,6 +388,23 @@ MIN_SATURATION = 25.0
 BAND = {"min_luma": MIN_MEAN_LUMA, "max_luma": MAX_MEAN_LUMA,
         "min_sd": MIN_STDDEV, "min_sat": MIN_SATURATION}
 
+# Frames whose subject is deliberately dark, and the luma floor each is
+# judged against instead of MIN_MEAN_LUMA. Everything else in the band is
+# shared. lv11b is embers in a hearth: three draws came back at about 15,
+# correct and rejected, against a floor set for an indigo night with a gold
+# accent in it. Ten is under what an ember scene measures and still well
+# above a near-black render, which comes back in the single digits — so the
+# frame the floor exists to catch is still caught. A frame named here draws
+# under its own number and nothing else moves.
+MIN_LUMA_BY_FRAME = {"lv11b": 10.0}
+
+
+def band_for(frame_id):
+    """The bounds one frame is judged against: the shared band, or the
+    shared band with this frame's own luma floor in it."""
+    floor = MIN_LUMA_BY_FRAME.get(frame_id)
+    return BAND if floor is None else dict(BAND, min_luma=floor)
+
 
 def measure(img):
     """`(mean_luma, stddev, mean_saturation)` for a frame, or None."""
@@ -467,10 +486,17 @@ def recipe(frame):
     """What this frame is made of, as one string, for the manifest digest.
 
     The prompt, the geometry and the API size: changing any of them is what
-    should make a rerun redraw.
+    should make a rerun redraw. A frame judged under its own luma floor
+    carries that number too, and only that frame does — so lowering one
+    frame's floor invalidates one record, and the frames on the shared band
+    keep the recipe they were recorded with.
     """
-    return "%s|%s|%dx%d" % (frame["prompt"], frame["api_size"],
-                            frame["size"][0], frame["size"][1])
+    out = "%s|%s|%dx%d" % (frame["prompt"], frame["api_size"],
+                           frame["size"][0], frame["size"][1])
+    floor = (frame.get("band") or BAND)["min_luma"]
+    if floor != MIN_MEAN_LUMA:
+        out += "|min_luma=%g" % floor
+    return out
 
 
 def already_made(frame, entries):
@@ -568,7 +594,7 @@ def main(argv=None):
                     print("  %-8s wrong size (%s), redrawing"
                           % (frame_id, note))
                     continue
-                ok, note = verdict(measure(img))
+                ok, note = verdict(measure(img), frame["band"])
                 if not ok:
                     print("  %-8s rejected (%s), redrawing"
                           % (frame_id, note))
