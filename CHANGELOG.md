@@ -600,3 +600,6 @@ bottom.
 
 ## 2026-09-06 — claude/love-zodiac-bg
 - love-zodiac-bg: new love vertical, dark-launched
+
+## 2026-09-06 — claude/love-lv11b
+- love gallery: lv11b prompt + per-frame luma floor
