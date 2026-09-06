@@ -230,6 +230,16 @@
       "size": "800x800",
       "webp_quality": 80
     },
+    "lv11b": {
+      "bytes": 50312,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 26.9 sd 18.8 sat 132.6",
+      "recipe_sha": "00eb6799f2112f5f2448394f694db6472768a0a679980a52fe2405443e362a14",
+      "sha256": "5d2551553b698b18aeb8fa5ec75e73897dd9fd8f3825e4a45fd128c16ead14c6",
+      "size": "800x800",
+      "webp_quality": 80
+    },
     "lv12a": {
       "bytes": 46784,
       "cost_usd": 0.042,
