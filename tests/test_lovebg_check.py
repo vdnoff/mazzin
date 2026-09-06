@@ -235,7 +235,7 @@ check("  and the hero glyph is the sign, as the module draws it",
       cfg["report"]["visuals"]["hero"]["glyph_step"] == "sign"
       and "glyph(ctx.picks.sign)" in RESULT_JS)
 
-print("\n--- the walk: the sign grid and eighteen love pairs ---")
+print("\n--- the walk: the sign grid, fourteen pairs and four four-ups ---")
 LOVE_STEPS = ["spark", "evening", "gesture", "gift", "conflict", "closeness",
               "romance", "rhythm", "distance", "home", "passion", "trust",
               "past", "public", "care", "silence", "future", "symbol"]
@@ -253,16 +253,39 @@ check("  pointing at the zodiac gallery, which has them",
       all(i["img"].startswith("/static/galleries/zodiac/")
           and os.path.isfile(os.path.join(ROOT, i["img"].lstrip("/")))
           for i in sign_images))
-check("every other step is a pair", all(
+# The four-choice steps use the grid the engine already draws for four
+# cards — `grid4`, the format zodiac-bg's seeking and bond steps sit on and
+# engine.js sizes in its GRID_SIZE table. No engine change was needed.
+FOURS = ["conflict", "romance", "home", "silence"]
+check("four steps are four-ups, on the engine's own grid4",
+      [s["id"] for s in steps if s["format"] == "grid4"] == FOURS
+      and "grid4: 4" in ENGINE_JS and ".cards.is-grid4" in open(
+          os.path.join(ROOT, "static/css/mazzin.css"), encoding="utf-8").read(),
+      str([(s["id"], s["format"]) for s in steps if s["format"] != "pair"]))
+check("  each with exactly four cards", all(
+    len(s["pairs"]) == 1 and len(s["pairs"][0]["images"]) == 4
+    for s in steps if s["id"] in FOURS))
+check("  and every other step is a pair of two", all(
     s["format"] == "pair" and len(s["pairs"]) == 1
     and len(s["pairs"][0]["images"]) == 2
-    for s in steps if s["id"] != "sign"))
-WANT_IDS = ["lv%02d%s" % (n, side) for n in range(1, 19) for side in "ab"]
-check("the love images are lv01a..lv18b, in walk order",
+    for s in steps if s["id"] != "sign" and s["id"] not in FOURS))
+WANT_IDS = []
+for n, sid in enumerate(LOVE_STEPS, 1):
+    for side in ("abcd" if sid in FOURS else "ab"):
+        WANT_IDS.append("lv%02d%s" % (n, side))
+check("the love images are lv01a..lv18d, in walk order, c and d on the fours",
       [i["id"] for i in love_images] == WANT_IDS,
       str([i["id"] for i in love_images][:6]))
-check("  thirty-six of them, and nothing else is this funnel's",
-      len(love_images) == 36 and len(images) == 48)
+check("  forty-four of them, and nothing else is this funnel's",
+      len(love_images) == 44 and len(images) == 56)
+NEW_LABELS = {"lv05c": "Споделен смях", "lv05d": "Разходка рамо до рамо",
+              "lv07c": "Писмо на възглавницата", "lv07d": "Танц в кухнята",
+              "lv10c": "Маса за гости", "lv10d": "Хамак за двама",
+              "lv16c": "Книги на дивана", "lv16d": "Залез от колата"}
+check("  the eight new cards carry the reviewed labels",
+      all(by_id[i]["label"] == v for i, v in NEW_LABELS.items()),
+      str({i: by_id[i]["label"] for i in NEW_LABELS
+           if by_id[i]["label"] != NEW_LABELS[i]}))
 check("  every one under this funnel's own gallery",
       all(i["img"] == GALLERY + i["id"] + ".webp" for i in love_images))
 check("  with a label, three colours and a file each",
@@ -320,19 +343,27 @@ tally = {}
 for i in love_images:
     for t in i["tags"]:
         tally[t] = tally.get(t, 0) + 1
-check("nine images per element", all(tally[e] == 9 for e in ELEMENTS),
+check("eleven images per element", all(tally[e] == 11 for e in ELEMENTS),
       str({e: tally.get(e) for e in ELEMENTS}))
-check("  eighteen sun, eighteen moon",
-      tally["sun"] == tally["moon"] == 18,
+check("  twenty-two sun, twenty-two moon",
+      tally["sun"] == tally["moon"] == 22,
       str({e: tally.get(e) for e in ENERGIES}))
-check("  twelve of each tone", all(tally[t] == 12 for t in TONES),
+check("  and the three tones within one of each other",
+      all(14 <= tally[t] <= 15 for t in TONES) and sum(tally[t] for t in TONES) == 44,
       str({t: tally.get(t) for t in TONES}))
 check("every pair contrasts two different elements",
       all(len({t for i in s["pairs"][0]["images"] for t in i["tags"]
-               if t in ELEMENTS}) == 2 for s in steps if s["id"] != "sign"),
-      str([s["id"] for s in steps if s["id"] != "sign"
+               if t in ELEMENTS}) == 2
+          for s in steps if s["id"] != "sign" and s["id"] not in FOURS),
+      str([s["id"] for s in steps if s["id"] != "sign" and s["id"] not in FOURS
            and len({t for i in s["pairs"][0]["images"] for t in i["tags"]
                     if t in ELEMENTS}) != 2]))
+check("  and every four-up offers all four elements",
+      all(sorted(t for i in s["pairs"][0]["images"] for t in i["tags"]
+                 if t in ELEMENTS) == sorted(ELEMENTS)
+          for s in steps if s["id"] in FOURS),
+      str([(s["id"], [t for i in s["pairs"][0]["images"] for t in i["tags"]
+                      if t in ELEMENTS]) for s in steps if s["id"] in FOURS]))
 check("the service tag rides on the hook pair only, and on both cards",
       [i["id"] for i in images if "purpose_love" in i["tags"]]
       == ["lv01a", "lv01b"])
@@ -375,6 +406,32 @@ for element in ELEMENTS:
           won[ARCHETYPE_OF[element]] == best
           and sum(v == best for v in won.values()) == 1, str(won))
 
+# And a reader tapping at random, many times over, with ties broken the way
+# engine.js breaks them (first listed). No archetype may be a foregone
+# conclusion and none may be out of reach — "roughly equally likely" is a
+# band, and the band is wide enough that a tag moved on one card does not
+# fail it while a walk tilted toward one element does.
+import random                                                  # noqa: E402
+
+rng = random.Random(7)
+RUNS = 20000
+wins = {st["id"]: 0 for st in cfg["styles"]}
+for _ in range(RUNS):
+    scores = {}
+    for s in steps:
+        for t in rng.choice(s["pairs"][0]["images"])["tags"]:
+            scores[t] = scores.get(t, 0) + 1
+    totals = [(sum(scores.get(t, 0) for t in st["tags"]), st["id"])
+              for st in cfg["styles"]]
+    best = max(v for v, _i in totals)
+    wins[next(i for v, i in totals if v == best)] += 1
+share = {k: v / float(RUNS) for k, v in wins.items()}
+check("under random taps every archetype wins between 15%% and 35%%",
+      all(0.15 <= v <= 0.35 for v in share.values()),
+      str({k: round(v, 3) for k, v in share.items()}))
+print("    random-walk shares: %s"
+      % ", ".join("%s %.1f%%" % (k, v * 100) for k, v in sorted(share.items())))
+
 print("\n--- the interstitials keep zodiac-bg's mechanics ---")
 mids = cfg["interstitials"]
 check("four beats, at the same four points of a nineteen-step walk",
@@ -400,7 +457,7 @@ check("  the second reads the element axis, all four",
 check("  the third answers the trust pair back",
       mids[2]["personal"]["step"] == "trust"
       and sorted(mids[2]["personal"]["lines"]) == ["lv12a", "lv12b"])
-check("    and says five pairs remain, which after fourteen of nineteen they do",
+check("    and says five taps remain, which after fourteen of nineteen they do",
       "пет" in mids[2]["sub"].lower(), mids[2]["sub"])
 check("  every personal variant is written, line and sub",
       all(r.get("line") and r.get("sub")
@@ -652,9 +709,14 @@ check("  and the product is a love profile, everywhere it is titled",
 CLINICAL = re.compile(r"кръстос\w*", re.IGNORECASE)
 check("no line uses the clinical word for a cross", not CLINICAL.search(RAW))
 
-print("\n--- the count claims say eighteen pairs, plus the sign ---")
-# Nineteen taps, eighteen of them pairs. The copy counts the pairs and names
-# the sign beside them, so nothing claims nineteen and nothing claims twelve.
+print("\n--- the count claims say nineteen taps ---")
+# The walk takes nineteen taps: the sign, fourteen pairs and four four-ups.
+# "18 двойки" stopped being true the day four of the pairs became grids, so
+# the copy counts what the reader actually does — докосвания — and every
+# claim says the same number.
+TAPS = len(steps)
+check("nineteen taps, counted off the config",
+      TAPS == 19 == cfg["swipe"]["pairs_count"])
 COUNTED = [("swipe.subtext", cfg["swipe"]["subtext"]),
            ("analyzing.messages[0]", cfg["analyzing"]["messages"][0]),
            ("report.generating_messages[0]",
@@ -663,10 +725,16 @@ COUNTED = [("swipe.subtext", cfg["swipe"]["subtext"]),
            ("interstitials[3].line", cfg["interstitials"][3]["line"]),
            ("result.value_banner", cfg["result"]["value_banner"])]
 for name, text in COUNTED:
-    check("  %-30s says 18 двойки" % name, "18 двойки" in text, text)
-check("nothing claims twelve or nineteen signals",
+    check("  %-30s says 19 докосвания" % name, "19 докосвания" in text, text)
+check("nothing claims eighteen pairs any more, or twelve of anything",
       not [v for _, v in STRINGS
-           if re.search(r"\b(12|19) (сигнала|избора|докосвания|двойки)\b", v)])
+           if re.search(r"\b(18|12) (сигнала|избора|докосвания|двойки)\b", v)
+           or "двойки" in v],
+      str([v for _, v in STRINGS if "двойки" in v][:3]))
+check("  and the one number claimed is the walk's own",
+      not [v for _, v in STRINGS
+           if re.search(r"\b(\d+) докосвания\b", v)
+           and int(re.search(r"\b(\d+) докосвания\b", v).group(1)) != TAPS])
 check("  and the only twelve left are the signs and the year",
       all(re.search(r"12 (зодии|месеца)|12-те", v)
           for _p, v in VISIBLE if re.search(r"\b12\b", v)),
@@ -830,7 +898,15 @@ check("  and sells the whole twelve-sign table in the badge words",
       "12" in ROWS[0]["line"]
       and LABELS["verdicts"]["works"] in ROWS[0]["line"]
       and LABELS["verdicts"]["avoid"] in ROWS[0]["line"], ROWS[0]["line"])
-check("  plus how to keep it", "задърж" in ROWS[0]["line"], ROWS[0]["line"])
+check("  plus how to keep the relationship, in the reviewed words",
+      "как да пазите връзката" in ROWS[0]["line"]
+      and "задърж" not in ROWS[0]["line"], ROWS[0]["line"])
+check("    said the same way everywhere the chapter is sold",
+      not [p for p, v in STRINGS if "да го задържиш" in v],
+      str([p for p, v in STRINGS if "да го задържиш" in v]))
+check("the evening question is the reviewed one",
+      by_step["evening"]["question"] == "Идеалната вечер за двама:",
+      by_step["evening"]["question"])
 check("the compatibility card is the first card, and it is love-headed",
       MIN["cards"][0]["id"] == "materials"
       and MIN["cards"][0]["key"] == "Съвместимост"
@@ -990,10 +1066,14 @@ if Image is not None:
     def size_of(name):
         with Image.open(os.path.join(GDIR, name + ".webp")) as im:
             return im.size
-    check("  every card is square, 800 on a side",
-          all(size_of(i["id"]) == (800, 800) for i in love_images),
-          str([(i["id"], size_of(i["id"])) for i in love_images
-               if size_of(i["id"]) != (800, 800)][:3]))
+    # The shape of the tile each step renders, measured on the live shell
+    # at 390x844: a pair card is 174x603, a four-up cell about 174x297.
+    SHAPE = {"pair": (640, 960), "grid4": (360, 600)}
+    wrong = [(i["id"], size_of(i["id"])) for s in steps
+             if s["id"] != "sign" for i in s["pairs"][0]["images"]
+             if size_of(i["id"]) != SHAPE[s["format"]]]
+    check("  pair cards are 640x960 and four-up cells 360x600", not wrong,
+          str(wrong[:3]))
     check("  the two interstitial frames are 4:5, 800x1000",
           size_of("int1") == size_of("int2") == (800, 1000))
     check("  and the share card is 1200x630", size_of("og") == (1200, 630))

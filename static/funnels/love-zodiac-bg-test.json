@@ -13,8 +13,8 @@
   "swipe": {
     "pairs_count": 19,
     "headline": "Анализ на твоя любовен профил",
-    "subtext": "18 двойки. Без писане. Любовен профил, който наистина е твой.",
-    "subtext_accent": "18 двойки",
+    "subtext": "19 докосвания. Без писане. Любовен профил, който наистина е твой.",
+    "subtext_accent": "19 докосвания",
     "hint": "Докосни това, което те привлича",
     "label_mode": "badge",
     "analyzing_fade_to": "#0E1430",
@@ -426,7 +426,7 @@
       },
       {
         "id": "evening",
-        "question": "Идеалната ви вечер:",
+        "question": "Идеалната вечер за двама:",
         "format": "pair",
         "pairs": [
           {
@@ -625,7 +625,7 @@
       {
         "id": "conflict",
         "question": "Когато има кавга:",
-        "format": "pair",
+        "format": "grid4",
         "pairs": [
           {
             "id": "p1",
@@ -681,6 +681,60 @@
                     "name": "Night Indigo",
                     "hex": "#141C3E",
                     "element": "the sky"
+                  }
+                ]
+              },
+              {
+                "id": "lv05c",
+                "img": "/static/galleries/love-zodiac-bg/lv05c.webp",
+                "label": "Споделен смях",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Morning Gold",
+                    "hex": "#F4CF7A",
+                    "element": "the sunlight"
+                  },
+                  {
+                    "name": "Kitchen Cream",
+                    "hex": "#F1E6CF",
+                    "element": "the table"
+                  },
+                  {
+                    "name": "Dawn Rose",
+                    "hex": "#E9B4A0",
+                    "element": "the window"
+                  }
+                ]
+              },
+              {
+                "id": "lv05d",
+                "img": "/static/galleries/love-zodiac-bg/lv05d.webp",
+                "label": "Разходка рамо до рамо",
+                "tags": [
+                  "earth",
+                  "moon",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Leaf Green",
+                    "hex": "#9EB87A",
+                    "element": "the lane"
+                  },
+                  {
+                    "name": "Path Sand",
+                    "hex": "#D9C39A",
+                    "element": "the path"
+                  },
+                  {
+                    "name": "Golden Haze",
+                    "hex": "#F0C878",
+                    "element": "the light"
                   }
                 ]
               }
@@ -757,7 +811,7 @@
       {
         "id": "romance",
         "question": "Романтика за теб е:",
-        "format": "pair",
+        "format": "grid4",
         "pairs": [
           {
             "id": "p1",
@@ -815,6 +869,60 @@
                     "element": "the valley"
                   }
                 ]
+              },
+              {
+                "id": "lv07c",
+                "img": "/static/galleries/love-zodiac-bg/lv07c.webp",
+                "label": "Писмо на възглавницата",
+                "tags": [
+                  "water",
+                  "moon",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Linen White",
+                    "hex": "#F3EEE4",
+                    "element": "the pillow"
+                  },
+                  {
+                    "name": "Paper Cream",
+                    "hex": "#EAE0C8",
+                    "element": "the letter"
+                  },
+                  {
+                    "name": "Morning Gold",
+                    "hex": "#F4CF7A",
+                    "element": "the light"
+                  }
+                ]
+              },
+              {
+                "id": "lv07d",
+                "img": "/static/galleries/love-zodiac-bg/lv07d.webp",
+                "label": "Танц в кухнята",
+                "tags": [
+                  "air",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Window Gold",
+                    "hex": "#F2C662",
+                    "element": "the window"
+                  },
+                  {
+                    "name": "Kitchen Cream",
+                    "hex": "#F1E6CF",
+                    "element": "the kitchen"
+                  },
+                  {
+                    "name": "Sky Pastel",
+                    "hex": "#BFD4E6",
+                    "element": "the sky"
+                  }
+                ]
               }
             ]
           }
@@ -833,7 +941,7 @@
                 "img": "/static/galleries/love-zodiac-bg/lv08a.webp",
                 "label": "Спонтанност",
                 "tags": [
-                  "air",
+                  "fire",
                   "sun",
                   "bold"
                 ],
@@ -955,7 +1063,7 @@
       {
         "id": "home",
         "question": "Домът за двама е:",
-        "format": "pair",
+        "format": "grid4",
         "pairs": [
           {
             "id": "p1",
@@ -1011,6 +1119,60 @@
                     "name": "Deep Indigo",
                     "hex": "#1A2246",
                     "element": "the hall"
+                  }
+                ]
+              },
+              {
+                "id": "lv10c",
+                "img": "/static/galleries/love-zodiac-bg/lv10c.webp",
+                "label": "Маса за гости",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "bold"
+                ],
+                "colors": [
+                  {
+                    "name": "Table Linen",
+                    "hex": "#F3EBDA",
+                    "element": "the tablecloth"
+                  },
+                  {
+                    "name": "Afternoon Gold",
+                    "hex": "#EFC470",
+                    "element": "the light"
+                  },
+                  {
+                    "name": "Garden Green",
+                    "hex": "#A5BE86",
+                    "element": "the garden"
+                  }
+                ]
+              },
+              {
+                "id": "lv10d",
+                "img": "/static/galleries/love-zodiac-bg/lv10d.webp",
+                "label": "Хамак за двама",
+                "tags": [
+                  "water",
+                  "moon",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Hammock Cream",
+                    "hex": "#EFE3C8",
+                    "element": "the hammock"
+                  },
+                  {
+                    "name": "Leaf Green",
+                    "hex": "#9EB87A",
+                    "element": "the trees"
+                  },
+                  {
+                    "name": "Dappled Gold",
+                    "hex": "#F2D28A",
+                    "element": "the sunlight"
                   }
                 ]
               }
@@ -1351,7 +1513,7 @@
       {
         "id": "silence",
         "question": "Мълчанието заедно:",
-        "format": "pair",
+        "format": "grid4",
         "pairs": [
           {
             "id": "p1",
@@ -1388,7 +1550,7 @@
                 "img": "/static/galleries/love-zodiac-bg/lv16b.webp",
                 "label": "Недовършен разговор",
                 "tags": [
-                  "fire",
+                  "air",
                   "sun",
                   "mystic"
                 ],
@@ -1407,6 +1569,60 @@
                     "name": "Deep Indigo",
                     "hex": "#1A2246",
                     "element": "the table"
+                  }
+                ]
+              },
+              {
+                "id": "lv16c",
+                "img": "/static/galleries/love-zodiac-bg/lv16c.webp",
+                "label": "Книги на дивана",
+                "tags": [
+                  "earth",
+                  "moon",
+                  "calm"
+                ],
+                "colors": [
+                  {
+                    "name": "Sofa Sand",
+                    "hex": "#D8C4A4",
+                    "element": "the sofa"
+                  },
+                  {
+                    "name": "Page Cream",
+                    "hex": "#F2EEE2",
+                    "element": "the pages"
+                  },
+                  {
+                    "name": "Afternoon Gold",
+                    "hex": "#EFC470",
+                    "element": "the light"
+                  }
+                ]
+              },
+              {
+                "id": "lv16d",
+                "img": "/static/galleries/love-zodiac-bg/lv16d.webp",
+                "label": "Залез от колата",
+                "tags": [
+                  "fire",
+                  "sun",
+                  "mystic"
+                ],
+                "colors": [
+                  {
+                    "name": "Sunset Gold",
+                    "hex": "#F3B75A",
+                    "element": "the sky"
+                  },
+                  {
+                    "name": "Hill Violet",
+                    "hex": "#B9A2C8",
+                    "element": "the hills"
+                  },
+                  {
+                    "name": "Car Slate",
+                    "hex": "#6E7688",
+                    "element": "the car"
                   }
                 ]
               }
@@ -1619,7 +1835,7 @@
       "template": "confirm",
       "kicker": "Дълбок слой",
       "line": "Дълбокият слой на сърцето е картиран.",
-      "sub": "Остават пет двойки.",
+      "sub": "Остават пет докосвания.",
       "cta": "Продължи анализа",
       "auto_advance_ms": 2000,
       "echo_steps": [
@@ -1647,7 +1863,7 @@
       "after_step": 19,
       "template": "almost",
       "kicker": "Калибриране",
-      "line": "Всичките 18 двойки са вътре.",
+      "line": "Всичките 19 докосвания са вътре.",
       "sub": "Повечето съчетания в любовта са обичайни — да видим твоето.",
       "cta": "Продължи анализа",
       "auto_advance_ms": 2400,
@@ -2009,7 +2225,7 @@
         },
         "dna": {
           "setup": "Огън и Слънце изглеждат отвън като едно и също, а отвътре дърпат в противоположни посоки, и разделението личи",
-          "trigger": "в двойките, които избра най-бързо,"
+          "trigger": "в докосванията, които направи най-бързо,"
         },
         "materials": {
           "setup": "Хората те усещат като сигурност много преди ти да я усетиш, а този, който остава, е онзи, който",
@@ -2275,7 +2491,7 @@
     "duration_ms": 2500,
     "text": "Разчитаме сигналите ти",
     "messages": [
-      "Разчитаме твоите 18 двойки…",
+      "Разчитаме твоите 19 докосвания…",
       "Претегляме ги спрямо четирите стихии…",
       "Изолираме твоя стил в любовта…"
     ]
@@ -2283,7 +2499,7 @@
   "analyzing_echo": true,
   "report": {
     "generating_messages": [
-      "Изкуственият ни интелект претегля твоите 18 двойки спрямо четирите стихии…",
+      "Изкуственият ни интелект претегля твоите 19 докосвания спрямо четирите стихии…",
       "Търсим съчетанията, които пасват на ТЕБ…",
       "Съпоставяме твоята зодия с избора ти на стихия…",
       "Почти готово — пишем любовния ти профил…"
@@ -2334,7 +2550,7 @@
         "enabled": true,
         "preview": [
           "Таблица за всичките дванадесет — с кои работиш лесно, коя ти струва скъпо, и защо една те намира отново и отново.",
-          "Профилът назовава трите енергии, с които вървиш леко, тази, която те изцежда, и как да го задържиш, когато вече е до теб."
+          "Профилът назовава трите енергии, с които вървиш леко, тази, която те изцежда, и как да пазите връзката, когато вече е до теб."
         ],
         "reveal": {
           "mode": "locked"
@@ -2463,12 +2679,12 @@
       "sticky_label": "Отключи пълния профил — {price}"
     },
     "title": "Твоят любовен профил — {style}",
-    "proof_line": "Изградено от твоите 18 двойки и твоята зодия",
+    "proof_line": "Изградено от твоите 19 докосвания",
     "manifest": [
       "Твоята палитра на любовта с точни кодове, плюс трите ти талисмана",
       "5 скрити сили в любовта и слепи петна — с това какво да направиш за всяко",
       "Твоят план в любовта: стихия, енергия и тон, с оценки",
-      "Съвместимост: таблица за всичките 12 зодии и как да го задържиш",
+      "Съвместимост: таблица за всичките 12 зодии и как да пазите връзката",
       "Даване и вземане: къде дава енергията ти и къде изтича",
       "Твоята карта на сърцето за 12 месеца, маркирана прозорец по прозорец"
     ],
@@ -2507,7 +2723,7 @@
   },
   "result": {
     "mistakes_teaser": "Видя сила #1. Другите четири са по-дълбоки — една обяснява избора ти на {gesture}.",
-    "value_banner": "Пет сили, таблица за съвместимост с всичките дванадесет зодии и карта на сърцето за дванадесет месеца — всичко изградено от твоите 18 двойки и твоята зодия, твое за постоянно."
+    "value_banner": "Пет сили, таблица за съвместимост с всичките дванадесет зодии и карта на сърцето за дванадесет месеца — всичко изградено от твоите 19 докосвания, твое за постоянно."
   },
   "result_copy": {
     "kicker": "ТВОЯТ ЛЮБОВЕН ПРОФИЛ",
@@ -2682,7 +2898,7 @@
           "icon": "heart",
           "promise": "таблицата за всичките 12 зодии — кой знак работи за теб и кой да държиш далеч",
           "upgrade": {
-            "purpose_love": "това, за което дойде — цялата таблица за 12-те зодии и как да го задържиш"
+            "purpose_love": "това, за което дойде — цялата таблица за 12-те зодии и как да пазите връзката"
           }
         },
         {
@@ -2811,7 +3027,7 @@
       "unlock": [
         {
           "id": "materials",
-          "line": "цялата таблица РАБОТИ / ИЗБЯГВАЙ за 12-те зодии — и как да го задържиш"
+          "line": "цялата таблица РАБОТИ / ИЗБЯГВАЙ за 12-те зодии — и как да пазите връзката"
         },
         {
           "id": "splurge",
