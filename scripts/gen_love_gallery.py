@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Draw the love-zodiac-bg funnel's real gallery: 36 cards and 2 interstitials.
+"""Draw the love-zodiac-bg funnel's real gallery: 44 cards and 2 interstitials.
 
 Console use only, run by hand against a key. Nothing imports this, no route
 reaches it, and it spends money — one image per frame at the published
@@ -15,24 +15,37 @@ a literal the way deploy.sh reads .env, never sourced — and falls back to the
 OPENAI_API_KEY environment variable when the file has none. Nothing else in
 .env is read.
 
---- what it draws --------------------------------------------------------------
+--- v2: portrait, lighter, four grids ------------------------------------------
 
-The plan is the 38 prompts below, one per frame, each closed on the same base
-suffix: painterly, dreamy, deep indigo night with warm gold accents, no text,
-no watermark, no close-up faces. Thirty-six are the quiz cards, drawn 1:1 at
-1024 and brought down to an 800x800 WebP; two are the interstitial frames,
-drawn portrait and centre-cropped to 4:5 at 800x1000. The plan is checked
-against the config before anything is called: every love-owned image id the
-funnel references has a prompt here and every prompt here is an id the funnel
-references, or the run refuses — a gallery drawn to last week's config is a
-gallery nobody sees.
+The first gallery was drawn square and dark, and the owner's phone review
+found both wrong. The engine renders a pair card as a tall column — at
+390x844 it measures 174x603, about 2:7 — and a four-up cell at 174x297,
+about 3:5. `object-fit: cover` then shows a square picture's middle third
+and cuts the subject off both sides. Every frame also sat on a night sky.
+
+So every frame is now rendered portrait (1024x1536, which is 2:3) and kept
+at the shape its tile wants: a pair card at 640x960, the whole render, the
+way the zodiac gallery's 640x982 frames are; a four-up cell at 360x600, twice
+its rendered size, centre-cropped to 3:5; the two interstitial frames at
+800x1000, 4:5. Which shape a card takes is read off the config — the step
+format the card sits in — so the plan and the funnel cannot disagree.
+
+Every prompt carries composition guidance for its own crop, and the pair
+guidance is the honest one: the tile shows the middle 40 percent of the
+width, so the subject is asked to sit in a central vertical band, not merely
+inside the middle 70 percent of the frame. And the palette moved to light:
+dawn, golden hour, airy pastel, with the warm gold accents kept. Four frames
+stay dark because their subject is dark — a nebula, falling stars, embers, a
+twilight road — and each carries its own luma floor. The recipes are bumped
+with a version tag, so the whole manifest is stale and the next run redraws
+everything.
 
 --- the manifest, and what a rerun does ----------------------------------------
 
 scripts/love_art.json records every frame this script has really drawn: the
-hash of the bytes on disk, the hash of the prompt that made them, the cost.
+hash of the bytes on disk, the hash of the recipe that made them, the cost.
 A rerun skips a frame whose file still hashes to what is recorded AND whose
-prompt is unchanged, and remakes everything else. So:
+recipe is unchanged, and remakes everything else. So:
 
     delete the file        -> it is drawn again (the record no longer matches)
     edit its prompt        -> it is drawn again (the recipe no longer matches)
@@ -45,14 +58,13 @@ leave the real art alone on every run after.
 
 --- the floor -------------------------------------------------------------------
 
-Not persona's. That floor is tuned for bright art on a warm sweep and would
-reject every correct frame here for being what was asked for: a deep indigo
-night sits at a mean luma persona calls "came back dark". What this floor
-catches is the render that came back as a non-picture — near-black, blown
-out, flat, or grey with no gold in it — and passes everything else. The
-owner's phone is the real gate. The band is stated as numbers and printed
-per frame, so a rejection can be read against the thresholds without
-rerunning anything.
+The floor catches the render that came back as a non-picture, and now also
+the render that came back as the old gloom: the whole first gallery measured
+between luma 25 and 62, and the default floor is 80, above every one of
+those and under what a dawn or golden-hour scene measures. A frame whose
+subject is genuinely dark is judged under its own floor, named per frame
+below. The band is printed per frame, so a rejection can be read against the
+thresholds without rerunning anything.
 
 A frame is also held under 120KB: the WebP is re-encoded a step at a time
 down to a floor quality, and a frame that cannot get under is a failure
@@ -83,12 +95,50 @@ MANIFEST = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 # server's own .env when it is run from there.
 ENV_FILES = (os.path.join(ROOT, ".env"), os.path.expanduser("~/mazzin/.env"))
 
-# --- geometry ------------------------------------------------------------------
+# Bumped when every frame has to be drawn again regardless of its prompt —
+# a new palette, a new geometry. It is part of every recipe.
+RECIPE_VERSION = "v2"
 
-FRAME = (800, 800)
-FRAME_TALL = (800, 1000)
-API_SQUARE = "1024x1024"
+# --- geometry ------------------------------------------------------------------
+#
+# One render size, three frame shapes, keyed by the kind of tile a frame is
+# shown in. Measured on the live shell at 390x844: a pair card is 174x603,
+# a four-up cell 174x279 to 174x297, the interstitial strip is free.
+
 API_PORTRAIT = "1024x1536"
+
+# The kind of tile, the committed frame, and the crop guidance it is drawn
+# against. A pair card keeps the whole 2:3 render, like the zodiac gallery's
+# 640x982 frames; a grid cell is twice its rendered size at 3:5; an
+# interstitial frame is 4:5.
+KINDS = {
+    "pair": {
+        "size": (640, 960),
+        "crop": "2:3",
+        "guidance": ("single central subject, composed for a 2:3 portrait "
+                     "frame that is shown as a tall central band, "
+                     "comfortable margins on all sides, subject fully inside "
+                     "the middle 70% of the frame height and the middle 40% "
+                     "of the frame width"),
+    },
+    "grid": {
+        "size": (360, 600),
+        "crop": "3:5",
+        "guidance": ("single central subject, composed for a 3:5 portrait "
+                     "crop, comfortable margins on all sides, subject fully "
+                     "inside the middle 70% of the frame"),
+    },
+    "interstitial": {
+        "size": (800, 1000),
+        "crop": "4:5",
+        "guidance": ("single central subject, composed for a 4:5 portrait "
+                     "crop, comfortable margins on all sides, subject fully "
+                     "inside the middle 70% of the frame"),
+    },
+}
+# Which step format draws which kind of tile. A format not named here is a
+# loud failure at plan time, not a square frame in a portrait tile.
+KIND_OF_FORMAT = {"pair": "pair", "grid4": "grid"}
 
 MODEL = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-1")
 IMAGE_QUALITY = os.getenv("LOVE_IMAGE_QUALITY", "medium")
@@ -99,9 +149,6 @@ API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
 # the API, stale the day the price list moves, `--price` overrides — the
 # number printed is an estimate and the invoice is the truth.
 PRICE = {
-    ("low", API_SQUARE): 0.011,
-    ("medium", API_SQUARE): 0.042,
-    ("high", API_SQUARE): 0.167,
     ("low", API_PORTRAIT): 0.016,
     ("medium", API_PORTRAIT): 0.063,
     ("high", API_PORTRAIT): 0.25,
@@ -115,118 +162,176 @@ MAX_BYTES = 120 * 1024
 
 # --- the style ----------------------------------------------------------------
 
-# The base suffix, on every prompt. One slot: the aspect, because thirty-six
-# frames are square and two are not, and telling a portrait render it is
-# square is asking for a square picture with black bars.
-STYLE_SUFFIX = (", painterly dreamy style, deep indigo night palette with "
-                "warm gold accents, soft glow, {aspect}, no text, no "
-                "watermark, no close-up faces")
-ASPECT_SQUARE = "square 1:1"
-ASPECT_TALL = "portrait 4:5"
+# The base suffix, on every prompt. One slot: the composition guidance for
+# the frame's own crop, because a pair card, a grid cell and an interstitial
+# frame are shown at three different shapes.
+STYLE_SUFFIX = (", painterly dreamy style, soft luminous palette — dawn sky, "
+                "golden hour or airy pastel light — with warm gold accents, "
+                "gentle glow, {guidance}, no text, no watermark, no close-up "
+                "faces")
 
 # --- the plan ------------------------------------------------------------------
 #
-# The 36 cards, in walk order, and the two interstitial frames. The subject
-# text is the brief, verbatim; the suffix above is what makes it one set.
+# The 44 cards, in walk order, and the two interstitial frames. Most scenes
+# happen at dawn, golden hour or in bright soft daylight; the four that stay
+# dark are the ones whose subject is dark, and they are named again in
+# MIN_LUMA_BY_FRAME.
 
 CARD_PROMPTS = [
-    ("lv01a", "lightning spark between two reaching hands"),
-    ("lv01b", "candle lighting a second candle, slow flame"),
-    ("lv02a", "couple silhouettes on a night city square with lights"),
-    ("lv02b", "two cups of tea by a rainy window, blanket"),
-    ("lv03a", "two hands interlaced fingers golden glow"),
-    ("lv03b", "handwritten letter with wax heart seal"),
-    ("lv04a", "small star pendant in an open palm"),
-    ("lv04b", "key tied with red thread"),
-    ("lv05a", "two chairs facing each other, warm lamp between"),
-    ("lv05b", "lone bench under stars with room for two"),
-    ("lv06a", "two trees with intertwined crowns"),
-    ("lv06b", "two birds flying parallel in open sky"),
-    ("lv07a", "candlelit table on a rooftop under stars"),
-    ("lv07b", "sunrise from a mountain peak, two backpacks"),
-    ("lv08a", "dancing silhouettes under a street lamp in rain"),
-    ("lv08b", "two coffee cups on the same table every morning, calendar"),
-    ("lv09a", "paper plane flying through night sky toward a lit window"),
-    ("lv09b", "two shadows at one door, key in lock"),
-    ("lv10a", "nest with two golden eggs in branches"),
-    ("lv10b", "open door to a lit garden"),
-    ("lv11a", "lightning over dark sea"),
+    ("lv01a", "spark of golden light leaping between two reaching hands, "
+              "bright dawn sky behind"),
+    ("lv01b", "one candle lighting a second candle on a sunlit windowsill, "
+              "soft morning light"),
+    ("lv02a", "couple silhouettes strolling a city square strung with lights "
+              "at golden hour"),
+    ("lv02b", "two cups of tea by a rain-streaked window, folded blanket, "
+              "pale morning light"),
+    ("lv03a", "two hands with interlaced fingers in warm golden sunlight"),
+    ("lv03b", "handwritten letter with a wax heart seal on a sunlit linen "
+              "table"),
+    ("lv04a", "small star pendant resting in an open palm, soft daylight"),
+    ("lv04b", "brass key tied with red thread on a pale wooden table, morning "
+              "light"),
+    ("lv05a", "two chairs facing each other by a bright window, warm lamp "
+              "between them"),
+    ("lv05b", "empty park bench at dawn with room for two, pink and gold sky"),
+    ("lv05c", "two silhouettes laughing together at a sunlit kitchen table, "
+              "light spilling in"),
+    ("lv05d", "two figures walking shoulder to shoulder down a tree-lined "
+              "lane in golden hour light"),
+    ("lv06a", "two trees with intertwined crowns in a sunlit meadow, airy "
+              "pastel sky"),
+    ("lv06b", "two birds flying side by side across a bright open sky at "
+              "dawn"),
+    ("lv07a", "candlelit table on a rooftop at golden hour, the sky glowing "
+              "peach and gold"),
+    ("lv07b", "sunrise from a mountain peak, two backpacks resting on the "
+              "rocks, golden light"),
+    ("lv07c", "a folded letter left on a pillow in soft morning light"),
+    ("lv07d", "two silhouettes dancing in a bright kitchen in daylight, sun "
+              "through the window"),
+    ("lv08a", "two silhouettes dancing in a light rain under a street lamp "
+              "at golden hour, wet pavement shining"),
+    ("lv08b", "two coffee cups on the same table in morning light, a wall "
+              "calendar behind"),
+    ("lv09a", "paper plane gliding across a pastel dawn sky toward a lit "
+              "window"),
+    ("lv09b", "two shadows cast on a sunlit door, a key turning in the lock"),
+    ("lv10a", "nest with two golden eggs among branches in soft spring "
+              "light"),
+    ("lv10b", "open door leading out to a bright sunlit garden"),
+    ("lv10c", "long table laid for guests in a sunlit garden, golden "
+              "afternoon light"),
+    ("lv10d", "hammock for two strung between trees in a leafy garden, "
+              "dappled sunlight"),
+    ("lv11a", "lightning over a stormy sea under a bright dramatic sky, "
+              "sunlight breaking through"),
     ("lv11b", "glowing embers in a hearth, warm amber light radiating onto "
               "stone, deep red and gold"),
-    ("lv12a", "figure leaping toward an outstretched hand over a gap"),
-    ("lv12b", "stone bridge over calm river, double railing"),
-    ("lv13a", "glass globe with a snowy memory inside"),
-    ("lv13b", "blank white page and a quill at dawn"),
-    ("lv14a", "couple silhouettes dancing in a lit square"),
-    ("lv14b", "two under one blanket on a rooftop, city far below"),
-    ("lv15a", "umbrella held over another silhouette in rain"),
-    ("lv15b", "kite launched by two hands into the sky"),
-    ("lv16a", "two fishermen on a misty pier, silence"),
-    ("lv16b", "two glasses of wine and an unfinished conversation, dying candle"),
-    ("lv17a", "road through hills toward a horizon with two moons"),
-    ("lv17b", "oak with initials carved in bark, gold in the grooves"),
-    ("lv18a", "heart-shaped nebula in deep space"),
-    ("lv18b", "two hands forming a heart against a full moon"),
+    ("lv12a", "figure leaping toward an outstretched hand over a gap, bright "
+              "sky behind"),
+    ("lv12b", "stone bridge with a double railing over a calm river in "
+              "morning mist and sunlight"),
+    ("lv13a", "glass snow globe with a tiny winter scene inside, on a sunlit "
+              "shelf"),
+    ("lv13b", "blank white page and a quill on a desk at dawn, soft golden "
+              "light"),
+    ("lv14a", "couple silhouettes dancing in a sunlit square, bright festive "
+              "bunting"),
+    ("lv14b", "two under one blanket on a rooftop at golden hour, city far "
+              "below in haze"),
+    ("lv15a", "umbrella held over another silhouette in a bright spring "
+              "rain, sun breaking through"),
+    ("lv15b", "kite launched by two hands into a bright open sky"),
+    ("lv16a", "two fishermen on a misty pier at sunrise, still water, pale "
+              "gold light"),
+    ("lv16b", "two glasses of wine and an unfinished conversation on a "
+              "terrace at golden hour"),
+    ("lv16c", "two figures reading side by side on a sofa in soft afternoon "
+              "light"),
+    ("lv16d", "two figures in a parked car on a hill watching the sunset, "
+              "warm glowing sky"),
+    ("lv17a", "road through soft hills toward a horizon with two pale moons "
+              "in a twilight sky"),
+    ("lv17b", "oak with initials carved into the bark, gold in the grooves, "
+              "sunlight through leaves"),
+    ("lv18a", "heart-shaped nebula glowing in deep space, warm gold and rose "
+              "against the dark"),
+    ("lv18b", "two hands forming a heart against a bright full moon in a "
+              "pale evening sky"),
 ]
 
 TALL_PROMPTS = [
-    ("int1", "night sky with two falling stars"),
-    ("int2", "two candles in darkness, one lighting the other"),
+    ("int1", "night sky with two falling stars over a faint horizon glow"),
+    ("int2", "two candles, one lighting the other, on a table in soft dawn "
+             "light"),
 ]
 
 
-def prompt_for(subject, tall=False):
-    """The subject, closed on the suffix, with the aspect said correctly."""
-    return subject + STYLE_SUFFIX.format(
-        aspect=ASPECT_TALL if tall else ASPECT_SQUARE)
+def prompt_for(subject, kind):
+    """The subject, closed on the suffix, with this kind's crop guidance."""
+    return subject + STYLE_SUFFIX.format(guidance=KINDS[kind]["guidance"])
 
 
 def owned_ids(cfg):
-    """Every image id the config references under this funnel's gallery.
+    """Every image id the config references under this funnel's gallery,
+    with the kind of tile each is shown in.
 
-    The cards off the steps, then the frames `preview_gallery` names on its
-    own — which is where the two interstitial frames live, because the
-    engine's interstitial screens carry no image slot and the strip under the
-    locked report does.
+    The cards off the steps, keyed by the step's format, then the frames
+    `preview_gallery` names on its own — which is where the two interstitial
+    frames live, because the engine's interstitial screens carry no image
+    slot and the strip under the locked report does.
     """
     out = []
     seen = set()
     for step in cfg["swipe"]["steps"]:
+        fmt = step.get("format")
         for pair in step["pairs"]:
             for item in pair["images"]:
                 if item["img"].startswith(OWNED) and item["id"] not in seen:
+                    if fmt not in KIND_OF_FORMAT:
+                        raise SystemExit("step %s has format %r, which no "
+                                         "frame shape is known for"
+                                         % (step.get("id"), fmt))
                     seen.add(item["id"])
-                    out.append(item["id"])
+                    out.append((item["id"], KIND_OF_FORMAT[fmt]))
     for item in cfg.get("preview_gallery") or []:
         if item["img"].startswith(OWNED) and item["id"] not in seen:
             seen.add(item["id"])
-            out.append(item["id"])
+            out.append((item["id"], "interstitial"))
     return out
 
 
 def frames(cfg):
-    """The plan: one frame per prompt, checked against the config.
+    """The plan: one frame per prompt, shaped by the config, checked
+    against it.
 
     A prompt for an id the funnel does not show, or an owned id with no
     prompt, is refused before anything is called. The gallery is the
     funnel's, not this file's.
     """
-    plan = [{"id": i, "kind": "card", "prompt": prompt_for(s),
-             "size": FRAME, "api_size": API_SQUARE, "band": band_for(i)}
-            for i, s in CARD_PROMPTS]
-    plan += [{"id": i, "kind": "interstitial", "prompt": prompt_for(s, True),
-              "size": FRAME_TALL, "api_size": API_PORTRAIT,
-              "band": band_for(i)}
-             for i, s in TALL_PROMPTS]
-    planned = [f["id"] for f in plan]
+    owned = owned_ids(cfg)
+    kind_of = dict(owned)
+    subjects = dict(CARD_PROMPTS + TALL_PROMPTS)
+    planned = [i for i, _s in CARD_PROMPTS + TALL_PROMPTS]
     if len(set(planned)) != len(planned):
         raise SystemExit("a frame id is planned twice")
-    owned = owned_ids(cfg)
-    missing = sorted(set(owned) - set(planned))
-    extra = sorted(set(planned) - set(owned))
+    missing = sorted(set(kind_of) - set(planned))
+    extra = sorted(set(planned) - set(kind_of))
     if missing or extra:
         raise SystemExit("plan and config disagree — no prompt for %s, "
                          "no config image for %s" % (missing, extra))
+    tall = {i for i, _s in TALL_PROMPTS}
+    wrong = [i for i, k in owned if (k == "interstitial") != (i in tall)]
+    if wrong:
+        raise SystemExit("interstitial frames and the preview-only ids "
+                         "disagree: %s" % wrong)
+    plan = []
+    for frame_id, kind in owned:
+        plan.append({"id": frame_id, "kind": kind,
+                     "prompt": prompt_for(subjects[frame_id], kind),
+                     "size": KINDS[kind]["size"], "api_size": API_PORTRAIT,
+                     "band": band_for(frame_id)})
     return plan
 
 
@@ -336,7 +441,8 @@ def generate(prompt, api_size, key, tries=3):
 
 def fit(raw, size):
     """The model's image, centre-cropped to the committed frame, as a Pillow
-    image. Square in, square out; portrait in, 4:5 out."""
+    image. A 2:3 render into a 2:3 frame is a resize; into 3:5 or 4:5 it is
+    a resize and a centre crop of the height."""
     from PIL import Image
 
     img = Image.open(io.BytesIO(raw))
@@ -373,30 +479,39 @@ def encode(img, ceiling=MAX_BYTES):
 
 # --- the floor -----------------------------------------------------------------
 
-# Mean luma below this is a frame that came back black: an indigo night with
-# a gold accent in it reads in the 30s to 90s, and a near-black render in the
-# single digits.
-MIN_MEAN_LUMA = 18.0
-# And above this it is a blown-out or blank page, which the palette makes
-# nearly impossible and the floor refuses anyway.
-MAX_MEAN_LUMA = 200.0
+# Mean luma below this is the old gloom, or a frame that came back black.
+# The whole first gallery measured 25 to 62 and every one of those frames is
+# what the review rejected; a dawn, golden-hour or pastel scene reads well
+# above 100. Eighty is over every old frame and under a warm golden-hour
+# render, which is the darkest thing the light palette should produce.
+MIN_MEAN_LUMA = 80.0
+# And above this it is a blown-out or blank page. Higher than before,
+# because an airy pastel frame legitimately sits high.
+MAX_MEAN_LUMA = 235.0
 # One flat wash scores fine on luma and is still not a picture.
 MIN_STDDEV = 12.0
-# Gold on indigo is colour. A greyscale render fails here and nowhere else.
-MIN_SATURATION = 25.0
+# Gold on pastel is still colour. A greyscale render fails here and nowhere
+# else; lower than the indigo floor because a pale palette is less saturated
+# by construction.
+MIN_SATURATION = 18.0
 
 BAND = {"min_luma": MIN_MEAN_LUMA, "max_luma": MAX_MEAN_LUMA,
         "min_sd": MIN_STDDEV, "min_sat": MIN_SATURATION}
 
 # Frames whose subject is deliberately dark, and the luma floor each is
 # judged against instead of MIN_MEAN_LUMA. Everything else in the band is
-# shared. lv11b is embers in a hearth: three draws came back at about 15,
-# correct and rejected, against a floor set for an indigo night with a gold
-# accent in it. Ten is under what an ember scene measures and still well
-# above a near-black render, which comes back in the single digits — so the
-# frame the floor exists to catch is still caught. A frame named here draws
-# under its own number and nothing else moves.
-MIN_LUMA_BY_FRAME = {"lv11b": 10.0}
+# shared. Four of forty-six, under the review's cap of six: a nebula in deep
+# space, falling stars at night, embers in a hearth, a twilight road under
+# two moons. Each number is under what its scene measures and above a
+# near-black render, which comes back in the single digits — so the frame
+# the floor exists to catch is still caught. A frame named here draws under
+# its own number and nothing else moves.
+MIN_LUMA_BY_FRAME = {
+    "lv11b": 20.0,   # embers: the first gallery measured 15 and 27
+    "lv17a": 40.0,   # twilight, not night: the sky still holds light
+    "lv18a": 25.0,   # a nebula on black, lit by its own gold and rose
+    "int1": 25.0,    # falling stars over a horizon glow
+}
 
 
 def band_for(frame_id):
@@ -420,10 +535,10 @@ def measure(img):
 def verdict(stats, bounds=BAND):
     """`(ok, note)` for a measured frame. Never raises.
 
-    Loose on purpose: it rejects near-black, blank, flat and colourless
-    renders and passes everything else, because the owner review is the
-    real gate. A frame that cannot be measured is kept and says so — it is
-    going in front of a human anyway.
+    Loose on purpose: it rejects the old gloom, near-black, blank, flat and
+    colourless renders and passes everything else, because the owner review
+    is the real gate. A frame that cannot be measured is kept and says so —
+    it is going in front of a human anyway.
     """
     if stats is None:
         return True, "unmeasured"
@@ -459,7 +574,7 @@ def save_manifest(entries):
     payload = {
         "note": ("What gen_love_gallery.py has really drawn. A rerun skips an "
                  "id whose file still hashes to what is recorded here and "
-                 "whose prompt is unchanged; delete the file, or edit the "
+                 "whose recipe is unchanged; delete the file, or edit the "
                  "prompt, to have it drawn again. Placeholders are never "
                  "recorded, so the first run paints over them."),
         "funnel": "love-zodiac-bg",
@@ -485,14 +600,13 @@ def on_disk_sha(frame_id):
 def recipe(frame):
     """What this frame is made of, as one string, for the manifest digest.
 
-    The prompt, the geometry and the API size: changing any of them is what
-    should make a rerun redraw. A frame judged under its own luma floor
-    carries that number too, and only that frame does — so lowering one
-    frame's floor invalidates one record, and the frames on the shared band
-    keep the recipe they were recorded with.
+    The version tag, the prompt, the geometry and the API size: changing any
+    of them is what should make a rerun redraw. A frame judged under its own
+    luma floor carries that number too, and only that frame does.
     """
-    out = "%s|%s|%dx%d" % (frame["prompt"], frame["api_size"],
-                           frame["size"][0], frame["size"][1])
+    out = "%s|%s|%s|%dx%d" % (RECIPE_VERSION, frame["prompt"],
+                              frame["api_size"], frame["size"][0],
+                              frame["size"][1])
     floor = (frame.get("band") or BAND)["min_luma"]
     if floor != MIN_MEAN_LUMA:
         out += "|min_luma=%g" % floor
@@ -561,9 +675,10 @@ def main(argv=None):
 
     if args.dry_run:
         for frame in plan:
-            print("\n--- %s (%s, %dx%d via %s) ---"
+            print("\n--- %s (%s, %dx%d via %s, luma floor %g) ---"
                   % (frame["id"], frame["kind"], frame["size"][0],
-                     frame["size"][1], frame["api_size"]))
+                     frame["size"][1], frame["api_size"],
+                     frame["band"]["min_luma"]))
             print(frame["prompt"])
         print("\ndry run: nothing called, nothing written")
         return 0

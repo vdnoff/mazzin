@@ -26,7 +26,8 @@ these are stand-ins for painted art, and a placeholder with a caption on it
 is one somebody forgets to replace.
 
 Written into static/galleries/love-zodiac-bg/:
-    lv01a … lv18b .webp   800x800, one per love-owned image still missing
+    lv01a … lv18b .webp   640x960 for a pair card, 360x600 for a four-up
+                          cell — the shape of the tile each step renders
     int1, int2 .webp      800x1000, the two interstitial frames (4:5)
     og.webp               1200x630, the share card
 """
@@ -40,10 +41,14 @@ CONFIG = os.path.join(ROOT, "funnels", "love-zodiac-bg.json")
 OUT = os.path.join(ROOT, "static", "galleries", "love-zodiac-bg")
 OWNED = "/static/galleries/love-zodiac-bg/"
 
-# Square, because the real art is drawn 1:1 and a stand-in has to be the
-# same shape or replacing one with the other would change the layout rather
-# than only the picture.
-FRAME = (800, 800)
+# The shape of the tile a step renders, measured on the live shell at
+# 390x844: a pair card is a tall column (174x603), a four-up cell is about
+# 3:5 (174x297). The real art is kept at these same frames — a pair card at
+# 2:3, the whole render; a grid cell at twice its rendered size — and a
+# stand-in has to be the same shape or replacing one with the other would
+# change the layout rather than only the picture. Keyed by step format, so
+# a format this table has never heard of is a loud failure.
+FRAME_BY_FORMAT = {"pair": (640, 960), "grid4": (360, 600)}
 # The two interstitial frames are 4:5.
 FRAME_TALL = (800, 1000)
 QUALITY = 80
@@ -108,9 +113,14 @@ def images_in(cfg):
             for item in pair["images"]:
                 if item["id"] in found or not item["img"].startswith(OWNED):
                     continue
-                found[item["id"]] = [c["hex"] for c in item["colors"]]
+                if step.get("format") not in FRAME_BY_FORMAT:
+                    raise SystemExit("step %s has format %r, which no frame "
+                                     "shape is known for"
+                                     % (step.get("id"), step.get("format")))
+                found[item["id"]] = ([c["hex"] for c in item["colors"]],
+                                     FRAME_BY_FORMAT[step["format"]])
                 order.append(item["id"])
-    return [(i, found[i]) for i in order]
+    return [(i, found[i][0], found[i][1]) for i in order]
 
 
 def tall_in(cfg):
@@ -145,11 +155,11 @@ def main():
 
     os.makedirs(OUT, exist_ok=True)
     items = images_in(cfg)
-    missing = [(i, stops) for i, stops in items
+    missing = [(i, stops, size) for i, stops, size in items
                if not os.path.exists(os.path.join(OUT, i + ".webp"))]
     total = 0
-    for image_id, stops in missing:
-        total += write(image_id, gradient(FRAME, stops))
+    for image_id, stops, size in missing:
+        total += write(image_id, gradient(size, stops))
 
     tall = tall_in(cfg)
     made = 0
@@ -165,7 +175,7 @@ def main():
     # A frame whose id the config no longer references is deleted rather than
     # left behind. The gallery is meant to be exactly what the funnel shows.
     # Only .webp files are touched, and only in this gallery.
-    keep = ({i + ".webp" for i, _s in items} | {"og.webp"}
+    keep = ({i + ".webp" for i, _s, _z in items} | {"og.webp"}
             | {name + ".webp" for name, _s in tall})
     orphans = sorted(f for f in os.listdir(OUT)
                      if f.endswith(".webp") and f not in keep)
