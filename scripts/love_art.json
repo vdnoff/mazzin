@@ -1,0 +1,378 @@
+{
+  "frames": {
+    "int1": {
+      "bytes": 66306,
+      "cost_usd": 0.063,
+      "kind": "interstitial",
+      "note": "luma 40.9 sd 21.6 sat 154.6",
+      "recipe_sha": "31daca30a970a0d4e75b4a3cb07ebd7ecf22f9baff533fb70a66a87b4f9efb60",
+      "sha256": "9505e50202dba5dff9095f4a2980e3b490c9218d35827c1964af0d94adc024b2",
+      "size": "800x1000",
+      "webp_quality": 80
+    },
+    "int2": {
+      "bytes": 36780,
+      "cost_usd": 0.063,
+      "kind": "interstitial",
+      "note": "luma 38.8 sd 34.9 sat 128.1",
+      "recipe_sha": "f5ca15c80e72e0b028a2442d430cf66f04dc4bd10113c944b90e2bb07e0b927a",
+      "sha256": "615c9fe86e46d9438473fc4797cf0b47c988007da344211256ae74e4a5099785",
+      "size": "800x1000",
+      "webp_quality": 80
+    },
+    "lv01a": {
+      "bytes": 25098,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 28.6 sd 18.6 sat 170.2",
+      "recipe_sha": "266ddb1a2e50dec2e46ed79c5622fc60e1f58c43fd8fc411f9d04c5ace3c9690",
+      "sha256": "373cf3f55ed27442ffdb4757a126357a166735d6c44300cb41b9fff80aa6f8ee",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv01b": {
+      "bytes": 27478,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 40.4 sd 31.9 sat 133.0",
+      "recipe_sha": "c12d4c87082c70df7b655f6e2f2e1a30ff7eb918d436651baa891df1580f2ce9",
+      "sha256": "695a61db7f78fa11d86115c469ba139d71b1a265429ab01c57e63189b0ab57ba",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv02a": {
+      "bytes": 52254,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 49.8 sd 31.2 sat 141.8",
+      "recipe_sha": "b109a7b62252307b86571416a07fab2016aafb1cf6ddd90fdfe0c0db44b58f23",
+      "sha256": "f1d12f311cd345d8a3b3516238edd9a5dbc1d1e8fbed48800db7c883bcb8a0b3",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv02b": {
+      "bytes": 38496,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 38.4 sd 21.7 sat 138.7",
+      "recipe_sha": "588f42fda28c0df9b363e80a9bd6c72eef9353d745d75d7b5bce5f738abe05b5",
+      "sha256": "aa08381be7581997966056e36b67ca7c74519854916d3e3dad64eab1b0d16722",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv03a": {
+      "bytes": 34076,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 49.3 sd 32.8 sat 142.9",
+      "recipe_sha": "186850da07116c090ab2a4fb426354f4fcd26bd499fa37d0d54be48699c2f522",
+      "sha256": "7dd7717ebac347d7e00be7ccadb323f39a511017377ebcf04fda38ad4d98fe4b",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv03b": {
+      "bytes": 38214,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 43.3 sd 33.4 sat 140.1",
+      "recipe_sha": "dca2aecb178f62a462e204504fba5c334c7d1b2f81b1a6329025253a9b83ba51",
+      "sha256": "b3a3e7f3d44564d314c7aeb01df20560294ce448ed6b673aad82ccbf2f05ac18",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv04a": {
+      "bytes": 37400,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 41.2 sd 27.7 sat 176.7",
+      "recipe_sha": "fa16a9372744e33bf4646962ad9730129f2b475fa9f2f01990ab3fda1b425132",
+      "sha256": "ebb51bd3f4b3ace66e8ced5cbe2d7687dcf4f86e242d720de2ee630617186b78",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv04b": {
+      "bytes": 24988,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 32.0 sd 18.9 sat 146.4",
+      "recipe_sha": "5b6b01242a6dc2b1cba9b5258aae2316d8e692009384db9dfb7d0b4633320145",
+      "sha256": "93802c99b4afb44053361d5a7b0c871d6f546b29198395507b8114f478bb5b04",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv05a": {
+      "bytes": 61668,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 55.5 sd 29.7 sat 131.3",
+      "recipe_sha": "69b371e6163142b7fa454143b340afcf18af7f98d5f0bbe261b70c914bbb4e5d",
+      "sha256": "080a3444303cf251610ac7e9c0e2198bf7ba221995868763d864aaf4c2cbbf47",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv05b": {
+      "bytes": 60890,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 50.3 sd 19.7 sat 159.8",
+      "recipe_sha": "5dccfc8eb77f062aa69094d1f54aafa7b1bd6be84a8a6ea9803933222dea4089",
+      "sha256": "694f13718f26948a54104b4880d1b1bb7e5ccbb78efe0b4d1506526b16f0ea6f",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv06a": {
+      "bytes": 49154,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 42.1 sd 19.0 sat 149.3",
+      "recipe_sha": "4dd5c673e8dacbc4cc805cbcc96da11610c15055eaef09b5025df1596b3dfde6",
+      "sha256": "683d6030e45af131e5927fec27c40d5ed136e74f2d3b2e89a794ba31327e2354",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv06b": {
+      "bytes": 36056,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 42.1 sd 19.3 sat 194.1",
+      "recipe_sha": "11f73a85b5120d08e6ab999ba9d268c5e12662aaae5d73e36a746dc4efb03221",
+      "sha256": "79dea59f672ad2a332ecf4df99c4b9cc9c4f5c4f8b284601a80854470805355d",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv07a": {
+      "bytes": 51038,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 40.5 sd 26.1 sat 184.6",
+      "recipe_sha": "0e26927e98b4812ddd8ab7d5a160c85bf6ea04e1153217917317ac7f90bf8041",
+      "sha256": "83aa5054ebdbf53d5bcfe5bfa7e397529795ddf5e8ef0ecd3e921770949dbc51",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv07b": {
+      "bytes": 43880,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 56.6 sd 39.5 sat 145.0",
+      "recipe_sha": "f05707a255b1892d5292f45480dd5d28ba5536f6e43146eb052f6f76eeb2a842",
+      "sha256": "9ae01621f355409b3d3694191c04b8a974d1ed223e039d5d045825d8651bbee0",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv08a": {
+      "bytes": 48988,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 45.6 sd 26.5 sat 150.5",
+      "recipe_sha": "5113752702eae05e0d3917d8c5906ecb9c385b5b629d1c21a90ae58c386cc521",
+      "sha256": "8d2875c845d8efbd2ad073d1caa9ec0eaf5a8b6dccf91af3823365ed7012c41f",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv08b": {
+      "bytes": 50256,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 41.7 sd 30.5 sat 164.6",
+      "recipe_sha": "49f78eab0deaaab0c951e0ebd8ec8d4a05c1e15f8e3d324bdd88a6590045cb09",
+      "sha256": "883850f524a32973713c695128de181fa6cfe4896402ab8d63962c3dd6fe14e1",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv09a": {
+      "bytes": 23740,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 30.5 sd 33.4 sat 175.6",
+      "recipe_sha": "42facc84856a4a5c0d2e2929a0fe8f2d99c81d1169e2e95b7f359a4156c40aae",
+      "sha256": "f79b4ad83cdfb591a7ae6148115f469714448a25d5e08f8ecd5c233957c62077",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv09b": {
+      "bytes": 24240,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 31.2 sd 14.5 sat 128.0",
+      "recipe_sha": "df41578b3007887af05e6fd7b130b972c6a5787452a521aa4c30e12b6aa6711c",
+      "sha256": "10af8be4e60f69bb8c66d285baca09001934fb6ee700b96a7b813a98b58d5a3a",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv10a": {
+      "bytes": 21000,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 31.3 sd 22.0 sat 162.9",
+      "recipe_sha": "75c302a4530d88ae5e2e770c0b19cb1b6eebdea29f8f7fae1439b325d6e3edcb",
+      "sha256": "c3dd17221acb15ee28f58cd4a0e3812afe233d4afdfc4bd49cc21ea76766caf3",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv10b": {
+      "bytes": 47142,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 29.2 sd 23.7 sat 192.9",
+      "recipe_sha": "68faf78cdf8bcd83f21f2e981d1a9b32d28564f282925dbece38344c5b23f2d4",
+      "sha256": "caea17721a997414e0ee8f4afbf70be6910edc79d365380cca6b64976905bb49",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv11a": {
+      "bytes": 32448,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 31.6 sd 28.2 sat 172.2",
+      "recipe_sha": "e4efda76ebeed6cc14ea583c7be4576f8a2e5df4c06df262944327e5f2c6814b",
+      "sha256": "586b898057efc26330976fcd90af3eec4e3b17846568958b3e10753338707755",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv12a": {
+      "bytes": 46784,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 60.4 sd 39.1 sat 119.3",
+      "recipe_sha": "9e3a6cff2846637a16544dbeb74e41335aa7a83caf8521f10d959ba5964b0680",
+      "sha256": "74138e48c68dbf10b38230255dc08f749701fc0f472dab785f7bd456259c0993",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv12b": {
+      "bytes": 34428,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 38.8 sd 22.0 sat 140.4",
+      "recipe_sha": "c50cc3fe4cb53e8cf19d97469b2cf7420de2abde548db415364e0736fe97f054",
+      "sha256": "57eb97e3c9d0cdd8bbd2173e48758d3c116814f0e7ec7b59bb181d1fa5f1db8f",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv13a": {
+      "bytes": 74564,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 47.1 sd 34.0 sat 158.8",
+      "recipe_sha": "5b30e592a81e5910c7e4fb2c3156d392d92acafc2035c48ce2f397fdb97baa98",
+      "sha256": "4236e656b5926cc8552b34101e9e833561971b5dbff4f052d2b59ab8de9b8023",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv13b": {
+      "bytes": 35762,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 61.8 sd 41.1 sat 129.1",
+      "recipe_sha": "a2d96331116372d15ce74527e86d5ca3ef180b993ce7b1834a8686e3e0dfbc4b",
+      "sha256": "61230ddb0991fc9ceaf1607c25b8c50f64b0d59c8551a7066042505e5bd6be97",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv14a": {
+      "bytes": 62958,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 57.9 sd 34.2 sat 117.8",
+      "recipe_sha": "84e343d06b9025e593e1e093c2375cdce3cfb074aea00a88569597cddbf2d463",
+      "sha256": "e7deb4ff44dfa45d9c72766404396b8e10db800ce7cf340956f3549b2004e9a3",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv14b": {
+      "bytes": 25684,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 24.6 sd 13.0 sat 182.8",
+      "recipe_sha": "b48fd107f11d9429cefa4fb9c36e8b85598008096f4306520b32a0c4eb6f49be",
+      "sha256": "b1421a679b42f747a45708b29de60290641e09388a489166a80c7cc306e9c47c",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv15a": {
+      "bytes": 61734,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 40.4 sd 23.6 sat 163.1",
+      "recipe_sha": "9666e5f448b2f404e47e955fb169ff6d56e84a069d65e56fcd22337a2bafbd4d",
+      "sha256": "e8a81bf44e834d00be717df2a2cab6534b38ecccb99eba8d5e6cb0548f5a80e0",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv15b": {
+      "bytes": 44166,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 42.1 sd 27.2 sat 188.1",
+      "recipe_sha": "670ef1107e4dfba0bbcf9afdf933ae0ed5dff44cf9c4b55d15ad291c7fd04eb8",
+      "sha256": "55c7491513b760fc6ec24c4d566ed8c7bba3374f2d9694c25c4bdebcbd62c062",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv16a": {
+      "bytes": 18114,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 44.2 sd 22.9 sat 126.4",
+      "recipe_sha": "ba8a81d2b1ca808ac26f326a9f594a83c37ac14a1d5826af7fda713bf076ed72",
+      "sha256": "6e49d3b153bbaa04c410c3408f300e0e735cfb0a59509d1a748dcc395ae6f780",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv16b": {
+      "bytes": 32926,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 32.4 sd 17.6 sat 140.2",
+      "recipe_sha": "91beac472dfccc97360cfd418bd6fe22f35f43d60d87eaffc0c7e273647ddf40",
+      "sha256": "f642af597cebe1ac31585f061bcc171b2fbd24b353f13be6e4569c1ea1206b09",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv17a": {
+      "bytes": 33124,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 40.3 sd 32.8 sat 153.5",
+      "recipe_sha": "77b873ee4f8c300b5f07fb66b10b75888f240b1812395e1d6ae5338007676730",
+      "sha256": "e2f3465f2be5a953be07c32e3c6182444f097944294330b72595ee6de3bd3c08",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv17b": {
+      "bytes": 20432,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 26.5 sd 12.7 sat 131.8",
+      "recipe_sha": "d40694425938aec01dde27514b13c0136d44b93e330865225b855f8f86b423f1",
+      "sha256": "fd3764525e6cedb035d635b5b73fd228283d8152a762f487f82112705cb62265",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv18a": {
+      "bytes": 36338,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 34.8 sd 41.2 sat 179.1",
+      "recipe_sha": "4dafd7a05c571ae28dcd10f5b7e420746e65ee734318c658cbd00a4484e923a3",
+      "sha256": "1f0eb00593872c8fa641a1f2171dc1ef9013d713e8141bb3bcd5b9f9be36e81f",
+      "size": "800x800",
+      "webp_quality": 80
+    },
+    "lv18b": {
+      "bytes": 52372,
+      "cost_usd": 0.042,
+      "kind": "card",
+      "note": "luma 53.3 sd 49.3 sat 146.2",
+      "recipe_sha": "66a369cda0b1382c91f54f215e53f5025aa62dd4e5f5f714d401287ba48773b6",
+      "sha256": "4147088a18f0442d669be01fcbff02cffc76c0ab8b63711169a95dea6b94d700",
+      "size": "800x800",
+      "webp_quality": 80
+    }
+  },
+  "funnel": "love-zodiac-bg",
+  "model": "gpt-image-1",
+  "note": "What gen_love_gallery.py has really drawn. A rerun skips an id whose file still hashes to what is recorded here and whose prompt is unchanged; delete the file, or edit the prompt, to have it drawn again. Placeholders are never recorded, so the first run paints over them.",
+  "quality": "medium"
+}
