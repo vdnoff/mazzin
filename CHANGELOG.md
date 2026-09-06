@@ -597,3 +597,6 @@ bottom.
 
 ## 2026-09-05 — claude/focus-report
 - focus phase C: report profile, speed-aware payload, purchasable
+
+## 2026-09-06 — claude/love-zodiac-bg
+- love-zodiac-bg: new love vertical, dark-launched
