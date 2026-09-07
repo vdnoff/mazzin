@@ -615,3 +615,6 @@ bottom.
 
 ## 2026-09-07 — claude/love-bands-fix
 - love gallery: bands from observed data
+
+## 2026-09-07 — claude/love-report-profile
+- love-zodiac-bg: report profile + live mode
