@@ -22,12 +22,14 @@ is skipped; delete the file or edit the prompt and it is drawn again. v4
 bumps every recipe, so everything on disk is stale and `--only` is how the
 owner calibrates a few frames before a plain run redraws the rest.
 
-v4 invents no style: the suffix is the constraint tail and the composition
-guidance, nothing else, because three rounds of style words produced three
-rejected galleries and the zodiac prompt they should have copied is not in
-the repo. The light lives per frame, in three buckets, every pair and
-four-up in one bucket, and each bucket is judged on a band read off the
-approved zodiac frames that sit in it.
+v4 invents no style: the suffix is the zodiac gallery's own style string,
+found in the server's generator and copied character for character, after
+the composition guidance. That string bans people, faces and hands and asks
+for a well-lit subject, so every scene is objects and symbols, and a scene
+that asks for darkness or names a person is refused at plan time — the
+zodiac generator's exposure guard, ported. The light lives per frame, in
+three buckets, every pair and four-up in one bucket, each judged on a band
+read off the approved zodiac frames that sit in it.
 
 And the key is read off ~/mazzin/.env as a literal line, never sourced, with
 the environment as the fallback.
@@ -193,29 +195,36 @@ check("the price table knows the portrait size at the quality in use",
 
 
 print("\n--- what a frame is asked for ---")
-V4_SUFFIX = ", {guidance}, no text, no watermark, no close-up faces"
-check("the v4 suffix is the constraint tail and the guidance slot, nothing "
-      "else",
+# The zodiac gallery's style string, as the server's generator has it.
+ZODIAC_STYLE = (
+    "Cinematic celestial art, painterly photographic hybrid, rich saturated "
+    "colour, luminous, well-lit subject, every detail clearly visible, subtle "
+    "silver star grain, vertical portrait composition centered and readable "
+    "at thumbnail size. No text, no letters, no numbers, no people, no faces, "
+    "no hands, no watermark, no logo, no frame."
+)
+check("the style string is the zodiac generator's, character for character",
+      gen.ZODIAC_STYLE == ZODIAC_STYLE, repr(gen.ZODIAC_STYLE))
+check("  and it is the whole of the v4 palette after the guidance slot",
       gen.DRAW_PALETTE == gen.RECORDED_PALETTE == "v4"
-      and gen.PALETTES == {"v4": V4_SUFFIX}
-      and gen.STYLE_SUFFIX == V4_SUFFIX, repr(gen.PALETTES))
-# The words that made v1, v2 and v3 what they were. None of them survives.
-INVENTED = ("painterly", "dreamy", "indigo", "pastel", "luminous", "moody",
-            "golden-hour", "saturated", "palette", "glow", "style")
-check("  and not one invented style word survives in it",
-      not [w for w in INVENTED if w in gen.STYLE_SUFFIX],
-      str([w for w in INVENTED if w in gen.STYLE_SUFFIX]))
-# A scene may say a lamp glows or a sky is pastel — those are light words,
-# which is where the light lives now. The treatment words are what is gone.
-TREATMENT = tuple(w for w in INVENTED if w not in ("glow", "pastel"))
-check("  nor does any scene carry a treatment word",
+      and gen.PALETTES == {"v4": ", {guidance}. " + ZODIAC_STYLE}
+      and gen.STYLE_SUFFIX == gen.PALETTES["v4"], repr(gen.PALETTES))
+check("  the old constraint tail is gone with it",
+      "close-up" not in gen_src.split("ZODIAC_STYLE = (")[1]
+      and "no close-up faces" not in gen.STYLE_SUFFIX)
+# The words that made v1, v2 and v3 what they were. A scene never carries
+# them: the only style words in a prompt are the zodiac string's own.
+TREATMENT = ("painterly", "dreamy", "luminous", "moody", "golden-hour",
+             "saturated", "palette", "cinematic", "style")
+check("  and no scene carries a treatment word of its own",
       not [(f["id"], w) for f in plan for w in TREATMENT
            if w in f["subject"]],
       str([(f["id"], w) for f in plan for w in TREATMENT
            if w in f["subject"]][:4]))
-check("  every prompt is its scene, the guidance for its crop, the tail", all(
+check("  every prompt is its scene, the guidance for its crop, the zodiac "
+      "string", all(
     f["prompt"] == f["subject"] + ", " + gen.KINDS[f["kind"]]["guidance"]
-    + ", no text, no watermark, no close-up faces"
+    + ". " + ZODIAC_STYLE
     for f in plan))
 GUIDE = "single central subject, composed for a "
 check("  every prompt carries the composition guidance for its own crop",
@@ -235,22 +244,68 @@ check("  and every subject is carried verbatim, opening the prompt",
       all(by_id[i]["prompt"].startswith(s + ",")
           for i, _b, s in gen.CARD_PROMPTS + gen.TALL_PROMPTS))
 SUBJECTS = {
-    "lv01a": "a spark of golden light leaping between two reaching hands in "
-             "the dark, night around them",
+    "lv01a": "a bright golden spark arcing between two reaching tree "
+             "branches, deep indigo starry sky behind",
     "lv06b": "two birds flying side by side across a bright open sky at dawn",
-    "lv11b": "glowing embers in a hearth in a dark room, deep red and gold",
-    "lv16c": "two figures reading side by side on a sofa in soft afternoon "
-             "light",
-    "lv18a": "heart-shaped nebula glowing in deep space, gold and rose "
-             "against the dark",
-    "int1": "night sky with two falling stars over a faint horizon glow",
+    "lv11b": "glowing embers in a stone hearth, deep red and gold, the ember "
+             "glow lighting the stones",
+    "lv12a": "a bridge of light meeting mid-air between two cliffs, bright "
+             "sky behind",
+    "lv16c": "two open books resting side by side on a sofa in soft "
+             "afternoon light",
+    "lv18a": "heart-shaped nebula glowing gold and rose in deep indigo space",
+    "lv18b": "two crescent moons curving toward each other into a heart "
+             "shape, glowing in a deep indigo sky",
+    "int1": "two falling stars streaking across a deep indigo sky over a "
+            "faint horizon glow",
 }
 for frame_id, subject in sorted(SUBJECTS.items()):
     check("  %-6s is the plan's subject" % frame_id,
           by_id[frame_id]["subject"] == subject)
-check("no prompt asks for a face, a word or a watermark",
-      all("no close-up faces" in f["prompt"] and "no text" in f["prompt"]
-          and "no watermark" in f["prompt"] for f in plan))
+check("every prompt bans people, faces, hands, text and a watermark",
+      all(all(w in f["prompt"].lower()
+              for w in ("no people", "no faces", "no hands", "no text",
+                        "no watermark"))
+          for f in plan))
+
+
+print("\n--- the exposure guard, ported from the zodiac generator ---")
+QUOTED = ("dark", "dim", "moody", "dusk", "night", "silhouette", "candlelit")
+check("the seven quoted exposure words are in the list",
+      all(w in gen.EXPOSURE_WORDS for w in QUOTED),
+      str([w for w in QUOTED if w not in gen.EXPOSURE_WORDS]))
+check("  and the style's own bans are words too: people, faces, hands",
+      all(w in gen.SUBJECT_WORDS for w in ("people", "faces", "hands",
+                                          "couple", "figures")))
+check("the guard names what it finds, as whole words",
+      gen.guard("a dark night with silhouettes") == ["dark", "night",
+                                                     "silhouettes"]
+      and gen.guard("a darkened room") == []
+      and gen.guard("Candlelit dinner") == ["candlelit"])
+check("  and a scene with a lamp, a moon or an ember passes it",
+      gen.guard("a lamp glowing under a moon, embers below") == [])
+check("no scene in the plan carries a guarded word",
+      not [(f["id"], gen.guard(f["subject"])) for f in plan
+           if gen.guard(f["subject"])],
+      str([(f["id"], gen.guard(f["subject"])) for f in plan
+           if gen.guard(f["subject"])][:4]))
+check("  none names a person or a hand in any other form either",
+      not [f["id"] for f in plan
+           if re.search(r"\b(two under|walking|dancing|reading|laughing|"
+                        r"leaping|fisher\w*|palm|arms?)\b", f["subject"])],
+      str([f["id"] for f in plan
+           if re.search(r"\b(two under|walking|dancing|reading|laughing|"
+                        r"leaping|fisher\w*|palm|arms?)\b", f["subject"])]))
+saved = gen.CARD_PROMPTS[0]
+gen.CARD_PROMPTS[0] = (saved[0], saved[1], "two hands in a dark night")
+try:
+    caught = refuses(cfg)
+finally:
+    gen.CARD_PROMPTS[0] = saved
+check("a scene that asks for darkness or a hand refuses to run",
+      caught is not None and "zodiac style refuses" in (caught or "")
+      and "night" in (caught or "") and "hands" in (caught or ""),
+      str(caught))
 
 
 print("\n--- the light plan: three buckets, one per step ---")
@@ -282,11 +337,13 @@ for bucket, ids in sorted(REVIEW.items()):
           str({i: buckets[i] for i in ids if buckets[i] != bucket}))
 # The light is in the words, per bucket, because there is no suffix to put
 # it in.
+# A dark frame's darkness is a named colour — deep indigo, an ember glow —
+# never an exposure word, and its subject is still lit.
 WORDS = {
     "bright": re.compile(r"bright|sunlit|sunlight|sunrise|daylight|dawn", re.I),
-    "mid": re.compile(r"soft|dusk|pastel|lamp|candle|afternoon|first light|"
-                      r"morning|sunset", re.I),
-    "dark": re.compile(r"night|dark|moon|embers|stars|darkness", re.I),
+    "mid": re.compile(r"soft|pastel|lamp|candle|afternoon|first light|"
+                      r"morning|sunset|evening", re.I),
+    "dark": re.compile(r"deep indigo|indigo|ember", re.I),
 }
 for bucket, pattern in sorted(WORDS.items()):
     check("  every %-6s scene says so in its own words" % bucket,
@@ -294,13 +351,16 @@ for bucket, pattern in sorted(WORDS.items()):
               if f["bucket"] == bucket),
           str([f["id"] for f in plan if f["bucket"] == bucket
                and not pattern.search(f["subject"])]))
-check("  and no bright scene calls itself dark, nor a dark one bright",
-      not [f["id"] for f in plan if f["bucket"] == "bright"
-           and WORDS["dark"].search(f["subject"])]
-      and not [f["id"] for f in plan if f["bucket"] == "dark"
-               and WORDS["bright"].search(f["subject"])],
-      str([f["id"] for f in plan if f["bucket"] == "bright"
+check("  and no bright or mid scene reaches for the dark colours",
+      not [f["id"] for f in plan if f["bucket"] != "dark"
+           and WORDS["dark"].search(f["subject"])],
+      str([f["id"] for f in plan if f["bucket"] != "dark"
            and WORDS["dark"].search(f["subject"])]))
+check("  every dark scene keeps its subject lit, the zk1b way",
+      all(re.search(r"bright|lit|glow|light", f["subject"], re.I)
+          for f in plan if f["bucket"] == "dark"),
+      str([f["id"] for f in plan if f["bucket"] == "dark"
+           and not re.search(r"bright|lit|glow|light", f["subject"], re.I)]))
 # A step that mixes buckets is refused at plan time, not shipped.
 saved = gen.CARD_PROMPTS[0]
 gen.CARD_PROMPTS[0] = (saved[0], "bright", saved[2])
@@ -318,15 +378,15 @@ recipes = [gen.recipe(f) for f in plan]
 check("every frame's recipe is distinct", len(set(recipes)) == len(recipes))
 check("  and carries the version, the prompt, the API size, the geometry "
       "and the bucket",
-      gen.RECIPE_VERSION == "v4"
-      and all(r.startswith("v4|") for r in recipes)
+      gen.RECIPE_VERSION == "v4.1"
+      and all(r.startswith("v4.1|") for r in recipes)
       and all(f["prompt"] in gen.recipe(f) and f["api_size"] in gen.recipe(f)
               and "%dx%d" % f["size"] in gen.recipe(f)
               and gen.recipe(f).split("|")[-1].split("|")[0]
               in ("bright", "mid", "dark") or "min_luma" in gen.recipe(f)
               for f in plan))
-check("  the version moved to v4: every frame on disk is stale by design",
-      gen.RECIPE_VERSION == "v4")
+check("  the version moved to v4.1: every frame on disk is stale by design",
+      gen.RECIPE_VERSION == "v4.1")
 check("  and the same scene in another bucket is another recipe",
       gen.recipe(dict(plan[0], bucket="bright", band=gen.BANDS["bright"]))
       != gen.recipe(plan[0]))
