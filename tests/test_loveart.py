@@ -268,8 +268,8 @@ SUBJECTS = {
             "deep indigo starry sky behind",
     "lv06b": "two birds flying side by side across a bright open sky at "
             "dawn",
-    "lv11b": "glowing embers in a stone hearth, deep red and gold, the "
-            "ember glow lighting the stones",
+    "lv11b": "glowing embers in a stone hearth, warm deep red and gold, "
+            "the ember glow lighting the stones",
     "lv12a": "a figure leaping toward an outstretched hand over a gap "
             "between two cliffs, bright sky behind",
     "lv16c": "two figures from behind reading side by side on a sofa in "
@@ -421,7 +421,7 @@ check("  and they stay out of a plan whose config does not name them",
       and not [f for f in _plan46 if f["id"].startswith("g0")])
 
 
-print("\n--- the light plan: three buckets, one per step ---")
+print("\n--- the light plan: three buckets, one per step but five ---")
 buckets = {f["id"]: f["bucket"] for f in plan}
 count = {b: sum(1 for v in buckets.values() if v == b)
          for b in ("bright", "mid", "dark")}
@@ -430,28 +430,92 @@ check("every frame sits in one of three buckets",
       set(buckets.values()) == {"bright", "mid", "dark"})
 # The first v4 run drew thirty of forty-six and rejected thirteen, each at a
 # consistent luma across three draws — a band assigned wrong, not art drawn
-# wrong. The buckets follow what was measured: four bright, twenty-eight
-# mid, fourteen dark.
-check("  four bright, twenty-eight mid, fourteen dark — what the draws said",
-      count == {"bright": 4, "mid": 31, "dark": 14}, str(count))
-check("  every pair and every four-up is lit alike: one bucket per step",
-      all(len({buckets[i["id"]] for p in s["pairs"] for i in p["images"]
-               if i["id"] in buckets}) == 1
-          for s in steps if s["id"] != "sign"),
-      str([(s["id"], sorted({buckets[i["id"]] for p in s["pairs"]
-                             for i in p["images"] if i["id"] in buckets}))
-           for s in steps if s["id"] != "sign"
-           and len({buckets[i["id"]] for p in s["pairs"]
-                    for i in p["images"] if i["id"] in buckets}) != 1]))
+# wrong. The buckets follow what was measured, and then five steps were
+# lit apart on purpose: six bright, twenty-eight mid, fifteen dark.
+check("  six bright, twenty-eight mid, fifteen dark",
+      count == {"bright": 6, "mid": 28, "dark": 15}, str(count))
+# Light contrast within a step is allowed only where the contrast IS the
+# choice's meaning, and the five steps where it is are declared, by id and
+# by the walk number their frames carry.
+CONTRAST = {"spark": 1, "romance": 7, "passion": 11, "past": 13,
+            "future": 17}
+by_step = {s["id"]: s for s in steps}
+check("the five contrast steps are declared, and no other",
+      gen.CONTRAST_STEPS == CONTRAST, str(gen.CONTRAST_STEPS))
+check("  by the walk number the frame ids carry",
+      all(by_step[sid]["pairs"][0]["images"][0]["id"] == "lv%02da" % n
+          for sid, n in CONTRAST.items()))
+
+
+def lit(step_id):
+    return sorted({buckets[i["id"]] for p in by_step[step_id]["pairs"]
+                   for i in p["images"] if i["id"] in buckets})
+
+
+check("  every other pair and four-up is lit alike: one bucket per step",
+      all(len(lit(s["id"])) == 1
+          for s in steps if s["id"] != "sign" and s["id"] not in CONTRAST),
+      str([(s["id"], lit(s["id"])) for s in steps
+           if s["id"] != "sign" and s["id"] not in CONTRAST
+           and len(lit(s["id"])) != 1]))
+check("  and each contrast step really spans two buckets, except passion, "
+      "which contrasts by temperature inside the dark",
+      lit("spark") == ["bright", "dark"] and lit("romance") == ["dark", "mid"]
+      and lit("passion") == ["dark"] and lit("past") == ["bright", "dark"]
+      and lit("future") == ["dark", "mid"],
+      str({s: lit(s) for s in CONTRAST}))
+# The frame-by-frame plan of the five, pinned: bucket, and the light word
+# that carries the contrast.
+CONTRAST_FRAMES = {
+    "lv01a": ("dark", "deep indigo starry sky"),
+    "lv01b": ("bright", "sunlit table"),
+    "lv07a": ("dark", "deep indigo evening sky"),
+    "lv07b": ("mid", "sunrise"),
+    "lv07c": ("mid", "bright morning sun"),
+    "lv07d": ("dark", "one warm lamp"),
+    "lv11a": ("dark", "cold steel-blue"),
+    "lv11b": ("dark", "warm deep red"),
+    "lv13a": ("dark", "amber lamplight"),
+    "lv13b": ("bright", "bright dawn light"),
+    "lv17a": ("dark", "two pale moons"),
+    "lv17b": ("mid", "warm afternoon sunlight"),
+}
+for frame_id, (bucket, word) in sorted(CONTRAST_FRAMES.items()):
+    check("  %-6s %-6s %s" % (frame_id, bucket, word),
+          buckets[frame_id] == bucket and word in by_id[frame_id]["subject"],
+          "%s: %s" % (buckets[frame_id], by_id[frame_id]["subject"][:60]))
+# What the six calibration frames were drawn under, and still are: their
+# recipes are pinned by hash, so a light-plan change that touched one of
+# them would fail here before it could cost a redraw.
+CALIBRATED = {
+    "lv02a": "f79aa22a80f058b39dcf25217320c6313fe7045fdfefbf931e1028d15ff69202",
+    "lv08a": "bd0437754847e8975d228e2356dbeddc0c6ca8555d6dddc32b045d133189726d",
+    "g01": "1c2ee9fb993cd6785e759d7cbb40d3d406ef19b058a19a1a4b11320c2172f025",
+    "lv03a": "d038261abfa4fcee982eaacda4dca7bb1256b55de98fcf911766ee30f9db79d3",
+    "lv04b": "fb74182ec94964e5ee63c2072d5f17eaf0a2eb7a3e886fe948b24f87e916e285",
+    "lv10b": "c75d17195000149f0538d31b5703f111dbd4d71beded8b90f6efb24e3367b6c0",
+}
+check("the six calibration frames keep the recipes they were drawn under",
+      all(hashlib.sha256(gen.recipe(by_id[i]).encode("utf-8")).hexdigest()
+          == sha for i, sha in CALIBRATED.items()),
+      str([i for i, sha in CALIBRATED.items()
+           if hashlib.sha256(gen.recipe(by_id[i]).encode("utf-8")).hexdigest()
+           != sha]))
+check("  and a bucket is still not part of a recipe, so a label move alone "
+      "redraws nothing",
+      gen.recipe(dict(by_id["lv02a"], bucket="dark", band=gen.BANDS["dark"]))
+      == gen.recipe(by_id["lv02a"]))
 check("  and the interstitials are the night frames they always were",
       buckets["int1"] == buckets["int2"] == "dark")
 # The thirteen rejected frames and the luma each drew, three times over.
 # Every one now sits in a band its numbers fit, and every one's step-mates
 # moved with it — an accepted step-mate keeps its frame, only the label
 # moves, because the bucket is not part of the recipe.
+# lv07d (82-84) is gone from this table: that was the bright kitchen, and
+# the frame is a lamp-lit evening now, drawn again on its own band.
 OBSERVED = {
     "lv04a": (21, 38), "lv05a": (40, 47), "lv05d": (41, 55),
-    "lv06a": (87, 96), "lv07b": (78, 90), "lv07d": (82, 84),
+    "lv06a": (87, 96), "lv07b": (78, 90),
     "lv08a": (32, 46), "lv10b": (58, 70), "lv10c": (93, 101),
     "lv10d": (74, 93), "lv12a": (84, 96), "lv12b": (83, 92),
     "lv15a": (79, 87),
@@ -464,9 +528,11 @@ check("every rejected frame's observed range now sits inside its band",
            for i, (lo, hi) in OBSERVED.items()
            if not (by_id[i]["band"]["min_luma"] <= lo
                    and hi <= by_id[i]["band"]["max_luma"])]))
+# lv07a and lv07d left this group when the romance step became a contrast
+# step: they are the evening half of it now, and dark on purpose.
 check("  the 70-to-101 group is mid, step-mates included",
       all(buckets[i] == "mid" for i in
-          ("lv06a", "lv06b", "lv07a", "lv07b", "lv07c", "lv07d", "lv10a",
+          ("lv06a", "lv06b", "lv07b", "lv07c", "lv10a",
            "lv10b", "lv10c", "lv10d", "lv12a", "lv12b", "lv15a", "lv15b")))
 check("  and the four that drew darker than their step keep its bucket "
       "with a floor just under what they drew",
@@ -498,16 +564,28 @@ check("  every dark scene keeps its subject lit, the zk1b way",
           for f in plan if f["bucket"] == "dark"),
       str([f["id"] for f in plan if f["bucket"] == "dark"
            and not re.search(r"bright|lit|glow|light", f["subject"], re.I)]))
-# A step that mixes buckets is refused at plan time, not shipped.
-saved = gen.CARD_PROMPTS[0]
-gen.CARD_PROMPTS[0] = (saved[0], "bright", saved[2])
+# A step outside the five that mixes buckets is refused at plan time, not
+# shipped; a contrast step is allowed to.
+_at = [r[0] for r in gen.CARD_PROMPTS].index("lv02a")
+saved = gen.CARD_PROMPTS[_at]
+gen.CARD_PROMPTS[_at] = (saved[0], "bright", saved[2])
 try:
     mixed = refuses(cfg)
 finally:
-    gen.CARD_PROMPTS[0] = saved
-check("a plan that lit one card of a pair differently would refuse to run",
-      mixed is not None and "mixes light buckets" in (mixed or ""),
-      str(mixed))
+    gen.CARD_PROMPTS[_at] = saved
+check("a plan that lit one card of an ordinary pair differently would refuse "
+      "to run",
+      mixed is not None and "mixes light buckets" in (mixed or "")
+      and "evening" in (mixed or ""), str(mixed))
+_at = [r[0] for r in gen.CARD_PROMPTS].index("lv17a")
+saved = gen.CARD_PROMPTS[_at]
+gen.CARD_PROMPTS[_at] = (saved[0], "bright", saved[2])
+try:
+    allowed = refuses(cfg)
+finally:
+    gen.CARD_PROMPTS[_at] = saved
+check("  while a contrast step may be lit however its meaning asks",
+      allowed is None, str(allowed))
 
 
 print("\n--- the manifest: recipes, idempotency, a full redraw ---")
@@ -924,12 +1002,12 @@ try:
         check("  with a pre-v5 manifest on disk that is all forty-nine",
               text.count("--- ") == 49, text.splitlines()[0])
         check("    each under its bucket's band",
-              text.count("bright: luma 110-225") == 3
+              text.count("bright: luma 110-225") == 5
               and text.count("bright: luma 18-225") == 1
-              and text.count("mid: luma 55-135") == 28
+              and text.count("mid: luma 55-135") == 25
               and text.count("mid: luma 38-135") == 2
               and text.count("mid: luma 30-135") == 1
-              and text.count("dark: luma") == 14, text.splitlines()[0])
+              and text.count("dark: luma") == 15, text.splitlines()[0])
         code, text = run(["--only", "lv06b,lv18a", "--dry-run"])
         check("--only draws exactly the frames named — calibration first",
               code == 0 and text.count("--- ") == 2 and "lv06b" in text
