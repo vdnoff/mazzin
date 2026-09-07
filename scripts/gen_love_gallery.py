@@ -37,28 +37,37 @@ inside the middle 70 percent of the frame. Four frames stay dark because
 their subject is dark — a nebula, falling stars, embers, a twilight road —
 and each carries its own luma floor.
 
---- v3: the palette, and calibration mode -------------------------------------
+--- v4: the zodiac style, verbatim, and light per frame -----------------------
 
-v1 was night-dark and v2 overshot to washed pastel: the whole v2 gallery
-measured luma 86 to 200, median 172, with saturation down to 76. v3 asks for
-rich golden hour — warm low sun, deep saturated colour, real contrast — and
-the base suffix says so. The per-frame scene words are v2's: the light is
-still dawn and golden hour, only the treatment changes.
+v1 was night-dark, v2 washed pastel, v3 oil-paint mush, and the cause was
+the same each time: a new set of style words in the suffix. The gallery the
+owner approves of is the zodiac one, and its generator lives on the server
+outside this repo (~/mazzin_gallery_v3/gen_zodiac.py). Its style string is
+ZODIAC_STYLE below, character for character, and the love gallery uses that
+and nothing else: no invented adjectives, ever again.
 
-The palette is versioned apart from the prompt, so changing it does NOT
-invalidate the manifest. PALETTES holds the suffix each version was drawn
-with; RECORDED_PALETTE is the version the manifest's frames were drawn
-under, DRAW_PALETTE the version a draw uses now. A record is current when
-it matches the frame's recipe under either — so a plain run after a palette
-change draws nothing, and the v2 frames stay on disk until the new palette
-has been looked at. That is what `--only` is for:
+That string bans people, faces and hands, so every scene is objects,
+symbols and landscapes, the way the zodiac cards are — two crescent moons
+curving into a heart rather than two hands. And it asks for a well-lit
+subject with every detail visible, so the zodiac generator's EXPOSURE_WORDS
+guard is ported: a scene that says dark, dim, night, silhouette, candlelit
+and so on is refused at plan time. The dark bucket's darkness lives in
+named colours instead — a deep indigo sky, an ember glow — the way zk1b
+(звездна нощ) and bd4a are drawn: dark frames, brightly lit subjects.
 
-    python3 scripts/gen_love_gallery.py --only lv07a,lv12b,lv18a
+The light still lives per frame, in three buckets — bright, mid, dark —
+with every pair and every four-up in one bucket, so no option wins by
+glowing, and each bucket is judged on its own band, taken off the zodiac
+frames that sit in it.
 
-redraws exactly the frames named under DRAW_PALETTE and records them under
-it — their recipes are bumped, nobody else's is. When the palette is
-approved, set RECORDED_PALETTE to it: every frame still recorded under the
-old one goes stale and the next plain run redraws the rest.
+The palette is still versioned apart from the prompt (PALETTES,
+RECORDED_PALETTE, DRAW_PALETTE), and `--only` still draws exactly the
+frames it names:
+
+    python3 scripts/gen_love_gallery.py --only lv06b,lv02b,lv18a
+
+v4 bumps every recipe, so a plain run would redraw all 46; calibrate with
+`--only` first. Nothing draws on its own — no test, no deploy.
 
 --- the manifest, and what a rerun does ----------------------------------------
 
@@ -76,19 +85,19 @@ The placeholders scripts/gen_love_placeholders.py writes are never recorded
 here, which is what lets this script paint over them on its first run and
 leave the real art alone on every run after.
 
---- the band --------------------------------------------------------------------
+--- the bands, one per light bucket --------------------------------------------
 
-A band, not a floor, because both bad runs are on record. v1's gloom: every
-frame between luma 25 and 62, muddy. v2's wash: 34 of 46 frames above luma
-160 and, among the rest, frames that were bright without being coloured —
-lv14b at luma 156 with saturation 132, lv07b at 158 and 119. So a frame is
-rejected when its mean luma is under 65 (gloom), over 160 (wash), or over
-130 with saturation under 150 (bright but pale, the v2 signature). Rich
-golden hour sits at luma 90 to 150 with saturation well over 150. A frame
-whose subject is genuinely dark is judged under its own floor, named per
-frame below; the ceiling and the wash rule still apply to it. The numbers
-are printed per frame, so a rejection can be read against the thresholds
-without rerunning anything.
+Three luma bands, taken off the approved zodiac frames that sit in each
+bucket. Dark: night and moon cards measure 19 to 65 there, so 15 to 75.
+Mid: first light, the wave, the still lake measure 84 to 117, so 55 to
+135. Bright: radiant sun 147, open sky 168, feather 177, above the clouds
+201, pastel skies 210, so 110 to 225 — and those bright frames sit at
+saturation 27 to 77, so the bright band asks for colour only above 20; a
+pale sky is what the approved gallery looks like, not a defect. Every band
+keeps the spread floor (the zodiac frames never go under 14) and the
+greyscale catch. A frame named in MIN_LUMA_BY_FRAME draws under its own
+floor inside its bucket's band. The numbers are printed per frame, so a
+rejection can be read against the thresholds without rerunning anything.
 
 A frame is also held under 120KB: the WebP is re-encoded a step at a time
 down to a floor quality, and a frame that cannot get under is a failure
@@ -119,11 +128,11 @@ MANIFEST = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 # server's own .env when it is run from there.
 ENV_FILES = (os.path.join(ROOT, ".env"), os.path.expanduser("~/mazzin/.env"))
 
-# Bumped when every frame has to be drawn again regardless of its prompt —
-# a new geometry. It is part of every recipe. A new PALETTE is not this: the
-# palette is versioned on its own, below, so it can be calibrated on a few
-# frames before the rest are redrawn.
-RECIPE_VERSION = "v2"
+# Bumped when every frame has to be drawn again regardless of its prompt.
+# v4: the light moved into the scene words; v4.1: the zodiac style string
+# and the exposure guard, every scene rewritten — so every frame is stale.
+# Calibrate with --only before a plain run.
+RECIPE_VERSION = "v4.1"
 
 # --- geometry ------------------------------------------------------------------
 #
@@ -195,119 +204,195 @@ MAX_BYTES = 120 * 1024
 # Every version a record on disk may have been drawn under is kept, verbatim:
 # a record is checked against the recipe of the palette it was drawn with,
 # and that recipe needs the text.
+#
+# The zodiac gallery's style string, from the server's own generator
+# (~/mazzin_gallery_v3/gen_zodiac.py), character for character. Its
+# constraint list is the constraint list — the old "no close-up faces"
+# tail is gone with it. Not to be edited: three versions of invented style
+# words produced three rejected galleries, and this is the string the
+# approved one was drawn with.
+ZODIAC_STYLE = (
+    "Cinematic celestial art, painterly photographic hybrid, rich saturated "
+    "colour, luminous, well-lit subject, every detail clearly visible, subtle "
+    "silver star grain, vertical portrait composition centered and readable "
+    "at thumbnail size. No text, no letters, no numbers, no people, no faces, "
+    "no hands, no watermark, no logo, no frame."
+)
 PALETTES = {
-    "v2": (", painterly dreamy style, soft luminous palette — dawn sky, "
-           "golden hour or airy pastel light — with warm gold accents, "
-           "gentle glow, {guidance}, no text, no watermark, no close-up "
-           "faces"),
-    "v3": (", painterly style with rich color depth, warm golden-hour "
-           "light, low sun, long soft shadows, deep saturated amber-and-teal "
-           "palette, luminous but moody, {guidance}, no text, no watermark, "
-           "no close-up faces"),
+    "v4": ", {guidance}. " + ZODIAC_STYLE,
 }
 # What the manifest's frames were drawn under, and what a draw uses now.
-# Different while the new palette is being calibrated on a few frames;
-# set RECORDED_PALETTE to DRAW_PALETTE once it is approved and the rest of
-# the gallery goes stale.
-RECORDED_PALETTE = "v2"
-DRAW_PALETTE = "v3"
+# The same while no palette is being calibrated; when one is, set
+# DRAW_PALETTE to it and calibrate with --only, then set RECORDED_PALETTE
+# to it once approved and the rest of the gallery goes stale.
+RECORDED_PALETTE = "v4"
+DRAW_PALETTE = "v4"
 STYLE_SUFFIX = PALETTES[DRAW_PALETTE]
+
+# --- the exposure guard, ported from the zodiac generator -------------------
+#
+# The style asks for a well-lit subject with every detail clearly visible,
+# and a scene word that asks for the opposite wins over the style every
+# time — that is how v1 came back as gloom. So the zodiac generator refuses
+# a scene that carries one of these, and this one does too. The list is the
+# zodiac generator's own, verbatim and in its order, with five of this
+# file's additions appended after it. Darkness is said in colour instead: a
+# deep indigo sky, an ember glow, a moon — the subject stays lit. Plain
+# "candle" and "candles" are not on the list, only candlelit and
+# candlelight: a candle is an object, and an object can be lit.
+ZODIAC_EXPOSURE_WORDS = (
+    "dark", "darkly", "dim", "dimly", "moody", "moodily", "shadow",
+    "shadowed", "shadowy", "low-key", "lowkey", "dramatic", "dramatically",
+    "intimate", "candlelit", "candlelight", "atmospheric", "gloomy", "murky",
+    "sombre", "somber", "night", "nighttime", "dusk", "twilight", "unlit",
+    "underexposed", "silhouette", "noir", "smoky", "hazy",
+)
+EXPOSURE_WORDS = ZODIAC_EXPOSURE_WORDS + (
+    "darkness", "midnight", "nocturnal", "silhouettes", "candle-lit",
+)
+# And the style's own bans, as words a scene must not use: a scene that
+# names a person or a hand is asking the model to break the constraint it
+# was just given.
+SUBJECT_WORDS = (
+    "people", "person", "couple", "figure", "figures", "face", "faces",
+    "hand", "hands", "fingers", "fishermen", "man", "woman", "child",
+    "someone", "silhouette", "silhouettes",
+)
+_GUARD = re.compile(r"\b(%s)\b" % "|".join(
+    re.escape(w) for w in EXPOSURE_WORDS + SUBJECT_WORDS), re.IGNORECASE)
+
+
+def guard(subject):
+    """The banned words a scene carries, or an empty list."""
+    return sorted({m.group(1).lower() for m in _GUARD.finditer(subject)})
+
 
 # --- the plan ------------------------------------------------------------------
 #
-# The 44 cards, in walk order, and the two interstitial frames. Most scenes
-# happen at dawn, golden hour or in bright soft daylight; the four that stay
-# dark are the ones whose subject is dark, and they are named again in
-# MIN_LUMA_BY_FRAME.
+# The 44 cards, in walk order, and the two interstitial frames, each with
+# its light bucket and its scene words. The light is IN the scene words
+# and the bucket is the band the frame is judged on. Every pair and every
+# four-up sits in one bucket, so the two or four options a reader compares
+# are lit alike: bright with bright, mid with mid, dark with dark. Eighteen
+# bright, fourteen mid, fourteen dark. No scene names a person, a face or a
+# hand, and no scene asks for darkness: a dark frame is a deep indigo sky or
+# an ember glow with a brightly lit subject in it, like the zodiac cards.
+
+BRIGHT, MID, DARK = "bright", "mid", "dark"
 
 CARD_PROMPTS = [
-    ("lv01a", "spark of golden light leaping between two reaching hands, "
-              "bright dawn sky behind"),
-    ("lv01b", "one candle lighting a second candle on a sunlit windowsill, "
-              "soft morning light"),
-    ("lv02a", "couple silhouettes strolling a city square strung with lights "
-              "at golden hour"),
-    ("lv02b", "two cups of tea by a rain-streaked window, folded blanket, "
-              "pale morning light"),
-    ("lv03a", "two hands with interlaced fingers in warm golden sunlight"),
-    ("lv03b", "handwritten letter with a wax heart seal on a sunlit linen "
-              "table"),
-    ("lv04a", "small star pendant resting in an open palm, soft daylight"),
-    ("lv04b", "brass key tied with red thread on a pale wooden table, morning "
-              "light"),
-    ("lv05a", "two chairs facing each other by a bright window, warm lamp "
-              "between them"),
-    ("lv05b", "empty park bench at dawn with room for two, pink and gold sky"),
-    ("lv05c", "two silhouettes laughing together at a sunlit kitchen table, "
-              "light spilling in"),
-    ("lv05d", "two figures walking shoulder to shoulder down a tree-lined "
-              "lane in golden hour light"),
-    ("lv06a", "two trees with intertwined crowns in a sunlit meadow, airy "
-              "pastel sky"),
-    ("lv06b", "two birds flying side by side across a bright open sky at "
-              "dawn"),
-    ("lv07a", "candlelit table on a rooftop at golden hour, the sky glowing "
-              "peach and gold"),
-    ("lv07b", "sunrise from a mountain peak, two backpacks resting on the "
-              "rocks, golden light"),
-    ("lv07c", "a folded letter left on a pillow in soft morning light"),
-    ("lv07d", "two silhouettes dancing in a bright kitchen in daylight, sun "
-              "through the window"),
-    ("lv08a", "two silhouettes dancing in a light rain under a street lamp "
-              "at golden hour, wet pavement shining"),
-    ("lv08b", "two coffee cups on the same table in morning light, a wall "
-              "calendar behind"),
-    ("lv09a", "paper plane gliding across a pastel dawn sky toward a lit "
-              "window"),
-    ("lv09b", "two shadows cast on a sunlit door, a key turning in the lock"),
-    ("lv10a", "nest with two golden eggs among branches in soft spring "
-              "light"),
-    ("lv10b", "open door leading out to a bright sunlit garden"),
-    ("lv10c", "long table laid for guests in a sunlit garden, golden "
-              "afternoon light"),
-    ("lv10d", "hammock for two strung between trees in a leafy garden, "
-              "dappled sunlight"),
-    ("lv11a", "lightning over a stormy sea under a bright dramatic sky, "
-              "sunlight breaking through"),
-    ("lv11b", "glowing embers in a hearth, warm amber light radiating onto "
-              "stone, deep red and gold"),
-    ("lv12a", "figure leaping toward an outstretched hand over a gap, bright "
-              "sky behind"),
-    ("lv12b", "stone bridge with a double railing over a calm river in "
-              "morning mist and sunlight"),
-    ("lv13a", "glass snow globe with a tiny winter scene inside, on a sunlit "
-              "shelf"),
-    ("lv13b", "blank white page and a quill on a desk at dawn, soft golden "
-              "light"),
-    ("lv14a", "couple silhouettes dancing in a sunlit square, bright festive "
-              "bunting"),
-    ("lv14b", "two under one blanket on a rooftop at golden hour, city far "
-              "below in haze"),
-    ("lv15a", "umbrella held over another silhouette in a bright spring "
-              "rain, sun breaking through"),
-    ("lv15b", "kite launched by two hands into a bright open sky"),
-    ("lv16a", "two fishermen on a misty pier at sunrise, still water, pale "
-              "gold light"),
-    ("lv16b", "two glasses of wine and an unfinished conversation on a "
-              "terrace at golden hour"),
-    ("lv16c", "two figures reading side by side on a sofa in soft afternoon "
-              "light"),
-    ("lv16d", "two figures in a parked car on a hill watching the sunset, "
-              "warm glowing sky"),
-    ("lv17a", "road through soft hills toward a horizon with two pale moons "
-              "in a twilight sky"),
-    ("lv17b", "oak with initials carved into the bark, gold in the grooves, "
-              "sunlight through leaves"),
-    ("lv18a", "heart-shaped nebula glowing in deep space, warm gold and rose "
-              "against the dark"),
-    ("lv18b", "two hands forming a heart against a bright full moon in a "
-              "pale evening sky"),
+    # 1 spark — dark
+    ("lv01a", DARK, "a bright golden spark arcing between two reaching tree "
+                    "branches, deep indigo starry sky behind"),
+    ("lv01b", DARK, "one lit candle lighting a second candle on a table, "
+                    "both flames bright and clear, deep indigo backdrop"),
+    # 2 evening — mid
+    ("lv02a", MID, "a small city square strung with warm string lights under "
+                   "a soft pastel evening sky"),
+    ("lv02b", MID, "two cups of tea by a rain-streaked window, folded "
+                   "blanket, soft grey afternoon light"),
+    # 3 gesture — bright
+    ("lv03a", BRIGHT, "two woven ribbons of gold and rose intertwined into "
+                      "one knot in bright sunlight, pale sky behind"),
+    ("lv03b", BRIGHT, "handwritten letter with a wax heart seal on a sunlit "
+                      "linen table, bright daylight"),
+    # 4 gift — bright
+    ("lv04a", BRIGHT, "small star pendant resting on a folded velvet cloth "
+                      "in bright daylight"),
+    ("lv04b", BRIGHT, "brass key tied with red thread on a pale wooden table "
+                      "in bright morning light"),
+    # 5 conflict — mid, four-up
+    ("lv05a", MID, "two chairs facing each other in a quiet room, a warm "
+                   "lamp glowing between them, soft evening light"),
+    ("lv05b", MID, "empty park bench at first light with room for two, soft "
+                   "pastel sky"),
+    ("lv05c", MID, "two teacups tipped toward each other beside a plate of "
+                   "shared pastries, soft afternoon light through a kitchen "
+                   "window"),
+    ("lv05d", MID, "a tree-lined lane with two sets of footprints side by "
+                   "side in soft late-afternoon light"),
+    # 6 closeness — bright
+    ("lv06a", BRIGHT, "two trees with intertwined crowns in a sunlit meadow, "
+                      "bright open sky"),
+    ("lv06b", BRIGHT, "two birds flying side by side across a bright open "
+                      "sky at dawn"),
+    # 7 romance — bright, four-up
+    ("lv07a", BRIGHT, "candles on a rooftop table at bright sunrise, clear "
+                      "morning sky"),
+    ("lv07b", BRIGHT, "sunrise from a mountain peak, two backpacks resting "
+                      "on the rocks, bright golden light"),
+    ("lv07c", BRIGHT, "a folded letter left on a pillow in bright morning "
+                      "sun"),
+    ("lv07d", BRIGHT, "a record spinning on a turntable in a bright kitchen, "
+                      "two aprons on hooks, sun through the window"),
+    # 8 rhythm — mid
+    ("lv08a", MID, "a street lamp glowing over wet cobblestones, two "
+                   "umbrellas leaning together, soft amber evening light"),
+    ("lv08b", MID, "two coffee cups on the same table in soft morning light, "
+                   "a wall calendar behind"),
+    # 9 distance — dark
+    ("lv09a", DARK, "paper plane gliding across a deep indigo starry sky "
+                    "toward one warmly lit window"),
+    ("lv09b", DARK, "a front door with two keys on one ring in the lock, a "
+                    "porch lamp glowing, deep indigo evening sky"),
+    # 10 home — bright, four-up
+    ("lv10a", BRIGHT, "nest with two golden eggs among branches in bright "
+                      "spring light"),
+    ("lv10b", BRIGHT, "open door leading out to a bright sunlit garden"),
+    ("lv10c", BRIGHT, "long table laid for guests in a sunlit garden, bright "
+                      "afternoon light"),
+    ("lv10d", BRIGHT, "hammock for two strung between trees in a leafy "
+                      "garden, bright dappled sunlight"),
+    # 11 passion — dark
+    ("lv11a", DARK, "lightning striking a stormy sea under a deep indigo "
+                    "sky, the bolt brightly lit"),
+    ("lv11b", DARK, "glowing embers in a stone hearth, deep red and gold, "
+                    "the ember glow lighting the stones"),
+    # 12 trust — bright
+    ("lv12a", BRIGHT, "a bridge of light meeting mid-air between two cliffs, "
+                      "bright sky behind"),
+    ("lv12b", BRIGHT, "stone bridge with a double railing over a calm river "
+                      "in bright morning sunlight"),
+    # 13 past — mid
+    ("lv13a", MID, "glass snow globe with a tiny winter scene inside, on a "
+                   "shelf in soft window light"),
+    ("lv13b", MID, "blank white page and a quill on a desk at first light, "
+                   "soft pastel dawn"),
+    # 14 public — dark
+    ("lv14a", DARK, "strings of glowing lights over a square under a deep "
+                    "indigo sky, two dance shoes on the cobblestones"),
+    ("lv14b", DARK, "one blanket spread on a rooftop under a deep indigo "
+                    "sky, city lights glittering far below"),
+    # 15 care — bright
+    ("lv15a", BRIGHT, "one umbrella sheltering a small potted flower in a "
+                      "bright spring rain, sun breaking through"),
+    ("lv15b", BRIGHT, "a kite rising into a bright open sky, its string "
+                      "trailing to the ground"),
+    # 16 silence — mid, four-up
+    ("lv16a", MID, "two fishing rods resting side by side on a misty pier at "
+                   "soft early morning, still water"),
+    ("lv16b", MID, "two glasses of wine on a terrace table under a soft "
+                   "amber evening sky, one candle"),
+    ("lv16c", MID, "two open books resting side by side on a sofa in soft "
+                   "afternoon light"),
+    ("lv16d", MID, "a parked car on a hill facing a soft glowing sunset sky"),
+    # 17 future — dark
+    ("lv17a", DARK, "road through indigo hills toward a horizon with two "
+                    "pale moons glowing in a deep indigo sky"),
+    ("lv17b", DARK, "an oak with initials carved into the bark, gold glowing "
+                    "in the grooves, deep indigo starry sky behind"),
+    # 18 symbol — dark
+    ("lv18a", DARK, "heart-shaped nebula glowing gold and rose in deep "
+                    "indigo space"),
+    ("lv18b", DARK, "two crescent moons curving toward each other into a "
+                    "heart shape, glowing in a deep indigo sky"),
 ]
 
 TALL_PROMPTS = [
-    ("int1", "night sky with two falling stars over a faint horizon glow"),
-    ("int2", "two candles, one lighting the other, on a table in soft dawn "
-             "light"),
+    ("int1", DARK, "two falling stars streaking across a deep indigo sky "
+                   "over a faint horizon glow"),
+    ("int2", DARK, "two candles, one lighting the other, bright flames "
+                   "against a deep indigo backdrop"),
 ]
 
 
@@ -357,8 +442,9 @@ def frames(cfg):
     """
     owned = owned_ids(cfg)
     kind_of = dict(owned)
-    subjects = dict(CARD_PROMPTS + TALL_PROMPTS)
-    planned = [i for i, _s in CARD_PROMPTS + TALL_PROMPTS]
+    subjects = {i: s for i, _b, s in CARD_PROMPTS + TALL_PROMPTS}
+    buckets = {i: b for i, b, _s in CARD_PROMPTS + TALL_PROMPTS}
+    planned = [i for i, _b, _s in CARD_PROMPTS + TALL_PROMPTS]
     if len(set(planned)) != len(planned):
         raise SystemExit("a frame id is planned twice")
     missing = sorted(set(kind_of) - set(planned))
@@ -366,18 +452,32 @@ def frames(cfg):
     if missing or extra:
         raise SystemExit("plan and config disagree — no prompt for %s, "
                          "no config image for %s" % (missing, extra))
-    tall = {i for i, _s in TALL_PROMPTS}
+    tall = {i for i, _b, _s in TALL_PROMPTS}
     wrong = [i for i, k in owned if (k == "interstitial") != (i in tall)]
     if wrong:
         raise SystemExit("interstitial frames and the preview-only ids "
                          "disagree: %s" % wrong)
+    # No scene may ask for what the style forbids: darkness, or a person.
+    banned = {i: guard(s) for i, s in subjects.items() if guard(s)}
+    if banned:
+        raise SystemExit("scenes carry words the zodiac style refuses: %s"
+                         % banned)
+    # One bucket per step: the options a reader compares are lit alike.
+    for step in cfg["swipe"]["steps"]:
+        ids = [i["id"] for p in step["pairs"] for i in p["images"]
+               if i["id"] in buckets]
+        if len({buckets[i] for i in ids}) > 1:
+            raise SystemExit("step %s mixes light buckets: %s"
+                             % (step.get("id"),
+                                {i: buckets[i] for i in ids}))
     plan = []
     for frame_id, kind in owned:
         plan.append({"id": frame_id, "kind": kind,
+                     "bucket": buckets[frame_id],
                      "subject": subjects[frame_id],
                      "prompt": prompt_for(subjects[frame_id], kind),
                      "size": KINDS[kind]["size"], "api_size": API_PORTRAIT,
-                     "band": band_for(frame_id)})
+                     "band": band_for(frame_id, buckets[frame_id])})
     return plan
 
 
@@ -525,51 +625,60 @@ def encode(img, ceiling=MAX_BYTES):
 
 # --- the floor -----------------------------------------------------------------
 
-# Mean luma below this is v1's gloom, or a frame that came back black. The
-# whole v1 gallery measured 25 to 62; a golden-hour frame with a low sun in
-# it reads 90 and up.
-MIN_MEAN_LUMA = 65.0
-# And above this it is v2's wash: 34 of the 46 v2 frames measured over 160,
-# and the review called the run washed. A rich golden-hour frame does not
-# get there.
-MAX_MEAN_LUMA = 160.0
-# One flat wash scores fine on luma and is still not a picture.
+# One flat wash scores fine on luma and is still not a picture. The approved
+# zodiac frames never measure under 14.
 MIN_STDDEV = 12.0
-# A greyscale render fails here and nowhere else. HSV saturation, 0-255.
-MIN_SATURATION = 60.0
-# The v2 signature inside the luma band: bright without being coloured.
-# lv14b came back at luma 156 with saturation 132, lv07b at 158 and 119,
-# lv02a at 161 and 132. So past this luma a frame has to be at least this
-# saturated, and the rich frames of the same run were — lv05c at 130 and
-# 201, lv07a at 155 and 184.
-WASH_LUMA = 130.0
-WASH_MIN_SATURATION = 150.0
 
-BAND = {"min_luma": MIN_MEAN_LUMA, "max_luma": MAX_MEAN_LUMA,
-        "min_sd": MIN_STDDEV, "min_sat": MIN_SATURATION,
-        "wash_luma": WASH_LUMA, "wash_sat": WASH_MIN_SATURATION}
+# One band per light bucket, each read off the approved zodiac frames that
+# sit in it (HSV saturation, 0-255):
+#
+#   dark    night and moon cards: bd4a 19, mo7b 30, mn9a 34, sa12b 50,
+#           es13c 64 — so 15 to 75, and still coloured (sat 60 and up;
+#           those measure 111 to 231)
+#   mid     first light 90, the wave 114, the still lake 108, sy8d 114,
+#           rising sun 84 — so 55 to 135, coloured above 50
+#   bright  radiant sun 147, open sky 168, feather 177, above the clouds
+#           201, pastel skies 210 — so 110 to 225, and only coloured above
+#           20: those five sit at saturation 27 to 77, and a pale sky is
+#           what the approved gallery looks like
+#
+# Below the dark floor is a black render, above the bright ceiling a blank
+# page; between buckets the bands overlap on purpose, because a frame is
+# judged in its own bucket and a dusk scene at 70 is right in mid and
+# right in dark.
+BANDS = {
+    "dark": {"min_luma": 15.0, "max_luma": 75.0, "min_sd": MIN_STDDEV,
+             "min_sat": 60.0},
+    "mid": {"min_luma": 55.0, "max_luma": 135.0, "min_sd": MIN_STDDEV,
+            "min_sat": 50.0},
+    "bright": {"min_luma": 110.0, "max_luma": 225.0, "min_sd": MIN_STDDEV,
+               "min_sat": 20.0},
+}
+# The band a frame with no bucket is judged on — the tests' synthetic frames
+# and nothing in the plan, which always carries one.
+BAND = BANDS["mid"]
+MIN_MEAN_LUMA = BAND["min_luma"]
+MAX_MEAN_LUMA = BAND["max_luma"]
+MIN_SATURATION = BAND["min_sat"]
 
-# Frames whose subject is deliberately dark, and the luma floor each is
-# judged against instead of MIN_MEAN_LUMA. Everything else in the band is
-# shared. Four of forty-six, under the review's cap of six: a nebula in deep
-# space, falling stars at night, embers in a hearth, a twilight road under
-# two moons. Each number is under what its scene measures and above a
-# near-black render, which comes back in the single digits — so the frame
-# the floor exists to catch is still caught. A frame named here draws under
-# its own number and nothing else moves.
+# Frames whose subject is darker than their bucket's floor, and the luma
+# floor each is judged against instead. Inside the bucket's band otherwise.
+# Two of forty-six: a nebula on black space lit only by itself, and falling
+# stars on a night sky — both can honestly come back under the dark
+# bucket's 15. Each number is still above a near-black render, which comes
+# back in the single digits.
 MIN_LUMA_BY_FRAME = {
-    "lv11b": 20.0,   # embers: the first gallery measured 15 and 27
-    "lv17a": 40.0,   # twilight, not night: the sky still holds light
-    "lv18a": 25.0,   # a nebula on black, lit by its own gold and rose
-    "int1": 25.0,    # falling stars over a horizon glow
+    "lv18a": 10.0,   # a nebula on black, lit by its own gold and rose
+    "int1": 10.0,    # falling stars over a faint horizon glow
 }
 
 
-def band_for(frame_id):
-    """The bounds one frame is judged against: the shared band, or the
-    shared band with this frame's own luma floor in it."""
+def band_for(frame_id, bucket="mid"):
+    """The bounds one frame is judged against: its bucket's band, or that
+    band with this frame's own luma floor in it."""
+    band = BANDS[bucket]
     floor = MIN_LUMA_BY_FRAME.get(frame_id)
-    return BAND if floor is None else dict(BAND, min_luma=floor)
+    return band if floor is None else dict(band, min_luma=floor)
 
 
 def measure(img):
@@ -594,14 +703,9 @@ def verdict(stats, bounds=BAND):
     if stats is None:
         return True, "unmeasured"
     mean, sd, sat = stats
-    washed = mean > bounds["wash_luma"] and sat < bounds["wash_sat"]
     ok = (bounds["min_luma"] <= mean <= bounds["max_luma"]
-          and sd >= bounds["min_sd"] and sat >= bounds["min_sat"]
-          and not washed)
-    note = "luma %.1f sd %.1f sat %.1f" % (mean, sd, sat)
-    if washed:
-        note += " washed"
-    return ok, note
+          and sd >= bounds["min_sd"] and sat >= bounds["min_sat"])
+    return ok, "luma %.1f sd %.1f sat %.1f" % (mean, sd, sat)
 
 
 def size_ok(img, size):
@@ -664,10 +768,11 @@ def recipe(frame, palette=None):
     """
     prompt = (frame["prompt"] if palette is None
               else prompt_for(frame["subject"], frame["kind"], palette))
-    out = "%s|%s|%s|%dx%d" % (RECIPE_VERSION, prompt, frame["api_size"],
-                              frame["size"][0], frame["size"][1])
+    out = "%s|%s|%s|%dx%d|%s" % (RECIPE_VERSION, prompt, frame["api_size"],
+                                 frame["size"][0], frame["size"][1],
+                                 frame.get("bucket", "mid"))
     floor = (frame.get("band") or BAND)["min_luma"]
-    if floor != MIN_MEAN_LUMA:
+    if floor != BANDS[frame.get("bucket", "mid")]["min_luma"]:
         out += "|min_luma=%g" % floor
     return out
 
@@ -749,10 +854,10 @@ def main(argv=None):
 
     if args.dry_run:
         for frame in plan:
-            print("\n--- %s (%s, %dx%d via %s, luma floor %g) ---"
+            print("\n--- %s (%s, %dx%d via %s, %s: luma %g-%g) ---"
                   % (frame["id"], frame["kind"], frame["size"][0],
-                     frame["size"][1], frame["api_size"],
-                     frame["band"]["min_luma"]))
+                     frame["size"][1], frame["api_size"], frame["bucket"],
+                     frame["band"]["min_luma"], frame["band"]["max_luma"]))
             print(frame["prompt"])
         print("\ndry run: nothing called, nothing written")
         return 0
@@ -819,6 +924,7 @@ def main(argv=None):
             "bytes": len(data),
             "size": "%dx%d" % frame["size"],
             "kind": frame["kind"],
+            "bucket": frame["bucket"],
             "palette": DRAW_PALETTE,
             "webp_quality": quality,
             "cost_usd": round(price, 4),
