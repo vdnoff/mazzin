@@ -621,3 +621,6 @@ bottom.
 
 ## 2026-09-07 — claude/love-final-gallery
 - love: final gallery + gender step + full labels
+
+## 2026-09-07 — claude/love-contrast-steps
+- love gallery: contrast steps
