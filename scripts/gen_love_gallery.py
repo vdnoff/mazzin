@@ -327,8 +327,10 @@ def guard(subject):
 # its light bucket and its scene words. The light is IN the scene words
 # and the bucket is the band the frame is judged on. Every pair and every
 # four-up sits in one bucket, so the two or four options a reader compares
-# are lit alike: bright with bright, mid with mid, dark with dark. Four
-# bright, twenty-eight mid, fourteen dark, as the v4 draws measured.
+# are lit alike: bright with bright, mid with mid, dark with dark — except
+# on the five CONTRAST_STEPS below, where the light IS the choice and the
+# options are lit apart on purpose. Six bright, twenty-eight mid, fifteen
+# dark, with the three gender frames.
 #
 # Seventeen scenes are v1's compositions, restored in v5: the ones that
 # showed a couple, a silhouette or a pair of hands. Each is written as
@@ -340,12 +342,24 @@ def guard(subject):
 
 BRIGHT, MID, DARK = "bright", "mid", "dark"
 
+# The steps whose options differ in light on purpose, because the light is
+# what is being chosen: a night spark against a candle lit in daylight
+# (1, искра/пламък); an evening of candles and a lamp-lit dance against a
+# sunrise and a morning letter (7, романтика); cold storm blues against
+# warm ember reds, both dark (11, страст); a dusk-toned memory against a
+# dawn page (13, минало/чист лист); a night road against an oak in
+# afternoon sun (17, бъдеще). Keyed by step id, valued by the walk number
+# the frame ids carry. Everywhere else the options a reader compares are
+# lit alike, and a step outside this table that mixes buckets is refused.
+CONTRAST_STEPS = {"spark": 1, "romance": 7, "passion": 11, "past": 13,
+                  "future": 17}
+
 CARD_PROMPTS = [
     # 1 spark — dark
     ("lv01a", DARK, "a bright golden spark leaping between two reaching hands, "
                     "deep indigo starry sky behind"),
-    ("lv01b", DARK, "one lit candle lighting a second candle on a table, "
-                    "both flames bright and clear, deep indigo backdrop"),
+    ("lv01b", BRIGHT, "one candle being lit from a match on a sunlit table, bright "
+                      "daylight through a window, the new flame clear"),
     # 2 evening — mid
     ("lv02a", MID, "couple silhouettes strolling a small city square strung with "
                    "warm string lights under a soft pastel evening sky"),
@@ -376,14 +390,15 @@ CARD_PROMPTS = [
     ("lv06b", MID, "two birds flying side by side across a bright open "
                       "sky at dawn"),
     # 7 romance — mid, four-up (lv07b drew 78-90, lv07d 82-84)
-    ("lv07a", MID, "candles on a rooftop table at bright sunrise, clear "
-                      "morning sky"),
+    ("lv07a", DARK, "candles glowing on a rooftop table, city lights far below, "
+                    "deep indigo evening sky"),
     ("lv07b", MID, "sunrise from a mountain peak, two backpacks resting "
                       "on the rocks, bright golden light"),
     ("lv07c", MID, "a folded letter left on a pillow in bright morning "
                       "sun"),
-    ("lv07d", MID, "two silhouettes dancing in a bright kitchen, sun through the "
-                   "window, a record spinning on a turntable"),
+    ("lv07d", DARK, "two silhouettes dancing in a kitchen lit by one warm lamp, a "
+                    "record spinning on a turntable, deep indigo evening in the "
+                    "window"),
     # 8 rhythm — mid
     ("lv08a", MID, "two silhouettes dancing in a light rain under a glowing "
                    "street lamp, soft amber evening light, wet cobblestones "
@@ -404,9 +419,9 @@ CARD_PROMPTS = [
     ("lv10d", MID, "hammock for two strung between trees in a leafy "
                       "garden, bright dappled sunlight"),
     # 11 passion — dark
-    ("lv11a", DARK, "lightning striking a stormy sea under a deep indigo "
-                    "sky, the bolt brightly lit"),
-    ("lv11b", DARK, "glowing embers in a stone hearth, deep red and gold, "
+    ("lv11a", DARK, "lightning striking a stormy sea in cold steel-blue and "
+                    "indigo, the bolt brightly lit"),
+    ("lv11b", DARK, "glowing embers in a stone hearth, warm deep red and gold, "
                     "the ember glow lighting the stones"),
     # 12 trust — mid (both drew 83-96)
     ("lv12a", MID, "a figure leaping toward an outstretched hand over a gap "
@@ -414,10 +429,11 @@ CARD_PROMPTS = [
     ("lv12b", MID, "stone bridge with a double railing over a calm river "
                       "in bright morning sunlight"),
     # 13 past — mid
-    ("lv13a", MID, "glass snow globe with a tiny winter scene inside, on a "
-                   "shelf in soft window light"),
-    ("lv13b", MID, "blank white page and a quill on a desk at first light, "
-                   "soft pastel dawn"),
+    ("lv13a", DARK, "glass snow globe with a tiny winter scene inside, glowing in "
+                    "soft amber lamplight on a shelf, deep indigo evening window "
+                    "behind"),
+    ("lv13b", BRIGHT, "blank white page and a quill on a desk in bright dawn light, "
+                      "pale sky through the window"),
     # 14 public — dark
     ("lv14a", DARK, "couple silhouettes dancing in a square under strings of "
                     "glowing lights and festive bunting, deep indigo sky"),
@@ -439,8 +455,9 @@ CARD_PROMPTS = [
     # 17 future — dark
     ("lv17a", DARK, "road through indigo hills toward a horizon with two "
                     "pale moons glowing in a deep indigo sky"),
-    ("lv17b", DARK, "an oak with initials carved into the bark, gold glowing "
-                    "in the grooves, deep indigo starry sky behind"),
+    ("lv17b", MID, "an oak with initials carved into the bark, gold glowing in "
+                   "the grooves, warm afternoon sunlight through the leaves, "
+                   "bright sky behind"),
     # 18 symbol — dark
     ("lv18a", DARK, "heart-shaped nebula glowing gold and rose in deep "
                     "indigo space"),
@@ -538,8 +555,11 @@ def frames(cfg):
     if banned:
         raise SystemExit("scenes carry words the zodiac style refuses: %s"
                          % banned)
-    # One bucket per step: the options a reader compares are lit alike.
+    # One bucket per step: the options a reader compares are lit alike —
+    # except on the contrast steps, where being lit apart is the choice.
     for step in cfg["swipe"]["steps"]:
+        if step.get("id") in CONTRAST_STEPS:
+            continue
         ids = [i["id"] for p in step["pairs"] for i in p["images"]
                if i["id"] in buckets]
         if len({buckets[i] for i in ids}) > 1:
