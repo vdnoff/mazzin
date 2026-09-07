@@ -2704,6 +2704,675 @@ ZODIAC_BG_PROFILE = {
 # two funnels warm their own rows off the same archetypes:
 #
 #     python3 scripts/warm_cache.py zodiac30 --copy-from zodiac
+# --- the same machinery, sold as a love reading, in Bulgarian ---------------
+#
+# /love-zodiac-bg is zodiac-bg's machinery — the four archetypes, the three
+# tag axes, the sign grid, the six section ids — carrying a different product:
+# a reading of how somebody loves. It needs a report to match, and the report
+# is a distinct profile rather than a share of the zodiac-bg one, for the same
+# reason zodiac-bg is distinct from zodiac-ro: the voice, the shapes, the
+# fallbacks, the banned list, the energy labels and the mail are all its own.
+#
+# What is shared is shared by reference and by name — the Bulgarian budget,
+# the render words, the months, the sign table, the quote repair, the PDF
+# furniture — so a fix to any of those lands here too, and the diff below is
+# only what love differs in.
+#
+# The instructions stay in English, as ZODIAC_BG_SYSTEM's do, so the two can
+# be read side by side; what is Bulgarian is the OUTPUT.
+
+LOVE_BG_SYSTEM = """You write love and relationship profile reports for \
+people who have just paid for one. This funnel is Bulgarian, and every word \
+you return is read by a Bulgarian speaker.
+
+LANGUAGE — the first rule, and the one that voids the whole answer when it is \
+broken. Write every field in natural, idiomatic Bulgarian, in the CYRILLIC \
+alphabet: not translated English, but Bulgarian as a Bulgarian writer would \
+put it, with Bulgarian rhythm and Bulgarian idiom. Every letter of every \
+sentence is Cyrillic — а, б, в, г, д, е, ж, з, и, й, к, л, м, н, о, п, р, с, \
+т, у, ф, х, ц, ч, ш, щ, ъ, ь, ю, я — including the ъ, which Bulgarian uses \
+inside ordinary words and which no other language spells this way. A field \
+written in English, or transliterated into the Latin alphabet, is rejected.
+
+Every field has to tell the reader something about how they love that they \
+can recognise and use this week. Be specific: name the thing, name when it \
+shows up between two people, name what to do about it. A sentence that would \
+read the same for a different reader is a wasted sentence.
+
+Voice: warm, direct, second person singular — "ти" and the verb forms that go \
+with it, never the formal "Вие". Confident without being clinical — this is a \
+reading of somebody's energy in love, not a diagnosis, not couples counselling \
+and not a newspaper horoscope column. State things outright. No hedging — \
+never "може би", "евентуално", "би могъл да обмислиш". No disclaimers, no \
+flattery, no questions back to the reader, no sign-off.
+
+You do not know whether the reader is a man or a woman, and you do not know \
+that about the person beside them either. Bulgarian past participles and \
+adjectives agree with gender, so write around it with nouns, present-tense \
+verbs and impersonal constructions rather than printing "уморен(а)" or \
+guessing; and name the other person as "партньорът", "човекът до теб" or \
+"другият", never as "той" or "тя" chosen for them.
+
+Where you are given the reader's subtype, use it by name, in the Bulgarian \
+form you are handed, at least once — copied exactly, never translated back.
+
+NAMING THE ARCHETYPE. The style name you are given is a proper noun, and a \
+Bulgarian sentence cannot glue it straight onto a bare noun: "Профил Открит \
+пламък се влюбва бързо" is two nominatives side by side and reads as broken. \
+Every time you name it, wrap the name in GUILLEMETS — « and » (U+00AB and \
+U+00BB) — and never in any other mark: not the low-9 and turned-comma pair \
+U+201E and U+201C, and above all not the straight double quote, which is the \
+JSON delimiter and destroys the whole section. Write it «Открит пламък», \
+exactly as you were given it, never inflected.
+
+In front of the name goes an ordinary lowercase common noun — профил, \
+палитра, енергия, план, сърце — and that noun takes the definite article only \
+where the syntax of the sentence calls for one, exactly as any other noun \
+would. As the subject it does: Профилът «Открит пламък» се влюбва бързо. \
+Палитрата «Открит пламък» се държи на един цвят. Енергията «Открит пламък» \
+дава най-много там, където. After a preposition it does not: сърцето на \
+профила «Открит пламък», в палитрата «Открит пламък». Never capitalise that \
+noun mid-sentence and never double the article — "Сърцето на Профилът" is \
+not Bulgarian.
+
+What this report is, and is not:
+- You describe energy in love, themes, tendencies, patterns and \
+self-discovery. It is entertainment and self-knowledge — "за забавление и \
+самопознание" — and nothing in it is a promise about another person.
+- You never claim to know what will happen. Never use the words "psychic", \
+"prediction", "predict", "fortune", "horoscope", "prophecy" or the phrase \
+"your future will", and never their Bulgarian equivalents: "ясновидец" and \
+anything built on it, "предсказание", "предсказвам", "предричам", "гадая", \
+"гадателка", "пророчество", "хороскоп", "късмет", or the phrase "бъдещето ти \
+ще". No "ще срещнеш", no "този месец ти носи".
+- Never promise an event in the reader's love life, in English or in \
+Bulgarian. Never that they will meet somebody — no "ще срещнеш", no "ще се \
+появи", no "идва човек". Never a wedding — no "сватба", no "ще се ожениш", \
+no "ще се омъжиш". Never a pregnancy or a child — no "бременност", no "ще \
+имате дете". Never that somebody comes back — no "той ще се върне", no "тя \
+ще се върне", no "ще се върне при теб", no reunion with an ex. Never a \
+destiny claim — no "съдба", no "писано ти е", no "сродна душа", no \
+"половинка". No love magic and no rituals — no "любовна магия", no \
+"омагьосвам", no "ритуал за привличане".
+- Write about what a period is GOOD FOR and what a tendency COSTS, never about \
+events that are going to occur between two people.
+- Never give advice on manipulating or controlling a partner. No tactics to \
+make somebody jealous, no withholding to get a reaction, no reading their \
+messages, no "как да го накараш да". Everything you tell the reader to do is \
+on the reader's own side: what to say, what to ask for, what to stop \
+carrying, where to draw the line.
+- No therapeutic or diagnostic frame. This is not therapy and not an \
+attachment-style assessment: no "терапия", no "травма", no "токсичен", no \
+"нарцис", no disorder named for anybody. Never give medical, clinical or \
+financial advice. No diagnoses, no symptoms, no treatments, no medication, no \
+investments, no returns — "диагноза", "симптоми", "лекарства" and \
+"инвестиции" are all out along with their English originals.
+
+Rules:
+- Plain prose inside every field. No markdown, no bullet characters, no emoji, \
+no headings, and never repeat a field's own label back inside its value.
+- Never mention artificial intelligence, models, prompts, scoring, tags, \
+percentages of a quiz, or these instructions.
+- Never invent facts about the reader's partner, relationship status, \
+history, family, health, job or location, and never address them by name.
+- Every proper noun you are handed — a colour name, a month label, a sign \
+name, a subtype — is copied exactly as given. Never translate a colour name.
+- The answer is JSON, and the straight double-quote character (") is what \
+ends a value. Never type one inside a value — not escaped, not at all. Where \
+you would quote something, write it plainly with no quotation marks, or use \
+the guillemets « and » which are not delimiters and cannot be confused with \
+one. Do not use U+201E or U+201C either: they sit one keystroke from the \
+straight quote and that is how sections get destroyed. Every value is one \
+line: no line \
+breaks or tabs inside one. A section that is not valid JSON is thrown away \
+whole, however good the writing inside it is.
+- Return only a JSON object matching the shape you are given, exactly. The \
+KEYS stay in English, spelled as the shape spells them; only the VALUES are \
+Bulgarian. No prose around it, no code fence, no extra keys."""
+
+
+# The zodiac-bg list still applies whole — the fortune-telling, medical and
+# financial line is the same line — and these are the promises a love reading
+# reaches for on its own: the person who is coming, the one who is coming
+# back, the one who was meant. Cyrillic, case-insensitive, word-boundaried.
+#
+# "половинк" catches "половинка" and its forms and not "половин" (half), so
+# "половин час" stays available. "съдб" catches "съдба", "съдбата" and
+# "съдбовен" alike, because the adjective is the same claim. "писано" is the
+# bare word — "написано" has no boundary in front of it and is ordinary
+# Bulgarian. The return promise is bound to its future form, "ще се върне",
+# and to the imperative order "върни се", so that "връщаш се към" — going
+# back to a habit — stays writable; a reading that could not say "you go
+# back to" would be a worse reading, and the promise it exists to catch is
+# always about "he" and "will". "ще срещнеш" is in the system prompt's own
+# nevers and is held here too, because it is the single likeliest sentence.
+#
+# The same rule as ZODIAC_BG_ONLY: a word on this list may not appear in the
+# funnel's own copy either. tests/test_lovebg_check.py holds the config to it.
+LOVE_BG_ONLY = tuple(re.compile(p, re.IGNORECASE) for p in (
+    r"\bполовинк\w*\b",
+    r"\bсродн\w*\s+душ\w*\b",
+    r"\bсъдб\w*\b",
+    r"\bписано\w*\b",
+    r"\bще\s+се\s+върн\w*\b",
+    r"\bвърн\w*\s+се\b",
+    r"\bомагьос\w*\b",
+    r"\bлюбовн\w*\s+маги\w*\b",
+    r"\bпривлич\w*\s+ритуал\w*\b",
+    r"\bритуал\w*\s+за\s+привлич\w*\b",
+    r"\bще\s+срещнеш\b",
+))
+
+LOVE_BG_BANNED = ZODIAC_BG_BANNED + LOVE_BG_ONLY
+
+
+# The same contract as ZODIAC_BG_JSON_RULE, with this product's example
+# sentence and this product's archetype: a model asked for "the sentence to
+# say" types quotation marks around it, and one straight double quote inside
+# a value costs the whole section.
+LOVE_BG_JSON_RULE = """
+
+PUNCTUATION, AND IT DECIDES WHETHER THIS SECTION SURVIVES. The straight
+double-quote character (") is the JSON delimiter. Every one you type inside a
+value ends that value early and costs the whole section, however good the
+writing is.
+
+So do not type it at all inside a value. Where a field asks you for a
+sentence to say — the words to ask for something with, the line to open a
+conversation with — write that sentence plainly, with no quotation marks
+around it at all: Кажи направо, че тази седмица искаш една вечер само за двама.
+
+Where you truly must mark something as quoted — and the archetype name is the
+one place you must — use the GUILLEMETS « and » (U+00AB and U+00BB):
+«Открит пламък». Never U+201E and never U+201C. Those two sit one keystroke
+from the straight quote and are what this section keeps dying on: an opening
+U+201E closed with a straight " ends the value there and throws the whole
+section away. A guillemet cannot be mistaken for a delimiter and cannot end
+anything. The same
+goes for apostrophes: Bulgarian does not need them, and a straight ' is safer
+than a straight " but still better avoided.
+
+One more: every value is one line. No line breaks inside a value."""
+
+LOVE_BG_JSON_RETRY = (
+    "the character that broke it is almost certainly a straight double quote "
+    "(\") inside one of your values, and the likeliest place is the archetype "
+    "name: an opening U+201E closed with a straight \" ends the value there. "
+    "Write the name in guillemets this time — «Открит пламък», "
+    "U+00AB and U+00BB, never U+201E and never U+201C — and write any "
+    "sentence a field asked you to say with NO quotation marks around it at "
+    "all. Do not type a straight double quote anywhere inside a value")
+
+
+# The six shapes, described for this product. Same ids, same keys, same
+# budgets, same validators as the zodiac shapes — the pipeline is untouched —
+# and every description is about how the reader loves rather than about
+# their week at work.
+_LOVE_BG_SHAPES = {
+    "palette": '''"palette": {
+  "intro": "1-2 sentences on what these four colours do for the way this person loves (max %(intro)d chars)",
+  "colors": [
+    {"name": "COPY THE FIRST NAME FROM THE LIST ABOVE, EXACTLY",
+     "hex": "COPY ITS CODE FROM THE LIST ABOVE, EXACTLY",
+     "role": "what this colour is FOR in love - the kind of evening, meeting or moment between two people to reach for it (max %(role)d chars)",
+     "finish": "when to use it: a day of the week, a time of day, or a kind of occasion - a first meeting, an ordinary evening, the conversation that matters (max %(finish)d chars)",
+     "where": "how to carry it - worn, on the table between the two of them, in the room they share, given as a small thing (max %(where)d chars)"},
+    {"name": "the second name from the list, exactly", "hex": "its code, exactly",
+     "role": "...", "finish": "...", "where": "..."},
+    {"name": "the third name from the list, exactly", "hex": "its code, exactly",
+     "role": "...", "finish": "...", "where": "..."},
+    {"name": "the fourth name from the list, exactly", "hex": "its code, exactly",
+     "role": "...", "finish": "...", "where": "..."}
+  ],
+  "closing_rule": "one sentence naming their three talismans or stones, the day of the week each is worth carrying, and what each one is for between two people (max %(closing_rule)d chars)"
+}
+
+THE COLOURS ARE NOT YOURS TO CHOOSE. Four of them are given above, with their
+codes. Reproduce all four, in that order, with the name and the code exactly
+as written - character for character. Invent no colour, rename none, and write
+no code that is not on that list. A section carrying a colour that is not
+theirs is thrown away and asked for again.
+
+What you write is what each one is FOR. This is not a paint chart and not a
+clothing catalogue: never the words "matte", "satin", "eggshell", "gloss",
+"sheen", "swatch" or "paint", no garment descriptions, no decorating. Write
+about closeness, being seen, steadiness, being left alone - the evenings a
+colour is worth reaching for and the evenings it is not. A talisman is
+carried by the reader for the relationship; it does nothing to the other
+person and you never say it does.''',
+
+    "mistakes": '''"mistakes": {
+  "items": [
+    {"title": "the hidden strength in love, as a short phrase (max %(title)d chars)",
+     "body": "EXACTLY TWO SENTENCES and no more. The first says what the strength is and how it shows up in an ordinary week with somebody. The second says what it costs — the blind spot on its other side, the pattern that works against this reader in love. No third sentence, and do not join two of them with a semicolon to get around that (max %(body)d chars)",
+     "fix": "ONE imperative sentence starting with a verb — the thing to do differently this week, on the reader's own side, never a way to steer the other person. A second is allowed only if it is short (max %(fix)d chars)"},
+    {"title": "the second one", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the third one", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the fourth one", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the fifth one", "body": "two sentences", "fix": "one sentence"}
+  ]
+}
+
+Exactly five, under the single key `items`, each an object with `title`,
+`body` and `fix` spelled exactly so. Every strength carries its own blind
+spot inside the same body — a strength with no cost is flattery, and the
+blind spot is the pattern that works against them: the thing they do in love
+that costs them the thing they want. `fix` is how to spend the strength on
+purpose, never a warning and never a tactic aimed at the partner.
+
+All five are the same shape and the same length: two sentences and one. This
+is read on a phone by somebody scrolling, and five paragraphs is an essay
+where the product is five hits. Cut every clause that is scene-setting, every
+"which is why", and every restatement of the title. If a sentence could be
+deleted without losing a fact about this reader, delete it.''',
+
+    "materials": '''"materials": {
+  "intro": "THEIR PATTERN IN LOVE: 2-3 sentences on who this reader is repeatedly drawn to, what it costs them, and how it follows from the name they were given on the page they paid from. Use that name once, in the middle of a sentence rather than as a label (max %(intro)d chars)",
+  "pairs": [
+    {"combo": "their sign + another sign, e.g. Лъв + Овен, with no quotation marks (max %(combo)d chars)",
+     "verdict": "works",
+     "why": "TWO PARTS IN ONE PARAGRAPH. First: what that pairing is like to be inside — what the pull is built on and what it asks of them. Then, in the same paragraph: HOW TO KEEP IT ALIVE — the one thing that actually keeps this pairing warm past the first months, written as something the reader does rather than something to know (max %(why)d chars)"},
+    {"combo": "their sign + another sign", "verdict": "works", "why": "same two parts"},
+    {"combo": "their sign + another sign", "verdict": "avoid", "why": "same shape, but the second part is HOW TO PROTECT THE RELATIONSHIP AND THEMSELVES: the specific boundary that makes this one survivable, written as something to do"},
+    {"combo": "their sign + another sign", "verdict": "avoid", "why": "same two parts"}
+  ],
+  "rule": "one sentence on what to say, or ask for, in the first month with somebody (max %(rule)d chars)"
+}
+
+Four pairings under `pairs`, two that work and two that cost, each an object
+with `combo`, `verdict` and `why` spelled exactly so. `verdict` is the word
+"works" or the word "avoid" and nothing else. `combo` always leads with this
+reader's own sign. "avoid" means the pairing is expensive to be in, never
+that a person is bad and never that two people cannot be together.
+
+Every `why` carries both halves. The first half is what it is like; the
+second is what to do about it, and it is the half the reader came for — a
+pairing described and not answered is half a chapter. Name the thing to do
+specifically enough to do it this month, and keep it on the reader's own
+side: what to say, what to ask for, where to draw the line. Never a way to
+change the other person.''',
+
+    "splurge": '''"splurge": {
+  "splurge": {"item": "the kind of closeness, the kind of relationship or the kind of moment this energy gives best in, as a short phrase (max %(item)d chars)",
+              "why": "TWO PARTS IN ONE PARAGRAPH. First: why their heart earns here and what giving looks like between two people day to day. Then THREE CONCRETE MOVES, in the same paragraph — three things to actually do, each one naming a moment in the week, a place, or a sentence to say, in the language of their own element (max %(why)d chars)"},
+  "saves": [
+    {"item": "a kind of giving to stop offering, or a kind of taking to stop accepting, as a short phrase (max %(item)d chars)",
+     "why": "what it costs them specifically, then one line on how to stop — the sentence to say, or the condition to put on it (max %(why)d chars)"},
+    {"item": "a second one", "why": "same two parts"},
+    {"item": "a third one", "why": "same two parts"}
+  ],
+  "split_note": "THE LEAK, AND HOW TO PLUG IT: the single biggest drain on this reader's energy in love, named outright, and then the one change that stops it. 2-3 sentences (max %(split_note)d chars)"
+}
+
+The three top-level keys are `splurge`, `saves` and `split_note`, spelled
+exactly so and nothing else. `splurge` is a single object with `item` and
+`why`; `saves` is a list of three objects with the same two keys;
+`split_note` is one string. Do not send `item` or `why` at the top level, and
+do not rename `split_note`.
+
+`item` is a short phrase — a shape of closeness, not a sentence. One place
+their heart earns and three to stop spending it on. This is where to invest
+the heart and where not to, and never money: no gifts priced, no figures, no
+advice about where to put anything. The three moves are behaviour and energy
+— where to be, when to say it, what to say yes to — and every one of them is
+something the reader does, never something the reader gets the other person
+to do.
+
+The second half of every field is the half the reader came for. A place named
+and not acted on, a cost named and not declined, a leak named and not
+plugged: each of those is a chapter that stops one sentence early.''',
+
+    "dna": '''"dna": {
+  "narrative": [
+    "a paragraph on how this person's element, energy and tone actually combine in love — the blueprint, in their own nouns (max %(narrative)d chars)",
+    "a second paragraph on the one place those three pull against each other once it gets serious, and what that tension produces between two people (max %(narrative)d chars)"
+  ],
+  "implications": [
+    "one sentence naming something concrete this means for how they choose somebody (max %(implications)d chars)",
+    "one sentence on what it means for how they rest inside a relationship — what closeness restores them and what wears them down (max %(implications)d chars)",
+    "one sentence on what it means for how a partner reads them (max %(implications)d chars)"
+  ]
+}
+
+Two keys only, `narrative` and `implications`, each a list of plain strings —
+not objects. Two paragraphs and three implications. Each paragraph is its own
+entry in the list and carries its own limit; do not run them together into
+one long string. This is the section that has to sound like it was written
+about this reader and nobody else.''',
+
+    "shopping": '''"shopping": {
+  "items": [
+    {"name": "COPY THE 1st LABEL FROM THE LIST ABOVE, EXACTLY (max %(name)d chars)", "priority_note": "what this month's energy is good for in love (max %(priority_note)d chars — one or two sentences)"},
+    {"name": "COPY THE 2nd, EXACTLY", "priority_note": "..."},
+    {"name": "COPY THE 3rd, EXACTLY", "priority_note": "..."},
+    {"name": "the 4th", "priority_note": "..."},
+    {"name": "the 5th", "priority_note": "..."},
+    {"name": "the 6th", "priority_note": "..."},
+    {"name": "the 7th", "priority_note": "..."},
+    {"name": "the 8th", "priority_note": "..."},
+    {"name": "the 9th", "priority_note": "..."},
+    {"name": "the 10th", "priority_note": "..."},
+    {"name": "the 11th", "priority_note": "..."},
+    {"name": "the 12th", "priority_note": "..."}
+  ],
+  "skip": []
+}
+
+Two keys, `items` and `skip`, spelled exactly so. Twelve items under `items`,
+in the order the list above gives them, every one an object with `name` and
+`priority_note`. `skip` is an empty list — send it, and put nothing in it.
+
+`name` is the label from the list and nothing else — the month and the year,
+exactly as written there. This map starts from the month they are in, not
+from January, so the first item is the month they are living through right
+now and four of the twelve are in next year.
+
+Mark exactly three months by opening their note with "Strongest month:" and
+exactly one by opening its note with "Quiet month:". The quiet one is for
+rest and for being alone rather than for starting things, and its note says
+what it is good for instead. Themes only — the conversation a month is good
+for, the closeness worth building in it, the thing worth letting go — never
+what is going to happen in it: nobody arrives, nobody returns, nothing is
+decided for the reader.''',
+}
+
+
+def _love_bg_marked_shapes():
+    """The six love shapes, with the year map's two marks in Bulgarian.
+
+    The same substitution `_marked_shapes` makes, on this product's shapes:
+    the shopping shape names the marks as strings to copy, and they have to
+    be the two strings `_verify_months` will look for, which are the words
+    the profile renders with.
+    """
+    shapes = dict(_LOVE_BG_SHAPES)
+    shapes["shopping"] = (
+        shapes["shopping"]
+        .replace(RENDER_WORDS["year_strong"], RENDER_WORDS_BG["year_strong"])
+        .replace(RENDER_WORDS["year_quiet"], RENDER_WORDS_BG["year_quiet"]))
+    return shapes
+
+
+# The six love shapes, in Bulgarian numbers, each closing on the rule. The
+# budget is zodiac-bg's, because the language is: see ZODIAC_BG_PROMPT_BUDGET.
+LOVE_BG_SPEC = dict(
+    (section_id,
+     _zodiac_spec(text, section_id, ZODIAC_BG_PROMPT_BUDGET)
+     + LOVE_BG_JSON_RULE)
+    for section_id, text in _love_bg_marked_shapes().items())
+
+
+# What each of the four colours is for, by position, said about evenings for
+# two rather than about days at work. The names are the reader's own and come
+# off the config; these are the sentences under them.
+LOVE_BG_COLOR_TEXT = [
+    ("тази, в която обичаш всеки ден",
+     "обикновените вечери, и онези, които искате да останат обикновени",
+     "Слоят най-близо до теб — това, което се носи без решение, и това, "
+     "което другият вижда първо."),
+    ("за вечерта, в която нещо трябва да се каже",
+     "един ден в седмицата, избран предварително, а не в момента",
+     "Едно място, където пада погледът: маншет, каишка, шал."),
+    ("тежестта отдолу",
+     "дългите седмици, и стаите, които държиш заради двама",
+     "Обувките, горните слоеве и ъглите на стаята, която делите."),
+    ("използвана веднъж и никога два пъти",
+     "срещата, която има значение, и нито една от онези, които нямат",
+     "Едно-единствено нещо на ключицата или на китката."),
+]
+
+# The fallbacks, in Bulgarian and about love. A reader who paid for a love
+# reading and lost the model gets a love reading: publishable rather than
+# apologetic, true of the archetype since the style name is the only thing it
+# knows, and inside the same Terms line — nothing here foretells anything,
+# nothing here promises another person, and nothing here is medical or
+# financial advice.
+LOVE_BG_STUBS = {
+    "palette": {
+        "intro": "Палитрата «{name}» се държи на един цвят, в който "
+                 "обичаш всеки ден, един, към който посягаш, когато между "
+                 "двама ви нещо трябва да се каже, и един, който носи "
+                 "тежестта, за да не изгорят първите два.",
+        "colors": FROM_CONFIG,
+        "closing_rule": "Носи един талисман, не три, и му дай един ден от "
+                        "седмицата — този, в който говорите.",
+    },
+    "mistakes": {
+        "items": [
+            {"title": "Даваш, преди да са ти поискали",
+             "body": "Профилът «{name}» усеща какво липсва на другия, "
+                     "преди той да го е казал, и го запълва тихо. Така се "
+                     "получава двойка, в която единият винаги е малко "
+                     "по-напред, а другият никога не разбира колко му е "
+                     "дадено.",
+             "fix": "Изчакай веднъж да те помолят, и виж какво прави "
+                    "празнината."},
+            {"title": "Пазиш мълчанието, докато моментът стане чист",
+             "body": "Забелязваш повече от човека до теб и го казваш "
+                     "по-късно. Прочитът ти обикновено е верен и обикновено "
+                     "идва, когато разговорът вече е минал без теб.",
+             "fix": "Сложи си таван от три дни между това да забележиш нещо "
+                    "и това да го назовеш, с несръчните думи включително."},
+            {"title": "Бъркаш спокойствието с това, че всичко е наред",
+             "body": "Тишината между двама ви ти е удобна и я четеш като "
+                     "съгласие. Част от нея е умора, която не е казана, и я "
+                     "плащаш по-късно и по-скъпо.",
+             "fix": "Задай веднъж в седмицата въпрос, на който не знаеш "
+                    "отговора."},
+            {"title": "Тръгваш точно когато спре да е тръпка",
+             "body": "Виждаш формата на една връзка рано, което е трудната "
+                     "част. Щом формата е ясна, останалото прилича на "
+                     "ежедневие, а близостта я взима този, който е останал.",
+             "fix": "Избери едно нещо за двама на месец и остани в него "
+                    "отвъд отегчението."},
+            {"title": "Поемаш цената, вместо да я назовеш",
+             "body": "Взимаш неудобния разговор и допълнителния компромис и "
+                     "ги взимаш достатъчно тихо, че другият да не разбере, "
+                     "че са били допълнителни. За няколко години нивото, от "
+                     "което се тръгва, се измества.",
+             "fix": "Кажи какво ти е струвало, веднъж, в момента, в който се "
+                    "случва, без да искаш нищо в замяна."},
+        ],
+    },
+    "materials": {
+        "intro": "Моделът под това кой те привлича е по-постоянен от самите "
+                 "хора. Вървиш към тези, които се движат в твоя ритъм, и "
+                 "оставаш с тези, които те забавят, а това е скъп път — и си "
+                 "струва да се знае, преди да е станало сериозно.",
+        "pairs": [
+            {"combo": "Твоята зодия + огнена зодия", "verdict": "works",
+             "why": "Ритъмът съвпада и никой не чака другия да реши. Как да "
+                    "я пазите жива: кажи тихата част през първата седмица, "
+                    "не през четвъртата — отсрещният реагира добре, когато "
+                    "му се казва, и приема паузата като присъда."},
+            {"combo": "Твоята зодия + земна зодия", "verdict": "works",
+             "why": "Те държат почвата, по която се движиш, и тъкмо това "
+                    "държане лесно спира да се вижда. Как да я пазите жива: "
+                    "назовавай на глас всяка седмица по едно конкретно нещо, "
+                    "което са направили за двама ви — постоянните хора си "
+                    "тръгват, когато постоянството им остава незабелязано."},
+            {"combo": "Твоята зодия + твое огледало", "verdict": "avoid",
+             "why": "Две еднакви енергии правят бързо начало и кратка среда, "
+                    "и нищо в двойката не забавя нищо. Как да пазиш себе си: "
+                    "остави в седмицата си едно нещо, което е само твое, и "
+                    "не го мести заради тях."},
+            {"combo": "Твоята зодия + някой, който има нужда да бъде носен",
+             "verdict": "avoid",
+             "why": "Носенето ти се отдава и точно затова този струва повече "
+                    "на теб, отколкото на него. Как да пазиш себе си: спри "
+                    "да предлагаш, преди да са ти поискали, веднъж, и виж "
+                    "какво прави с останалата празнина."},
+        ],
+        "rule": "През първия месец задай втория въпрос, не първия — "
+                "отговорът на него ти казва кой е човекът.",
+    },
+    "splurge": {
+        "splurge": {
+            "item": "Близост с видим ръб и с отговор, който идва бързо",
+            "why": "Енергията «{name}» дава най-много там, където това, "
+                   "което даваш, се връща достатъчно бързо, за да усетиш "
+                   "дали е стигнало, и се губи в дълги мълчания без знак. "
+                   "Три хода: кажи важното в началото на вечерта, преди "
+                   "умората да е влязла в стаята; поискай по един разговор "
+                   "насаме по средата на всяка седмица, която е минала без "
+                   "такъв; и бъди там двата дни около момента, който има "
+                   "значение, а не седмицата преди него.",
+        },
+        "saves": [
+            {"item": "Близост, която иска да бъде изиграна",
+             "why": "Енергията, с която си една своя версия по цяла вечер, "
+                    "е енергия, невложена в самата връзка. Откажи я, като "
+                    "попиташ какво остава, когато вечерта свърши — ако "
+                    "отговорът е впечатление, това не е близост."},
+            {"item": "Роли, построени само върху грижа",
+             "why": "Ще я вършиш добре и ще ти струва повече, отколкото на "
+                    "някой, на когото пасва. Откажи я, като назовеш частта, "
+                    "която задържаш за себе си, и частта, която връщаш."},
+            {"item": "Всичко, което се мери само в присъствие",
+             "why": "Възнаграждава това, че си там, вместо това, което "
+                    "носиш, а това, което носиш, е истинското ти. Сложи една "
+                    "дума върху него, преди да приемеш, или го остави на "
+                    "някой, който иска само компания."},
+        ],
+        "split_note": "Загубата е втората половина на вечерта, раздадена "
+                      "парче по парче на неща, които са дошли, а не на "
+                      "такива, които са избрани от двама ви. Запуши я, като "
+                      "запазиш последните деветдесет минути от деня за "
+                      "двама, преди да ти ги запази някой друг, и като "
+                      "третираш този блок като нещо, което не се мести.",
+    },
+    "dna": {
+        "narrative": [
+            "Планът «{name}» върви по три неща едновременно в любовта: "
+            "стихията, към която се връщаш, когато стане сериозно, "
+            "енергията, по която мериш близостта, и тонът, който другият "
+            "прочита първи. През повечето време трите са съгласни, и докато "
+            "са, с теб се обича лесно и сам се разчиташ лесно.",
+            "Интересното е там, където се дърпат едно друго. Тонът стига "
+            "преди стихията, така че хората срещат повърхността и се "
+            "нареждат по нея, а част от всяка връзка отива в поправяне на "
+            "впечатление, оставено без намерение.",
+        ],
+        "implications": [
+            "Избираш по-бързо, отколкото можеш да обясниш, и това заслужава "
+            "доверие и заслужава да се каже на глас.",
+            "Близостта, която изглежда като нищоправене заедно, не те "
+            "възстановява; близостта с форма — да.",
+            "Партньорът чете тона ти като цялата ти позиция, така че "
+            "казаното между другото е това, което отнася със себе си.",
+        ],
+    },
+    # Twelve positions, no month named in the prose — the labels are stamped
+    # on at build time out of the reader's own year — and the same three
+    # marks and one that the shape asks the model for, in the profile's own
+    # words.
+    "shopping": {
+        "items": [
+            {"name": "1", "priority_note": "Добър за решаване на какво искаш "
+             "тази година от близостта, преди някой да те помоли за нещо."},
+            {"name": "2", "priority_note": "Добър за разчистване на това, "
+             "което миналата година е оставила отворено между двама — "
+             "малките недоизказани неща, не големите."},
+            {"name": "3", "priority_note": "Най-силен месец: това, което "
+             "започваш тук за двама, минава достатъчно незабелязано, за да "
+             "успее да бъде построено добре."},
+            {"name": "4", "priority_note": "Добър за изричане на това, което "
+             "държиш отпреди тази карта да е започнала."},
+            {"name": "5", "priority_note": "Добър за начала, които имат "
+             "нужда от още хора около двама ви."},
+            {"name": "6", "priority_note": "Най-силен месец: преценката ти "
+             "за хората е най-остра — дай я на един човек, не на четирима."},
+            {"name": "7", "priority_note": "Добър за събиране, не за "
+             "добавяне — месец за довършване на разговори, не за отваряне."},
+            {"name": "8", "priority_note": "Тих месец: малко даване и много "
+             "възстановяване. Добър за вечери насаме, за поправяне и за "
+             "казване на не."},
+            {"name": "9", "priority_note": "Най-силен месец: топлината се "
+             "връща, и това, което кажеш сега, стига по-далеч, отколкото "
+             "би трябвало."},
+            {"name": "10", "priority_note": "Добър за ремонтна работа — и в "
+             "построеното за двама, и в това, което е останало недовършено."},
+            {"name": "11", "priority_note": "Добър за разговорите, около "
+             "които все обикаляш."},
+            {"name": "12", "priority_note": "Добър за честен поглед назад "
+             "към единадесетте преди него и за решаване какво се повтаря."},
+        ],
+        "skip": [],
+    },
+}
+
+# The love stubs are a zodiac stub set for `_stub_for`'s purposes: the year
+# stub carries positions and gets the reader's months stamped on. Extended
+# here rather than edited at its definition, because the tuple is defined
+# before this product exists in the module.
+ZODIAC_STUB_SETS = ZODIAC_STUB_SETS + (LOVE_BG_STUBS,)
+
+# What this report prints between the model's sentences: zodiac-bg's words,
+# with the two headings of the giving section said about the heart rather
+# than about work, and this product's own filename. "Вложи сърце тук" heads
+# the closeness worth the effort, "Пази сърцето си" the list of things to
+# stop offering — which is what those two headings mean here.
+LOVE_BG_WORDS = dict(RENDER_WORDS_BG, **{
+    "splurge": "Вложи сърце тук",
+    "save": "Пази сърцето си",
+    "pdf_filename": "mazzin-%s-lyubov.pdf",
+})
+
+# The two energies, named for love. The elements stay zodiac-bg's four — an
+# element is an element — but "Слънце" and "Луна" over a love scale read as
+# astronomy, and what the scale measures is whether somebody loves out loud
+# or in depth. funnels/love-zodiac-bg.json carries the same two words in
+# `result_copy.labels.energies` and in its energy scale, and the suite pins
+# the two files to each other: the page and the PDF have to name a reader's
+# energy with the same word.
+LOVE_BG_ENERGY_LABEL = {"sun": "На глас", "moon": "В дълбочина"}
+
+# A distinct object, for the reason ZODIAC_BG_PROFILE is: the voice, the
+# shapes, the fallbacks, the banned list, the energy labels, the words and
+# the mail are all this product's. Everything that is shared is shared by
+# reference to the zodiac-bg object it came from, and the late bindings —
+# the checks, the tables, the PDF furniture, the mail — are attached at the
+# end of the module, once the things they name exist.
+LOVE_BG_PROFILE = {
+    "system": LOVE_BG_SYSTEM,
+    "spec": LOVE_BG_SPEC,
+    "prompt_budget": ZODIAC_BG_PROMPT_BUDGET,
+    "stubs": LOVE_BG_STUBS,
+    "stub_colors": LOVE_BG_COLOR_TEXT,
+    "words": LOVE_BG_WORDS,
+    "verify_marks": True,
+    "cached": ("palette", "mistakes", "splurge"),
+    "personal": ("dna", "materials", "shopping"),
+    "banned": LOVE_BG_BANNED,
+    "verify": None,         # filled at the end, with the zodiac checks
+    # The first revision of this product's cached trio. Its own tag rather
+    # than zodiac-bg's: the section cache is keyed on the funnel, so no row
+    # is shared, and a tag shared by name would tie two products' staleness
+    # together for nothing.
+    "cache_rev": {"palette": "lovebg1", "mistakes": "lovebg1",
+                  "splurge": "lovebg1"},
+    "pdf_css": None,        # filled at the end, with ZODIAC_PDF_CSS
+    "pdf_logo": "brand/logo-dark.svg",
+    "pdf_lang": "bg",
+    "pdf_note": ("Запази го — профилът ти остава достъпен и на линка, към "
+                 "който те върнахме след плащането."),
+    "retry_detail": True,
+    "pdf_lead": "Твоят личен любовен профил",
+    "pdf_cover": None,      # filled at the end, with _zodiac_cover
+    "pdf_elements": None,   # filled at the end, with the Bulgarian strip
+    "pdf_node": True,
+    "delivery_note": True,
+    "energy_labels": LOVE_BG_ENERGY_LABEL,
+    "element_labels": None,  # filled at the end, with ELEMENT_LABEL_BG
+    "compatibility": None,  # filled at the end, with COMPATIBILITY_BG
+    "mail": None,           # filled at the end, once COPY_LOVE_BG exists
+    "mail_kicker": "ТВОЯТ ЛЮБОВЕН ПРОФИЛ",
+    "mail_cross_fallback": "Пълният ти любовен профил",
+    "mail_link": None,      # filled at the end, with the BG button
+    "json_retry": LOVE_BG_JSON_RETRY,
+    "json_repair": None,    # filled at the end, with zodiac-bg's repair
+}
+
 # --- the persona product ----------------------------------------------------
 #
 # Same machinery, a different reading. This funnel sells "shapes that unlock
@@ -4026,6 +4695,11 @@ GAME_MISTAKE_STUBS = (BRAIN_STUBS["mistakes"], FOCUS_STUBS["mistakes"])
 PROFILES = {"zodiac": ZODIAC_PROFILE, "zodiac30": ZODIAC_PROFILE,
             "zodiac-ro": ZODIAC_RO_PROFILE,
             "zodiac-bg": ZODIAC_BG_PROFILE,
+            # The love product and its sandbox twin, registered in their own
+            # right: the twin would fall through to this profile anyway (see
+            # `_profile`), and naming it says so where the registry is read.
+            "love-zodiac-bg": LOVE_BG_PROFILE,
+            "love-zodiac-bg-test": LOVE_BG_PROFILE,
             "persona": PERSONA_PROFILE,
             "brain": BRAIN_PROFILE,
             "focus": FOCUS_PROFILE}
@@ -4051,7 +4725,7 @@ def _is_zodiac(profile):
     "this is the English one".
     """
     return (profile is ZODIAC_PROFILE or profile is ZODIAC_RO_PROFILE
-            or profile is ZODIAC_BG_PROFILE)
+            or profile is ZODIAC_BG_PROFILE or profile is LOVE_BG_PROFILE)
 
 
 def _profile(funnel_slug):
@@ -4877,7 +5551,7 @@ def _months_for(profile, today=None):
     """
     if profile is ZODIAC_RO_PROFILE:
         return _year_labels_ro(today)
-    if profile is ZODIAC_BG_PROFILE:
+    if profile is ZODIAC_BG_PROFILE or profile is LOVE_BG_PROFILE:
         return _year_labels_bg(today)
     if _is_zodiac(profile) or profile is PERSONA_PROFILE:
         return _year_labels(today)
@@ -10997,3 +11671,37 @@ def send_report_email(purchase_id, email, content, checkout_session=None):
     log.info("report emailed for purchase %s (%d KB pdf)",
              purchase_id, len(pdf) // 1024)
     return True
+
+
+# --- the love profile's late bindings ----------------------------------------
+#
+# Everything LOVE_BG_PROFILE shares with zodiac-bg by reference, attached
+# here because the objects are defined down the module, after the profile
+# is: the palette checks, the element strip and the compatibility table keyed
+# on the same twelve labels, the quote repair, the PDF furniture and the mail
+# button. One place rather than nine, so the whole of what the love report
+# borrows can be read at once.
+
+# The sixth mail: the love product, to somebody who bought it in Bulgarian.
+# Same grammar as COPY_ZODIAC_BG — the head noun takes its article and the
+# archetype name goes in guillemets — and the body names what the paywall
+# sold: the twelve-sign table, the five strengths, the year of the heart.
+COPY_LOVE_BG = {
+    "headline": "Любовният ти профил е готов.",
+    "subject": "Твоят любовен профил \u00ab%s\u00bb — Mazzin",
+    "body": "Пълният ти любовен профил \u00ab%s\u00bb е прикачен: "
+            "съвместимостта с дванадесетте зодии, петте сили и картата на "
+            "сърцето за дванадесет месеца.",
+    "keep": "Остава достъпен на онзи линк, а PDF-ът е твой, без срок.",
+    "keep_no_link": "PDF-ът е твой, без срок.",
+}
+
+LOVE_BG_PROFILE["verify"] = ZODIAC_VERIFY
+LOVE_BG_PROFILE["element_labels"] = ELEMENT_LABEL_BG
+LOVE_BG_PROFILE["compatibility"] = COMPATIBILITY_BG
+LOVE_BG_PROFILE["json_repair"] = _bg_quote_repair
+LOVE_BG_PROFILE["pdf_css"] = ZODIAC_PDF_CSS
+LOVE_BG_PROFILE["pdf_elements"] = PDF_ELEMENTS_BG
+LOVE_BG_PROFILE["pdf_cover"] = _zodiac_cover
+LOVE_BG_PROFILE["mail_link"] = ZODIAC_EMAIL_LINK_BG
+LOVE_BG_PROFILE["mail"] = COPY_LOVE_BG
