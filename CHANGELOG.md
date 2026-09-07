@@ -606,3 +606,6 @@ bottom.
 
 ## 2026-09-06 — claude/love-gallery-v2
 - love gallery v2: portrait, lighter, 4-choice steps
+
+## 2026-09-07 — claude/love-palette-v3
+- love gallery v3 palette + calibration flag
