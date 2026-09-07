@@ -99,6 +99,22 @@ greyscale catch. A frame named in MIN_LUMA_BY_FRAME draws under its own
 floor inside its bucket's band. The numbers are printed per frame, so a
 rejection can be read against the thresholds without rerunning anything.
 
+The buckets themselves were corrected from the first v4 run. It drew 30 of
+46 and rejected 13, every one of them at a CONSISTENT luma across three
+attempts — lv06a at 87 to 96 against a bright band that starts at 110,
+lv04a at 21 to 38 — which is a band assigned wrong, not a picture drawn
+wrong. So the assignment follows the observed numbers: steps 6, 7, 10, 12
+and 15 are mid, and four frames that render darker than their step-mates
+(lv04a, lv05a, lv05d, lv08a) keep their step's bucket with a floor of their
+own just under what they measured. A step-mate whose frame was accepted
+keeps it: the bucket is not part of the recipe, only the prompt and the
+geometry are, so moving a label redraws nothing.
+
+`--save-rejects` keeps what the band throws away: a rejected draw is written
+to static/galleries/love-zodiac-bg/_rejects/<id>_<attempt>.webp — the
+directory ignores itself in git — so a human can look at the picture and the
+numbers before more money goes on the same frame.
+
 A frame is also held under 120KB: the WebP is re-encoded a step at a time
 down to a floor quality, and a frame that cannot get under is a failure
 rather than a heavy file on a phone.
@@ -311,19 +327,19 @@ CARD_PROMPTS = [
                    "window"),
     ("lv05d", MID, "a tree-lined lane with two sets of footprints side by "
                    "side in soft late-afternoon light"),
-    # 6 closeness — bright
-    ("lv06a", BRIGHT, "two trees with intertwined crowns in a sunlit meadow, "
+    # 6 closeness — mid (drew 87-96 and 192; the step follows the pair)
+    ("lv06a", MID, "two trees with intertwined crowns in a sunlit meadow, "
                       "bright open sky"),
-    ("lv06b", BRIGHT, "two birds flying side by side across a bright open "
+    ("lv06b", MID, "two birds flying side by side across a bright open "
                       "sky at dawn"),
-    # 7 romance — bright, four-up
-    ("lv07a", BRIGHT, "candles on a rooftop table at bright sunrise, clear "
+    # 7 romance — mid, four-up (lv07b drew 78-90, lv07d 82-84)
+    ("lv07a", MID, "candles on a rooftop table at bright sunrise, clear "
                       "morning sky"),
-    ("lv07b", BRIGHT, "sunrise from a mountain peak, two backpacks resting "
+    ("lv07b", MID, "sunrise from a mountain peak, two backpacks resting "
                       "on the rocks, bright golden light"),
-    ("lv07c", BRIGHT, "a folded letter left on a pillow in bright morning "
+    ("lv07c", MID, "a folded letter left on a pillow in bright morning "
                       "sun"),
-    ("lv07d", BRIGHT, "a record spinning on a turntable in a bright kitchen, "
+    ("lv07d", MID, "a record spinning on a turntable in a bright kitchen, "
                       "two aprons on hooks, sun through the window"),
     # 8 rhythm — mid
     ("lv08a", MID, "a street lamp glowing over wet cobblestones, two "
@@ -335,23 +351,23 @@ CARD_PROMPTS = [
                     "toward one warmly lit window"),
     ("lv09b", DARK, "a front door with two keys on one ring in the lock, a "
                     "porch lamp glowing, deep indigo evening sky"),
-    # 10 home — bright, four-up
-    ("lv10a", BRIGHT, "nest with two golden eggs among branches in bright "
+    # 10 home — mid, four-up (lv10b drew 58-70, lv10c 93-101, lv10d 74-93)
+    ("lv10a", MID, "nest with two golden eggs among branches in bright "
                       "spring light"),
-    ("lv10b", BRIGHT, "open door leading out to a bright sunlit garden"),
-    ("lv10c", BRIGHT, "long table laid for guests in a sunlit garden, bright "
+    ("lv10b", MID, "open door leading out to a bright sunlit garden"),
+    ("lv10c", MID, "long table laid for guests in a sunlit garden, bright "
                       "afternoon light"),
-    ("lv10d", BRIGHT, "hammock for two strung between trees in a leafy "
+    ("lv10d", MID, "hammock for two strung between trees in a leafy "
                       "garden, bright dappled sunlight"),
     # 11 passion — dark
     ("lv11a", DARK, "lightning striking a stormy sea under a deep indigo "
                     "sky, the bolt brightly lit"),
     ("lv11b", DARK, "glowing embers in a stone hearth, deep red and gold, "
                     "the ember glow lighting the stones"),
-    # 12 trust — bright
-    ("lv12a", BRIGHT, "a bridge of light meeting mid-air between two cliffs, "
+    # 12 trust — mid (both drew 83-96)
+    ("lv12a", MID, "a bridge of light meeting mid-air between two cliffs, "
                       "bright sky behind"),
-    ("lv12b", BRIGHT, "stone bridge with a double railing over a calm river "
+    ("lv12b", MID, "stone bridge with a double railing over a calm river "
                       "in bright morning sunlight"),
     # 13 past — mid
     ("lv13a", MID, "glass snow globe with a tiny winter scene inside, on a "
@@ -363,10 +379,10 @@ CARD_PROMPTS = [
                     "indigo sky, two dance shoes on the cobblestones"),
     ("lv14b", DARK, "one blanket spread on a rooftop under a deep indigo "
                     "sky, city lights glittering far below"),
-    # 15 care — bright
-    ("lv15a", BRIGHT, "one umbrella sheltering a small potted flower in a "
+    # 15 care — mid (lv15a drew 79-87; the step follows the pair)
+    ("lv15a", MID, "one umbrella sheltering a small potted flower in a "
                       "bright spring rain, sun breaking through"),
-    ("lv15b", BRIGHT, "a kite rising into a bright open sky, its string "
+    ("lv15b", MID, "a kite rising into a bright open sky, its string "
                       "trailing to the ground"),
     # 16 silence — mid, four-up
     ("lv16a", MID, "two fishing rods resting side by side on a misty pier at "
@@ -661,15 +677,20 @@ MIN_MEAN_LUMA = BAND["min_luma"]
 MAX_MEAN_LUMA = BAND["max_luma"]
 MIN_SATURATION = BAND["min_sat"]
 
-# Frames whose subject is darker than their bucket's floor, and the luma
-# floor each is judged against instead. Inside the bucket's band otherwise.
-# Two of forty-six: a nebula on black space lit only by itself, and falling
-# stars on a night sky — both can honestly come back under the dark
-# bucket's 15. Each number is still above a near-black render, which comes
-# back in the single digits.
+# Frames whose subject renders darker than their bucket's floor, and the
+# luma floor each is judged against instead. Inside the bucket's band
+# otherwise. Two are dark by nature — a nebula on black space, falling stars
+# — and four measured, three draws each, well under a bucket their step-mate
+# was accepted in; they keep the step's bucket for the pairing and take a
+# floor just under what they drew. Each number is still above a near-black
+# render, which comes back in the single digits.
 MIN_LUMA_BY_FRAME = {
     "lv18a": 10.0,   # a nebula on black, lit by its own gold and rose
     "int1": 10.0,    # falling stars over a faint horizon glow
+    "lv04a": 18.0,   # a pendant on velvet: drew 21-38, step-mate bright
+    "lv05a": 38.0,   # a lamp between two chairs: drew 40-47, in mid
+    "lv05d": 38.0,   # footprints in a lane: drew 41-55, in mid
+    "lv08a": 30.0,   # a street lamp on wet stone: drew 32-46, in mid
 }
 
 
@@ -763,17 +784,38 @@ def recipe(frame, palette=None):
     The version tag, the prompt under a palette, the geometry and the API
     size: changing any of them is what should make a rerun redraw. A frame
     judged under its own luma floor carries that number too, and only that
-    frame does. The palette defaults to the draw palette; a record is
+    frame does. The BUCKET is not in it: a band decides how a draw is
+    judged, not what is drawn, so moving a frame's label never redraws an
+    accepted frame. The palette defaults to the draw palette; a record is
     compared under the palette it was drawn with.
     """
     prompt = (frame["prompt"] if palette is None
               else prompt_for(frame["subject"], frame["kind"], palette))
-    out = "%s|%s|%s|%dx%d|%s" % (RECIPE_VERSION, prompt, frame["api_size"],
-                                 frame["size"][0], frame["size"][1],
-                                 frame.get("bucket", "mid"))
-    floor = (frame.get("band") or BAND)["min_luma"]
-    if floor != BANDS[frame.get("bucket", "mid")]["min_luma"]:
-        out += "|min_luma=%g" % floor
+    out = "%s|%s|%s|%dx%d" % (RECIPE_VERSION, prompt, frame["api_size"],
+                              frame["size"][0], frame["size"][1])
+    if frame["id"] in MIN_LUMA_BY_FRAME:
+        out += "|min_luma=%g" % MIN_LUMA_BY_FRAME[frame["id"]]
+    return out
+
+
+def legacy_recipes(frame, palette=None):
+    """The v4.1 spellings of this frame's recipe, one per bucket.
+
+    The first v4 run recorded thirty frames under a recipe that carried the
+    bucket the frame was judged in, and a floor when it had one. Those
+    records stay current whatever bucket the frame is labelled now: an
+    accepted frame is an accepted frame.
+    """
+    base = recipe(frame, palette)
+    if frame["id"] in MIN_LUMA_BY_FRAME:
+        base = base[:base.rindex("|min_luma=")]
+    out = []
+    for bucket in BANDS:
+        one = "%s|%s" % (base, bucket)
+        floor = MIN_LUMA_BY_FRAME.get(frame["id"])
+        if floor is not None and floor != BANDS[bucket]["min_luma"]:
+            one += "|min_luma=%g" % floor
+        out.append(one)
     return out
 
 
@@ -783,7 +825,8 @@ def already_made(frame, entries, palettes=None):
     Under either palette by default — the one the gallery was drawn with
     and the one a draw uses now — so a palette change alone invalidates
     nothing. `--only` narrows this to the draw palette for the frames it
-    names, which is what bumps their recipes and nobody else's.
+    names, which is what bumps their recipes and nobody else's. A record in
+    the v4.1 spelling, bucket and all, counts too.
     """
     entry = entries.get(frame["id"])
     if not entry:
@@ -792,8 +835,11 @@ def already_made(frame, entries, palettes=None):
         return False
     if palettes is None:
         palettes = (RECORDED_PALETTE, DRAW_PALETTE)
-    return any(entry.get("recipe_sha")
-               == sha(recipe(frame, p).encode("utf-8")) for p in palettes)
+    spellings = [recipe(frame, p) for p in palettes]
+    for p in palettes:
+        spellings.extend(legacy_recipes(frame, p))
+    return any(entry.get("recipe_sha") == sha(s.encode("utf-8"))
+               for s in spellings)
 
 
 # --- the run -------------------------------------------------------------------
@@ -801,6 +847,28 @@ def already_made(frame, entries, palettes=None):
 
 def write(frame_id, data):
     path = os.path.join(OUT, frame_id + ".webp")
+    with open(path, "wb") as fh:
+        fh.write(data)
+    return path
+
+
+REJECTS = "_rejects"
+
+
+def write_reject(frame_id, attempt, data):
+    """A rejected draw, kept for a human to look at before the next draw.
+
+    Written beside the gallery under _rejects/, never into it — the gallery
+    is exactly what the funnel shows — and the directory carries a
+    .gitignore of its own so nothing in it is ever committed.
+    """
+    folder = os.path.join(OUT, REJECTS)
+    os.makedirs(folder, exist_ok=True)
+    ignore = os.path.join(folder, ".gitignore")
+    if not os.path.exists(ignore):
+        with open(ignore, "w", encoding="utf-8") as fh:
+            fh.write("*\n")
+    path = os.path.join(folder, "%s_%d.webp" % (frame_id, attempt))
     with open(path, "wb") as fh:
         fh.write(data)
     return path
@@ -820,6 +888,9 @@ def main(argv=None):
                     help="override the assumed per-image price in dollars")
     ap.add_argument("--retries", type=int, default=2,
                     help="redraws allowed when a frame fails its floor")
+    ap.add_argument("--save-rejects", action="store_true",
+                    help="keep rejected draws under %s/ for review"
+                         % REJECTS)
     args = ap.parse_args(argv)
 
     with open(CONFIG, encoding="utf-8") as fh:
@@ -892,8 +963,15 @@ def main(argv=None):
                     continue
                 ok, note = verdict(measure(img), frame["band"])
                 if not ok:
-                    print("  %-8s rejected (%s), redrawing"
-                          % (frame_id, note))
+                    kept = ""
+                    if args.save_rejects:
+                        saved = encode(img)[0]
+                        if saved is not None:
+                            kept = " -> " + os.path.relpath(
+                                write_reject(frame_id, attempt + 1, saved),
+                                ROOT)
+                    print("  %-8s rejected (%s), redrawing%s"
+                          % (frame_id, note, kept))
                     continue
                 candidate, quality = encode(img)
                 if candidate is None:

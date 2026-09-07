@@ -330,8 +330,12 @@ count = {b: sum(1 for v in buckets.values() if v == b)
 print("    " + ", ".join("%s %d" % kv for kv in sorted(count.items())))
 check("every frame sits in one of three buckets",
       set(buckets.values()) == {"bright", "mid", "dark"})
-check("  eighteen bright, fourteen mid, fourteen dark — thirds, near enough",
-      count == {"bright": 18, "mid": 14, "dark": 14}, str(count))
+# The first v4 run drew thirty of forty-six and rejected thirteen, each at a
+# consistent luma across three draws — a band assigned wrong, not art drawn
+# wrong. The buckets follow what was measured: four bright, twenty-eight
+# mid, fourteen dark.
+check("  four bright, twenty-eight mid, fourteen dark — what the draws said",
+      count == {"bright": 4, "mid": 28, "dark": 14}, str(count))
 check("  every pair and every four-up is lit alike: one bucket per step",
       all(len({buckets[i["id"]] for p in s["pairs"] for i in p["images"]
                if i["id"] in buckets}) == 1
@@ -343,29 +347,49 @@ check("  every pair and every four-up is lit alike: one bucket per step",
                     for i in p["images"] if i["id"] in buckets}) != 1]))
 check("  and the interstitials are the night frames they always were",
       buckets["int1"] == buckets["int2"] == "dark")
-REVIEW = {"bright": ("lv06b", "lv07b", "lv15b", "lv10d"),
-          "mid": ("lv02b", "lv05a", "lv16c"),
-          "dark": ("lv01a", "lv11a", "lv11b", "lv14b", "lv18a", "int1")}
-for bucket, ids in sorted(REVIEW.items()):
-    check("  the review's %-6s examples are in that bucket" % bucket,
-          all(buckets[i] == bucket for i in ids),
-          str({i: buckets[i] for i in ids if buckets[i] != bucket}))
-# The light is in the words, per bucket, because there is no suffix to put
-# it in.
-# A dark frame's darkness is a named colour — deep indigo, an ember glow —
-# never an exposure word, and its subject is still lit.
-WORDS = {
-    "bright": re.compile(r"bright|sunlit|sunlight|sunrise|daylight|dawn", re.I),
-    "mid": re.compile(r"soft|pastel|lamp|candle|afternoon|first light|"
-                      r"morning|sunset|evening", re.I),
-    "dark": re.compile(r"deep indigo|indigo|ember", re.I),
+# The thirteen rejected frames and the luma each drew, three times over.
+# Every one now sits in a band its numbers fit, and every one's step-mates
+# moved with it — an accepted step-mate keeps its frame, only the label
+# moves, because the bucket is not part of the recipe.
+OBSERVED = {
+    "lv04a": (21, 38), "lv05a": (40, 47), "lv05d": (41, 55),
+    "lv06a": (87, 96), "lv07b": (78, 90), "lv07d": (82, 84),
+    "lv08a": (32, 46), "lv10b": (58, 70), "lv10c": (93, 101),
+    "lv10d": (74, 93), "lv12a": (84, 96), "lv12b": (83, 92),
+    "lv15a": (79, 87),
 }
-for bucket, pattern in sorted(WORDS.items()):
-    check("  every %-6s scene says so in its own words" % bucket,
-          all(pattern.search(f["subject"]) for f in plan
-              if f["bucket"] == bucket),
-          str([f["id"] for f in plan if f["bucket"] == bucket
-               and not pattern.search(f["subject"])]))
+check("every rejected frame's observed range now sits inside its band",
+      all(by_id[i]["band"]["min_luma"] <= lo
+          and hi <= by_id[i]["band"]["max_luma"]
+          for i, (lo, hi) in OBSERVED.items()),
+      str([(i, by_id[i]["band"]["min_luma"], by_id[i]["band"]["max_luma"])
+           for i, (lo, hi) in OBSERVED.items()
+           if not (by_id[i]["band"]["min_luma"] <= lo
+                   and hi <= by_id[i]["band"]["max_luma"])]))
+check("  the 70-to-101 group is mid, step-mates included",
+      all(buckets[i] == "mid" for i in
+          ("lv06a", "lv06b", "lv07a", "lv07b", "lv07c", "lv07d", "lv10a",
+           "lv10b", "lv10c", "lv10d", "lv12a", "lv12b", "lv15a", "lv15b")))
+check("  and the four that drew darker than their step keep its bucket "
+      "with a floor just under what they drew",
+      buckets["lv04a"] == buckets["lv04b"] == "bright"
+      and buckets["lv05a"] == buckets["lv05d"] == "mid"
+      and buckets["lv08a"] == buckets["lv08b"] == "mid"
+      and all(OBSERVED[i][0] - 5 <= gen.MIN_LUMA_BY_FRAME[i] < OBSERVED[i][0]
+              for i in ("lv04a", "lv05a", "lv05d", "lv08a")))
+check("  the dark bucket is untouched: the review's dark examples stay dark",
+      all(buckets[i] == "dark" for i in
+          ("lv01a", "lv11a", "lv11b", "lv14b", "lv18a", "int1")))
+# A dark frame's darkness is a named colour — deep indigo, an ember glow —
+# never an exposure word, and its subject is still lit. Bright and mid are
+# what the draws measured, not what the words say, so only dark is held to
+# its vocabulary.
+WORDS = {"dark": re.compile(r"deep indigo|indigo|ember", re.I)}
+check("  every dark scene says so in its own colours",
+      all(WORDS["dark"].search(f["subject"]) for f in plan
+          if f["bucket"] == "dark"),
+      str([f["id"] for f in plan if f["bucket"] == "dark"
+           and not WORDS["dark"].search(f["subject"])]))
 check("  and no bright or mid scene reaches for the dark colours",
       not [f["id"] for f in plan if f["bucket"] != "dark"
            and WORDS["dark"].search(f["subject"])],
@@ -391,20 +415,47 @@ check("a plan that lit one card of a pair differently would refuse to run",
 print("\n--- the manifest: recipes, idempotency, a full redraw ---")
 recipes = [gen.recipe(f) for f in plan]
 check("every frame's recipe is distinct", len(set(recipes)) == len(recipes))
-check("  and carries the version, the prompt, the API size, the geometry "
-      "and the bucket",
+check("  and carries the version, the prompt, the API size and the geometry",
       gen.RECIPE_VERSION == "v4.1"
       and all(r.startswith("v4.1|") for r in recipes)
       and all(f["prompt"] in gen.recipe(f) and f["api_size"] in gen.recipe(f)
-              and "%dx%d" % f["size"] in gen.recipe(f)
-              and gen.recipe(f).split("|")[-1].split("|")[0]
-              in ("bright", "mid", "dark") or "min_luma" in gen.recipe(f)
-              for f in plan))
-check("  the version moved to v4.1: every frame on disk is stale by design",
-      gen.RECIPE_VERSION == "v4.1")
-check("  and the same scene in another bucket is another recipe",
-      gen.recipe(dict(plan[0], bucket="bright", band=gen.BANDS["bright"]))
-      != gen.recipe(plan[0]))
+              and "%dx%d" % f["size"] in gen.recipe(f) for f in plan))
+check("  but not the bucket: a band judges a draw, it does not make one",
+      not any(gen.recipe(f).split("|")[4:5] in (["bright"], ["mid"], ["dark"])
+              for f in plan)
+      and gen.recipe(dict(plan[0], bucket="bright", band=gen.BANDS["bright"]))
+      == gen.recipe(plan[0]))
+# The first v4 run recorded thirty frames under the v4.1 spelling, bucket
+# and all. Those records are still current, whatever the label says now.
+LEGACY = gen.legacy_recipes(by_id["lv06b"])
+check("the v4.1 spelling is still known, one per bucket",
+      len(LEGACY) == 3
+      and all(s.startswith(gen.recipe(by_id["lv06b"]) + "|") for s in LEGACY)
+      and {s.rsplit("|", 1)[1] for s in LEGACY} == {"bright", "mid", "dark"})
+_stamp = gen.on_disk_sha("lv06b")
+check("  a frame accepted as bright is still current now that its label "
+      "says mid",
+      by_id["lv06b"]["bucket"] == "mid"
+      and gen.already_made(by_id["lv06b"], {"lv06b": {
+          "sha256": _stamp,
+          "recipe_sha": hashlib.sha256(
+              [s for s in LEGACY if s.endswith("|bright")][0]
+              .encode("utf-8")).hexdigest()}}))
+check("  and so is one drawn under an overridden floor, in that spelling",
+      gen.already_made(by_id["lv18a"], {"lv18a": {
+          "sha256": gen.on_disk_sha("lv18a"),
+          "recipe_sha": hashlib.sha256(
+              (gen.recipe(by_id["lv18a"]).replace("|min_luma=10", "")
+               + "|dark|min_luma=10").encode("utf-8")).hexdigest()}}))
+check("  while a record from a different prompt is not, in any spelling",
+      not gen.already_made(by_id["lv06b"], {"lv06b": {
+          "sha256": _stamp,
+          "recipe_sha": hashlib.sha256(
+              (gen.recipe(by_id["lv06a"]) + "|bright").encode("utf-8"))
+          .hexdigest()}}))
+check("  the thirteen rejected frames have no record, so nothing needs "
+      "bumping: they are simply drawn",
+      all(i in by_id for i in OBSERVED))
 check("  so the same subject at another size is another recipe",
       gen.recipe(dict(plan[0], size=(360, 600)))
       != gen.recipe(plan[0]))
@@ -571,18 +622,26 @@ check("  and an unmeasurable frame is kept and says so",
       gen.verdict(None) == (True, "unmeasured"))
 
 
-print("\n--- two frames go darker than their bucket, on their own floor ---")
-check("exactly two frames carry their own luma floor",
-      gen.MIN_LUMA_BY_FRAME == {"lv18a": 10.0, "int1": 10.0},
+print("\n--- six frames go darker than their bucket, on their own floor ---")
+check("exactly six frames carry their own luma floor",
+      gen.MIN_LUMA_BY_FRAME == {"lv18a": 10.0, "int1": 10.0, "lv04a": 18.0,
+                                "lv05a": 38.0, "lv05d": 38.0, "lv08a": 30.0},
       str(gen.MIN_LUMA_BY_FRAME))
-check("  both in the dark bucket, set above a black render and under "
-      "the bucket's own floor",
-      all(by_id[i]["bucket"] == "dark" and 6.0 < v < gen.BANDS["dark"]["min_luma"]
+check("  each set above a black render and under its own bucket's floor",
+      all(6.0 < v < gen.BANDS[by_id[i]["bucket"]]["min_luma"]
           for i, v in gen.MIN_LUMA_BY_FRAME.items()))
 for frame_id, floor in sorted(gen.MIN_LUMA_BY_FRAME.items()):
-    check("  %-6s band is the dark band with only the floor moved" % frame_id,
-          by_id[frame_id]["band"] == dict(gen.BANDS["dark"], min_luma=floor)
-          and by_id[frame_id]["band"] is not gen.BANDS["dark"])
+    bucket = by_id[frame_id]["bucket"]
+    check("  %-6s band is the %s band with only the floor moved"
+          % (frame_id, bucket),
+          by_id[frame_id]["band"] == dict(gen.BANDS[bucket], min_luma=floor)
+          and by_id[frame_id]["band"] is not gen.BANDS[bucket])
+check("a pendant that drew 21 to 38 passes its own floor in bright",
+      gen.verdict((25.0, 30.0, 120.0), by_id["lv04a"]["band"])[0]
+      and not gen.verdict((25.0, 30.0, 120.0), by_id["lv04b"]["band"])[0])
+check("  and a lamp between chairs at 42 passes its own floor in mid",
+      gen.verdict((42.0, 30.0, 140.0), by_id["lv05a"]["band"])[0]
+      and not gen.verdict((42.0, 30.0, 140.0), by_id["lv05b"]["band"])[0])
 NEBULA = (12.0, 45.0, 140.0)
 check("a nebula at 12 passes its own floor and fails the dark band",
       gen.verdict(NEBULA, by_id["lv18a"]["band"])[0]
@@ -603,10 +662,14 @@ check("the floor is in an overridden frame's recipe, and in no other",
       and not [f["id"] for f in plan
                if f["id"] not in gen.MIN_LUMA_BY_FRAME
                and "min_luma" in gen.recipe(f)])
+_before = gen.recipe(by_id["lv18a"])
+gen.MIN_LUMA_BY_FRAME["lv18a"] = 12.0
+try:
+    _after = gen.recipe(by_id["lv18a"])
+finally:
+    gen.MIN_LUMA_BY_FRAME["lv18a"] = 10.0
 check("  so moving one floor invalidates one record",
-      gen.recipe(dict(by_id["lv18a"],
-                      band=dict(gen.BANDS["dark"], min_luma=12.0)))
-      != gen.recipe(by_id["lv18a"])
+      _after != _before and gen.recipe(by_id["lv18a"]) == _before
       and gen.recipe(dict(plan[0], band=gen.BANDS[plan[0]["bucket"]]))
       == gen.recipe(plan[0]))
 check("  and the dry run says which band a frame draws under",
@@ -704,8 +767,13 @@ for func in [n for n in ast.walk(ast.parse(gen_src))
                 and any(isinstance(a, ast.Constant) and "w" in str(a.value)
                         for a in node.args[1:])):
             writers.add(func.name)
-check("only two functions open a file for writing",
-      writers == {"write", "save_manifest"}, str(sorted(writers)))
+check("only three functions open a file for writing",
+      writers == {"write", "write_reject", "save_manifest"},
+      str(sorted(writers)))
+check("  the reject writer writes beside the gallery, in a folder that "
+      "ignores itself",
+      'os.path.join(OUT, REJECTS)' in gen_src and gen.REJECTS == "_rejects"
+      and 'fh.write("*\\n")' in gen_src)
 check("  the frame writer writes into the gallery",
       re.search(r"def write\(frame_id, data\):\s*\n\s*path = "
                 r"os\.path\.join\(OUT,", gen_src) is not None
@@ -756,9 +824,12 @@ try:
         check("  with a pre-v4 manifest on disk that is all forty-six",
               text.count("--- ") == 46, text.splitlines()[0])
         check("    each under its bucket's band",
-              text.count("bright: luma 110-225") == 18
-              and text.count("mid: luma 55-135") == 14
-              and text.count("dark: luma") == 14)
+              text.count("bright: luma 110-225") == 3
+              and text.count("bright: luma 18-225") == 1
+              and text.count("mid: luma 55-135") == 25
+              and text.count("mid: luma 38-135") == 2
+              and text.count("mid: luma 30-135") == 1
+              and text.count("dark: luma") == 14, text.splitlines()[0])
         code, text = run(["--only", "lv06b,lv18a", "--dry-run"])
         check("--only draws exactly the frames named — calibration first",
               code == 0 and text.count("--- ") == 2 and "lv06b" in text
@@ -781,6 +852,56 @@ finally:
     gen.ENV_FILES = was
 check("no file was written by any of that",
       not os.path.exists(gen.MANIFEST + ".tmp"))
+
+
+print("\n--- --save-rejects keeps what the band throws away ---")
+if Image is not None:
+    black = Image.new("RGB", (1024, 1536), (4, 4, 6))
+    buf = io.BytesIO()
+    black.save(buf, "PNG")
+    BLACK = buf.getvalue()
+    scratch_out = os.path.join(SCRATCH, "gallery")
+    os.makedirs(scratch_out, exist_ok=True)
+    was_out, was_manifest = gen.OUT, gen.MANIFEST
+    was_key, was_gen = gen.api_key, gen.generate
+    gen.OUT = scratch_out
+    gen.MANIFEST = os.path.join(SCRATCH, "manifest.json")
+    gen.api_key = lambda: "sk-test"
+    gen.generate = lambda *a, **kw: BLACK
+    try:
+        code, text = run(["--only", "lv03a", "--retries", "1"])
+        check("without the flag a rejected draw is discarded",
+              code == 1 and "rejected" in text
+              and not os.path.exists(os.path.join(scratch_out, "_rejects")),
+              text.splitlines()[-4:])
+        code, text = run(["--only", "lv03a", "--retries", "1",
+                          "--save-rejects"])
+        kept = sorted(os.listdir(os.path.join(scratch_out, "_rejects")))
+        check("with it every rejected draw is written under _rejects/",
+              code == 1 and kept == [".gitignore", "lv03a_1.webp",
+                                     "lv03a_2.webp"], str(kept))
+        check("  named by frame and attempt, and said so in the log",
+              "_rejects/lv03a_1.webp" in text
+              and "_rejects/lv03a_2.webp" in text)
+        check("  the folder ignores itself, so nothing in it is ever "
+              "committed",
+              open(os.path.join(scratch_out, "_rejects", ".gitignore"),
+                   encoding="utf-8").read() == "*\n")
+        check("  and nothing reached the gallery or the manifest",
+              not [f for f in os.listdir(scratch_out) if f.endswith(".webp")]
+              and not os.path.exists(gen.MANIFEST))
+        with Image.open(os.path.join(scratch_out, "_rejects",
+                                     "lv03a_1.webp")) as im:
+            check("  a kept reject is the frame at its committed shape",
+                  im.size == (640, 960), str(im.size))
+    finally:
+        gen.OUT, gen.MANIFEST = was_out, was_manifest
+        gen.api_key, gen.generate = was_key, was_gen
+    import shutil
+    shutil.rmtree(scratch_out)
+check("the real gallery has no _rejects folder committed",
+      not os.path.exists(os.path.join(GALLERY, "_rejects"))
+      or os.path.exists(os.path.join(GALLERY, "_rejects", ".gitignore")))
 
 
 print("\n--- the placeholder script, and the gallery on disk ---")
