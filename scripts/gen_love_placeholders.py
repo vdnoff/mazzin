@@ -28,6 +28,7 @@ is one somebody forgets to replace.
 Written into static/galleries/love-zodiac-bg/:
     lv01a … lv18b .webp   640x960 for a pair card, 360x600 for a four-up
                           cell — the shape of the tile each step renders
+    g01, g02, g03 .webp   360x600, the three-up gender step's cells
     int1, int2 .webp      800x1000, the two interstitial frames (4:5)
     og.webp               1200x630, the share card
 """
@@ -48,7 +49,8 @@ OWNED = "/static/galleries/love-zodiac-bg/"
 # stand-in has to be the same shape or replacing one with the other would
 # change the layout rather than only the picture. Keyed by step format, so
 # a format this table has never heard of is a loud failure.
-FRAME_BY_FORMAT = {"pair": (640, 960), "grid4": (360, 600)}
+FRAME_BY_FORMAT = {"pair": (640, 960), "grid3": (360, 600),
+                   "grid4": (360, 600)}
 # The two interstitial frames are 4:5.
 FRAME_TALL = (800, 1000)
 QUALITY = 80

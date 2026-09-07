@@ -116,21 +116,25 @@ kinds = {}
 for f in plan:
     kinds[f["kind"]] = kinds.get(f["kind"], 0) + 1
 print("    plan: " + ", ".join("%s %d" % kv for kv in sorted(kinds.items())))
-check("forty-six frames: twenty-eight pair cards, sixteen grid cells, two "
+check("forty-nine frames: twenty-eight pair cards, nineteen grid cells, two "
       "interstitials",
-      len(plan) == 46 and kinds == {"pair": 28, "grid": 16, "interstitial": 2},
+      len(plan) == 49 and kinds == {"pair": 28, "grid": 19, "interstitial": 2},
       str(kinds))
 check("  the cards are every love card the walk shows, in walk order",
       [f["id"] for f in plan if f["kind"] != "interstitial"]
       == [i["id"] for i in images])
-check("  a card's kind is its step's format: pair or grid4, nothing else",
+check("  a card's kind is its step's format: pair, grid3 or grid4, nothing "
+      "else",
       all(by_id[i["id"]]["kind"] == gen.KIND_OF_FORMAT[format_of[i["id"]]]
           for i in images)
-      and gen.KIND_OF_FORMAT == {"pair": "pair", "grid4": "grid"})
-check("  the sixteen grid cells are the four four-up steps' cards",
+      and gen.KIND_OF_FORMAT == {"pair": "pair", "grid3": "grid",
+                                 "grid4": "grid"})
+check("  the nineteen grid cells are the four four-ups' and the three-up's",
       sorted(f["id"] for f in plan if f["kind"] == "grid")
-      == sorted(i["id"] for i in images if format_of[i["id"]] == "grid4")
-      and len([s for s in steps if s["format"] == "grid4"]) == 4)
+      == sorted(i["id"] for i in images
+                if format_of[i["id"]] in ("grid3", "grid4"))
+      and len([s for s in steps if s["format"] == "grid4"]) == 4
+      and [s["id"] for s in steps if s["format"] == "grid3"] == ["gender"])
 check("  the interstitials are the two frames only the preview strip names",
       [f["id"] for f in plan if f["kind"] == "interstitial"]
       == [g["id"] for g in extras] == ["int1", "int2"])
@@ -230,11 +234,13 @@ check("  it is the whole of the v5 palette after the guidance slot",
 # them: the only style words in a prompt are the zodiac string's own.
 TREATMENT = ("painterly", "dreamy", "luminous", "moody", "golden-hour",
              "saturated", "palette", "cinematic", "style")
+# The three gender frames are the owner's words verbatim, "luminous"
+# nebula included, and are not held to this.
 check("  and no scene carries a treatment word of its own",
       not [(f["id"], w) for f in plan for w in TREATMENT
-           if w in f["subject"]],
+           if w in f["subject"] and not f["id"].startswith("g0")],
       str([(f["id"], w) for f in plan for w in TREATMENT
-           if w in f["subject"]][:4]))
+           if w in f["subject"] and not f["id"].startswith("g0")][:4]))
 check("  every prompt is its scene, the guidance for its crop, the zodiac "
       "string", all(
     f["prompt"] == f["subject"] + ", " + gen.KINDS[f["kind"]]["guidance"]
@@ -353,13 +359,16 @@ RESTORED = ("lv01a", "lv02a", "lv03a", "lv05c", "lv05d", "lv07d", "lv08a",
             "lv09b", "lv12a", "lv14a", "lv14b", "lv15a", "lv15b", "lv16a",
             "lv16c", "lv16d", "lv18b")
 PEOPLE = re.compile(r"\b(silhouettes?|figures?|hands?|fishermen|couple)\b")
+# The gender step's two stardust silhouettes are new, not restored, and
+# stand outside this count.
+walk_frames = [f for f in plan if not f["id"].startswith("g0")]
 check("seventeen frames name a silhouette, a figure, hands or a couple",
-      sorted(f["id"] for f in plan if PEOPLE.search(f["subject"]))
+      sorted(f["id"] for f in walk_frames if PEOPLE.search(f["subject"]))
       == sorted(RESTORED),
-      str(sorted(set(f["id"] for f in plan if PEOPLE.search(f["subject"]))
-                 ^ set(RESTORED))))
+      str(sorted(set(f["id"] for f in walk_frames
+                     if PEOPLE.search(f["subject"])) ^ set(RESTORED))))
 check("  and the other twenty-nine are the object scenes they were",
-      not [f["id"] for f in plan if f["id"] not in RESTORED
+      not [f["id"] for f in walk_frames if f["id"] not in RESTORED
            and PEOPLE.search(f["subject"])])
 check("  no scene, restored or not, asks for a face",
       not [f["id"] for f in plan
@@ -392,7 +401,10 @@ check("  and none asks for v1's darkness",
 check("three gender frames wait on the step, in one bucket",
       [r[0] for r in gen.PENDING_PROMPTS] == ["g01", "g02", "g03"]
       and {r[1] for r in gen.PENDING_PROMPTS} == {"mid"}
-      and not [f for f in plan if f["id"].startswith("g0")]
+      and [f["id"] for f in plan if f["id"].startswith("g0")]
+      == ["g01", "g02", "g03"]
+      and all(f["kind"] == "grid" and f["bucket"] == "mid"
+              for f in plan if f["id"].startswith("g0"))
       and not any(gen.guard(r[2]) for r in gen.PENDING_PROMPTS))
 check("  feminine, masculine, neutral — stardust silhouettes and a star",
       "feminine silhouette" in gen.PENDING_PROMPTS[0][2]
@@ -400,18 +412,13 @@ check("  feminine, masculine, neutral — stardust silhouettes and a star",
       and "masculine silhouette" in gen.PENDING_PROMPTS[1][2]
       and "teal-gold" in gen.PENDING_PROMPTS[1][2]
       and "neutral and welcoming" in gen.PENDING_PROMPTS[2][2])
-_with_step = json.loads(json.dumps(cfg))
-_with_step["swipe"]["steps"].insert(2, {
-    "id": "gender", "question": "За кого е този профил?", "format": "grid4",
-    "pairs": [{"id": "p1", "images": [
-        {"id": g, "img": "/static/galleries/love-zodiac-bg/%s.webp" % g,
-         "label": g, "tags": []} for g in ("g01", "g02", "g03")]}]})
-_plan49 = gen.frames(_with_step)
-check("  and they join the plan the day the config names them: 49 frames",
-      len(_plan49) == 49
-      and [f["id"] for f in _plan49 if f["id"].startswith("g0")]
-      == ["g01", "g02", "g03"]
-      and all(f["kind"] == "grid" for f in _plan49 if f["id"].startswith("g0")))
+_without = json.loads(json.dumps(cfg))
+_without["swipe"]["steps"] = [s for s in _without["swipe"]["steps"]
+                              if s["id"] != "gender"]
+_plan46 = gen.frames(_without)
+check("  and they stay out of a plan whose config does not name them",
+      len(_plan46) == 46
+      and not [f for f in _plan46 if f["id"].startswith("g0")])
 
 
 print("\n--- the light plan: three buckets, one per step ---")
@@ -426,7 +433,7 @@ check("every frame sits in one of three buckets",
 # wrong. The buckets follow what was measured: four bright, twenty-eight
 # mid, fourteen dark.
 check("  four bright, twenty-eight mid, fourteen dark — what the draws said",
-      count == {"bright": 4, "mid": 28, "dark": 14}, str(count))
+      count == {"bright": 4, "mid": 31, "dark": 14}, str(count))
 check("  every pair and every four-up is lit alike: one bucket per step",
       all(len({buckets[i["id"]] for p in s["pairs"] for i in p["images"]
                if i["id"] in buckets}) == 1
@@ -577,7 +584,7 @@ entries = gen.load_manifest()
 if entries:
     # The manifest on disk was drawn under v4, and v5 bumps every recipe:
     # the final full redraw.
-    check("every recorded frame is stale: a plain run would redraw all 46",
+    check("every recorded frame is stale: a plain run would redraw all 49",
           not any(gen.already_made(f, entries) for f in plan)
           and not any(gen.already_made(f, entries, (gen.DRAW_PALETTE,))
                       for f in plan),
@@ -598,7 +605,7 @@ if entries:
     print("    %d frames recorded before v5, all stale; %d of them would "
           "fail their bucket band" % (len(entries), len(rejected)))
 else:
-    notes.append("no manifest on disk: the first run draws all 46")
+    notes.append("no manifest on disk: the first run draws all 49")
     check("  with no manifest, nothing is skipped",
           not any(gen.already_made(f, {}) for f in plan))
 
@@ -898,10 +905,11 @@ try:
     code, text = run(["--dry-run", "--force"])
     check("a forced dry run prints every prompt and calls nothing",
           code == 0 and not called and text.count("--- lv") == 44
+          and text.count("--- g0") == 3
           and text.count("--- int") == 2 and "nothing called" in text,
           "exit %s, %d calls" % (code, len(called)))
     check("  and states the count and the estimate first",
-          re.search(r"46 frame\(s\) to draw, ~\$\d+\.\d\d estimated", text)
+          re.search(r"49 frame\(s\) to draw, ~\$\d+\.\d\d estimated", text)
           is not None, text.splitlines()[0])
     code, text = run(["--dry-run"])
     check("a plain dry run lists only the frames not yet recorded",
@@ -913,12 +921,12 @@ try:
     check("  and names the palette it would draw under",
           "palette v5" in text.splitlines()[0], text.splitlines()[0])
     if gen.load_manifest():
-        check("  with a pre-v4 manifest on disk that is all forty-six",
-              text.count("--- ") == 46, text.splitlines()[0])
+        check("  with a pre-v5 manifest on disk that is all forty-nine",
+              text.count("--- ") == 49, text.splitlines()[0])
         check("    each under its bucket's band",
               text.count("bright: luma 110-225") == 3
               and text.count("bright: luma 18-225") == 1
-              and text.count("mid: luma 55-135") == 25
+              and text.count("mid: luma 55-135") == 28
               and text.count("mid: luma 38-135") == 2
               and text.count("mid: luma 30-135") == 1
               and text.count("dark: luma") == 14, text.splitlines()[0])
@@ -1002,6 +1010,7 @@ check("the placeholders come off the same config into the same gallery",
       ph.CONFIG == gen.CONFIG and ph.OUT == gen.OUT and ph.OWNED == gen.OWNED)
 check("  at the shape the real art is kept at, per step format",
       ph.FRAME_BY_FORMAT == {"pair": gen.KINDS["pair"]["size"],
+                             "grid3": gen.KINDS["grid"]["size"],
                              "grid4": gen.KINDS["grid"]["size"]}
       and ph.FRAME_TALL == gen.KINDS["interstitial"]["size"])
 check("  and it leaves a frame already on disk alone",
@@ -1011,8 +1020,8 @@ check("  never painting into another funnel's gallery",
 gallery = {f[:-len(".webp")] for f in os.listdir(GALLERY)
            if f.endswith(".webp")}
 want = {f["id"] for f in plan} | {"og"}
-check("every planned frame has a file, and the og beside them — forty-seven",
-      want <= gallery and len(want) == 47, str(sorted(want - gallery)[:4]))
+check("every planned frame has a file, and the og beside them — fifty",
+      want <= gallery and len(want) == 50, str(sorted(want - gallery)[:4]))
 check("  and the gallery holds nothing else — plan equals directory",
       not (gallery - want), str(sorted(gallery - want)[:4]))
 big = [f for f in sorted(gallery)

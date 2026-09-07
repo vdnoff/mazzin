@@ -749,6 +749,75 @@ body.is-fading .dots span { background: #868FB6; }
   min-width: 44px;
 }
 
+/* Three across, one row: a single-select between three named options, the
+   love funnel's "for whom is this profile" step. Same columns as the sign
+   grid — about 112px each at 390px — and one row of portrait cells at 3:5,
+   which is the shape the four-up cells are drawn for, so the frames are the
+   same art size as those. Only a step that names `grid3` gets this; no
+   other funnel does. */
+.cards.is-grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 8px;
+  /* One row of 3:5 cells: at 390px a 114px column wants about 190px of
+     height, and the ceiling sits just above the floor so the elastic row
+     cannot stretch the cells past the shape the frames are drawn for. */
+  min-height: min(48vw, 24vh);
+  max-height: min(50vw, 26vh);
+}
+
+.cards.is-grid3 .card {
+  border-radius: 12px;
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* The narrow cells take the sign grid's badge: the type steps down and the
+   padding comes in, and the chip and the corner check that would cover a
+   112px cell stay away — the confirmation moves inside the label, as on the
+   sign step. The love funnel's own wrap rule below lets the longest of the
+   three names take a second line. */
+.cards.is-grid3 .card-name {
+  font-size: 11px;
+  padding: 4px 6px;
+  bottom: 6px;
+  max-width: 96%;
+  letter-spacing: -0.01em;
+}
+
+.cards.is-grid3 .reaction { display: none !important; }
+.cards.is-grid3 .check { display: none; }
+
+.cards.is-grid3 .card.is-chosen .card-name {
+  opacity: 1;
+  color: #16181d;
+  background: var(--accent, #C05621);
+  max-width: 100%;
+  padding-left: 5px;
+  padding-right: 5px;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+
+.cards.is-grid3 .card.is-chosen .card-name::after {
+  content: "\2713";
+  margin-left: 5px;
+  font-weight: 700;
+}
+
+@supports ((backdrop-filter: blur(4px)) or (-webkit-backdrop-filter: blur(4px))) {
+  .cards.is-grid3 .card.is-chosen .card-name {
+    background: var(--accent, #C05621);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+body.theme-zodiac .cards.is-grid3 .card.is-chosen .card-name {
+  color: #221A05;
+  background: #E8C878;
+}
+
 .card {
   position: relative;
   flex: 1 1 0;
@@ -1018,6 +1087,8 @@ body.is-fading .dots span { background: #868FB6; }
    174px wide at 390px, so one rule serves both. */
 .card:has(> .card-img[src*="/galleries/love-zodiac-bg/"]) .card-name {
   white-space: normal;
+  /* And on this funnel's three-up the type is smaller, so the wrap holds
+     two lines there too: the max-height is in ems. */
   /* Said outright, because `left: 50%` leaves an absolutely positioned box
      only half the card to shrink into once its text may wrap: without this
      every two-word label folded at 87px. The max-width above still caps it

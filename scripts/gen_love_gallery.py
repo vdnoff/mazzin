@@ -204,7 +204,7 @@ KINDS = {
 }
 # Which step format draws which kind of tile. A format not named here is a
 # loud failure at plan time, not a square frame in a portrait tile.
-KIND_OF_FORMAT = {"pair": "pair", "grid4": "grid"}
+KIND_OF_FORMAT = {"pair": "pair", "grid3": "grid", "grid4": "grid"}
 
 MODEL = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-1")
 IMAGE_QUALITY = os.getenv("LOVE_IMAGE_QUALITY", "medium")

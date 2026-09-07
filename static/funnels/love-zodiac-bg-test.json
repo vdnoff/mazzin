@@ -11,10 +11,10 @@
     "og_image": "/static/galleries/love-zodiac-bg/og.webp"
   },
   "swipe": {
-    "pairs_count": 19,
+    "pairs_count": 20,
     "headline": "Анализ на твоя любовен профил",
-    "subtext": "19 докосвания. Без писане. Любовен профил, който наистина е твой.",
-    "subtext_accent": "19 докосвания",
+    "subtext": "20 докосвания. Без писане. Любовен профил, който наистина е твой.",
+    "subtext_accent": "20 докосвания",
     "hint": "Докосни това, което те привлича",
     "label_mode": "badge",
     "analyzing_fade_to": "#0E1430",
@@ -417,6 +417,94 @@
                     "name": "Midnight Indigo",
                     "hex": "#1A2446",
                     "element": "lower field"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "gender",
+        "question": "За кого е този профил?",
+        "format": "grid3",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "g01",
+                "img": "/static/galleries/love-zodiac-bg/g01.webp",
+                "label": "За жена",
+                "tags": [
+                  "gender_female"
+                ],
+                "colors": [
+                  {
+                    "name": "Rose Gold",
+                    "hex": "#E8A98C",
+                    "element": "the nebula"
+                  },
+                  {
+                    "name": "Dusk Mauve",
+                    "hex": "#7A4C7E",
+                    "element": "the stardust"
+                  },
+                  {
+                    "name": "Night Indigo",
+                    "hex": "#141C3E",
+                    "element": "the sky"
+                  }
+                ]
+              },
+              {
+                "id": "g02",
+                "img": "/static/galleries/love-zodiac-bg/g02.webp",
+                "label": "За мъж",
+                "tags": [
+                  "gender_male"
+                ],
+                "colors": [
+                  {
+                    "name": "Teal Gold",
+                    "hex": "#5FA8A0",
+                    "element": "the nebula"
+                  },
+                  {
+                    "name": "Deep Teal",
+                    "hex": "#1F5E66",
+                    "element": "the stardust"
+                  },
+                  {
+                    "name": "Night Indigo",
+                    "hex": "#141C3E",
+                    "element": "the sky"
+                  }
+                ]
+              },
+              {
+                "id": "g03",
+                "img": "/static/galleries/love-zodiac-bg/g03.webp",
+                "label": "Предпочитам да не казвам",
+                "tags": [
+                  "gender_unsaid"
+                ],
+                "colors": [
+                  {
+                    "name": "Star White",
+                    "hex": "#F4EBD0",
+                    "element": "the star"
+                  },
+                  {
+                    "name": "Pale Gold",
+                    "hex": "#E8C878",
+                    "element": "the swirls"
+                  },
+                  {
+                    "name": "Night Indigo",
+                    "hex": "#141C3E",
+                    "element": "the sky"
                   }
                 ]
               }
@@ -1767,7 +1855,7 @@
   },
   "interstitials": [
     {
-      "after_step": 4,
+      "after_step": 5,
       "template": "confirm",
       "kicker": "Сигналът е записан",
       "line": "Два лични сигнала за сърцето са вътре.",
@@ -1795,7 +1883,7 @@
       }
     },
     {
-      "after_step": 9,
+      "after_step": 10,
       "template": "almost",
       "kicker": "Открит е модел",
       "line": "Любовният профил е калибриран на {pct}%.",
@@ -1831,7 +1919,7 @@
       }
     },
     {
-      "after_step": 14,
+      "after_step": 15,
       "template": "confirm",
       "kicker": "Дълбок слой",
       "line": "Дълбокият слой на сърцето е картиран.",
@@ -1860,10 +1948,10 @@
       }
     },
     {
-      "after_step": 19,
+      "after_step": 20,
       "template": "almost",
       "kicker": "Калибриране",
-      "line": "Всичките 19 докосвания са вътре.",
+      "line": "Всичките 20 докосвания са вътре.",
       "sub": "Повечето съчетания в любовта са обичайни — да видим твоето.",
       "cta": "Продължи анализа",
       "auto_advance_ms": 2400,
@@ -2491,7 +2579,7 @@
     "duration_ms": 2500,
     "text": "Разчитаме сигналите ти",
     "messages": [
-      "Разчитаме твоите 19 докосвания…",
+      "Разчитаме твоите 20 докосвания…",
       "Претегляме ги спрямо четирите стихии…",
       "Изолираме твоя стил в любовта…"
     ]
@@ -2499,7 +2587,7 @@
   "analyzing_echo": true,
   "report": {
     "generating_messages": [
-      "Изкуственият ни интелект претегля твоите 19 докосвания спрямо четирите стихии…",
+      "Изкуственият ни интелект претегля твоите 20 докосвания спрямо четирите стихии…",
       "Търсим съчетанията, които пасват на ТЕБ…",
       "Съпоставяме твоята зодия с избора ти на стихия…",
       "Почти готово — пишем любовния ти профил…"
@@ -2679,7 +2767,7 @@
       "sticky_label": "Отключи пълния профил — {price}"
     },
     "title": "Твоят любовен профил — {style}",
-    "proof_line": "Изградено от твоите 19 докосвания",
+    "proof_line": "Изградено от твоите 20 докосвания",
     "manifest": [
       "Твоята палитра на любовта с точни кодове, плюс трите ти талисмана",
       "5 скрити сили в любовта и слепи петна — с това какво да направиш за всяко",
@@ -2723,7 +2811,7 @@
   },
   "result": {
     "mistakes_teaser": "Видя сила #1. Другите четири са по-дълбоки — една обяснява избора ти на {gesture}.",
-    "value_banner": "Пет сили, таблица за съвместимост с всичките дванадесет зодии и карта на сърцето за дванадесет месеца — всичко изградено от твоите 19 докосвания, твое за постоянно."
+    "value_banner": "Пет сили, таблица за съвместимост с всичките дванадесет зодии и карта на сърцето за дванадесет месеца — всичко изградено от твоите 20 докосвания, твое за постоянно."
   },
   "result_copy": {
     "kicker": "ТВОЯТ ЛЮБОВЕН ПРОФИЛ",

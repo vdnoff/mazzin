@@ -98,8 +98,8 @@ check("slug is love-zodiac-bg", cfg["slug"] == SLUG, cfg["slug"])
 check("funnel_id is love_zodiac_bg_v1",
       cfg["funnel_id"] == "love_zodiac_bg_v1", cfg["funnel_id"])
 check("locale is bg", cfg["locale"] == "bg", cfg["locale"])
-check("pairs_count == number of steps == 19",
-      cfg["swipe"]["pairs_count"] == len(steps) == 19,
+check("pairs_count == number of steps == 20",
+      cfg["swipe"]["pairs_count"] == len(steps) == 20,
       "%s vs %s" % (cfg["swipe"]["pairs_count"], len(steps)))
 check("the theme, the module and the sheet are zodiac-bg's",
       all(cfg[k] == zbg[k] for k in ("theme", "result_module", "result_css")),
@@ -232,7 +232,7 @@ LOVE_STEPS = ["spark", "evening", "gesture", "gift", "conflict", "closeness",
               "romance", "rhythm", "distance", "home", "passion", "trust",
               "past", "public", "care", "silence", "future", "symbol"]
 check("nineteen steps: the hook pair, the sign, then seventeen pairs",
-      [s["id"] for s in steps] == LOVE_STEPS[:1] + ["sign"] + LOVE_STEPS[1:],
+      [s["id"] for s in steps] == LOVE_STEPS[:1] + ["sign", "gender"] + LOVE_STEPS[1:],
       str([s["id"] for s in steps]))
 check("the sign step is zodiac-bg's, card for card",
       by_step["sign"] == next(s for s in zbg["swipe"]["steps"]
@@ -260,16 +260,19 @@ check("  each with exactly four cards", all(
 check("  and every other step is a pair of two", all(
     s["format"] == "pair" and len(s["pairs"]) == 1
     and len(s["pairs"][0]["images"]) == 2
-    for s in steps if s["id"] != "sign" and s["id"] not in FOURS))
+    for s in steps if s["id"] not in ("sign", "gender") and s["id"] not in FOURS))
 WANT_IDS = []
 for n, sid in enumerate(LOVE_STEPS, 1):
     for side in ("abcd" if sid in FOURS else "ab"):
         WANT_IDS.append("lv%02d%s" % (n, side))
-check("the love images are lv01a..lv18d, in walk order, c and d on the fours",
+# The gender step's three sit after the hook pair, where the step does.
+WANT_IDS[2:2] = ["g01", "g02", "g03"]
+check("the love images are lv01a..lv18d, in walk order, c and d on the fours, "
+      "g01..g03 third",
       [i["id"] for i in love_images] == WANT_IDS,
       str([i["id"] for i in love_images][:6]))
-check("  forty-four of them, and nothing else is this funnel's",
-      len(love_images) == 44 and len(images) == 56)
+check("  forty-seven of them, and nothing else is this funnel's",
+      len(love_images) == 47 and len(images) == 59)
 NEW_LABELS = {"lv05c": "Споделен смях", "lv05d": "Разходка рамо до рамо",
               "lv07c": "Писмо на възглавницата", "lv07d": "Танц в кухнята",
               "lv10c": "Маса за гости", "lv10d": "Хамак за двама",
@@ -288,8 +291,10 @@ check("  with a label, three colours and a file each",
            if not os.path.isfile(os.path.join(ROOT, i["img"].lstrip("/")))]))
 check("no step shuffles off, pins or inverts except the sign grid",
       all(s.get("shuffle") is None and s.get("pin_first") is None
-          and s.get("scoring") is None for s in steps if s["id"] != "sign")
-      and by_step["sign"].get("shuffle") is False)
+          and s.get("scoring") is None
+          for s in steps if s["id"] not in ("sign", "gender"))
+      and by_step["sign"].get("shuffle") is False
+      and by_step["gender"].get("shuffle") is False)
 check("the og image is this funnel's own, on disk",
       cfg["meta"]["og_image"] == GALLERY + "og.webp"
       and os.path.isfile(os.path.join(ROOT, "static/galleries/love-zodiac-bg",
@@ -321,18 +326,22 @@ print("\n--- the tag map: balanced, and every archetype reachable ---")
 ELEMENTS = ("fire", "earth", "air", "water")
 ENERGIES = ("sun", "moon")
 TONES = ("bold", "calm", "mystic")
-check("every love image carries one element, one energy and one tone",
+# The gender step's three cards score nothing: they carry one gender tag
+# each and no axis tag, and are held to that in their own block below.
+GENDER_IDS = ("g01", "g02", "g03")
+scored = [i for i in love_images if i["id"] not in GENDER_IDS]
+check("every scored love image carries one element, one energy and one tone",
       all(sum(t in ELEMENTS for t in i["tags"]) == 1
           and sum(t in ENERGIES for t in i["tags"]) == 1
           and sum(t in TONES for t in i["tags"]) == 1
-          for i in love_images),
-      str([i["id"] for i in love_images
+          for i in scored) and len(scored) == 44,
+      str([i["id"] for i in scored
            if sum(t in ELEMENTS for t in i["tags"]) != 1]))
 check("  and nothing outside that vocabulary but the one service tag",
       all(set(i["tags"]) <= set(ELEMENTS + ENERGIES + TONES
-                                + ("purpose_love",)) for i in love_images))
+                                + ("purpose_love",)) for i in scored))
 tally = {}
-for i in love_images:
+for i in scored:
     for t in i["tags"]:
         tally[t] = tally.get(t, 0) + 1
 check("eleven images per element", all(tally[e] == 11 for e in ELEMENTS),
@@ -346,8 +355,8 @@ check("  and the three tones within one of each other",
 check("every pair contrasts two different elements",
       all(len({t for i in s["pairs"][0]["images"] for t in i["tags"]
                if t in ELEMENTS}) == 2
-          for s in steps if s["id"] != "sign" and s["id"] not in FOURS),
-      str([s["id"] for s in steps if s["id"] != "sign" and s["id"] not in FOURS
+          for s in steps if s["id"] not in ("sign", "gender") and s["id"] not in FOURS),
+      str([s["id"] for s in steps if s["id"] not in ("sign", "gender") and s["id"] not in FOURS
            and len({t for i in s["pairs"][0]["images"] for t in i["tags"]
                     if t in ELEMENTS}) != 2]))
 check("  and every four-up offers all four elements",
@@ -426,16 +435,18 @@ print("    random-walk shares: %s"
 
 print("\n--- the interstitials keep zodiac-bg's mechanics ---")
 mids = cfg["interstitials"]
-check("four beats, at the same four points of a nineteen-step walk",
-      [e["after_step"] for e in mids] == [4, 9, 14, 19],
+check("four beats, at the same four points, one step later each for the "
+      "gender step",
+      [e["after_step"] for e in mids] == [5, 10, 15, 20],
       str([e["after_step"] for e in mids]))
 check("  same templates and dwell times as zodiac-bg",
       [(e["template"], e["auto_advance_ms"]) for e in mids]
       == [(e["template"], e["auto_advance_ms"])
           for e in zbg["interstitials"]])
 echoed = [sid for e in mids for sid in e["echo_steps"]]
-check("  every step is echoed exactly once, in walk order",
-      echoed == [s["id"] for s in steps], str(echoed))
+# The gender step is not a signal about the heart, so no beat echoes it.
+check("  every scored step is echoed exactly once, in walk order",
+      echoed == [s["id"] for s in steps if s["id"] != "gender"], str(echoed))
 check("  the first beat answers the hook pair back, card for card",
       mids[0]["personal"]["step"] == "spark"
       and sorted(mids[0]["personal"]["lines"]) == ["lv01a", "lv01b"])
@@ -701,14 +712,15 @@ check("  and the product is a love profile, everywhere it is titled",
 CLINICAL = re.compile(r"кръстос\w*", re.IGNORECASE)
 check("no line uses the clinical word for a cross", not CLINICAL.search(RAW))
 
-print("\n--- the count claims say nineteen taps ---")
-# The walk takes nineteen taps: the sign, fourteen pairs and four four-ups.
+print("\n--- the count claims say twenty taps ---")
+# The walk takes twenty taps: the sign, the gender three-up, fourteen pairs
+# and four four-ups.
 # "18 двойки" stopped being true the day four of the pairs became grids, so
 # the copy counts what the reader actually does — докосвания — and every
 # claim says the same number.
 TAPS = len(steps)
-check("nineteen taps, counted off the config",
-      TAPS == 19 == cfg["swipe"]["pairs_count"])
+check("twenty taps, counted off the config",
+      TAPS == 20 == cfg["swipe"]["pairs_count"])
 COUNTED = [("swipe.subtext", cfg["swipe"]["subtext"]),
            ("analyzing.messages[0]", cfg["analyzing"]["messages"][0]),
            ("report.generating_messages[0]",
@@ -717,7 +729,7 @@ COUNTED = [("swipe.subtext", cfg["swipe"]["subtext"]),
            ("interstitials[3].line", cfg["interstitials"][3]["line"]),
            ("result.value_banner", cfg["result"]["value_banner"])]
 for name, text in COUNTED:
-    check("  %-30s says 19 докосвания" % name, "19 докосвания" in text, text)
+    check("  %-30s says 20 докосвания" % name, "20 докосвания" in text, text)
 check("nothing claims eighteen pairs any more, or twelve of anything",
       not [v for _, v in STRINGS
            if re.search(r"\b(18|12) (сигнала|избора|докосвания|двойки)\b", v)
@@ -930,6 +942,69 @@ print("    longest label %d chars, longest word %d chars"
          max(len(w) for i in love_images
              for w in re.split(r"[\s-]+", i["label"]))))
 
+print("\n--- the gender step: three named options, scoring nothing ---")
+# "За кого е този профил?" sits right after the sign, on the three-up format
+# the engine gained for it: one row of three, pinned in the approved order,
+# each card carrying one gender tag and no axis tag, so the answer changes
+# the report's grammar and never its archetype.
+GENDER = by_step["gender"]
+check("the gender step is third, after the sign",
+      [s["id"] for s in steps][:3] == ["spark", "sign", "gender"])
+check("  asking for whom the profile is",
+      GENDER["question"] == "За кого е този профил?", GENDER["question"])
+check("  on the three-up, pinned in the approved order",
+      GENDER["format"] == "grid3" and GENDER.get("shuffle") is False
+      and [i["id"] for i in GENDER["pairs"][0]["images"]] == list(GENDER_IDS)
+      and [i["label"] for i in GENDER["pairs"][0]["images"]]
+      == ["За жена", "За мъж", "Предпочитам да не казвам"])
+check("  each card carries its one gender tag and nothing that scores",
+      [i["tags"] for i in GENDER["pairs"][0]["images"]]
+      == [["gender_female"], ["gender_male"], ["gender_unsaid"]]
+      and all(not set(i["tags"]) & set(ELEMENTS + ENERGIES + TONES)
+              for i in GENDER["pairs"][0]["images"]))
+check("  so no archetype counts it",
+      not any(t.startswith("gender_") for st in cfg["styles"]
+              for t in st["tags"])
+      and all(t in reports.GENDER_TAGS for i in GENDER["pairs"][0]["images"]
+              for t in i["tags"]))
+check("  three frames with three colours each, on disk",
+      all(len(i["colors"]) == 3
+          and os.path.isfile(os.path.join(ROOT, i["img"].lstrip("/")))
+          for i in GENDER["pairs"][0]["images"]))
+check("the engine knows the format, by that name and no other new one",
+      "var GRID_SIZE = { grid3: 3, grid4: 4, grid6: 6, grid12: 12 };"
+      in ENGINE_JS)
+check("  and the sheet lays it out: one row of three, the badge stepped down",
+      ".cards.is-grid3 {" in CSS
+      and "grid-template-columns: repeat(3, minmax(0, 1fr));"
+      in CSS.split(".cards.is-grid3 {", 1)[1].split("}", 1)[0]
+      and ".cards.is-grid3 .card-name {" in CSS
+      and ".cards.is-grid3 .reaction { display: none !important; }" in CSS)
+# And the server accepts what the client sends: /api/track gates a swipe's
+# shown list on a closed set of sizes, and three had to be admitted to it or
+# this step's every tap was a valid event thrown away on arrival.
+import tracking                                                # noqa: E402
+check("  and /api/track accepts a three-image shown list",
+      3 in tracking.SHOWN_SIZES
+      and tracking._clean_extra(SLUG, "swipe", {
+          "pair": "gender:p1", "shown": list(GENDER_IDS),
+          "chosen": "g02"})["chosen"] == "g02"
+      and tracking.SHOWN_SIZES == frozenset((2, 3, 4, 6, 12)))
+check("  no other funnel names the format",
+      not [f for f in os.listdir(os.path.join(ROOT, "funnels"))
+           if not f.startswith("love-zodiac-bg")
+           and '"grid3"' in open(os.path.join(ROOT, "funnels", f),
+                                encoding="utf-8").read()])
+# The three-up's cells are the sign grid's width — about 112px at 390px —
+# and its badge is the sign grid's 11px, so a line holds about thirteen
+# characters and two lines about twenty-six. "Предпочитам да не казвам"
+# measured two whole lines on the live shell; the budget is held here.
+G_WORD, G_LABEL = 13, 26
+check("  every label fits the narrow cell in two lines",
+      all(len(i["label"]) <= G_LABEL
+          and all(len(w) <= G_WORD for w in i["label"].split())
+          for i in GENDER["pairs"][0]["images"]))
+
 print("\n--- compatibility is the locked core ---")
 MIN = cfg["result_copy"]["profile"]
 ROWS = MIN["unlock"]
@@ -1112,11 +1187,12 @@ if Image is not None:
             return im.size
     # The shape of the tile each step renders, measured on the live shell
     # at 390x844: a pair card is 174x603, a four-up cell about 174x297.
-    SHAPE = {"pair": (640, 960), "grid4": (360, 600)}
+    SHAPE = {"pair": (640, 960), "grid3": (360, 600), "grid4": (360, 600)}
     wrong = [(i["id"], size_of(i["id"])) for s in steps
              if s["id"] != "sign" for i in s["pairs"][0]["images"]
              if size_of(i["id"]) != SHAPE[s["format"]]]
-    check("  pair cards are 640x960 and four-up cells 360x600", not wrong,
+    check("  pair cards are 640x960, three-up and four-up cells 360x600",
+          not wrong,
           str(wrong[:3]))
     check("  the two interstitial frames are 4:5, 800x1000",
           size_of("int1") == size_of("int2") == (800, 1000))
@@ -1562,9 +1638,7 @@ check("the verify hooks are the zodiac palette checks",
       profile["verify"] is reports.ZODIAC_VERIFY)
 
 print("\n--- the reader's grammatical gender, on two sections ---")
-# The step that asks is not in the config yet — the engine has no
-# three-option format — so the profile side is exercised on a copy of the
-# config carrying the step the way it will be written: three cards, one tag
+# The step that asks is the three-up after the sign: three cards, one tag
 # each, no scoring weight. The tag rides in `choices` like every other tap
 # and reaches the two personal sections as one instruction line.
 check("the tags and the two sections are declared on the profile alone",
@@ -1579,16 +1653,7 @@ check("the tags and the two sections are declared on the profile alone",
 check("  and _section_prompt asks the profile for it, once, on the personal "
       "sections",
       REPORTS_SRC.count('profile.get("personal_note")') == 1)
-_gendered = json.loads(RAW)
-_gendered["swipe"]["steps"].insert(2, {
-    "id": "gender", "question": "За кого е този профил?", "format": "grid4",
-    "pairs": [{"id": "p1", "images": [
-        {"id": "g01", "img": GALLERY + "g01.webp", "label": "За жена",
-         "tags": ["gender_female"]},
-        {"id": "g02", "img": GALLERY + "g02.webp", "label": "За мъж",
-         "tags": ["gender_male"]},
-        {"id": "g03", "img": GALLERY + "g03.webp",
-         "label": "Предпочитам да не казвам", "tags": ["gender_unsaid"]}]}]})
+_gendered = cfg
 _gstyle = reports._style(_gendered, "radiant_fire")
 
 
@@ -1623,10 +1688,12 @@ check("  the year map never carries it",
       all(FEM not in gender_prompt(g, "shopping")
           and MASC not in gender_prompt(g, "shopping")
           for g in ("g01", "g02", "g03")))
-check("  and a walk with no gender step is the prompt it was",
-      FEM not in prompt and MASC not in prompt
-      and gender_prompt("g03", "materials").replace(
-          "За кого е този профил?", "") != "")
+_no_answer = [c for c in gendered_choices("g03") if c not in GENDER_IDS]
+check("  and a walk that never answered is the prompt it was",
+      not any(w in reports._section_prompt(
+                  _gstyle, NAME, scores, section, cfg=cfg,
+                  choices=_no_answer, funnel_slug=SLUG, months=months)
+              for section in ("dna", "materials") for w in (FEM, MASC)))
 check("  the line keeps the other person unnamed either way",
       all("партньорът, човекът до теб, другият" in line
           and "уморен(а)" in line
