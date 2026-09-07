@@ -618,3 +618,6 @@ bottom.
 
 ## 2026-09-07 — claude/love-report-profile
 - love-zodiac-bg: report profile + live mode
+
+## 2026-09-07 — claude/love-final-gallery
+- love: final gallery + gender step + full labels
