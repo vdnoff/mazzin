@@ -3,7 +3,7 @@
   "funnel_id": "love_zodiac_bg_v1",
   "locale": "bg",
   "theme": "zodiac",
-  "stripe_mode": "test",
+  "stripe_mode": "live",
   "result_module": "/static/js/result_zodiac.js",
   "result_css": "/static/css/result_zodiac.css",
   "meta": {
@@ -2935,8 +2935,8 @@
       "scales": [
         {
           "id": "energy",
-          "left": "Слънце",
-          "right": "Луна"
+          "left": "На глас",
+          "right": "В дълбочина"
         },
         {
           "id": "tone",
@@ -3057,8 +3057,8 @@
         "water": "Вода"
       },
       "energies": {
-        "sun": "Слънце",
-        "moon": "Луна"
+        "sun": "На глас",
+        "moon": "В дълбочина"
       },
       "led_template": "водеща енергия {energy}",
       "months": [
@@ -3079,7 +3079,7 @@
         "works": "РАБОТИ",
         "avoid": "ИЗБЯГВАЙ"
       },
-      "saves_head": "От какво да се откажеш",
+      "saves_head": "Пази сърцето си",
       "scale_aria": "от {left} към {right} — {at} от 100 към {right}",
       "price_regular_aria": "Редовна цена {price}"
     },

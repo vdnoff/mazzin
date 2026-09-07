@@ -1096,7 +1096,8 @@ check("  read through the accessor, which defaults to the English one",
       == reports._prompt_budget(None) == reports.PROMPT_BUDGET)
 check("  and the translated profiles are the only ones that set the key",
       sorted(slug for slug, p in reports.PROFILES.items()
-             if p.get("prompt_budget")) == ["zodiac-bg", "zodiac-ro"],
+             if p.get("prompt_budget"))
+      == ["love-zodiac-bg", "love-zodiac-bg-test", "zodiac-bg", "zodiac-ro"],
       str([slug for slug, p in reports.PROFILES.items()
            if p.get("prompt_budget")]))
 
@@ -1216,7 +1217,8 @@ check("  naming the quote, the field and what to do instead",
       and "NO quotation marks" in reports.ZODIAC_BG_JSON_RETRY)
 check("  and the translated profiles are the only ones that declare one",
       sorted(slug for slug, pr in reports.PROFILES.items()
-             if pr.get("json_retry")) == ["zodiac-bg", "zodiac-ro"],
+             if pr.get("json_retry"))
+      == ["love-zodiac-bg", "love-zodiac-bg-test", "zodiac-bg", "zodiac-ro"],
       str([slug for slug, pr in reports.PROFILES.items()
            if pr.get("json_retry")]))
 check("  and every call site still hands the profile's own",
@@ -1638,9 +1640,10 @@ print("\n--- the straight quote is repaired before the parser sees it ---")
 # for the key next to it, and what it costs when it does is a buyer's report.
 repair = profile.get("json_repair")
 check("the BG profile declares a repair", callable(repair))
-check("  and it is the only profile that does",
-      [slug for slug, pr in reports.PROFILES.items() if pr.get("json_repair")]
-      == ["zodiac-bg"],
+check("  and the Bulgarian profiles are the only ones that do",
+      sorted(slug for slug, pr in reports.PROFILES.items()
+             if pr.get("json_repair"))
+      == ["love-zodiac-bg", "love-zodiac-bg-test", "zodiac-bg"],
       str([slug for slug, pr in reports.PROFILES.items()
            if pr.get("json_repair")]))
 

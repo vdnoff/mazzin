@@ -873,7 +873,8 @@ check("  read through the accessor, which defaults to the English one",
 # than loosened to "at least one".
 check("  and the translated profiles are the only ones that set the key",
       sorted(slug for slug, p in reports.PROFILES.items()
-             if p.get("prompt_budget")) == ["zodiac-bg", "zodiac-ro"],
+             if p.get("prompt_budget"))
+      == ["love-zodiac-bg", "love-zodiac-bg-test", "zodiac-bg", "zodiac-ro"],
       str([slug for slug, p in reports.PROFILES.items()
            if p.get("prompt_budget")]))
 
@@ -1104,7 +1105,8 @@ check("the RO profile declares a JSON retry note",
 # generic advice alone, which is what the three checks below hold.
 check("  and the translated profiles are the only ones that do",
       sorted(slug for slug, pr in reports.PROFILES.items()
-             if pr.get("json_retry")) == ["zodiac-bg", "zodiac-ro"],
+             if pr.get("json_retry"))
+      == ["love-zodiac-bg", "love-zodiac-bg-test", "zodiac-bg", "zodiac-ro"],
       str([slug for slug, pr in reports.PROFILES.items()
            if pr.get("json_retry")]))
 check("  naming the quote, the field and what to do instead",

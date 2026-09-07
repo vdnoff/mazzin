@@ -12,12 +12,12 @@ every archetype is reachable, the copy really is Bulgarian in Cyrillic, the
 cross lines really are the love angle, and it stays inside the same Terms line
 zodiac-bg is held to.
 
-Two things this funnel does not have yet, and the suite says so rather than
-pretending: a report profile in reports.py, and a live Stripe mode. Both
-belong to the report phase. The checks that need the profile are marked
-DEFERRED below and switch themselves on the day reports.PROFILES names the
-slug; until then the suite asserts the dark-launch facts instead — the funnel
-transacts on test keys only and falls through to no profile of its own.
+The report phase has landed: reports.LOVE_BG_PROFILE is registered under the
+slug and its twin, the funnel transacts live, and the checks that waited for
+the profile run here — the page's labels are the profile's constants, the
+compatibility table is keyed on the grid's twelve labels, the mail and the
+PDF are this product's Bulgarian, the profile's own strings pass its own
+banned list, and every string on the model's path keeps the guillemet rule.
 
 No database, no network, no key. Everything is read off disk.
 """
@@ -42,12 +42,6 @@ def check(label, ok, detail=""):
         fails.append("%s %s" % (label, detail))
     print("  %-58s %s%s" % (label, "ok" if ok else "FAIL",
                             ("  " + str(detail)) if detail and not ok else ""))
-
-
-def deferred(label, why):
-    """A check that belongs to the report phase, recorded rather than run."""
-    notes.append("DEFERRED %s — %s" % (label, why))
-    print("  %-58s deferred" % label)
 
 
 JS = os.path.join(ROOT, "static", "js")
@@ -78,11 +72,7 @@ GALLERY = "/static/galleries/love-zodiac-bg/"
 love_images = [i for i in images if i["img"].startswith(GALLERY)]
 sign_images = by_step["sign"]["pairs"][0]["images"]
 
-# The profile, when the report phase lands it. Until then the slug is
-# unregistered and the fallback is kitchen's, which is exactly why the funnel
-# is not live.
-PROFILE_LANDED = SLUG in reports.PROFILES
-profile = reports.PROFILES.get(SLUG)
+profile = reports.LOVE_BG_PROFILE
 
 
 def leaves(node, path=""):
@@ -120,29 +110,31 @@ check("it names the minimal layout outright",
 check("  and runs no layout experiment",
       "paywall_variants" not in cfg, str(cfg.get("paywall_variants")))
 
-print("\n--- dark launch: complete, reachable, never sold ---")
-# There is no funnel registry to keep it out of: /<slug> serves any
-# funnels/<slug>.json, and the homepage links funnels by hand. What keeps a
-# real card out is the Stripe mode — payments.py transacts a `test` funnel on
-# the STRIPE_TEST_* keys only, and refuses checkout outright rather than
-# falling back to the live ones. Flip to "live" in the report phase.
-check("it transacts on test keys until the report phase",
-      cfg["stripe_mode"] == "test", cfg["stripe_mode"])
+print("\n--- live: complete, reachable, sold ---")
+# The report phase is what flipped this. While the slug fell through to the
+# kitchen profile a real purchase would have delivered the wrong document,
+# and the Stripe mode was what kept a real card out; now a purchase delivers
+# this product's own report, and the funnel transacts on the live keys.
+check("it transacts on live keys", cfg["stripe_mode"] == "live",
+      cfg["stripe_mode"])
 check("  which is the field payments.py reads, per request",
-      payments._stripe_mode(cfg) == payments.TEST
+      payments._stripe_mode(cfg) == payments.LIVE
       and payments.effective_mode.__code__.co_argcount == 2)
 check("  and zodiac-bg is still live", zbg["stripe_mode"] == "live")
 home = open(os.path.join(ROOT, "static/pages/home.html"),
             encoding="utf-8").read()
-check("the homepage does not link it",
+check("the homepage does not link it yet",
       'href="/%s"' % SLUG not in home and SLUG not in home)
-check("no report profile is registered for it yet",
-      not PROFILE_LANDED
-      and reports._profile(SLUG) is reports.KITCHEN_PROFILE,
-      "registered: %s" % PROFILE_LANDED)
-if PROFILE_LANDED:
-    notes.append("the report profile has landed — flip stripe_mode to live "
-                 "and retire the dark-launch block above")
+check("the report profile is registered under the slug and its twin",
+      reports.PROFILES.get(SLUG) is profile
+      and reports.PROFILES.get(SLUG + "-test") is profile
+      and reports._profile(SLUG) is profile
+      and reports._profile(SLUG + "-test") is profile)
+check("  it is a zodiac profile, so every zodiac branch takes it",
+      reports._is_zodiac(profile))
+check("  and a distinct object, not a share of zodiac-bg's",
+      profile is not reports.ZODIAC_BG_PROFILE
+      and reports._profile("zodiac-bg") is reports.ZODIAC_BG_PROFILE)
 
 print("\n--- it is zodiac-bg's machinery, key for key ---")
 
@@ -853,30 +845,35 @@ check("  tone is relabelled Пламък to Жарава",
       (SCALES[1]["left"], SCALES[1]["right"]) == ("Пламък", "Жарава"))
 check("  depth is relabelled Романтик to Реалист",
       (SCALES[2]["left"], SCALES[2]["right"]) == ("Романтик", "Реалист"))
-# Energy stays Слънце/Луна. The page reads `labels.energies`, but the PDF
-# prints reports.py's ENERGY_LABEL_BG through the profile's `energy_labels`,
-# and test_zodiacbg_check pins the two together. A page saying На глас over
-# a PDF saying Слънце is the drift that pin exists to catch, so the relabel
-# waits for the report phase to declare its own constant.
-check("  energy keeps reports.py's two words, which the PDF will print",
-      (SCALES[0]["left"], SCALES[0]["right"])
-      == (reports.ENERGY_LABEL_BG["sun"], reports.ENERGY_LABEL_BG["moon"])
-      and LABELS["energies"] == reports.ENERGY_LABEL_BG)
-deferred("energies relabelled На глас / В дълбочина",
-         "needs a love-profile energy_labels constant in reports.py; "
-         "until then the page and the PDF share ENERGY_LABEL_BG")
-check("elements are reports.py's Bulgarian four",
-      LABELS["elements"] == reports.ELEMENT_LABEL_BG)
-check("verdict badges are reports.py's, exactly",
-      LABELS["verdicts"] == reports.RENDER_WORDS_BG["verdicts"])
+# Energy is relabelled for love. The page reads `labels.energies` and the
+# energy scale; the PDF, the mail header and the delivered page print the
+# profile's `energy_labels`; and the three are pinned to one constant here —
+# a page saying На глас over a PDF saying Слънце is the drift this exists to
+# catch. Sun and moon stay the tag names underneath; only the words move.
+check("  energy is relabelled На глас to В дълбочина, page and PDF alike",
+      (SCALES[0]["left"], SCALES[0]["right"]) == ("На глас", "В дълбочина")
+      == (profile["energy_labels"]["sun"], profile["energy_labels"]["moon"])
+      and LABELS["energies"] == profile["energy_labels"]
+      == reports.LOVE_BG_ENERGY_LABEL
+      and sorted(LABELS["energies"]) == ["moon", "sun"])
+check("  and zodiac-bg keeps Слънце and Луна, untouched",
+      reports.ZODIAC_BG_PROFILE["energy_labels"] is reports.ENERGY_LABEL_BG
+      and reports.ENERGY_LABEL_BG == {"sun": "Слънце", "moon": "Луна"}
+      and zbg["result_copy"]["labels"]["energies"] == reports.ENERGY_LABEL_BG)
+check("elements are reports.py's Bulgarian four, shared with zodiac-bg",
+      LABELS["elements"] == reports.ELEMENT_LABEL_BG
+      and profile["element_labels"] is reports.ELEMENT_LABEL_BG)
+check("verdict badges are the profile's, exactly",
+      LABELS["verdicts"] == profile["words"]["verdicts"]
+      == reports.RENDER_WORDS_BG["verdicts"])
 check("months are reports.py's twelve, in order",
       LABELS["months"] == list(reports.MONTH_ABBR_BG))
 check("the two templates keep their tokens",
       "{energy}" in LABELS["led_template"]
       and all(t in LABELS["scale_aria"] for t in ("{left}", "{right}", "{at}"))
       and "{price}" in LABELS["price_regular_aria"])
-for energy in reports.ENERGY_LABEL_BG.values():
-    check("  led_template reads for %-8s" % energy,
+for energy in profile["energy_labels"].values():
+    check("  led_template reads for %-11s" % energy,
           LABELS["led_template"].replace("{energy}", energy)
           == "водеща енергия " + energy)
 check("the chips say it the way the formula does",
@@ -885,9 +882,8 @@ check("the chips say it the way the formula does",
 check("the split caption names the four elements in the same four words",
       all(label in cfg["result_copy"]["profile"]["split_caption"]
           for label in reports.ELEMENT_LABEL_BG.values()))
-check("the saves heading reuses the PDF's own word",
-      reports.RENDER_WORDS_BG["save"].lower()[:5]
-      in LABELS["saves_head"].lower())
+check("the saves heading is the PDF's own heading for that list",
+      LABELS["saves_head"] == profile["words"]["save"] == "Пази сърцето си")
 
 print("\n--- compatibility is the locked core ---")
 MIN = cfg["result_copy"]["profile"]
@@ -1019,10 +1015,8 @@ twin_cfg = json.load(open(os.path.join(ROOT, "funnels",
 TWINNED = ("slug", "funnel_id", "stripe_mode")
 differ = sorted(k for k in set(cfg) | set(twin_cfg)
                 if cfg.get(k) != twin_cfg.get(k))
-# The source is on test keys already, so the twin differs in two fields and
-# agrees on the third — which is the generator doing exactly its job.
-check("it differs in the slug and the funnel_id, and agrees on the mode",
-      differ == ["funnel_id", "slug"], str(differ))
+check("it differs in exactly the three twinned fields",
+      differ == sorted(TWINNED), str(differ))
 check("  slug, funnel_id and stripe_mode",
       twin_cfg["slug"] == SLUG + "-test"
       and twin_cfg["funnel_id"] == "love_zodiac_bg_v1_test"
@@ -1036,6 +1030,11 @@ check("  it runs the same sale",
       payments._effective_price(twin_cfg, BEFORE_END)[0] == 199)
 check("  and is gated by the same switch every twin is",
       config.is_test_slug(twin_cfg["slug"]) and not config.is_test_slug(SLUG))
+check("  and reads the same report profile, so a sandbox purchase delivers "
+      "the same document",
+      reports._profile(twin_cfg["slug"]) is profile
+      and reports._email_copy({"funnel": twin_cfg["slug"]})
+      is reports.COPY_LOVE_BG)
 
 print("\n--- the gallery on disk ---")
 GDIR = os.path.join(ROOT, "static/galleries/love-zodiac-bg")
@@ -1078,26 +1077,443 @@ if Image is not None:
           size_of("int1") == size_of("int2") == (800, 1000))
     check("  and the share card is 1200x630", size_of("og") == (1200, 630))
 
-print("\n--- the report profile: the report phase ---")
-if PROFILE_LANDED:
-    check("the profile is a zodiac profile", reports._is_zodiac(profile))
-    check("  page labels are the profile's constants",
-          LABELS["elements"] == profile.get("element_labels")
-          and LABELS["energies"] == profile.get("energy_labels"))
-    check("  and its compatibility table is keyed on the grid's labels",
-          sorted(profile["compatibility"])
-          == sorted(i["label"] for i in sign_images))
-else:
-    deferred("the profile is registered and is a zodiac profile",
-             "reports.PROFILES has no love-zodiac-bg yet")
-    deferred("page labels equal the profile's element and energy constants",
-             "asserted against ENERGY_LABEL_BG / ELEMENT_LABEL_BG above "
-             "until the profile declares its own")
-    deferred("the compatibility table is keyed on the twelve labels",
-             "the table is the profile's")
-    deferred("the mail and the PDF are this funnel's Bulgarian",
-             "no COPY_LOVE_BG yet — a purchase today would deliver the "
-             "kitchen document, which is why the funnel is on test keys")
+print("\n--- the report profile: mirrored from zodiac-bg, object for object ---")
+ZBG = reports.ZODIAC_BG_PROFILE
+check("it declares every key zodiac-bg's profile declares, and no other",
+      sorted(profile) == sorted(ZBG),
+      str(sorted(set(profile) ^ set(ZBG))))
+check("  nothing is left unfilled", not [k for k, v in profile.items()
+                                         if v is None],
+      str([k for k, v in profile.items() if v is None]))
+OWN = ("system", "spec", "stubs", "stub_colors", "words", "banned",
+       "cache_rev", "pdf_lead", "energy_labels", "mail", "mail_kicker",
+       "mail_cross_fallback", "json_retry")
+check("  what love differs in is its own object",
+      all(profile[k] is not ZBG[k] for k in OWN),
+      str([k for k in OWN if profile[k] is ZBG[k]]))
+SHARED = ("prompt_budget", "verify", "pdf_css", "pdf_logo", "pdf_lang",
+          "pdf_note", "pdf_cover", "pdf_elements", "element_labels",
+          "compatibility", "mail_link", "json_repair", "cached", "personal",
+          "verify_marks", "retry_detail", "pdf_node", "delivery_note")
+check("  and what it shares, it shares by reference or by value",
+      all(profile[k] is ZBG[k] or profile[k] == ZBG[k] for k in SHARED),
+      str([k for k in SHARED if not (profile[k] is ZBG[k]
+                                     or profile[k] == ZBG[k])]))
+check("the prompt budget is zodiac-bg's, because the language is",
+      profile["prompt_budget"] == reports.ZODIAC_BG_PROMPT_BUDGET
+      and reports._prompt_budget(profile) == reports.ZODIAC_BG_PROMPT_BUDGET)
+check("the cached trio and the personal trio are zodiac-bg's",
+      profile["cached"] == ("palette", "mistakes", "splurge")
+      and profile["personal"] == ("dna", "materials", "shopping")
+      and reports.cached_sections(SLUG) == profile["cached"]
+      and reports.personal_sections(SLUG + "-test") == profile["personal"])
+check("  every cached section opens on its own first revision",
+      profile["cache_rev"] == {"palette": "lovebg1", "mistakes": "lovebg1",
+                               "splurge": "lovebg1"}, str(profile["cache_rev"]))
+REPORTS_SRC = open(os.path.join(ROOT, "reports.py"), encoding="utf-8").read()
+check("the quote repair is the one zodiac-bg uses, not a fork of it",
+      profile["json_repair"] is reports._bg_quote_repair
+      and ZBG["json_repair"] is reports._bg_quote_repair
+      and REPORTS_SRC.count("def _bg_quote_repair") == 1
+      and REPORTS_SRC.count("_CLOSER_RE = re.compile") == 1)
+check("  and the retry note names this product's archetype in guillemets",
+      profile["json_retry"] is reports.LOVE_BG_JSON_RETRY
+      and "«Открит пламък»" in profile["json_retry"]
+      and "straight double quote" in profile["json_retry"]
+      and "NO quotation marks" in profile["json_retry"])
+check("the year runs on zodiac-bg's months",
+      reports._months_for(profile) == reports._year_labels_bg()
+      and reports._year_marks(profile)
+      == (reports.RENDER_WORDS_BG["year_strong"],
+          reports.RENDER_WORDS_BG["year_quiet"]))
+check("  and the love stubs are a zodiac stub set, so the year gets stamped",
+      profile["stubs"] in reports.ZODIAC_STUB_SETS
+      and reports.ZODIAC_STUBS_BG in reports.ZODIAC_STUB_SETS)
+
+print("\n--- the voice ---")
+SYSTEM = profile["system"]
+check("it is its own system prompt, about love, in English instructions",
+      SYSTEM is reports.LOVE_BG_SYSTEM and SYSTEM != reports.ZODIAC_BG_SYSTEM
+      and SYSTEM.startswith("You write love and relationship profile reports"))
+check("  demanding Bulgarian in Cyrillic, ти not Вие, and the ъ",
+      "CYRILLIC" in SYSTEM and '"ти"' in SYSTEM and '"Вие"' in SYSTEM
+      and "ъ, which Bulgarian uses" in SYSTEM)
+check("  the archetype always in guillemets, on a lowercase common noun",
+      "GUILLEMETS" in SYSTEM and "U+00AB" in SYSTEM
+      and "lowercase common noun" in SYSTEM
+      and "definite article only" in SYSTEM)
+for example in ("Профилът «Открит пламък» се влюбва бързо",
+                "Палитрата «Открит пламък» се държи на един цвят",
+                "Енергията «Открит пламък»",
+                "сърцето на профила «Открит пламък»",
+                "в палитрата «Открит пламък»",
+                '"Сърцето на Профилът" is'):
+    check("  worked example: %s" % example[:44], example in SYSTEM)
+check("  the never-claim-the-future rule, in English and in Bulgarian",
+      all(w in SYSTEM for w in ('"psychic"', '"horoscope"', '"prophecy"',
+                                '"ясновидец"', '"предсказание"', '"гадая"',
+                                '"хороскоп"', '"късмет"', '"бъдещето ти')))
+check("  and the love-specific nevers: meeting, wedding, pregnancy, "
+      "the ex, destiny, magic",
+      all(w in SYSTEM for w in ('"ще срещнеш"', '"сватба"', '"бременност"',
+                                '"той ще се върне"', '"тя ще се върне"',
+                                '"съдба"', '"писано ти е"', '"сродна душа"',
+                                '"половинка"', '"любовна магия"',
+                                '"омагьосвам"', '"ритуал за привличане"')),
+      str([w for w in ('"ще срещнеш"', '"сватба"', '"бременност"',
+                       '"той ще се върне"', '"съдба"', '"половинка"',
+                       '"любовна магия"') if w not in SYSTEM]))
+check("  no manipulation or control of a partner",
+      "manipulating or controlling a partner" in SYSTEM
+      and "reader's own side" in SYSTEM)
+check("  no therapeutic or diagnostic frame — entertainment and "
+      "self-discovery",
+      "No therapeutic or diagnostic frame" in SYSTEM
+      and "entertainment" in SYSTEM and "самопознание" in SYSTEM
+      and "not couples counselling" in SYSTEM)
+check("  the medical and financial line, as zodiac-bg states it",
+      '"диагноза", "симптоми", "лекарства" and "инвестиции"' in SYSTEM)
+check("  keys stay English, values Bulgarian, one line each",
+      "KEYS stay in English" in SYSTEM and "Every value is one line" in SYSTEM)
+check("  and nothing in it is U+201E or U+201C",
+      "„" not in SYSTEM and "“" not in SYSTEM)
+
+print("\n--- the shapes ---")
+SPEC = profile["spec"]
+check("six shapes, the six ids every funnel uses",
+      sorted(SPEC) == ["dna", "materials", "mistakes", "palette", "shopping",
+                       "splurge"]
+      and sorted(SPEC) == sorted(reports.ZODIAC_BG_SPEC))
+check("  none of them is zodiac-bg's",
+      all(SPEC[s] != reports.ZODIAC_BG_SPEC[s] for s in SPEC))
+check("  each closes on the love JSON rule, with this product's example",
+      all(SPEC[s].endswith(reports.LOVE_BG_JSON_RULE) for s in SPEC)
+      and "«Открит пламък»" in reports.LOVE_BG_JSON_RULE
+      and "с no quotation marks" not in reports.LOVE_BG_JSON_RULE
+      and "no quotation marks" in reports.LOVE_BG_JSON_RULE
+      and "Кажи направо, че тази седмица" in reports.LOVE_BG_JSON_RULE)
+check("  each states its budgets at the Bulgarian number",
+      all(reports._budget_lines(s, reports.ZODIAC_BG_PROMPT_BUDGET) in SPEC[s]
+          and "LENGTHS ARE HARD LIMITS" in SPEC[s] for s in SPEC))
+check("  and every field name the validator wants is in the shape it wants",
+      all(("\"%s\"" % field) in SPEC[section]
+          for section, fields in reports.SHAPE.items()
+          for field in fields),
+      str([(section, field) for section, fields in reports.SHAPE.items()
+           for field in fields if ("\"%s\"" % field) not in SPEC[section]]))
+SAYS = {
+    "palette": ("the way this person loves", "talismans", "closeness",
+                "it does nothing to the other"),
+    "mistakes": ("hidden strength in love", "works against this reader in "
+                 "love", "never a tactic aimed at the partner",
+                 "EXACTLY TWO SENTENCES"),
+    "materials": ("THEIR PATTERN IN LOVE", "HOW TO KEEP IT ALIVE",
+                  "HOW TO PROTECT THE RELATIONSHIP", "Лъв + Овен",
+                  "never that two people cannot be together",
+                  "change the other person"),
+    "splurge": ("where to invest\nthe heart and where not to", "never money",
+                "THREE CONCRETE MOVES", "THE LEAK, AND HOW TO PLUG IT",
+                "never something the reader gets the other person"),
+    "dna": ("combine in love", "once it gets serious",
+            "how they choose somebody", "how a partner reads them"),
+    "shopping": ("good for in love", "nobody arrives, nobody returns",
+                 reports.RENDER_WORDS_BG["year_strong"],
+                 reports.RENDER_WORDS_BG["year_quiet"]),
+}
+for section, phrases in sorted(SAYS.items()):
+    check("  %-9s says what it is about" % section,
+          all(p in SPEC[section] for p in phrases),
+          str([p for p in phrases if p not in SPEC[section]]))
+check("  the year map asks for the Bulgarian marks and never the English",
+      "Strongest month:" not in SPEC["shopping"]
+      and "Quiet month:" not in SPEC["shopping"]
+      and "exactly three months" in SPEC["shopping"]
+      and profile.get("verify_marks") is True)
+check("  the sign combo example carries no quotation marks",
+      "Лъв + Овен, with no quotation marks" in SPEC["materials"]
+      and '\\"' not in SPEC["materials"])
+check("  and no shape uses U+201E or U+201C",
+      all("„" not in SPEC[s] and "“" not in SPEC[s] for s in SPEC))
+
+print("\n--- the banned list: zodiac-bg's, plus what a love reading promises ---")
+BANNED = profile["banned"]
+check("it starts with the whole zodiac-bg list",
+      BANNED[:len(reports.ZODIAC_BG_BANNED)] == reports.ZODIAC_BG_BANNED
+      and BANNED is reports.LOVE_BG_BANNED)
+check("  and adds the love list", BANNED[len(reports.ZODIAC_BG_BANNED):]
+      == reports.LOVE_BG_ONLY and len(reports.LOVE_BG_ONLY) == 11)
+CAUGHT = ("тя е твоята половинка", "сродна душа", "сродни души",
+          "това е съдба", "съдбата ви е обща", "съдбовна среща",
+          "писано ти е", "той ще се върне", "тя ще се върне при теб",
+          "върни се при него", "омагьосан от теб", "любовна магия",
+          "любовни магии", "ритуал за привличане", "привличащ ритуал",
+          "ще срещнеш човека", "ПОЛОВИНКАТА ти", "хороскоп", "инвестиции")
+for phrase in CAUGHT:
+    check("  catches %-26s" % phrase,
+          reports._banned_hit(phrase, BANNED) is not None)
+FREE = ("половин час преди срещата", "написано е на лицето ти",
+        "връщаш се към стария навик", "се връща към теб всяка вечер",
+        "магията на една обикновена вечер", "ритуалът на неделната закуска",
+        "ще срещнете гостите заедно", "привлича те тишината",
+        "непредвидим", "лекар по професия")
+for phrase in FREE:
+    check("  and lets %-32s through" % phrase,
+          reports._banned_hit(phrase, BANNED) is None,
+          str(reports._banned_hit(phrase, BANNED)))
+
+
+def profile_strings():
+    """Every string the profile itself can put in front of a reader."""
+    def walk(node):
+        if isinstance(node, dict):
+            for value in node.values():
+                for item in walk(value):
+                    yield item
+        elif isinstance(node, (list, tuple)):
+            for value in node:
+                for item in walk(value):
+                    yield item
+        elif isinstance(node, str):
+            yield node
+    for key in ("stubs", "stub_colors", "words", "mail", "pdf_lead",
+                "pdf_note", "mail_kicker", "mail_cross_fallback"):
+        for item in walk(profile[key]):
+            yield key, item
+
+
+hit = [(k, reports._banned_hit(s, BANNED), s[:50]) for k, s in profile_strings()
+       if reports._banned_hit(s, BANNED)]
+check("nothing the profile prints itself trips its own list", not hit,
+      str(hit[:4]))
+hit = [(p, reports._banned_hit(v, BANNED)) for p, v in STRINGS
+       if reports._banned_hit(v, BANNED)]
+check("  and nothing in the funnel's own copy does either", not hit,
+      str(hit[:4]))
+hit = [(p, reports._banned_hit(v, BANNED)) for p, v in leaves(twin_cfg)
+       if reports._banned_hit(v, BANNED)]
+check("  nor in the twin's", not hit, str(hit[:4]))
+
+print("\n--- the guillemet rule, on every string the model sees or writes ---")
+LLM_PATH = [("system", SYSTEM), ("json_rule", reports.LOVE_BG_JSON_RULE),
+            ("json_retry", reports.LOVE_BG_JSON_RETRY)]
+LLM_PATH += [("spec:" + s, SPEC[s]) for s in sorted(SPEC)]
+check("no low-9 or turned-comma mark anywhere on the model's path",
+      not [k for k, text in LLM_PATH if "„" in text or "“" in text])
+NAME = "Открит пламък"
+bare = [(k, m.start()) for k, text in LLM_PATH
+        for m in re.finditer(NAME, text)
+        if not (text[m.start() - 1:m.start()] == "«"
+                and text[m.end():m.end() + 1] == "»")]
+check("  every archetype name on it is wrapped in «»",
+      bare == [("system", SYSTEM.index('"Профил Открит пламък се')
+                          + len('"Профил '))], str(bare[:4]))
+check("    the one exception being the broken example the prompt shows",
+      SYSTEM.count('"Профил Открит пламък се влюбва бързо"') == 1
+      and "reads as broken" in SYSTEM)
+STUB_STRINGS = [s for k, s in profile_strings() if k == "stubs"]
+check("the stubs name the archetype in «{name}» and never bare",
+      all("{name}" not in s or s.count("«{name}»") == s.count("{name}")
+          for s in STUB_STRINGS)
+      and sum(s.count("«{name}»") for s in STUB_STRINGS) >= 4)
+check("  and carry no quotation mark of any kind",
+      not [s[:40] for s in STUB_STRINGS
+           if '"' in s or "„" in s or "“" in s or "'" in s])
+check("  the mail names it in guillemets too",
+      profile["mail"]["subject"].count("«%s»") == 1
+      and profile["mail"]["body"].count("«%s»") == 1)
+check("  and every one of them is Cyrillic prose",
+      not [s[:40] for s in STUB_STRINGS
+           if s not in (reports.FROM_CONFIG, "works", "avoid")
+           and re.findall(r"[A-Za-z]+", s.replace("{name}", ""))],
+      str([s[:40] for s in STUB_STRINGS
+           if s not in (reports.FROM_CONFIG, "works", "avoid")
+           and re.findall(r"[A-Za-z]+", s.replace("{name}", ""))][:3]))
+
+print("\n--- the fallbacks stand on their own ---")
+months = reports._months_for(profile)
+STYLE = reports._style(cfg, "radiant_fire")
+check("a style resolves off this config", STYLE and STYLE["name"] == NAME)
+for section in sorted(SPEC):
+    stub = reports._stub_for(section, NAME, STYLE, profile["stubs"], months)
+    try:
+        reports.VALIDATORS[section](stub)
+        ok, why = True, ""
+    except Exception as exc:                      # noqa: BLE001
+        ok, why = False, "%s: %s" % (type(exc).__name__, exc)
+    check("  %-9s stub passes the validator" % section, ok, why)
+mistakes = reports._stub_for("mistakes", NAME, STYLE, profile["stubs"], months)
+check("the mistakes stub opens on the strength the free page gave away",
+      mistakes["items"][0] == STYLE["reveals"]["mistake_one"]
+      and len(mistakes["items"]) == 5
+      and mistakes["items"][0]["title"] != profile["stubs"]["mistakes"]
+      ["items"][0]["title"])
+year = reports._stub_for("shopping", NAME, STYLE, profile["stubs"], months)
+check("the year stub is stamped with this reader's twelve months",
+      [row["name"] for row in year["items"]] == months)
+notes_ = [row["priority_note"] for row in year["items"]]
+check("  three strong months and one quiet, in the profile's own marks",
+      sum(n.startswith(reports.RENDER_WORDS_BG["year_strong"])
+          for n in notes_) == 3
+      and sum(n.startswith(reports.RENDER_WORDS_BG["year_quiet"])
+              for n in notes_) == 1)
+check("  and the purchase path's check accepts it",
+      reports._verify_for(profile, STYLE, months)(("shopping",),
+                                                  {"shopping": year}) is None)
+palette = reports._stub_for("palette", NAME, STYLE, profile["stubs"], months,
+                            colors=profile["stub_colors"])
+check("the palette stub carries this style's own four colours",
+      [c["name"] for c in palette["colors"]]
+      == [c["name"] for c in STYLE["reveals"]["palette"]["colors"]]
+      and [c["role"] for c in palette["colors"]]
+      == [t[0] for t in reports.LOVE_BG_COLOR_TEXT])
+check("  under love sentences, not zodiac-bg's",
+      reports.LOVE_BG_COLOR_TEXT != reports.ZODIAC_COLOR_TEXT_BG
+      and len(reports.LOVE_BG_COLOR_TEXT) == 4
+      and reports._verify_for(profile, STYLE, months)(
+          ("palette",), {"palette": palette}) is None)
+check("  and the fallback name is Bulgarian",
+      profile["words"]["style_fallback"] == "Твоят стил")
+
+print("\n--- the year map is policed in Bulgarian ---")
+
+
+def year_map(strong, quiet):
+    rows = []
+    for index, label in enumerate(months):
+        note = "Добър за разговор." * 3
+        if index in (0, 3, 6):
+            note = strong + " " + note
+        if index == 9:
+            note = quiet + " " + note
+        rows.append({"name": label, "priority_note": note})
+    return {"items": rows, "skip": []}
+
+
+GOOD_BG = year_map(reports.RENDER_WORDS_BG["year_strong"],
+                   reports.RENDER_WORDS_BG["year_quiet"])
+BAD_EN = year_map("Strongest month:", "Quiet month:")
+verify = reports._verify_for(profile, STYLE, months)
+check("a year map marked in Bulgarian is accepted",
+      verify(("shopping",), {"shopping": GOOD_BG}) is None,
+      str(verify(("shopping",), {"shopping": GOOD_BG})))
+check("  and the same map marked in English is refused",
+      verify(("shopping",), {"shopping": BAD_EN}) is not None)
+
+print("\n--- compatibility: the same twelve labels, the same classical table ---")
+table = profile["compatibility"]
+check("the table is zodiac-bg's, keyed on this grid's twelve labels",
+      table is reports.COMPATIBILITY_BG
+      and sorted(table) == sorted(i["label"] for i in sign_images))
+check("  and every answer in it is one of the twelve",
+      all(a in table and b in table and c in table
+          for (a, b), c in table.values()))
+choices = []
+for step in steps:
+    if step["id"] == "sign":
+        choices.append("sign_virgo")
+    else:
+        choices.append(step["pairs"][0]["images"][0]["id"])
+read = reports._sign(cfg, choices)
+check("the sign step reads back a Bulgarian label",
+      (read or {}).get("label") == "Дева", str(read))
+block = reports._compat_block(cfg, choices, table)
+check("  and the compatibility block names its three signs in Bulgarian",
+      block and "Телец" in block and "Козирог" in block
+      and "Стрелец" in block and "Virgo" not in block,
+      (block or "")[:120])
+scores = {"fire": 6, "sun": 5, "bold": 4, "earth": 2}
+prompt = reports._section_prompt(STYLE, NAME, scores, "materials", cfg=cfg,
+                                 choices=choices, funnel_slug=SLUG,
+                                 months=months)
+check("a materials prompt for this funnel is built on the love shape",
+      "HOW TO KEEP IT ALIVE" in prompt and "Телец" in prompt
+      and reports.LOVE_BG_JSON_RULE in prompt
+      and prompt.endswith('{"materials": {...}}.')
+      and "THEIR PATTERN IN RELATIONSHIPS" not in prompt)
+check("  it hands over the reader's sign, the love purpose and the subtype",
+      "this reader's sign is Дева" in prompt
+      and "love and relationships" in prompt
+      and "name this report is written to" in prompt)
+year_prompt = reports._section_prompt(STYLE, NAME, scores, "shopping",
+                                      cfg=cfg, choices=choices,
+                                      funnel_slug=SLUG, months=months)
+check("  the year prompt lists these twelve months and the Bulgarian marks",
+      all(label in year_prompt for label in months)
+      and reports.RENDER_WORDS_BG["year_strong"] in year_prompt
+      and "Strongest month:" not in year_prompt)
+cached = reports._cached_prompt(STYLE, NAME, ("palette",), SLUG)
+check("  and the cached palette prompt is the love one, with the four "
+      "colours named",
+      "the way this person loves" in cached
+      and all(c["name"] in cached
+              for c in STYLE["reveals"]["palette"]["colors"]))
+
+
+def love(*combos):
+    verdicts = ["works", "works", "avoid", "avoid"]
+    return {"materials": {
+        "intro": "x" * 40, "rule": "r" * 40,
+        "pairs": [{"combo": c, "verdict": v, "why": "y" * 40}
+                  for c, v in zip(combos, verdicts)]}}
+
+
+check("a section naming one sign twice is refused, in Bulgarian names",
+      verify(("materials",),
+             love("Дева + Телец", "Дева + Козирог", "Дева + Стрелец",
+                  "Дева + Стрелец")) is not None
+      and verify(("materials",),
+                 love("Дева + Телец", "Дева + Козирог", "Дева + Стрелец",
+                      "Дева + Овен")) is None)
+check("  and the love stub passes it",
+      verify(("materials",), {"materials": reports._fill(
+          profile["stubs"]["materials"], NAME)}) is None)
+
+print("\n--- the mail and the PDF are this product's Bulgarian ---")
+MAIL = profile["mail"]
+check("the mail is its own copy, chosen by the profile",
+      MAIL is reports.COPY_LOVE_BG
+      and reports._email_copy({"funnel": SLUG}) is MAIL
+      and MAIL is not reports.COPY_ZODIAC_BG)
+check("  with the same keys as zodiac-bg's, all Bulgarian",
+      sorted(MAIL) == sorted(reports.COPY_ZODIAC_BG)
+      and all(re.search(r"[Ѐ-ӿ]", v) for v in MAIL.values()))
+check("  the subject and the body say love, and take the archetype",
+      "любовен" in MAIL["subject"] and "любовен" in MAIL["body"]
+      and MAIL["subject"].count("%s") == 1 and MAIL["body"].count("%s") == 1
+      and MAIL["subject"].endswith("— Mazzin"))
+check("  the body names what the paywall sold",
+      "дванадесетте зодии" in MAIL["body"] and "петте сили" in MAIL["body"]
+      and "картата на сърцето" in MAIL["body"])
+check("  the kicker over it is the page's own",
+      profile["mail_kicker"] == cfg["result_copy"]["kicker"]
+      == "ТВОЯТ ЛЮБОВЕН ПРОФИЛ"
+      and profile["mail_cross_fallback"] == "Пълният ти любовен профил")
+check("  and the button is the Bulgarian one",
+      profile["mail_link"] is reports.ZODIAC_EMAIL_LINK_BG
+      and "Отвори профила си онлайн" in profile["mail_link"])
+WORDS = profile["words"]
+check("the PDF is filed as a love document",
+      WORDS["pdf_filename"] == "mazzin-%s-lyubov.pdf"
+      and (WORDS["pdf_filename"] % reports._slug(NAME)).endswith("-lyubov.pdf")
+      and profile["pdf_lang"] == "bg")
+check("  its words are zodiac-bg's, with the two headings said for the heart",
+      {k: v for k, v in WORDS.items()
+       if k not in ("splurge", "save", "pdf_filename")}
+      == {k: v for k, v in reports.RENDER_WORDS_BG.items()
+          if k not in ("splurge", "save", "pdf_filename")}
+      and WORDS["splurge"] == "Вложи сърце тук"
+      and WORDS["save"] == "Пази сърцето си"
+      and reports._words(profile) is WORDS)
+check("  the cover, the strip, the sheet and the note are zodiac-bg's",
+      profile["pdf_cover"] is reports._zodiac_cover
+      and profile["pdf_elements"] is reports.PDF_ELEMENTS_BG
+      and profile["pdf_css"] is ZBG["pdf_css"]
+      and profile["pdf_note"] == ZBG["pdf_note"]
+      and profile["pdf_logo"] == "brand/logo-dark.svg")
+check("  and the lead says love", profile["pdf_lead"] == "Твоят личен любовен "
+      "профил" and profile["pdf_lead"] != ZBG["pdf_lead"])
+check("the verify hooks are the zodiac palette checks",
+      profile["verify"] is reports.ZODIAC_VERIFY)
 
 print("\n--- and the neighbours are untouched ---")
 check("funnels/zodiac-bg.json is still zodiac-bg, byte for byte with static/",
