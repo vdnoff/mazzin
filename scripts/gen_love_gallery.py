@@ -33,12 +33,32 @@ format the card sits in — so the plan and the funnel cannot disagree.
 Every prompt carries composition guidance for its own crop, and the pair
 guidance is the honest one: the tile shows the middle 40 percent of the
 width, so the subject is asked to sit in a central vertical band, not merely
-inside the middle 70 percent of the frame. And the palette moved to light:
-dawn, golden hour, airy pastel, with the warm gold accents kept. Four frames
-stay dark because their subject is dark — a nebula, falling stars, embers, a
-twilight road — and each carries its own luma floor. The recipes are bumped
-with a version tag, so the whole manifest is stale and the next run redraws
-everything.
+inside the middle 70 percent of the frame. Four frames stay dark because
+their subject is dark — a nebula, falling stars, embers, a twilight road —
+and each carries its own luma floor.
+
+--- v3: the palette, and calibration mode -------------------------------------
+
+v1 was night-dark and v2 overshot to washed pastel: the whole v2 gallery
+measured luma 86 to 200, median 172, with saturation down to 76. v3 asks for
+rich golden hour — warm low sun, deep saturated colour, real contrast — and
+the base suffix says so. The per-frame scene words are v2's: the light is
+still dawn and golden hour, only the treatment changes.
+
+The palette is versioned apart from the prompt, so changing it does NOT
+invalidate the manifest. PALETTES holds the suffix each version was drawn
+with; RECORDED_PALETTE is the version the manifest's frames were drawn
+under, DRAW_PALETTE the version a draw uses now. A record is current when
+it matches the frame's recipe under either — so a plain run after a palette
+change draws nothing, and the v2 frames stay on disk until the new palette
+has been looked at. That is what `--only` is for:
+
+    python3 scripts/gen_love_gallery.py --only lv07a,lv12b,lv18a
+
+redraws exactly the frames named under DRAW_PALETTE and records them under
+it — their recipes are bumped, nobody else's is. When the palette is
+approved, set RECORDED_PALETTE to it: every frame still recorded under the
+old one goes stale and the next plain run redraws the rest.
 
 --- the manifest, and what a rerun does ----------------------------------------
 
@@ -56,15 +76,19 @@ The placeholders scripts/gen_love_placeholders.py writes are never recorded
 here, which is what lets this script paint over them on its first run and
 leave the real art alone on every run after.
 
---- the floor -------------------------------------------------------------------
+--- the band --------------------------------------------------------------------
 
-The floor catches the render that came back as a non-picture, and now also
-the render that came back as the old gloom: the whole first gallery measured
-between luma 25 and 62, and the default floor is 80, above every one of
-those and under what a dawn or golden-hour scene measures. A frame whose
-subject is genuinely dark is judged under its own floor, named per frame
-below. The band is printed per frame, so a rejection can be read against the
-thresholds without rerunning anything.
+A band, not a floor, because both bad runs are on record. v1's gloom: every
+frame between luma 25 and 62, muddy. v2's wash: 34 of 46 frames above luma
+160 and, among the rest, frames that were bright without being coloured —
+lv14b at luma 156 with saturation 132, lv07b at 158 and 119. So a frame is
+rejected when its mean luma is under 65 (gloom), over 160 (wash), or over
+130 with saturation under 150 (bright but pale, the v2 signature). Rich
+golden hour sits at luma 90 to 150 with saturation well over 150. A frame
+whose subject is genuinely dark is judged under its own floor, named per
+frame below; the ceiling and the wash rule still apply to it. The numbers
+are printed per frame, so a rejection can be read against the thresholds
+without rerunning anything.
 
 A frame is also held under 120KB: the WebP is re-encoded a step at a time
 down to a floor quality, and a frame that cannot get under is a failure
@@ -96,7 +120,9 @@ MANIFEST = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 ENV_FILES = (os.path.join(ROOT, ".env"), os.path.expanduser("~/mazzin/.env"))
 
 # Bumped when every frame has to be drawn again regardless of its prompt —
-# a new palette, a new geometry. It is part of every recipe.
+# a new geometry. It is part of every recipe. A new PALETTE is not this: the
+# palette is versioned on its own, below, so it can be calibrated on a few
+# frames before the rest are redrawn.
 RECIPE_VERSION = "v2"
 
 # --- geometry ------------------------------------------------------------------
@@ -162,13 +188,30 @@ MAX_BYTES = 120 * 1024
 
 # --- the style ----------------------------------------------------------------
 
-# The base suffix, on every prompt. One slot: the composition guidance for
-# the frame's own crop, because a pair card, a grid cell and an interstitial
-# frame are shown at three different shapes.
-STYLE_SUFFIX = (", painterly dreamy style, soft luminous palette — dawn sky, "
-                "golden hour or airy pastel light — with warm gold accents, "
-                "gentle glow, {guidance}, no text, no watermark, no close-up "
-                "faces")
+# The base suffix, on every prompt, one per palette version. One slot: the
+# composition guidance for the frame's own crop, because a pair card, a grid
+# cell and an interstitial frame are shown at three different shapes.
+#
+# Every version a record on disk may have been drawn under is kept, verbatim:
+# a record is checked against the recipe of the palette it was drawn with,
+# and that recipe needs the text.
+PALETTES = {
+    "v2": (", painterly dreamy style, soft luminous palette — dawn sky, "
+           "golden hour or airy pastel light — with warm gold accents, "
+           "gentle glow, {guidance}, no text, no watermark, no close-up "
+           "faces"),
+    "v3": (", painterly style with rich color depth, warm golden-hour "
+           "light, low sun, long soft shadows, deep saturated amber-and-teal "
+           "palette, luminous but moody, {guidance}, no text, no watermark, "
+           "no close-up faces"),
+}
+# What the manifest's frames were drawn under, and what a draw uses now.
+# Different while the new palette is being calibrated on a few frames;
+# set RECORDED_PALETTE to DRAW_PALETTE once it is approved and the rest of
+# the gallery goes stale.
+RECORDED_PALETTE = "v2"
+DRAW_PALETTE = "v3"
+STYLE_SUFFIX = PALETTES[DRAW_PALETTE]
 
 # --- the plan ------------------------------------------------------------------
 #
@@ -268,9 +311,11 @@ TALL_PROMPTS = [
 ]
 
 
-def prompt_for(subject, kind):
-    """The subject, closed on the suffix, with this kind's crop guidance."""
-    return subject + STYLE_SUFFIX.format(guidance=KINDS[kind]["guidance"])
+def prompt_for(subject, kind, palette=None):
+    """The subject, closed on a palette's suffix, with this kind's crop
+    guidance. The draw palette unless one is named."""
+    suffix = PALETTES[DRAW_PALETTE if palette is None else palette]
+    return subject + suffix.format(guidance=KINDS[kind]["guidance"])
 
 
 def owned_ids(cfg):
@@ -329,6 +374,7 @@ def frames(cfg):
     plan = []
     for frame_id, kind in owned:
         plan.append({"id": frame_id, "kind": kind,
+                     "subject": subjects[frame_id],
                      "prompt": prompt_for(subjects[frame_id], kind),
                      "size": KINDS[kind]["size"], "api_size": API_PORTRAIT,
                      "band": band_for(frame_id)})
@@ -479,24 +525,29 @@ def encode(img, ceiling=MAX_BYTES):
 
 # --- the floor -----------------------------------------------------------------
 
-# Mean luma below this is the old gloom, or a frame that came back black.
-# The whole first gallery measured 25 to 62 and every one of those frames is
-# what the review rejected; a dawn, golden-hour or pastel scene reads well
-# above 100. Eighty is over every old frame and under a warm golden-hour
-# render, which is the darkest thing the light palette should produce.
-MIN_MEAN_LUMA = 80.0
-# And above this it is a blown-out or blank page. Higher than before,
-# because an airy pastel frame legitimately sits high.
-MAX_MEAN_LUMA = 235.0
+# Mean luma below this is v1's gloom, or a frame that came back black. The
+# whole v1 gallery measured 25 to 62; a golden-hour frame with a low sun in
+# it reads 90 and up.
+MIN_MEAN_LUMA = 65.0
+# And above this it is v2's wash: 34 of the 46 v2 frames measured over 160,
+# and the review called the run washed. A rich golden-hour frame does not
+# get there.
+MAX_MEAN_LUMA = 160.0
 # One flat wash scores fine on luma and is still not a picture.
 MIN_STDDEV = 12.0
-# Gold on pastel is still colour. A greyscale render fails here and nowhere
-# else; lower than the indigo floor because a pale palette is less saturated
-# by construction.
-MIN_SATURATION = 18.0
+# A greyscale render fails here and nowhere else. HSV saturation, 0-255.
+MIN_SATURATION = 60.0
+# The v2 signature inside the luma band: bright without being coloured.
+# lv14b came back at luma 156 with saturation 132, lv07b at 158 and 119,
+# lv02a at 161 and 132. So past this luma a frame has to be at least this
+# saturated, and the rich frames of the same run were — lv05c at 130 and
+# 201, lv07a at 155 and 184.
+WASH_LUMA = 130.0
+WASH_MIN_SATURATION = 150.0
 
 BAND = {"min_luma": MIN_MEAN_LUMA, "max_luma": MAX_MEAN_LUMA,
-        "min_sd": MIN_STDDEV, "min_sat": MIN_SATURATION}
+        "min_sd": MIN_STDDEV, "min_sat": MIN_SATURATION,
+        "wash_luma": WASH_LUMA, "wash_sat": WASH_MIN_SATURATION}
 
 # Frames whose subject is deliberately dark, and the luma floor each is
 # judged against instead of MIN_MEAN_LUMA. Everything else in the band is
@@ -543,9 +594,14 @@ def verdict(stats, bounds=BAND):
     if stats is None:
         return True, "unmeasured"
     mean, sd, sat = stats
+    washed = mean > bounds["wash_luma"] and sat < bounds["wash_sat"]
     ok = (bounds["min_luma"] <= mean <= bounds["max_luma"]
-          and sd >= bounds["min_sd"] and sat >= bounds["min_sat"])
-    return ok, "luma %.1f sd %.1f sat %.1f" % (mean, sd, sat)
+          and sd >= bounds["min_sd"] and sat >= bounds["min_sat"]
+          and not washed)
+    note = "luma %.1f sd %.1f sat %.1f" % (mean, sd, sat)
+    if washed:
+        note += " washed"
+    return ok, note
 
 
 def size_ok(img, size):
@@ -597,30 +653,42 @@ def on_disk_sha(frame_id):
         return sha(fh.read())
 
 
-def recipe(frame):
+def recipe(frame, palette=None):
     """What this frame is made of, as one string, for the manifest digest.
 
-    The version tag, the prompt, the geometry and the API size: changing any
-    of them is what should make a rerun redraw. A frame judged under its own
-    luma floor carries that number too, and only that frame does.
+    The version tag, the prompt under a palette, the geometry and the API
+    size: changing any of them is what should make a rerun redraw. A frame
+    judged under its own luma floor carries that number too, and only that
+    frame does. The palette defaults to the draw palette; a record is
+    compared under the palette it was drawn with.
     """
-    out = "%s|%s|%s|%dx%d" % (RECIPE_VERSION, frame["prompt"],
-                              frame["api_size"], frame["size"][0],
-                              frame["size"][1])
+    prompt = (frame["prompt"] if palette is None
+              else prompt_for(frame["subject"], frame["kind"], palette))
+    out = "%s|%s|%s|%dx%d" % (RECIPE_VERSION, prompt, frame["api_size"],
+                              frame["size"][0], frame["size"][1])
     floor = (frame.get("band") or BAND)["min_luma"]
     if floor != MIN_MEAN_LUMA:
         out += "|min_luma=%g" % floor
     return out
 
 
-def already_made(frame, entries):
-    """True when this id's committed frame is the one the manifest recorded."""
+def already_made(frame, entries, palettes=None):
+    """True when this id's committed frame is the one the manifest recorded.
+
+    Under either palette by default — the one the gallery was drawn with
+    and the one a draw uses now — so a palette change alone invalidates
+    nothing. `--only` narrows this to the draw palette for the frames it
+    names, which is what bumps their recipes and nobody else's.
+    """
     entry = entries.get(frame["id"])
     if not entry:
         return False
     if entry.get("sha256") != on_disk_sha(frame["id"]):
         return False
-    return entry.get("recipe_sha") == sha(recipe(frame).encode("utf-8"))
+    if palettes is None:
+        palettes = (RECORDED_PALETTE, DRAW_PALETTE)
+    return any(entry.get("recipe_sha")
+               == sha(recipe(frame, p).encode("utf-8")) for p in palettes)
 
 
 # --- the run -------------------------------------------------------------------
@@ -638,7 +706,9 @@ def main(argv=None):
     ap.add_argument("--dry-run", action="store_true",
                     help="print the plan and every prompt, call nothing")
     ap.add_argument("--only", default="",
-                    help="comma-separated frame ids to draw")
+                    help="comma-separated frame ids to draw under the "
+                         "current palette — calibration mode: their "
+                         "recipes are bumped, nobody else's")
     ap.add_argument("--force", action="store_true",
                     help="redraw even frames the manifest already records")
     ap.add_argument("--price", type=float, default=None,
@@ -662,7 +732,11 @@ def main(argv=None):
 
     entries = load_manifest()
     if not args.force:
-        plan = [f for f in plan if not already_made(f, entries)]
+        # Named frames are held to the draw palette, so one recorded under
+        # the old palette is stale and drawn; everything else is current
+        # under either palette and left alone.
+        palettes = (DRAW_PALETTE,) if args.only else None
+        plan = [f for f in plan if not already_made(f, entries, palettes)]
 
     def price_of(frame):
         if args.price is not None:
@@ -670,8 +744,8 @@ def main(argv=None):
         return PRICE.get((IMAGE_QUALITY, frame["api_size"]), 0.0)
 
     estimate = sum(price_of(f) for f in plan)
-    print("%s, quality %s — %d frame(s) to draw, ~$%.2f estimated"
-          % (MODEL, IMAGE_QUALITY, len(plan), estimate))
+    print("%s, quality %s, palette %s — %d frame(s) to draw, ~$%.2f estimated"
+          % (MODEL, IMAGE_QUALITY, DRAW_PALETTE, len(plan), estimate))
 
     if args.dry_run:
         for frame in plan:
@@ -684,7 +758,9 @@ def main(argv=None):
         return 0
 
     if not plan:
-        print("nothing to draw: every frame is recorded and unchanged")
+        print("nothing to draw: every frame is recorded and unchanged"
+              + (" — use --force to redraw the frames named" if args.only
+                 else " — name frames with --only to calibrate the palette"))
         return 0
 
     key = api_key()
@@ -743,6 +819,7 @@ def main(argv=None):
             "bytes": len(data),
             "size": "%dx%d" % frame["size"],
             "kind": frame["kind"],
+            "palette": DRAW_PALETTE,
             "webp_quality": quality,
             "cost_usd": round(price, 4),
             "note": note,
