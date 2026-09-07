@@ -270,10 +270,25 @@ check("every prompt bans people, faces, hands, text and a watermark",
 
 
 print("\n--- the exposure guard, ported from the zodiac generator ---")
-QUOTED = ("dark", "dim", "moody", "dusk", "night", "silhouette", "candlelit")
-check("the seven quoted exposure words are in the list",
-      all(w in gen.EXPOSURE_WORDS for w in QUOTED),
-      str([w for w in QUOTED if w not in gen.EXPOSURE_WORDS]))
+ZODIAC_EXPOSURE = (
+    "dark", "darkly", "dim", "dimly", "moody", "moodily", "shadow",
+    "shadowed", "shadowy", "low-key", "lowkey", "dramatic", "dramatically",
+    "intimate", "candlelit", "candlelight", "atmospheric", "gloomy", "murky",
+    "sombre", "somber", "night", "nighttime", "dusk", "twilight", "unlit",
+    "underexposed", "silhouette", "noir", "smoky", "hazy",
+)
+check("the exposure list opens on the zodiac generator's, verbatim and in "
+      "order",
+      gen.ZODIAC_EXPOSURE_WORDS == ZODIAC_EXPOSURE
+      and gen.EXPOSURE_WORDS[:len(ZODIAC_EXPOSURE)] == ZODIAC_EXPOSURE,
+      str(gen.EXPOSURE_WORDS[:8]))
+check("  with this file's five appended after it, nothing else",
+      gen.EXPOSURE_WORDS[len(ZODIAC_EXPOSURE):]
+      == ("darkness", "midnight", "nocturnal", "silhouettes", "candle-lit"))
+check("  plain candle and candles are not on it — a candle is an object",
+      "candle" not in gen.EXPOSURE_WORDS and "candles" not in gen.EXPOSURE_WORDS
+      and gen.guard("two candles, one lighting the other") == []
+      and gen.guard("a candlelight dinner") == ["candlelight"])
 check("  and the style's own bans are words too: people, faces, hands",
       all(w in gen.SUBJECT_WORDS for w in ("people", "faces", "hands",
                                           "couple", "figures")))

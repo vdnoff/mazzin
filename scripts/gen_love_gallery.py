@@ -234,16 +234,21 @@ STYLE_SUFFIX = PALETTES[DRAW_PALETTE]
 # The style asks for a well-lit subject with every detail clearly visible,
 # and a scene word that asks for the opposite wins over the style every
 # time — that is how v1 came back as gloom. So the zodiac generator refuses
-# a scene that carries one of these, and this one does too. The first seven
-# are the ones quoted from the server's list; the rest fill its ellipsis
-# with the same family, and should be reconciled against the original file
-# when it is next to hand. Darkness is said in colour instead: a deep
-# indigo sky, an ember glow, a moon — the subject stays lit.
-EXPOSURE_WORDS = (
-    "dark", "dim", "moody", "dusk", "night", "silhouette", "candlelit",
-    "darkness", "dimly", "twilight", "midnight", "nocturnal", "silhouettes",
-    "candle-lit", "shadowy", "gloomy", "murky", "low-key", "underexposed",
-    "unlit",
+# a scene that carries one of these, and this one does too. The list is the
+# zodiac generator's own, verbatim and in its order, with five of this
+# file's additions appended after it. Darkness is said in colour instead: a
+# deep indigo sky, an ember glow, a moon — the subject stays lit. Plain
+# "candle" and "candles" are not on the list, only candlelit and
+# candlelight: a candle is an object, and an object can be lit.
+ZODIAC_EXPOSURE_WORDS = (
+    "dark", "darkly", "dim", "dimly", "moody", "moodily", "shadow",
+    "shadowed", "shadowy", "low-key", "lowkey", "dramatic", "dramatically",
+    "intimate", "candlelit", "candlelight", "atmospheric", "gloomy", "murky",
+    "sombre", "somber", "night", "nighttime", "dusk", "twilight", "unlit",
+    "underexposed", "silhouette", "noir", "smoky", "hazy",
+)
+EXPOSURE_WORDS = ZODIAC_EXPOSURE_WORDS + (
+    "darkness", "midnight", "nocturnal", "silhouettes", "candle-lit",
 )
 # And the style's own bans, as words a scene must not use: a scene that
 # names a person or a hand is asking the model to break the constraint it
