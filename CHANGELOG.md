@@ -612,3 +612,6 @@ bottom.
 
 ## 2026-09-07 — claude/love-palette-v4-final
 - love gallery: zodiac style verbatim
+
+## 2026-09-07 — claude/love-bands-fix
+- love gallery: bands from observed data
