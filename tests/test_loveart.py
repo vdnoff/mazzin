@@ -203,15 +203,29 @@ ZODIAC_STYLE = (
     "at thumbnail size. No text, no letters, no numbers, no people, no faces, "
     "no hands, no watermark, no logo, no frame."
 )
-check("the style string is the zodiac generator's, character for character",
+# And the love gallery's own, v5: the same string with the ban on people,
+# faces and hands replaced by a ban on close-up faces, and nothing else
+# moved — the compositions came back, the style did not change.
+LOVE_STYLE = (
+    "Cinematic celestial art, painterly photographic hybrid, rich saturated "
+    "colour, luminous, well-lit subject, every detail clearly visible, subtle "
+    "silver star grain, vertical portrait composition centered and readable "
+    "at thumbnail size. No text, no letters, no numbers, no close-up faces, "
+    "no watermark, no logo, no frame."
+)
+check("the zodiac style string is still held, character for character",
       gen.ZODIAC_STYLE == ZODIAC_STYLE, repr(gen.ZODIAC_STYLE))
-check("  and it is the whole of the v4 palette after the guidance slot",
-      gen.DRAW_PALETTE == gen.RECORDED_PALETTE == "v4"
-      and gen.PALETTES == {"v4": ", {guidance}. " + ZODIAC_STYLE}
-      and gen.STYLE_SUFFIX == gen.PALETTES["v4"], repr(gen.PALETTES))
-check("  the old constraint tail is gone with it",
-      "close-up" not in gen_src.split("ZODIAC_STYLE = (")[1]
-      and "no close-up faces" not in gen.STYLE_SUFFIX)
+check("the love style string is pinned verbatim",
+      gen.LOVE_STYLE == LOVE_STYLE, repr(gen.LOVE_STYLE))
+check("  and differs from the zodiac one in exactly that substitution",
+      gen.LOVE_STYLE == ZODIAC_STYLE.replace(
+          "no people, no faces, no hands", "no close-up faces")
+      and gen.LOVE_STYLE != ZODIAC_STYLE)
+check("  it is the whole of the v5 palette after the guidance slot",
+      gen.DRAW_PALETTE == gen.RECORDED_PALETTE == "v5"
+      and gen.PALETTES == {"v4": ", {guidance}. " + ZODIAC_STYLE,
+                           "v5": ", {guidance}. " + LOVE_STYLE}
+      and gen.STYLE_SUFFIX == gen.PALETTES["v5"], repr(gen.PALETTES))
 # The words that made v1, v2 and v3 what they were. A scene never carries
 # them: the only style words in a prompt are the zodiac string's own.
 TREATMENT = ("painterly", "dreamy", "luminous", "moody", "golden-hour",
@@ -224,7 +238,7 @@ check("  and no scene carries a treatment word of its own",
 check("  every prompt is its scene, the guidance for its crop, the zodiac "
       "string", all(
     f["prompt"] == f["subject"] + ", " + gen.KINDS[f["kind"]]["guidance"]
-    + ". " + ZODIAC_STYLE
+    + ". " + LOVE_STYLE
     for f in plan))
 GUIDE = "single central subject, composed for a "
 check("  every prompt carries the composition guidance for its own crop",
@@ -244,28 +258,32 @@ check("  and every subject is carried verbatim, opening the prompt",
       all(by_id[i]["prompt"].startswith(s + ",")
           for i, _b, s in gen.CARD_PROMPTS + gen.TALL_PROMPTS))
 SUBJECTS = {
-    "lv01a": "a bright golden spark arcing between two reaching tree "
-             "branches, deep indigo starry sky behind",
-    "lv06b": "two birds flying side by side across a bright open sky at dawn",
-    "lv11b": "glowing embers in a stone hearth, deep red and gold, the ember "
-             "glow lighting the stones",
-    "lv12a": "a bridge of light meeting mid-air between two cliffs, bright "
-             "sky behind",
-    "lv16c": "two open books resting side by side on a sofa in soft "
-             "afternoon light",
-    "lv18a": "heart-shaped nebula glowing gold and rose in deep indigo space",
-    "lv18b": "two crescent moons curving toward each other into a heart "
-             "shape, glowing in a deep indigo sky",
-    "int1": "two falling stars streaking across a deep indigo sky over a "
-            "faint horizon glow",
+    "lv01a": "a bright golden spark leaping between two reaching hands, "
+            "deep indigo starry sky behind",
+    "lv06b": "two birds flying side by side across a bright open sky at "
+            "dawn",
+    "lv11b": "glowing embers in a stone hearth, deep red and gold, the "
+            "ember glow lighting the stones",
+    "lv12a": "a figure leaping toward an outstretched hand over a gap "
+            "between two cliffs, bright sky behind",
+    "lv16c": "two figures from behind reading side by side on a sofa in "
+            "soft afternoon light",
+    "lv18a": "heart-shaped nebula glowing gold and rose in deep indigo "
+            "space",
+    "lv18b": "two hands forming a heart shape against a bright full moon "
+            "in a deep indigo sky",
+    "int1": "two falling stars streaking across a deep indigo sky over "
+            "a faint horizon glow",
 }
 for frame_id, subject in sorted(SUBJECTS.items()):
     check("  %-6s is the plan's subject" % frame_id,
           by_id[frame_id]["subject"] == subject)
-check("every prompt bans people, faces, hands, text and a watermark",
+check("every prompt bans close-up faces, text and a watermark — and no "
+      "longer people or hands",
       all(all(w in f["prompt"].lower()
-              for w in ("no people", "no faces", "no hands", "no text",
-                        "no watermark"))
+              for w in ("no close-up faces", "no text", "no watermark"))
+          and "no people" not in f["prompt"].lower()
+          and "no hands" not in f["prompt"].lower()
           for f in plan))
 
 
@@ -277,24 +295,36 @@ ZODIAC_EXPOSURE = (
     "sombre", "somber", "night", "nighttime", "dusk", "twilight", "unlit",
     "underexposed", "silhouette", "noir", "smoky", "hazy",
 )
-check("the exposure list opens on the zodiac generator's, verbatim and in "
-      "order",
-      gen.ZODIAC_EXPOSURE_WORDS == ZODIAC_EXPOSURE
-      and gen.EXPOSURE_WORDS[:len(ZODIAC_EXPOSURE)] == ZODIAC_EXPOSURE,
+check("the zodiac list is still held verbatim and in order",
+      gen.ZODIAC_EXPOSURE_WORDS == ZODIAC_EXPOSURE)
+# v5: a silhouette is a subject here, not a way of asking for gloom, so the
+# one silhouette word comes out of the zodiac list on its way into the guard
+# and the plural is no longer appended.
+check("  the guard is that list minus silhouette, in order",
+      gen.EXPOSURE_WORDS[:len(ZODIAC_EXPOSURE) - 1]
+      == tuple(w for w in ZODIAC_EXPOSURE if w != "silhouette")
+      and gen.SILHOUETTE_WORDS == ("silhouette", "silhouettes")
+      and "silhouette" not in gen.EXPOSURE_WORDS
+      and "silhouettes" not in gen.EXPOSURE_WORDS,
       str(gen.EXPOSURE_WORDS[:8]))
-check("  with this file's five appended after it, nothing else",
-      gen.EXPOSURE_WORDS[len(ZODIAC_EXPOSURE):]
-      == ("darkness", "midnight", "nocturnal", "silhouettes", "candle-lit"))
+check("  with this file's four appended after it, nothing else",
+      gen.EXPOSURE_WORDS[len(ZODIAC_EXPOSURE) - 1:]
+      == ("darkness", "midnight", "nocturnal", "candle-lit"))
 check("  plain candle and candles are not on it — a candle is an object",
       "candle" not in gen.EXPOSURE_WORDS and "candles" not in gen.EXPOSURE_WORDS
       and gen.guard("two candles, one lighting the other") == []
       and gen.guard("a candlelight dinner") == ["candlelight"])
-check("  and the style's own bans are words too: people, faces, hands",
-      all(w in gen.SUBJECT_WORDS for w in ("people", "faces", "hands",
-                                          "couple", "figures")))
+check("  and the style's one ban is words too: a face, a portrait of somebody",
+      gen.SUBJECT_WORDS == ("face", "faces", "portrait of a", "close-up",
+                            "closeup")
+      and gen.guard("a portrait of a woman") == ["portrait of a"]
+      and gen.guard("a close-up face") == ["close-up", "face"])
+check("  while people, couples, figures, silhouettes and hands pass it now",
+      all(gen.guard(s) == [] for s in (
+          "couple silhouettes", "two figures from behind", "two hands",
+          "two fishermen", "a person waving", "two people at a table")))
 check("the guard names what it finds, as whole words",
-      gen.guard("a dark night with silhouettes") == ["dark", "night",
-                                                     "silhouettes"]
+      gen.guard("a dark night with silhouettes") == ["dark", "night"]
       and gen.guard("a darkened room") == []
       and gen.guard("Candlelit dinner") == ["candlelit"])
 check("  and a scene with a lamp, a moon or an ember passes it",
@@ -304,23 +334,84 @@ check("no scene in the plan carries a guarded word",
            if gen.guard(f["subject"])],
       str([(f["id"], gen.guard(f["subject"])) for f in plan
            if gen.guard(f["subject"])][:4]))
-check("  none names a person or a hand in any other form either",
-      not [f["id"] for f in plan
-           if re.search(r"\b(two under|walking|dancing|reading|laughing|"
-                        r"leaping|fisher\w*|palm|arms?)\b", f["subject"])],
-      str([f["id"] for f in plan
-           if re.search(r"\b(two under|walking|dancing|reading|laughing|"
-                        r"leaping|fisher\w*|palm|arms?)\b", f["subject"])]))
 saved = gen.CARD_PROMPTS[0]
-gen.CARD_PROMPTS[0] = (saved[0], saved[1], "two hands in a dark night")
+gen.CARD_PROMPTS[0] = (saved[0], saved[1], "two faces in a dark night")
 try:
     caught = refuses(cfg)
 finally:
     gen.CARD_PROMPTS[0] = saved
-check("a scene that asks for darkness or a hand refuses to run",
+check("a scene that asks for darkness or a face refuses to run",
       caught is not None and "zodiac style refuses" in (caught or "")
-      and "night" in (caught or "") and "hands" in (caught or ""),
+      and "night" in (caught or "") and "faces" in (caught or ""),
       str(caught))
+
+print("\n--- v5: the seventeen compositions, back ---")
+# Every frame that showed a couple, a silhouette or a pair of hands in the
+# v1 plan shows it again: as silhouettes, figures from behind or hands, in
+# its own frame's bucket, lit the way its v4 stand-in was.
+RESTORED = ("lv01a", "lv02a", "lv03a", "lv05c", "lv05d", "lv07d", "lv08a",
+            "lv09b", "lv12a", "lv14a", "lv14b", "lv15a", "lv15b", "lv16a",
+            "lv16c", "lv16d", "lv18b")
+PEOPLE = re.compile(r"\b(silhouettes?|figures?|hands?|fishermen|couple)\b")
+check("seventeen frames name a silhouette, a figure, hands or a couple",
+      sorted(f["id"] for f in plan if PEOPLE.search(f["subject"]))
+      == sorted(RESTORED),
+      str(sorted(set(f["id"] for f in plan if PEOPLE.search(f["subject"]))
+                 ^ set(RESTORED))))
+check("  and the other twenty-nine are the object scenes they were",
+      not [f["id"] for f in plan if f["id"] not in RESTORED
+           and PEOPLE.search(f["subject"])])
+check("  no scene, restored or not, asks for a face",
+      not [f["id"] for f in plan
+           if re.search(r"\bfaces?\b|portrait", f["subject"])])
+check("  a figure is a silhouette, from behind, or hands — never facing",
+      all(re.search(r"silhouette|from behind|hands?\b|fingers", f["subject"])
+          for f in plan if f["id"] in RESTORED),
+      str([f["id"] for f in plan if f["id"] in RESTORED
+           and not re.search(r"silhouette|from behind|hands?\b|fingers",
+                             f["subject"])]))
+# The v1 line, restored: the same composition, the v4 light.
+V1 = {"lv01a": "spark", "lv02a": "square", "lv03a": "interlaced",
+      "lv05c": "kitchen table", "lv05d": "shoulder to shoulder",
+      "lv07d": "dancing", "lv08a": "street lamp", "lv09b": "key",
+      "lv12a": "leaping", "lv14a": "dancing", "lv14b": "blanket",
+      "lv15a": "umbrella", "lv15b": "kite", "lv16a": "pier",
+      "lv16c": "sofa", "lv16d": "parked car", "lv18b": "heart"}
+for frame_id, word in sorted(V1.items()):
+    check("  %-6s keeps its v1 composition: %s" % (frame_id, word),
+          word in by_id[frame_id]["subject"])
+check("  each keeps its frame's bucket and its step's",
+      all(by_id[i]["bucket"] == by_id[i[:4] + "a"]["bucket"]
+          for i in RESTORED))
+check("  and none asks for v1's darkness",
+      not [i for i in RESTORED if gen.guard(by_id[i]["subject"])]
+      and all("deep indigo" in by_id[i]["subject"]
+              for i in RESTORED if by_id[i]["bucket"] == "dark"))
+
+# The three frames of the gender step, planned ahead of the step.
+check("three gender frames wait on the step, in one bucket",
+      [r[0] for r in gen.PENDING_PROMPTS] == ["g01", "g02", "g03"]
+      and {r[1] for r in gen.PENDING_PROMPTS} == {"mid"}
+      and not [f for f in plan if f["id"].startswith("g0")]
+      and not any(gen.guard(r[2]) for r in gen.PENDING_PROMPTS))
+check("  feminine, masculine, neutral — stardust silhouettes and a star",
+      "feminine silhouette" in gen.PENDING_PROMPTS[0][2]
+      and "rose-gold" in gen.PENDING_PROMPTS[0][2]
+      and "masculine silhouette" in gen.PENDING_PROMPTS[1][2]
+      and "teal-gold" in gen.PENDING_PROMPTS[1][2]
+      and "neutral and welcoming" in gen.PENDING_PROMPTS[2][2])
+_with_step = json.loads(json.dumps(cfg))
+_with_step["swipe"]["steps"].insert(2, {
+    "id": "gender", "question": "За кого е този профил?", "format": "grid4",
+    "pairs": [{"id": "p1", "images": [
+        {"id": g, "img": "/static/galleries/love-zodiac-bg/%s.webp" % g,
+         "label": g, "tags": []} for g in ("g01", "g02", "g03")]}]})
+_plan49 = gen.frames(_with_step)
+check("  and they join the plan the day the config names them: 49 frames",
+      len(_plan49) == 49
+      and [f["id"] for f in _plan49 if f["id"].startswith("g0")]
+      == ["g01", "g02", "g03"]
+      and all(f["kind"] == "grid" for f in _plan49 if f["id"].startswith("g0")))
 
 
 print("\n--- the light plan: three buckets, one per step ---")
@@ -416,8 +507,8 @@ print("\n--- the manifest: recipes, idempotency, a full redraw ---")
 recipes = [gen.recipe(f) for f in plan]
 check("every frame's recipe is distinct", len(set(recipes)) == len(recipes))
 check("  and carries the version, the prompt, the API size and the geometry",
-      gen.RECIPE_VERSION == "v4.1"
-      and all(r.startswith("v4.1|") for r in recipes)
+      gen.RECIPE_VERSION == "v5"
+      and all(r.startswith("v5|") for r in recipes)
       and all(f["prompt"] in gen.recipe(f) and f["api_size"] in gen.recipe(f)
               and "%dx%d" % f["size"] in gen.recipe(f) for f in plan))
 check("  but not the bucket: a band judges a draw, it does not make one",
@@ -428,7 +519,7 @@ check("  but not the bucket: a band judges a draw, it does not make one",
 # The first v4 run recorded thirty frames under the v4.1 spelling, bucket
 # and all. Those records are still current, whatever the label says now.
 LEGACY = gen.legacy_recipes(by_id["lv06b"])
-check("the v4.1 spelling is still known, one per bucket",
+check("the bucketed spelling is still known, one per bucket",
       len(LEGACY) == 3
       and all(s.startswith(gen.recipe(by_id["lv06b"]) + "|") for s in LEGACY)
       and {s.rsplit("|", 1)[1] for s in LEGACY} == {"bright", "mid", "dark"})
@@ -484,13 +575,14 @@ check("the manifest lives beside the script, not in the gallery",
       gen.MANIFEST == os.path.join(REPO, "scripts", "love_art.json"))
 entries = gen.load_manifest()
 if entries:
-    # The manifest on disk was drawn before v4, and v4 bumps every recipe.
+    # The manifest on disk was drawn under v4, and v5 bumps every recipe:
+    # the final full redraw.
     check("every recorded frame is stale: a plain run would redraw all 46",
           not any(gen.already_made(f, entries) for f in plan)
           and not any(gen.already_made(f, entries, (gen.DRAW_PALETTE,))
                       for f in plan),
           str([f["id"] for f in plan if gen.already_made(f, entries)][:4]))
-    check("  and a record drawn under v4 would be current again",
+    check("  and a record drawn under v5 would be current again",
           gen.already_made(plan[0], {plan[0]["id"]: {
               "sha256": gen.on_disk_sha(plan[0]["id"]),
               "recipe_sha": hashlib.sha256(
@@ -503,8 +595,8 @@ if entries:
             stats[i] = tuple(float(x) for x in m.groups())
     rejected = [i for i, s in stats.items()
                 if not gen.verdict(s, by_id[i]["band"])[0]]
-    print("    %d frames recorded before v4, all stale; %d of them would "
-          "fail their v4 bucket band" % (len(entries), len(rejected)))
+    print("    %d frames recorded before v5, all stale; %d of them would "
+          "fail their bucket band" % (len(entries), len(rejected)))
 else:
     notes.append("no manifest on disk: the first run draws all 46")
     check("  with no manifest, nothing is skipped",
@@ -819,7 +911,7 @@ try:
                                              f, gen.load_manifest())]),
           text.splitlines()[0])
     check("  and names the palette it would draw under",
-          "palette v4" in text.splitlines()[0], text.splitlines()[0])
+          "palette v5" in text.splitlines()[0], text.splitlines()[0])
     if gen.load_manifest():
         check("  with a pre-v4 manifest on disk that is all forty-six",
               text.count("--- ") == 46, text.splitlines()[0])

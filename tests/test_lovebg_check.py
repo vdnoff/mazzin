@@ -885,6 +885,51 @@ check("the split caption names the four elements in the same four words",
 check("the saves heading is the PDF's own heading for that list",
       LABELS["saves_head"] == profile["words"]["save"] == "Пази сърцето си")
 
+print("\n--- every card label is read whole: two lines, never an ellipsis ---")
+# The badge pill is one line with an ellipsis in shared CSS, and four of this
+# funnel's labels are longer than a 390px tile's 167px pill — "Писмо на
+# възглавницата" came back as "Писмо на възглавн…". The fix wraps to a
+# second line and lives in mazzin.css, scoped to the cards whose picture
+# comes out of this funnel's own gallery, since the shell puts no funnel
+# class on the page: every other funnel's pill is byte for byte what it was,
+# and the sign grid these cards share with zodiac-bg included.
+CSS = open(os.path.join(ROOT, "static/css/mazzin.css"), encoding="utf-8").read()
+LOVE_RULE = '.card:has(> .card-img[src*="/galleries/love-zodiac-bg/"]) .card-name'
+check("the sheet carries one rule for this funnel's card names",
+      CSS.count(LOVE_RULE + " {") == 1 and CSS.count("love-zodiac-bg") == 1)
+_rule = CSS.split(LOVE_RULE + " {", 1)[1].split("}", 1)[0]
+check("  it wraps, keeps the pill at its own width, and stops at two lines",
+      "white-space: normal;" in _rule and "width: max-content;" in _rule
+      and "max-height: calc(2.4em + 10px);" in _rule
+      and "ellipsis" not in _rule and "line-clamp" not in _rule)
+_base = CSS.split("\n.card-name {", 1)[1].split("}", 1)[0]
+check("  and the shared pill is untouched: one line, ellipsis, for everyone "
+      "else",
+      "white-space: nowrap;" in _base and "text-overflow: ellipsis;" in _base
+      and "max-width: 96%;" in _base and "font-size: 14px;" in _base
+      and "padding: 5px 10px;" in _base)
+# The budget, measured on the live shell at 390px: a pair card and a four-up
+# cell are both 174px wide, the pill is 96% of that less 10px of padding a
+# side — 147px a line — and the widest glyph run in these labels measured
+# 9.2px a character at 14px bold. So a word longer than fifteen characters
+# can spill past the pill, and a label longer than thirty cannot be held in
+# two lines. The four that wrap today are 19 to 22 characters; every label
+# is held under both numbers before it can be committed, so an ellipsis
+# never comes back and a third line never appears.
+WORD, LABEL = 15, 30
+long_words = [(i["id"], w) for i in love_images
+              for w in re.split(r"[\s-]+", i["label"]) if len(w) > WORD]
+long_labels = [(i["id"], i["label"]) for i in love_images
+               if len(i["label"]) > LABEL]
+check("no word is longer than a pill line holds (%d)" % WORD, not long_words,
+      str(long_words[:4]))
+check("  and no label is longer than two lines hold (%d)" % LABEL,
+      not long_labels, str(long_labels[:4]))
+print("    longest label %d chars, longest word %d chars"
+      % (max(len(i["label"]) for i in love_images),
+         max(len(w) for i in love_images
+             for w in re.split(r"[\s-]+", i["label"]))))
+
 print("\n--- compatibility is the locked core ---")
 MIN = cfg["result_copy"]["profile"]
 ROWS = MIN["unlock"]
@@ -1079,8 +1124,9 @@ if Image is not None:
 
 print("\n--- the report profile: mirrored from zodiac-bg, object for object ---")
 ZBG = reports.ZODIAC_BG_PROFILE
-check("it declares every key zodiac-bg's profile declares, and no other",
-      sorted(profile) == sorted(ZBG),
+check("it declares every key zodiac-bg's profile declares, plus the "
+      "gender line",
+      sorted(set(profile) - {"personal_note"}) == sorted(ZBG),
       str(sorted(set(profile) ^ set(ZBG))))
 check("  nothing is left unfilled", not [k for k, v in profile.items()
                                          if v is None],
@@ -1514,6 +1560,90 @@ check("  and the lead says love", profile["pdf_lead"] == "Твоят личен 
       "профил" and profile["pdf_lead"] != ZBG["pdf_lead"])
 check("the verify hooks are the zodiac palette checks",
       profile["verify"] is reports.ZODIAC_VERIFY)
+
+print("\n--- the reader's grammatical gender, on two sections ---")
+# The step that asks is not in the config yet — the engine has no
+# three-option format — so the profile side is exercised on a copy of the
+# config carrying the step the way it will be written: three cards, one tag
+# each, no scoring weight. The tag rides in `choices` like every other tap
+# and reaches the two personal sections as one instruction line.
+check("the tags and the two sections are declared on the profile alone",
+      reports.GENDER_TAGS == {"gender_female": "feminine",
+                              "gender_male": "masculine",
+                              "gender_unsaid": None}
+      and reports.GENDER_SECTIONS == ("dna", "materials")
+      and profile["personal_note"] is reports._love_bg_gender_note
+      and sorted(s for s, pr in reports.PROFILES.items()
+                 if pr.get("personal_note"))
+      == ["love-zodiac-bg", "love-zodiac-bg-test"])
+check("  and _section_prompt asks the profile for it, once, on the personal "
+      "sections",
+      REPORTS_SRC.count('profile.get("personal_note")') == 1)
+_gendered = json.loads(RAW)
+_gendered["swipe"]["steps"].insert(2, {
+    "id": "gender", "question": "За кого е този профил?", "format": "grid4",
+    "pairs": [{"id": "p1", "images": [
+        {"id": "g01", "img": GALLERY + "g01.webp", "label": "За жена",
+         "tags": ["gender_female"]},
+        {"id": "g02", "img": GALLERY + "g02.webp", "label": "За мъж",
+         "tags": ["gender_male"]},
+        {"id": "g03", "img": GALLERY + "g03.webp",
+         "label": "Предпочитам да не казвам", "tags": ["gender_unsaid"]}]}]})
+_gstyle = reports._style(_gendered, "radiant_fire")
+
+
+def gendered_choices(pick):
+    return ["sign_virgo" if s["id"] == "sign"
+            else pick if s["id"] == "gender"
+            else s["pairs"][0]["images"][0]["id"]
+            for s in _gendered["swipe"]["steps"]]
+
+
+def gender_prompt(pick, section):
+    return reports._section_prompt(
+        _gstyle, NAME, scores, section, cfg=_gendered,
+        choices=gendered_choices(pick), funnel_slug=SLUG, months=months)
+
+
+FEM, MASC = "FEMININE grammatical gender", "MASCULINE grammatical gender"
+for section in ("dna", "materials"):
+    check("  %-9s for a woman is addressed in the feminine" % section,
+          FEM in gender_prompt("g01", section)
+          and "уморена, готова, сама, влюбена" in gender_prompt("g01", section)
+          and MASC not in gender_prompt("g01", section))
+    check("  %-9s for a man in the masculine" % section,
+          MASC in gender_prompt("g02", section)
+          and "уморен, готов, сам, влюбен" in gender_prompt("g02", section)
+          and FEM not in gender_prompt("g02", section))
+    check("  %-9s unsaid stays the neutral default" % section,
+          FEM not in gender_prompt("g03", section)
+          and MASC not in gender_prompt("g03", section)
+          and "gender" not in gender_prompt("g03", section).lower())
+check("  the year map never carries it",
+      all(FEM not in gender_prompt(g, "shopping")
+          and MASC not in gender_prompt(g, "shopping")
+          for g in ("g01", "g02", "g03")))
+check("  and a walk with no gender step is the prompt it was",
+      FEM not in prompt and MASC not in prompt
+      and gender_prompt("g03", "materials").replace(
+          "За кого е този профил?", "") != "")
+check("  the line keeps the other person unnamed either way",
+      all("партньорът, човекът до теб, другият" in line
+          and "уморен(а)" in line
+          for line in reports.LOVE_BG_GENDER_LINE.values()))
+GENDER_WORDS = re.compile(r"feminine|masculine|gender|женски|мъжки|уморена|"
+                          r"\bwoman\b|\bman\b", re.I)
+check("no cached-section prompt mentions gender",
+      not [s for s in profile["cached"]
+           if GENDER_WORDS.search(reports._cached_prompt(STYLE, NAME, (s,),
+                                                          SLUG))])
+check("  nor any cached shape, nor any stub",
+      not [s for s in profile["cached"] if GENDER_WORDS.search(SPEC[s])]
+      and not [s[:30] for k, s in profile_strings()
+               if k == "stubs" and GENDER_WORDS.search(s)])
+check("  and the twin reads the same line",
+      reports._profile(SLUG + "-test")["personal_note"]
+      is profile["personal_note"])
 
 print("\n--- and the neighbours are untouched ---")
 check("funnels/zodiac-bg.json is still zodiac-bg, byte for byte with static/",

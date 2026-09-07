@@ -997,6 +997,35 @@ body.is-fading .dots span { background: #868FB6; }
   letter-spacing: -0.01em;
 }
 
+/* The love funnel's cards carry short sentences rather than names — "Писмо
+   на възглавницата", "Навън, сред светлините" — and four of them want more
+   than the 167px a 390px tile gives the pill, so the ellipsis above cut them
+   to "Писмо на възглавн…". A label the reader cannot finish is the failure
+   this mode exists to prevent, so on that funnel's cards the pill wraps to a
+   second line instead. Only that: the pill keeps its shrink-to-fit width, so
+   a label that fits on one line is the same pixels it was, and only a label
+   that did not fit grows — upward, off its bottom anchor, over the lower
+   edge of the art it already sat on. Two lines is the ceiling, held by the
+   max-height and by tests/test_lovebg_check.py, which measures every label
+   of that funnel against the pill's budget before one can be committed.
+
+   Scoped to the cards whose picture comes out of that funnel's own gallery —
+   the one thing on the page that is this funnel's and no other's, since the
+   shell puts no funnel class or attribute on the document. Every other
+   funnel's pill, the sign grid these cards share with zodiac-bg included,
+   renders byte for byte what it did; a browser without :has() keeps the
+   one-line pill and its ellipsis. Pair cards and four-up cells are the same
+   174px wide at 390px, so one rule serves both. */
+.card:has(> .card-img[src*="/galleries/love-zodiac-bg/"]) .card-name {
+  white-space: normal;
+  /* Said outright, because `left: 50%` leaves an absolutely positioned box
+     only half the card to shrink into once its text may wrap: without this
+     every two-word label folded at 87px. The max-width above still caps it
+     at the tile, which is where a long label wraps. */
+  width: max-content;
+  max-height: calc(2.4em + 10px);   /* two lines at 1.2, plus the padding */
+}
+
 /* Under the selection wash the label goes with the rest of the card — the
    chip that lands on top is the one carrying the name at that point, and two
    copies of the same word stacked on each other reads as a rendering fault. */

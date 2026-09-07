@@ -3327,6 +3327,63 @@ LOVE_BG_WORDS = dict(RENDER_WORDS_BG, **{
 # energy with the same word.
 LOVE_BG_ENERGY_LABEL = {"sun": "На глас", "moon": "В дълбочина"}
 
+# --- the reader's grammatical gender -----------------------------------------
+#
+# Bulgarian past participles and adjectives agree with gender, and the
+# system prompt writes around that because the funnel never asked. A step
+# that asks — "За кого е този профил?" — carries one of these tags on its
+# cards, and the sections written for this reader alone take the answer as
+# one instruction line: feminine forms, masculine forms, or nothing at all,
+# which is the neutral phrasing the prompt already has and stays the
+# default. "gender_unsaid" is a tag like the other two so the choice rides
+# to the purchase row like every other tap, and it says nothing to the
+# model on purpose.
+#
+# Personal sections only, and only two of the three: the cached trio is one
+# answer per archetype for every buyer of it, and a gendered row in that
+# cache would be somebody else's reader; the year map names months, not the
+# reader. Read off the tags of the cards they tapped, the way `_purpose`
+# reads the purpose, so which step asks belongs to the funnel.
+GENDER_TAGS = {"gender_female": "feminine", "gender_male": "masculine",
+               "gender_unsaid": None}
+GENDER_SECTIONS = ("dna", "materials")
+LOVE_BG_GENDER_LINE = {
+    "feminine": (
+        "REQUIRED — this reader said the profile is for a woman. Address "
+        "them in the FEMININE grammatical gender throughout this section: "
+        "feminine past participles and adjectives — уморена, готова, сама, "
+        "влюбена — never the masculine form and never a bracketed "
+        "alternative like уморен(а). The person beside them stays unnamed, "
+        "as before: партньорът, човекът до теб, другият."),
+    "masculine": (
+        "REQUIRED — this reader said the profile is for a man. Address "
+        "them in the MASCULINE grammatical gender throughout this section: "
+        "masculine past participles and adjectives — уморен, готов, сам, "
+        "влюбен — never the feminine form and never a bracketed "
+        "alternative like уморен(а). The person beside them stays unnamed, "
+        "as before: партньорът, човекът до теб, другият."),
+}
+
+
+def _love_bg_gender(cfg, choices):
+    """The grammatical gender the reader asked for, or None."""
+    if not cfg or not choices:
+        return None
+    images = _images_by_id(cfg)
+    for image_id in choices:
+        for tag in (images.get(image_id) or {}).get("tags") or ():
+            if tag in GENDER_TAGS:
+                return GENDER_TAGS[tag]
+    return None
+
+
+def _love_bg_gender_note(cfg, choices, section_id):
+    """The one instruction line for a personal section, or None."""
+    if section_id not in GENDER_SECTIONS:
+        return None
+    return LOVE_BG_GENDER_LINE.get(_love_bg_gender(cfg, choices))
+
+
 # A distinct object, for the reason ZODIAC_BG_PROFILE is: the voice, the
 # shapes, the fallbacks, the banned list, the energy labels, the words and
 # the mail are all this product's. Everything that is shared is shared by
@@ -3371,6 +3428,9 @@ LOVE_BG_PROFILE = {
     "mail_link": None,      # filled at the end, with the BG button
     "json_retry": LOVE_BG_JSON_RETRY,
     "json_repair": None,    # filled at the end, with zodiac-bg's repair
+    # The gender line, on the two sections it belongs to. Love-only: no
+    # other profile declares one, and `_section_prompt` asks the profile.
+    "personal_note": _love_bg_gender_note,
 }
 
 # --- the persona product ----------------------------------------------------
@@ -7306,6 +7366,15 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
                 _profile_for(cfg, funnel_slug, style, tag_scores, choices))
             if subtype:
                 parts.append(subtype)
+            # A line the profile itself adds to its per-purchase prompts,
+            # read off the reader's own choices — the love profile's
+            # grammatical gender. Declared on the profile and nowhere else,
+            # so every product that declares none is prompted byte for byte
+            # as it was, and the cached trio never sees it.
+            note = profile.get("personal_note")
+            line = note(cfg, choices, section_id) if note else None
+            if line:
+                parts.append(line)
 
     # The love section names three signs because the paywall promised three
     # signs. Which three is classical rather than the model's to invent.
