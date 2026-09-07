@@ -517,12 +517,14 @@
     return out;
   }
 
-  // A step shows two images side by side, four in a grid, six in three rows
-  // of two, or twelve in four rows of three. All of them are one question and
-  // one tap; the format only changes how many things are being compared at
-  // once. Everything downstream reads this table rather than naming a format,
-  // so a new one is an entry here plus the CSS that lays it out.
-  var GRID_SIZE = { grid4: 4, grid6: 6, grid12: 12 };
+  // A step shows two images side by side, three in one row, four in a grid,
+  // six in three rows of two, or twelve in four rows of three. All of them
+  // are one question and one tap; the format only changes how many things
+  // are being compared at once. Everything downstream reads this table
+  // rather than naming a format, so a new one is an entry here plus the CSS
+  // that lays it out. A step gets a format only by naming it, so a funnel
+  // that names none of these renders the pair it always did.
+  var GRID_SIZE = { grid3: 3, grid4: 4, grid6: 6, grid12: 12 };
   var GRID_NAMES = Object.keys(GRID_SIZE);
 
   function stepFormat(st) {

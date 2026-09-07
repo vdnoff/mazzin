@@ -111,7 +111,10 @@ ALLOWED_EVENTS = {
 # plus the pair, and it is a closed set for the same reason the event names
 # are: the number is the client's word about our own layout, and a swipe
 # claiming a size no format produces is not a swipe this funnel served.
-SHOWN_SIZES = frozenset((2, 4, 6, 12))
+# Three is the love funnel's one-row gender step (`grid3`); without it here
+# that step's swipes were a valid tap the client sent and the server threw
+# away.
+SHOWN_SIZES = frozenset((2, 3, 4, 6, 12))
 
 # `viz_upload` happens on both sides of the money now, and the two are
 # different events wearing one name: one is somebody still deciding, the other

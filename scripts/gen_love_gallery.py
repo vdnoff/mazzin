@@ -46,14 +46,29 @@ outside this repo (~/mazzin_gallery_v3/gen_zodiac.py). Its style string is
 ZODIAC_STYLE below, character for character, and the love gallery uses that
 and nothing else: no invented adjectives, ever again.
 
-That string bans people, faces and hands, so every scene is objects,
+That string bans people, faces and hands, so the v4 scenes were objects,
 symbols and landscapes, the way the zodiac cards are — two crescent moons
 curving into a heart rather than two hands. And it asks for a well-lit
 subject with every detail visible, so the zodiac generator's EXPOSURE_WORDS
-guard is ported: a scene that says dark, dim, night, silhouette, candlelit
-and so on is refused at plan time. The dark bucket's darkness lives in
-named colours instead — a deep indigo sky, an ember glow — the way zk1b
-(звездна нощ) and bd4a are drawn: dark frames, brightly lit subjects.
+guard is ported: a scene that says dark, dim, night, candlelit and so on is
+refused at plan time. The dark bucket's darkness lives in named colours
+instead — a deep indigo sky, an ember glow — the way zk1b (звездна нощ) and
+bd4a are drawn: dark frames, brightly lit subjects.
+
+--- v5: the compositions back, in the v4 light --------------------------------
+
+The v4 gallery was judged right in style and wrong in scene: a heart of two
+moons is not two hands, and a love card with nobody in it says less than
+the v1 card did. So every frame that showed a couple, a silhouette or a
+pair of hands in the v1 plan shows it again — seventeen of them — written
+as silhouettes, figures from behind and hands, never a close-up face. The
+style string is the zodiac one with exactly that change: the ban on people,
+faces and hands becomes a ban on close-up faces, and nothing else in it
+moves. v1's darkness was the actual defect, not its compositions, so a
+restored scene is lit the way its v4 stand-in was and sits in the same
+bucket; the exposure guard stays, minus the two silhouette words, which are
+subjects now rather than a way of asking for gloom. Every recipe is v5, so
+the whole gallery is drawn again, once.
 
 The light still lives per frame, in three buckets — bright, mid, dark —
 with every pair and every four-up in one bucket, so no option wins by
@@ -148,7 +163,7 @@ ENV_FILES = (os.path.join(ROOT, ".env"), os.path.expanduser("~/mazzin/.env"))
 # v4: the light moved into the scene words; v4.1: the zodiac style string
 # and the exposure guard, every scene rewritten — so every frame is stale.
 # Calibrate with --only before a plain run.
-RECIPE_VERSION = "v4.1"
+RECIPE_VERSION = "v5"
 
 # --- geometry ------------------------------------------------------------------
 #
@@ -189,7 +204,7 @@ KINDS = {
 }
 # Which step format draws which kind of tile. A format not named here is a
 # loud failure at plan time, not a square frame in a portrait tile.
-KIND_OF_FORMAT = {"pair": "pair", "grid4": "grid"}
+KIND_OF_FORMAT = {"pair": "pair", "grid3": "grid", "grid4": "grid"}
 
 MODEL = os.getenv("OPENAI_IMAGE_MODEL", "gpt-image-1")
 IMAGE_QUALITY = os.getenv("LOVE_IMAGE_QUALITY", "medium")
@@ -234,15 +249,29 @@ ZODIAC_STYLE = (
     "at thumbnail size. No text, no letters, no numbers, no people, no faces, "
     "no hands, no watermark, no logo, no frame."
 )
+# v5: the same string with one substitution, and no other word moved. The
+# zodiac cards have nobody in them by design; the love cards need two
+# silhouettes, two figures from behind, two hands. What stays banned is the
+# one thing a generated face costs: a face close enough to be somebody.
+LOVE_STYLE = ZODIAC_STYLE.replace("no people, no faces, no hands",
+                                  "no close-up faces")
+assert LOVE_STYLE == (
+    "Cinematic celestial art, painterly photographic hybrid, rich saturated "
+    "colour, luminous, well-lit subject, every detail clearly visible, subtle "
+    "silver star grain, vertical portrait composition centered and readable "
+    "at thumbnail size. No text, no letters, no numbers, no close-up faces, "
+    "no watermark, no logo, no frame."
+)
 PALETTES = {
     "v4": ", {guidance}. " + ZODIAC_STYLE,
+    "v5": ", {guidance}. " + LOVE_STYLE,
 }
 # What the manifest's frames were drawn under, and what a draw uses now.
 # The same while no palette is being calibrated; when one is, set
 # DRAW_PALETTE to it and calibrate with --only, then set RECORDED_PALETTE
 # to it once approved and the rest of the gallery goes stale.
-RECORDED_PALETTE = "v4"
-DRAW_PALETTE = "v4"
+RECORDED_PALETTE = "v5"
+DRAW_PALETTE = "v5"
 STYLE_SUFFIX = PALETTES[DRAW_PALETTE]
 
 # --- the exposure guard, ported from the zodiac generator -------------------
@@ -256,6 +285,14 @@ STYLE_SUFFIX = PALETTES[DRAW_PALETTE]
 # deep indigo sky, an ember glow, a moon — the subject stays lit. Plain
 # "candle" and "candles" are not on the list, only candlelit and
 # candlelight: a candle is an object, and an object can be lit.
+#
+# v5 takes one word out of the zodiac list on its way into EXPOSURE_WORDS:
+# "silhouette" (and this file's plural). In the zodiac gallery a silhouette
+# is a way of asking for an unlit subject; here it is the subject — a couple
+# drawn as two dark shapes against a lit sky is exactly the card — and the
+# style's "well-lit subject" still applies to everything around them. The
+# zodiac tuple itself stays verbatim, so it can be compared with the
+# server's, and the subtraction is done where the guard is built.
 ZODIAC_EXPOSURE_WORDS = (
     "dark", "darkly", "dim", "dimly", "moody", "moodily", "shadow",
     "shadowed", "shadowy", "low-key", "lowkey", "dramatic", "dramatically",
@@ -263,16 +300,17 @@ ZODIAC_EXPOSURE_WORDS = (
     "sombre", "somber", "night", "nighttime", "dusk", "twilight", "unlit",
     "underexposed", "silhouette", "noir", "smoky", "hazy",
 )
-EXPOSURE_WORDS = ZODIAC_EXPOSURE_WORDS + (
-    "darkness", "midnight", "nocturnal", "silhouettes", "candle-lit",
-)
-# And the style's own bans, as words a scene must not use: a scene that
-# names a person or a hand is asking the model to break the constraint it
-# was just given.
+SILHOUETTE_WORDS = ("silhouette", "silhouettes")
+EXPOSURE_WORDS = tuple(
+    w for w in ZODIAC_EXPOSURE_WORDS if w not in SILHOUETTE_WORDS
+) + ("darkness", "midnight", "nocturnal", "candle-lit")
+# And the style's own ban, as words a scene must not use: a scene that asks
+# for a face, or for a portrait of somebody, is asking the model to break
+# the one constraint the love style keeps. People, couples, figures,
+# silhouettes and hands are what the restored scenes are made of and are
+# allowed again — from behind, as shapes, as hands, never as a face.
 SUBJECT_WORDS = (
-    "people", "person", "couple", "figure", "figures", "face", "faces",
-    "hand", "hands", "fingers", "fishermen", "man", "woman", "child",
-    "someone", "silhouette", "silhouettes",
+    "face", "faces", "portrait of a", "close-up", "closeup",
 )
 _GUARD = re.compile(r"\b(%s)\b" % "|".join(
     re.escape(w) for w in EXPOSURE_WORDS + SUBJECT_WORDS), re.IGNORECASE)
@@ -289,27 +327,33 @@ def guard(subject):
 # its light bucket and its scene words. The light is IN the scene words
 # and the bucket is the band the frame is judged on. Every pair and every
 # four-up sits in one bucket, so the two or four options a reader compares
-# are lit alike: bright with bright, mid with mid, dark with dark. Eighteen
-# bright, fourteen mid, fourteen dark. No scene names a person, a face or a
-# hand, and no scene asks for darkness: a dark frame is a deep indigo sky or
-# an ember glow with a brightly lit subject in it, like the zodiac cards.
+# are lit alike: bright with bright, mid with mid, dark with dark. Four
+# bright, twenty-eight mid, fourteen dark, as the v4 draws measured.
+#
+# Seventeen scenes are v1's compositions, restored in v5: the ones that
+# showed a couple, a silhouette or a pair of hands. Each is written as
+# silhouettes, figures from behind or hands — never a face — and each is
+# lit the way its v4 stand-in was, in the same bucket: v1's darkness was the
+# defect, not its people. The other twenty-nine are the v4 scenes, unchanged.
+# No scene asks for darkness: a dark frame is a deep indigo sky or an ember
+# glow with a brightly lit subject in it, like the zodiac cards.
 
 BRIGHT, MID, DARK = "bright", "mid", "dark"
 
 CARD_PROMPTS = [
     # 1 spark — dark
-    ("lv01a", DARK, "a bright golden spark arcing between two reaching tree "
-                    "branches, deep indigo starry sky behind"),
+    ("lv01a", DARK, "a bright golden spark leaping between two reaching hands, "
+                    "deep indigo starry sky behind"),
     ("lv01b", DARK, "one lit candle lighting a second candle on a table, "
                     "both flames bright and clear, deep indigo backdrop"),
     # 2 evening — mid
-    ("lv02a", MID, "a small city square strung with warm string lights under "
-                   "a soft pastel evening sky"),
+    ("lv02a", MID, "couple silhouettes strolling a small city square strung with "
+                   "warm string lights under a soft pastel evening sky"),
     ("lv02b", MID, "two cups of tea by a rain-streaked window, folded "
                    "blanket, soft grey afternoon light"),
     # 3 gesture — bright
-    ("lv03a", BRIGHT, "two woven ribbons of gold and rose intertwined into "
-                      "one knot in bright sunlight, pale sky behind"),
+    ("lv03a", BRIGHT, "two hands with interlaced fingers in bright golden sunlight, "
+                      "pale sky behind"),
     ("lv03b", BRIGHT, "handwritten letter with a wax heart seal on a sunlit "
                       "linen table, bright daylight"),
     # 4 gift — bright
@@ -322,11 +366,10 @@ CARD_PROMPTS = [
                    "lamp glowing between them, soft evening light"),
     ("lv05b", MID, "empty park bench at first light with room for two, soft "
                    "pastel sky"),
-    ("lv05c", MID, "two teacups tipped toward each other beside a plate of "
-                   "shared pastries, soft afternoon light through a kitchen "
-                   "window"),
-    ("lv05d", MID, "a tree-lined lane with two sets of footprints side by "
-                   "side in soft late-afternoon light"),
+    ("lv05c", MID, "two silhouettes laughing together at a kitchen table, soft "
+                   "afternoon light spilling through the window"),
+    ("lv05d", MID, "two figures from behind walking shoulder to shoulder down a "
+                   "tree-lined lane in soft late-afternoon light"),
     # 6 closeness — mid (drew 87-96 and 192; the step follows the pair)
     ("lv06a", MID, "two trees with intertwined crowns in a sunlit meadow, "
                       "bright open sky"),
@@ -339,18 +382,19 @@ CARD_PROMPTS = [
                       "on the rocks, bright golden light"),
     ("lv07c", MID, "a folded letter left on a pillow in bright morning "
                       "sun"),
-    ("lv07d", MID, "a record spinning on a turntable in a bright kitchen, "
-                      "two aprons on hooks, sun through the window"),
+    ("lv07d", MID, "two silhouettes dancing in a bright kitchen, sun through the "
+                   "window, a record spinning on a turntable"),
     # 8 rhythm — mid
-    ("lv08a", MID, "a street lamp glowing over wet cobblestones, two "
-                   "umbrellas leaning together, soft amber evening light"),
+    ("lv08a", MID, "two silhouettes dancing in a light rain under a glowing "
+                   "street lamp, soft amber evening light, wet cobblestones "
+                   "shining"),
     ("lv08b", MID, "two coffee cups on the same table in soft morning light, "
                    "a wall calendar behind"),
     # 9 distance — dark
     ("lv09a", DARK, "paper plane gliding across a deep indigo starry sky "
                     "toward one warmly lit window"),
-    ("lv09b", DARK, "a front door with two keys on one ring in the lock, a "
-                    "porch lamp glowing, deep indigo evening sky"),
+    ("lv09b", DARK, "two figures from behind at one front door, a key turning in "
+                    "the lock, a porch lamp glowing, deep indigo evening sky"),
     # 10 home — mid, four-up (lv10b drew 58-70, lv10c 93-101, lv10d 74-93)
     ("lv10a", MID, "nest with two golden eggs among branches in bright "
                       "spring light"),
@@ -365,8 +409,8 @@ CARD_PROMPTS = [
     ("lv11b", DARK, "glowing embers in a stone hearth, deep red and gold, "
                     "the ember glow lighting the stones"),
     # 12 trust — mid (both drew 83-96)
-    ("lv12a", MID, "a bridge of light meeting mid-air between two cliffs, "
-                      "bright sky behind"),
+    ("lv12a", MID, "a figure leaping toward an outstretched hand over a gap "
+                   "between two cliffs, bright sky behind"),
     ("lv12b", MID, "stone bridge with a double railing over a calm river "
                       "in bright morning sunlight"),
     # 13 past — mid
@@ -375,23 +419,23 @@ CARD_PROMPTS = [
     ("lv13b", MID, "blank white page and a quill on a desk at first light, "
                    "soft pastel dawn"),
     # 14 public — dark
-    ("lv14a", DARK, "strings of glowing lights over a square under a deep "
-                    "indigo sky, two dance shoes on the cobblestones"),
-    ("lv14b", DARK, "one blanket spread on a rooftop under a deep indigo "
-                    "sky, city lights glittering far below"),
+    ("lv14a", DARK, "couple silhouettes dancing in a square under strings of "
+                    "glowing lights and festive bunting, deep indigo sky"),
+    ("lv14b", DARK, "two figures from behind under one blanket on a rooftop, city "
+                    "lights glittering far below, deep indigo sky"),
     # 15 care — mid (lv15a drew 79-87; the step follows the pair)
-    ("lv15a", MID, "one umbrella sheltering a small potted flower in a "
-                      "bright spring rain, sun breaking through"),
-    ("lv15b", MID, "a kite rising into a bright open sky, its string "
-                      "trailing to the ground"),
+    ("lv15a", MID, "one silhouette holding an umbrella over another in a bright "
+                   "spring rain, sun breaking through"),
+    ("lv15b", MID, "a kite launched by two pairs of hands into a bright open sky"),
     # 16 silence — mid, four-up
-    ("lv16a", MID, "two fishing rods resting side by side on a misty pier at "
-                   "soft early morning, still water"),
+    ("lv16a", MID, "two fishermen from behind on a misty pier in soft early "
+                   "morning light, still water, pale gold"),
     ("lv16b", MID, "two glasses of wine on a terrace table under a soft "
                    "amber evening sky, one candle"),
-    ("lv16c", MID, "two open books resting side by side on a sofa in soft "
-                   "afternoon light"),
-    ("lv16d", MID, "a parked car on a hill facing a soft glowing sunset sky"),
+    ("lv16c", MID, "two figures from behind reading side by side on a sofa in "
+                   "soft afternoon light"),
+    ("lv16d", MID, "two figures from behind in a parked car on a hill watching a "
+                   "soft glowing sunset sky"),
     # 17 future — dark
     ("lv17a", DARK, "road through indigo hills toward a horizon with two "
                     "pale moons glowing in a deep indigo sky"),
@@ -400,8 +444,22 @@ CARD_PROMPTS = [
     # 18 symbol — dark
     ("lv18a", DARK, "heart-shaped nebula glowing gold and rose in deep "
                     "indigo space"),
-    ("lv18b", DARK, "two crescent moons curving toward each other into a "
-                    "heart shape, glowing in a deep indigo sky"),
+    ("lv18b", DARK, "two hands forming a heart shape against a bright full moon "
+                    "in a deep indigo sky"),
+]
+
+# The three frames of the gender step, planned ahead of the step: the engine
+# has no three-option format yet, so the config cannot carry them, and a
+# plan that named ids the config does not show would refuse itself. They
+# join the plan the day the config names them, and stay out of it until
+# then. One bucket for the three, as for any step.
+PENDING_PROMPTS = [
+    ("g01", MID, "a graceful feminine silhouette of flowing stardust against "
+                 "a luminous rose-gold nebula"),
+    ("g02", MID, "a strong masculine silhouette of flowing stardust against "
+                 "a luminous teal-gold nebula"),
+    ("g03", MID, "a radiant star of pure white-gold light between two soft "
+                 "nebula swirls, neutral and welcoming"),
 ]
 
 TALL_PROMPTS = [
@@ -458,9 +516,11 @@ def frames(cfg):
     """
     owned = owned_ids(cfg)
     kind_of = dict(owned)
-    subjects = {i: s for i, _b, s in CARD_PROMPTS + TALL_PROMPTS}
-    buckets = {i: b for i, b, _s in CARD_PROMPTS + TALL_PROMPTS}
-    planned = [i for i, _b, _s in CARD_PROMPTS + TALL_PROMPTS]
+    pending = [row for row in PENDING_PROMPTS if row[0] in kind_of]
+    rows = CARD_PROMPTS + pending + TALL_PROMPTS
+    subjects = {i: s for i, _b, s in rows}
+    buckets = {i: b for i, b, _s in rows}
+    planned = [i for i, _b, _s in rows]
     if len(set(planned)) != len(planned):
         raise SystemExit("a frame id is planned twice")
     missing = sorted(set(kind_of) - set(planned))
