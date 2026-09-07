@@ -18,15 +18,16 @@ version exists to fix.
 
 The manifest makes reruns cheap and deletions meaningful. A frame whose file
 still hashes to what was recorded, drawn from a recipe that has not changed,
-is skipped; delete the file or edit the prompt and it is drawn again. The
-palette is versioned apart from the recipe: a record is current under the
-palette it was drawn with OR the one a draw uses now, so v3's new suffix
-invalidates nothing, and `--only` is what bumps the frames it names — the
-calibration mode, checked here against the real v2 manifest.
+is skipped; delete the file or edit the prompt and it is drawn again. v4
+bumps every recipe, so everything on disk is stale and `--only` is how the
+owner calibrates a few frames before a plain run redraws the rest.
 
-The band rejects both bad runs. v1's gloom measured luma 25 to 62; v2's wash
-measured 86 to 200, median 172, pale at the top. Only the frames whose
-subject is dark are judged under a floor of their own.
+v4 invents no style: the suffix is the constraint tail and the composition
+guidance, nothing else, because three rounds of style words produced three
+rejected galleries and the zodiac prompt they should have copied is not in
+the repo. The light lives per frame, in three buckets, every pair and
+four-up in one bucket, and each bucket is judged on a band read off the
+approved zodiac frames that sit in it.
 
 And the key is read off ~/mazzin/.env as a literal line, never sourced, with
 the environment as the fallback.
@@ -192,30 +193,30 @@ check("the price table knows the portrait size at the quality in use",
 
 
 print("\n--- what a frame is asked for ---")
-V2_SUFFIX = (", painterly dreamy style, soft luminous palette — dawn sky, "
-             "golden hour or airy pastel light — with warm gold accents, "
-             "gentle glow, {guidance}, no text, no watermark, no close-up "
-             "faces")
-V3_SUFFIX = (", painterly style with rich color depth, warm golden-hour "
-             "light, low sun, long soft shadows, deep saturated amber-and-teal "
-             "palette, luminous but moody, {guidance}, no text, no watermark, "
-             "no close-up faces")
-check("the draw palette is v3, the review's rich golden hour, verbatim",
-      gen.DRAW_PALETTE == "v3" and gen.PALETTES["v3"] == V3_SUFFIX
-      and gen.STYLE_SUFFIX == V3_SUFFIX, repr(gen.STYLE_SUFFIX))
-check("  and the v2 suffix is kept verbatim, because the manifest was drawn "
-      "under it",
-      gen.RECORDED_PALETTE == "v2" and gen.PALETTES["v2"] == V2_SUFFIX)
-check("  it says nothing about a night, an indigo or a pastel palette",
-      not any(w in gen.STYLE_SUFFIX for w in ("indigo", "night", "pastel")))
-check("  every prompt ends on it", all(
-    f["prompt"].endswith(", no text, no watermark, no close-up faces")
-    and "deep saturated amber-and-teal palette, luminous but moody"
-        in f["prompt"]
+V4_SUFFIX = ", {guidance}, no text, no watermark, no close-up faces"
+check("the v4 suffix is the constraint tail and the guidance slot, nothing "
+      "else",
+      gen.DRAW_PALETTE == gen.RECORDED_PALETTE == "v4"
+      and gen.PALETTES == {"v4": V4_SUFFIX}
+      and gen.STYLE_SUFFIX == V4_SUFFIX, repr(gen.PALETTES))
+# The words that made v1, v2 and v3 what they were. None of them survives.
+INVENTED = ("painterly", "dreamy", "indigo", "pastel", "luminous", "moody",
+            "golden-hour", "saturated", "palette", "glow", "style")
+check("  and not one invented style word survives in it",
+      not [w for w in INVENTED if w in gen.STYLE_SUFFIX],
+      str([w for w in INVENTED if w in gen.STYLE_SUFFIX]))
+# A scene may say a lamp glows or a sky is pastel — those are light words,
+# which is where the light lives now. The treatment words are what is gone.
+TREATMENT = tuple(w for w in INVENTED if w not in ("glow", "pastel"))
+check("  nor does any scene carry a treatment word",
+      not [(f["id"], w) for f in plan for w in TREATMENT
+           if w in f["subject"]],
+      str([(f["id"], w) for f in plan for w in TREATMENT
+           if w in f["subject"]][:4]))
+check("  every prompt is its scene, the guidance for its crop, the tail", all(
+    f["prompt"] == f["subject"] + ", " + gen.KINDS[f["kind"]]["guidance"]
+    + ", no text, no watermark, no close-up faces"
     for f in plan))
-check("  and the scene words are v2's: the light framing did not move",
-      all(gen.prompt_for(f["subject"], f["kind"], "v2").startswith(
-          f["subject"] + ",") for f in plan))
 GUIDE = "single central subject, composed for a "
 check("  every prompt carries the composition guidance for its own crop",
       all(GUIDE + gen.KINDS[f["kind"]]["crop"] in f["prompt"]
@@ -232,58 +233,103 @@ check("  a grid cell is composed for 3:5 and an interstitial for 4:5",
               if f["kind"] == "interstitial"))
 check("  and every subject is carried verbatim, opening the prompt",
       all(by_id[i]["prompt"].startswith(s + ",")
-          for i, s in gen.CARD_PROMPTS + gen.TALL_PROMPTS))
+          for i, _b, s in gen.CARD_PROMPTS + gen.TALL_PROMPTS))
 SUBJECTS = {
-    "lv01a": "spark of golden light leaping between two reaching hands, "
-             "bright dawn sky behind",
-    "lv05c": "two silhouettes laughing together at a sunlit kitchen table, "
-             "light spilling in",
-    "lv07d": "two silhouettes dancing in a bright kitchen in daylight, sun "
-             "through the window",
-    "lv10d": "hammock for two strung between trees in a leafy garden, "
-             "dappled sunlight",
-    "lv11b": "glowing embers in a hearth, warm amber light radiating onto "
-             "stone, deep red and gold",
-    "lv16d": "two figures in a parked car on a hill watching the sunset, "
-             "warm glowing sky",
-    "lv18a": "heart-shaped nebula glowing in deep space, warm gold and rose "
+    "lv01a": "a spark of golden light leaping between two reaching hands in "
+             "the dark, night around them",
+    "lv06b": "two birds flying side by side across a bright open sky at dawn",
+    "lv11b": "glowing embers in a hearth in a dark room, deep red and gold",
+    "lv16c": "two figures reading side by side on a sofa in soft afternoon "
+             "light",
+    "lv18a": "heart-shaped nebula glowing in deep space, gold and rose "
              "against the dark",
     "int1": "night sky with two falling stars over a faint horizon glow",
 }
 for frame_id, subject in sorted(SUBJECTS.items()):
-    check("  %-6s is the review's subject" % frame_id,
-          dict(gen.CARD_PROMPTS + gen.TALL_PROMPTS)[frame_id] == subject)
+    check("  %-6s is the plan's subject" % frame_id,
+          by_id[frame_id]["subject"] == subject)
 check("no prompt asks for a face, a word or a watermark",
       all("no close-up faces" in f["prompt"] and "no text" in f["prompt"]
           and "no watermark" in f["prompt"] for f in plan))
-# The palette moved to light: every scene that is not deliberately dark says
-# so in its own words, and the dark ones are exactly the frames with a floor
-# of their own.
-LIGHT = re.compile(r"dawn|sunrise|sunlit|sunlight|golden|morning|daylight|"
-                   r"bright|pastel|afternoon|spring|sunset", re.I)
-dark = set(gen.MIN_LUMA_BY_FRAME)
-check("every frame not named dark is written in daylight words",
-      all(LIGHT.search(s) for i, s in gen.CARD_PROMPTS + gen.TALL_PROMPTS
-          if i not in dark),
-      str([i for i, s in gen.CARD_PROMPTS + gen.TALL_PROMPTS
-           if i not in dark and not LIGHT.search(s)]))
-check("  and the dark ones are at most six of forty-six",
-      0 < len(dark) <= 6 and dark <= set(by_id), str(sorted(dark)))
+
+
+print("\n--- the light plan: three buckets, one per step ---")
+buckets = {f["id"]: f["bucket"] for f in plan}
+count = {b: sum(1 for v in buckets.values() if v == b)
+         for b in ("bright", "mid", "dark")}
+print("    " + ", ".join("%s %d" % kv for kv in sorted(count.items())))
+check("every frame sits in one of three buckets",
+      set(buckets.values()) == {"bright", "mid", "dark"})
+check("  eighteen bright, fourteen mid, fourteen dark — thirds, near enough",
+      count == {"bright": 18, "mid": 14, "dark": 14}, str(count))
+check("  every pair and every four-up is lit alike: one bucket per step",
+      all(len({buckets[i["id"]] for p in s["pairs"] for i in p["images"]
+               if i["id"] in buckets}) == 1
+          for s in steps if s["id"] != "sign"),
+      str([(s["id"], sorted({buckets[i["id"]] for p in s["pairs"]
+                             for i in p["images"] if i["id"] in buckets}))
+           for s in steps if s["id"] != "sign"
+           and len({buckets[i["id"]] for p in s["pairs"]
+                    for i in p["images"] if i["id"] in buckets}) != 1]))
+check("  and the interstitials are the night frames they always were",
+      buckets["int1"] == buckets["int2"] == "dark")
+REVIEW = {"bright": ("lv06b", "lv07b", "lv15b", "lv10d"),
+          "mid": ("lv02b", "lv05a", "lv16c"),
+          "dark": ("lv01a", "lv11a", "lv11b", "lv14b", "lv18a", "int1")}
+for bucket, ids in sorted(REVIEW.items()):
+    check("  the review's %-6s examples are in that bucket" % bucket,
+          all(buckets[i] == bucket for i in ids),
+          str({i: buckets[i] for i in ids if buckets[i] != bucket}))
+# The light is in the words, per bucket, because there is no suffix to put
+# it in.
+WORDS = {
+    "bright": re.compile(r"bright|sunlit|sunlight|sunrise|daylight|dawn", re.I),
+    "mid": re.compile(r"soft|dusk|pastel|lamp|candle|afternoon|first light|"
+                      r"morning|sunset", re.I),
+    "dark": re.compile(r"night|dark|moon|embers|stars|darkness", re.I),
+}
+for bucket, pattern in sorted(WORDS.items()):
+    check("  every %-6s scene says so in its own words" % bucket,
+          all(pattern.search(f["subject"]) for f in plan
+              if f["bucket"] == bucket),
+          str([f["id"] for f in plan if f["bucket"] == bucket
+               and not pattern.search(f["subject"])]))
+check("  and no bright scene calls itself dark, nor a dark one bright",
+      not [f["id"] for f in plan if f["bucket"] == "bright"
+           and WORDS["dark"].search(f["subject"])]
+      and not [f["id"] for f in plan if f["bucket"] == "dark"
+               and WORDS["bright"].search(f["subject"])],
+      str([f["id"] for f in plan if f["bucket"] == "bright"
+           and WORDS["dark"].search(f["subject"])]))
+# A step that mixes buckets is refused at plan time, not shipped.
+saved = gen.CARD_PROMPTS[0]
+gen.CARD_PROMPTS[0] = (saved[0], "bright", saved[2])
+try:
+    mixed = refuses(cfg)
+finally:
+    gen.CARD_PROMPTS[0] = saved
+check("a plan that lit one card of a pair differently would refuse to run",
+      mixed is not None and "mixes light buckets" in (mixed or ""),
+      str(mixed))
 
 
 print("\n--- the manifest: recipes, idempotency, a full redraw ---")
 recipes = [gen.recipe(f) for f in plan]
 check("every frame's recipe is distinct", len(set(recipes)) == len(recipes))
-check("  and carries the version, the prompt, the API size and the geometry",
-      gen.RECIPE_VERSION == "v2"
-      and all(r.startswith("v2|") for r in recipes)
+check("  and carries the version, the prompt, the API size, the geometry "
+      "and the bucket",
+      gen.RECIPE_VERSION == "v4"
+      and all(r.startswith("v4|") for r in recipes)
       and all(f["prompt"] in gen.recipe(f) and f["api_size"] in gen.recipe(f)
-              and "%dx%d" % f["size"] in gen.recipe(f) for f in plan))
-check("  the version did not move: a palette is not a geometry",
-      gen.RECIPE_VERSION == "v2")
-check("  under the recorded palette the recipe carries the v2 prompt",
-      all(gen.PALETTES["v2"].split("{")[0] in gen.recipe(f, "v2")
-          and gen.recipe(f, "v2") != gen.recipe(f) for f in plan))
+              and "%dx%d" % f["size"] in gen.recipe(f)
+              and gen.recipe(f).split("|")[-1].split("|")[0]
+              in ("bright", "mid", "dark") or "min_luma" in gen.recipe(f)
+              for f in plan))
+check("  the version moved to v4: every frame on disk is stale by design",
+      gen.RECIPE_VERSION == "v4")
+check("  and the same scene in another bucket is another recipe",
+      gen.recipe(dict(plan[0], bucket="bright", band=gen.BANDS["bright"]))
+      != gen.recipe(plan[0]))
 check("  so the same subject at another size is another recipe",
       gen.recipe(dict(plan[0], size=(360, 600)))
       != gen.recipe(plan[0]))
@@ -312,22 +358,13 @@ check("the manifest lives beside the script, not in the gallery",
       gen.MANIFEST == os.path.join(REPO, "scripts", "love_art.json"))
 entries = gen.load_manifest()
 if entries:
-    # The real v2 manifest, and the whole point of calibration mode: the
-    # palette changed and nothing on disk went stale.
-    check("every recorded frame is current: a plain run draws nothing",
-          all(gen.already_made(f, entries) for f in plan),
-          str([f["id"] for f in plan if not gen.already_made(f, entries)][:4]))
-    check("  because each record is the frame's recipe under the palette it "
-          "was drawn with",
-          all(entries[f["id"]].get("recipe_sha")
-              == hashlib.sha256(gen.recipe(f, gen.RECORDED_PALETTE)
-                                .encode("utf-8")).hexdigest()
-              for f in plan))
-    check("  while under the draw palette alone every frame is stale — "
-          "which is what --only asks",
-          not any(gen.already_made(f, entries, (gen.DRAW_PALETTE,))
-                  for f in plan))
-    check("  and a record drawn under v3 is current for a plain run too",
+    # The manifest on disk was drawn before v4, and v4 bumps every recipe.
+    check("every recorded frame is stale: a plain run would redraw all 46",
+          not any(gen.already_made(f, entries) for f in plan)
+          and not any(gen.already_made(f, entries, (gen.DRAW_PALETTE,))
+                      for f in plan),
+          str([f["id"] for f in plan if gen.already_made(f, entries)][:4]))
+    check("  and a record drawn under v4 would be current again",
           gen.already_made(plan[0], {plan[0]["id"]: {
               "sha256": gen.on_disk_sha(plan[0]["id"]),
               "recipe_sha": hashlib.sha256(
@@ -340,15 +377,8 @@ if entries:
             stats[i] = tuple(float(x) for x in m.groups())
     rejected = [i for i, s in stats.items()
                 if not gen.verdict(s, by_id[i]["band"])[0]]
-    check("the band, read against v2's own numbers, rejects most of that run",
-          len(stats) == 46 and 30 <= len(rejected) <= 42,
-          "%d of %d rejected" % (len(rejected), len(stats)))
-    check("  and what it keeps is coloured: every survivor has saturation "
-          "over 100",
-          all(stats[i][2] > 100 for i in stats if i not in rejected),
-          str([(i, stats[i]) for i in stats if i not in rejected]))
-    print("    %d v2 frames recorded, all current; %d would fail the v3 band"
-          % (len(entries), len(rejected)))
+    print("    %d frames recorded before v4, all stale; %d of them would "
+          "fail their v4 bucket band" % (len(entries), len(rejected)))
 else:
     notes.append("no manifest on disk: the first run draws all 46")
     check("  with no manifest, nothing is skipped",
@@ -405,83 +435,107 @@ check("  and the only line the reader matches is the key's",
       and gen._ENV_LINE.pattern.count("=") == 1)
 
 
-print("\n--- the band: against v1's gloom and v2's wash ---")
-check("the band is 65 to 160 on luma, coloured past 130",
-      gen.BAND == {"min_luma": 65.0, "max_luma": 160.0, "min_sd": 12.0,
-                   "min_sat": 60.0, "wash_luma": 130.0, "wash_sat": 150.0},
-      str(gen.BAND))
-check("  the floor is over every frame v1 drew, which topped out at 62",
-      gen.MIN_MEAN_LUMA == 65.0 and gen.MIN_MEAN_LUMA > 61.8)
-check("  and the ceiling is under v2's median of 172",
-      gen.MAX_MEAN_LUMA == 160.0)
-check("a rich golden-hour frame passes",
-      gen.verdict((110.0, 40.0, 175.0))[0]
-      and gen.verdict((150.0, 35.0, 184.0))[0]
-      and gen.verdict((95.0, 30.0, 160.0))[0])
-check("  and so does a bright frame that is saturated — lv05c's own numbers",
-      gen.verdict((130.1, 56.9, 201.4))[0])
-check("v1's gloom is rejected: luma 40 and 62",
-      not gen.verdict((40.0, 40.0, 150.0))[0]
-      and not gen.verdict((62.0, 40.0, 150.0))[0])
-check("v2's wash is rejected: luma 172, the run's median",
-      not gen.verdict((172.0, 30.0, 140.0))[0])
-check("  and bright-but-pale, lv14b's and lv07b's own numbers",
-      not gen.verdict((156.4, 41.8, 132.5))[0]
-      and not gen.verdict((158.5, 43.7, 119.0))[0])
-check("    which the note names as washed",
-      gen.verdict((156.4, 41.8, 132.5))[1].endswith(" washed")
-      and not gen.verdict((110.0, 40.0, 175.0))[1].endswith(" washed"))
-check("a near-black render fails", not gen.verdict((6.0, 30.0, 150.0))[0])
-check("  a blown-out one fails", not gen.verdict((245.0, 30.0, 160.0))[0])
-check("  a flat wash fails", not gen.verdict((110.0, 3.0, 170.0))[0])
-check("  a greyscale one fails", not gen.verdict((110.0, 40.0, 5.0))[0])
+print("\n--- three bands, read off the approved zodiac frames ---")
+check("dark is 15 to 75, mid 55 to 135, bright 110 to 225",
+      gen.BANDS == {
+          "dark": {"min_luma": 15.0, "max_luma": 75.0, "min_sd": 12.0,
+                   "min_sat": 60.0},
+          "mid": {"min_luma": 55.0, "max_luma": 135.0, "min_sd": 12.0,
+                  "min_sat": 50.0},
+          "bright": {"min_luma": 110.0, "max_luma": 225.0, "min_sd": 12.0,
+                     "min_sat": 20.0}},
+      str(gen.BANDS))
+check("  and every planned frame is judged on its bucket's band",
+      all(f["band"] == gen.BANDS[f["bucket"]] for f in plan
+          if f["id"] not in gen.MIN_LUMA_BY_FRAME))
+# The approved zodiac frames, as measured on disk: (luma, sd, sat).
+ZODIAC = {
+    "новолуние mn9a": (33.6, 16.2, 111.7), "среднощно небе mo7b": (29.5, 22.6, 177.3),
+    "стая на свещи sa12a": (45.5, 19.3, 231.1), "вкоренен камък es13c": (63.5, 33.6, 221.2),
+    "първа светлина mo7a": (90.3, 38.2, 107.5), "вълна sy8d": (113.6, 55.7, 161.9),
+    "планинско езеро fl10b": (107.8, 60.0, 68.7), "изгряващо слънце sl18a": (84.1, 35.0, 242.8),
+    "сияйно слънце en4a": (147.2, 28.6, 238.6), "открито небе es13d": (168.2, 20.0, 77.1),
+    "перо sy8c": (177.2, 16.6, 43.6), "над облаците ls5f": (201.5, 17.3, 32.2),
+    "пастелно небе pl6c": (210.3, 13.9, 27.3),
+}
+for name, want in (("новолуние mn9a", "dark"), ("среднощно небе mo7b", "dark"),
+                   ("стая на свещи sa12a", "dark"), ("вкоренен камък es13c", "dark"),
+                   ("първа светлина mo7a", "mid"), ("вълна sy8d", "mid"),
+                   ("планинско езеро fl10b", "mid"), ("изгряващо слънце sl18a", "mid"),
+                   ("сияйно слънце en4a", "bright"), ("открито небе es13d", "bright"),
+                   ("перо sy8c", "bright"), ("над облаците ls5f", "bright"),
+                   ("пастелно небе pl6c", "bright")):
+    check("  %-24s passes the %s band" % (name, want),
+          gen.verdict(ZODIAC[name], gen.BANDS[want])[0],
+          str(ZODIAC[name]))
+check("a pale sky is not a defect: пастелно небе at saturation 27 passes bright",
+      gen.verdict((210.3, 13.9, 27.3), gen.BANDS["bright"])[0])
+check("  but a night card fails bright and a pale sky fails dark",
+      not gen.verdict(ZODIAC["новолуние mn9a"], gen.BANDS["bright"])[0]
+      and not gen.verdict(ZODIAC["пастелно небе pl6c"], gen.BANDS["dark"])[0])
+check("  and mid rejects both ends: 19 and 201",
+      not gen.verdict((19.1, 18.4, 185.0), gen.BANDS["mid"])[0]
+      and not gen.verdict((201.5, 17.3, 32.2), gen.BANDS["mid"])[0])
+check("v1's gloom, luma 40 muddy, fails bright and mid",
+      not gen.verdict((40.0, 40.0, 150.0), gen.BANDS["bright"])[0]
+      and not gen.verdict((40.0, 40.0, 150.0), gen.BANDS["mid"])[0])
+check("  v2's wash, luma 172, fails mid and dark",
+      not gen.verdict((172.0, 30.0, 140.0), gen.BANDS["mid"])[0]
+      and not gen.verdict((172.0, 30.0, 140.0), gen.BANDS["dark"])[0])
+check("a near-black render fails every band",
+      not any(gen.verdict((6.0, 30.0, 150.0), b)[0] for b in gen.BANDS.values()))
+check("  a blown-out one fails every band",
+      not any(gen.verdict((245.0, 30.0, 60.0), b)[0] for b in gen.BANDS.values()))
+check("  a flat wash fails every band",
+      not any(gen.verdict((110.0, 3.0, 170.0), b)[0] for b in gen.BANDS.values()))
+check("  a greyscale one fails every band",
+      not any(gen.verdict((110.0, 40.0, 5.0), b)[0] for b in gen.BANDS.values()))
+check("  the default band is mid, for a frame with no bucket",
+      gen.BAND is gen.BANDS["mid"] and gen.band_for("nothing") is gen.BANDS["mid"])
 check("  and an unmeasurable frame is kept and says so",
       gen.verdict(None) == (True, "unmeasured"))
 
 
-print("\n--- four frames are deliberately dark, and judged on their own floor ---")
-check("exactly four frames carry their own luma floor",
-      gen.MIN_LUMA_BY_FRAME == {"lv11b": 20.0, "lv17a": 40.0,
-                                "lv18a": 25.0, "int1": 25.0},
+print("\n--- two frames go darker than their bucket, on their own floor ---")
+check("exactly two frames carry their own luma floor",
+      gen.MIN_LUMA_BY_FRAME == {"lv18a": 10.0, "int1": 10.0},
       str(gen.MIN_LUMA_BY_FRAME))
-check("  each set above a black render and under the default",
-      all(6.0 < v < gen.MIN_MEAN_LUMA for v in gen.MIN_LUMA_BY_FRAME.values()))
+check("  both in the dark bucket, set above a black render and under "
+      "the bucket's own floor",
+      all(by_id[i]["bucket"] == "dark" and 6.0 < v < gen.BANDS["dark"]["min_luma"]
+          for i, v in gen.MIN_LUMA_BY_FRAME.items()))
 for frame_id, floor in sorted(gen.MIN_LUMA_BY_FRAME.items()):
-    check("  %-6s band is the shared band with only the floor moved" % frame_id,
-          by_id[frame_id]["band"] == dict(gen.BAND, min_luma=floor)
-          and by_id[frame_id]["band"] is not gen.BAND)
-check("  and every other frame is judged on the shared band, untouched",
-      all(f["band"] == gen.BAND for f in plan
-          if f["id"] not in gen.MIN_LUMA_BY_FRAME))
-NEBULA = (30.0, 45.0, 140.0)
-check("a nebula at 30 passes its own floor and fails the shared one",
+    check("  %-6s band is the dark band with only the floor moved" % frame_id,
+          by_id[frame_id]["band"] == dict(gen.BANDS["dark"], min_luma=floor)
+          and by_id[frame_id]["band"] is not gen.BANDS["dark"])
+NEBULA = (12.0, 45.0, 140.0)
+check("a nebula at 12 passes its own floor and fails the dark band",
       gen.verdict(NEBULA, by_id["lv18a"]["band"])[0]
-      and not gen.verdict(NEBULA, gen.BAND)[0]
+      and not gen.verdict(NEBULA, gen.BANDS["dark"])[0]
       and not gen.verdict(NEBULA, by_id["lv18b"]["band"])[0])
-check("  embers at 22 pass lv11b's floor and fail lv17a's",
-      gen.verdict((22.0, 38.0, 140.0), by_id["lv11b"]["band"])[0]
-      and not gen.verdict((22.0, 38.0, 140.0), by_id["lv17a"]["band"])[0])
-check("  while a near-black render fails every dark floor too",
+check("  while a near-black render fails its floor too",
       not any(gen.verdict((6.0, 30.0, 150.0), by_id[i]["band"])[0]
               for i in gen.MIN_LUMA_BY_FRAME))
-check("  and a dark frame is still held to the ceiling and the wash rule",
-      not gen.verdict((172.0, 30.0, 140.0), by_id["lv18a"]["band"])[0]
-      and not gen.verdict((156.4, 41.8, 132.5), by_id["int1"]["band"])[0])
+check("  and a dark frame is still held to the dark ceiling",
+      not gen.verdict((110.0, 30.0, 140.0), by_id["lv18a"]["band"])[0]
+      and not gen.verdict((90.0, 30.0, 140.0), by_id["int1"]["band"])[0])
 check("the run judges each frame on its own band",
       'verdict(measure(img), frame["band"])' in gen_src
       and "verdict(measure(img))" not in gen_src)
-check("the floor is in a dark frame's recipe, and in no other",
+check("the floor is in an overridden frame's recipe, and in no other",
       all("|min_luma=%g" % v in gen.recipe(by_id[i])
           for i, v in gen.MIN_LUMA_BY_FRAME.items())
       and not [f["id"] for f in plan
                if f["id"] not in gen.MIN_LUMA_BY_FRAME
                and "min_luma" in gen.recipe(f)])
 check("  so moving one floor invalidates one record",
-      gen.recipe(dict(by_id["lv18a"], band=dict(gen.BAND, min_luma=12.0)))
+      gen.recipe(dict(by_id["lv18a"],
+                      band=dict(gen.BANDS["dark"], min_luma=12.0)))
       != gen.recipe(by_id["lv18a"])
-      and gen.recipe(dict(plan[0], band=gen.BAND)) == gen.recipe(plan[0]))
-check("  and the dry run says which floor a frame draws under",
-      "luma floor %g" in gen_src)
+      and gen.recipe(dict(plan[0], band=gen.BANDS[plan[0]["bucket"]]))
+      == gen.recipe(plan[0]))
+check("  and the dry run says which band a frame draws under",
+      "%s: luma %g-%g" in gen_src)
 
 
 print("\n--- the frame mechanics, run for real ---")
@@ -533,15 +587,19 @@ else:
     stats = gen.measure(pair)
     check("the measure reads luma, spread and colour",
           stats is not None and len(stats) == 3 and stats[2] > 0)
-    check("  and the synthetic golden-hour frame passes the band",
+    check("  and the synthetic low-sun frame passes the mid band",
           gen.verdict(stats)[0], str(stats))
     dusk = Image.new("RGB", (640, 960), (20, 28, 62))
     ImageDraw.Draw(dusk).ellipse((190, 290, 450, 670), fill=(242, 194, 90))
-    check("  while v1's indigo night with a gold disc fails it",
-          not gen.verdict(gen.measure(dusk))[0], str(gen.measure(dusk)))
+    check("  an indigo night with a gold disc fails mid and passes dark",
+          not gen.verdict(gen.measure(dusk))[0]
+          and gen.verdict(gen.measure(dusk), gen.BANDS["dark"])[0],
+          str(gen.measure(dusk)))
     pale = synthetic((640, 960), ground=(232, 222, 206), hills=(146, 128, 98))
-    check("  and so does v2's pale pastel with the same sun",
-          not gen.verdict(gen.measure(pale))[0], str(gen.measure(pale)))
+    check("  and a pale pastel with the same sun fails mid and passes bright",
+          not gen.verdict(gen.measure(pale))[0]
+          and gen.verdict(gen.measure(pale), gen.BANDS["bright"])[0],
+          str(gen.measure(pale)))
     data, q = gen.encode(pair)
     check("a quiet frame encodes under the ceiling at full quality",
           data is not None and len(data) <= gen.MAX_BYTES and q == gen.QUALITY,
@@ -618,18 +676,21 @@ try:
                                              f, gen.load_manifest())]),
           text.splitlines()[0])
     check("  and names the palette it would draw under",
-          "palette v3" in text.splitlines()[0], text.splitlines()[0])
+          "palette v4" in text.splitlines()[0], text.splitlines()[0])
     if gen.load_manifest():
-        check("  with the v2 manifest on disk that is nothing at all",
-              text.count("--- ") == 0, text.splitlines()[0])
-        code, text = run(["--only", "lv07a,lv18a", "--dry-run"])
-        check("--only redraws exactly the frames named, no --force needed",
-              code == 0 and text.count("--- ") == 2 and "lv07a" in text
+        check("  with a pre-v4 manifest on disk that is all forty-six",
+              text.count("--- ") == 46, text.splitlines()[0])
+        check("    each under its bucket's band",
+              text.count("bright: luma 110-225") == 18
+              and text.count("mid: luma 55-135") == 14
+              and text.count("dark: luma") == 14)
+        code, text = run(["--only", "lv06b,lv18a", "--dry-run"])
+        check("--only draws exactly the frames named — calibration first",
+              code == 0 and text.count("--- ") == 2 and "lv06b" in text
               and "lv18a" in text, text.splitlines()[0])
-        code, text = run([])
-        check("  and a plain run with nothing stale stops before the key",
-              code == 0 and not called and "nothing to draw" in text
-              and "--only" in text, text)
+        code, text = run(["--only", "lv06b"])
+        check("  and with no key a calibration run stops before calling",
+              code == 1 and not called and "nothing was called" in text, text)
     code, text = run(["--only", "lv07a,nope"])
     check("an unknown frame id is refused, exit 2",
           code == 2 and "nope" in text and not called)
