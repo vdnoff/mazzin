@@ -971,6 +971,110 @@ def send_purchase_event(purchase_id, slug, amount_cents, currency,
     return True
 
 
+# --- the pixel events' server-side twins ------------------------------------
+#
+# The browser pixel fires PageView, Lead, InitiateCheckout and AddPaymentInfo
+# under an event id it made up, and posts that same id to /api/track with the
+# tracking event it belongs to. This sends the twin: the same event name, the
+# same event_id, the same session id as external_id, so Meta deduplicates the
+# pair and keeps whichever copy matched better. Everything the Purchase sender
+# holds to holds here — the session id hashed the way fbevents.js hashes it,
+# the address and the user agent in the clear as the spec takes them, the
+# click ids when the browser had them — with two things fewer: no email,
+# because none exists before a purchase, and no value.
+#
+# Off the request. tracking.py hands this to a daemon thread, so a tracking
+# response never waits on Meta; and inside the thread the call gets one
+# attempt with a short deadline, because a stuck socket in a thread is still
+# a worker's memory for as long as it lasts. Every failure is a debug line
+# and nothing else — a missed pixel twin is the browser copy standing alone,
+# which is what every event was until this existed.
+MIRROR_TIMEOUT_S = 2.0
+MIRRORED_EVENT_NAMES = frozenset(
+    ("PageView", "Lead", "InitiateCheckout", "AddPaymentInfo"))
+
+
+def send_pixel_event(event_name, event_id, slug, session_id, client_ip=None,
+                     client_ua=None, meta_ids=None, event_time=None):
+    """Tell Meta the browser pixel's event happened, under the pixel's own
+    id. Returns True if it was accepted.
+
+    `event_id` is the id the browser passed to fbq as eventID, which is what
+    makes the pair one event to Meta: the copy with the better match wins
+    and the other is dropped, on either side, in either order.
+    """
+    if event_name not in MIRRORED_EVENT_NAMES:
+        return False
+    if not (config.META_PIXEL_ID and config.META_CAPI_TOKEN):
+        return False
+    # Nothing from a test-mode funnel counts as live. The Purchase sender
+    # reads Stripe's own livemode and drops a test payment outright; a pixel
+    # event has no such flag, so the funnel's mode decides, the way it
+    # decides which keys the funnel transacts on. With a test event code the
+    # twin goes to the Test Events tab, exactly as a Purchase would; without
+    # one it does not go at all.
+    test_code = config.META_TEST_EVENT_CODE
+    if effective_mode(slug) == TEST and not test_code:
+        log.debug("Meta %s twin skipped for %s: test-mode funnel and no "
+                  "test event code", event_name, slug)
+        return False
+
+    try:
+        import requests
+    except ImportError:
+        log.debug("requests not installed — Meta pixel twins are skipped")
+        return False
+
+    ids = meta_ids or {}
+    user_data = {"external_id": _sha256(session_id)}
+    if client_ip:
+        user_data["client_ip_address"] = client_ip
+    if client_ua:
+        user_data["client_user_agent"] = client_ua
+    if ids.get("fbp"):
+        user_data["fbp"] = ids["fbp"]
+    event_time = event_time or int(time.time())
+    if ids.get("fbc"):
+        user_data["fbc"] = ids["fbc"]
+    elif ids.get("fbclid"):
+        user_data["fbc"] = "fb.1.%d.%s" % (event_time * 1000, ids["fbclid"])
+
+    payload = {
+        "data": [{
+            "event_name": event_name,
+            "event_time": event_time,
+            "event_id": event_id,
+            "action_source": "website",
+            "event_source_url": "%s/%s" % (config.BASE_URL, slug),
+            "user_data": user_data,
+        }],
+    }
+    if test_code:
+        payload["test_event_code"] = test_code
+
+    try:
+        response = requests.post(
+            _capi_url(),
+            json=payload,
+            params={"access_token": config.META_CAPI_TOKEN},
+            timeout=MIRROR_TIMEOUT_S,
+        )
+    except Exception as exc:
+        # Class only, and at debug: the payload holds click ids and a hashed
+        # session, none of it belongs in a log line, and a slow Meta is not
+        # an incident on this side.
+        log.debug("Meta %s twin failed: %s", event_name, type(exc).__name__)
+        return False
+
+    if response.status_code >= 300:
+        log.debug("Meta %s twin rejected: HTTP %s", event_name,
+                  response.status_code)
+        return False
+
+    log.debug("Meta %s twin sent", event_name)
+    return True
+
+
 # --- GET /api/pixel-config -------------------------------------------------
 
 

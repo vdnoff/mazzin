@@ -200,6 +200,7 @@
   var payReadyFired = false;    // which control was shown, counted once
   var readerCountry = null;     // two letters off the edge, or null for unknown
   var pixelPayFired = false;    // AddPaymentInfo: once, on either path
+  var pixelCheckoutFired = false;   // InitiateCheckout: once, on either path
   // --- express checkout -----------------------------------------------------
   var xpState = "off";          // off | reserved | wallet | redirect
   var xpStarted = false;        // the whole attempt runs once per page
@@ -263,10 +264,48 @@
     return window.fbq;
   }
 
-  function pixelTrack(name) {
-    if (!pixelReady) { pixelQueue.push(name); return; }
+  // One id per pixel event, and the same id on both sides of it. Every event
+  // the pixel fires goes to Meta with an eventID, and the tracking POST of
+  // the same moment carries it as `pixel_event_id`, so the server can send
+  // the event's twin under the same id and Meta keeps one of the pair — the
+  // better-matched one — rather than counting both.
+  //
+  // Lead, InitiateCheckout and AddPaymentInfo keep their id for the whole
+  // session, in sessionStorage beside the session id: a reload, or the way
+  // back from Stripe's page, runs this file again and fires them again, and
+  // under a fresh id each of those would have been a second conversion. Under
+  // the session's own id they all collapse into one. PageView is the one
+  // event that is genuinely per load, so its id is.
+  var EVENT_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  var EVENT_ID_KEY = "mazzin_evid";
+  var pixelIds = {};
+
+  function pixelEventId(name) {
+    if (pixelIds[name]) return pixelIds[name];
+    var stored = {};
+    if (name !== "PageView") {
+      try { stored = JSON.parse(sessionStorage.getItem(EVENT_ID_KEY) || "{}") || {}; }
+      catch (e) { stored = {}; }
+      if (EVENT_ID_RE.test(stored[name] || "")) {
+        pixelIds[name] = stored[name];
+        return stored[name];
+      }
+    }
+    var id = uuid();
+    pixelIds[name] = id;
+    if (name !== "PageView") {
+      stored[name] = id;
+      try { sessionStorage.setItem(EVENT_ID_KEY, JSON.stringify(stored)); }
+      catch (e) { /* private mode: the id lives for this load only */ }
+    }
+    return id;
+  }
+
+  function pixelTrack(name, eventId) {
+    var id = eventId || pixelEventId(name);
+    if (!pixelReady) { pixelQueue.push({ name: name, id: id }); return; }
     try {
-      fbq()("track", name);
+      fbq()("track", name, {}, { eventID: id });
     } catch (e) { /* measurement must never break the funnel */ }
   }
 
@@ -309,10 +348,10 @@
         if (!id) return;
         loadPixel(String(id));
         pixelReady = true;
-        pixelTrack("PageView");
+        pixelTrack("PageView", pixelEventId("PageView"));
         var queued = pixelQueue.slice();
         pixelQueue = [];
-        queued.forEach(pixelTrack);
+        queued.forEach(function (q) { pixelTrack(q.name, q.id); });
       })
       .catch(function () { /* no pixel, no funnel impact */ });
   }
@@ -341,11 +380,20 @@
 
   // --- tracking ------------------------------------------------------------
 
-  function track(event, stepNo, extra) {
+  // `pixelId` is the eventID the pixel fired this same moment under, when it
+  // did. It rides on the body with the click cookies, so the server can send
+  // the event's twin under the same id and with the same identifiers the
+  // browser copy carried. Nothing of it is stored: the row is what it was.
+  function track(event, stepNo, extra, pixelId) {
     var body = { funnel: slug, session_id: sessionId, event: event };
     if (stepNo) body.step = stepNo;
     if (extra) body.extra = extra;
     for (var k in attribution) body[k] = attribution[k];
+    if (pixelId) {
+      body.pixel_event_id = pixelId;
+      var ids = metaIds();
+      for (var m in ids) body[m] = ids[m];
+    }
 
     var json = JSON.stringify(body);
     try {
@@ -4383,11 +4431,12 @@
 
   // Everything that happens once a result is on screen, whoever drew it.
   function finishResult() {
-    track("result_view");
     // A finished quiz with a result on screen is the qualified visitor Meta
     // should be optimising towards, so Lead sits exactly here and nowhere
-    // earlier.
-    pixelTrack("Lead");
+    // earlier — and the tracking event of the same moment carries its id.
+    var lead = pixelEventId("Lead");
+    track("result_view", null, null, lead);
+    pixelTrack("Lead", lead);
     if (singlePage) {
       watchCommerce();
       watchScroll();
@@ -6268,13 +6317,15 @@
   // the UI anyway — the button is disabled while the box is clear, and a
   // disabled button dispatches no click.
   function startCheckout() {
-    track("pay_tap", null, { method: "redirect" });
+    // The pixel first, so the tap that fired it carries its id: the twin the
+    // server sends for that tap is the one Meta deduplicates against.
+    var payPixel = firePayPixel();
+    track("pay_tap", null, { method: "redirect" }, payPixel);
     // Meta's name for the same moment. InitiateCheckout already fires when the
     // offer reaches somebody; this is the narrower signal Meta optimises
     // against — the tap that starts paying. The wallet button fires it too,
     // from its own click handler: they are two buttons now, and the one the
     // reader was given is not a thing Meta should be able to tell apart.
-    firePayPixel();
     if (!PAYMENTS_ENABLED || !el.withdrawalCheck.checked) return;
 
     el.payError.hidden = true;
@@ -6618,8 +6669,7 @@
   // own guard: what this measures is somebody pressing the thing that takes
   // their money.
   function xpClick(ev) {
-    track("pay_tap", null, { method: "wallet" });
-    firePayPixel();
+    track("pay_tap", null, { method: "wallet" }, firePayPixel());
 
     // The withdrawal consent has to be given before the sheet opens, not
     // inside it — there is nothing in a wallet sheet that could carry it, and
@@ -7935,8 +7985,21 @@
     // button are not on it yet is not a checkout anybody has reached.
     if (payHeld) return;
     paywallTracked = true;
-    track("paywall_view", null, { src: payIntent });
-    pixelTrack("InitiateCheckout");
+    track("paywall_view", null, { src: payIntent }, fireCheckoutPixel());
+  }
+
+  // InitiateCheckout, once a load and on both paths — the offer scrolling
+  // into view on the single page, the button that opens the paywall screen
+  // on the other layout. It returns the id it fired under so the tracking
+  // event of the same moment can carry it, and null when it has already
+  // fired, so a second `paywall_view` or `paywall_open` in the same load
+  // records itself and asks for no second twin.
+  function fireCheckoutPixel() {
+    if (pixelCheckoutFired) return null;
+    pixelCheckoutFired = true;
+    var id = pixelEventId("InitiateCheckout");
+    pixelTrack("InitiateCheckout", id);
+    return id;
   }
 
   // AddPaymentInfo, once a session and on both paths.
@@ -7953,9 +8016,11 @@
   // is the right place to know it. The pixel is the one that has to mean the
   // same thing on both paths.
   function firePayPixel() {
-    if (pixelPayFired) return;
+    if (pixelPayFired) return null;
     pixelPayFired = true;
-    pixelTrack("AddPaymentInfo");
+    var id = pixelEventId("AddPaymentInfo");
+    pixelTrack("AddPaymentInfo", id);
+    return id;
   }
 
   // --- boot ----------------------------------------------------------------
@@ -8020,8 +8085,7 @@
     // The pixel event stays here on purpose. InitiateCheckout is Meta's name
     // for the intent step, and intent is exactly what this tap is.
     el.cta.addEventListener("click", function () {
-      track("paywall_open");
-      pixelTrack("InitiateCheckout");
+      track("paywall_open", null, null, fireCheckoutPixel());
       renderPaywall();
       show("screen-paywall");
     });
@@ -8147,7 +8211,10 @@
     if (!first) { startResult(); return; }
     pair = first;
     show("screen-swipe");
-    track("funnel_start");
+    // The page arriving, under the id the pixel's PageView fires with — made
+    // here, before either side has fired, so both carry the same one whichever
+    // of the pixel config and this line lands first.
+    track("funnel_start", null, null, pixelEventId("PageView"));
     if (hasIntro()) {
       // The frames warm while the card is being read, so the first question
       // is on screen the moment the button is pressed rather than after it.
