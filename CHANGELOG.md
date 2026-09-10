@@ -624,3 +624,6 @@ bottom.
 
 ## 2026-09-07 — claude/love-contrast-steps
 - love gallery: contrast steps
+
+## 2026-09-10 — claude/capi-event-mirror
+- CAPI mirror for pixel events with dedup
