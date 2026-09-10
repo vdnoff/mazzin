@@ -11,11 +11,14 @@ import json
 import logging
 import os
 import re
+import threading
+import time
 
 from flask import Blueprint, request
 
 import config
 import database
+import payments
 
 log = logging.getLogger(__name__)
 
@@ -618,6 +621,74 @@ def _clean_extra(funnel, event, value):
     return out
 
 
+# --- the pixel's server-side twin ---------------------------------------------
+#
+# Four of the browser pixel's events get a copy sent from here under the same
+# event id, so Meta keeps the better-matched one of the pair. The tracking
+# event is the carrier: the browser fires fbq with an eventID it made up and
+# posts that id as `pixel_event_id` on the tracking event of the same moment
+# — PageView rides on `funnel_start`, Lead on `result_view`, InitiateCheckout
+# on whichever of `paywall_view` and `paywall_open` fired the pixel, and
+# AddPaymentInfo on the `pay_tap` that did. Nothing here is persisted: the
+# id is read off the body, handed to the sender, and forgotten.
+#
+# That carrier is also the bot guard, and PageView is why it matters. The
+# pixel filters crawlers by construction — they do not run JavaScript, so
+# they never fire it — and a twin sent for every HTTP hit on a funnel page
+# would undo that filter. So a twin is sent only from here, off a POST that
+# only engine.js makes, and only when it carries both the pixel's own id and
+# the session id every tracking event has to carry. A health check, a
+# crawler, a curl at the page: none of them reaches this function.
+MIRRORED_EVENTS = {
+    "funnel_start": "PageView",
+    "result_view": "Lead",
+    "paywall_view": "InitiateCheckout",
+    "paywall_open": "InitiateCheckout",
+    "pay_tap": "AddPaymentInfo",
+}
+
+UA_MAX = 512
+
+
+def _spawn(target, **kwargs):
+    """Run `target` off the request, the way the visualizer runs its work.
+
+    A daemon thread rather than an inline call with a short timeout: the
+    response is the hot path of every swipe, and even two seconds of it
+    waiting on Meta is two seconds of a worker doing nothing for a body that
+    was written before the wait began. Replaceable by a test that wants the
+    call made in front of it.
+    """
+    threading.Thread(target=target, kwargs=kwargs, daemon=True).start()
+
+
+def _mirror(funnel, session_id, event, body):
+    """Hand this event's pixel twin to Meta, off the request, or do nothing.
+
+    True when a twin was handed off. Only the four mirrored events, only
+    with a well-formed pixel id on the body — an id that is not one is not a
+    reason to refuse the row, so it is dropped here and the event is still
+    recorded. What the browser knew about itself — its address, its user
+    agent, its click cookies — is read here, in the request, because the
+    thread that sends it has no request to read.
+    """
+    name = MIRRORED_EVENTS.get(event)
+    if not name:
+        return False
+    event_id = body.get("pixel_event_id")
+    if not isinstance(event_id, str) or not UUID_RE.match(event_id):
+        return False
+    _spawn(payments.send_pixel_event,
+           event_name=name, event_id=event_id, slug=funnel,
+           session_id=session_id,
+           client_ip=payments._client_ip(),
+           client_ua=(request.headers.get("User-Agent") or "")[:UA_MAX]
+           or None,
+           meta_ids=payments._clean_meta_ids(body),
+           event_time=int(time.time()))
+    return True
+
+
 @bp.post("/api/track")
 def track():
     body = request.get_json(silent=True, force=True)
@@ -688,5 +759,9 @@ def track():
         # No payload, no session id, no IP — just the fact that it failed.
         log.exception("track insert failed")
         return "", 500
+
+    # After the row, never before, and never in a way that can change the
+    # answer: the twin is handed to a thread and the response does not wait.
+    _mirror(funnel, session_id, event, body)
 
     return "", 204
