@@ -325,6 +325,12 @@ try:
           and "no commentary" in req["system"])
     check("  and the model is the one on the command line",
           req["model"] == "m" and out == {"s0": "T Hi {n}", "s1": "T Yo"})
+    check("  no sampling parameter rides along — anthropic 1.x rejects them",
+          not (set(req) & {"temperature", "top_p", "top_k", "extra_body"}),
+          str(sorted(req)))
+    check("  the request is exactly the five keys the SDK 1.x takes",
+          set(req) == {"model", "max_tokens", "system", "messages",
+                       "output_config"}, str(sorted(req)))
 
     class BadRequestError(Exception):
         pass

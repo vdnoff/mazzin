@@ -282,7 +282,10 @@ def _rejects_structured(exc):
 
 def _ask(client, model, language, prompt, source):
     """One call. Returns the text of the answer."""
-    kwargs = dict(model=model, max_tokens=MAX_TOKENS, temperature=0.2,
+    # No sampling parameters: anthropic 1.x's `messages.create` no longer
+    # takes temperature, top_p or top_k, and a translation wants the
+    # default anyway.
+    kwargs = dict(model=model, max_tokens=MAX_TOKENS,
                   system=SYSTEM % {"language": language},
                   messages=[{"role": "user", "content": prompt}])
     if _STRUCTURED["on"]:
