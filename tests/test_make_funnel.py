@@ -24,7 +24,9 @@ contract a real run rests on:
 Everything is written into a scratch root, never into the repo's own
 funnels/ — the last checks prove the repo is exactly as it was.
 """
+import contextlib
 import importlib.util
+import io
 import json
 import os
 import shutil
@@ -267,7 +269,9 @@ try:
     check("  and after three refusals the run fails, not the funnel",
           raised and len(client.calls) == 3)
     many = [("p%d" % i, "line %d {n}" % i) for i in range(95)]
-    client = FakeClient([json.dumps(dict(("s%d" % (s + i), "T %d {n}" % (s + i))
+    # Keys are local to the chunk — s0..s39 in every call — so a chunk can
+    # be bisected without renumbering; the paths are mapped back outside.
+    client = FakeClient([json.dumps(dict(("s%d" % i, "T %d {n}" % (s + i))
                                          for i in range(min(40, 95 - s))))
                          for s in (0, 40, 80)])
     out = mf.translate_all(many, "Czech", (), "m", client)
@@ -276,6 +280,194 @@ try:
           and out["p41"] == "T 41 {n}")
     check("  without a key, a real run refuses plainly",
           mf.key_from_env_file([os.path.join(scratch, "nope")]) == "")
+
+    print("\n--- the JSON contract: structured output, no prefill ---")
+
+    class RecordingClient:
+        """Answers by a function of the request, so a fake can fail on one
+        chunk and pass on another, the way the real failure did."""
+
+        def __init__(self, fn):
+            self.fn = fn
+            self.calls = []
+
+        @property
+        def messages(self):
+            return self
+
+        def create(self, **kw):
+            self.calls.append(kw)
+            return FakeMessage(self.fn(kw, len(self.calls)))
+
+    def echo(kw):
+        """A correct answer for whatever chunk was asked."""
+        asked = json.loads(kw["messages"][0]["content"]
+                           .split("\n\nYour previous")[0])
+        return json.dumps(dict((k, "T " + v) for k, v in asked.items()))
+
+    mf._STRUCTURED["on"] = True
+    rc = RecordingClient(lambda kw, n: echo(kw))
+    out = mf.translate_chunk(rc, "m", "German", {"s0": "Hi {n}", "s1": "Yo"},
+                             ())
+    req = rc.calls[0]
+    fmt = (req.get("output_config") or {}).get("format") or {}
+    check("the answer is asked for as a structured output",
+          fmt.get("type") == "json_schema"
+          and fmt["schema"]["required"] == ["s0", "s1"]
+          and fmt["schema"]["additionalProperties"] is False
+          and all(v == {"type": "string"}
+                  for v in fmt["schema"]["properties"].values()),
+          str(fmt))
+    check("  one user turn and no assistant prefill — a 400 on this model",
+          [m["role"] for m in req["messages"]] == ["user"])
+    check("  the system prompt forbids fences and commentary outright",
+          "no markdown fences" in req["system"]
+          and "no commentary" in req["system"])
+    check("  and the model is the one on the command line",
+          req["model"] == "m" and out == {"s0": "T Hi {n}", "s1": "T Yo"})
+
+    class BadRequestError(Exception):
+        pass
+
+    def refuse_structured(kw, n):
+        if "output_config" in kw:
+            raise BadRequestError("output_config: Extra inputs are not "
+                                  "permitted")
+        return echo(kw)
+
+    rc = RecordingClient(refuse_structured)
+    with contextlib.redirect_stdout(io.StringIO()):
+        out = mf.translate_chunk(rc, "m", "German", {"s0": "Hi"}, ())
+        out2 = mf.translate_chunk(rc, "m", "German", {"s0": "Yo"}, ())
+    check("a server that refuses output_config gets bare JSON instead",
+          out == {"s0": "T Hi"} and out2 == {"s0": "T Yo"}
+          and ["output_config" in k for k in rc.calls] == [True, False, False]
+          and mf._STRUCTURED["on"] is False,
+          str(["output_config" in k for k in rc.calls]))
+    mf._STRUCTURED["on"] = True
+    rc = RecordingClient(lambda kw, n: (_ for _ in ()).throw(
+        BadRequestError("max_tokens: too large")))
+    try:
+        mf.translate_chunk(rc, "m", "German", {"s0": "Hi"}, ())
+        raised = False
+    except BadRequestError:
+        raised = True
+    check("  any other 400 still goes straight up", raised
+          and mf._STRUCTURED["on"] is True)
+    check("fences and commentary are stripped before parsing",
+          mf._strip_fence('Here it is:\n```json\n{"a": "b"}\n```\nDone.')
+          == '{"a": "b"}'
+          and mf._parse_json('Sure! {"a": "x}"} ok') == {"a": "x}"}
+          and mf._parse_json("no json here") is None
+          and mf._parse_json('{"a": 1}') == {"a": 1})
+
+    print("\n--- a refused chunk is bisected, never the whole run ---")
+    four = [("p%d" % i, "line %d" % i) for i in range(4)]
+
+    def whole_chunk_broken(kw, n):
+        asked = json.loads(kw["messages"][0]["content"]
+                           .split("\n\nYour previous")[0])
+        return "garbage" if len(asked) == 4 else echo(kw)
+
+    rc = RecordingClient(whole_chunk_broken)
+    kept = []
+    log = io.StringIO()
+    with contextlib.redirect_stdout(log):
+        out = mf.translate_all(four, "German", (), "m", rc, kept)
+    check("a chunk refused three times is split and both halves translated",
+          len(rc.calls) == 5
+          and out == dict(("p%d" % i, "T line %d" % i) for i in range(4))
+          and kept == [], "%d calls, %s" % (len(rc.calls), out))
+    check("  and the split is said in the log",
+          "chunk of 4 refused" in log.getvalue()
+          and "splitting 2 + 2" in log.getvalue())
+    check("  the refusal passed to the second try named the fault",
+          "not valid JSON" in rc.calls[1]["messages"][0]["content"])
+
+    def one_string_broken(kw, n):
+        asked = json.loads(kw["messages"][0]["content"]
+                           .split("\n\nYour previous")[0])
+        return "nope" if "line 2" in asked.values() else echo(kw)
+
+    rc = RecordingClient(one_string_broken)
+    kept = []
+    log = io.StringIO()
+    with contextlib.redirect_stdout(log):
+        out = mf.translate_all(four, "German", (), "m", rc, kept)
+    check("one string that never parses is kept in English",
+          out["p2"] == "line 2" and kept == [("p2", "line 2")], str(kept))
+    check("  the other three are translated",
+          out["p0"] == "T line 0" and out["p1"] == "T line 1"
+          and out["p3"] == "T line 3")
+    check("  after 3 + 1 + 3 + 3 + 1 calls — down to the single string",
+          len(rc.calls) == 11, len(rc.calls))
+    check("  and the kept string is named as it happens",
+          "WARNING kept English  p2  'line 2'" in log.getvalue())
+    check("ChunkRefused is a TranslationError carrying the raw answer",
+          issubclass(mf.ChunkRefused, mf.TranslationError))
+
+    print("\n--- the kept-English run still writes the funnel, exit 0 ---")
+    HOOK_Q = MASTER["swipe"]["steps"][0]["question"]
+
+    def hook_broken(kw, n):
+        asked = json.loads(kw["messages"][0]["content"]
+                           .split("\n\nYour previous")[0])
+        return "nope" if HOOK_Q in asked.values() else echo(kw)
+
+    saved_key, saved_client = mf.api_key, mf._client
+    mf.api_key = lambda: "k"
+    mf._client = lambda key: RecordingClient(hook_broken)
+    log = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(log):
+            code = mf.main(["blinds", "hu", "--root", scratch])
+    finally:
+        mf.api_key, mf._client = saved_key, saved_client
+    written = json.load(open(os.path.join(scratch, "funnels", "blinds-hu.json"),
+                             encoding="utf-8"))
+    check("exit code 0 with one string kept", code == 0, code)
+    check("  the funnel carries the English original at that path",
+          written["swipe"]["steps"][0]["question"] == HOOK_Q)
+    check("  and the translation everywhere else",
+          written["swipe"]["steps"][1]["question"].startswith("T ")
+          and written["checkout"]["cta_label"].startswith("T "))
+    check("  the WARNING summary names the path",
+          "WARNING: 1 string(s) kept in English" in log.getvalue()
+          and "swipe.steps[0].question" in log.getvalue().split("WARNING:")[-1])
+    check("  the locale still landed",
+          written["pricing"]["currency"] == "huf"
+          and written["report_profile"]["language_name"] == "Hungarian")
+
+    print("\n--- --only-chunk ---")
+    r = run("blinds", "de", "--no-llm", "--root", scratch, "--only-chunk", "9")
+    check("--only-chunk 9 --no-llm prints that chunk and writes nothing",
+          r.returncode == 0 and "chunk 9 of 9 only" in r.stdout
+          and "report_profile.words" in r.stdout
+          and not os.path.exists(os.path.join(scratch, "funnels",
+                                              "blinds-de.json")),
+          r.stdout[-200:])
+    r = run("blinds", "de", "--no-llm", "--root", scratch, "--only-chunk", "12")
+    check("  a chunk that does not exist is a plain error",
+          r.returncode == 1 and "no chunk 12" in r.stdout, r.stdout[-100:])
+    mf.api_key = lambda: "k"
+    mf._client = lambda key: RecordingClient(
+        lambda kw, n: "```json\nnot really\n```")
+    err, log = io.StringIO(), io.StringIO()
+    try:
+        with contextlib.redirect_stdout(log), contextlib.redirect_stderr(err):
+            code = mf.main(["blinds", "hu", "--root", scratch, "--only-chunk",
+                            "2"])
+    finally:
+        mf.api_key, mf._client = saved_key, saved_client
+    check("a failing chunk under --only-chunk exits 1 with the raw answer "
+          "on stderr",
+          code == 1 and err.getvalue().count("not really") == 3
+          and "attempt 3 refused" in err.getvalue()
+          and "chunk refused 3 times" in log.getvalue(),
+          err.getvalue()[:120])
+    check("  and does not bisect, and says it writes nothing",
+          "splitting" not in log.getvalue()
+          and "nothing written" in log.getvalue())
 
     print("\n--- hu and de, generated offline ---")
     results = {}

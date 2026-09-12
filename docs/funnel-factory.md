@@ -56,8 +56,18 @@ forints) and `stripe_min_cents` — and the generator refuses an amount that
 breaks them.
 
 Every string the model touches is checked before it is accepted: same keys,
-every `{token}` intact, no line breaks, no banned word. A chunk that stays
-wrong after three tries fails the run; nothing half-translated is written.
+every `{token}` intact, no line breaks, no banned word. The answer is asked
+for as a structured output (a JSON schema of the chunk's keys), so it is
+valid JSON by contract on the models that support it; fences and commentary
+are stripped before parsing regardless. A chunk that stays wrong after three
+tries is split in half and each half asked for on its own, down to single
+strings. A single string that still fails is kept in English, the run goes
+on, and a `WARNING` at the end lists the paths to translate by hand — the
+exit code is 0 whenever the funnel was written. To look at one bad chunk:
+
+```bash
+cd ~/mazzin && python3 scripts/make_funnel.py blinds hu --only-chunk 4   # raw answers on stderr, nothing written
+```
 
 ## Add a vertical
 
