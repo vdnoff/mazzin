@@ -1223,7 +1223,10 @@ VARIANT_FUNNELS = {"zodiac30", "zodiac-bg",
                    # A twin is its source with three fields changed, so
                    # it carries the arms too — which is the point: the
                    # sandbox walks the same split the live funnel does.
-                   "zodiac-bg-test"}
+                   "zodiac-bg-test",
+                   # The blinds funnel took the zodiac30 look wholesale —
+                   # one arm, the minimal template — and its twin with it.
+                   "blinds", "blinds-test"}
 check("only the funnel that asked for them has variants",
       set(s for s in NEIGHBOUR_SLUGS
           if json.load(open(os.path.join(ROOT, "funnels", s + ".json"),

@@ -217,8 +217,11 @@
   // Four whole percents that add to a hundred. Rounding each share on its own
   // gives 33/33/17/16 as readily as not, and a caption whose numbers sum to
   // 99 is the one thing on this card a reader can check for themselves.
-  function splitOf(ctx, elements) {
-    var raw = elements.map(function (row) { return Math.max(0, row.score); });
+  // Whole percentages that add up to a hundred, largest remainders first.
+  // Shared by the element split and the generic one below: one arithmetic,
+  // so a bar on either page cannot sum to 99.
+  function splitPcts(rows) {
+    var raw = rows.map(function (row) { return Math.max(0, row.score); });
     var total = raw.reduce(function (a, b) { return a + b; }, 0);
     var pcts;
     if (!total) {
@@ -233,6 +236,11 @@
         .slice(0, Math.max(0, owed))
         .forEach(function (row) { pcts[row.i] += 1; });
     }
+    return pcts;
+  }
+
+  function splitOf(ctx, elements) {
+    var pcts = splitPcts(elements);
     return elements.map(function (row, i) {
       return {
         tag: row.tag,
@@ -242,6 +250,152 @@
       };
     });
   }
+
+  // --- the generic profile ---------------------------------------------------
+  //
+  // The same card for a funnel that is not about the sky. A zodiac config
+  // names `subtypes`, and `profileOf` below reads the run on elements, signs
+  // and energies to pick one. A funnel with none of that — a buyer's guide —
+  // declares what its card should be read on instead:
+  //
+  //   result_copy.profile.split   {tags, names, colors}: the bar, over the
+  //                               funnel's own style tags
+  //   result_copy.profile.scales  [{id, left, right, left_tags, right_tags}]:
+  //                               each pole a set of tags, the dot between
+  //   result_copy.profile.lines   {style id: one bright line}, falling back
+  //                               to the style's blurb
+  //   result_copy.profile.glyph_step  the step whose tapped frame is the badge
+  //
+  // plus the same `chips`, `formula`, `split_caption`, `offer_head`,
+  // `unlock*` and `cards` the zodiac table carries, filled from these words:
+  // {style}, {style_bare}, {lead}, {second}, {sections}, one {<tag>} per
+  // split tag with its percentage, and one {<scale id>} naming the pole the
+  // dot sits nearer. No sign, no energy, no rarity: those blocks simply do
+  // not draw, and the section teasers stand where the rarity card would.
+  //
+  // Nothing here runs for a config that names `subtypes` — that is the
+  // zodiac path, node for node as it was — and nothing runs for a config
+  // that names neither, which still gets the plain hero it always did.
+  function genericProfileOf(ctx, table) {
+    var split = table && table.split;
+    var tags = (split && split.tags) || [];
+    if (!tags.length) return null;
+
+    var rows = ctx.tally(tags);
+    var names = split.names || {};
+    var colors = split.colors || {};
+    var pcts = splitPcts(rows);
+    var cells = rows.map(function (row, i) {
+      return {
+        tag: row.tag,
+        name: names[row.tag] || row.tag,
+        pct: pcts[i],
+        color: colors[row.tag] || "#E8C878"
+      };
+    });
+    // The lead is the style's own tag where it has one on this axis, so the
+    // formula agrees with the name over it; the runner-up is the strongest
+    // of the rest.
+    var own = rows.filter(function (row) {
+      return ctx.style.tags.indexOf(row.tag) !== -1;
+    });
+    var top = lead(own, ctx.style.tags) || lead(rows, ctx.style.tags)
+      || rows[0];
+    var second = lead(rows.filter(function (row) {
+      return row.tag !== top.tag;
+    }), ctx.style.tags);
+
+    var name = ctx.style.name || "";
+    var bare = name.replace(/^The\s+/, "");
+    var words = {
+      style: name,
+      style_bare: bare,
+      lead: names[top.tag] || top.tag,
+      second: second ? (names[second.tag] || second.tag) : "",
+      sections: String((ctx.sections || []).length)
+    };
+    cells.forEach(function (cell) { words[cell.tag] = String(cell.pct); });
+
+    var scales = (table.scales || []).map(function (row) {
+      var left = positive(ctx.tally(row.left_tags || []));
+      var right = positive(ctx.tally(row.right_tags || []));
+      var sum = function (set) {
+        return Object.keys(set).reduce(function (n, k) {
+          return n + set[k];
+        }, 0);
+      };
+      var at = between(sum(left), sum(right));
+      words[row.id] = at < 50 ? row.left : (at > 50 ? row.right : "");
+      return { id: row.id, left: row.left, right: row.right, at: at };
+    });
+
+    var line = (table.lines || {})[ctx.style.id] || ctx.style.blurb || "";
+    return {
+      generic: true,
+      archetype: ctx.style.id,
+      primary: top.tag,
+      second: second ? second.tag : "",
+      energy: "",
+      sign: "",
+      subtype: name,
+      subtype_bare: bare,
+      rarity: 0,
+      words: words,
+      formula: fill(table.formula || "", words),
+      rarity_line: "",
+      cross_line: fill(line, words),
+      split: cells,
+      split_caption: fill(table.split_caption || "", words),
+      scales: scales
+    };
+  }
+
+  // The badge on the hero: the sign they tapped, or on a generic card the
+  // frame from the step the config names.
+  function heroPick(ctx, data) {
+    if (data && data.generic) {
+      var step = (profileBlock(ctx) || {}).glyph_step;
+      return step ? ctx.picks[step] : null;
+    }
+    return ctx.picks.sign;
+  }
+
+  // The locked chapters as a grid of boxes, read straight off the report's
+  // own sections — the title over one teaser line, behind a lock. The
+  // generic card's answer to "what am I buying", where the zodiac page puts
+  // its rarity; a section with nothing to tease gets its title alone.
+  function sectionTeasers(ctx) {
+    var cards = (profileBlock(ctx) || {}).cards || [];
+    var icons = {};
+    cards.forEach(function (card) { icons[card.id] = card.icon || ""; });
+    var grid = elm("ul", "zr-boxes-grid is-teasers");
+    (ctx.sections || []).forEach(function (section) {
+      if (!section.locked || !section.title) return;
+      var cell = elm("li", "zr-box");
+      var icon = elm("span", "zr-box-icon");
+      icon.setAttribute("aria-hidden", "true");
+      icon.appendChild(drawn(ICONS[icons[section.id]] || ICONS.lock));
+      cell.appendChild(icon);
+      cell.appendChild(elm("p", "zr-box-title", section.title));
+      if (section.teaser_line) {
+        cell.appendChild(elm("p", "zr-box-sub", section.teaser_line));
+      }
+      grid.appendChild(cell);
+    });
+    return grid.childNodes.length ? grid : null;
+  }
+
+  // The checklist rows a generic config leaves undeclared: one per locked
+  // section, keyed on its title, worded by its teaser line.
+  function sectionRows(ctx) {
+    return (ctx.sections || []).filter(function (section) {
+      return section.locked && section.title;
+    }).map(function (section) {
+      return { id: section.id, key: section.title,
+               line: section.teaser_line || "" };
+    });
+  }
+
 
   function fill(text, words) {
     if (!text) return "";
@@ -255,7 +409,7 @@
   // is what sends `render` back to the page it drew before this existed.
   function profileOf(ctx, elements, top) {
     var table = profileBlock(ctx);
-    if (!table || !table.subtypes) return null;
+    if (!table || !table.subtypes) return genericProfileOf(ctx, table);
 
     var scores = positive(elements);
     var primary = top.tag;
@@ -989,11 +1143,17 @@
   function checklist(ctx, data) {
     var table = profileBlock(ctx) || {};
     var rows = table.unlock || [];
-    if (!rows.length) return null;
     var keys = {};
     (table.cards || []).forEach(function (card) {
       keys[card.id] = card.key || "";
     });
+    if (!rows.length && data && data.generic) {
+      rows = sectionRows(ctx);
+      rows.forEach(function (row) {
+        if (!keys[row.id]) keys[row.id] = row.key;
+      });
+    }
+    if (!rows.length) return null;
     var block = elm("div", "zr-unlock");
     if (table.unlock_head) {
       block.appendChild(elm("p", "zr-unlock-head", table.unlock_head));
@@ -1571,7 +1731,7 @@
     // draw it from. Below the hero the two pages differ entirely, which is
     // why the branch is the whole body rather than one node.
     root.appendChild(data
-      ? richHero(ctx, glyph(ctx.picks.sign), data, { lean: lean })
+      ? richHero(ctx, glyph(heroPick(ctx, data)), data, { lean: lean })
       : hero(ctx, copy, elements, top));
     var strip = taps(ctx, copy);
     if (strip) root.appendChild(strip);
@@ -1587,6 +1747,12 @@
       // that have no rich hero to put it in.
       var rare = rarityBadge(data, profileBlock(ctx) || {});
       if (rare) root.appendChild(rare);
+      // A generic card has no rarity to give a screen to; the locked
+      // chapters take that screen instead, read off the report's sections.
+      if (data.generic) {
+        var teasers = sectionTeasers(ctx);
+        if (teasers) root.appendChild(teasers);
+      }
       // And where the two lean arms part: minimal carries its pitch as a
       // checklist inside the offer card, boxes puts a locked chapter and four
       // tiles here instead. Everything above this line and everything below
@@ -1840,7 +2006,10 @@
     if (ctx.style.blurb) {
       card.appendChild(elm("p", "zr-sub", ctx.style.blurb));
     }
-    card.appendChild(deliveredElements(ctx));
+    // Only for a style read on the four elements. A buyer's guide style
+    // carries none of them and a strip naming Fire and Water under it would
+    // be somebody else's page.
+    if (hasElement(ctx.style)) card.appendChild(deliveredElements(ctx));
     var band = tapped(ctx, hero.band);
     if (band) {
       band.classList.add("zr-band");
@@ -1853,6 +2022,12 @@
   // opening this from a link in their mail has no run left to count — so the
   // bar names the archetype's own element out of its tags rather than
   // inventing a percentage nobody measured. All four are drawn; one is lit.
+  function hasElement(style) {
+    return ((style && style.tags) || []).some(function (tag) {
+      return ELEMENTS.indexOf(tag) !== -1;
+    });
+  }
+
   function deliveredElements(ctx) {
     var own = (ctx.style.tags || []).filter(function (tag) {
       return ELEMENTS.indexOf(tag) !== -1;

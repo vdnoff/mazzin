@@ -99,6 +99,35 @@ cd ~/mazzin && python3 scripts/make_funnel.py blinds hu --only-chunk 4   # raw a
    `tests/test_blinds_check.py`, including the simulation and the browser
    walk.
 
+### The zodiac30 look
+
+A factory funnel renders on the zodiac result module rather than the
+kitchen template, so it looks and flows like zodiac30. The keys that
+carry it, all of them in the master and translated by the generator
+(structure and ids frozen, strings translated):
+
+| key | what it is |
+|---|---|
+| `theme: "zodiac"`, `result_module`, `result_css`, `result_template: "minimal"` | the dark theme, the module and its stylesheet, the minimal page |
+| `paywall_variants` | one arm, `template: "minimal"`, weight 1 (`name` is copy) |
+| `swipe.label_mode: "badge"`, `swipe.analyzing_fade_to`, `analyzing_echo` | badge labels, the fade into the dark page, the echo of the taps |
+| `interstitials[]` | `template` confirm/almost, `kicker`, `line`, `sub`, `cta`, `auto_advance_ms`, `echo_steps` (no `personal` block: those lines are keyed on signs) |
+| `report.sections[].teaser_line` | one line under each locked title, in the teaser boxes and the checklist fallback |
+| `report.visuals.taps`, `.hero.glyph_step`, `.hero.band_step`, `.section_steps` | what the paid page draws: the taps strip, the badge and band frames, one frame per chapter |
+| `checkout.express`, `checkout.commerce.price_anchor`, `price_anchor_accent`, `price_note`, `badges` | the wallet path and the offer card's own lines |
+| `result_copy.kicker`, `blend_note`, `taps_caption`, `offer_sub`, `locked_note`, `delivered_note`, `delivery_line`, `delivery_line_bare` | the page's own words |
+| `result_copy.labels.verdicts`, `saves_head`, `price_regular_aria`, `scale_aria` | what the delivered chapters print between the model's sentences |
+| `result_copy.profile.glyph_step` | the step whose tapped frame is the hero badge |
+| `result_copy.profile.split` | `{tags, names, colors}`: the bar over the funnel's own style tags |
+| `result_copy.profile.scales[]` | `{id, left, right, left_tags, right_tags}`: a dot between two tag sets |
+| `result_copy.profile.chips`, `formula`, `split_caption`, `offer_head` | filled from `{style}`, `{style_bare}`, `{lead}`, `{second}`, `{sections}`, one `{<tag>}` per split tag, one `{<scale id>}` per scale |
+| `result_copy.profile.unlock[]`, `unlock_head`, `unlock_tail`, `cards[]` | the checklist in the offer card and the keyword over each delivered chapter |
+
+The module reads the generic table only when the profile declares no
+`subtypes`; a zodiac config is drawn exactly as before, and
+`tests/test_minimal_generic.py` holds the four zodiac funnels to recorded
+fixtures byte for byte.
+
 ### The `report_profile` block
 
 | key | what it is |

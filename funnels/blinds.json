@@ -2,7 +2,11 @@
   "slug": "blinds",
   "funnel_id": "blinds_v1",
   "locale": "en",
+  "theme": "zodiac",
   "stripe_mode": "live",
+  "result_module": "/static/js/result_zodiac.js",
+  "result_css": "/static/css/result_zodiac.css",
+  "result_template": "minimal",
   "meta": {
     "title": "What's Your Window Style?",
     "og_image": "/static/galleries/blinds/og.webp"
@@ -1141,32 +1145,52 @@
         ],
         "scoring": "inverse"
       }
-    ]
+    ],
+    "label_mode": "badge",
+    "analyzing_fade_to": "#0E1430"
   },
   "interstitials": [
     {
       "after_step": 3,
-      "template": "pattern",
-      "kicker": "Pattern detected",
-      "line": "A clear pattern in {n} of {total} choices",
-      "sub": "Adjusting what you see next.",
-      "cta": "Continue analysis"
+      "template": "confirm",
+      "kicker": "Signal recorded",
+      "line": "A clear pattern in {n} of {total} choices.",
+      "sub": "Your window style is narrowing.",
+      "cta": "Continue analysis",
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "hook",
+        "material",
+        "light"
+      ]
     },
     {
       "after_step": 6,
-      "template": "confirm",
-      "kicker": "Signal recorded",
-      "line": "One material keeps winning. Testing it.",
-      "sub": "Adjusting what you see next.",
-      "cta": "Continue analysis"
+      "template": "almost",
+      "kicker": "Pattern detected",
+      "line": "Profile {pct}% calibrated.",
+      "sub": "One material keeps winning. Testing it.",
+      "cta": "Continue analysis",
+      "auto_advance_ms": 2000,
+      "echo_steps": [
+        "pattern",
+        "slats",
+        "bedroom"
+      ]
     },
     {
-      "after_step": 8,
+      "after_step": 9,
       "template": "almost",
       "kicker": "Calibrating",
-      "line": "Profile {pct}% calibrated. One last signal.",
-      "sub": "One more, then the read.",
-      "cta": "Continue analysis"
+      "line": "All 9 choices in.",
+      "sub": "Most combinations are common — let's see yours.",
+      "cta": "Continue analysis",
+      "auto_advance_ms": 2400,
+      "echo_steps": [
+        "living",
+        "kitchen",
+        "dealbreaker"
+      ]
     }
   ],
   "interstitial_working": [
@@ -2036,6 +2060,7 @@
       "Finding your window style…"
     ]
   },
+  "analyzing_echo": true,
   "report": {
     "generating_messages": [
       "Our AI is comparing your choices against thousands of windows…",
@@ -2054,7 +2079,8 @@
         ],
         "reveal": {
           "mode": "visible"
-        }
+        },
+        "teaser_line": "Exact codes, finishes and which window each colour belongs on."
       },
       {
         "id": "mistakes",
@@ -2066,7 +2092,8 @@
         ],
         "reveal": {
           "mode": "locked"
-        }
+        },
+        "teaser_line": "Four more, and the one that costs most to undo is last."
       },
       {
         "id": "materials",
@@ -2078,7 +2105,8 @@
         ],
         "reveal": {
           "mode": "locked"
-        }
+        },
+        "teaser_line": "Roller, roman, venetian, wooden, zebra — which suit you and which to skip."
       },
       {
         "id": "shopping",
@@ -2090,7 +2118,8 @@
         ],
         "reveal": {
           "mode": "locked"
-        }
+        },
+        "teaser_line": "Measure, mount, control side, lining — in the order to decide them."
       },
       {
         "id": "dna",
@@ -2102,7 +2131,8 @@
         ],
         "reveal": {
           "mode": "locked"
-        }
+        },
+        "teaser_line": "The label words that cost money and change nothing."
       },
       {
         "id": "splurge",
@@ -2114,7 +2144,8 @@
         ],
         "reveal": {
           "mode": "locked"
-        }
+        },
+        "teaser_line": "The one window to overspend on, and three places to save."
       }
     ],
     "mistake_one": {
@@ -2184,6 +2215,19 @@
             "b5b"
           ]
         }
+      },
+      "taps": true,
+      "hero": {
+        "glyph_step": "hook",
+        "band_step": "living"
+      },
+      "section_steps": {
+        "palette": "hook",
+        "mistakes": "dealbreaker",
+        "materials": "material",
+        "shopping": "kitchen",
+        "dna": "pattern",
+        "splurge": "slats"
       }
     },
     "hook_slots": {
@@ -2217,6 +2261,7 @@
     "product_name": "Your Window Style Buyer's Guide — the traps behind wrong-size re-orders and returns",
     "product_image": "/static/creative_src/stripe_tile.png",
     "single_page": true,
+    "express": true,
     "commerce": {
       "anchor_head": "A {price} decision that saves you a wrong-size re-order",
       "anchor_head_accent": "wrong-size re-order",
@@ -2232,7 +2277,14 @@
       "mid_button": "See what's inside ↓",
       "sticky_label": "Unlock full guide — {price}",
       "sample_link": "See a sample page",
-      "sample_caption": "An example page. Yours is written from your own choices."
+      "sample_caption": "An example page. Yours is written from your own choices.",
+      "price_anchor": "instead of one wrong-size re-order",
+      "price_anchor_accent": "wrong-size re-order",
+      "price_note": "one-time",
+      "badges": [
+        "ONE-TIME",
+        "NO SUBSCRIPTION"
+      ]
     },
     "title": "Your {style} Buyer's Guide",
     "proof_line": "Built from your 9 choices",
@@ -2282,8 +2334,153 @@
     "value_banner": "The traps in this guide cost blind buyers wrong-size re-orders and returns. Catching one pays for the guide many times over."
   },
   "result_copy": {
+    "kicker": "YOUR WINDOW STYLE",
+    "blend_note": "clear result",
+    "taps_caption": "Read from your taps:",
+    "offer_sub": "Your complete buyer's guide — once, forever.",
+    "locked_note": "Locked",
+    "delivered_note": "A PDF of this guide is in your inbox. This page stays at the link you were sent back to.",
     "delivery_line": "Your PDF was sent to {email}",
-    "delivery_line_bare": "Your PDF was sent to your email"
+    "delivery_line_bare": "Your PDF was sent to your email",
+    "labels": {
+      "verdicts": {
+        "works": "WORKS",
+        "avoid": "AVOID"
+      },
+      "saves_head": "Save here",
+      "price_regular_aria": "Regular price {price}",
+      "scale_aria": "{left} to {right} — {at} out of 100 toward {right}"
+    },
+    "profile": {
+      "glyph_step": "hook",
+      "split": {
+        "tags": [
+          "minimal",
+          "modern",
+          "classic",
+          "rustic",
+          "industrial"
+        ],
+        "names": {
+          "minimal": "Minimal",
+          "modern": "Scandi",
+          "classic": "Classic",
+          "rustic": "Organic",
+          "industrial": "Bold"
+        },
+        "colors": {
+          "minimal": "#C9CDD3",
+          "modern": "#E0C08C",
+          "classic": "#B98A44",
+          "rustic": "#8E9B5E",
+          "industrial": "#7E8388"
+        }
+      },
+      "split_caption": "{minimal}% Minimal · {modern}% Scandi · {classic}% Classic · {rustic}% Organic · {industrial}% Bold",
+      "scales": [
+        {
+          "id": "tone",
+          "left": "Warm",
+          "right": "Cool",
+          "left_tags": [
+            "warm"
+          ],
+          "right_tags": [
+            "cool"
+          ]
+        },
+        {
+          "id": "light",
+          "left": "Dark",
+          "right": "Bright",
+          "left_tags": [
+            "dark"
+          ],
+          "right_tags": [
+            "bright"
+          ]
+        },
+        {
+          "id": "material",
+          "left": "Natural",
+          "right": "Metal",
+          "left_tags": [
+            "wood",
+            "stone"
+          ],
+          "right_tags": [
+            "metal"
+          ]
+        }
+      ],
+      "chips": [
+        "{lead}-led",
+        "{tone}",
+        "{light}",
+        "{material}"
+      ],
+      "formula": "{lead}-led · {second} undercurrent",
+      "offer_head": "Your complete {style_bare} buyer's guide — {sections} sections",
+      "unlock_head": "What you unlock:",
+      "unlock": [
+        {
+          "id": "materials",
+          "line": "which suit you — and the two to skip"
+        },
+        {
+          "id": "mistakes",
+          "line": "mistakes #2 to #5, the costliest last"
+        },
+        {
+          "id": "dna",
+          "line": "the label words that cost money, and what each is worth"
+        },
+        {
+          "id": "splurge",
+          "line": "one window to overspend on, every other one to save on"
+        },
+        {
+          "id": "shopping",
+          "line": "measure, mount, control side, lining — to take to the shop"
+        }
+      ],
+      "unlock_tail": {
+        "key": "+ The palette",
+        "line": "exact colour codes, finishes and windows"
+      },
+      "cards": [
+        {
+          "id": "materials",
+          "key": "Blind types",
+          "icon": "check"
+        },
+        {
+          "id": "mistakes",
+          "key": "What to avoid",
+          "icon": "eye"
+        },
+        {
+          "id": "dna",
+          "key": "Price traps",
+          "icon": "coin"
+        },
+        {
+          "id": "splurge",
+          "key": "Look for less",
+          "icon": "map"
+        },
+        {
+          "id": "shopping",
+          "key": "Checklist",
+          "icon": "calendar"
+        },
+        {
+          "id": "palette",
+          "key": "Palette",
+          "icon": "palette"
+        }
+      ]
+    }
   },
   "report_profile": {
     "vertical_noun": "window blinds and shades",
@@ -2490,5 +2687,14 @@
       "opening_bare": "You just dodged the traps that send blind buyers back for re-orders and returns."
     },
     "banned": []
-  }
+  },
+  "paywall_variants": [
+    {
+      "id": "minimal",
+      "enabled": true,
+      "weight": 1,
+      "name": "The short way down",
+      "template": "minimal"
+    }
+  ]
 }

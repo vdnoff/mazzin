@@ -5115,6 +5115,11 @@ def build_guide_profile(cfg):
         "json_retry": _guide_text(block.get("json_retry")) or None,
         "language_name": language,
         "vertical_noun": noun,
+        # The delivered page opens on where the PDF went, but only when the
+        # config carries the line that says so: a result page without one is
+        # never handed the address, exactly as the registered profiles.
+        "delivery_note": bool(((cfg.get("result_copy") or {})
+                               .get("delivery_line"))),
     }
     if budget is not None:
         profile["prompt_budget"] = float(budget)
