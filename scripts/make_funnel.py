@@ -35,9 +35,20 @@ ids, URLs, hex and rgb colours and colour names, `{tokens}` inside a string
 the model-facing English under report_profile.sections — the instructions
 to the model stay English on every funnel, as reports.py's own do.
 
+A chunk the model cannot get right in three tries is split in half and each
+half asked for on its own, down to single strings; a single string that still
+fails is kept in ENGLISH, the run goes on, and a WARNING at the end lists the
+paths to translate by hand. The exit code is 0 whenever the funnel was
+written. The answer is requested as a structured output (a JSON schema of
+the chunk's keys), which is what makes "not valid JSON" a thing of the past
+on the models that support it; fences and commentary are still stripped
+before parsing for the ones that do not.
+
 --no-llm wraps every translatable value as "[xx] <original>" so the whole
 pipeline — freezing, locale, mirror, gitignore — runs offline and free.
 --dry-run prints the plan and a token estimate and writes nothing.
+--only-chunk N translates chunk N alone (1-based), writes nothing, and prints
+every refused raw answer to stderr — the debugging view of one bad chunk.
 """
 import argparse
 import json
@@ -93,8 +104,9 @@ and any number, currency symbol or price exactly as written.
 - Never use the words for psychic, prediction, fortune-telling, horoscope, \
 guarantee, or any medical or financial claim.
 - Return ONLY a JSON object with the same keys as the input and the \
-translated strings as values. No prose, no code fence, no extra keys, no \
-missing keys. Every value on one line."""
+translated strings as values: no markdown fences, no commentary, no \
+explanation before or after it, no extra keys, no missing keys. Every value \
+on one line."""
 
 
 # --- the walk ------------------------------------------------------------------
@@ -186,12 +198,32 @@ class TranslationError(Exception):
 
 
 def _strip_fence(text):
+    """The JSON out of whatever the model wrapped it in.
+
+    A fence, a "Here is the translation:" lead-in, a closing remark — all
+    seen in the wild, all costing a chunk. The structured-output request
+    below is what stops them at the source; this is the belt to that brace,
+    for a model or a proxy that ignores the request.
+    """
     text = text.strip()
     if text.startswith("```"):
         text = text.split("\n", 1)[1] if "\n" in text else ""
         if text.rstrip().endswith("```"):
             text = text.rstrip()[:-3]
+    text = text.strip()
+    first, last = text.find("{"), text.rfind("}")
+    if first > 0 or (last != -1 and last < len(text) - 1):
+        if first != -1 and last > first:
+            text = text[first:last + 1]
     return text.strip()
+
+
+def _parse_json(text):
+    """The answer as a dict, or None when it is not JSON at all."""
+    try:
+        return json.loads(_strip_fence(text))
+    except ValueError:
+        return None
 
 
 def check_chunk(source, answer, banned):
@@ -218,52 +250,178 @@ def check_chunk(source, answer, banned):
     return notes
 
 
-def translate_chunk(client, model, language, source, banned):
+# --- the call ------------------------------------------------------------------
+#
+# The answer is asked for as a structured output: a JSON schema naming the
+# chunk's keys, every one a required string, nothing else allowed. The API
+# then guarantees the text block is valid JSON in that shape, which is the
+# whole of the failure five languages were dying of ("not valid JSON", the
+# same chunk every time). An assistant prefill of "{" would have been the
+# old way to lean on this, and it is not an option: prefills are rejected
+# with a 400 on the 4.6 models this runs on, and structured outputs are the
+# replacement. The fence stripping stays as the belt to that brace.
+#
+# A server that refuses `output_config` (an older model, a proxy that
+# strips it) is remembered as such and every later call goes without it —
+# the prompt still asks for bare JSON and the checks below still police it.
+
+_STRUCTURED = {"on": True}
+
+
+def _schema_for(source):
+    return {"type": "object",
+            "properties": dict((k, {"type": "string"}) for k in source),
+            "required": list(source),
+            "additionalProperties": False}
+
+
+def _rejects_structured(exc):
+    return (type(exc).__name__ == "BadRequestError"
+            and "output_config" in str(exc))
+
+
+def _ask(client, model, language, prompt, source):
+    """One call. Returns the text of the answer."""
+    kwargs = dict(model=model, max_tokens=MAX_TOKENS, temperature=0.2,
+                  system=SYSTEM % {"language": language},
+                  messages=[{"role": "user", "content": prompt}])
+    if _STRUCTURED["on"]:
+        try:
+            message = client.messages.create(
+                output_config={"format": {"type": "json_schema",
+                                          "schema": _schema_for(source)}},
+                **kwargs)
+        except Exception as exc:
+            if not _rejects_structured(exc):
+                raise
+            _STRUCTURED["on"] = False
+            print("  (output_config refused — asking for bare JSON from "
+                  "here on)")
+            message = client.messages.create(**kwargs)
+    else:
+        message = client.messages.create(**kwargs)
+    return "".join(b.text for b in message.content if b.type == "text")
+
+
+class ChunkRefused(TranslationError):
+    """A chunk the model could not get right in TRIES attempts."""
+
+    def __init__(self, problems, raw):
+        TranslationError.__init__(
+            self, "chunk refused %d times: %s"
+            % (TRIES, "; ".join(problems[:3])))
+        self.problems = problems
+        self.raw = raw
+
+
+def translate_chunk(client, model, language, source, banned, debug=False):
+    """{key: translated} for one chunk, or raise ChunkRefused.
+
+    `debug` prints every refused raw answer to stderr, for --only-chunk.
+    """
     prompt = json.dumps(source, ensure_ascii=False, indent=1)
     note = ""
-    last = None
+    last, raw = None, ""
     for attempt in range(TRIES):
-        message = client.messages.create(
-            model=model, max_tokens=MAX_TOKENS, temperature=0.2,
-            system=SYSTEM % {"language": language},
-            messages=[{"role": "user", "content": prompt + note}])
-        text = "".join(b.text for b in message.content if b.type == "text")
-        try:
-            answer = json.loads(_strip_fence(text))
-        except ValueError:
+        raw = _ask(client, model, language, prompt + note, source)
+        answer = _parse_json(raw)
+        if answer is None:
             problems = ["the answer was not valid JSON"]
         else:
             problems = check_chunk(source, answer, banned)
         if not problems:
-            return {k: answer[k].strip() for k in source}
+            return dict((k, answer[k].strip()) for k in source)
         last = problems
+        if debug:
+            sys.stderr.write("--- attempt %d refused: %s\n%s\n---\n"
+                             % (attempt + 1, "; ".join(problems[:3]), raw))
         note = ("\n\nYour previous answer was refused:\n"
                 + "\n".join("  - " + p for p in problems[:12])
                 + "\nSend the whole object again, corrected, as JSON only.")
-    raise TranslationError("chunk refused %d times: %s"
-                           % (TRIES, "; ".join(last[:3])))
+    raise ChunkRefused(last, raw)
 
 
-def translate_all(items, language, banned, model=MODEL, client=None):
-    """{path: translated} for every (path, string) in `items`."""
-    if client is None:
-        key = api_key()
-        if not key:
-            raise TranslationError("no ANTHROPIC_API_KEY in .env or the "
-                                   "environment")
-        import anthropic
-        client = anthropic.Anthropic(api_key=key)
-    out = {}
-    for start in range(0, len(items), CHUNK):
-        chunk = items[start:start + CHUNK]
-        source = dict(("s%d" % (start + i), text)
-                      for i, (_, text) in enumerate(chunk))
+def translate_items(client, model, language, items, banned, kept, depth=0):
+    """{path: translated} for `items`, bisecting a chunk that stays refused.
+
+    A chunk that fails TRIES times is split in half and each half is asked
+    for on its own, down to single strings — the failing string is usually
+    one string, and the other thirty-nine should not go down with it. A
+    single string that still fails is kept in English, noted in `kept`, and
+    the run goes on: a funnel with one English line beats no funnel, and the
+    warning at the end says which line to fix by hand.
+    """
+    source = dict(("s%d" % i, text) for i, (_, text) in enumerate(items))
+    try:
         answer = translate_chunk(client, model, language, source, banned)
-        for i, (path, _) in enumerate(chunk):
-            out[path] = answer["s%d" % (start + i)]
-        print("  translated %d/%d" % (min(start + CHUNK, len(items)),
-                                      len(items)))
+    except ChunkRefused as err:
+        if len(items) == 1:
+            path, text = items[0]
+            print("  WARNING kept English  %s  %r" % (path, text[:60]))
+            kept.append((path, text))
+            return {path: text}
+        half = len(items) // 2
+        print("  %schunk of %d refused (%s) — splitting %d + %d"
+              % ("  " * depth, len(items), err.problems[0][:50], half,
+                 len(items) - half))
+        out = translate_items(client, model, language, items[:half], banned,
+                              kept, depth + 1)
+        out.update(translate_items(client, model, language, items[half:],
+                                   banned, kept, depth + 1))
+        return out
+    return dict((path, answer["s%d" % i]) for i, (path, _) in enumerate(items))
+
+
+def _client(key):
+    import anthropic
+    return anthropic.Anthropic(api_key=key)
+
+
+def _connect(client):
+    if client is not None:
+        return client
+    key = api_key()
+    if not key:
+        raise TranslationError("no ANTHROPIC_API_KEY in .env or the "
+                               "environment")
+    return _client(key)
+
+
+def chunks_of(items):
+    return [items[start:start + CHUNK] for start in range(0, len(items), CHUNK)]
+
+
+def translate_all(items, language, banned, model=MODEL, client=None,
+                  kept=None):
+    """{path: translated} for every (path, string) in `items`.
+
+    `kept` collects the (path, English) pairs that stayed English.
+    """
+    client = _connect(client)
+    kept = [] if kept is None else kept
+    out = {}
+    done = 0
+    for chunk in chunks_of(items):
+        out.update(translate_items(client, model, language, chunk, banned,
+                                   kept))
+        done += len(chunk)
+        print("  translated %d/%d" % (done, len(items)))
     return out
+
+
+def translate_one_chunk(items, number, language, banned, model=MODEL,
+                        client=None):
+    """--only-chunk: chunk `number` (1-based) on its own, no bisect, raw
+    answers to stderr when it fails. Returns {path: translated}."""
+    groups = chunks_of(items)
+    if not 1 <= number <= len(groups):
+        raise ValueError("no chunk %d — there are %d" % (number, len(groups)))
+    chunk = groups[number - 1]
+    client = _connect(client)
+    source = dict(("s%d" % i, text) for i, (_, text) in enumerate(chunk))
+    answer = translate_chunk(client, model, language, source, banned,
+                             debug=True)
+    return dict((path, answer["s%d" % i]) for i, (path, _) in enumerate(chunk))
 
 
 def pseudo_translate(items, lang):
@@ -355,8 +513,12 @@ def write_both(root, slug, cfg):
 
 
 def build(vertical, lang, root=ROOT, no_llm=False, dry_run=False,
-          model=MODEL, client=None, locales=None):
-    """The whole pipeline. Returns the config written (or planned)."""
+          model=MODEL, client=None, locales=None, only_chunk=None):
+    """The whole pipeline. Returns (config written, kept-English pairs).
+
+    Nothing is written on --dry-run or --only-chunk: the first returns
+    (None, []), the second returns (None, []) after printing its chunk.
+    """
     master_path = os.path.join(root, "funnels", vertical + ".json")
     if not os.path.isfile(master_path):
         raise FileNotFoundError("no master funnel at %s — write funnels/%s.json"
@@ -390,13 +552,30 @@ def build(vertical, lang, root=ROOT, no_llm=False, dry_run=False,
         # the same length again; four characters a token is the usual rule.
         est = int(chars / 4 * 2.4) + 400 * ((len(items) + CHUNK - 1) // CHUNK)
         print("  estimated tokens: ~%d (nothing written)" % est)
-        return None
+        return None, []
 
+    if only_chunk is not None:
+        groups = chunks_of(items)
+        print("  chunk %d of %d only — nothing written" % (only_chunk,
+                                                           len(groups)))
+        if no_llm:
+            if not 1 <= only_chunk <= len(groups):
+                raise ValueError("no chunk %d — there are %d"
+                                 % (only_chunk, len(groups)))
+            one = pseudo_translate(groups[only_chunk - 1], lang)
+        else:
+            one = translate_one_chunk(items, only_chunk, loc["language_name"],
+                                      banned, model, client)
+        for path, text in one.items():
+            print("  %s => %s" % (path, text))
+        return None, []
+
+    kept = []
     if no_llm:
         translated = pseudo_translate(items, lang)
     else:
         translated = translate_all(items, loc["language_name"], banned,
-                                   model, client)
+                                   model, client, kept)
 
     cfg = json.loads(json.dumps(master))     # a deep copy, key order kept
     for path, text in translated.items():
@@ -405,7 +584,12 @@ def build(vertical, lang, root=ROOT, no_llm=False, dry_run=False,
     write_both(root, cfg["slug"], cfg)
     if ensure_gitignore(root, vertical):
         print("appended  .gitignore")
-    return cfg
+    if kept:
+        print("WARNING: %d string(s) kept in English — translate by hand in "
+              "funnels/%s.json:" % (len(kept), cfg["slug"]))
+        for path, text in kept:
+            print("  %s  %r" % (path, text[:60]))
+    return cfg, kept
 
 
 def main(argv=None):
@@ -419,10 +603,13 @@ def main(argv=None):
     ap.add_argument("--root", default=ROOT,
                     help="repo root to read the master from and write into")
     ap.add_argument("--model", default=MODEL)
+    ap.add_argument("--only-chunk", type=int, metavar="N",
+                    help="translate only chunk N (1-based), write nothing, "
+                         "and print the raw answer to stderr when it fails")
     args = ap.parse_args(argv)
     try:
         build(args.vertical, args.lang, args.root, args.no_llm,
-              args.dry_run, args.model)
+              args.dry_run, args.model, only_chunk=args.only_chunk)
     except (FileNotFoundError, ValueError, TranslationError) as exc:
         print("error: %s" % exc)
         return 1
