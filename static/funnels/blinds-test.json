@@ -10,8 +10,8 @@
   "swipe": {
     "pairs_count": 9,
     "headline": "Your window style analysis",
-    "subtext": "$400+ saved on your blinds",
-    "subtext_accent": "$400+",
+    "subtext": "Skip the wrong-size re-orders on your blinds",
+    "subtext_accent": "wrong-size re-orders",
     "hint": "Tap your choice",
     "card_aria": "Choose {label}",
     "steps": [
@@ -1148,7 +1148,7 @@
       "after_step": 3,
       "template": "pattern",
       "kicker": "Pattern detected",
-      "line": "You choose {leading_trait} over {opposite} — {n} of {total} choices",
+      "line": "A clear pattern in {n} of {total} choices",
       "sub": "Adjusting what you see next.",
       "cta": "Continue analysis"
     },
@@ -1156,7 +1156,7 @@
       "after_step": 6,
       "template": "confirm",
       "kicker": "Signal recorded",
-      "line": "Your {leading_material} signal is strong. Testing it.",
+      "line": "One material keeps winning. Testing it.",
       "sub": "Adjusting what you see next.",
       "cta": "Continue analysis"
     },
@@ -2214,12 +2214,12 @@
   },
   "checkout": {
     "kicker": "Your guide is ready",
-    "product_name": "Your Window Style Buyer's Guide — the traps that cost $400+",
+    "product_name": "Your Window Style Buyer's Guide — the traps behind wrong-size re-orders and returns",
     "product_image": "/static/creative_src/stripe_tile.png",
     "single_page": true,
     "commerce": {
-      "anchor_head": "A {price} decision that saves you $400+",
-      "anchor_head_accent": "$400+",
+      "anchor_head": "A {price} decision that saves you a wrong-size re-order",
+      "anchor_head_accent": "wrong-size re-order",
       "price_suffix": "one-time · no subscription",
       "consent": "One-time {price} — no subscription, ever. My guide unlocks instantly.",
       "trust": [
@@ -2227,8 +2227,8 @@
         "One-time — no recurring charges",
         "Instant delivery"
       ],
-      "mid_line": "Save $400+ on your blinds — starting now.",
-      "mid_line_accent": "$400+",
+      "mid_line": "Skip the costly mistakes on your blinds — starting now.",
+      "mid_line_accent": "costly mistakes",
       "mid_button": "See what's inside ↓",
       "sticky_label": "Unlock full guide — {price}",
       "sample_link": "See a sample page",
@@ -2246,8 +2246,8 @@
     ],
     "manifest_hero": "mistakes",
     "manifest_head": "What's inside — {n} sections, yours forever",
-    "anchor_head": "A {price} decision that protects a $1,500 order",
-    "anchor": "The traps in this guide cost blind buyers $400+ in re-orders and returns. Catching one pays for it a hundred times over.",
+    "anchor_head": "A {price} decision that protects a whole-house order",
+    "anchor": "The traps in this guide cost blind buyers wrong-size re-orders and returns. Catching one pays for the guide many times over.",
     "reframe": "Less than a coffee. Cheaper than one blind ordered the wrong size.",
     "price_suffix": "one-time",
     "cta_label": "Get my guide for {price}",
@@ -2278,8 +2278,8 @@
     "error_consent": "Please tick the box above to continue."
   },
   "result": {
-    "mistakes_teaser": "You've seen mistake #1. The other four cost {style} buyers $400+ to undo — and one involves your {material}.",
-    "value_banner": "The traps in this guide cost blind buyers $400+ in re-orders and returns. Catching one pays for it a hundred times over."
+    "mistakes_teaser": "You've seen mistake #1. The other four are what send {style} buyers back for re-orders — and one involves your {material}.",
+    "value_banner": "The traps in this guide cost blind buyers wrong-size re-orders and returns. Catching one pays for the guide many times over."
   },
   "result_copy": {
     "delivery_line": "Your PDF was sent to {email}",
@@ -2486,8 +2486,8 @@
       "body": "Your personalized {style} buyer's guide is attached.",
       "keep": "It stays available at that link, and the PDF is yours to keep.",
       "keep_no_link": "The PDF is yours to keep.",
-      "opening": "You just spent {price} to dodge the traps that cost blind buyers $400+.",
-      "opening_bare": "You just dodged the traps that cost blind buyers $400+."
+      "opening": "You just spent {price} to dodge the traps that send blind buyers back for re-orders and returns.",
+      "opening_bare": "You just dodged the traps that send blind buyers back for re-orders and returns."
     },
     "banned": []
   }

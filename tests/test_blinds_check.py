@@ -142,11 +142,19 @@ check("interstitials sit inside the walk",
 check("  each names a template the engine draws",
       all(i["template"] in ("pattern", "confirm", "almost")
           for i in cfg["interstitials"]))
-check("  the pattern one uses the tone tokens",
-      any("{leading_trait}" in i["line"] and "{opposite}" in i["line"]
+# The engine fills {leading_trait}, {opposite} and {leading_material} with
+# the raw tag word and offers no config map for it, so a translated funnel
+# would print "warm" inside a Hungarian sentence. The lines here carry the
+# same energy on the tokens the engine derives as numbers.
+check("  no interstitial interpolates a raw tag word",
+      not [i["line"] for i in cfg["interstitials"]
+           if re.search(r"\{(leading_trait|opposite|leading_material)\}",
+                        i["line"] + " " + i.get("sub", ""))])
+check("  the pattern one still counts the choices",
+      any("{n}" in i["line"] and "{total}" in i["line"]
           for i in cfg["interstitials"]))
-check("  the confirm one uses the material token",
-      any("{leading_material}" in i["line"] for i in cfg["interstitials"]))
+check("  and the engine still has no tag-label map to read",
+      "tag_labels" not in ENGINE_JS)
 
 print("\n--- the ten-tag system, exactly as kitchen ---")
 IDENTITY = {"rustic", "minimal", "modern", "classic", "industrial"}
@@ -358,6 +366,24 @@ check("  and never reaches for self-discovery",
 check("  the free result promises the guide, not a reading",
       "guide" in cfg["result"]["mistakes_teaser"].lower()
       or "guide" in cfg["result"]["value_banner"].lower())
+MONEY = re.compile(r"[$€£]\s?\d|\d[\d,]*\s?\+|\b\d{3,}\b")
+check("no copy string names a money amount — the master is translated "
+      "into eight currencies",
+      not [p for p, t in strings_of(cfg)
+           if MONEY.search(t) and not p.startswith("swipe.steps")
+           and ".colors[" not in p and "rgb" not in p],
+      str([(p, t) for p, t in strings_of(cfg) if MONEY.search(t)
+           and not p.startswith("swipe.steps") and ".colors[" not in p][:4]))
+check("  the loss framing stays",
+      "re-order" in cfg["checkout"]["anchor"]
+      and "returns" in cfg["checkout"]["anchor"]
+      and "wrong size" in cfg["checkout"]["reframe"])
+check("  every accent is a substring of its line",
+      cfg["swipe"]["subtext_accent"] in cfg["swipe"]["subtext"]
+      and cfg["checkout"]["commerce"]["anchor_head_accent"]
+      in cfg["checkout"]["commerce"]["anchor_head"]
+      and cfg["checkout"]["commerce"]["mid_line_accent"]
+      in cfg["checkout"]["commerce"]["mid_line"])
 check("the mistakes teaser keeps its tokens",
       "{style}" in cfg["result"]["mistakes_teaser"]
       and "{material}" in cfg["result"]["mistakes_teaser"])
@@ -734,8 +760,8 @@ def walk():
                                                      cfg["style_elements"]["items"]},
                   str(chips))
             teaser = page.inner_text(".mistakes-teaser")
-            check("  the teaser names the style and the saving",
-                  name in teaser and "$400+" in teaser, teaser)
+            check("  the teaser names the style and the loss",
+                  name in teaser and "re-orders" in teaser, teaser)
             check("  the sticky price reads the charm price",
                   "$2.99" in page.inner_text("body"))
             check("  no page errors", not errors, str(errors[:2]))
