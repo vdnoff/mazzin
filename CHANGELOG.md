@@ -627,3 +627,6 @@ bottom.
 
 ## 2026-09-10 — claude/capi-event-mirror
 - CAPI mirror for pixel events with dedup
+
+## 2026-09-12 — claude/blinds-factory
+- funnel factory v1: blinds + generator + /go router
