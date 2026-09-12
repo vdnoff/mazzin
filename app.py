@@ -15,6 +15,7 @@ import database
 import visualizer
 from admin import bp as admin_bp
 from payments import bp as payments_bp
+from router import bp as router_bp
 from tracking import bp as tracking_bp
 from visualizer import bp as visualizer_bp
 
@@ -45,6 +46,10 @@ app.register_blueprint(tracking_bp)
 app.register_blueprint(payments_bp)
 app.register_blueprint(visualizer_bp)
 app.register_blueprint(admin_bp)
+# GET /go — the ad link, resolved to a funnel. A static rule, so it wins over
+# /<slug> whatever the registration order; the mapping and the queue write
+# live in router.py, where a module may hold SQL.
+app.register_blueprint(router_bp)
 
 
 @app.errorhandler(413)
