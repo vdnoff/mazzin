@@ -166,7 +166,14 @@ try:
     check("hundreds of strings are copy", len(items) > 300, len(items))
     check("  questions, labels, buttons, sections, stubs, mail, words",
           all(any(p.startswith(pre) for p in paths)
-              for pre in ("swipe.steps[0].question", "swipe.steps[0].pairs",
+              for pre in ("result_copy.kicker", "result_copy.profile.chips",
+                          "result_copy.profile.split.names",
+                          "result_copy.profile.scales[0].left",
+                          "result_copy.profile.unlock[0].line",
+                          "result_copy.profile.cards[0].key",
+                          "report.sections[0].teaser_line",
+                          "paywall_variants[0].name", "interstitials[0].line",
+                          "swipe.steps[0].question", "swipe.steps[0].pairs",
                           "checkout.cta_label", "report.sections[0].title",
                           "report_profile.stubs", "report_profile.mail",
                           "report_profile.words", "pricing.cta",
@@ -191,7 +198,20 @@ try:
               "report_profile.stubs.materials.pairs[0].verdict",
               "report_profile.words.pdf_filename", "checkout.product_image",
               "pricing.currency", "interstitials[0].template",
-              "report.also.rows[0].section", "checkout.manifest_hero")
+              "report.also.rows[0].section", "checkout.manifest_hero",
+              "theme", "result_module", "result_css", "result_template",
+              "swipe.label_mode", "swipe.analyzing_fade_to",
+              "interstitials[0].echo_steps[0]", "interstitials[0].auto_advance_ms",
+              "paywall_variants[0].id", "paywall_variants[0].template",
+              "report.visuals.hero.glyph_step", "report.visuals.section_steps.palette",
+              "result_copy.profile.glyph_step",
+              "result_copy.profile.split.tags[0]",
+              "result_copy.profile.split.colors.minimal",
+              "result_copy.profile.scales[0].id",
+              "result_copy.profile.scales[0].left_tags[0]",
+              "result_copy.profile.scales[0].right_tags[0]",
+              "result_copy.profile.unlock[0].id",
+              "result_copy.profile.cards[0].id", "result_copy.profile.cards[0].icon")
     frozen_hit = [p for p in FROZEN if p in paths]
     check("nothing structural is copy", not frozen_hit, str(frozen_hit))
     check("  the sentinel the report module reads is not copy",
