@@ -12,3 +12,7 @@ assets/
 
 # Uploaded kitchen photos and their renders. Never in git, never in static/.
 data/
+
+# Factory galleries: drawn on the server by scripts/make_gallery.py from the
+# spec in scripts/galleries/, never committed. The spec is the code.
+static/galleries/blinds/

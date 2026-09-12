@@ -118,3 +118,30 @@ CREATE TABLE funnel_mode_overrides (
               ON UPDATE CURRENT_TIMESTAMP,
   changed_by VARCHAR(64) NULL
 );
+
+-- 2026-09-12 — the funnel factory's generation queue
+--
+-- MUST BE APPLIED BY HAND BEFORE THE DEPLOY THAT SHIPS /go.
+--
+-- Until it is, /go still redirects exactly as designed — the write is inside
+-- a try/except and a missing table costs one warning line per miss and
+-- nothing else. What is lost meanwhile is the count.
+--
+-- One row per (vertical, language) somebody asked for through /go and did
+-- not get: the language was not generated yet, or the vertical does not
+-- exist at all. `hits` counts the asks, `first_seen` / `last_seen` bracket
+-- them, and `status` is what the batch on the server sets as it works the
+-- queue — 'new' until somebody looks, 'generating' while make_funnel.py
+-- runs, 'live' once the file is on disk, 'rejected' for a pair that will
+-- never be made. Two short lowercase tokens and a count: nothing here is
+-- about a person.
+CREATE TABLE IF NOT EXISTS gen_queue (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  vertical VARCHAR(24) NOT NULL,
+  lang VARCHAR(24) NOT NULL,
+  first_seen DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_seen DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  hits INT NOT NULL DEFAULT 1,
+  status ENUM('new','generating','live','rejected') NOT NULL DEFAULT 'new',
+  UNIQUE KEY uq_vertical_lang (vertical, lang)
+);

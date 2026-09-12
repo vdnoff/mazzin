@@ -1,0 +1,12 @@
+{
+  "_note": "Per-language pricing and number format for scripts/make_funnel.py. amount_cents is integer minor units, as everywhere else in this repo. Stripe rules encoded per currency: every amount here is at or above Stripe's minimum charge for that currency, and amount_multiple is the minor-unit step Stripe accepts — HUF is charged in whole forints, so its amounts must be divisible by 100; EUR, CZK, PLN and DKK take any whole minor unit. price_format and decimal_mark are the two optional pricing keys engine.js and reports.py already read.",
+  "en": {"language_name": "English", "currency": "usd", "amount_cents": 299, "amount_multiple": 1, "stripe_min_cents": 50, "price_format": null, "decimal_mark": null},
+  "nl": {"language_name": "Dutch", "currency": "eur", "amount_cents": 299, "amount_multiple": 1, "stripe_min_cents": 50, "price_format": "€ {amount}", "decimal_mark": ","},
+  "de": {"language_name": "German", "currency": "eur", "amount_cents": 299, "amount_multiple": 1, "stripe_min_cents": 50, "price_format": "{amount} €", "decimal_mark": ","},
+  "hu": {"language_name": "Hungarian", "currency": "huf", "amount_cents": 99000, "amount_multiple": 100, "stripe_min_cents": 17500, "price_format": "{amount} Ft", "decimal_mark": ","},
+  "cs": {"language_name": "Czech", "currency": "czk", "amount_cents": 6900, "amount_multiple": 1, "stripe_min_cents": 1500, "price_format": "{amount} Kč", "decimal_mark": ","},
+  "pl": {"language_name": "Polish", "currency": "pln", "amount_cents": 1199, "amount_multiple": 1, "stripe_min_cents": 200, "price_format": "{amount} zł", "decimal_mark": ","},
+  "da": {"language_name": "Danish", "currency": "dkk", "amount_cents": 1995, "amount_multiple": 1, "stripe_min_cents": 250, "price_format": "{amount} kr.", "decimal_mark": ","},
+  "sk": {"language_name": "Slovak", "currency": "eur", "amount_cents": 299, "amount_multiple": 1, "stripe_min_cents": 50, "price_format": "{amount} €", "decimal_mark": ","},
+  "el": {"language_name": "Greek", "currency": "eur", "amount_cents": 299, "amount_multiple": 1, "stripe_min_cents": 50, "price_format": "{amount} €", "decimal_mark": ","}
+}
