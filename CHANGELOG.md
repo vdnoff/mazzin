@@ -630,3 +630,6 @@ bottom.
 
 ## 2026-09-12 — claude/blinds-factory
 - funnel factory v1: blinds + generator + /go router
+
+## 2026-09-12 — claude/make-funnel-bisect
+- make_funnel: bisect fallback + JSON hardening
