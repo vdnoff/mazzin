@@ -465,16 +465,20 @@ try:
           and written["report_profile"]["language_name"] == "Hungarian")
 
     print("\n--- --only-chunk ---")
-    r = run("blinds", "de", "--no-llm", "--root", scratch, "--only-chunk", "9")
-    check("--only-chunk 9 --no-llm prints that chunk and writes nothing",
-          r.returncode == 0 and "chunk 9 of 9 only" in r.stdout
-          and "report_profile.words" in r.stdout
+    last = (len(mf.collect(MASTER)) + mf.CHUNK - 1) // mf.CHUNK
+    r = run("blinds", "de", "--no-llm", "--root", scratch, "--only-chunk",
+            str(last))
+    check("--only-chunk N --no-llm prints that chunk and writes nothing",
+          r.returncode == 0 and "chunk %d of %d only" % (last, last) in r.stdout
+          and "=> [de] " in r.stdout
           and not os.path.exists(os.path.join(scratch, "funnels",
                                               "blinds-de.json")),
           r.stdout[-200:])
-    r = run("blinds", "de", "--no-llm", "--root", scratch, "--only-chunk", "12")
+    r = run("blinds", "de", "--no-llm", "--root", scratch, "--only-chunk",
+            str(last + 3))
     check("  a chunk that does not exist is a plain error",
-          r.returncode == 1 and "no chunk 12" in r.stdout, r.stdout[-100:])
+          r.returncode == 1 and "no chunk %d" % (last + 3) in r.stdout,
+          r.stdout[-100:])
     mf.api_key = lambda: "k"
     mf._client = lambda key: RecordingClient(
         lambda kw, n: "```json\nnot really\n```")
