@@ -1,0 +1,486 @@
+{
+  "vertical": "blinds",
+  "dir": "static/galleries/blinds",
+  "size": [
+    640,
+    982
+  ],
+  "og": {
+    "filename": "og.webp",
+    "size": [
+      1200,
+      630
+    ],
+    "from": "b1a"
+  },
+  "images": [
+    {
+      "id": "b1a",
+      "filename": "b1a.webp",
+      "step": "hook",
+      "type": "sheer roller",
+      "tags": [
+        "bright",
+        "cool",
+        "minimal"
+      ],
+      "alt": "Sheer white roller blind in a bright white bedroom",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a sheer white roller blind lowered over a tall window in an airy white bedroom, pale linen bedding, soft even morning light glowing through the fabric."
+    },
+    {
+      "id": "b1b",
+      "filename": "b1b.webp",
+      "step": "hook",
+      "type": "roman",
+      "tags": [
+        "dark",
+        "warm",
+        "classic"
+      ],
+      "alt": "Deep green velvet roman blind on a wooden pole in a warm bedroom",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a deep forest-green velvet roman blind hung from a dark wooden pole over a window in a warm bedroom, walnut bedside table, brass lamp, low evening light."
+    },
+    {
+      "id": "b1c",
+      "filename": "b1c.webp",
+      "step": "hook",
+      "type": "sheer roller",
+      "tags": [
+        "bright",
+        "cool",
+        "minimal"
+      ],
+      "alt": "Pale linen sheer roller blind in a white loft bedroom",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a pale oatmeal sheer roller blind over a loft window in a white-walled bedroom, concrete-grey floor, soft diffused daylight, uncluttered."
+    },
+    {
+      "id": "b1d",
+      "filename": "b1d.webp",
+      "step": "hook",
+      "type": "roman",
+      "tags": [
+        "dark",
+        "warm",
+        "classic"
+      ],
+      "alt": "Burgundy roman blind with a walnut window frame in a library corner",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a burgundy velvet roman blind with a wide tailored hem over a walnut-framed window, reading chair and stacked books, lamplit warm evening tones."
+    },
+    {
+      "id": "b2a",
+      "filename": "b2a.webp",
+      "step": "material",
+      "type": "woven wood",
+      "tags": [
+        "warm",
+        "wood",
+        "rustic"
+      ],
+      "alt": "Woven bamboo roman shade over a window with trailing plants",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a woven bamboo roman shade half-lowered over a sunny window, trailing plants on the sill, oak floor, warm honey daylight, textured natural weave clearly visible."
+    },
+    {
+      "id": "b2b",
+      "filename": "b2b.webp",
+      "step": "material",
+      "type": "venetian",
+      "tags": [
+        "cool",
+        "metal",
+        "industrial"
+      ],
+      "alt": "Brushed aluminium venetian blind against a concrete wall",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a brushed aluminium venetian blind with slim slats over a window set in a raw concrete wall, cool grey light, matte black window frame."
+    },
+    {
+      "id": "b2c",
+      "filename": "b2c.webp",
+      "step": "material",
+      "type": "woven wood",
+      "tags": [
+        "warm",
+        "wood",
+        "rustic"
+      ],
+      "alt": "Natural jute woven-wood blind beside a terracotta pot",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a natural jute woven-wood blind lowered over a cottage window, terracotta pot with an olive tree, warm plaster wall, soft afternoon light."
+    },
+    {
+      "id": "b2d",
+      "filename": "b2d.webp",
+      "step": "material",
+      "type": "venetian",
+      "tags": [
+        "cool",
+        "metal",
+        "industrial"
+      ],
+      "alt": "Steel-grey venetian slats in a black window frame",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a steel-grey metal venetian blind, slats tilted half open, inside a black steel window frame, cool north light, polished concrete sill."
+    },
+    {
+      "id": "b3a",
+      "filename": "b3a.webp",
+      "step": "light",
+      "type": "roman",
+      "tags": [
+        "bright",
+        "warm",
+        "modern"
+      ],
+      "alt": "Oatmeal linen roman blind filtering soft morning light",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: an oatmeal linen roman blind half-raised over a window, soft warm morning light filtering through the weave onto a pale oak floor and a white wall."
+    },
+    {
+      "id": "b3b",
+      "filename": "b3b.webp",
+      "step": "light",
+      "type": "blackout roller",
+      "tags": [
+        "dark",
+        "cool",
+        "industrial"
+      ],
+      "alt": "Charcoal blackout roller blind fully lowered in a dark bedroom",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a charcoal blackout roller blind fully lowered over a bedroom window, only a thin edge of cool light around the fabric, dark grey walls, black metal bed frame."
+    },
+    {
+      "id": "b3c",
+      "filename": "b3c.webp",
+      "step": "light",
+      "type": "roman",
+      "tags": [
+        "bright",
+        "warm",
+        "modern"
+      ],
+      "alt": "Cream roman blind glowing with daylight over an oak floor",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a cream cotton roman blind lowered over a window and glowing with warm daylight, oak herringbone floor, a linen armchair beside it."
+    },
+    {
+      "id": "b3d",
+      "filename": "b3d.webp",
+      "step": "light",
+      "type": "blackout roller",
+      "tags": [
+        "dark",
+        "cool",
+        "industrial"
+      ],
+      "alt": "Slate-grey blackout roller blind at dusk",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a slate-grey blackout roller blind lowered in a minimalist bedroom at dusk, cool blue light at the edges, dark concrete-look wall, low platform bed."
+    },
+    {
+      "id": "b4a",
+      "filename": "b4a.webp",
+      "step": "pattern",
+      "type": "roller",
+      "tags": [
+        "cool",
+        "stone",
+        "minimal"
+      ],
+      "alt": "Plain pale-grey textured roller blind in a white room",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a plain pale-grey textured roller blind lowered over a window in an all-white room, cool even light, nothing else on the wall."
+    },
+    {
+      "id": "b4b",
+      "filename": "b4b.webp",
+      "step": "pattern",
+      "type": "roman",
+      "tags": [
+        "warm",
+        "wood",
+        "rustic"
+      ],
+      "alt": "Patterned damask roman blind on a wooden pole",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a warm patterned damask roman blind in ochre and cream hung from a turned wooden pole, wooden window seat with cushions, honey afternoon light."
+    },
+    {
+      "id": "b4c",
+      "filename": "b4c.webp",
+      "step": "pattern",
+      "type": "roller",
+      "tags": [
+        "cool",
+        "stone",
+        "minimal"
+      ],
+      "alt": "Putty-grey roller blind against a concrete-look wall",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a plain putty-grey roller blind over a window in a room with a smooth concrete-look wall, cool daylight, pale stone floor."
+    },
+    {
+      "id": "b4d",
+      "filename": "b4d.webp",
+      "step": "pattern",
+      "type": "roman",
+      "tags": [
+        "warm",
+        "wood",
+        "rustic"
+      ],
+      "alt": "Botanical-print roman blind over a wooden window seat",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a botanical leaf-print roman blind in green and cream over a deep wooden window seat, oak boards, warm sunlight, a wicker basket on the seat."
+    },
+    {
+      "id": "b5a",
+      "filename": "b5a.webp",
+      "step": "slats",
+      "type": "wooden venetian",
+      "tags": [
+        "warm",
+        "wood",
+        "modern"
+      ],
+      "alt": "Light-oak wooden venetian blind with slats half open",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a light-oak wooden venetian blind with wide slats tilted half open over a living room window, white walls, warm daylight striping the pale wooden floor."
+    },
+    {
+      "id": "b5b",
+      "filename": "b5b.webp",
+      "step": "slats",
+      "type": "venetian",
+      "tags": [
+        "dark",
+        "metal",
+        "industrial"
+      ],
+      "alt": "Matte black aluminium venetian blind over exposed brick",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a matte black aluminium venetian blind lowered over a window in an exposed-brick wall, dark moody light, black steel radiator beneath."
+    },
+    {
+      "id": "b5c",
+      "filename": "b5c.webp",
+      "step": "slats",
+      "type": "wooden venetian",
+      "tags": [
+        "warm",
+        "wood",
+        "modern"
+      ],
+      "alt": "Honey-oak venetian blind in a white room",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a honey-oak wooden venetian blind with cotton tapes over a window in a white room, slats open, warm golden light, a small plant on the sill."
+    },
+    {
+      "id": "b5d",
+      "filename": "b5d.webp",
+      "step": "slats",
+      "type": "venetian",
+      "tags": [
+        "dark",
+        "metal",
+        "industrial"
+      ],
+      "alt": "Black venetian blind in an industrial loft",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a black metal venetian blind over a tall factory window in an industrial loft, dark charcoal walls, cool light through the slats."
+    },
+    {
+      "id": "b6a",
+      "filename": "b6a.webp",
+      "step": "bedroom",
+      "type": "blackout roman",
+      "tags": [
+        "warm",
+        "dark",
+        "classic"
+      ],
+      "alt": "Layered blackout roman blind under sheer curtains with a brass pole",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a layered bedroom window: a dark blackout roman blind under sheer cream curtains on a brass pole, warm lamplight, walnut headboard, rich dark tones."
+    },
+    {
+      "id": "b6b",
+      "filename": "b6b.webp",
+      "step": "bedroom",
+      "type": "zebra",
+      "tags": [
+        "cool",
+        "bright",
+        "minimal"
+      ],
+      "alt": "Grey zebra day-night blind in a pale bedroom",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a grey zebra day-night blind with alternating sheer and solid bands over a bedroom window, pale grey walls, cool bright daylight, white bedding."
+    },
+    {
+      "id": "b6c",
+      "filename": "b6c.webp",
+      "step": "bedroom",
+      "type": "blackout roman",
+      "tags": [
+        "warm",
+        "dark",
+        "classic"
+      ],
+      "alt": "Layered roman blind and drapes with mahogany furniture",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a bedroom window layered with a chocolate-brown blackout roman blind and heavy taupe drapes, mahogany dresser, warm evening lamplight."
+    },
+    {
+      "id": "b6d",
+      "filename": "b6d.webp",
+      "step": "bedroom",
+      "type": "zebra",
+      "tags": [
+        "cool",
+        "bright",
+        "minimal"
+      ],
+      "alt": "White zebra blind in a bright minimalist bedroom",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a white zebra day-night blind over a window in a bright minimalist bedroom, light grey walls, cool morning light, low white bed."
+    },
+    {
+      "id": "b7a",
+      "filename": "b7a.webp",
+      "step": "living",
+      "type": "vertical",
+      "tags": [
+        "warm",
+        "stone",
+        "rustic"
+      ],
+      "alt": "Vertical blinds in a natural linen weave over patio doors",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: natural linen-weave vertical blinds hanging over wide patio doors in a living room, warm stone-coloured fabric, jute rug, terracotta cushions, soft warm light."
+    },
+    {
+      "id": "b7b",
+      "filename": "b7b.webp",
+      "step": "living",
+      "type": "roller",
+      "tags": [
+        "dark",
+        "metal",
+        "industrial"
+      ],
+      "alt": "Charcoal floor-to-ceiling roller blind in a steel-framed window",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a charcoal floor-to-ceiling roller blind over a black steel-framed window in a dark living room, concrete floor, black leather sofa, cool low light."
+    },
+    {
+      "id": "b7c",
+      "filename": "b7c.webp",
+      "step": "living",
+      "type": "vertical",
+      "tags": [
+        "warm",
+        "stone",
+        "rustic"
+      ],
+      "alt": "Oat-coloured vertical blinds beside a rattan chair",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: oat-coloured fabric vertical blinds over a tall living room window, rattan chair, limewashed wall, warm afternoon light."
+    },
+    {
+      "id": "b7d",
+      "filename": "b7d.webp",
+      "step": "living",
+      "type": "roller",
+      "tags": [
+        "dark",
+        "metal",
+        "industrial"
+      ],
+      "alt": "Black roller blind in an industrial loft living room",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a black blackout roller blind half-lowered over a large factory window in an industrial loft living room, dark walls, steel shelving, cool light."
+    },
+    {
+      "id": "b8a",
+      "filename": "b8a.webp",
+      "step": "kitchen",
+      "type": "wooden venetian",
+      "tags": [
+        "bright",
+        "wood",
+        "minimal"
+      ],
+      "alt": "White faux-wood venetian blind over a kitchen sink",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a white faux-wood venetian blind over a kitchen window above a sink, white cabinets, pale wooden counter, bright clean daylight."
+    },
+    {
+      "id": "b8b",
+      "filename": "b8b.webp",
+      "step": "kitchen",
+      "type": "roman",
+      "tags": [
+        "bright",
+        "stone",
+        "rustic"
+      ],
+      "alt": "Cream striped cotton roman blind over a farmhouse sink",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a cream cotton roman blind with a subtle stone-grey stripe over a kitchen window above a farmhouse sink, limestone counter, bright daylight, herbs on the sill."
+    },
+    {
+      "id": "b8c",
+      "filename": "b8c.webp",
+      "step": "kitchen",
+      "type": "wooden venetian",
+      "tags": [
+        "bright",
+        "wood",
+        "minimal"
+      ],
+      "alt": "White wooden venetian blind above a marble counter",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a white wooden venetian blind with slats open over a kitchen window, white marble counter, bright daylight, minimal white kitchen."
+    },
+    {
+      "id": "b8d",
+      "filename": "b8d.webp",
+      "step": "kitchen",
+      "type": "roman",
+      "tags": [
+        "bright",
+        "stone",
+        "rustic"
+      ],
+      "alt": "Stone-coloured linen roman blind in a country kitchen",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a stone-coloured linen roman blind over a country kitchen window, pale limestone sill, bright morning light, a ceramic jug and a wooden board."
+    },
+    {
+      "id": "b9a",
+      "filename": "b9a.webp",
+      "step": "dealbreaker",
+      "type": "venetian",
+      "tags": [
+        "dark",
+        "metal",
+        "industrial"
+      ],
+      "alt": "Shiny gold metallic venetian blind in a dark room",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a shiny gold-toned metallic venetian blind over a window in a dark room, glossy reflective slats, black walls, dim light."
+    },
+    {
+      "id": "b9b",
+      "filename": "b9b.webp",
+      "step": "dealbreaker",
+      "type": "woven wood",
+      "tags": [
+        "warm",
+        "wood",
+        "rustic"
+      ],
+      "alt": "Knotty bamboo roll-up blind on a log-cabin wall",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a rustic knotty bamboo roll-up blind over a small window in a log-cabin wall, warm wood everywhere, rough hand-tied cords, golden light."
+    },
+    {
+      "id": "b9c",
+      "filename": "b9c.webp",
+      "step": "dealbreaker",
+      "type": "venetian",
+      "tags": [
+        "dark",
+        "metal",
+        "industrial"
+      ],
+      "alt": "Chrome mirrored venetian blind with dark walls",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a mirrored chrome venetian blind over a window, reflective metal slats catching cold light, dark charcoal walls, black window frame."
+    },
+    {
+      "id": "b9d",
+      "filename": "b9d.webp",
+      "step": "dealbreaker",
+      "type": "woven wood",
+      "tags": [
+        "warm",
+        "wood",
+        "rustic"
+      ],
+      "alt": "Rough bamboo roll-up blind in a timber cabin",
+      "prompt": "Photorealistic interior photograph, portrait orientation (2:3), eye-level, natural daylight, editorial home-magazine quality. The window treatment fills the upper two thirds of the frame and is the clear subject. No people, no hands, no text, no lettering, no brand logos, no watermarks. Scene: a rough natural bamboo roll-up blind lowered over a window in a timber cabin, knotty pine walls, warm rustic light, a wooden stool beneath."
+    }
+  ]
+}

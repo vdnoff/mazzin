@@ -1,0 +1,2494 @@
+{
+  "slug": "blinds-test",
+  "funnel_id": "blinds_v1_test",
+  "locale": "en",
+  "stripe_mode": "test",
+  "meta": {
+    "title": "What's Your Window Style?",
+    "og_image": "/static/galleries/blinds/og.webp"
+  },
+  "swipe": {
+    "pairs_count": 9,
+    "headline": "Your window style analysis",
+    "subtext": "$400+ saved on your blinds",
+    "subtext_accent": "$400+",
+    "hint": "Tap your choice",
+    "card_aria": "Choose {label}",
+    "steps": [
+      {
+        "id": "hook",
+        "question": "Which window would you wake up to?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "b1a",
+                "img": "/static/galleries/blinds/b1a.webp",
+                "label": "Clean & bright",
+                "tags": [
+                  "bright",
+                  "cool",
+                  "minimal"
+                ],
+                "colors": [
+                  {
+                    "name": "Chalk White",
+                    "hex": "#F2F0EB",
+                    "element": "sheer fabric"
+                  },
+                  {
+                    "name": "Cool Linen",
+                    "hex": "#DDE0E3",
+                    "element": "bedding"
+                  },
+                  {
+                    "name": "Pale Ash",
+                    "hex": "#C9C4BA",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "b1b",
+                "img": "/static/galleries/blinds/b1b.webp",
+                "label": "Rich & layered",
+                "tags": [
+                  "dark",
+                  "warm",
+                  "classic"
+                ],
+                "colors": [
+                  {
+                    "name": "Forest Velvet",
+                    "hex": "#1F3A2E",
+                    "element": "roman blind"
+                  },
+                  {
+                    "name": "Aged Brass",
+                    "hex": "#B98A44",
+                    "element": "lamp"
+                  },
+                  {
+                    "name": "Walnut",
+                    "hex": "#4A2E1A",
+                    "element": "bedside table"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "images": [
+              {
+                "id": "b1c",
+                "img": "/static/galleries/blinds/b1c.webp",
+                "label": "Clean & bright",
+                "tags": [
+                  "bright",
+                  "cool",
+                  "minimal"
+                ],
+                "colors": [
+                  {
+                    "name": "Oat Sheer",
+                    "hex": "#E8E2D6",
+                    "element": "sheer fabric"
+                  },
+                  {
+                    "name": "Loft White",
+                    "hex": "#F4F3F0",
+                    "element": "walls"
+                  },
+                  {
+                    "name": "Concrete Grey",
+                    "hex": "#B8B8B4",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "b1d",
+                "img": "/static/galleries/blinds/b1d.webp",
+                "label": "Rich & layered",
+                "tags": [
+                  "dark",
+                  "warm",
+                  "classic"
+                ],
+                "colors": [
+                  {
+                    "name": "Burgundy Velvet",
+                    "hex": "#5B1F26",
+                    "element": "roman blind"
+                  },
+                  {
+                    "name": "Walnut Frame",
+                    "hex": "#4C2F1C",
+                    "element": "window frame"
+                  },
+                  {
+                    "name": "Lamp Amber",
+                    "hex": "#D8A25A",
+                    "element": "lamplight"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "material",
+        "question": "Which would you rather touch?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "b2a",
+                "img": "/static/galleries/blinds/b2a.webp",
+                "label": "Woven bamboo",
+                "tags": [
+                  "warm",
+                  "wood",
+                  "rustic"
+                ],
+                "colors": [
+                  {
+                    "name": "Honey Bamboo",
+                    "hex": "#C69A56",
+                    "element": "woven shade"
+                  },
+                  {
+                    "name": "Leaf Green",
+                    "hex": "#5F7A45",
+                    "element": "plants"
+                  },
+                  {
+                    "name": "Warm Oak",
+                    "hex": "#B8895A",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "b2b",
+                "img": "/static/galleries/blinds/b2b.webp",
+                "label": "Brushed metal",
+                "tags": [
+                  "cool",
+                  "metal",
+                  "industrial"
+                ],
+                "colors": [
+                  {
+                    "name": "Brushed Aluminium",
+                    "hex": "#A9ADB2",
+                    "element": "slats"
+                  },
+                  {
+                    "name": "Raw Concrete",
+                    "hex": "#8E8E8A",
+                    "element": "wall"
+                  },
+                  {
+                    "name": "Matte Black",
+                    "hex": "#1E1E1E",
+                    "element": "window frame"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "images": [
+              {
+                "id": "b2c",
+                "img": "/static/galleries/blinds/b2c.webp",
+                "label": "Woven bamboo",
+                "tags": [
+                  "warm",
+                  "wood",
+                  "rustic"
+                ],
+                "colors": [
+                  {
+                    "name": "Natural Jute",
+                    "hex": "#B79A6A",
+                    "element": "woven blind"
+                  },
+                  {
+                    "name": "Terracotta",
+                    "hex": "#B5623C",
+                    "element": "pot"
+                  },
+                  {
+                    "name": "Warm Plaster",
+                    "hex": "#E3D3BF",
+                    "element": "wall"
+                  }
+                ]
+              },
+              {
+                "id": "b2d",
+                "img": "/static/galleries/blinds/b2d.webp",
+                "label": "Brushed metal",
+                "tags": [
+                  "cool",
+                  "metal",
+                  "industrial"
+                ],
+                "colors": [
+                  {
+                    "name": "Steel Grey",
+                    "hex": "#7E8388",
+                    "element": "slats"
+                  },
+                  {
+                    "name": "Ink Black",
+                    "hex": "#141416",
+                    "element": "window frame"
+                  },
+                  {
+                    "name": "Concrete Sill",
+                    "hex": "#B4B4B0",
+                    "element": "sill"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "light",
+        "question": "How much daylight do you want?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "b3a",
+                "img": "/static/galleries/blinds/b3a.webp",
+                "label": "Soft & filtered",
+                "tags": [
+                  "bright",
+                  "warm",
+                  "modern"
+                ],
+                "colors": [
+                  {
+                    "name": "Oatmeal Linen",
+                    "hex": "#D9CBB3",
+                    "element": "roman blind"
+                  },
+                  {
+                    "name": "Morning Gold",
+                    "hex": "#F0D9A8",
+                    "element": "light"
+                  },
+                  {
+                    "name": "Pale Oak",
+                    "hex": "#CDB58C",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "b3b",
+                "img": "/static/galleries/blinds/b3b.webp",
+                "label": "Full blackout",
+                "tags": [
+                  "dark",
+                  "cool",
+                  "industrial"
+                ],
+                "colors": [
+                  {
+                    "name": "Charcoal",
+                    "hex": "#2A2B2E",
+                    "element": "roller blind"
+                  },
+                  {
+                    "name": "Graphite Wall",
+                    "hex": "#4A4C50",
+                    "element": "walls"
+                  },
+                  {
+                    "name": "Black Steel",
+                    "hex": "#1A1A1C",
+                    "element": "bed frame"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "images": [
+              {
+                "id": "b3c",
+                "img": "/static/galleries/blinds/b3c.webp",
+                "label": "Soft & filtered",
+                "tags": [
+                  "bright",
+                  "warm",
+                  "modern"
+                ],
+                "colors": [
+                  {
+                    "name": "Cream Cotton",
+                    "hex": "#EFE4CF",
+                    "element": "roman blind"
+                  },
+                  {
+                    "name": "Honey Light",
+                    "hex": "#E9C98A",
+                    "element": "light"
+                  },
+                  {
+                    "name": "Herringbone Oak",
+                    "hex": "#B9905E",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "b3d",
+                "img": "/static/galleries/blinds/b3d.webp",
+                "label": "Full blackout",
+                "tags": [
+                  "dark",
+                  "cool",
+                  "industrial"
+                ],
+                "colors": [
+                  {
+                    "name": "Slate",
+                    "hex": "#3C4148",
+                    "element": "roller blind"
+                  },
+                  {
+                    "name": "Dusk Blue",
+                    "hex": "#5A6B84",
+                    "element": "edge light"
+                  },
+                  {
+                    "name": "Concrete",
+                    "hex": "#6E6F72",
+                    "element": "wall"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "pattern",
+        "question": "Plain or patterned?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "b4a",
+                "img": "/static/galleries/blinds/b4a.webp",
+                "label": "Plain & calm",
+                "tags": [
+                  "cool",
+                  "stone",
+                  "minimal"
+                ],
+                "colors": [
+                  {
+                    "name": "Pale Grey",
+                    "hex": "#D4D5D3",
+                    "element": "roller blind"
+                  },
+                  {
+                    "name": "Chalk",
+                    "hex": "#F3F2EF",
+                    "element": "walls"
+                  },
+                  {
+                    "name": "Limestone",
+                    "hex": "#C6C2B8",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "b4b",
+                "img": "/static/galleries/blinds/b4b.webp",
+                "label": "Pattern & warmth",
+                "tags": [
+                  "warm",
+                  "wood",
+                  "rustic"
+                ],
+                "colors": [
+                  {
+                    "name": "Ochre Damask",
+                    "hex": "#C48A3C",
+                    "element": "roman blind"
+                  },
+                  {
+                    "name": "Cream Ground",
+                    "hex": "#EFE3CC",
+                    "element": "roman blind"
+                  },
+                  {
+                    "name": "Turned Oak",
+                    "hex": "#A7773F",
+                    "element": "pole"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "images": [
+              {
+                "id": "b4c",
+                "img": "/static/galleries/blinds/b4c.webp",
+                "label": "Plain & calm",
+                "tags": [
+                  "cool",
+                  "stone",
+                  "minimal"
+                ],
+                "colors": [
+                  {
+                    "name": "Putty Grey",
+                    "hex": "#C9C3B9",
+                    "element": "roller blind"
+                  },
+                  {
+                    "name": "Concrete",
+                    "hex": "#B0AFAA",
+                    "element": "wall"
+                  },
+                  {
+                    "name": "Pale Stone",
+                    "hex": "#D9D5CC",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "b4d",
+                "img": "/static/galleries/blinds/b4d.webp",
+                "label": "Pattern & warmth",
+                "tags": [
+                  "warm",
+                  "wood",
+                  "rustic"
+                ],
+                "colors": [
+                  {
+                    "name": "Leaf Print",
+                    "hex": "#5E7B4E",
+                    "element": "roman blind"
+                  },
+                  {
+                    "name": "Cream Ground",
+                    "hex": "#F0E8D6",
+                    "element": "roman blind"
+                  },
+                  {
+                    "name": "Oak Seat",
+                    "hex": "#B4864F",
+                    "element": "window seat"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "slats",
+        "question": "Which slats?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "b5a",
+                "img": "/static/galleries/blinds/b5a.webp",
+                "label": "Light oak",
+                "tags": [
+                  "warm",
+                  "wood",
+                  "modern"
+                ],
+                "colors": [
+                  {
+                    "name": "Light Oak",
+                    "hex": "#D2A86E",
+                    "element": "slats"
+                  },
+                  {
+                    "name": "Warm White",
+                    "hex": "#F4EFE6",
+                    "element": "walls"
+                  },
+                  {
+                    "name": "Pale Board",
+                    "hex": "#C9A97C",
+                    "element": "floor"
+                  }
+                ]
+              },
+              {
+                "id": "b5b",
+                "img": "/static/galleries/blinds/b5b.webp",
+                "label": "Matte black",
+                "tags": [
+                  "dark",
+                  "metal",
+                  "industrial"
+                ],
+                "colors": [
+                  {
+                    "name": "Matte Black",
+                    "hex": "#1C1C1E",
+                    "element": "slats"
+                  },
+                  {
+                    "name": "Red Brick",
+                    "hex": "#7E4A3A",
+                    "element": "wall"
+                  },
+                  {
+                    "name": "Iron",
+                    "hex": "#3A3A3C",
+                    "element": "radiator"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "images": [
+              {
+                "id": "b5c",
+                "img": "/static/galleries/blinds/b5c.webp",
+                "label": "Light oak",
+                "tags": [
+                  "warm",
+                  "wood",
+                  "modern"
+                ],
+                "colors": [
+                  {
+                    "name": "Honey Oak",
+                    "hex": "#CFA062",
+                    "element": "slats"
+                  },
+                  {
+                    "name": "Cotton Tape",
+                    "hex": "#EAE2D2",
+                    "element": "ladder tapes"
+                  },
+                  {
+                    "name": "Soft White",
+                    "hex": "#F5F2EC",
+                    "element": "walls"
+                  }
+                ]
+              },
+              {
+                "id": "b5d",
+                "img": "/static/galleries/blinds/b5d.webp",
+                "label": "Matte black",
+                "tags": [
+                  "dark",
+                  "metal",
+                  "industrial"
+                ],
+                "colors": [
+                  {
+                    "name": "Black Metal",
+                    "hex": "#202022",
+                    "element": "slats"
+                  },
+                  {
+                    "name": "Charcoal",
+                    "hex": "#3B3B3E",
+                    "element": "walls"
+                  },
+                  {
+                    "name": "Cool Glass",
+                    "hex": "#9DA9B5",
+                    "element": "window"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bedroom",
+        "question": "Bedroom blackout: which one?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "b6a",
+                "img": "/static/galleries/blinds/b6a.webp",
+                "label": "Layered & soft",
+                "tags": [
+                  "warm",
+                  "dark",
+                  "classic"
+                ],
+                "colors": [
+                  {
+                    "name": "Blackout Taupe",
+                    "hex": "#4E4038",
+                    "element": "roman blind"
+                  },
+                  {
+                    "name": "Sheer Cream",
+                    "hex": "#EFE6D6",
+                    "element": "curtains"
+                  },
+                  {
+                    "name": "Brass Pole",
+                    "hex": "#B78E4C",
+                    "element": "pole"
+                  }
+                ]
+              },
+              {
+                "id": "b6b",
+                "img": "/static/galleries/blinds/b6b.webp",
+                "label": "Sleek day-night",
+                "tags": [
+                  "cool",
+                  "bright",
+                  "minimal"
+                ],
+                "colors": [
+                  {
+                    "name": "Zebra Grey",
+                    "hex": "#A9ABAD",
+                    "element": "zebra blind"
+                  },
+                  {
+                    "name": "Pale Grey Wall",
+                    "hex": "#E4E5E6",
+                    "element": "walls"
+                  },
+                  {
+                    "name": "Crisp White",
+                    "hex": "#F7F7F5",
+                    "element": "bedding"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "images": [
+              {
+                "id": "b6c",
+                "img": "/static/galleries/blinds/b6c.webp",
+                "label": "Layered & soft",
+                "tags": [
+                  "warm",
+                  "dark",
+                  "classic"
+                ],
+                "colors": [
+                  {
+                    "name": "Chocolate",
+                    "hex": "#3D2A20",
+                    "element": "roman blind"
+                  },
+                  {
+                    "name": "Taupe Drape",
+                    "hex": "#8C7B6A",
+                    "element": "drapes"
+                  },
+                  {
+                    "name": "Mahogany",
+                    "hex": "#5A2D1E",
+                    "element": "dresser"
+                  }
+                ]
+              },
+              {
+                "id": "b6d",
+                "img": "/static/galleries/blinds/b6d.webp",
+                "label": "Sleek day-night",
+                "tags": [
+                  "cool",
+                  "bright",
+                  "minimal"
+                ],
+                "colors": [
+                  {
+                    "name": "White Band",
+                    "hex": "#F2F2F0",
+                    "element": "zebra blind"
+                  },
+                  {
+                    "name": "Light Grey",
+                    "hex": "#D7D9DB",
+                    "element": "walls"
+                  },
+                  {
+                    "name": "Cool Morning",
+                    "hex": "#DCE4EC",
+                    "element": "light"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "living",
+        "question": "Living room window: which one?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "b7a",
+                "img": "/static/galleries/blinds/b7a.webp",
+                "label": "Natural weave",
+                "tags": [
+                  "warm",
+                  "stone",
+                  "rustic"
+                ],
+                "colors": [
+                  {
+                    "name": "Linen Stone",
+                    "hex": "#C9BBA4",
+                    "element": "vertical blinds"
+                  },
+                  {
+                    "name": "Jute",
+                    "hex": "#B79A70",
+                    "element": "rug"
+                  },
+                  {
+                    "name": "Terracotta",
+                    "hex": "#B6603F",
+                    "element": "cushions"
+                  }
+                ]
+              },
+              {
+                "id": "b7b",
+                "img": "/static/galleries/blinds/b7b.webp",
+                "label": "Floor-to-ceiling dark",
+                "tags": [
+                  "dark",
+                  "metal",
+                  "industrial"
+                ],
+                "colors": [
+                  {
+                    "name": "Charcoal",
+                    "hex": "#26272A",
+                    "element": "roller blind"
+                  },
+                  {
+                    "name": "Black Steel",
+                    "hex": "#161618",
+                    "element": "window frame"
+                  },
+                  {
+                    "name": "Concrete Floor",
+                    "hex": "#8F8F8B",
+                    "element": "floor"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "images": [
+              {
+                "id": "b7c",
+                "img": "/static/galleries/blinds/b7c.webp",
+                "label": "Natural weave",
+                "tags": [
+                  "warm",
+                  "stone",
+                  "rustic"
+                ],
+                "colors": [
+                  {
+                    "name": "Oat",
+                    "hex": "#D6C7AE",
+                    "element": "vertical blinds"
+                  },
+                  {
+                    "name": "Rattan",
+                    "hex": "#C39A5E",
+                    "element": "chair"
+                  },
+                  {
+                    "name": "Limewash",
+                    "hex": "#E7DFD2",
+                    "element": "wall"
+                  }
+                ]
+              },
+              {
+                "id": "b7d",
+                "img": "/static/galleries/blinds/b7d.webp",
+                "label": "Floor-to-ceiling dark",
+                "tags": [
+                  "dark",
+                  "metal",
+                  "industrial"
+                ],
+                "colors": [
+                  {
+                    "name": "Blackout Black",
+                    "hex": "#1B1B1D",
+                    "element": "roller blind"
+                  },
+                  {
+                    "name": "Dark Wall",
+                    "hex": "#33353A",
+                    "element": "walls"
+                  },
+                  {
+                    "name": "Steel Shelf",
+                    "hex": "#6B6E73",
+                    "element": "shelving"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "kitchen",
+        "question": "Kitchen window: which one?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "b8a",
+                "img": "/static/galleries/blinds/b8a.webp",
+                "label": "Crisp white slats",
+                "tags": [
+                  "bright",
+                  "wood",
+                  "minimal"
+                ],
+                "colors": [
+                  {
+                    "name": "Pure White",
+                    "hex": "#F6F5F2",
+                    "element": "faux-wood slats"
+                  },
+                  {
+                    "name": "White Cabinet",
+                    "hex": "#EDECE8",
+                    "element": "cabinets"
+                  },
+                  {
+                    "name": "Pale Wood",
+                    "hex": "#D8C3A0",
+                    "element": "counter"
+                  }
+                ]
+              },
+              {
+                "id": "b8b",
+                "img": "/static/galleries/blinds/b8b.webp",
+                "label": "Soft stripe fabric",
+                "tags": [
+                  "bright",
+                  "stone",
+                  "rustic"
+                ],
+                "colors": [
+                  {
+                    "name": "Cream Stripe",
+                    "hex": "#EDE4D2",
+                    "element": "roman blind"
+                  },
+                  {
+                    "name": "Stone Stripe",
+                    "hex": "#A9A297",
+                    "element": "roman blind"
+                  },
+                  {
+                    "name": "Limestone",
+                    "hex": "#D7D0C2",
+                    "element": "counter"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "images": [
+              {
+                "id": "b8c",
+                "img": "/static/galleries/blinds/b8c.webp",
+                "label": "Crisp white slats",
+                "tags": [
+                  "bright",
+                  "wood",
+                  "minimal"
+                ],
+                "colors": [
+                  {
+                    "name": "White Wood",
+                    "hex": "#F3F1EC",
+                    "element": "wooden slats"
+                  },
+                  {
+                    "name": "Marble",
+                    "hex": "#E9E6E0",
+                    "element": "counter"
+                  },
+                  {
+                    "name": "Soft Grey Vein",
+                    "hex": "#B9BCC0",
+                    "element": "counter"
+                  }
+                ]
+              },
+              {
+                "id": "b8d",
+                "img": "/static/galleries/blinds/b8d.webp",
+                "label": "Soft stripe fabric",
+                "tags": [
+                  "bright",
+                  "stone",
+                  "rustic"
+                ],
+                "colors": [
+                  {
+                    "name": "Stone Linen",
+                    "hex": "#CFC4B0",
+                    "element": "roman blind"
+                  },
+                  {
+                    "name": "Limestone Sill",
+                    "hex": "#DAD3C4",
+                    "element": "sill"
+                  },
+                  {
+                    "name": "Morning White",
+                    "hex": "#F6F3EC",
+                    "element": "walls"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "dealbreaker",
+        "question": "Which would you never hang?",
+        "format": "pair",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "b9a",
+                "img": "/static/galleries/blinds/b9a.webp",
+                "label": "Shiny metallic",
+                "tags": [
+                  "dark",
+                  "metal",
+                  "industrial"
+                ],
+                "colors": [
+                  {
+                    "name": "Gold Metallic",
+                    "hex": "#C7A247",
+                    "element": "slats"
+                  },
+                  {
+                    "name": "Black Wall",
+                    "hex": "#1A1A1A",
+                    "element": "walls"
+                  },
+                  {
+                    "name": "Dim Bronze",
+                    "hex": "#6E5A2E",
+                    "element": "reflections"
+                  }
+                ]
+              },
+              {
+                "id": "b9b",
+                "img": "/static/galleries/blinds/b9b.webp",
+                "label": "Rustic bamboo",
+                "tags": [
+                  "warm",
+                  "wood",
+                  "rustic"
+                ],
+                "colors": [
+                  {
+                    "name": "Knotty Bamboo",
+                    "hex": "#B98B4E",
+                    "element": "roll-up blind"
+                  },
+                  {
+                    "name": "Log Wall",
+                    "hex": "#8E6234",
+                    "element": "walls"
+                  },
+                  {
+                    "name": "Cabin Gold",
+                    "hex": "#D9A85E",
+                    "element": "light"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "p2",
+            "images": [
+              {
+                "id": "b9c",
+                "img": "/static/galleries/blinds/b9c.webp",
+                "label": "Shiny metallic",
+                "tags": [
+                  "dark",
+                  "metal",
+                  "industrial"
+                ],
+                "colors": [
+                  {
+                    "name": "Chrome",
+                    "hex": "#C9CDD1",
+                    "element": "slats"
+                  },
+                  {
+                    "name": "Charcoal Wall",
+                    "hex": "#2C2D30",
+                    "element": "walls"
+                  },
+                  {
+                    "name": "Cold Light",
+                    "hex": "#AEB8C4",
+                    "element": "reflections"
+                  }
+                ]
+              },
+              {
+                "id": "b9d",
+                "img": "/static/galleries/blinds/b9d.webp",
+                "label": "Rustic bamboo",
+                "tags": [
+                  "warm",
+                  "wood",
+                  "rustic"
+                ],
+                "colors": [
+                  {
+                    "name": "Raw Bamboo",
+                    "hex": "#C2985C",
+                    "element": "roll-up blind"
+                  },
+                  {
+                    "name": "Knotty Pine",
+                    "hex": "#B27C43",
+                    "element": "walls"
+                  },
+                  {
+                    "name": "Warm Timber",
+                    "hex": "#8F5A2C",
+                    "element": "stool"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "scoring": "inverse"
+      }
+    ]
+  },
+  "interstitials": [
+    {
+      "after_step": 3,
+      "template": "pattern",
+      "kicker": "Pattern detected",
+      "line": "You choose {leading_trait} over {opposite} — {n} of {total} choices",
+      "sub": "Adjusting what you see next.",
+      "cta": "Continue analysis"
+    },
+    {
+      "after_step": 6,
+      "template": "confirm",
+      "kicker": "Signal recorded",
+      "line": "Your {leading_material} signal is strong. Testing it.",
+      "sub": "Adjusting what you see next.",
+      "cta": "Continue analysis"
+    },
+    {
+      "after_step": 8,
+      "template": "almost",
+      "kicker": "Calibrating",
+      "line": "Profile {pct}% calibrated. One last signal.",
+      "sub": "One more, then the read.",
+      "cta": "Continue analysis"
+    }
+  ],
+  "interstitial_working": [
+    "Analyzing your choices…",
+    "Comparing against our data…",
+    "Finding your window style…"
+  ],
+  "preview_gallery": [
+    {
+      "id": "b1a",
+      "img": "/static/galleries/blinds/b1a.webp",
+      "tags": [
+        "bright",
+        "cool",
+        "minimal"
+      ]
+    },
+    {
+      "id": "b1b",
+      "img": "/static/galleries/blinds/b1b.webp",
+      "tags": [
+        "dark",
+        "warm",
+        "classic"
+      ]
+    },
+    {
+      "id": "b1c",
+      "img": "/static/galleries/blinds/b1c.webp",
+      "tags": [
+        "bright",
+        "cool",
+        "minimal"
+      ]
+    },
+    {
+      "id": "b1d",
+      "img": "/static/galleries/blinds/b1d.webp",
+      "tags": [
+        "dark",
+        "warm",
+        "classic"
+      ]
+    },
+    {
+      "id": "b2a",
+      "img": "/static/galleries/blinds/b2a.webp",
+      "tags": [
+        "warm",
+        "wood",
+        "rustic"
+      ]
+    },
+    {
+      "id": "b2b",
+      "img": "/static/galleries/blinds/b2b.webp",
+      "tags": [
+        "cool",
+        "metal",
+        "industrial"
+      ]
+    },
+    {
+      "id": "b2c",
+      "img": "/static/galleries/blinds/b2c.webp",
+      "tags": [
+        "warm",
+        "wood",
+        "rustic"
+      ]
+    },
+    {
+      "id": "b2d",
+      "img": "/static/galleries/blinds/b2d.webp",
+      "tags": [
+        "cool",
+        "metal",
+        "industrial"
+      ]
+    },
+    {
+      "id": "b3a",
+      "img": "/static/galleries/blinds/b3a.webp",
+      "tags": [
+        "bright",
+        "warm",
+        "modern"
+      ]
+    },
+    {
+      "id": "b3b",
+      "img": "/static/galleries/blinds/b3b.webp",
+      "tags": [
+        "dark",
+        "cool",
+        "industrial"
+      ]
+    },
+    {
+      "id": "b3c",
+      "img": "/static/galleries/blinds/b3c.webp",
+      "tags": [
+        "bright",
+        "warm",
+        "modern"
+      ]
+    },
+    {
+      "id": "b3d",
+      "img": "/static/galleries/blinds/b3d.webp",
+      "tags": [
+        "dark",
+        "cool",
+        "industrial"
+      ]
+    },
+    {
+      "id": "b4a",
+      "img": "/static/galleries/blinds/b4a.webp",
+      "tags": [
+        "cool",
+        "stone",
+        "minimal"
+      ]
+    },
+    {
+      "id": "b4b",
+      "img": "/static/galleries/blinds/b4b.webp",
+      "tags": [
+        "warm",
+        "wood",
+        "rustic"
+      ]
+    },
+    {
+      "id": "b4c",
+      "img": "/static/galleries/blinds/b4c.webp",
+      "tags": [
+        "cool",
+        "stone",
+        "minimal"
+      ]
+    },
+    {
+      "id": "b4d",
+      "img": "/static/galleries/blinds/b4d.webp",
+      "tags": [
+        "warm",
+        "wood",
+        "rustic"
+      ]
+    },
+    {
+      "id": "b5a",
+      "img": "/static/galleries/blinds/b5a.webp",
+      "tags": [
+        "warm",
+        "wood",
+        "modern"
+      ]
+    },
+    {
+      "id": "b5b",
+      "img": "/static/galleries/blinds/b5b.webp",
+      "tags": [
+        "dark",
+        "metal",
+        "industrial"
+      ]
+    },
+    {
+      "id": "b5c",
+      "img": "/static/galleries/blinds/b5c.webp",
+      "tags": [
+        "warm",
+        "wood",
+        "modern"
+      ]
+    },
+    {
+      "id": "b5d",
+      "img": "/static/galleries/blinds/b5d.webp",
+      "tags": [
+        "dark",
+        "metal",
+        "industrial"
+      ]
+    },
+    {
+      "id": "b6a",
+      "img": "/static/galleries/blinds/b6a.webp",
+      "tags": [
+        "warm",
+        "dark",
+        "classic"
+      ]
+    },
+    {
+      "id": "b6b",
+      "img": "/static/galleries/blinds/b6b.webp",
+      "tags": [
+        "cool",
+        "bright",
+        "minimal"
+      ]
+    },
+    {
+      "id": "b6c",
+      "img": "/static/galleries/blinds/b6c.webp",
+      "tags": [
+        "warm",
+        "dark",
+        "classic"
+      ]
+    },
+    {
+      "id": "b6d",
+      "img": "/static/galleries/blinds/b6d.webp",
+      "tags": [
+        "cool",
+        "bright",
+        "minimal"
+      ]
+    },
+    {
+      "id": "b7a",
+      "img": "/static/galleries/blinds/b7a.webp",
+      "tags": [
+        "warm",
+        "stone",
+        "rustic"
+      ]
+    },
+    {
+      "id": "b7b",
+      "img": "/static/galleries/blinds/b7b.webp",
+      "tags": [
+        "dark",
+        "metal",
+        "industrial"
+      ]
+    },
+    {
+      "id": "b7c",
+      "img": "/static/galleries/blinds/b7c.webp",
+      "tags": [
+        "warm",
+        "stone",
+        "rustic"
+      ]
+    },
+    {
+      "id": "b7d",
+      "img": "/static/galleries/blinds/b7d.webp",
+      "tags": [
+        "dark",
+        "metal",
+        "industrial"
+      ]
+    },
+    {
+      "id": "b8a",
+      "img": "/static/galleries/blinds/b8a.webp",
+      "tags": [
+        "bright",
+        "wood",
+        "minimal"
+      ]
+    },
+    {
+      "id": "b8b",
+      "img": "/static/galleries/blinds/b8b.webp",
+      "tags": [
+        "bright",
+        "stone",
+        "rustic"
+      ]
+    },
+    {
+      "id": "b8c",
+      "img": "/static/galleries/blinds/b8c.webp",
+      "tags": [
+        "bright",
+        "wood",
+        "minimal"
+      ]
+    },
+    {
+      "id": "b8d",
+      "img": "/static/galleries/blinds/b8d.webp",
+      "tags": [
+        "bright",
+        "stone",
+        "rustic"
+      ]
+    },
+    {
+      "id": "b9a",
+      "img": "/static/galleries/blinds/b9a.webp",
+      "tags": [
+        "dark",
+        "metal",
+        "industrial"
+      ]
+    },
+    {
+      "id": "b9b",
+      "img": "/static/galleries/blinds/b9b.webp",
+      "tags": [
+        "warm",
+        "wood",
+        "rustic"
+      ]
+    },
+    {
+      "id": "b9c",
+      "img": "/static/galleries/blinds/b9c.webp",
+      "tags": [
+        "dark",
+        "metal",
+        "industrial"
+      ]
+    },
+    {
+      "id": "b9d",
+      "img": "/static/galleries/blinds/b9d.webp",
+      "tags": [
+        "warm",
+        "wood",
+        "rustic"
+      ]
+    }
+  ],
+  "style_elements": {
+    "title": "Your Style Elements",
+    "subline": "Recognized from your choices — specified in your full guide.",
+    "items": [
+      {
+        "id": "sheer-roller",
+        "label": "Sheer roller",
+        "spec": "Sheer roller — 10-15% openness, white or oat, chain on the wall side",
+        "image": "b1a",
+        "img": "/static/galleries/blinds/b1a.webp",
+        "tags": [
+          "bright",
+          "cool",
+          "minimal"
+        ]
+      },
+      {
+        "id": "velvet-roman",
+        "label": "Velvet roman",
+        "spec": "Lined velvet roman — cotton velvet, blackout lining, cased header on a pole",
+        "image": "b1b",
+        "img": "/static/galleries/blinds/b1b.webp",
+        "tags": [
+          "dark",
+          "warm",
+          "classic"
+        ]
+      },
+      {
+        "id": "woven-wood",
+        "label": "Woven wood",
+        "spec": "Woven bamboo shade — natural, unlined, edge-bound to stop fraying",
+        "image": "b2a",
+        "img": "/static/galleries/blinds/b2a.webp",
+        "tags": [
+          "warm",
+          "wood",
+          "rustic"
+        ]
+      },
+      {
+        "id": "aluminium-venetian",
+        "label": "Aluminium venetian",
+        "spec": "25 mm aluminium venetian — brushed finish, powder-coated headrail",
+        "image": "b2b",
+        "img": "/static/galleries/blinds/b2b.webp",
+        "tags": [
+          "cool",
+          "metal",
+          "industrial"
+        ]
+      },
+      {
+        "id": "linen-roman",
+        "label": "Linen roman",
+        "spec": "Linen-look roman — light-filtering lining, cassette-free, soft fold",
+        "image": "b3a",
+        "img": "/static/galleries/blinds/b3a.webp",
+        "tags": [
+          "bright",
+          "warm",
+          "modern"
+        ]
+      },
+      {
+        "id": "blackout-roller",
+        "label": "Blackout roller",
+        "spec": "Blackout roller — coated fabric, side channels if it must be total",
+        "image": "b3b",
+        "img": "/static/galleries/blinds/b3b.webp",
+        "tags": [
+          "dark",
+          "cool",
+          "industrial"
+        ]
+      },
+      {
+        "id": "oak-venetian",
+        "label": "Oak venetian",
+        "spec": "50 mm wooden venetian — real oak or basswood, cotton ladder tapes",
+        "image": "b5a",
+        "img": "/static/galleries/blinds/b5a.webp",
+        "tags": [
+          "warm",
+          "wood",
+          "modern"
+        ]
+      },
+      {
+        "id": "black-venetian",
+        "label": "Black venetian",
+        "spec": "25 mm aluminium venetian — matte black, black cords and headrail",
+        "image": "b5b",
+        "img": "/static/galleries/blinds/b5b.webp",
+        "tags": [
+          "dark",
+          "metal",
+          "industrial"
+        ]
+      },
+      {
+        "id": "zebra-blind",
+        "label": "Zebra day-night",
+        "spec": "Zebra blind — alternating bands, grey or white, chain control",
+        "image": "b6b",
+        "img": "/static/galleries/blinds/b6b.webp",
+        "tags": [
+          "cool",
+          "bright",
+          "minimal"
+        ]
+      },
+      {
+        "id": "vertical-weave",
+        "label": "Vertical weave",
+        "spec": "89 mm vertical blinds — linen-look fabric, wand control, chain-free",
+        "image": "b7a",
+        "img": "/static/galleries/blinds/b7a.webp",
+        "tags": [
+          "warm",
+          "stone",
+          "rustic"
+        ]
+      },
+      {
+        "id": "faux-wood",
+        "label": "Faux-wood venetian",
+        "spec": "50 mm faux-wood venetian — moisture-proof, white, for kitchens and bathrooms",
+        "image": "b8a",
+        "img": "/static/galleries/blinds/b8a.webp",
+        "tags": [
+          "bright",
+          "wood",
+          "minimal"
+        ]
+      },
+      {
+        "id": "layered-window",
+        "label": "Layered window",
+        "spec": "Blackout roman under a sheer — one pole, two layers, brass finials",
+        "image": "b6a",
+        "img": "/static/galleries/blinds/b6a.webp",
+        "tags": [
+          "warm",
+          "dark",
+          "classic"
+        ]
+      }
+    ]
+  },
+  "styles": [
+    {
+      "id": "modern_minimal",
+      "name": "Modern Minimal",
+      "tags": [
+        "minimal",
+        "cool",
+        "bright",
+        "metal"
+      ],
+      "blurb": "Plain fabrics, hidden hardware and daylight doing the decorating — the blind should almost disappear when it is up.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Chalk White",
+              "rgb": [
+                242,
+                240,
+                235
+              ]
+            },
+            {
+              "name": "Pale Grey",
+              "rgb": [
+                212,
+                213,
+                211
+              ]
+            },
+            {
+              "name": "Brushed Steel",
+              "rgb": [
+                169,
+                173,
+                178
+              ]
+            },
+            {
+              "name": "Graphite",
+              "rgb": [
+                58,
+                58,
+                60
+              ]
+            }
+          ],
+          "line": "Chalk white carries every window, pale grey takes the ones facing the street, and graphite appears once — on the chain and the brackets."
+        },
+        "mistakes": {
+          "setup": "That one is the cheapest of the five to put right. The other four are ranked by what they cost to undo, and the one that costs most is",
+          "trigger": "the cassette you were upsold, before it is fitted,"
+        },
+        "materials": {
+          "setup": "Plain fabric and metal hardware only work with one rule between them, and it is",
+          "trigger": "the same white on every window, and only that,"
+        },
+        "shopping": {
+          "setup": "Measure before anything else, and with {slats} in the picture the number people get wrong is",
+          "trigger": "the recess depth, not the width,"
+        },
+        "dna": {
+          "setup": "The price traps in this category are all aimed at your style, because a plain blind looks the same in every price band until",
+          "trigger": "the third month, when the cheap fabric cockles,"
+        },
+        "splurge": {
+          "setup": "Spend on the fabric and save on the mechanism, and the one place the look falls apart is",
+          "trigger": "a chain that hangs on the wrong side,"
+        },
+        "mistake_one": {
+          "title": "Paying for a cassette you do not need",
+          "body": "A cassette headbox is sold as the tidy finish for a plain blind, and on a recessed window it hides nothing — the fabric already disappears into the reveal. It adds a third to the price and a plastic box to a window that was meant to be empty.",
+          "fix": "Order a bare roller with a fascia-free bracket, and put the saving into a better fabric."
+        }
+      }
+    },
+    {
+      "id": "warm_scandi",
+      "name": "Warm Scandinavian",
+      "tags": [
+        "modern",
+        "warm",
+        "bright",
+        "wood"
+      ],
+      "blurb": "Pale wood, soft linen and light kept warm rather than blocked — a window that looks good empty and better half-drawn.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Warm White",
+              "rgb": [
+                244,
+                239,
+                230
+              ]
+            },
+            {
+              "name": "Oatmeal Linen",
+              "rgb": [
+                217,
+                203,
+                179
+              ]
+            },
+            {
+              "name": "Light Oak",
+              "rgb": [
+                210,
+                168,
+                110
+              ]
+            },
+            {
+              "name": "Clay",
+              "rgb": [
+                181,
+                98,
+                60
+              ]
+            }
+          ],
+          "line": "Warm white is the wall behind every blind, oatmeal linen is the fabric, light oak is the slat, and clay turns up once — a single cushion, never a blind."
+        },
+        "mistakes": {
+          "setup": "That one is the cheapest of the five to put right. The other four are ranked by what they cost to undo, and the one that costs most is",
+          "trigger": "the wood tone, matched to the wrong floor,"
+        },
+        "materials": {
+          "setup": "Linen and pale oak agree on almost everything, and the one thing they do not is",
+          "trigger": "a bright white lining, which reads as cold,"
+        },
+        "shopping": {
+          "setup": "Buy the bedroom blind last and the living room one first, because with {material} in the picture the mistake is",
+          "trigger": "ordering all the windows at once,"
+        },
+        "dna": {
+          "setup": "This is the style every retailer photographs, so the price traps are dressed up as the look itself — and the first one is",
+          "trigger": "the word linen, on a polyester blind,"
+        },
+        "splurge": {
+          "setup": "Spend on one real wooden blind where you see it most, save on the rest, and the room reads as",
+          "trigger": "one decision instead of four,"
+        },
+        "mistake_one": {
+          "title": "Buying \"linen\" that is not linen",
+          "body": "Most blinds sold as linen are a polyester weave printed to look like it, and they hang like it too: stiff folds, a shine in side light, and a colour that goes grey rather than mellowing. The word costs nothing to print on a label.",
+          "fix": "Ask for the fibre content in writing, and accept a linen-cotton blend before a polyester that only borrows the name."
+        }
+      }
+    },
+    {
+      "id": "classic_elegant",
+      "name": "Classic Elegant",
+      "tags": [
+        "classic",
+        "warm",
+        "dark",
+        "wood"
+      ],
+      "blurb": "Weight, lining and a proper pole — blinds that are part of the room's furniture, not a fitting on the glass.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Cream Ground",
+              "rgb": [
+                239,
+                227,
+                204
+              ]
+            },
+            {
+              "name": "Forest Velvet",
+              "rgb": [
+                31,
+                58,
+                46
+              ]
+            },
+            {
+              "name": "Walnut",
+              "rgb": [
+                74,
+                46,
+                26
+              ]
+            },
+            {
+              "name": "Aged Brass",
+              "rgb": [
+                185,
+                138,
+                68
+              ]
+            }
+          ],
+          "line": "Cream ground keeps the room from going heavy, forest velvet is the blind itself, walnut is the pole, and aged brass appears only on the finials and the hold-back."
+        },
+        "mistakes": {
+          "setup": "That one is the cheapest of the five to put right. The other four are ranked by what they cost to undo, and the one that costs most is",
+          "trigger": "the lining, chosen after the fabric,"
+        },
+        "materials": {
+          "setup": "Velvet and brass carry a room on their own, and the pairing that turns the whole thing to costume is",
+          "trigger": "a printed damask beside a real one,"
+        },
+        "shopping": {
+          "setup": "Measure the drop before the width, because with {light} in the picture the one number people get wrong is",
+          "trigger": "where the blind stacks when it is up,"
+        },
+        "dna": {
+          "setup": "Every price band in this category has a \"luxury\" line, and the trap is that the word is doing the work — the first one is",
+          "trigger": "a made-to-measure price for a stock size,"
+        },
+        "splurge": {
+          "setup": "Spend on the fabric and the lining, save on the pole, and the piece that ages worst is",
+          "trigger": "the cheap brass, by the second winter,"
+        },
+        "mistake_one": {
+          "title": "Choosing the lining last",
+          "body": "A roman blind is two fabrics, and the one nobody sees decides how it hangs, how much light it stops and whether the face fabric fades. Left to the end it defaults to whatever is cheapest, and a velvet blind with a thin lining is a curtain that cannot make up its mind.",
+          "fix": "Choose the lining with the fabric, in the same shop, in the same light — blackout for a bedroom, interlined for anything that has to hang heavy."
+        }
+      }
+    },
+    {
+      "id": "natural_organic",
+      "name": "Natural Organic",
+      "tags": [
+        "rustic",
+        "warm",
+        "wood",
+        "stone"
+      ],
+      "blurb": "Bamboo, jute and stone-coloured weaves — texture over pattern, and every window a little different from the next.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Warm Plaster",
+              "rgb": [
+                227,
+                211,
+                191
+              ]
+            },
+            {
+              "name": "Honey Bamboo",
+              "rgb": [
+                198,
+                154,
+                86
+              ]
+            },
+            {
+              "name": "Linen Stone",
+              "rgb": [
+                201,
+                187,
+                164
+              ]
+            },
+            {
+              "name": "Terracotta",
+              "rgb": [
+                181,
+                98,
+                60
+              ]
+            }
+          ],
+          "line": "Warm plaster is the wall, honey bamboo is the blind, linen stone is the softer fabric on the room it needs to be quiet in, and terracotta is the one thing that is allowed to be loud."
+        },
+        "mistakes": {
+          "setup": "That one is the cheapest of the five to put right. The other four are ranked by what they cost to undo, and the one that costs most is",
+          "trigger": "the weave that lets the whole street in,"
+        },
+        "materials": {
+          "setup": "Bamboo and linen live together easily, and the one combination that goes straight to holiday rental is",
+          "trigger": "two woven blinds in two different tones,"
+        },
+        "shopping": {
+          "setup": "Buy the living room first and the bathroom last, because with {material} in the picture the mistake is",
+          "trigger": "a natural weave in the one room that steams,"
+        },
+        "dna": {
+          "setup": "The trap in this category is that texture photographs well, so the first thing you pay for is",
+          "trigger": "a lining you were never told about,"
+        },
+        "splurge": {
+          "setup": "Spend on one real woven-wood blind where the light hits it, save everywhere else, and the thing that gives a cheap one away is",
+          "trigger": "the cord, not the weave,"
+        },
+        "mistake_one": {
+          "title": "A woven blind with no privacy",
+          "body": "A bamboo or jute weave looks solid in the shop and turns into a lantern at night: with the lights on, every gap in the weave shows the room to the street. It is the most common reason a natural blind gets taken down within a year.",
+          "fix": "Order a privacy lining on any woven blind facing a road, or pair it with a sheer roller behind it for the evenings."
+        }
+      }
+    },
+    {
+      "id": "bold_statement",
+      "name": "Bold Statement",
+      "tags": [
+        "industrial",
+        "dark",
+        "cool",
+        "metal"
+      ],
+      "blurb": "Black slats, charcoal fabric and steel-framed windows — the blind is a graphic element, and it is meant to be seen.",
+      "reveals": {
+        "palette": {
+          "colors": [
+            {
+              "name": "Charcoal",
+              "rgb": [
+                38,
+                39,
+                42
+              ]
+            },
+            {
+              "name": "Matte Black",
+              "rgb": [
+                28,
+                28,
+                30
+              ]
+            },
+            {
+              "name": "Steel Grey",
+              "rgb": [
+                126,
+                131,
+                136
+              ]
+            },
+            {
+              "name": "Red Brick",
+              "rgb": [
+                126,
+                74,
+                58
+              ]
+            }
+          ],
+          "line": "Charcoal is the fabric, matte black is the slat and the hardware, steel grey is where the light lands, and red brick is the wall that stops it all reading as a cinema."
+        },
+        "mistakes": {
+          "setup": "That one is the cheapest of the five to put right. The other four are ranked by what they cost to undo, and the one that costs most is",
+          "trigger": "the black that is not the same black,"
+        },
+        "materials": {
+          "setup": "Black metal and dark fabric want one warm surface between them, and the pairing that never works is",
+          "trigger": "gloss black slats against matte black frames,"
+        },
+        "shopping": {
+          "setup": "Order the largest window first, because with {slats} in the picture the number people get wrong is",
+          "trigger": "the slat width, not the drop,"
+        },
+        "dna": {
+          "setup": "Dark blinds are where retailers hide the biggest markups, because black shows nothing in a photograph — the first trap is",
+          "trigger": "the \"designer\" black at twice the price,"
+        },
+        "splurge": {
+          "setup": "Spend on the metal venetian you see from the sofa, save on every blackout roller, and the look breaks on",
+          "trigger": "a white chain on a black blind,"
+        },
+        "mistake_one": {
+          "title": "Mixing blacks",
+          "body": "There are warm blacks, blue blacks and grey blacks, and a black venetian beside a black steel window frame in a different one looks like a mistake from across the room. It is the single most visible error in a dark scheme and the one nobody can name.",
+          "fix": "Take a slat sample to the window frame in daylight before you order, and match the hardware to the frame, not to the fabric."
+        }
+      }
+    }
+  ],
+  "analyzing": {
+    "duration_ms": 2500,
+    "text": "Analyzing your choices",
+    "messages": [
+      "Analyzing your 9 choices…",
+      "Comparing against thousands of windows…",
+      "Finding your window style…"
+    ]
+  },
+  "report": {
+    "generating_messages": [
+      "Our AI is comparing your choices against thousands of windows…",
+      "Searching for the blind types that fit YOU…",
+      "Checking the price traps set for your style…",
+      "Writing your buyer's guide…"
+    ],
+    "sections": [
+      {
+        "id": "palette",
+        "title": "Your Window Colour Palette",
+        "enabled": true,
+        "preview": [
+          "Each one is specified by fabric or slat finish as well as by colour, because the same shade reads differently in a weave than it does on metal.",
+          "The guide gives the exact codes, which window each colour belongs on, and the one place a second tone is allowed."
+        ],
+        "reveal": {
+          "mode": "visible"
+        }
+      },
+      {
+        "id": "mistakes",
+        "title": "What to Avoid",
+        "enabled": true,
+        "preview": [
+          "It sounds obvious written down, and it is still the thing that costs people the most to undo once the brackets are in the wall.",
+          "The remaining four are ranked by what they cost to fix, cheapest correction first."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "materials",
+        "title": "Best Blind Types for Your Style",
+        "enabled": true,
+        "preview": [
+          "Get that one pairing right and every other window in the house can follow it without another decision being made.",
+          "The guide names the blind types, the two combinations to avoid entirely, and what to ask a supplier for."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "shopping",
+        "title": "Pre-Purchase Checklist",
+        "enabled": true,
+        "preview": [
+          "Everything else can wait until the first window is up and you can see what the room actually still needs.",
+          "The list is ordered by what has to be decided first, not by what happens to be cheapest."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "dna",
+        "title": "Price Traps in This Category",
+        "enabled": true,
+        "preview": [
+          "It shows up on the price tag as a word rather than a number, which is exactly why it works.",
+          "The guide names the traps set for your style in particular and what each one is actually worth paying."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "splurge",
+        "title": "Get the Look for Less",
+        "enabled": true,
+        "preview": [
+          "The difference is invisible in a showroom and obvious after two years of pulling the blind up every morning.",
+          "The guide splits the budget window by window, with the one place to overspend and three to save."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      }
+    ],
+    "mistake_one": {
+      "title": "Mistake #1 of 5",
+      "locked_note": "Mistakes 2–5 — inside your full guide"
+    },
+    "also": {
+      "title": "Also in your guide",
+      "rows": [
+        {
+          "section": "materials",
+          "hook": "Your {material} + {slats} pairing has one expensive conflict — and one combination that always works."
+        },
+        {
+          "section": "dna",
+          "hook": "The price traps aimed at people who choose {light} — and what each one is really worth."
+        },
+        {
+          "section": "splurge",
+          "hook": "Where your {room} budget should actually go — the one window to overspend on."
+        },
+        {
+          "title": "Your Exact Colour Codes",
+          "hook": "The code for every colour above, the finish to ask for, and which window each belongs on."
+        }
+      ]
+    },
+    "visuals": {
+      "moodboard_step": "hook",
+      "material_steps": [
+        "material",
+        "slats"
+      ],
+      "defaults": {
+        "modern_minimal": {
+          "moodboard": "b1a",
+          "materials": [
+            "b2b",
+            "b5b"
+          ]
+        },
+        "warm_scandi": {
+          "moodboard": "b3a",
+          "materials": [
+            "b2a",
+            "b5a"
+          ]
+        },
+        "classic_elegant": {
+          "moodboard": "b1b",
+          "materials": [
+            "b4b",
+            "b5a"
+          ]
+        },
+        "natural_organic": {
+          "moodboard": "b2a",
+          "materials": [
+            "b2a",
+            "b7a"
+          ]
+        },
+        "bold_statement": {
+          "moodboard": "b7b",
+          "materials": [
+            "b2b",
+            "b5b"
+          ]
+        }
+      }
+    },
+    "hook_slots": {
+      "material": {
+        "step": "material",
+        "fallback": "material"
+      },
+      "slats": {
+        "step": "slats",
+        "fallback": "slats"
+      },
+      "light": {
+        "step": "light",
+        "fallback": "light"
+      },
+      "room": {
+        "step": "living",
+        "fallback": "living room"
+      }
+    },
+    "preparing": "Preparing your personalized guide…",
+    "locked_aria": "Locked"
+  },
+  "pricing": {
+    "amount_cents": 299,
+    "currency": "usd",
+    "cta": "Unlock my full guide"
+  },
+  "checkout": {
+    "kicker": "Your guide is ready",
+    "product_name": "Your Window Style Buyer's Guide — the traps that cost $400+",
+    "product_image": "/static/creative_src/stripe_tile.png",
+    "single_page": true,
+    "commerce": {
+      "anchor_head": "A {price} decision that saves you $400+",
+      "anchor_head_accent": "$400+",
+      "price_suffix": "one-time · no subscription",
+      "consent": "One-time {price} — no subscription, ever. My guide unlocks instantly.",
+      "trust": [
+        "Secure via Stripe",
+        "One-time — no recurring charges",
+        "Instant delivery"
+      ],
+      "mid_line": "Save $400+ on your blinds — starting now.",
+      "mid_line_accent": "$400+",
+      "mid_button": "See what's inside ↓",
+      "sticky_label": "Unlock full guide — {price}",
+      "sample_link": "See a sample page",
+      "sample_caption": "An example page. Yours is written from your own choices."
+    },
+    "title": "Your {style} Buyer's Guide",
+    "proof_line": "Built from your 9 choices",
+    "manifest": [
+      "Your window colour palette with exact codes and finishes",
+      "The 5 mistakes people with your style make — with fixes",
+      "The best blind types for your style, and the two to avoid",
+      "Every price trap in this category, and what each is worth",
+      "Get the look for less — where to spend and where to save",
+      "A pre-purchase checklist to take to the shop"
+    ],
+    "manifest_hero": "mistakes",
+    "manifest_head": "What's inside — {n} sections, yours forever",
+    "anchor_head": "A {price} decision that protects a $1,500 order",
+    "anchor": "The traps in this guide cost blind buyers $400+ in re-orders and returns. Catching one pays for it a hundred times over.",
+    "reframe": "Less than a coffee. Cheaper than one blind ordered the wrong size.",
+    "price_suffix": "one-time",
+    "cta_label": "Get my guide for {price}",
+    "consent_prechecked": true,
+    "trust": [
+      "Secure payment via Stripe",
+      "Instant delivery",
+      "One-time — no subscription"
+    ],
+    "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right.",
+    "unlock_note": "Unlock all {n} sections · {price}",
+    "number_words": [
+      "zero",
+      "one",
+      "two",
+      "three",
+      "four",
+      "five",
+      "six",
+      "seven",
+      "eight",
+      "nine",
+      "ten"
+    ],
+    "redirecting": "Redirecting…",
+    "error_checkout": "Could not start checkout. Please try again.",
+    "error_payment": "That payment didn't go through. Please try again.",
+    "error_consent": "Please tick the box above to continue."
+  },
+  "result": {
+    "mistakes_teaser": "You've seen mistake #1. The other four cost {style} buyers $400+ to undo — and one involves your {material}.",
+    "value_banner": "The traps in this guide cost blind buyers $400+ in re-orders and returns. Catching one pays for it a hundred times over."
+  },
+  "result_copy": {
+    "delivery_line": "Your PDF was sent to {email}",
+    "delivery_line_bare": "Your PDF was sent to your email"
+  },
+  "report_profile": {
+    "vertical_noun": "window blinds and shades",
+    "language_name": "English",
+    "pdf_lang": "en",
+    "pdf_lead": "Your window style buyer's guide",
+    "sections": {
+      "palette": {
+        "brief": "The colours of the blinds, slats and linings, as fabric or finish rather than paint: which window each belongs on, and the one place a second tone is allowed."
+      },
+      "mistakes": {
+        "brief": "The five buying mistakes people with this style make with blinds: wrong type for the room, wrong measurement, wrong lining, wrong control side, wrong finish. Each expensive to undo once the brackets are in."
+      },
+      "materials": {
+        "brief": "The blind types — roller, roman, venetian, wooden, zebra, vertical, sheer, blackout — paired with fabrics and finishes, as combinations that work or fail for this style."
+      },
+      "shopping": {
+        "brief": "A pre-purchase checklist in the order the decisions have to be made: measure, mount, control, lining, finish. `skip` names the add-ons not worth paying for."
+      },
+      "dna": {
+        "brief": "The price traps set in this category for this style — words on a label that cost money and deliver nothing — and what each is honestly worth paying."
+      },
+      "splurge": {
+        "brief": "Where to overspend once and where to save on every other window, with a rough split of a whole-house budget."
+      }
+    },
+    "stubs": {
+      "palette": {
+        "intro": "A {name} window palette works on three colours and a strict split: one quiet fabric doing the bulk, one carrying the slats or the lining, and one appearing rarely enough to still register.",
+        "colors": "from-config",
+        "closing_rule": "Keep every blind in the same room to one fabric family, and let the hardware, never the fabric, carry the second finish."
+      },
+      "mistakes": {
+        "items": [
+          {
+            "title": "Measuring the width first",
+            "body": "Every blind is quoted by width, so that is the number people measure and the drop gets guessed. A blind that stops short of the sill looks unfinished, and one that pools on it wears out at the hem within a year.",
+            "fix": "Measure the drop at both sides and the middle, and order to the longest."
+          },
+          {
+            "title": "One control side for the whole house",
+            "body": "The chain or the wand goes where the fitter puts it, and on a window beside a wardrobe or a tap that is the wrong side for the rest of the blind's life. Nobody notices until the first morning.",
+            "fix": "Stand at each window and decide which hand reaches it before you order."
+          },
+          {
+            "title": "Skipping the lining question",
+            "body": "A blind is two layers and the one nobody looks at decides the light, the privacy and how the face fabric ages. Left to the default it is whatever is cheapest.",
+            "fix": "Name the lining you want on the order — blackout, privacy or none — and check it is on the confirmation."
+          },
+          {
+            "title": "Paying for a motor on a window you never touch",
+            "body": "Motorisation is sold on the biggest window and used on it least. The budget that went on the motor is the budget the bedroom blackout needed.",
+            "fix": "Motorise only the blind you would otherwise reach over furniture for."
+          },
+          {
+            "title": "Ordering every window at once",
+            "body": "The first blind up teaches you the mount, the control side and the fabric in the room's own light. Ordering all of them from a swatch skips that lesson and pays for it in returns.",
+            "fix": "Order one, hang it, live with it for a week, then order the rest."
+          }
+        ]
+      },
+      "materials": {
+        "intro": "In a {name} home the blind type matters more than the fabric, because the type decides how the window looks when the blind is up as well as down.",
+        "pairs": [
+          {
+            "combo": "Plain roller with a matching fascia",
+            "verdict": "works",
+            "why": "The fascia hides the roll and the blind disappears when raised, which is the whole point of a plain fabric."
+          },
+          {
+            "combo": "Wooden venetian with cotton ladder tapes",
+            "verdict": "works",
+            "why": "The tapes hide the cord holes and read as furniture rather than as a fitting, which is what a wooden blind is for."
+          },
+          {
+            "combo": "Woven-wood shade over a window facing the street, unlined",
+            "verdict": "avoid",
+            "why": "It is a lantern at night; every gap in the weave shows the room to the pavement."
+          },
+          {
+            "combo": "Sheer roller under a blackout roman on one bracket",
+            "verdict": "works",
+            "why": "Day and night handled by two blinds on one fitting, and the sheer softens the roman's stack when it is up."
+          }
+        ],
+        "rule": "Buy the type for the room's job first — light, privacy, steam — and choose the fabric second."
+      },
+      "shopping": {
+        "items": [
+          {
+            "name": "Measure every window twice",
+            "priority_note": "Width and drop at three points each, in millimetres, before any catalogue is opened."
+          },
+          {
+            "name": "Decide inside or outside the recess",
+            "priority_note": "It changes the size, the light gap and the price, and it cannot be undone after the order."
+          },
+          {
+            "name": "Choose the blind type per room",
+            "priority_note": "Blackout for bedrooms, moisture-proof for kitchens and bathrooms, filtering for living rooms."
+          },
+          {
+            "name": "Name the lining",
+            "priority_note": "Blackout, privacy or none — written on the order, not assumed."
+          },
+          {
+            "name": "Pick the control side per window",
+            "priority_note": "The side your hand reaches without moving furniture."
+          },
+          {
+            "name": "Order one blind first",
+            "priority_note": "Hang it, live with it, then order the rest to match."
+          }
+        ],
+        "skip": [
+          {
+            "name": "The cassette headbox on a recessed window",
+            "why": "The reveal already hides the roll; the box adds a third to the price and a plastic edge to the window."
+          },
+          {
+            "name": "Motorisation on a window you can reach",
+            "why": "It is the biggest single add-on and the one used least."
+          }
+        ]
+      },
+      "dna": {
+        "narrative": [
+          "The price traps in blinds are words rather than numbers. Made-to-measure on a stock size, designer on a plain fabric, premium on a polyester weave — each one adds to the price and none of them changes what arrives.",
+          "For a {name} home the traps cluster around the finish, because a plain or textured blind looks the same in every price band in a photograph and only shows its quality once it has been raised and lowered a few hundred times."
+        ],
+        "implications": [
+          "Ask what a label word actually changes in the product before paying for it.",
+          "Judge a blind by its mechanism and its lining, not by the name on the fabric."
+        ]
+      },
+      "splurge": {
+        "splurge": {
+          "item": "The one blind you see from where you sit most",
+          "why": "That is the window that sets the room, and a real fabric or real wood there carries every cheaper blind in the house."
+        },
+        "saves": [
+          {
+            "item": "Bedroom blackout rollers",
+            "why": "Nobody sees the fabric with the lights off; the coating is what matters and every price band has it."
+          },
+          {
+            "item": "Bathroom and kitchen blinds",
+            "why": "Moisture-proof faux-wood or a wipeable roller does the job at a third of the price of the real thing."
+          },
+          {
+            "item": "Hardware finishes",
+            "why": "A bracket in the wrong finish costs pennies to swap; a fabric in the wrong colour costs the whole blind."
+          }
+        ],
+        "split_note": "Put half the whole budget into the main window and split the rest evenly across the others."
+      }
+    },
+    "stub_colors": [
+      [
+        "60% - the main blind fabric",
+        "matte weave",
+        "Every blind in the main room, and the wall they hang against."
+      ],
+      [
+        "30% - the slats or the lining",
+        "brushed or smooth",
+        "Slats where you have them, linings where you do not."
+      ],
+      [
+        "10% - hardware and one accent",
+        "satin metal",
+        "Chains, brackets and finials, and nothing larger."
+      ],
+      [
+        "once, and never twice",
+        "solid colour",
+        "One cushion or one blind in one room, never a second."
+      ]
+    ],
+    "words": {
+      "year_strong": "Strongest month:",
+      "year_quiet": "Quiet month:",
+      "fix": "Fix:",
+      "skip": "Skip",
+      "splurge": "Worth paying for",
+      "save": "Save here",
+      "verdicts": {
+        "works": "WORKS",
+        "avoid": "AVOID"
+      },
+      "style_fallback": "Your style",
+      "taps_caption": "Read from your taps:",
+      "pdf_note": "Keep this — your guide also stays available at the link you were sent back to after checkout.",
+      "mail_style": "style",
+      "pdf_filename": "mazzin-%s-guide.pdf"
+    },
+    "mail": {
+      "headline": "Smart move.",
+      "subject": "Your {style} window buyer's guide — Mazzin",
+      "body": "Your personalized {style} buyer's guide is attached.",
+      "keep": "It stays available at that link, and the PDF is yours to keep.",
+      "keep_no_link": "The PDF is yours to keep.",
+      "opening": "You just spent {price} to dodge the traps that cost blind buyers $400+.",
+      "opening_bare": "You just dodged the traps that cost blind buyers $400+."
+    },
+    "banned": []
+  }
+}
