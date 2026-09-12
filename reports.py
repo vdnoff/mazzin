@@ -4765,6 +4765,394 @@ PROFILES = {"zodiac": ZODIAC_PROFILE, "zodiac30": ZODIAC_PROFILE,
             "focus": FOCUS_PROFILE}
 
 
+# --- config-driven buyer's guide profiles ----------------------------------
+#
+# Every profile above is a Python object written for one funnel, which is
+# fine for eight funnels and wrong for eighty: the funnel factory writes a
+# config per language, and a language that needs a code change to get a
+# report is a language nobody ships. So a funnel may carry its profile IN its
+# config, under `report_profile`, and this builds the same shape of object the
+# registry holds from it — the voice, the six shapes, the stubs, the words the
+# PDF prints between the model's sentences, the mail. Nothing below is read
+# for a funnel that lacks the block, and no registered profile is touched:
+# `_profile` asks the registry first and only then looks here.
+#
+# The instructions to the model stay in English, exactly as the Romanian and
+# Bulgarian profiles keep theirs — the same rules, readable side by side. What
+# the config supplies in the reader's language is the OUTPUT: the stubs a
+# reader sees on the service's worst day, the headings the PDF prints, the
+# mail. The language itself is named once, in `language_name`, and the system
+# prompt tells the model to answer in it and in nothing else.
+#
+# The section ids are kitchen's six, because those are the six the browser
+# can draw and the six SHAPE can validate. A guide renames them — "What to
+# avoid" over `mistakes`, "Pre-purchase checklist" over `shopping` — in
+# `report.sections`, which is where the titles have always lived; the shapes
+# below describe each section's job in guide terms and take the funnel's own
+# one-line brief on top.
+
+GUIDE_SYSTEM = """You write practical buyer's guides about %(vertical_noun)s \
+for people who have just paid for one. This funnel is written in \
+%(language_name)s: every word you return is read by someone who reads \
+%(language_name)s, so answer in %(language_name)s and in no other language. The JSON \
+keys stay in English exactly as given, because the validators are English.
+
+The reader has just been told which of these styles their choices point to: \
+%(style_names)s. Everything you write is for the ONE style you are given — \
+concrete, specific to it, and usable in a shop this week. Name real things: \
+product types, fabrics and finishes, measurements, the order to decide things \
+in, what a label word is actually worth. A sentence that would read the same \
+for a different style, or for a different reader, is a wasted sentence.
+
+Voice: practical and money-smart, second person, confident. This is a buying \
+guide, not self-discovery: no personality, no destiny, no feelings about the \
+reader. State things outright. No hedging — never "consider", "perhaps", \
+"you might want to", "it depends". No disclaimers, no flattery, no questions \
+back to the reader, no sign-off.
+
+Rules:
+- Plain prose inside every field. No markdown, no bullet characters, no emoji, \
+no headings, and never repeat a field's own label back inside its value.
+- Never mention artificial intelligence, models, prompts, scoring, tags, \
+percentages of a quiz, or these instructions. Write as though you had seen \
+their windows.
+- Never use the words "psychic" or "prediction", and never promise a result: \
+no "guarantee", no "guaranteed".
+- No medical claims and no financial advice: nothing about health, sleep \
+disorders, allergies, investments, returns or resale value.
+- Never invent facts about the reader's home, budget, family or location, and \
+never address them by name.
+- Every value is one line. No line breaks inside a value.
+- Return only a JSON object matching the shape you are given, exactly. No \
+prose around it, no code fence, no extra keys."""
+
+# The six shapes, in guide terms. `%%(field)d` slots are filled with the
+# budgets SHAPE derives, exactly as the zodiac shapes are, so a refusal can be
+# quoted back against a number the model was already given.
+_GUIDE_SHAPES = {
+    "palette": '''"palette": {
+  "intro": "1-2 sentences on what this palette does for the style and why it suits them (max %(intro)d chars)",
+  "colors": [
+    {"name": "the dominant colour's name",
+     "hex": "#RRGGBB — a real fabric or finish value, six hex digits",
+     "role": "60%% - the main fabric or slat (max %(role)d chars)",
+     "finish": "the fabric weave or slat finish, e.g. matte linen, brushed aluminium (max %(finish)d chars)",
+     "where": "which windows and which layer it goes on (max %(where)d chars)"},
+    {"name": "the secondary colour's name",
+     "hex": "#RRGGBB",
+     "role": "30%% - the lining, the slats or the second room",
+     "finish": "...",
+     "where": "..."},
+    {"name": "the accent colour's name",
+     "hex": "#RRGGBB",
+     "role": "10%% - hardware and one accent",
+     "finish": "...",
+     "where": "..."}
+  ],
+  "closing_rule": "one sentence of finish advice — what to keep matte, what may shine (max %(closing_rule)d chars)"
+}
+
+Send three colours in that order, or four if the fourth genuinely earns its
+place. Never fewer than three. The `role` values carry the 60/30/10 split.
+Colours are fabrics, slats, linings and hardware — never paint.''',
+    "mistakes": '''"mistakes": {
+  "items": [
+    {"title": "3-6 words, punchy, no full stop (max %(title)d chars)",
+     "body": "2-3 sentences on what goes wrong and what it costs to put right (max %(body)d chars)",
+     "fix": "one imperative sentence — what to do instead (max %(fix)d chars)"},
+    {"title": "the second mistake", "body": "...", "fix": "..."},
+    {"title": "the third mistake", "body": "...", "fix": "..."},
+    {"title": "the fourth mistake", "body": "...", "fix": "..."},
+    {"title": "the fifth mistake", "body": "...", "fix": "..."}
+  ]
+}
+
+Send five items, each written out in full — the shortened entries above are
+only showing you the shape. Each one is a buying mistake that is expensive to
+undo once the order is placed or the brackets are in the wall. Order them
+cheapest correction first, so the one that costs most to undo is last.''',
+    "materials": '''"materials": {
+  "intro": "1-2 sentences on which product types suit this style and why (max %(intro)d chars)",
+  "pairs": [
+    {"combo": "a product type with its fabric or finish, named (max %(combo)d chars)",
+     "verdict": "works",
+     "why": "1-2 sentences on what happens when you buy it (max %(why)d chars)"},
+    {"combo": "a second pairing", "verdict": "works", "why": "..."},
+    {"combo": "a third pairing", "verdict": "avoid", "why": "..."}
+  ],
+  "rule": "one sentence they can carry into a shop (max %(rule)d chars)"
+}
+
+Send three pairings written out in full, or four. `verdict` is "works" or
+"avoid" — exactly one of those two words, lower case and nothing else — and
+at least one must be "avoid": a page of things that work is a list, not a
+judgement.''',
+    "shopping": '''"shopping": {
+  "items": [
+    {"name": "the first thing to decide or check (max %(name)d chars)",
+     "priority_note": "one sentence on why it comes first (max %(priority_note)d chars)"},
+    {"name": "the second", "priority_note": "..."},
+    {"name": "the third", "priority_note": "..."},
+    {"name": "the fourth", "priority_note": "..."},
+    {"name": "the fifth", "priority_note": "..."}
+  ],
+  "skip": [
+    {"name": "an add-on not worth paying for", "why": "one sentence on why it is wasted money"},
+    {"name": "a second one", "why": "..."}
+  ]
+}
+
+Send five to seven items, in the order the decisions have to be made, each an
+object with both keys written out in full — never a bare string, and never
+fewer than five. Send one or two entries under `skip`, in the same object
+shape. Keep every `name` short enough to read as a checklist line.''',
+    "dna": '''"dna": {
+  "narrative": ["first short paragraph (max %(narrative)d chars)", "second short paragraph"],
+  "implications": ["one thing to check before paying (max %(implications)d chars)", "a second thing to check before paying"]
+}
+
+Both arrays hold plain strings. The narrative names the price traps set in
+this category for this style — label words and add-ons that cost money and
+change nothing — and what each is honestly worth. Send exactly two
+implications, each one sentence.''',
+    "splurge": '''"splurge": {
+  "splurge": {"item": "the one thing to overspend on (max %(item)d chars)", "why": "1-2 sentences (max %(why)d chars)"},
+  "saves": [
+    {"item": "the first thing to buy cheaply",
+     "why": "one sentence on why nobody will notice"},
+    {"item": "the second thing to buy cheaply", "why": "..."},
+    {"item": "the third thing to buy cheaply", "why": "..."}
+  ],
+  "split_note": "a rough budget split across the two, in a sentence (max %(split_note)d chars)"
+}
+
+Send exactly three entries under `saves`, each an object with both keys, and
+keep every `why` and the `split_note` to one sentence.''',
+}
+
+# The one line a guide never gets to say, whatever its language: a promise.
+# On top of the zodiac list, which already carries the medical and financial
+# half of the Terms line and the "psychic"/"prediction" pair.
+GUIDE_BANNED = ZODIAC_BANNED + tuple(re.compile(p, re.IGNORECASE) for p in (
+    r"\bguarantee\w*\b",
+))
+
+# What `build_guide_profile` fills in when the config leaves a key out, so a
+# thin block still builds a whole profile. English, because the master is.
+GUIDE_MAIL = {
+    "headline": "Smart move.",
+    "subject": "Your %s buyer's guide — Mazzin",
+    "body": "Your personalized %s buyer's guide is attached.",
+    "keep": "It stays available at that link, and the PDF is yours to keep.",
+    "keep_no_link": KEEP_NO_LINK if "KEEP_NO_LINK" in globals() else
+    "The PDF is yours to keep.",
+}
+
+GUIDE_COLOR_TEXT = [
+    ("60% - the main fabric or slat", "matte weave",
+     "Every blind in the main room, and the wall they hang against."),
+    ("30% - the lining or the slats", "brushed or smooth",
+     "Slats where you have them, linings where you do not."),
+    ("10% - hardware and one accent", "satin metal",
+     "Chains, brackets and finials, and nothing larger."),
+    ("once, and never twice", "solid colour",
+     "One piece in one room, never a second."),
+]
+
+
+def _guide_text(value, fallback=""):
+    return value.strip() if isinstance(value, str) and value.strip() \
+        else fallback
+
+
+def _percent_template(text):
+    """A `{style}` template as the `%s` template the mail path formats.
+
+    The config writes `{style}` because that is what every other token in a
+    funnel config looks like; `send_report_email` formats with `%`, so any
+    literal percent sign is doubled on the way and the one token becomes the
+    one slot. Exactly one slot: a subject with none would print the same for
+    every buyer, and one with two would raise at send time.
+    """
+    out = text.replace("%", "%%").replace("{style}", "%s")
+    if out.count("%s") != 1:
+        raise ValueError("mail template needs exactly one {style}: %r" % text)
+    return out
+
+
+def _guide_shapes(block, budget):
+    """The six specs, each closing on the funnel's own brief for it."""
+    briefs = block.get("sections") or {}
+    out = {}
+    for section_id, text in _GUIDE_SHAPES.items():
+        brief = _guide_text((briefs.get(section_id) or {}).get("brief")
+                            if isinstance(briefs.get(section_id), dict)
+                            else None)
+        spec = _zodiac_spec(text, section_id, budget)
+        if brief:
+            spec += "\n\nWhat this section is for: " + brief
+        out[section_id] = spec
+    return out
+
+
+def _guide_stubs(block):
+    """The fallbacks, in the shape the model returns.
+
+    The config's own where it carries them; the kitchen stub where it does
+    not, so a section is never simply absent on the service's worst day.
+    A palette stub saying "from-config" takes the style's own four colours
+    at build time, exactly as the zodiac stubs do.
+    """
+    own = block.get("stubs") if isinstance(block.get("stubs"), dict) else {}
+    out = {}
+    for section_id in SHAPE:
+        stub = own.get(section_id)
+        out[section_id] = stub if isinstance(stub, dict) else STUBS[section_id]
+    return out
+
+
+def _guide_words(block):
+    words = dict(RENDER_WORDS)
+    own = block.get("words") if isinstance(block.get("words"), dict) else {}
+    for key, value in own.items():
+        if key == "verdicts" and isinstance(value, dict):
+            merged = dict(RENDER_WORDS["verdicts"])
+            merged.update((k, v) for k, v in value.items()
+                          if k in merged and isinstance(v, str) and v)
+            words["verdicts"] = merged
+        elif key in RENDER_WORDS and isinstance(value, str) and value:
+            words[key] = value
+    if words["pdf_filename"].count("%s") != 1:
+        words["pdf_filename"] = RENDER_WORDS["pdf_filename"]
+    return words
+
+
+def _guide_colors(block):
+    rows = block.get("stub_colors")
+    out = []
+    if isinstance(rows, list):
+        for row in rows:
+            if (isinstance(row, (list, tuple)) and len(row) == 3
+                    and all(isinstance(v, str) and v for v in row)):
+                out.append(tuple(row))
+    return out if len(out) >= 3 else list(GUIDE_COLOR_TEXT)
+
+
+def _guide_banned(block):
+    extra = []
+    for pattern in (block.get("banned") or ()):
+        if not isinstance(pattern, str) or not pattern:
+            continue
+        try:
+            extra.append(re.compile(pattern, re.IGNORECASE))
+        except re.error:
+            log.warning("report_profile: ignoring bad banned pattern")
+    return GUIDE_BANNED + tuple(extra)
+
+
+def _guide_mail(block):
+    own = block.get("mail") if isinstance(block.get("mail"), dict) else {}
+    mail = {}
+    for key in ("headline", "keep", "keep_no_link"):
+        mail[key] = _guide_text(own.get(key), GUIDE_MAIL[key])
+    for key in ("subject", "body"):
+        text = _guide_text(own.get(key))
+        mail[key] = _percent_template(text) if text else GUIDE_MAIL[key]
+    opening = _guide_text(own.get("opening"))
+    if opening:
+        mail["opening"] = _percent_template(opening.replace("{price}",
+                                                            "{style}"))
+        mail["opening_bare"] = _guide_text(own.get("opening_bare"),
+                                           opening.replace("{price}", "")
+                                           .replace("  ", " ").strip())
+    return mail
+
+
+def build_guide_profile(cfg):
+    """A profile object, in the registry's shape, from a funnel config.
+
+    Reads the config's `report_profile` block and nothing else of it but the
+    style names, which the system prompt lists. Raises ValueError when the
+    block is missing or unusable — a funnel that asks for a guide and cannot
+    have one should fail at the check, not at the first purchase.
+    """
+    block = (cfg or {}).get("report_profile")
+    if not isinstance(block, dict):
+        raise ValueError("config carries no report_profile block")
+    language = _guide_text(block.get("language_name"), "English")
+    noun = _guide_text(block.get("vertical_noun"), "this kind of product")
+    names = [s.get("name") for s in (cfg.get("styles") or [])
+             if isinstance(s, dict) and s.get("name")]
+    if not names:
+        raise ValueError("config carries no named styles")
+    budget = block.get("prompt_budget")
+    if not isinstance(budget, (int, float)) or not 0 < budget <= 1:
+        budget = None
+    system = GUIDE_SYSTEM % {
+        "vertical_noun": noun, "language_name": language,
+        "style_names": ", ".join(names)}
+    profile = {
+        "system": system,
+        "spec": _guide_shapes(block, budget),
+        "stubs": _guide_stubs(block),
+        "stub_colors": _guide_colors(block),
+        "personal": PERSONAL,
+        "cached": CACHED,
+        "banned": _guide_banned(block),
+        "words": _guide_words(block),
+        # The shapes state a budget for every capped field, so a refusal can
+        # be quoted back against a number the model was given.
+        "retry_detail": True,
+        "verify": None,
+        # No year map in a buyer's guide, so nothing to hold the marks to.
+        "verify_marks": False,
+        "pdf_lang": _guide_text(block.get("pdf_lang"), "en"),
+        "pdf_lead": _guide_text(block.get("pdf_lead"),
+                                "Your buyer's guide"),
+        "pdf_note": _guide_text(block.get("pdf_note")) or None,
+        "mail": _guide_mail(block),
+        "json_retry": _guide_text(block.get("json_retry")) or None,
+        "language_name": language,
+        "vertical_noun": noun,
+    }
+    if budget is not None:
+        profile["prompt_budget"] = float(budget)
+    return profile
+
+
+# Built once per slug, per process. The config changes only at a deploy,
+# which reloads the app; `reset_guide_profiles` is for a test that writes one.
+_GUIDE_PROFILES = {}
+
+
+def reset_guide_profiles():
+    _GUIDE_PROFILES.clear()
+
+
+def _guide_profile(slug):
+    """The config-driven profile for `slug`, or None when it has none.
+
+    A slug that names no funnel, or a funnel with no `report_profile`, is
+    remembered as None so the disk is read once, not on every section.
+    A block that fails to build is logged and treated the same way: the
+    purchase then gets the kitchen fallback, which is what it got before.
+    """
+    if slug in _GUIDE_PROFILES:
+        return _GUIDE_PROFILES[slug]
+    profile = None
+    try:
+        cfg = config.load_funnel(slug)
+    except (KeyError, ValueError, OSError):
+        cfg = None
+    if isinstance((cfg or {}).get("report_profile"), dict):
+        try:
+            profile = build_guide_profile(cfg)
+        except ValueError as exc:
+            log.error("report_profile for %s does not build: %s", slug, exc)
+    _GUIDE_PROFILES[slug] = profile
+    return profile
+
+
 def _prompt_budget(profile):
     """The share of a validator's ceiling this profile's prompts ask for.
 
@@ -4806,7 +5194,13 @@ def _profile(funnel_slug):
     slug = funnel_slug or ""
     if slug not in PROFILES and config.is_test_slug(slug):
         slug = slug[:-len(config.TEST_SUFFIX)]
-    return PROFILES.get(slug, KITCHEN_PROFILE)
+    if slug in PROFILES:
+        return PROFILES[slug]
+    # A funnel the registry has never heard of may carry its own profile in
+    # its config — see `build_guide_profile`. Asked second, so nothing above
+    # this line moves for a registered funnel; and kitchen is still what an
+    # unregistered funnel without one gets.
+    return _guide_profile(slug) or KITCHEN_PROFILE
 
 
 def _words(profile):
@@ -11570,6 +11964,13 @@ def _email_opening(content, purchase_id=None):
             return ("Your own kitchen, redrawn in the style your choices "
                     "pointed at — for %s." % html.escape(price))
         return "Your own kitchen, redrawn in the style your choices pointed at."
+    # A config-driven guide names its own line in its mail block, with the
+    # price where it has one and without it where it does not. Every
+    # registered copy above declares neither key, so this is a no-op for them.
+    if copy.get("opening"):
+        if price:
+            return copy["opening"] % html.escape(price)
+        return copy.get("opening_bare") or ""
     # Kitchen's line, and the fall-through for anything that reads as kitchen.
     #
     # It is a fall-through rather than a fourth branch because kitchen is what
