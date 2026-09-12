@@ -24,6 +24,7 @@ free style result, sees a partially-locked report, hits a paywall.
 | `config.py` | Env vars, paths, `load_funnel()`, slug validation | DB, Stripe calls |
 | `database.py` | MySQL (PyMySQL) connections, `execute` / `execute_rowcount` / `query_all` / `query_one` | Query construction for callers, ORM anything |
 | `tracking.py` | `POST /api/track` — validate + one INSERT | Reads, joins, anything slow |
+| `router.py` | `GET /go` — vertical + language → slug, the two fallback tiers, the one `gen_queue` upsert | Rendering, LLM calls, anything slower than a redirect |
 | `payments.py` | `POST /api/checkout`, `POST /api/stripe/webhook`, `GET /api/report`, `effective_mode()` and the mode-override table | Trusting a client-supplied amount, report copy, deciding a mode anywhere but `effective_mode()` |
 | `reports.py` | `generate_report()` — builds and stores report content | HTTP routes, Stripe calls |
 | `visualizer.py` | `/api/visualizer/*` — photo intake, EXIF stripping, the image-edit call, generation credits | Running on an unpaid purchase, writing under `static/`, putting a photo in a log line |
@@ -32,7 +33,9 @@ free style result, sees a partially-locked report, hits a paywall.
 | `templates/admin/` | The dashboard's markup and its inline CSS | Living under `static/`, where it would be public |
 | `schema.sql` | Table definitions (from scratch) | Being edited after a migration ships |
 | `schema_migrations.sql` | Append-only `ALTER`s applied on top of `schema.sql` | Being rewritten or reordered |
-| `funnels/*.json` | Funnel content, styles, pricing, copy | — |
+| `funnels/*.json` | Funnel content, styles, pricing, copy; a `report_profile` block where the funnel is factory-made | — |
+| `scripts/make_funnel.py` / `scripts/locales.json` | Localized funnels from a master (see `docs/funnel-factory.md`) | Being run by a deploy or a test with a real key |
+| `scripts/galleries/*.json` / `scripts/make_gallery.py` | A vertical's image spec, and drawing it on the server | Committing the images |
 | `static/js/engine.js` | Swipe UX, scoring, screens, tracking calls, checkout redirect + report polling | Holding payment state it can't prove |
 | `static/css/mazzin.css` | Mobile portrait styling | Desktop layout |
 | `deploy.sh` / `rollback.sh` | Server deploy + recovery | Being run from anywhere but the server |
