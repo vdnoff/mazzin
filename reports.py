@@ -26,6 +26,7 @@ import concurrent.futures
 import datetime
 import decimal
 import html
+import inspect
 import json
 import logging
 import math
@@ -8204,6 +8205,26 @@ def _parse(text, want):
     return _parse_detail(text, want)[0]
 
 
+# Whether this process's SDK takes a temperature. anthropic 1.x dropped
+# temperature, top_p and top_k from `messages.create`, and the live venv may
+# be on 0.x or 1.x — so the kwarg is passed only where the signature has a
+# slot for it, decided once per process, with the TypeError as the backstop.
+# None until the first call asks.
+_SAMPLING = {"temperature": None}
+
+
+def _accepts_temperature(client):
+    if _SAMPLING["temperature"] is None:
+        try:
+            params = inspect.signature(client.messages.create).parameters
+            _SAMPLING["temperature"] = (
+                "temperature" in params
+                or any(p.kind == p.VAR_KEYWORD for p in params.values()))
+        except (TypeError, ValueError):
+            _SAMPLING["temperature"] = True
+    return _SAMPLING["temperature"]
+
+
 def _ask(client, prompt, max_tokens, system=None):
     """(text, stop_reason). The stop reason is how truncation announces itself.
 
@@ -8214,13 +8235,24 @@ def _ask(client, prompt, max_tokens, system=None):
     gate = _limiter()
     gate.acquire()
     try:
-        message = client.messages.create(
+        kwargs = dict(
             model=config.ANTHROPIC_MODEL,
             max_tokens=max_tokens,
-            temperature=TEMPERATURE,
             system=SYSTEM if system is None else system,
             messages=[{"role": "user", "content": prompt}],
         )
+        if _accepts_temperature(client):
+            kwargs["temperature"] = TEMPERATURE
+        try:
+            message = client.messages.create(**kwargs)
+        except TypeError as exc:
+            # The signature said yes and the call said no — a 1.x SDK
+            # behind a wrapper the inspection could not see through.
+            if "temperature" not in kwargs or "temperature" not in str(exc):
+                raise
+            _SAMPLING["temperature"] = False
+            del kwargs["temperature"]
+            message = client.messages.create(**kwargs)
     finally:
         gate.release()
     text = "".join(
