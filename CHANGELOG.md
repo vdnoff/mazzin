@@ -633,3 +633,6 @@ bottom.
 
 ## 2026-09-12 — claude/make-funnel-bisect
 - make_funnel: bisect fallback + JSON hardening
+
+## 2026-09-12 — claude/sdk-1x-compat
+- make_funnel/reports: anthropic SDK 1.x compat
