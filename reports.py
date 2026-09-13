@@ -4819,6 +4819,7 @@ percentages of a quiz, or these instructions. Write as though you had seen \
 their windows.
 - Never use the words "psychic" or "prediction", and never promise a result: \
 no "guarantee", no "guaranteed".
+- %(value_rule)s
 - No medical claims and no financial advice: nothing about health, sleep \
 disorders, allergies, investments, returns or resale value.
 - Never invent facts about the reader's home, budget, family or location, and \
@@ -4826,6 +4827,23 @@ never address them by name.
 - Every value is one line. No line breaks inside a value.
 - Return only a JSON object matching the shape you are given, exactly. No \
 prose around it, no code fence, no extra keys."""
+
+# Money, and the one way it may be said. A guide sells "how not to overpay",
+# and the cheapest way to sell that is a statistic nobody measured — "most
+# people save", "9 in 10 overpay" — which is the one sentence the funnel is
+# never allowed to print. The config names one anchor figure, the market
+# cost of a purchase mistake, and the model may say that figure, phrased
+# exactly as the config phrases it, and no other.
+GUIDE_VALUE_RULE = (
+    "Money: the only figure you may state is the cost of a purchase mistake, "
+    "and only in these words: \"%s\". Never invent a statistic, a success "
+    "rate, a savings total, a range, or a share of people who saved or "
+    "overpaid, and never promise this reader a saving. Where something is "
+    "cheaper, say what it is and why it looks the same; do not price it.")
+GUIDE_VALUE_RULE_BARE = (
+    "Money: state no figures at all — no prices, no statistics, no success "
+    "rates, no share of people. Say what is cheaper and why, never by how "
+    "much.")
 
 # The six shapes, in guide terms. `%%(field)d` slots are filled with the
 # budgets SHAPE derives, exactly as the zodiac shapes are, so a refusal can be
@@ -4870,8 +4888,10 @@ Colours are fabrics, slats, linings and hardware — never paint.''',
 
 Send five items, each written out in full — the shortened entries above are
 only showing you the shape. Each one is a buying mistake that is expensive to
-undo once the order is placed or the brackets are in the wall. Order them
-cheapest correction first, so the one that costs most to undo is last.''',
+undo once the order is placed or the brackets are in the wall, and each body
+says what putting it right costs in kind — a re-made blind, a returned order,
+a bracket swapped — never in a figure. Order them cheapest correction first,
+so the one that costs most to undo is last.''',
     "materials": '''"materials": {
   "intro": "1-2 sentences on which product types suit this style and why (max %(intro)d chars)",
   "pairs": [
@@ -4887,7 +4907,9 @@ cheapest correction first, so the one that costs most to undo is last.''',
 Send three pairings written out in full, or four. `verdict` is "works" or
 "avoid" — exactly one of those two words, lower case and nothing else — and
 at least one must be "avoid": a page of things that work is a list, not a
-judgement.''',
+judgement. Every "works" pairing's `why` ends by naming the cheaper
+equivalent that looks the same from across the room — the stock size, the
+faux version, the ready-made — and why nobody will tell the difference.''',
     "shopping": '''"shopping": {
   "items": [
     {"name": "the first thing to decide or check (max %(name)d chars)",
@@ -4903,19 +4925,21 @@ judgement.''',
   ]
 }
 
-Send five to seven items, in the order the decisions have to be made, each an
-object with both keys written out in full — never a bare string, and never
-fewer than five. Send one or two entries under `skip`, in the same object
-shape. Keep every `name` short enough to read as a checklist line.''',
+Send five to seven items, ordered by the cost of getting each one wrong —
+the slip that costs a whole blind first, the one that costs a bracket last —
+each an object with both keys written out in full — never a bare string, and
+never fewer than five. Send one or two entries under `skip`, in the same
+object shape. Keep every `name` short enough to read as a checklist line.''',
     "dna": '''"dna": {
   "narrative": ["first short paragraph (max %(narrative)d chars)", "second short paragraph"],
   "implications": ["one thing to check before paying (max %(implications)d chars)", "a second thing to check before paying"]
 }
 
-Both arrays hold plain strings. The narrative names the price traps set in
-this category for this style — label words and add-ons that cost money and
-change nothing — and what each is honestly worth. Send exactly two
-implications, each one sentence.''',
+Both arrays hold plain strings. The narrative names the label terms set in
+this category for this style — words on the price tag that add to it and
+change nothing about what arrives — and what each is honestly worth, in
+kind rather than in figures. Send exactly two implications, each one
+sentence.''',
     "splurge": '''"splurge": {
   "splurge": {"item": "the one thing to overspend on (max %(item)d chars)", "why": "1-2 sentences (max %(why)d chars)"},
   "saves": [
@@ -4928,7 +4952,10 @@ implications, each one sentence.''',
 }
 
 Send exactly three entries under `saves`, each an object with both keys, and
-keep every `why` and the `split_note` to one sentence.''',
+keep every `why` and the `split_note` to one sentence. The split is
+sixty-forty, room by room: the sixty on the one window they see most, the
+forty across every other room, said in those proportions and never as a
+sum of money.''',
 }
 
 # The one line a guide never gets to say, whatever its language: a promise.
@@ -5069,6 +5096,27 @@ def _guide_mail(block):
     return mail
 
 
+def _value_anchor(framing):
+    """The one money phrase a guide funnel may print, or "".
+
+    `value_framing.scale.value` phrased around the amount — "up to {amount}"
+    with the amount formatted by `amount_format` — which is the same string
+    the result page's cost row shows. One source, so the report and the page
+    that sold it name the same figure in the same words.
+    """
+    if not isinstance(framing, dict):
+        return ""
+    amount = framing.get("amount")
+    if isinstance(amount, bool) or not isinstance(amount, (int, float)) \
+            or amount <= 0:
+        return ""
+    shape = _guide_text(framing.get("amount_format"), "{n}")
+    text = shape.replace("{n}", str(int(round(amount))))
+    value = _guide_text((framing.get("scale") or {}).get("value"),
+                        "up to {amount}")
+    return value.replace("{amount}", text)
+
+
 def build_guide_profile(cfg):
     """A profile object, in the registry's shape, from a funnel config.
 
@@ -5089,9 +5137,13 @@ def build_guide_profile(cfg):
     budget = block.get("prompt_budget")
     if not isinstance(budget, (int, float)) or not 0 < budget <= 1:
         budget = None
+    framing = cfg.get("value_framing")
+    anchor = _value_anchor(framing)
     system = GUIDE_SYSTEM % {
         "vertical_noun": noun, "language_name": language,
-        "style_names": ", ".join(names)}
+        "style_names": ", ".join(names),
+        "value_rule": (GUIDE_VALUE_RULE % anchor) if anchor
+        else GUIDE_VALUE_RULE_BARE}
     profile = {
         "system": system,
         "spec": _guide_shapes(block, budget),
@@ -5120,6 +5172,16 @@ def build_guide_profile(cfg):
         # never handed the address, exactly as the registered profiles.
         "delivery_note": bool(((cfg.get("result_copy") or {})
                                .get("delivery_line"))),
+        # The paper is the page: the dark sheet, the hero card, the numbered
+        # sections and the chip badges the delivered view draws. The cover
+        # is this profile's own — no elements, and the cost line under the
+        # blurb — resolved by name at build time because the sheet and the
+        # zodiac cover it borrows from are defined further down this file.
+        "pdf_css": ZODIAC_PDF_CSS + GUIDE_PDF_CSS,
+        "pdf_cover": _guide_cover,
+        "pdf_node": True,
+        "pdf_logo": "brand/logo-dark.svg",
+        "value_anchor": anchor,
     }
     if budget is not None:
         profile["prompt_budget"] = float(budget)
@@ -10729,6 +10791,63 @@ def _zodiac_cover(content, profile, cfg):
 ZODIAC_PROFILE["pdf_cover"] = _zodiac_cover
 ZODIAC_RO_PROFILE["pdf_cover"] = _zodiac_cover
 ZODIAC_BG_PROFILE["pdf_cover"] = _zodiac_cover
+
+
+# The guide's own additions to the zodiac sheet: the cost line on the cover,
+# in the accent, at the size the page gives the same figure.
+GUIDE_PDF_CSS = """
+.cover-cost { margin: 14px 0 0; padding: 12px 14px; border: 1px solid
+  rgba(232, 200, 120, 0.45); border-radius: 12px; text-align: center; }
+.cover-cost-label { display: block; font-size: 9.5px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; color: #E8C878; }
+.cover-cost-figure { display: block; margin: 4px 0 2px; font-size: 26px;
+  font-weight: 800; letter-spacing: -0.01em; color: #E8C878; }
+.cover-cost-note { display: block; font-size: 10px; color: #A8AECC; }
+"""
+
+
+def _guide_cover(content, profile, cfg):
+    """The guide's cover: the delivered page's hero, on paper.
+
+    The zodiac cover with the element strip left off — a buyer's guide style
+    carries no element — and the one money line the funnel is allowed under
+    the blurb: the cost of getting it wrong, phrased exactly as the config
+    phrases it on the page. A config that would not load costs the blurb
+    and the line; the cover still names the style.
+    """
+    style = _style(cfg, content.get("style_id")) if cfg else None
+    hero = _pdf_visuals().get("hero") or {}
+    name = _e(content.get("style_name") or _pdf_words()["style_fallback"])
+    blurb = _e((style or {}).get("blurb"))
+    framing = (cfg or {}).get("value_framing")
+    scale = (framing or {}).get("scale") if isinstance(framing, dict) else None
+    anchor = _value_anchor(framing)
+    cost = ""
+    if anchor and isinstance(scale, dict):
+        cost = ('<p class="cover-cost">'
+                '<span class="cover-cost-label">%s</span>'
+                '<span class="cover-cost-figure">%s</span>%s</p>'
+                % (_e(scale.get("label") or ""), _e(anchor),
+                   ('<span class="cover-cost-note">%s</span>'
+                    % _e(scale.get("note"))) if scale.get("note") else ""))
+    return [
+        '<section class="cover">',
+        '<img class="cover-logo" src="%s" alt="Mazzin">'
+        % _e(profile.get("pdf_logo") or "brand/logo.svg"),
+        '<p class="cover-kicker">%s</p>'
+        % _e(((cfg or {}).get("result_copy") or {}).get("kicker")
+             or profile["pdf_lead"]),
+        '<div class="cover-card">',
+        _pdf_image(hero.get("glyph"), "cover-glyph"),
+        '<h1 class="cover-name">%s</h1>' % name,
+        '<div class="rule"></div>',
+        ('<p class="cover-blurb">%s</p>' % blurb) if blurb else "",
+        cost,
+        _pdf_image(hero.get("band"), "cover-band", True),
+        "</div>",
+        '<p class="cover-note">%s</p>' % _e(profile.get("pdf_note") or ""),
+        "</section>",
+    ]
 
 # --- the persona cover, and the head on it ----------------------------------
 #

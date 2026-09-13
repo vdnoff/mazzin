@@ -329,12 +329,14 @@ check("the six section ids are the six the engine draws",
       SECTION_IDS == ["palette", "mistakes", "materials", "shopping", "dna",
                       "splurge"], str(SECTION_IDS))
 TITLES = dict((s["id"], s["title"]) for s in cfg["report"]["sections"])
-check("  titled as the buyer's guide sells them",
+check("  titled around money saved",
       TITLES["materials"].lower().startswith("best blind types")
-      and TITLES["mistakes"] == "What to Avoid"
-      and "price traps" in TITLES["dna"].lower()
-      and TITLES["splurge"].lower().startswith("get the look for less")
-      and TITLES["shopping"].lower().startswith("pre-purchase checklist"),
+      and "cheaper equivalent" in TITLES["materials"].lower()
+      and TITLES["mistakes"].lower().startswith("the five priciest mistakes")
+      and "label terms" in TITLES["dna"].lower()
+      and TITLES["splurge"] == "Where to Spend, Where to Save"
+      and TITLES["shopping"].lower().startswith("pre-purchase checklist")
+      and "cost of error" in TITLES["shopping"].lower(),
       str(TITLES))
 check("  palette is the free one, the five above are locked",
       TITLES and cfg["report"]["sections"][0]["reveal"]["mode"] == "visible"
@@ -375,19 +377,65 @@ check("  the free result promises the guide, not a reading",
       "guide" in cfg["result"]["mistakes_teaser"].lower()
       or "guide" in cfg["result"]["value_banner"].lower())
 MONEY = re.compile(r"[$€£]\s?\d|\d[\d,]*\s?\+|\b\d{3,}\b")
-check("no copy string names a money amount — the master is translated "
-      "into eight currencies",
+VF = cfg["value_framing"]
+ANCHOR = VF["scale"]["value"].replace(
+    "{amount}", VF["amount_format"].replace("{n}", str(VF["amount"])))
+check("the value framing is one anchor figure, phrased 'up to'",
+      VF["amount"] == 250 and VF["amount_format"] == "${n}"
+      and ANCHOR == "up to $250"
+      and VF["scale"]["value"] == "up to {amount}"
+      and "{amount}" in VF["counter"]["aria"]
+      and "{style}" in VF["counter"]["note"]
+      and VF["counter"]["lead"] == "up to", ANCHOR)
+check("  no range, no rate, no share of people anywhere in it",
+      not re.search(r"\d\s*[-–]\s*\d|%|\bmost\b|\bpeople\b|\bsave[sd]?\b",
+                    json.dumps(VF)))
+
+
+def framed(text):
+    """The string with the one permitted money phrase removed."""
+    return text.replace(ANCHOR, "")
+
+
+check("the only money on the page is the anchor, phrased exactly — no "
+      "other figure, no range, no invented rate",
       not [p for p, t in strings_of(cfg)
-           if MONEY.search(t) and not p.startswith("swipe.steps")
+           if MONEY.search(framed(t)) and not p.startswith("swipe.steps")
            and ".colors[" not in p and "rgb" not in p
            # "{at} out of 100" is an aria template, not a price
            and not p.startswith("result_copy.labels")],
-      str([(p, t) for p, t in strings_of(cfg) if MONEY.search(t)
-           and not p.startswith("swipe.steps") and ".colors[" not in p][:4]))
-check("  the loss framing stays",
-      "re-order" in cfg["checkout"]["anchor"]
-      and "returns" in cfg["checkout"]["anchor"]
-      and "wrong size" in cfg["checkout"]["reframe"])
+      str([(p, t) for p, t in strings_of(cfg) if MONEY.search(framed(t))
+           and not p.startswith("swipe.steps") and ".colors[" not in p
+           and not p.startswith("result_copy.labels")][:4]))
+check("  and no string invents a statistic or a personal saving",
+      not [p for p, t in strings_of(cfg)
+           if re.search(r"\d+\s?%\s+of|\b(most|9 in 10|nine in ten) "
+                        r"(people|buyers)|you('ll| will) save|saves? you\b",
+                        t, re.I)],
+      str([p for p, t in strings_of(cfg)
+           if re.search(r"\d+\s?%\s+of|you('ll| will) save|saves? you\b",
+                        t, re.I)][:4]))
+check("  the anchor appears where the money is argued",
+      ANCHOR in cfg["checkout"]["anchor"]
+      and ANCHOR in cfg["checkout"]["commerce"]["price_anchor"]
+      and ANCHOR in cfg["report_profile"]["mail"]["opening"])
+check("  the loss framing stays, and the promise is not to overpay",
+      "wrong made-to-measure order" in cfg["checkout"]["anchor"]
+      and "wrong size" in cfg["checkout"]["reframe"]
+      and "overpay" in cfg["checkout"]["product_name"]
+      and "overpay" in cfg["swipe"]["headline"]
+      and "overpay" in cfg["result_copy"]["offer_sub"])
+check("the savings frame runs through the quiz: a kicker on every step",
+      all(s.get("kicker") for s in steps)
+      and len({s["kicker"] for s in steps}) == 9
+      and any(re.search(r"price|cost|re-order|pay|expensive|markup",
+                        s["kicker"], re.I) for s in steps)
+      and all(len(s["kicker"]) <= 48 for s in steps),
+      str([s.get("kicker") for s in steps]))
+check("  questions are still style questions",
+      all(s["question"].endswith("?") for s in steps)
+      and not any(re.search(r"€|\$|price|cost", s["question"], re.I)
+                  for s in steps))
 check("  every accent is a substring of its line",
       cfg["swipe"]["subtext_accent"] in cfg["swipe"]["subtext"]
       and cfg["checkout"]["commerce"]["anchor_head_accent"]
@@ -412,9 +460,16 @@ check("every fallback the chrome keys override is still in the source",
       str([lit for lit in ENGLISH if lit not in ENGINE_JS]))
 check("  the engine reads price_format and decimal_mark",
       "pricing.price_format" in ENGINE_JS and "decimal_mark" in ENGINE_JS)
-check("  and this funnel touches neither engine.js nor the stylesheet",
+MAZZIN_CSS = read("static/css/mazzin.css")
+check("  and this funnel touches engine.js nowhere, the stylesheet once",
       "blinds" not in ENGINE_JS
-      and "blinds" not in read("static/css/mazzin.css"))
+      and MAZZIN_CSS.count("galleries/blinds/") == 1
+      and '.card:has(> .card-img[src*="/galleries/blinds/"]) .card-name {'
+      in MAZZIN_CSS)
+check("  the one rule lets a long card label wrap to a second line",
+      re.search(r'galleries/blinds/"\]\) \.card-name \{[^}]*white-space: normal;'
+                r'[^}]*max-height: calc\(2\.4em \+ 10px\);', MAZZIN_CSS)
+      is not None)
 
 print("\n--- the report profile, from the config ---")
 block = cfg["report_profile"]
@@ -452,6 +507,26 @@ check("  practical tone, no self-discovery, no claims, no prediction",
       and "guarantee" in live["system"])
 check("  and answers in the language only",
       "in no other language" in live["system"])
+check("the money rule names the anchor and forbids everything else",
+      live["value_anchor"] == ANCHOR
+      and ('only in these words: "%s"' % ANCHOR) in live["system"]
+      and "Never invent a statistic" in live["system"]
+      and "never promise this reader a saving" in live["system"])
+check("  a config without a value framing states no figures at all",
+      "state no figures at all" in reports.build_guide_profile(
+          dict(cfg, value_framing=None))["system"])
+check("the PDF is the dark page: the zodiac sheet, the guide's cover, "
+      "numbered sections",
+      live["pdf_css"].startswith(reports.ZODIAC_PDF_CSS)
+      and "cover-cost" in live["pdf_css"]
+      and live["pdf_cover"] is reports._guide_cover
+      and live["pdf_node"] is True
+      and live["pdf_logo"] == "brand/logo-dark.svg")
+check("  the shapes ask for the cheaper equivalent and the cost in kind",
+      "cheaper" in live["spec"]["materials"]
+      and "never in a figure" in live["spec"]["mistakes"]
+      and "cost of getting each one wrong" in live["spec"]["shopping"]
+      and "sixty-forty" in live["spec"]["splurge"])
 check("the spec covers every SHAPE section with budgets",
       set(live["spec"]) == set(reports.SHAPE)
       and all("characters maximum" in v for v in live["spec"].values()))
@@ -491,8 +566,8 @@ check("  keep and keep_no_link",
       mail["keep"] and mail["keep_no_link"])
 check("the mail copy is what _email_copy picks for this funnel",
       reports._email_copy({"funnel": SLUG}) is mail)
-check("  and the opening is the guide's, priced",
-      "blind buyers" in reports._email_opening({"funnel": SLUG}, None)
+check("  and the opening is the guide's, anchored on the one figure",
+      ANCHOR in reports._email_opening({"funnel": SLUG}, None)
       and "renovators" not in reports._email_opening({"funnel": SLUG}, None))
 check("  every registered copy still declares no opening",
       not [k for k, p in reports.PROFILES.items()
@@ -561,15 +636,23 @@ check("  under the guide's titles",
       == [TITLES[s] for s in SECTION_IDS])
 html = reports._pdf_html(content)
 check("the PDF document is in English and leads with the guide",
-      'lang="en"' in html and "window style buyer" in html)
+      'lang="en"' in html and cfg["result_copy"]["kicker"] in html
+      and 'class="cover-cost"' in html)
 check("  printing the guide's own words between the sections",
       block["words"]["splurge"] in html and block["words"]["save"] in html
       and block["words"]["verdicts"]["avoid"] in html)
 check("  and the guide's keep line, not kitchen's",
       "your guide also stays" in html)
+check("  the cover is the hero card with the cost line, no element strip",
+      'class="cover-cost"' in html and ANCHOR in html
+      and "cover-elements" not in html
+      and 'lang="en"' in html
+      and "@page { background: #0E1430; }" in html)
 try:
     pdf = reports.build_pdf(content)
-    check("  WeasyPrint renders it", bool(pdf) and pdf[:4] == b"%PDF")
+    check("  WeasyPrint renders it, under a megabyte for a mailbox",
+          bool(pdf) and pdf[:4] == b"%PDF" and len(pdf) < 1_000_000,
+          len(pdf) if pdf else None)
 except Exception as exc:                       # noqa: BLE001
     check("  WeasyPrint renders it", False, type(exc).__name__)
 prompt = reports._section_prompt(reports._style(cfg, "bold_statement"),
@@ -709,13 +792,18 @@ check("  chips, formula and offer head use the generic words only",
           for _ in [0]))
 check("  the checklist rows and cards name the locked sections",
       [r["id"] for r in P["unlock"]]
-      == ["materials", "mistakes", "dna", "splurge", "shopping"]
+      == ["mistakes", "materials", "dna", "splurge", "shopping"]
+      and [c["id"] for c in P["cards"]][:5] == [r["id"] for r in P["unlock"]]
       and {c["id"] for c in P["cards"]} == set(SECTION_IDS)
       and all(c["key"] and c["icon"] for c in P["cards"])
       and P["unlock_head"] and P["unlock_tail"]["key"]
       and P["unlock_tail"]["line"])
 check("every section carries a teaser line",
       all(s.get("teaser_line") for s in cfg["report"]["sections"]))
+check("the counter and the cost row have their words",
+      VF["counter"]["kicker"] and VF["counter"]["note"]
+      and VF["scale"]["label"] and VF["scale"]["note"]
+      and "{amount}" in VF["scale"]["aria"])
 check("the paid page's visuals: taps, a hero, a frame per chapter",
       vis["taps"] is True
       and vis["hero"]["glyph_step"] in {s["id"] for s in steps}
@@ -810,10 +898,14 @@ def walk():
             for index, step in enumerate(steps):
                 cards = page.query_selector_all("#cards .card")
                 q = page.inner_text("#swipe-caption")
-                check("  step %d/9 %-12s two cards, config question"
+                # text_content, not inner_text: the kicker is uppercased
+                # by the stylesheet and inner_text reports the transform.
+                kick = (page.text_content("#step-kicker") or "").strip()
+                check("  step %d/9 %-12s two cards, question, money kicker"
                       % (index + 1, step["id"]),
-                      len(cards) == 2 and q == step["question"],
-                      "%d cards, %r" % (len(cards), q))
+                      len(cards) == 2 and q == step["question"]
+                      and kick == step["kicker"],
+                      "%d cards, %r, %r" % (len(cards), q, kick))
                 if index == 0:
                     srcs = sorted(os.path.basename(i.get_attribute("src"))
                                   for i in page.query_selector_all(
@@ -856,19 +948,21 @@ def walk():
                 "() => [...document.querySelector('#result-module').children]"
                 ".map(n => n.className)")
             check("  the result is the minimal page: kicker, lux hero, taps, "
-                  "teasers, offer",
+                  "the cost counter, offer",
                   shape == ["zr-kicker is-framed", "zr-hero is-rich is-lux",
-                            "zr-taps", "zr-boxes-grid is-teasers",
-                            "zr-offer"], str(shape))
+                            "zr-taps", "zr-cost", "zr-offer"], str(shape))
             name = page.inner_text("#result-module .zr-subtype")
             check("  a style was named, and it is one of the five",
                   name in {s["name"] for s in cfg["styles"]}, name)
-            teasers = page.eval_on_selector_all(
-                ".zr-boxes-grid.is-teasers .zr-box-title",
-                "ns => ns.map(n => n.textContent)")
-            check("  the teasers are the five locked sections",
-                  teasers == [TITLES[s] for s in SECTION_IDS[1:]],
-                  str(teasers))
+            page.wait_for_timeout(1600)
+            figure = page.inner_text("#result-module .zr-cost-figure")
+            check("  the counter has counted up to the anchor",
+                  figure == "$250"
+                  and page.locator(".zr-boxes-grid").count() == 0, figure)
+            check("  and the cost row sits under the three scales, in full",
+                  page.locator(".zr-scales .zr-scale").count() == 4
+                  and page.inner_text(".zr-scale.is-cost .zr-cost-value")
+                  == ANCHOR)
             check("  the engine's own report is not drawn",
                   page.evaluate("document.getElementById('report').hidden"))
             check("  the sticky price reads the charm price",

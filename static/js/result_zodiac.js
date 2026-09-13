@@ -385,6 +385,119 @@
     return grid.childNodes.length ? grid : null;
   }
 
+  // --- value framing ---------------------------------------------------------
+  //
+  // The one money figure a guide funnel is allowed to put on the page: the
+  // market cost of a purchase mistake, phrased "up to {amount}". One anchor
+  // per funnel, in `value_framing`, and every block below fills from it —
+  // no ranges, no rates, no share of people who saved anything. A config
+  // without the block draws the section teasers where the counter would go
+  // and no cost row in the card, exactly as it did.
+  function valueFraming(ctx) {
+    var block = ctx.cfg && ctx.cfg.value_framing;
+    if (!block || typeof block !== "object") return null;
+    if (typeof block.amount !== "number" || !(block.amount > 0)) return null;
+    return block;
+  }
+
+  function amountText(block, n) {
+    return String(block.amount_format || "{n}")
+      .replace(/\{n\}/g, String(Math.round(n)));
+  }
+
+  function framingWords(block, data) {
+    var words = {};
+    for (var key in (data && data.words) || {}) {
+      if (Object.prototype.hasOwnProperty.call(data.words, key)) {
+        words[key] = data.words[key];
+      }
+    }
+    words.amount = amountText(block, block.amount);
+    return words;
+  }
+
+  function reducedMotion() {
+    try {
+      return !!(window.matchMedia
+                && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // The figure counts up from nothing to the anchor over a moment, then
+  // stays. Motion is decoration: with reduced motion asked for, or without
+  // requestAnimationFrame, the final number is simply written.
+  function countUp(node, block) {
+    var target = block.amount;
+    var done = function () { node.textContent = amountText(block, target); };
+    if (reducedMotion() || typeof window.requestAnimationFrame !== "function") {
+      done();
+      return;
+    }
+    node.textContent = amountText(block, 0);
+    var length = 1400;
+    var start = null;
+    var step = function (now) {
+      if (start === null) start = now;
+      var t = Math.min(1, (now - start) / length);
+      var eased = 1 - Math.pow(1 - t, 3);
+      node.textContent = amountText(block, target * eased);
+      if (t < 1) {
+        window.requestAnimationFrame(step);
+      } else {
+        done();
+      }
+    };
+    window.requestAnimationFrame(step);
+  }
+
+  // The counter card, where the zodiac page puts its rarity: the kicker, the
+  // lead ("up to"), the animated figure, and the line that says what the
+  // figure is and what the guide does about it.
+  function costCounter(ctx, data) {
+    var block = valueFraming(ctx);
+    var copy = block && block.counter;
+    if (!block || !copy) return null;
+    var words = framingWords(block, data);
+    var card = elm("section", "zr-cost");
+    if (copy.kicker) card.appendChild(elm("p", "zr-cost-kicker", copy.kicker));
+    if (copy.lead) card.appendChild(elm("p", "zr-cost-lead", copy.lead));
+    var figure = elm("p", "zr-cost-figure");
+    figure.setAttribute("aria-label", fill(copy.aria || "{amount}", words));
+    card.appendChild(figure);
+    if (copy.note) {
+      card.appendChild(elm("p", "zr-cost-note", fill(copy.note, words)));
+    }
+    countUp(figure, block);
+    return card;
+  }
+
+  // The fourth row under the three style scales: not a lean between two
+  // poles but the cost of getting the style wrong, full width, in the
+  // accent, with the honest label the config gives it.
+  function costScale(ctx, data) {
+    var block = valueFraming(ctx);
+    var copy = block && block.scale;
+    if (!block || !copy) return null;
+    var words = framingWords(block, data);
+    var row = elm("div", "zr-scale is-cost");
+    row.appendChild(elm("span", "zr-cost-label", fill(copy.label || "", words)));
+    var track = elm("span", "zr-scale-track is-cost");
+    track.setAttribute("role", "img");
+    track.setAttribute("aria-label", fill(copy.aria || copy.value || "",
+                                          words));
+    var run = elm("i", "zr-scale-run is-cost");
+    run.style.left = "0";
+    run.style.width = "100%";
+    track.appendChild(run);
+    row.appendChild(track);
+    row.appendChild(elm("span", "zr-cost-value", fill(copy.value || "", words)));
+    if (copy.note) row.appendChild(elm("span", "zr-cost-sub",
+                                       fill(copy.note, words)));
+    return row;
+  }
+
   // The checklist rows a generic config leaves undeclared: one per locked
   // section, keyed on its title, worded by its teaser line.
   function sectionRows(ctx) {
@@ -708,6 +821,10 @@
       data.scales.forEach(function (row) {
         scales.appendChild(scaleRow(ctx, row, lean));
       });
+      // The cost row rides under the three on a generic card that names a
+      // value framing; a zodiac card has no such block and draws nothing.
+      var cost = (lean && data.generic) ? costScale(ctx, data) : null;
+      if (cost) scales.appendChild(cost);
       card.appendChild(scales);
     }
     if ((data.split || []).length) card.appendChild(splitBar(data, lean));
@@ -1750,8 +1867,8 @@
       // A generic card has no rarity to give a screen to; the locked
       // chapters take that screen instead, read off the report's sections.
       if (data.generic) {
-        var teasers = sectionTeasers(ctx);
-        if (teasers) root.appendChild(teasers);
+        var pitch = costCounter(ctx, data) || sectionTeasers(ctx);
+        if (pitch) root.appendChild(pitch);
       }
       // And where the two lean arms part: minimal carries its pitch as a
       // checklist inside the offer card, boxes puts a locked chapter and four

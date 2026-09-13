@@ -1097,6 +1097,15 @@ body.theme-zodiac .cards.is-grid3 .card.is-chosen .card-name {
   max-height: calc(2.4em + 10px);   /* two lines at 1.2, plus the padding */
 }
 
+/* The blinds cards carry two-word labels too — "Floor-to-ceiling dark" — and
+   wrap the same way, for the same reason; its own rule rather than a second
+   selector on the love one, which tests/test_lovebg_check.py reads whole. */
+.card:has(> .card-img[src*="/galleries/blinds/"]) .card-name {
+  white-space: normal;
+  width: max-content;
+  max-height: calc(2.4em + 10px);
+}
+
 /* Under the selection wash the label goes with the rest of the card — the
    chip that lands on top is the one carrying the name at that point, and two
    copies of the same word stacked on each other reads as a rendering fault. */

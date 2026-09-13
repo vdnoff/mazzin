@@ -166,7 +166,9 @@ try:
     check("hundreds of strings are copy", len(items) > 300, len(items))
     check("  questions, labels, buttons, sections, stubs, mail, words",
           all(any(p.startswith(pre) for p in paths)
-              for pre in ("result_copy.kicker", "result_copy.profile.chips",
+              for pre in ("value_framing.counter.note", "value_framing.scale.label",
+                          "value_framing.amount_format", "swipe.steps[0].kicker",
+                          "result_copy.kicker", "result_copy.profile.chips",
                           "result_copy.profile.split.names",
                           "result_copy.profile.scales[0].left",
                           "result_copy.profile.unlock[0].line",
@@ -211,7 +213,8 @@ try:
               "result_copy.profile.scales[0].left_tags[0]",
               "result_copy.profile.scales[0].right_tags[0]",
               "result_copy.profile.unlock[0].id",
-              "result_copy.profile.cards[0].id", "result_copy.profile.cards[0].icon")
+              "result_copy.profile.cards[0].id", "result_copy.profile.cards[0].icon",
+              "value_framing.amount")
     frozen_hit = [p for p in FROZEN if p in paths]
     check("nothing structural is copy", not frozen_hit, str(frozen_hit))
     check("  the sentinel the report module reads is not copy",
