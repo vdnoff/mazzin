@@ -639,3 +639,6 @@ bottom.
 
 ## 2026-09-13 — claude/blinds-zodiac-look
 - blinds: zodiac30 look — minimal template generalized
+
+## 2026-09-13 — claude/blinds-savings-v2
+- blinds: savings-first result + report + PDF
