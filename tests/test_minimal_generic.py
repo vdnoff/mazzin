@@ -218,6 +218,7 @@ READ = """() => {
            names: [...r.querySelectorAll('.zr-split-name')].map(n => ({text: n.textContent,
               ws: getComputedStyle(n).whiteSpace, overflow: getComputedStyle(n).overflow,
               ellipsis: getComputedStyle(n).textOverflow}))},
+    offerHasList: !!r.querySelector('.zr-offer .zr-checklist'),
     rows: [...r.querySelectorAll('.zr-checklist .zr-check')].map(n => ({
       key: (n.querySelector('.zr-check-key') || {}).textContent || '', text: n.querySelector('.zr-check-line').textContent.trim()})),
     anchor: t('.zr-anchor'), gold: t('.zr-anchor .zr-gold'), price: t('.zr-price-now'), note: t('.zr-price-note'),
@@ -295,15 +296,16 @@ try:
         page.close()
         check("no page errors", not errors, str(errors[:2]))
         check("the module drew the minimal arm",
-              free["cls"] == "result-module is-minimal", free["cls"])
+              free["cls"].startswith("result-module is-minimal"), free["cls"])
         check("  on the dark ground",
               free["body"].replace(" ", "") in ("rgb(14,20,48)",
                                                 "rgba(14,20,48,1)"),
               free["body"])
         check("  the engine's own report is hidden", free["engineReport"])
-        check("the page is kicker, lux hero, taps, the cost counter, offer",
+        check("the page is kicker, lux hero, taps, counter, unlock list, offer",
               free["shape"] == ["zr-kicker is-framed", "zr-hero is-rich is-lux",
-                                "zr-taps", "zr-cost", "zr-offer"],
+                                "zr-taps", "zr-cost", "zr-unlock is-list",
+                                "zr-offer"],
               str(free["shape"]))
         check("  the kicker is the config's, framed in two stars",
               free["kicker"].strip("✦ ") == BLINDS["result_copy"]["kicker"]
@@ -322,11 +324,16 @@ try:
               == [(r["left"], r["right"]) for r in PROFILE["scales"]]
               and all(0 <= s["at"] <= 100 for s in free["scales"]),
               str(free["scales"]))
-        check("  a five-way split over the identity tags summing to 100",
+        check("  a five-way split over the identity tags summing to 100, a "
+              "name under every segment that has a width",
               len(free["split"]) == 5 and round(sum(free["split"])) == 100
               and free["splitNames"] == [PROFILE["split"]["names"][t]
-                                         for t in PROFILE["split"]["tags"]],
+                                         for t, pct in zip(
+                                             PROFILE["split"]["tags"],
+                                             free["split"]) if pct],
               str(free["split"]) + str(free["splitNames"]))
+        check("  the root wears is-generic, which no zodiac page does",
+              free["cls"] == "result-module is-minimal is-generic")
         check("  coloured from the config", all(free["splitColors"]))
         check("  the bright line is the style's blurb",
               free["crossBright"] and free["cross"].strip("✦ ")
@@ -349,19 +356,23 @@ try:
               and cost.get("aria") == ANCHOR
               and cost.get("note") == VF["counter"]["note"].replace(
                   "{style}", free["subtype"]), str(cost))
-        row = free["costRow"] or {}
-        check("the cost row is the fourth scale, full width, the loudest",
-              row.get("rows") == 4 and row.get("last")
-              and row.get("width") == "100%"
-              and row.get("label") == VF["scale"]["label"]
-              and row.get("value") == ANCHOR
-              and row.get("note") == VF["scale"]["note"]
-              and row.get("size", 0) > row.get("poleSize", 0) * 1.8,
-              str(row))
+        check("the hero carries three scales and no cost row",
+              free["costRow"] is None and len(free["scales"]) == 3)
         check("  honest: no personal saving, no range, no rate",
-              not re.search(r"\d\s*[-–]\s*\d|%|\bsave", (row.get("label") or "")
-                            + (row.get("note") or "") + (cost.get("note") or ""),
+              not re.search(r"\d\s*[-–]\s*\d|%|\bsave", cost.get("note") or "",
                             re.I))
+        check("the unlock list stands between the counter and the offer, "
+              "keyed on the chapter titles",
+              free["unlockHead"] == PROFILE["unlock_head"]
+              and [r["key"] for r in free["rows"]]
+              == [next(s["title"] for s in SECTIONS if s["id"] == row["id"])
+                  for row in PROFILE["unlock"]] + [PROFILE["unlock_tail"]["key"]],
+              str([r["key"] for r in free["rows"]]))
+        check("  worded from the config's unlock lines",
+              all(row["line"] in text["text"] for row, text
+                  in zip(PROFILE["unlock"], free["rows"])))
+        check("  and the offer card carries no list of its own",
+              free["offerHasList"] is False)
         check("chips wrap rather than truncate",
               all(c["ws"] == "normal" and not c["clipped"]
                   for c in free["wrap"]["chips"]), str(free["wrap"]["chips"]))
@@ -371,15 +382,6 @@ try:
         check("the offer head names the style and the promise",
               free["offerHead"] and "overpay" in free["offerHead"]
               and free["subtype"] in free["offerHead"], free["offerHead"])
-        check("  the checklist is the config's five rows plus the tail",
-              free["unlockHead"] == PROFILE["unlock_head"]
-              and [r["key"] for r in free["rows"]]
-              == [c["key"] for c in PROFILE["cards"]
-                  if c["id"] != "palette"] + [PROFILE["unlock_tail"]["key"]],
-              str([r["key"] for r in free["rows"]]))
-        check("  worded from the config's unlock lines",
-              all(row["line"] in text["text"] for row, text
-                  in zip(PROFILE["unlock"], free["rows"])))
         check("the anchor is the commerce price anchor with its accent",
               free["anchor"] == BLINDS["checkout"]["commerce"]["price_anchor"]
               and free["gold"] == BLINDS["checkout"]["commerce"]
@@ -446,8 +448,11 @@ check("  the badge, the pitch and the checklist rows are its only hooks",
       and "if (data.generic) {" in JS
       and "var pitch = costCounter(ctx, data) || sectionTeasers(ctx);" in JS
       and "rows = sectionRows(ctx);" in JS)
-check("  the cost row is gated on the generic lean card",
-      "var cost = (lean && data.generic) ? costScale(ctx, data) : null;" in JS)
+check("  the generic page draws its list above the offer, the zodiac page "
+      "inside it",
+      "var list = unlockList(ctx, data);" in JS
+      and "if (list && !data.generic) card.appendChild(list);" in JS
+      and "costScale" not in JS)
 check("  the counter respects reduced motion and writes the final figure",
       "prefers-reduced-motion: reduce" in JS
       and "node.textContent = amountText(block, target);" in JS)

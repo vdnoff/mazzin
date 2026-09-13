@@ -454,7 +454,9 @@
 
   // The counter card, where the zodiac page puts its rarity: the kicker, the
   // lead ("up to"), the animated figure, and the line that says what the
-  // figure is and what the guide does about it.
+  // figure is and what the guide does about it. The one money moment on the
+  // page — the hero card carries the style and nothing priced — and it sits
+  // directly over the unlock list and the offer it argues for.
   function costCounter(ctx, data) {
     var block = valueFraming(ctx);
     var copy = block && block.counter;
@@ -473,29 +475,43 @@
     return card;
   }
 
-  // The fourth row under the three style scales: not a lean between two
-  // poles but the cost of getting the style wrong, full width, in the
-  // accent, with the honest label the config gives it.
-  function costScale(ctx, data) {
-    var block = valueFraming(ctx);
-    var copy = block && block.scale;
-    if (!block || !copy) return null;
-    var words = framingWords(block, data);
-    var row = elm("div", "zr-scale is-cost");
-    row.appendChild(elm("span", "zr-cost-label", fill(copy.label || "", words)));
-    var track = elm("span", "zr-scale-track is-cost");
-    track.setAttribute("role", "img");
-    track.setAttribute("aria-label", fill(copy.aria || copy.value || "",
-                                          words));
-    var run = elm("i", "zr-scale-run is-cost");
-    run.style.left = "0";
-    run.style.width = "100%";
-    track.appendChild(run);
-    row.appendChild(track);
-    row.appendChild(elm("span", "zr-cost-value", fill(copy.value || "", words)));
-    if (copy.note) row.appendChild(elm("span", "zr-cost-sub",
-                                       fill(copy.note, words)));
-    return row;
+  // The unlock list, standing on its own between the counter and the offer.
+  //
+  // Same rows and same furniture as the checklist the zodiac offer card
+  // carries inside it — the head, a tick per row, the tail — but keyed on
+  // the report's own section titles rather than the card keywords: the row
+  // names the chapter as the paid page will, and the config's short line
+  // says what it is worth. A vertical list rather than a grid, so the eye
+  // runs from the figure above straight down to the price below.
+  function unlockList(ctx, data) {
+    var table = profileBlock(ctx) || {};
+    var rows = table.unlock || [];
+    if (!rows.length) rows = sectionRows(ctx);
+    if (!rows.length) return null;
+    var titles = {};
+    (ctx.sections || []).forEach(function (section) {
+      titles[section.id] = section.title || "";
+    });
+    var keys = {};
+    (table.cards || []).forEach(function (card) {
+      keys[card.id] = card.key || "";
+    });
+    var block = elm("section", "zr-unlock is-list");
+    if (table.unlock_head) {
+      block.appendChild(elm("p", "zr-unlock-head", table.unlock_head));
+    }
+    var list = elm("ul", "zr-checklist");
+    rows.forEach(function (row) {
+      list.appendChild(checkRow(titles[row.id] || keys[row.id] || row.key
+                                || "", fill(row.line || "", data.words || {})));
+    });
+    var tail = table.unlock_tail;
+    if (tail && tail.key) {
+      list.appendChild(checkRow(tail.key,
+                                fill(tail.line || "", data.words || {})));
+    }
+    block.appendChild(list);
+    return block;
   }
 
   // The checklist rows a generic config leaves undeclared: one per locked
@@ -753,6 +769,10 @@
       // same measurement twice.
       var names = elm("div", "zr-split-names");
       (data.split || []).forEach(function (cell) {
+        // A generic card may score a segment at nothing at all — five tags
+        // over nine taps — and a name under a segment of no width is a
+        // word standing on air. The zodiac card names all four as it did.
+        if (data.generic && !cell.pct) return;
         var name = elm("span", "zr-split-name", cell.name || cell.tag);
         name.style.width = cell.pct + "%";
         name.style.color = cell.color || "#E8C878";
@@ -821,10 +841,6 @@
       data.scales.forEach(function (row) {
         scales.appendChild(scaleRow(ctx, row, lean));
       });
-      // The cost row rides under the three on a generic card that names a
-      // value framing; a zodiac card has no such block and draws nothing.
-      var cost = (lean && data.generic) ? costScale(ctx, data) : null;
-      if (cost) scales.appendChild(cost);
       card.appendChild(scales);
     }
     if ((data.split || []).length) card.appendChild(splitBar(data, lean));
@@ -1507,7 +1523,9 @@
     // rather than as six blocks the reader scrolls past to reach the price.
     if (data && template === "minimal") {
       var list = checklist(ctx, data);
-      if (list) card.appendChild(list);
+      // A generic page drew its list above this card, under the counter,
+      // so this card opens on the price.
+      if (list && !data.generic) card.appendChild(list);
     }
 
     // The price, and the order of the argument around it.
@@ -1843,6 +1861,11 @@
     var lean = template === "minimal" || template === "boxes";
     root.classList.toggle("is-minimal", lean);
     root.classList.toggle("is-boxes", template === "boxes");
+    // A generic card names five or more split segments where the zodiac
+    // card names four, so its names row is set a size down. Toggled off
+    // on a zodiac page, which leaves that page's class list exactly as it
+    // was.
+    root.classList.toggle("is-generic", !!(data && data.generic));
     root.appendChild(kicker(copy, lean));
     // The rich card, or the one this page drew before there was a table to
     // draw it from. Below the hero the two pages differ entirely, which is
@@ -1869,6 +1892,8 @@
       if (data.generic) {
         var pitch = costCounter(ctx, data) || sectionTeasers(ctx);
         if (pitch) root.appendChild(pitch);
+        var list = unlockList(ctx, data);
+        if (list) root.appendChild(list);
       }
       // And where the two lean arms part: minimal carries its pitch as a
       // checklist inside the offer card, boxes puts a locked chapter and four

@@ -425,13 +425,12 @@ check("  the loss framing stays, and the promise is not to overpay",
       and "overpay" in cfg["checkout"]["product_name"]
       and "overpay" in cfg["swipe"]["headline"]
       and "overpay" in cfg["result_copy"]["offer_sub"])
-check("the savings frame runs through the quiz: a kicker on every step",
-      all(s.get("kicker") for s in steps)
-      and len({s["kicker"] for s in steps}) == 9
-      and any(re.search(r"price|cost|re-order|pay|expensive|markup",
-                        s["kicker"], re.I) for s in steps)
-      and all(len(s["kicker"]) <= 48 for s in steps),
-      str([s.get("kicker") for s in steps]))
+check("the quiz steps are clean style questions — no kicker on any",
+      not any(s.get("kicker") for s in steps),
+      str([s.get("kicker") for s in steps if s.get("kicker")]))
+check("  and the header keeps the savings frame",
+      "overpay" in cfg["swipe"]["headline"]
+      and cfg["swipe"]["subtext_accent"] in cfg["swipe"]["subtext"])
 check("  questions are still style questions",
       all(s["question"].endswith("?") for s in steps)
       and not any(re.search(r"€|\$|price|cost", s["question"], re.I)
@@ -800,7 +799,7 @@ check("  the checklist rows and cards name the locked sections",
       and P["unlock_tail"]["line"])
 check("every section carries a teaser line",
       all(s.get("teaser_line") for s in cfg["report"]["sections"]))
-check("the counter and the cost row have their words",
+check("the counter has its words, and the scale block feeds the PDF cover",
       VF["counter"]["kicker"] and VF["counter"]["note"]
       and VF["scale"]["label"] and VF["scale"]["note"]
       and "{amount}" in VF["scale"]["aria"])
@@ -898,14 +897,12 @@ def walk():
             for index, step in enumerate(steps):
                 cards = page.query_selector_all("#cards .card")
                 q = page.inner_text("#swipe-caption")
-                # text_content, not inner_text: the kicker is uppercased
-                # by the stylesheet and inner_text reports the transform.
-                kick = (page.text_content("#step-kicker") or "").strip()
-                check("  step %d/9 %-12s two cards, question, money kicker"
+                kicker_shown = page.locator("#step-kicker:visible").count()
+                check("  step %d/9 %-12s two cards, question, no kicker"
                       % (index + 1, step["id"]),
                       len(cards) == 2 and q == step["question"]
-                      and kick == step["kicker"],
-                      "%d cards, %r, %r" % (len(cards), q, kick))
+                      and kicker_shown == 0,
+                      "%d cards, %r, kicker=%d" % (len(cards), q, kicker_shown))
                 if index == 0:
                     srcs = sorted(os.path.basename(i.get_attribute("src"))
                                   for i in page.query_selector_all(
@@ -947,10 +944,11 @@ def walk():
             shape = page.evaluate(
                 "() => [...document.querySelector('#result-module').children]"
                 ".map(n => n.className)")
-            check("  the result is the minimal page: kicker, lux hero, taps, "
-                  "the cost counter, offer",
+            check("  the result is: kicker, lux hero, taps, the counter, the "
+                  "unlock list, offer",
                   shape == ["zr-kicker is-framed", "zr-hero is-rich is-lux",
-                            "zr-taps", "zr-cost", "zr-offer"], str(shape))
+                            "zr-taps", "zr-cost", "zr-unlock is-list",
+                            "zr-offer"], str(shape))
             name = page.inner_text("#result-module .zr-subtype")
             check("  a style was named, and it is one of the five",
                   name in {s["name"] for s in cfg["styles"]}, name)
@@ -959,10 +957,22 @@ def walk():
             check("  the counter has counted up to the anchor",
                   figure == "$250"
                   and page.locator(".zr-boxes-grid").count() == 0, figure)
-            check("  and the cost row sits under the three scales, in full",
-                  page.locator(".zr-scales .zr-scale").count() == 4
-                  and page.inner_text(".zr-scale.is-cost .zr-cost-value")
-                  == ANCHOR)
+            check("  the hero carries the three style scales and nothing priced",
+                  page.locator(".zr-scales .zr-scale").count() == 3
+                  and page.locator(".zr-hero .is-cost").count() == 0
+                  and ANCHOR not in page.inner_text(".zr-hero"))
+            check("  the unlock list names the five chapters, then the tail",
+                  page.eval_on_selector_all(
+                      ".zr-unlock.is-list .zr-check-key",
+                      "ns => ns.map(n => n.textContent)")
+                  == [TITLES[r["id"]] for r in P["unlock"]]
+                  + [P["unlock_tail"]["key"]])
+            check("  and the offer card opens on the price, no list inside",
+                  page.locator(".zr-offer .zr-unlock").count() == 0
+                  and page.locator(".zr-offer .zr-checklist").count() == 0)
+            check("  the figure appears once on the page",
+                  page.inner_text("#result-module").count(ANCHOR.split()[-1])
+                  == 2)  # the counter figure and the offer's price anchor
             check("  the engine's own report is not drawn",
                   page.evaluate("document.getElementById('report').hidden"))
             check("  the sticky price reads the charm price",

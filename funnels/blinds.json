@@ -38,7 +38,6 @@
       {
         "id": "hook",
         "question": "Which window would you wake up to?",
-        "kicker": "The look you pick sets the budget",
         "format": "pair",
         "pairs": [
           {
@@ -164,7 +163,6 @@
       {
         "id": "material",
         "question": "Which would you rather touch?",
-        "kicker": "Material is the biggest price swing",
         "format": "pair",
         "pairs": [
           {
@@ -290,7 +288,6 @@
       {
         "id": "light",
         "question": "How much daylight do you want?",
-        "kicker": "Lining costs more to change than to choose",
         "format": "pair",
         "pairs": [
           {
@@ -416,7 +413,6 @@
       {
         "id": "pattern",
         "question": "Plain or patterned?",
-        "kicker": "Pattern is where the markups hide",
         "format": "pair",
         "pairs": [
           {
@@ -542,7 +538,6 @@
       {
         "id": "slats",
         "question": "Which slats?",
-        "kicker": "The finish sets the price band",
         "format": "pair",
         "pairs": [
           {
@@ -668,7 +663,6 @@
       {
         "id": "bedroom",
         "question": "Bedroom blackout: which one?",
-        "kicker": "Bedrooms are where re-orders happen",
         "format": "pair",
         "pairs": [
           {
@@ -794,7 +788,6 @@
       {
         "id": "living",
         "question": "Living room window: which one?",
-        "kicker": "Biggest window, most expensive mistake",
         "format": "pair",
         "pairs": [
           {
@@ -920,7 +913,6 @@
       {
         "id": "kitchen",
         "question": "Kitchen window: which one?",
-        "kicker": "Steam ruins the wrong blind within a year",
         "format": "pair",
         "pairs": [
           {
@@ -1046,7 +1038,6 @@
       {
         "id": "dealbreaker",
         "question": "Which would you never hang?",
-        "kicker": "Know what you would never pay for",
         "format": "pair",
         "pairs": [
           {
@@ -2450,23 +2441,23 @@
       "unlock": [
         {
           "id": "mistakes",
-          "line": "the five priciest mistakes for your style — what each costs, and the fix"
+          "line": "what each costs to put right, and the fix"
         },
         {
           "id": "materials",
-          "line": "the blind types that suit you, and the cheaper equivalent that looks the same"
+          "line": "the look-alike that costs less, for every type that suits you"
         },
         {
           "id": "dna",
-          "line": "the label terms that cost money and change nothing"
+          "line": "the words on the price tag that add to it — and what each is worth"
         },
         {
           "id": "splurge",
-          "line": "where to spend and where to save — sixty-forty, room by room"
+          "line": "sixty-forty, room by room — one window to spend on, the rest to save on"
         },
         {
           "id": "shopping",
-          "line": "the pre-purchase checklist, ordered by cost of error"
+          "line": "the most expensive slip first, down to the bracket"
         }
       ],
       "unlock_tail": {
