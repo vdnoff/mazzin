@@ -636,3 +636,6 @@ bottom.
 
 ## 2026-09-12 — claude/sdk-1x-compat
 - make_funnel/reports: anthropic SDK 1.x compat
+
+## 2026-09-13 — claude/blinds-zodiac-look
+- blinds: zodiac30 look — minimal template generalized
