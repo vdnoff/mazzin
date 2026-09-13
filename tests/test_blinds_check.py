@@ -137,11 +137,19 @@ check("  step ids are unique", len({s["id"] for s in steps}) == 9)
 check("analyzing copy names 9", "9" in cfg["analyzing"]["messages"][0])
 check("proof line names 9", "9" in cfg["checkout"]["proof_line"])
 ANCHORS = sorted(i["after_step"] for i in cfg["interstitials"])
-check("interstitials sit inside the walk",
-      ANCHORS and all(0 < a < 9 for a in ANCHORS), str(ANCHORS))
-check("  each names a template the engine draws",
-      all(i["template"] in ("pattern", "confirm", "almost")
+check("interstitials sit inside the walk, the last on the final step",
+      ANCHORS == [3, 6, 9], str(ANCHORS))
+check("  each is a cinematic beat: confirm/almost, auto-advance, echoes",
+      all(i["template"] in ("confirm", "almost")
+          and isinstance(i.get("auto_advance_ms"), int)
+          and i["auto_advance_ms"] >= 2000
+          and len(i.get("echo_steps") or []) == 3
           for i in cfg["interstitials"]))
+check("  every echoed step exists and each step is echoed once",
+      sorted(e for i in cfg["interstitials"] for e in i["echo_steps"])
+      == sorted(s["id"] for s in steps))
+check("  no personal lines — nothing to key on a sign or an element",
+      not any("personal" in i for i in cfg["interstitials"]))
 # The engine fills {leading_trait}, {opposite} and {leading_material} with
 # the raw tag word and offers no config map for it, so a translated funnel
 # would print "warm" inside a Hungarian sentence. The lines here carry the
@@ -371,7 +379,9 @@ check("no copy string names a money amount — the master is translated "
       "into eight currencies",
       not [p for p, t in strings_of(cfg)
            if MONEY.search(t) and not p.startswith("swipe.steps")
-           and ".colors[" not in p and "rgb" not in p],
+           and ".colors[" not in p and "rgb" not in p
+           # "{at} out of 100" is an aria template, not a price
+           and not p.startswith("result_copy.labels")],
       str([(p, t) for p, t in strings_of(cfg) if MONEY.search(t)
            and not p.startswith("swipe.steps") and ".colors[" not in p][:4]))
 check("  the loss framing stays",
@@ -452,6 +462,8 @@ check("  the palette shape keeps the 60/30/10 split",
       "60% -" in live["spec"]["palette"] and "10% -" in live["spec"]["palette"])
 check("retry_detail is on, so drift is quoted back",
       live["retry_detail"] is True)
+check("the delivered page is handed the address, because the config prints it",
+      live["delivery_note"] is True)
 check("no year map: verify_marks off, verify none",
       live["verify_marks"] is False and live["verify"] is None)
 check("personal and cached are kitchen's split",
@@ -635,6 +647,92 @@ check("the spec and the scripts are not",
       subprocess.run(["git", "check-ignore", "-q",
                       "scripts/galleries/blinds.json"], cwd=ROOT).returncode != 0)
 
+print("\n--- the zodiac30 look: the keys the module and the theme read ---")
+Z30 = json.loads(read("funnels/zodiac30.json"))
+check("theme, module, stylesheet and template are zodiac30's",
+      cfg["theme"] == "zodiac"
+      and cfg["result_module"] == Z30["result_module"]
+      and cfg["result_css"] == Z30["result_css"]
+      and cfg["result_template"] == "minimal")
+check("  one paywall arm, the minimal template, weighted in",
+      cfg["paywall_variants"] == [{"id": "minimal", "enabled": True,
+                                   "weight": 1, "name": "The short way down",
+                                   "template": "minimal"}])
+check("  badge labels, the dark fade and the analysing echo",
+      cfg["swipe"]["label_mode"] == "badge"
+      and cfg["swipe"]["analyzing_fade_to"] == Z30["swipe"]["analyzing_fade_to"]
+      and cfg["analyzing_echo"] is True)
+check("  the express wallet, and the consent kept",
+      cfg["checkout"]["express"] is True
+      and cfg["checkout"].get("withdrawal_consent") is not False)
+COMMERCE_EXTRA = ("price_anchor", "price_anchor_accent", "price_note", "badges")
+check("  the commerce keys the offer card reads",
+      all(cfg["checkout"]["commerce"].get(k) for k in COMMERCE_EXTRA)
+      and cfg["checkout"]["commerce"]["price_anchor_accent"]
+      in cfg["checkout"]["commerce"]["price_anchor"])
+RC = cfg["result_copy"]
+check("result_copy carries the page's own words",
+      all(RC.get(k) for k in ("kicker", "taps_caption", "offer_sub",
+                              "locked_note", "delivered_note",
+                              "delivery_line", "delivery_line_bare")))
+check("  and the labels the delivered chapters print",
+      RC["labels"]["verdicts"] == {"works": "WORKS", "avoid": "AVOID"}
+      and RC["labels"]["saves_head"]
+      and "{price}" in RC["labels"]["price_regular_aria"]
+      and "{at}" in RC["labels"]["scale_aria"])
+P = RC["profile"]
+check("the generic profile declares no subtypes — the zodiac reader is never "
+      "entered", "subtypes" not in P and "rarity" not in P
+      and "sign_cross" not in P)
+check("  the split is over the five identity tags, named and coloured",
+      P["split"]["tags"] == ["minimal", "modern", "classic", "rustic",
+                             "industrial"]
+      and set(P["split"]["names"]) == set(P["split"]["tags"])
+      and set(P["split"]["colors"]) == set(P["split"]["tags"])
+      and all(re.match(r"^#[0-9A-F]{6}$", v)
+              for v in P["split"]["colors"].values()))
+check("  three scales, each pole a set of the ten tags",
+      len(P["scales"]) == 3
+      and all(set(r["left_tags"]) | set(r["right_tags"]) <= ALL
+              and r["left"] and r["right"] and r["id"]
+              for r in P["scales"]))
+check("  the badge step exists",
+      P["glyph_step"] in {s["id"] for s in steps})
+check("  chips, formula and offer head use the generic words only",
+      all(re.findall(r"\{(\w+)\}", " ".join(P["chips"]) + P["formula"]
+                     + P["offer_head"] + P["split_caption"])
+          and all(w in {"style", "style_bare", "lead", "second", "sections"}
+                  | set(P["split"]["tags"]) | {r["id"] for r in P["scales"]}
+                  for w in re.findall(r"\{(\w+)\}", " ".join(P["chips"])
+                                      + P["formula"] + P["offer_head"]
+                                      + P["split_caption"]))
+          for _ in [0]))
+check("  the checklist rows and cards name the locked sections",
+      [r["id"] for r in P["unlock"]]
+      == ["materials", "mistakes", "dna", "splurge", "shopping"]
+      and {c["id"] for c in P["cards"]} == set(SECTION_IDS)
+      and all(c["key"] and c["icon"] for c in P["cards"])
+      and P["unlock_head"] and P["unlock_tail"]["key"]
+      and P["unlock_tail"]["line"])
+check("every section carries a teaser line",
+      all(s.get("teaser_line") for s in cfg["report"]["sections"]))
+check("the paid page's visuals: taps, a hero, a frame per chapter",
+      vis["taps"] is True
+      and vis["hero"]["glyph_step"] in {s["id"] for s in steps}
+      and vis["hero"]["band_step"] in {s["id"] for s in steps}
+      and set(vis["section_steps"]) == set(SECTION_IDS)
+      and all(v in {s["id"] for s in steps}
+              for v in vis["section_steps"].values()))
+check("the copy is still a buyer's guide — no mystique in the new keys",
+      not [p for p, t in strings_of({"result_copy": RC,
+                                     "interstitials": cfg["interstitials"]})
+           if re.search(r"\b(cosmic|reading|energy|sign|element|rare)\b", t,
+                        re.I)],
+      str([p for p, t in strings_of({"result_copy": RC,
+                                     "interstitials": cfg["interstitials"]})
+           if re.search(r"\b(cosmic|reading|energy|sign|element|rare)\b", t,
+                        re.I)]))
+
 print("\n--- the routes ---")
 client = app.test_client()
 check("/blinds serves the shell", client.get("/blinds").status_code == 200)
@@ -706,6 +804,9 @@ def walk():
             page.wait_for_selector("#cards .card", timeout=10000)
             check("  the header leads with the saving",
                   page.inner_text("#swipe-subtext") == cfg["swipe"]["subtext"])
+            check("  the body wears the zodiac theme",
+                  page.evaluate("document.body.classList.contains("
+                                "'theme-zodiac')"))
             for index, step in enumerate(steps):
                 cards = page.query_selector_all("#cards .card")
                 q = page.inner_text("#swipe-caption")
@@ -722,48 +823,59 @@ def walk():
                                    ["b1c.webp", "b1d.webp"]), srcs)
                 cards[index % 2].click()
                 done = index + 1
-                if done in anchors and done < 9:
+                if done in anchors:
                     page.wait_for_selector("#screen-interstitial.is-active",
                                            timeout=12000)
                     seen.append(done)
-                    page.click("#mid-cta")
+                    page.wait_for_timeout(700)
+                    tiles = page.locator("#screen-interstitial .mid-echo-cell "
+                                         "img").count()
+                    line = page.inner_text("#mid-line").strip()
+                    check("    beat after step %d echoes three frames, "
+                          "tag-free line" % done,
+                          tiles == 3 and line
+                          and not re.search(r"\b(warm|cool|dark|bright|wood|"
+                                            r"stone|metal)\b", line),
+                          "%d tiles, %r" % (tiles, line))
+                    # Auto-advances; the button is there for the impatient.
+                    page.wait_for_function(
+                        "() => !document.getElementById('screen-interstitial')"
+                        ".classList.contains('is-active')", timeout=15000)
                 if done < 9:
                     page.wait_for_function(
                         "q => document.getElementById('screen-swipe')"
                         ".classList.contains('is-active') &&"
                         " document.getElementById('swipe-caption')"
                         ".textContent === q",
-                        arg=steps[done]["question"], timeout=12000)
-            page.wait_for_selector("#result-body:not([hidden])", timeout=15000)
-            page.wait_for_selector(".section-elements", timeout=8000)
+                        arg=steps[done]["question"], timeout=15000)
+            page.wait_for_selector("#result-module.is-minimal", timeout=25000)
+            page.wait_for_timeout(1200)
             check("  interstitials fired where the config anchors them",
-                  seen == sorted(a for a in anchors if a < 9), str(seen))
-            name = page.inner_text("#result-name")
+                  seen == sorted(anchors), str(seen))
+            shape = page.evaluate(
+                "() => [...document.querySelector('#result-module').children]"
+                ".map(n => n.className)")
+            check("  the result is the minimal page: kicker, lux hero, taps, "
+                  "teasers, offer",
+                  shape == ["zr-kicker is-framed", "zr-hero is-rich is-lux",
+                            "zr-taps", "zr-boxes-grid is-teasers",
+                            "zr-offer"], str(shape))
+            name = page.inner_text("#result-module .zr-subtype")
             check("  a style was named, and it is one of the five",
                   name in {s["name"] for s in cfg["styles"]}, name)
-            sections = page.eval_on_selector_all(
-                "#report .section",
-                "ns => ns.map(n => n.querySelector('.section-title')"
-                ".textContent)")
-            check("  the free run is palette, mistake #1, elements",
-                  sections[:3] == [TITLES["palette"], "Mistake #1 of 5",
-                                   cfg["style_elements"]["title"]],
-                  str(sections))
-            check("  then the two locked teasers and the also-card",
-                  sections[3:] == [TITLES["mistakes"], TITLES["shopping"],
-                                   cfg["report"]["also"]["title"]],
-                  str(sections))
-            chips = page.eval_on_selector_all(
-                ".element-chip .element-label", "ns => ns.map(n => n.textContent)")
-            check("  six element chips from the config",
-                  len(chips) == 6 and set(chips) <= {e["label"] for e in
-                                                     cfg["style_elements"]["items"]},
-                  str(chips))
-            teaser = page.inner_text(".mistakes-teaser")
-            check("  the teaser names the style and the loss",
-                  name in teaser and "re-orders" in teaser, teaser)
+            teasers = page.eval_on_selector_all(
+                ".zr-boxes-grid.is-teasers .zr-box-title",
+                "ns => ns.map(n => n.textContent)")
+            check("  the teasers are the five locked sections",
+                  teasers == [TITLES[s] for s in SECTION_IDS[1:]],
+                  str(teasers))
+            check("  the engine's own report is not drawn",
+                  page.evaluate("document.getElementById('report').hidden"))
             check("  the sticky price reads the charm price",
-                  "$2.99" in page.inner_text("body"))
+                  "$2.99" in page.inner_text("#result-module"))
+            check("  the consent box gates the button",
+                  page.locator("#result-module #withdrawal").count() == 1
+                  and page.locator("#result-module #pay-button").count() == 1)
             check("  no page errors", not errors, str(errors[:2]))
             browser.close()
     finally:

@@ -2370,7 +2370,10 @@ check("both lean arms are one flag, and one call each",
       'var lean = template === "minimal" || template === "boxes";'
       in RESULT_JS
       and "root.appendChild(kicker(copy, lean));" in RESULT_JS
-      and "richHero(ctx, glyph(ctx.picks.sign), data, { lean: lean })"
+      # The badge is resolved by `heroPick` now — the sign for a zodiac
+      # card, the config's own step for a generic one — and it is still one
+      # call, on one flag.
+      and "richHero(ctx, glyph(heroPick(ctx, data)), data, { lean: lean })"
       in RESULT_JS
       and RESULT_JS.count("var strip = taps(ctx, copy);") == 1
       and RESULT_JS.count(

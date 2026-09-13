@@ -80,6 +80,10 @@ FROZEN_KEYS = frozenset((
     "moodboard_step", "material_steps", "echo_steps", "emphasized_section",
     "pdf_filename", "verdict", "element", "result_template", "scoring",
     "after_step", "auto_advance_ms", "duration_ms", "ends",
+    # The minimal template's own structure: tag sets a scale is read on,
+    # the step a badge is taken from, how a card labels itself.
+    "left_tags", "right_tags", "glyph_step", "band_step", "hero_step",
+    "label_mode",
 ))
 # Dotted path prefixes that are frozen whole.
 FROZEN_PATHS = (
