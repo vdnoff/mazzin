@@ -28,6 +28,7 @@ No database, no network, no key: reports are built on stubs.
 import http.server
 import json
 import os
+import re
 import socketserver
 import sys
 import threading
@@ -186,7 +187,7 @@ READ = """() => {
     shape: [...r.children].map(n => n.className),
     kicker: t('.zr-kicker'), stars: r.querySelectorAll('.zr-kicker .zr-star').length,
     subtype: t('.zr-subtype'), chips: all('.zr-chip'),
-    scales: [...r.querySelectorAll('.zr-scale')].map(n => ({
+    scales: [...r.querySelectorAll('.zr-scale:not(.is-cost)')].map(n => ({
       left: n.children[0].textContent, right: n.children[2].textContent,
       at: parseFloat(n.querySelector('.zr-scale-dot').style.left)})),
     split: [...r.querySelectorAll('.zr-split-seg')].map(n => parseFloat(n.style.width)),
@@ -200,6 +201,23 @@ READ = """() => {
       title: n.querySelector('.zr-box-title').textContent, sub: (n.querySelector('.zr-box-sub') || {}).textContent || '',
       icon: !!n.querySelector('.zr-box-icon svg')})),
     offerHead: t('.zr-offer-head'), unlockHead: t('.zr-unlock-head'),
+    cost: (() => { const c = r.querySelector('.zr-cost'); if (!c) return null;
+      return {kicker: t('.zr-cost-kicker'), lead: t('.zr-cost-lead'),
+              figure: t('.zr-cost-figure'), note: t('.zr-cost-note'),
+              aria: c.querySelector('.zr-cost-figure').getAttribute('aria-label')}; })(),
+    costRow: (() => { const c = r.querySelector('.zr-scales .zr-scale.is-cost'); if (!c) return null;
+      const run = c.querySelector('.zr-scale-run'); const v = c.querySelector('.zr-cost-value');
+      const pole = r.querySelector('.zr-scale:not(.is-cost) .zr-scale-pole');
+      return {label: t('.zr-cost-label'), value: v.textContent, note: t('.zr-cost-sub'),
+              width: run.style.width, size: parseFloat(getComputedStyle(v).fontSize),
+              poleSize: pole ? parseFloat(getComputedStyle(pole).fontSize) : 0,
+              colour: getComputedStyle(v).color, last: c === c.parentNode.lastElementChild,
+              rows: r.querySelectorAll('.zr-scales .zr-scale').length}; })(),
+    wrap: {chips: [...r.querySelectorAll('.zr-chip')].map(n => ({text: n.textContent,
+              clipped: n.scrollWidth > n.clientWidth + 1, ws: getComputedStyle(n).whiteSpace})),
+           names: [...r.querySelectorAll('.zr-split-name')].map(n => ({text: n.textContent,
+              ws: getComputedStyle(n).whiteSpace, overflow: getComputedStyle(n).overflow,
+              ellipsis: getComputedStyle(n).textOverflow}))},
     rows: [...r.querySelectorAll('.zr-checklist .zr-check')].map(n => ({
       key: (n.querySelector('.zr-check-key') || {}).textContent || '', text: n.querySelector('.zr-check-line').textContent.trim()})),
     anchor: t('.zr-anchor'), gold: t('.zr-anchor .zr-gold'), price: t('.zr-price-now'), note: t('.zr-price-note'),
@@ -283,10 +301,10 @@ try:
                                                 "rgba(14,20,48,1)"),
               free["body"])
         check("  the engine's own report is hidden", free["engineReport"])
-        check("the page is kicker, lux hero, taps, teasers, offer",
+        check("the page is kicker, lux hero, taps, the cost counter, offer",
               free["shape"] == ["zr-kicker is-framed", "zr-hero is-rich is-lux",
-                                "zr-taps", "zr-boxes-grid is-teasers",
-                                "zr-offer"], str(free["shape"]))
+                                "zr-taps", "zr-cost", "zr-offer"],
+              str(free["shape"]))
         check("  the kicker is the config's, framed in two stars",
               free["kicker"].strip("✦ ") == BLINDS["result_copy"]["kicker"]
               and free["stars"] == 2, free["kicker"])
@@ -319,16 +337,39 @@ try:
               "%s / %s" % (free["taps"], free["tapsCaption"]))
         check("no rarity card and no question cards — nothing zodiac",
               free["rarity"] == 0 and free["cards"] == 0)
-        locked = [s for s in SECTIONS if s["reveal"]["mode"] == "locked"]
-        check("the teaser boxes are the five locked sections, in order",
-              [b["title"] for b in free["teasers"]]
-              == [s["title"] for s in locked], str(free["teasers"]))
-        check("  each with its teaser line and an icon",
-              [b["sub"] for b in free["teasers"]]
-              == [s["teaser_line"] for s in locked]
-              and all(b["icon"] for b in free["teasers"]))
-        check("the offer head names the style and the section count",
-              free["offerHead"] and "6 sections" in free["offerHead"]
+        check("  and no teaser boxes: the counter took their screen",
+              free["teasers"] == [])
+        VF = BLINDS["value_framing"]
+        ANCHOR = "up to $250"
+        cost = free["cost"] or {}
+        check("the counter card carries the config's words around the anchor",
+              cost.get("kicker") == VF["counter"]["kicker"]
+              and cost.get("lead") == VF["counter"]["lead"]
+              and cost.get("figure") == "$250"
+              and cost.get("aria") == ANCHOR
+              and cost.get("note") == VF["counter"]["note"].replace(
+                  "{style}", free["subtype"]), str(cost))
+        row = free["costRow"] or {}
+        check("the cost row is the fourth scale, full width, the loudest",
+              row.get("rows") == 4 and row.get("last")
+              and row.get("width") == "100%"
+              and row.get("label") == VF["scale"]["label"]
+              and row.get("value") == ANCHOR
+              and row.get("note") == VF["scale"]["note"]
+              and row.get("size", 0) > row.get("poleSize", 0) * 1.8,
+              str(row))
+        check("  honest: no personal saving, no range, no rate",
+              not re.search(r"\d\s*[-–]\s*\d|%|\bsave", (row.get("label") or "")
+                            + (row.get("note") or "") + (cost.get("note") or ""),
+                            re.I))
+        check("chips wrap rather than truncate",
+              all(c["ws"] == "normal" and not c["clipped"]
+                  for c in free["wrap"]["chips"]), str(free["wrap"]["chips"]))
+        check("  and so do the split names — no ellipsis anywhere",
+              all(n["ws"] == "normal" and n["ellipsis"] != "ellipsis"
+                  for n in free["wrap"]["names"]), str(free["wrap"]["names"]))
+        check("the offer head names the style and the promise",
+              free["offerHead"] and "overpay" in free["offerHead"]
               and free["subtype"] in free["offerHead"], free["offerHead"])
         check("  the checklist is the config's five rows plus the tail",
               free["unlockHead"] == PROFILE["unlock_head"]
@@ -400,10 +441,16 @@ check("the generic reader exists and is only reached without subtypes",
       "function genericProfileOf(ctx, table)" in JS
       and "if (!table || !table.subtypes) return genericProfileOf(ctx, table);"
       in JS)
-check("  the badge, the teasers and the checklist rows are its only hooks",
+check("  the badge, the pitch and the checklist rows are its only hooks",
       "glyph(heroPick(ctx, data))" in JS
       and "if (data.generic) {" in JS
+      and "var pitch = costCounter(ctx, data) || sectionTeasers(ctx);" in JS
       and "rows = sectionRows(ctx);" in JS)
+check("  the cost row is gated on the generic lean card",
+      "var cost = (lean && data.generic) ? costScale(ctx, data) : null;" in JS)
+check("  the counter respects reduced motion and writes the final figure",
+      "prefers-reduced-motion: reduce" in JS
+      and "node.textContent = amountText(block, target);" in JS)
 check("  the element strip is gated on a style that has an element",
       "if (hasElement(ctx.style)) card.appendChild(deliveredElements(ctx));"
       in JS)

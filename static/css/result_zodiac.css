@@ -567,9 +567,12 @@ body:has(.result-module) {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--zr-lux);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* A chip that does not fit wraps to a second line rather than losing its
+     end to an ellipsis: "MINIMAL-LED" cut to "MINIM…" says nothing. */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+  line-height: 1.25;
 }
 
 /* The side they lean to is lit and the other is not, so the row reads before
@@ -631,9 +634,15 @@ body:has(.result-module) {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* The name under a narrow segment wraps at a space rather than losing its
+     end to an ellipsis, and a single word too wide for its column is let
+     out whole: the bar above still carries the width, the word is what the
+     row is for. */
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  line-height: 1.15;
 }
 
 /* The reading is the sentence this card is for. It was set as an aside under
@@ -1524,6 +1533,109 @@ body:has(.result-module) {
   line-height: 1.55;
   text-align: center;
   color: var(--zr-faint);
+}
+
+/* --- the value framing: the cost row and the counter card ------------------
+   A guide funnel's one money figure. The row sits under the three style
+   scales in the lux card and is the loudest thing in it: full width, the
+   accent, a label that says what it is. The counter card stands where the
+   zodiac page keeps its rarity, and counts up to the same figure. */
+.result-module.is-minimal .zr-scale.is-cost {
+  display: block;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(196, 166, 96, 0.28);
+}
+
+.result-module.is-minimal .zr-cost-label {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--zr-lux);
+}
+
+.result-module.is-minimal .zr-scale-track.is-cost {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(196, 166, 96, 0.18);
+  overflow: hidden;
+}
+
+.result-module.is-minimal .zr-scale-run.is-cost {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(232, 200, 120, 0.55), #E8C878);
+}
+
+.result-module.is-minimal .zr-cost-value {
+  display: block;
+  margin: 8px 0 0;
+  font-family: var(--font-display, inherit);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--zr-lux);
+}
+
+.result-module.is-minimal .zr-cost-sub {
+  display: block;
+  margin: 3px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--zr-muted);
+}
+
+.result-module.is-minimal .zr-cost {
+  margin: 18px 0 0;
+  padding: 20px 18px 18px;
+  border: 1px solid rgba(196, 166, 96, 0.45);
+  border-radius: 16px;
+  background: var(--zr-panel);
+  text-align: center;
+}
+
+.result-module.is-minimal .zr-cost-kicker {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--zr-lux);
+}
+
+.result-module.is-minimal .zr-cost-lead {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--zr-muted);
+}
+
+.result-module.is-minimal .zr-cost-figure {
+  margin: 2px 0 6px;
+  font-family: var(--font-display, inherit);
+  font-size: 52px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: #E8C878;
+  font-variant-numeric: tabular-nums;
+}
+
+.result-module.is-minimal .zr-cost-note {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--zr-text);
 }
 
 /* --- the boxes arm ---------------------------------------------------------

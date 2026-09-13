@@ -7,14 +7,30 @@
   "result_module": "/static/js/result_zodiac.js",
   "result_css": "/static/css/result_zodiac.css",
   "result_template": "minimal",
+  "value_framing": {
+    "amount": 250,
+    "amount_format": "${n}",
+    "counter": {
+      "kicker": "THE COST OF GETTING IT WRONG",
+      "lead": "up to",
+      "note": "what one wrong made-to-measure order can cost — your guide flags the five priciest traps for {style}",
+      "aria": "up to {amount}"
+    },
+    "scale": {
+      "label": "Cost of getting it wrong",
+      "value": "up to {amount}",
+      "note": "one wrong made-to-measure order — the mistake this guide is built to catch",
+      "aria": "cost of getting it wrong: up to {amount}"
+    }
+  },
   "meta": {
     "title": "What's Your Window Style?",
     "og_image": "/static/galleries/blinds/og.webp"
   },
   "swipe": {
     "pairs_count": 9,
-    "headline": "Your window style analysis",
-    "subtext": "Skip the wrong-size re-orders on your blinds",
+    "headline": "Your window style — and how not to overpay for it",
+    "subtext": "No more wrong-size re-orders",
     "subtext_accent": "wrong-size re-orders",
     "hint": "Tap your choice",
     "card_aria": "Choose {label}",
@@ -22,6 +38,7 @@
       {
         "id": "hook",
         "question": "Which window would you wake up to?",
+        "kicker": "The look you pick sets the budget",
         "format": "pair",
         "pairs": [
           {
@@ -147,6 +164,7 @@
       {
         "id": "material",
         "question": "Which would you rather touch?",
+        "kicker": "Material is the biggest price swing",
         "format": "pair",
         "pairs": [
           {
@@ -272,6 +290,7 @@
       {
         "id": "light",
         "question": "How much daylight do you want?",
+        "kicker": "Lining costs more to change than to choose",
         "format": "pair",
         "pairs": [
           {
@@ -397,6 +416,7 @@
       {
         "id": "pattern",
         "question": "Plain or patterned?",
+        "kicker": "Pattern is where the markups hide",
         "format": "pair",
         "pairs": [
           {
@@ -522,6 +542,7 @@
       {
         "id": "slats",
         "question": "Which slats?",
+        "kicker": "The finish sets the price band",
         "format": "pair",
         "pairs": [
           {
@@ -647,6 +668,7 @@
       {
         "id": "bedroom",
         "question": "Bedroom blackout: which one?",
+        "kicker": "Bedrooms are where re-orders happen",
         "format": "pair",
         "pairs": [
           {
@@ -772,6 +794,7 @@
       {
         "id": "living",
         "question": "Living room window: which one?",
+        "kicker": "Biggest window, most expensive mistake",
         "format": "pair",
         "pairs": [
           {
@@ -897,6 +920,7 @@
       {
         "id": "kitchen",
         "question": "Kitchen window: which one?",
+        "kicker": "Steam ruins the wrong blind within a year",
         "format": "pair",
         "pairs": [
           {
@@ -1022,6 +1046,7 @@
       {
         "id": "dealbreaker",
         "question": "Which would you never hang?",
+        "kicker": "Know what you would never pay for",
         "format": "pair",
         "pairs": [
           {
@@ -2057,15 +2082,15 @@
     "messages": [
       "Analyzing your 9 choices…",
       "Comparing against thousands of windows…",
-      "Finding your window style…"
+      "Finding where your style overpays…"
     ]
   },
   "analyzing_echo": true,
   "report": {
     "generating_messages": [
       "Our AI is comparing your choices against thousands of windows…",
-      "Searching for the blind types that fit YOU…",
-      "Checking the price traps set for your style…",
+      "Finding the blind types that fit YOU — and the cheaper equivalents…",
+      "Pricing the traps set for your style…",
       "Writing your buyer's guide…"
     ],
     "sections": [
@@ -2074,98 +2099,98 @@
         "title": "Your Window Colour Palette",
         "enabled": true,
         "preview": [
-          "Each one is specified by fabric or slat finish as well as by colour, because the same shade reads differently in a weave than it does on metal.",
-          "The guide gives the exact codes, which window each colour belongs on, and the one place a second tone is allowed."
+          "Each one is specified by fabric or slat finish as well as by colour, because a shade re-ordered for the wrong finish is the most common return.",
+          "The guide gives the exact codes, the finish to ask for, and which window each colour belongs on."
         ],
         "reveal": {
           "mode": "visible"
         },
-        "teaser_line": "Exact codes, finishes and which window each colour belongs on."
+        "teaser_line": "Exact codes and finishes, so nothing gets re-ordered for the shade."
       },
       {
         "id": "mistakes",
-        "title": "What to Avoid",
+        "title": "The Five Priciest Mistakes for Your Style",
         "enabled": true,
         "preview": [
           "It sounds obvious written down, and it is still the thing that costs people the most to undo once the brackets are in the wall.",
-          "The remaining four are ranked by what they cost to fix, cheapest correction first."
+          "The remaining four are ranked by what they cost to put right, costliest last."
         ],
         "reveal": {
           "mode": "locked"
         },
-        "teaser_line": "Four more, and the one that costs most to undo is last."
+        "teaser_line": "Each with what it costs to put right, and the fix — costliest last."
       },
       {
         "id": "materials",
-        "title": "Best Blind Types for Your Style",
+        "title": "Best Blind Types for Your Style — and the Cheaper Equivalent",
         "enabled": true,
         "preview": [
           "Get that one pairing right and every other window in the house can follow it without another decision being made.",
-          "The guide names the blind types, the two combinations to avoid entirely, and what to ask a supplier for."
+          "The guide names the blind types, the cheaper equivalent for each, and the two combinations to avoid entirely."
         ],
         "reveal": {
           "mode": "locked"
         },
-        "teaser_line": "Roller, roman, venetian, wooden, zebra — which suit you and which to skip."
+        "teaser_line": "Which types suit you, and the look-alike that costs less."
       },
       {
         "id": "shopping",
-        "title": "Pre-Purchase Checklist",
+        "title": "Pre-Purchase Checklist, Ordered by Cost of Error",
         "enabled": true,
         "preview": [
-          "Everything else can wait until the first window is up and you can see what the room actually still needs.",
-          "The list is ordered by what has to be decided first, not by what happens to be cheapest."
+          "The first slip is the one that costs a whole blind; the last is a bracket in the wrong finish.",
+          "The list is ordered by what each mistake costs to undo, not by what is cheapest to buy."
         ],
         "reveal": {
           "mode": "locked"
         },
-        "teaser_line": "Measure, mount, control side, lining — in the order to decide them."
+        "teaser_line": "Measure, mount, lining, control side — the most expensive slip first."
       },
       {
         "id": "dna",
-        "title": "Price Traps in This Category",
+        "title": "Label Terms That Cost Money and Change Nothing",
         "enabled": true,
         "preview": [
           "It shows up on the price tag as a word rather than a number, which is exactly why it works.",
-          "The guide names the traps set for your style in particular and what each one is actually worth paying."
+          "The guide names the terms aimed at your style in particular and what each is honestly worth paying."
         ],
         "reveal": {
           "mode": "locked"
         },
-        "teaser_line": "The label words that cost money and change nothing."
+        "teaser_line": "The words on the price tag that add to it, for your style in particular."
       },
       {
         "id": "splurge",
-        "title": "Get the Look for Less",
+        "title": "Where to Spend, Where to Save",
         "enabled": true,
         "preview": [
           "The difference is invisible in a showroom and obvious after two years of pulling the blind up every morning.",
-          "The guide splits the budget window by window, with the one place to overspend and three to save."
+          "The guide splits the budget sixty-forty, room by room: one window to spend on and three places to save."
         ],
         "reveal": {
           "mode": "locked"
         },
-        "teaser_line": "The one window to overspend on, and three places to save."
+        "teaser_line": "The 60/40 split, room by room: one window to spend on, the rest to save on."
       }
     ],
     "mistake_one": {
       "title": "Mistake #1 of 5",
-      "locked_note": "Mistakes 2–5 — inside your full guide"
+      "locked_note": "Mistakes 2–5, with what each costs — inside your full guide"
     },
     "also": {
       "title": "Also in your guide",
       "rows": [
         {
           "section": "materials",
-          "hook": "Your {material} + {slats} pairing has one expensive conflict — and one combination that always works."
+          "hook": "Your {material} + {slats} pairing — and the cheaper equivalent that looks the same."
         },
         {
           "section": "dna",
-          "hook": "The price traps aimed at people who choose {light} — and what each one is really worth."
+          "hook": "The label terms aimed at people who choose {light} — and what each is really worth."
         },
         {
           "section": "splurge",
-          "hook": "Where your {room} budget should actually go — the one window to overspend on."
+          "hook": "Where your {room} budget should actually go — sixty-forty, room by room."
         },
         {
           "title": "Your Exact Colour Codes",
@@ -2222,11 +2247,11 @@
         "band_step": "living"
       },
       "section_steps": {
-        "palette": "hook",
+        "palette": "pattern",
         "mistakes": "dealbreaker",
         "materials": "material",
         "shopping": "kitchen",
-        "dna": "pattern",
+        "dna": "light",
         "splurge": "slats"
       }
     },
@@ -2258,13 +2283,13 @@
   },
   "checkout": {
     "kicker": "Your guide is ready",
-    "product_name": "Your Window Style Buyer's Guide — the traps behind wrong-size re-orders and returns",
+    "product_name": "Your Window Style Buyer's Guide — how not to overpay for it",
     "product_image": "/static/creative_src/stripe_tile.png",
     "single_page": true,
     "express": true,
     "commerce": {
-      "anchor_head": "A {price} decision that saves you a wrong-size re-order",
-      "anchor_head_accent": "wrong-size re-order",
+      "anchor_head": "A {price} guide against a mistake that costs up to $250",
+      "anchor_head_accent": "up to $250",
       "price_suffix": "one-time · no subscription",
       "consent": "One-time {price} — no subscription, ever. My guide unlocks instantly.",
       "trust": [
@@ -2272,14 +2297,14 @@
         "One-time — no recurring charges",
         "Instant delivery"
       ],
-      "mid_line": "Skip the costly mistakes on your blinds — starting now.",
-      "mid_line_accent": "costly mistakes",
+      "mid_line": "Your style, and how not to overpay for it — starting now.",
+      "mid_line_accent": "not to overpay",
       "mid_button": "See what's inside ↓",
       "sticky_label": "Unlock full guide — {price}",
       "sample_link": "See a sample page",
       "sample_caption": "An example page. Yours is written from your own choices.",
-      "price_anchor": "instead of one wrong-size re-order",
-      "price_anchor_accent": "wrong-size re-order",
+      "price_anchor": "against a mistake that costs up to $250",
+      "price_anchor_accent": "up to $250",
       "price_note": "one-time",
       "badges": [
         "ONE-TIME",
@@ -2289,17 +2314,17 @@
     "title": "Your {style} Buyer's Guide",
     "proof_line": "Built from your 9 choices",
     "manifest": [
-      "Your window colour palette with exact codes and finishes",
-      "The 5 mistakes people with your style make — with fixes",
-      "The best blind types for your style, and the two to avoid",
-      "Every price trap in this category, and what each is worth",
-      "Get the look for less — where to spend and where to save",
-      "A pre-purchase checklist to take to the shop"
+      "The five priciest mistakes for your style — what each costs, and the fix",
+      "The best blind types for you, and the cheaper equivalent that looks the same",
+      "The label terms that cost money and change nothing",
+      "Where to spend and where to save — sixty-forty, room by room",
+      "A pre-purchase checklist ordered by cost of error",
+      "Your window colour palette with exact codes and finishes"
     ],
     "manifest_hero": "mistakes",
     "manifest_head": "What's inside — {n} sections, yours forever",
-    "anchor_head": "A {price} decision that protects a whole-house order",
-    "anchor": "The traps in this guide cost blind buyers wrong-size re-orders and returns. Catching one pays for the guide many times over.",
+    "anchor_head": "A {price} decision against a mistake that costs up to $250",
+    "anchor": "One wrong made-to-measure order costs up to $250. The guide flags the five priciest traps for your style before you order.",
     "reframe": "Less than a coffee. Cheaper than one blind ordered the wrong size.",
     "price_suffix": "one-time",
     "cta_label": "Get my guide for {price}",
@@ -2330,14 +2355,14 @@
     "error_consent": "Please tick the box above to continue."
   },
   "result": {
-    "mistakes_teaser": "You've seen mistake #1. The other four are what send {style} buyers back for re-orders — and one involves your {material}.",
-    "value_banner": "The traps in this guide cost blind buyers wrong-size re-orders and returns. Catching one pays for the guide many times over."
+    "mistakes_teaser": "You've seen mistake #1. The other four are what send {style} buyers back for a re-order — and one involves your {material}.",
+    "value_banner": "One wrong made-to-measure order costs up to $250. The guide flags the five priciest traps for your style before you order."
   },
   "result_copy": {
     "kicker": "YOUR WINDOW STYLE",
     "blend_note": "clear result",
     "taps_caption": "Read from your taps:",
-    "offer_sub": "Your complete buyer's guide — once, forever.",
+    "offer_sub": "Your style, and how not to overpay for it — once, forever.",
     "locked_note": "Locked",
     "delivered_note": "A PDF of this guide is in your inbox. This page stays at the link you were sent back to.",
     "delivery_line": "Your PDF was sent to {email}",
@@ -2420,53 +2445,53 @@
         "{material}"
       ],
       "formula": "{lead}-led · {second} undercurrent",
-      "offer_head": "Your complete {style_bare} buyer's guide — {sections} sections",
+      "offer_head": "Your {style_bare} guide — how not to overpay for it",
       "unlock_head": "What you unlock:",
       "unlock": [
         {
-          "id": "materials",
-          "line": "which suit you — and the two to skip"
+          "id": "mistakes",
+          "line": "the five priciest mistakes for your style — what each costs, and the fix"
         },
         {
-          "id": "mistakes",
-          "line": "mistakes #2 to #5, the costliest last"
+          "id": "materials",
+          "line": "the blind types that suit you, and the cheaper equivalent that looks the same"
         },
         {
           "id": "dna",
-          "line": "the label words that cost money, and what each is worth"
+          "line": "the label terms that cost money and change nothing"
         },
         {
           "id": "splurge",
-          "line": "one window to overspend on, every other one to save on"
+          "line": "where to spend and where to save — sixty-forty, room by room"
         },
         {
           "id": "shopping",
-          "line": "measure, mount, control side, lining — to take to the shop"
+          "line": "the pre-purchase checklist, ordered by cost of error"
         }
       ],
       "unlock_tail": {
         "key": "+ The palette",
-        "line": "exact colour codes, finishes and windows"
+        "line": "exact colour codes and finishes, so nothing is re-ordered for the shade"
       },
       "cards": [
+        {
+          "id": "mistakes",
+          "key": "Priciest mistakes",
+          "icon": "eye"
+        },
         {
           "id": "materials",
           "key": "Blind types",
           "icon": "check"
         },
         {
-          "id": "mistakes",
-          "key": "What to avoid",
-          "icon": "eye"
-        },
-        {
           "id": "dna",
-          "key": "Price traps",
+          "key": "Label traps",
           "icon": "coin"
         },
         {
           "id": "splurge",
-          "key": "Look for less",
+          "key": "Spend / save",
           "icon": "map"
         },
         {
@@ -2486,30 +2511,30 @@
     "vertical_noun": "window blinds and shades",
     "language_name": "English",
     "pdf_lang": "en",
-    "pdf_lead": "Your window style buyer's guide",
+    "pdf_lead": "Your window style — and how not to overpay for it",
     "sections": {
       "palette": {
-        "brief": "The colours of the blinds, slats and linings, as fabric or finish rather than paint: which window each belongs on, and the one place a second tone is allowed."
+        "brief": "The colours of the blinds, slats and linings as fabric or finish rather than paint, built from the frames this reader tapped: which window each belongs on, and the finish to ask for so the shade is never re-ordered."
       },
       "mistakes": {
-        "brief": "The five buying mistakes people with this style make with blinds: wrong type for the room, wrong measurement, wrong lining, wrong control side, wrong finish. Each expensive to undo once the brackets are in."
+        "brief": "The five priciest buying mistakes for this style, each named with what it costs to put right — wrong type for the room, wrong measurement, wrong lining, wrong control side, wrong finish — ordered costliest last, and tied to the reader's own picks where a pick invites one."
       },
       "materials": {
-        "brief": "The blind types — roller, roman, venetian, wooden, zebra, vertical, sheer, blackout — paired with fabrics and finishes, as combinations that work or fail for this style."
+        "brief": "The blind types that suit this style — roller, roman, venetian, wooden, zebra, vertical, sheer, blackout — paired with fabrics and finishes, and for each 'works' pairing the cheaper equivalent that looks the same from across the room. Name the reader's picks."
       },
       "shopping": {
-        "brief": "A pre-purchase checklist in the order the decisions have to be made: measure, mount, control, lining, finish. `skip` names the add-ons not worth paying for."
+        "brief": "A pre-purchase checklist ordered by cost of error: the slip that costs a whole blind first, the one that costs a bracket last. Measure, mount, lining, control side, finish. `skip` names the add-ons not worth paying for."
       },
       "dna": {
-        "brief": "The price traps set in this category for this style — words on a label that cost money and deliver nothing — and what each is honestly worth paying."
+        "brief": "The label terms set for this style that cost money and change nothing — made-to-measure on a stock size, designer, premium, linen on polyester — and what each is honestly worth, against the frames this reader chose."
       },
       "splurge": {
-        "brief": "Where to overspend once and where to save on every other window, with a rough split of a whole-house budget."
+        "brief": "Where to spend and where to save on a sixty-forty logic, room by room: the one window to overspend on (the one they see most), and the rooms where the cheaper version is the right one."
       }
     },
     "stubs": {
       "palette": {
-        "intro": "A {name} window palette works on three colours and a strict split: one quiet fabric doing the bulk, one carrying the slats or the lining, and one appearing rarely enough to still register.",
+        "intro": "A {name} window palette works on three colours and a strict split: one quiet fabric doing the bulk, one carrying the slats or the lining, and one appearing rarely enough to still register — each named with its finish, so nothing is re-ordered for the shade.",
         "colors": "from-config",
         "closing_rule": "Keep every blind in the same room to one fabric family, and let the hardware, never the fabric, carry the second finish."
       },
@@ -2517,74 +2542,74 @@
         "items": [
           {
             "title": "Measuring the width first",
-            "body": "Every blind is quoted by width, so that is the number people measure and the drop gets guessed. A blind that stops short of the sill looks unfinished, and one that pools on it wears out at the hem within a year.",
+            "body": "Every blind is quoted by width, so that is the number people measure and the drop gets guessed. A blind that stops short of the sill looks unfinished, and one that pools on it wears out at the hem within a year. On a made-to-measure order that is the whole blind again.",
             "fix": "Measure the drop at both sides and the middle, and order to the longest."
           },
           {
-            "title": "One control side for the whole house",
-            "body": "The chain or the wand goes where the fitter puts it, and on a window beside a wardrobe or a tap that is the wrong side for the rest of the blind's life. Nobody notices until the first morning.",
-            "fix": "Stand at each window and decide which hand reaches it before you order."
-          },
-          {
             "title": "Skipping the lining question",
-            "body": "A blind is two layers and the one nobody looks at decides the light, the privacy and how the face fabric ages. Left to the default it is whatever is cheapest.",
+            "body": "A blind is two layers and the one nobody looks at decides the light, the privacy and how the face fabric ages. Left to the default it is whatever is cheapest, and a lining cannot be swapped after the fact — the blind is re-made.",
             "fix": "Name the lining you want on the order — blackout, privacy or none — and check it is on the confirmation."
           },
           {
+            "title": "One control side for the whole house",
+            "body": "The chain or the wand goes where the fitter puts it, and on a window beside a wardrobe or a tap that is the wrong side for the rest of the blind's life. A control side is a re-make on most made-to-measure lines.",
+            "fix": "Stand at each window and decide which hand reaches it before you order."
+          },
+          {
             "title": "Paying for a motor on a window you never touch",
-            "body": "Motorisation is sold on the biggest window and used on it least. The budget that went on the motor is the budget the bedroom blackout needed.",
+            "body": "Motorisation is sold on the biggest window and used on it least. The budget that went on the motor is the budget the bedroom blackout needed, and it cannot be returned once fitted.",
             "fix": "Motorise only the blind you would otherwise reach over furniture for."
           },
           {
             "title": "Ordering every window at once",
-            "body": "The first blind up teaches you the mount, the control side and the fabric in the room's own light. Ordering all of them from a swatch skips that lesson and pays for it in returns.",
+            "body": "The first blind up teaches you the mount, the control side and the fabric in the room's own light. Ordering all of them from a swatch skips that lesson and pays for it in returns — which made-to-measure lines do not take.",
             "fix": "Order one, hang it, live with it for a week, then order the rest."
           }
         ]
       },
       "materials": {
-        "intro": "In a {name} home the blind type matters more than the fabric, because the type decides how the window looks when the blind is up as well as down.",
+        "intro": "In a {name} home the blind type matters more than the fabric, because the type decides how the window looks when the blind is up as well as down — and every type has a cheaper equivalent that reads the same from across the room.",
         "pairs": [
           {
             "combo": "Plain roller with a matching fascia",
             "verdict": "works",
-            "why": "The fascia hides the roll and the blind disappears when raised, which is the whole point of a plain fabric."
+            "why": "The fascia hides the roll and the blind disappears when raised; the stock-size roller in the same fabric looks identical and costs a fraction."
           },
           {
             "combo": "Wooden venetian with cotton ladder tapes",
             "verdict": "works",
-            "why": "The tapes hide the cord holes and read as furniture rather than as a fitting, which is what a wooden blind is for."
+            "why": "The tapes hide the cord holes and read as furniture; a faux-wood venetian with the same tapes is the equivalent for a kitchen or bathroom at half the price."
           },
           {
             "combo": "Woven-wood shade over a window facing the street, unlined",
             "verdict": "avoid",
-            "why": "It is a lantern at night; every gap in the weave shows the room to the pavement."
+            "why": "It is a lantern at night; every gap in the weave shows the room to the pavement, and the lining has to be ordered again."
           },
           {
             "combo": "Sheer roller under a blackout roman on one bracket",
             "verdict": "works",
-            "why": "Day and night handled by two blinds on one fitting, and the sheer softens the roman's stack when it is up."
+            "why": "Day and night handled by two blinds on one fitting; a blackout roller behind a ready-made sheer gives the same layered window for less."
           }
         ],
-        "rule": "Buy the type for the room's job first — light, privacy, steam — and choose the fabric second."
+        "rule": "Buy the type for the room's job first — light, privacy, steam — and choose the fabric second; the cheaper equivalent is almost always the same type in a stock size."
       },
       "shopping": {
         "items": [
           {
             "name": "Measure every window twice",
-            "priority_note": "Width and drop at three points each, in millimetres, before any catalogue is opened."
+            "priority_note": "Width and drop at three points each, in millimetres — the slip that costs a whole made-to-measure blind."
           },
           {
             "name": "Decide inside or outside the recess",
             "priority_note": "It changes the size, the light gap and the price, and it cannot be undone after the order."
           },
           {
-            "name": "Choose the blind type per room",
-            "priority_note": "Blackout for bedrooms, moisture-proof for kitchens and bathrooms, filtering for living rooms."
+            "name": "Name the lining",
+            "priority_note": "Blackout, privacy or none — written on the order; a lining is a re-make, not a swap."
           },
           {
-            "name": "Name the lining",
-            "priority_note": "Blackout, privacy or none — written on the order, not assumed."
+            "name": "Choose the blind type per room",
+            "priority_note": "Blackout for bedrooms, moisture-proof for kitchens and bathrooms, filtering for living rooms."
           },
           {
             "name": "Pick the control side per window",
@@ -2592,7 +2617,7 @@
           },
           {
             "name": "Order one blind first",
-            "priority_note": "Hang it, live with it, then order the rest to match."
+            "priority_note": "Hang it, live with it, then order the rest to match — a bracket finish is cheap to swap, a fabric is not."
           }
         ],
         "skip": [
@@ -2608,8 +2633,8 @@
       },
       "dna": {
         "narrative": [
-          "The price traps in blinds are words rather than numbers. Made-to-measure on a stock size, designer on a plain fabric, premium on a polyester weave — each one adds to the price and none of them changes what arrives.",
-          "For a {name} home the traps cluster around the finish, because a plain or textured blind looks the same in every price band in a photograph and only shows its quality once it has been raised and lowered a few hundred times."
+          "The label terms in blinds are words rather than numbers. Made-to-measure on a stock size, designer on a plain fabric, premium on a polyester weave — each one adds to the price and none of them changes what arrives.",
+          "For a {name} home the terms cluster around the finish, because a plain or textured blind looks the same in every price band in a photograph and only shows its quality once it has been raised and lowered a few hundred times."
         ],
         "implications": [
           "Ask what a label word actually changes in the product before paying for it.",
@@ -2635,7 +2660,7 @@
             "why": "A bracket in the wrong finish costs pennies to swap; a fabric in the wrong colour costs the whole blind."
           }
         ],
-        "split_note": "Put half the whole budget into the main window and split the rest evenly across the others."
+        "split_note": "Sixty percent of the whole budget into the main window, forty across every other room."
       }
     },
     "stub_colors": [
@@ -2665,7 +2690,7 @@
       "year_quiet": "Quiet month:",
       "fix": "Fix:",
       "skip": "Skip",
-      "splurge": "Worth paying for",
+      "splurge": "Spend here",
       "save": "Save here",
       "verdicts": {
         "works": "WORKS",
@@ -2679,14 +2704,15 @@
     },
     "mail": {
       "headline": "Smart move.",
-      "subject": "Your {style} window buyer's guide — Mazzin",
-      "body": "Your personalized {style} buyer's guide is attached.",
+      "subject": "Your {style} guide — how not to overpay for it — Mazzin",
+      "body": "Your personalized {style} guide is attached: the five priciest mistakes for your style, the cheaper equivalents, the label terms that change nothing, and the checklist ordered by cost of error.",
       "keep": "It stays available at that link, and the PDF is yours to keep.",
       "keep_no_link": "The PDF is yours to keep.",
-      "opening": "You just spent {price} to dodge the traps that send blind buyers back for re-orders and returns.",
-      "opening_bare": "You just dodged the traps that send blind buyers back for re-orders and returns."
+      "opening": "You just spent {price} against a mistake that costs up to $250.",
+      "opening_bare": "The guide against the mistake that costs up to $250."
     },
-    "banned": []
+    "banned": [],
+    "pdf_note": "Keep this — your guide also stays available at the link you were sent back to after checkout."
   },
   "paywall_variants": [
     {
