@@ -648,3 +648,6 @@ bottom.
 
 ## 2026-09-14 — claude/blinds-final-polish
 - blinds: savings copy, .99, unlock-first, pdf weight
+
+## 2026-09-14 — claude/anchor-currency
+- generator: per-locale anchor currency
