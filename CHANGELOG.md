@@ -645,3 +645,6 @@ bottom.
 
 ## 2026-09-14 — claude/blinds-result-v3
 - blinds result v3: clean hero, single counter, unlock list
+
+## 2026-09-14 — claude/blinds-final-polish
+- blinds: savings copy, .99, unlock-first, pdf weight
