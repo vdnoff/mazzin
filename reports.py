@@ -27,6 +27,7 @@ import datetime
 import decimal
 import html
 import inspect
+import io
 import json
 import logging
 import math
@@ -5181,6 +5182,9 @@ def build_guide_profile(cfg):
         "pdf_cover": _guide_cover,
         "pdf_node": True,
         "pdf_logo": "brand/logo-dark.svg",
+        # The gallery is drawn on the server and has no print variants, so
+        # the document resamples what it embeds — see `_light_src`.
+        "pdf_light_images": True,
         "value_anchor": anchor,
     }
     if budget is not None:
@@ -10230,7 +10234,52 @@ def _pdf_words():
 PRINT_DIR = "img/print"
 
 
-def _print_src(image_id, item):
+# On-the-fly print copies, for a funnel whose gallery is drawn on the server
+# and never gets scripts/gen_print_variants.py run over it. WeasyPrint keeps
+# a JPEG's own DCT stream and re-encodes everything else as raw deflated
+# pixels, which is how nine 640x982 WebP taps and six chapter shots made a
+# 2.7 MB mail attachment. A JPEG at the width the sheet draws is a tenth of
+# that. Cached per file and size for the life of the process: the gallery
+# changes only when somebody regenerates it.
+PDF_LIGHT_WIDTH = 420
+PDF_LIGHT_TAP_WIDTH = 160
+PDF_LIGHT_QUALITY = 72
+_light_cache = {}
+
+
+def _light_src(path, width):
+    """A downscaled JPEG data URI for the image at `path`, or ""."""
+    try:
+        stamp = os.path.getmtime(path)
+    except OSError:
+        return ""
+    key = (path, stamp, width)
+    hit = _light_cache.get(key)
+    if hit is not None:
+        return hit
+    try:
+        from PIL import Image
+        with Image.open(path) as im:
+            im.load()
+            im = im.convert("RGB")
+            if im.width > width:
+                im = im.resize(
+                    (width, max(1, round(im.height * width / im.width))),
+                    Image.LANCZOS)
+            buf = io.BytesIO()
+            im.save(buf, "JPEG", quality=PDF_LIGHT_QUALITY, optimize=True,
+                    progressive=False)
+        uri = "data:image/jpeg;base64," + base64.b64encode(
+            buf.getvalue()).decode("ascii")
+    except Exception:
+        log.warning("pdf: could not make a light copy of %s",
+                    os.path.basename(path))
+        uri = ""
+    _light_cache[key] = uri
+    return uri
+
+
+def _print_src(image_id, item, width=PDF_LIGHT_WIDTH):
     """Where the PDF should read this photograph from.
 
     The print copy first. WeasyPrint embeds whatever it is handed at full
@@ -10246,7 +10295,15 @@ def _print_src(image_id, item):
     if os.path.isfile(os.path.join(config.STATIC_DIR, rel)):
         return rel
     src = item.get("img") or ""
-    return src[len("/static/"):] if src.startswith("/static/") else src
+    src = src[len("/static/"):] if src.startswith("/static/") else src
+    # A profile that asks for light images gets the original resampled to
+    # a JPEG at the drawn width; every other profile is handed the path it
+    # always was, so its document does not move by a byte.
+    if src and _pdf_profile().get("pdf_light_images"):
+        light = _light_src(os.path.join(config.STATIC_DIR, src), width)
+        if light:
+            return light
+    return src
 
 
 def _pdf_asset(rel):
@@ -11069,7 +11126,7 @@ def _pdf_taps(cfg):
     cells = []
     for image_id in ids:
         item = (_pdf_visuals().get("images") or {}).get(image_id)
-        src = _print_src(image_id, item) if item else ""
+        src = _print_src(image_id, item, PDF_LIGHT_TAP_WIDTH) if item else ""
         if src:
             cells.append('<td class="tapcell"><img src="%s" alt=""></td>'
                          % _e(src))

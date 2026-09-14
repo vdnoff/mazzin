@@ -1535,10 +1535,9 @@ body:has(.result-module) {
   color: var(--zr-faint);
 }
 
-/* --- the value framing: the counter card and the unlock list ---------------
-   A guide funnel's one money figure. The counter card stands where the
-   zodiac page keeps its rarity, counts up to the figure, and sits directly
-   over the unlock list and the offer it argues for. */
+/* --- the value framing: the unlock list -------------------------------------
+   A guide funnel's one money figure leads the unlock list, which stands
+   where the zodiac page keeps its rarity, directly over the offer. */
 /* Five names under five segments: a size down and free to break, so the
    narrowest column's name neither runs into its neighbour nor loses its
    end. Only the generic card wears the class. */
@@ -1559,48 +1558,65 @@ body:has(.result-module) {
   background: var(--zr-panel);
 }
 
-.result-module.is-minimal .zr-cost {
-  margin: 18px 0 0;
-  padding: 20px 18px 18px;
-  border: 1px solid rgba(196, 166, 96, 0.45);
-  border-radius: 16px;
-  background: var(--zr-panel);
-  text-align: center;
-}
-
-.result-module.is-minimal .zr-cost-kicker {
-  margin: 0 0 8px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--zr-lux);
-}
-
-.result-module.is-minimal .zr-cost-lead {
-  margin: 0;
-  font-size: 13px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--zr-muted);
-}
-
-.result-module.is-minimal .zr-cost-figure {
-  margin: 2px 0 6px;
-  font-family: var(--font-display, inherit);
-  font-size: 52px;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  color: #E8C878;
-  font-variant-numeric: tabular-nums;
-}
-
-.result-module.is-minimal .zr-cost-note {
-  margin: 0;
+/* The list's head, stepped up, with the lock glyph before the words. */
+.result-module.is-minimal .zr-unlock-head.is-titled {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 14px;
-  line-height: 1.45;
+  letter-spacing: 0.14em;
+}
+
+.result-module.is-minimal .zr-unlock-lock {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.result-module.is-minimal .zr-unlock-lock svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The money row: the one figure on the page, a size up, in the accent,
+   behind a shield rather than a tick. */
+.result-module.is-minimal .zr-check.is-money {
+  padding: 10px 0 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(196, 166, 96, 0.28);
+}
+
+.result-module.is-minimal .zr-check.is-money .zr-check-line {
+  font-size: 17px;
+  line-height: 1.4;
   color: var(--zr-text);
+}
+
+.result-module.is-minimal .zr-check.is-money .zr-check-key {
+  font-size: 17px;
+  color: #E8C878;
+}
+
+.result-module.is-minimal .zr-check-mark.is-shield {
+  width: 22px;
+  height: 22px;
+  color: #E8C878;
+}
+
+.result-module.is-minimal .zr-check-mark.is-shield svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* --- the boxes arm ---------------------------------------------------------
