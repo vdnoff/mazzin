@@ -167,7 +167,7 @@ try:
     check("  questions, labels, buttons, sections, stubs, mail, words",
           all(any(p.startswith(pre) for p in paths)
               for pre in ("value_framing.counter.note", "value_framing.scale.label",
-                          "value_framing.amount_format", "swipe.steps[0].kicker",
+                          "value_framing.amount_format",
                           "result_copy.kicker", "result_copy.profile.chips",
                           "result_copy.profile.split.names",
                           "result_copy.profile.scales[0].left",

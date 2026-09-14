@@ -1535,63 +1535,28 @@ body:has(.result-module) {
   color: var(--zr-faint);
 }
 
-/* --- the value framing: the cost row and the counter card ------------------
-   A guide funnel's one money figure. The row sits under the three style
-   scales in the lux card and is the loudest thing in it: full width, the
-   accent, a label that says what it is. The counter card stands where the
-   zodiac page keeps its rarity, and counts up to the same figure. */
-.result-module.is-minimal .zr-scale.is-cost {
-  display: block;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(196, 166, 96, 0.28);
+/* --- the value framing: the counter card and the unlock list ---------------
+   A guide funnel's one money figure. The counter card stands where the
+   zodiac page keeps its rarity, counts up to the figure, and sits directly
+   over the unlock list and the offer it argues for. */
+/* Five names under five segments: a size down and free to break, so the
+   narrowest column's name neither runs into its neighbour nor loses its
+   end. Only the generic card wears the class. */
+.result-module.is-minimal.is-generic .zr-split-name {
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+  padding: 0 1px;
 }
 
-.result-module.is-minimal .zr-cost-label {
-  display: block;
-  margin: 0 0 6px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--zr-lux);
-}
-
-.result-module.is-minimal .zr-scale-track.is-cost {
-  display: block;
-  position: relative;
-  width: 100%;
-  height: 10px;
-  border-radius: 999px;
-  background: rgba(196, 166, 96, 0.18);
-  overflow: hidden;
-}
-
-.result-module.is-minimal .zr-scale-run.is-cost {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(232, 200, 120, 0.55), #E8C878);
-}
-
-.result-module.is-minimal .zr-cost-value {
-  display: block;
-  margin: 8px 0 0;
-  font-family: var(--font-display, inherit);
-  font-size: 26px;
-  font-weight: 800;
-  line-height: 1.05;
-  letter-spacing: -0.01em;
-  color: var(--zr-lux);
-}
-
-.result-module.is-minimal .zr-cost-sub {
-  display: block;
-  margin: 3px 0 0;
-  font-size: 12px;
-  line-height: 1.35;
-  color: var(--zr-muted);
+/* The unlock list on its own, between the counter and the offer: the same
+   rows the offer card carries on the zodiac page, framed as a block. */
+.result-module.is-minimal .zr-unlock.is-list {
+  margin: 14px 0 0;
+  padding: 16px 18px 6px;
+  border: 1px solid rgba(196, 166, 96, 0.28);
+  border-radius: 16px;
+  background: var(--zr-panel);
 }
 
 .result-module.is-minimal .zr-cost {

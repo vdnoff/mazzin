@@ -123,8 +123,7 @@ carry it, all of them in the master and translated by the generator
 | `result_copy.profile.chips`, `formula`, `split_caption`, `offer_head` | filled from `{style}`, `{style_bare}`, `{lead}`, `{second}`, `{sections}`, one `{<tag>}` per split tag, one `{<scale id>}` per scale |
 | `result_copy.profile.unlock[]`, `unlock_head`, `unlock_tail`, `cards[]` | the checklist in the offer card and the keyword over each delivered chapter |
 
-| `value_framing.amount` (frozen), `amount_format`, `counter.kicker`, `counter.lead`, `counter.note`, `counter.aria`, `scale.label`, `scale.value`, `scale.note`, `scale.aria` | the one money figure: the cost of a purchase mistake, "up to {amount}", counted up on the page and drawn as the fourth scale; the report's prompt is held to the same phrase and nothing else numeric |
-| `swipe.steps[].kicker` | the money line over each style question |
+| `value_framing.amount` (frozen), `amount_format`, `counter.kicker`, `counter.lead`, `counter.note`, `counter.aria`, `scale.label`, `scale.value`, `scale.note`, `scale.aria` | the one money figure: the cost of a purchase mistake, "up to {amount}", counted up once on the page above the unlock list; `scale` feeds the PDF cover's cost line and the phrase the report's prompt is held to |
 
 The module reads the generic table only when the profile declares no
 `subtypes`; a zodiac config is drawn exactly as before, and
