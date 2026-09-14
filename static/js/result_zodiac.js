@@ -401,8 +401,13 @@
   }
 
   function amountText(block, n) {
-    return String(block.amount_format || "{n}")
-      .replace(/\{n\}/g, String(Math.round(n)));
+    var digits = String(Math.round(n));
+    var group = typeof block.amount_group === "string" ? block.amount_group : "";
+    if (group && digits.length > 3) {
+      // A market that writes its thousands apart (100 000 Ft, 1.800 kr.).
+      digits = digits.replace(/\B(?=(\d{3})+(?!\d))/g, group);
+    }
+    return String(block.amount_format || "{n}").replace(/\{n\}/g, digits);
   }
 
   function framingWords(block, data) {

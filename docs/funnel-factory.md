@@ -55,6 +55,17 @@ per row — `amount_multiple` (100 for HUF, which is charged in whole
 forints) and `stripe_min_cents` — and the generator refuses an amount that
 breaks them.
 
+The row also carries the market's value-framing anchor — the one money
+figure the copy names — as `anchor_amount`, `anchor_format` (written around
+`{n}`: `€{n}`, `{n} Ft`, `{n} kr.`) and `anchor_group` (the thousands
+separator: `" "` for `100 000 Ft`, `"."` for `1.800 kr.`, `""` for none).
+After translation the generator writes the three to `value_framing`
+(`amount`, `amount_format`, `amount_group`) and swaps the master's literal
+(`$250`) for the market's in every string of the funnel; the model is held
+to handing that literal back unchanged so the swap can find it. A
+non-English funnel that still names the literal — or carries any `$` at
+all — is refused and nothing is written.
+
 Every string the model touches is checked before it is accepted: same keys,
 every `{token}` intact, no line breaks, no banned word. The answer is asked
 for as a structured output (a JSON schema of the chunk's keys), so it is
@@ -123,7 +134,7 @@ carry it, all of them in the master and translated by the generator
 | `result_copy.profile.chips`, `formula`, `split_caption`, `offer_head` | filled from `{style}`, `{style_bare}`, `{lead}`, `{second}`, `{sections}`, one `{<tag>}` per split tag, one `{<scale id>}` per scale |
 | `result_copy.profile.unlock[]`, `unlock_head`, `unlock_tail`, `cards[]` | the checklist in the offer card and the keyword over each delivered chapter |
 
-| `value_framing.amount` (frozen), `amount_format`, `unlock_row.key`, `unlock_row.line`, `scale.label`, `scale.value`, `scale.note`, `scale.aria` | the one money figure: "up to {amount}". `unlock_row` is the gold first row of the unlock list (`{amount}`, `{style}`); `scale` feeds the PDF cover's cost line and the phrase the report's prompt is held to |
+| `value_framing.amount`, `amount_format`, `amount_group` (the locale writes all three), `unlock_row.key`, `unlock_row.line`, `scale.label`, `scale.value`, `scale.note`, `scale.aria` | the one money figure: "up to {amount}". `unlock_row` is the gold first row of the unlock list (`{amount}`, `{style}`); `scale` feeds the PDF cover's cost line and the phrase the report's prompt is held to |
 
 The module reads the generic table only when the profile declares no
 `subtypes`; a zodiac config is drawn exactly as before, and
