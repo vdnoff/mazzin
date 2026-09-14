@@ -351,7 +351,7 @@ check("price is an integer number of cents",
       isinstance(cfg["pricing"]["amount_cents"], int)
       and not isinstance(cfg["pricing"]["amount_cents"], bool))
 check("  a charm price in dollars, no format override",
-      cfg["pricing"]["amount_cents"] == 299 and cfg["pricing"]["currency"] == "usd"
+      cfg["pricing"]["amount_cents"] == 199 and cfg["pricing"]["currency"] == "usd"
       and "price_format" not in cfg["pricing"]
       and "decimal_mark" not in cfg["pricing"])
 check("  no sale block", "sale" not in cfg)
@@ -384,11 +384,11 @@ check("the value framing is one anchor figure, phrased 'up to'",
       VF["amount"] == 250 and VF["amount_format"] == "${n}"
       and ANCHOR == "up to $250"
       and VF["scale"]["value"] == "up to {amount}"
-      and "{amount}" in VF["counter"]["aria"]
-      and "{style}" in VF["counter"]["note"]
-      and VF["counter"]["lead"] == "up to", ANCHOR)
+      and "{amount}" in VF["unlock_row"]["key"]
+      and "{style}" in VF["unlock_row"]["line"]
+      and "counter" not in VF, ANCHOR)
 check("  no range, no rate, no share of people anywhere in it",
-      not re.search(r"\d\s*[-–]\s*\d|%|\bmost\b|\bpeople\b|\bsave[sd]?\b",
+      not re.search(r"\d\s*[-–]\s*\d|%|\bmost\b|\bpeople\b|\bsaved\b",
                     json.dumps(VF)))
 
 
@@ -407,14 +407,21 @@ check("the only money on the page is the anchor, phrased exactly — no "
       str([(p, t) for p, t in strings_of(cfg) if MONEY.search(framed(t))
            and not p.startswith("swipe.steps") and ".colors[" not in p
            and not p.startswith("result_copy.labels")][:4]))
-check("  and no string invents a statistic or a personal saving",
+check("  and no string invents a statistic or promises a saving outright",
       not [p for p, t in strings_of(cfg)
            if re.search(r"\d+\s?%\s+of|\b(most|9 in 10|nine in ten) "
-                        r"(people|buyers)|you('ll| will) save|saves? you\b",
+                        r"(people|buyers)|you('ll| will) save|\bsaved\b",
                         t, re.I)],
       str([p for p, t in strings_of(cfg)
-           if re.search(r"\d+\s?%\s+of|you('ll| will) save|saves? you\b",
+           if re.search(r"\d+\s?%\s+of|you('ll| will) save|\bsaved\b",
                         t, re.I)][:4]))
+check("  every saving is 'up to' the anchor, never a flat number",
+      all(re.search(r"save (you )?up to \$250", t, re.I)
+          for p, t in strings_of(cfg) if re.search(r"\bsave\b", t, re.I)
+          and "$250" in t),
+      str([t for p, t in strings_of(cfg) if re.search(r"\bsave\b", t, re.I)
+           and "$250" in t and not re.search(r"save (you )?up to \$250", t,
+                                              re.I)][:3]))
 check("  the anchor appears where the money is argued",
       ANCHOR in cfg["checkout"]["anchor"]
       and ANCHOR in cfg["checkout"]["commerce"]["price_anchor"]
@@ -649,11 +656,30 @@ check("  the cover is the hero card with the cost line, no element strip",
       and "@page { background: #0E1430; }" in html)
 try:
     pdf = reports.build_pdf(content)
-    check("  WeasyPrint renders it, under a megabyte for a mailbox",
-          bool(pdf) and pdf[:4] == b"%PDF" and len(pdf) < 1_000_000,
+    check("  WeasyPrint renders it, under half a megabyte for a mailbox",
+          bool(pdf) and pdf[:4] == b"%PDF" and len(pdf) < 500_000,
           len(pdf) if pdf else None)
 except Exception as exc:                       # noqa: BLE001
     check("  WeasyPrint renders it", False, type(exc).__name__)
+uris = re.findall(r'src="data:image/jpeg;base64,([^"]+)"', html)
+check("the images are embedded as light JPEGs, not the gallery originals",
+      len(uris) >= 10 and "galleries/blinds/" not in html, len(uris))
+import base64 as _b64
+from PIL import Image as _Image
+import io as _io
+decoded = [_b64.b64decode(u) for u in uris]
+sizes = [_Image.open(_io.BytesIO(d)).size for d in decoded]
+check("  every one at the drawn width or narrower",
+      all(w <= reports.PDF_LIGHT_WIDTH for w, h in sizes), str(sizes[:4]))
+check("  the taps grid at its smaller width",
+      sum(1 for w, h in sizes if w <= reports.PDF_LIGHT_TAP_WIDTH) >= 6)
+check("  and all of them together under the budget",
+      sum(len(d) for d in decoded) < 500_000, sum(len(d) for d in decoded))
+check("  the light copy is cached per file and size",
+      len(reports._light_cache) >= len(set(uris)))
+check("  and kitchen's document is handed its paths, as it always was",
+      "pdf_light_images" not in reports.KITCHEN_PROFILE
+      and "pdf_light_images" not in reports.ZODIAC_PROFILE)
 prompt = reports._section_prompt(reports._style(cfg, "bold_statement"),
                                  "Bold Statement", {"dark": 4}, "materials",
                                  cfg, ["b5b", "b2b"], SLUG)
@@ -799,10 +825,26 @@ check("  the checklist rows and cards name the locked sections",
       and P["unlock_tail"]["line"])
 check("every section carries a teaser line",
       all(s.get("teaser_line") for s in cfg["report"]["sections"]))
-check("the counter has its words, and the scale block feeds the PDF cover",
-      VF["counter"]["kicker"] and VF["counter"]["note"]
+check("the money row has its words, and the scale block feeds the PDF cover",
+      VF["unlock_row"]["key"] == "Save up to {amount} on your blinds"
+      and VF["unlock_row"]["line"]
       and VF["scale"]["label"] and VF["scale"]["note"]
       and "{amount}" in VF["scale"]["aria"])
+check("the exact copy swaps",
+      cfg["swipe"]["subtext"]
+      == "Save up to $250 on your blinds — find your style first"
+      and cfg["analyzing"]["text"]
+      == "Finding your style — and where you can save..."
+      and cfg["checkout"]["commerce"]["price_anchor"]
+      == "{price} — could save you up to $250 on your order"
+      and cfg["report_profile"]["mail"]["subject"]
+      == "Your {style} guide — save up to $250 on your blinds"
+      and cfg["swipe"]["headline"]
+      == "Your window style — and how not to overpay for it"
+      and cfg["result_copy"]["profile"]["unlock_head"] == "WHAT YOU UNLOCK")
+check("  the old re-orders header phrasing is gone",
+      "wrong-size re-orders" not in json.dumps(cfg)
+      and "back for a re-order" not in json.dumps(cfg))
 check("the paid page's visuals: taps, a hero, a frame per chapter",
       vis["taps"] is True
       and vis["hero"]["glyph_step"] in {s["id"] for s in steps}
@@ -944,39 +986,51 @@ def walk():
             shape = page.evaluate(
                 "() => [...document.querySelector('#result-module').children]"
                 ".map(n => n.className)")
-            check("  the result is: kicker, lux hero, taps, the counter, the "
-                  "unlock list, offer",
+            check("  the result is: kicker, lux hero, taps, the unlock list, "
+                  "offer — no counter card",
                   shape == ["zr-kicker is-framed", "zr-hero is-rich is-lux",
-                            "zr-taps", "zr-cost", "zr-unlock is-list",
-                            "zr-offer"], str(shape))
+                            "zr-taps", "zr-unlock is-list", "zr-offer"],
+                  str(shape))
             name = page.inner_text("#result-module .zr-subtype")
             check("  a style was named, and it is one of the five",
                   name in {s["name"] for s in cfg["styles"]}, name)
-            page.wait_for_timeout(1600)
-            figure = page.inner_text("#result-module .zr-cost-figure")
-            check("  the counter has counted up to the anchor",
-                  figure == "$250"
-                  and page.locator(".zr-boxes-grid").count() == 0, figure)
+            money = page.text_content(".zr-check.is-money .zr-check-line")
+            check("  the money row leads the list, behind a shield",
+                  money and money.startswith("Save up to $250 on your blinds")
+                  and name in money
+                  and page.locator(".zr-check.is-money .zr-check-mark"
+                                   ".is-shield svg").count() == 1
+                  and page.locator(".zr-boxes-grid").count() == 0
+                  and page.locator(".zr-cost").count() == 0, money)
+            check("  the head is stepped up and wears the lock glyph",
+                  page.text_content(".zr-unlock-head").strip()
+                  == "WHAT YOU UNLOCK"
+                  and page.locator(".zr-unlock-head .zr-unlock-lock svg")
+                  .count() == 1)
             check("  the hero carries the three style scales and nothing priced",
                   page.locator(".zr-scales .zr-scale").count() == 3
                   and page.locator(".zr-hero .is-cost").count() == 0
                   and ANCHOR not in page.inner_text(".zr-hero"))
-            check("  the unlock list names the five chapters, then the tail",
+            check("  the unlock list: the money row, the five chapters, the tail",
                   page.eval_on_selector_all(
                       ".zr-unlock.is-list .zr-check-key",
                       "ns => ns.map(n => n.textContent)")
-                  == [TITLES[r["id"]] for r in P["unlock"]]
+                  == ["Save up to $250 on your blinds"]
+                  + [TITLES[r["id"]] for r in P["unlock"]]
                   + [P["unlock_tail"]["key"]])
             check("  and the offer card opens on the price, no list inside",
                   page.locator(".zr-offer .zr-unlock").count() == 0
                   and page.locator(".zr-offer .zr-checklist").count() == 0)
-            check("  the figure appears once on the page",
-                  page.inner_text("#result-module").count(ANCHOR.split()[-1])
-                  == 2)  # the counter figure and the offer's price anchor
+            check("  the figure appears in the money row and the price anchor",
+                  page.inner_text("#result-module").count("$250") == 2)
+            check("  the price anchor names the price and the saving",
+                  page.inner_text(".zr-anchor")
+                  == "$1.99 — could save you up to $250 on your order")
             check("  the engine's own report is not drawn",
                   page.evaluate("document.getElementById('report').hidden"))
-            check("  the sticky price reads the charm price",
-                  "$2.99" in page.inner_text("#result-module"))
+            check("  the price is the new charm price",
+                  page.inner_text(".zr-price-now") == "$1.99"
+                  and "$2.99" not in page.inner_text("#result-module"))
             check("  the consent box gates the button",
                   page.locator("#result-module #withdrawal").count() == 1
                   and page.locator("#result-module #pay-button").count() == 1)

@@ -416,73 +416,39 @@
     return words;
   }
 
-  function reducedMotion() {
-    try {
-      return !!(window.matchMedia
-                && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-    } catch (e) {
-      return false;
-    }
-  }
-
-  // The figure counts up from nothing to the anchor over a moment, then
-  // stays. Motion is decoration: with reduced motion asked for, or without
-  // requestAnimationFrame, the final number is simply written.
-  function countUp(node, block) {
-    var target = block.amount;
-    var done = function () { node.textContent = amountText(block, target); };
-    if (reducedMotion() || typeof window.requestAnimationFrame !== "function") {
-      done();
-      return;
-    }
-    node.textContent = amountText(block, 0);
-    var length = 1400;
-    var start = null;
-    var step = function (now) {
-      if (start === null) start = now;
-      var t = Math.min(1, (now - start) / length);
-      var eased = 1 - Math.pow(1 - t, 3);
-      node.textContent = amountText(block, target * eased);
-      if (t < 1) {
-        window.requestAnimationFrame(step);
-      } else {
-        done();
-      }
-    };
-    window.requestAnimationFrame(step);
-  }
-
-  // The counter card, where the zodiac page puts its rarity: the kicker, the
-  // lead ("up to"), the animated figure, and the line that says what the
-  // figure is and what the guide does about it. The one money moment on the
-  // page — the hero card carries the style and nothing priced — and it sits
-  // directly over the unlock list and the offer it argues for.
-  function costCounter(ctx, data) {
+  // The money row: the one figure on the page, as the first row of the
+  // unlock list — gold, a size up, a shield rather than a tick. Filled from
+  // `value_framing.unlock_row` with the same words the other rows get plus
+  // {amount}; a config without the row draws the list as it is.
+  function moneyRow(ctx, data) {
     var block = valueFraming(ctx);
-    var copy = block && block.counter;
-    if (!block || !copy) return null;
+    var copy = block && block.unlock_row;
+    if (!block || !copy || !copy.key) return null;
     var words = framingWords(block, data);
-    var card = elm("section", "zr-cost");
-    if (copy.kicker) card.appendChild(elm("p", "zr-cost-kicker", copy.kicker));
-    if (copy.lead) card.appendChild(elm("p", "zr-cost-lead", copy.lead));
-    var figure = elm("p", "zr-cost-figure");
-    figure.setAttribute("aria-label", fill(copy.aria || "{amount}", words));
-    card.appendChild(figure);
-    if (copy.note) {
-      card.appendChild(elm("p", "zr-cost-note", fill(copy.note, words)));
+    var item = elm("li", "zr-check is-money");
+    var mark = elm("span", "zr-check-mark is-shield");
+    mark.setAttribute("aria-hidden", "true");
+    mark.appendChild(drawn(ICONS.shield));
+    item.appendChild(mark);
+    var line = elm("p", "zr-check-line");
+    line.appendChild(elm("strong", "zr-check-key", fill(copy.key, words)));
+    if (copy.line) {
+      line.appendChild(document.createTextNode(
+        " \u2014 " + fill(copy.line, words)));
     }
-    countUp(figure, block);
-    return card;
+    item.appendChild(line);
+    return item;
   }
 
-  // The unlock list, standing on its own between the counter and the offer.
+  // The unlock list, standing on its own between the taps and the offer.
   //
   // Same rows and same furniture as the checklist the zodiac offer card
   // carries inside it — the head, a tick per row, the tail — but keyed on
   // the report's own section titles rather than the card keywords: the row
   // names the chapter as the paid page will, and the config's short line
-  // says what it is worth. A vertical list rather than a grid, so the eye
-  // runs from the figure above straight down to the price below.
+  // says what it is worth. The head wears the lock glyph, and the money
+  // row leads. A vertical list rather than a grid, so the eye runs from
+  // the figure straight down to the price below.
   function unlockList(ctx, data) {
     var table = profileBlock(ctx) || {};
     var rows = table.unlock || [];
@@ -498,9 +464,17 @@
     });
     var block = elm("section", "zr-unlock is-list");
     if (table.unlock_head) {
-      block.appendChild(elm("p", "zr-unlock-head", table.unlock_head));
+      var head = elm("p", "zr-unlock-head is-titled");
+      var glyph = elm("span", "zr-unlock-lock");
+      glyph.setAttribute("aria-hidden", "true");
+      glyph.appendChild(drawn(ICONS.lock));
+      head.appendChild(glyph);
+      head.appendChild(document.createTextNode(table.unlock_head));
+      block.appendChild(head);
     }
     var list = elm("ul", "zr-checklist");
+    var money = moneyRow(ctx, data);
+    if (money) list.appendChild(money);
     rows.forEach(function (row) {
       list.appendChild(checkRow(titles[row.id] || keys[row.id] || row.key
                                 || "", fill(row.line || "", data.words || {})));
@@ -1210,6 +1184,8 @@
     check: ["M3.2 8.4 6.4 11.6 12.8 4.8"],
     // The one place a padlock belongs: over the chapter the boxes arm shows
     // and does not open.
+    shield: ["M8 1.5 2.8 3.6v4.1c0 3.2 2.2 5.6 5.2 6.8 3-1.2 5.2-3.6 5.2-6.8V3.6L8 1.5z",
+             "M5.6 8.2l1.7 1.7 3.2-3.4"],
     lock: ["M4.6 7.2V5.4a3.4 3.4 0 0 1 6.8 0v1.8",
            "M3.4 7.2h9.2v6.4H3.4z"]
   };
@@ -1890,10 +1866,10 @@
       // A generic card has no rarity to give a screen to; the locked
       // chapters take that screen instead, read off the report's sections.
       if (data.generic) {
-        var pitch = costCounter(ctx, data) || sectionTeasers(ctx);
-        if (pitch) root.appendChild(pitch);
+        // The unlock list is the pitch: the money row leads it. A config
+        // with no rows at all falls back to the section teasers.
         var list = unlockList(ctx, data);
-        if (list) root.appendChild(list);
+        root.appendChild(list || sectionTeasers(ctx) || elm("span"));
       }
       // And where the two lean arms part: minimal carries its pitch as a
       // checklist inside the offer card, boxes puts a locked chapter and four

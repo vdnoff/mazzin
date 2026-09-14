@@ -157,7 +157,7 @@ try:
           all(l["decimal_mark"] == "," and "{amount}" in l["price_format"]
               for k, l in locales.items() if k != "en"))
     check("  and English writes dollars the way kitchen does",
-          locales["en"]["currency"] == "usd" and locales["en"]["amount_cents"] == 299
+          locales["en"]["currency"] == "usd" and locales["en"]["amount_cents"] == 199
           and not locales["en"]["price_format"])
 
     print("\n--- the walk: what is copy and what is not ---")
@@ -166,7 +166,7 @@ try:
     check("hundreds of strings are copy", len(items) > 300, len(items))
     check("  questions, labels, buttons, sections, stubs, mail, words",
           all(any(p.startswith(pre) for p in paths)
-              for pre in ("value_framing.counter.note", "value_framing.scale.label",
+              for pre in ("value_framing.unlock_row.key", "value_framing.scale.label",
                           "value_framing.amount_format",
                           "result_copy.kicker", "result_copy.profile.chips",
                           "result_copy.profile.split.names",
@@ -588,18 +588,24 @@ try:
               "unicode kept",
               open(static, encoding="utf-8").read().startswith('{\n  "slug"')
               and "\\u" not in open(static, encoding="utf-8").read())
+    check("the table carries the language pass's prices",
+          [locales[l]["amount_cents"] for l in ("en", "nl", "de", "sk", "el")]
+          == [199] * 5 and locales["hu"]["amount_cents"] == 79000
+          and locales["cs"]["amount_cents"] == 4900
+          and locales["pl"]["amount_cents"] == 899
+          and locales["da"]["amount_cents"] == 1495)
     check("HUF amount is divisible by 100 in the generated file",
           results["hu"]["pricing"]["amount_cents"] % 100 == 0
           and results["hu"]["pricing"]["currency"] == "huf"
           and results["hu"]["pricing"]["price_format"] == "{amount} Ft")
     check("  and the German one is euro cents with a comma",
-          results["de"]["pricing"]["amount_cents"] == 299
+          results["de"]["pricing"]["amount_cents"] == 199
           and results["de"]["pricing"]["currency"] == "eur"
           and results["de"]["pricing"]["decimal_mark"] == ",")
     check("the reports module writes that price the way the page does",
-          reports._written_price(results["hu"], 99000) == "990 Ft"
-          and reports._written_price(results["de"], 299) == "2,99 €"
-          and reports._written_price(results["hu"], 99050) == "990,50 Ft")
+          reports._written_price(results["hu"], 79000) == "790 Ft"
+          and reports._written_price(results["de"], 199) == "1,99 €"
+          and reports._written_price(results["hu"], 79050) == "790,50 Ft")
 
     print("\n--- .gitignore ---")
     ignore = open(os.path.join(scratch, ".gitignore"), encoding="utf-8").read()

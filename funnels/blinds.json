@@ -10,11 +10,9 @@
   "value_framing": {
     "amount": 250,
     "amount_format": "${n}",
-    "counter": {
-      "kicker": "THE COST OF GETTING IT WRONG",
-      "lead": "up to",
-      "note": "what one wrong made-to-measure order can cost — your guide flags the five priciest traps for {style}",
-      "aria": "up to {amount}"
+    "unlock_row": {
+      "key": "Save up to {amount} on your blinds",
+      "line": "the five priciest mistakes for {style}, flagged before you order"
     },
     "scale": {
       "label": "Cost of getting it wrong",
@@ -30,8 +28,8 @@
   "swipe": {
     "pairs_count": 9,
     "headline": "Your window style — and how not to overpay for it",
-    "subtext": "No more wrong-size re-orders",
-    "subtext_accent": "wrong-size re-orders",
+    "subtext": "Save up to $250 on your blinds — find your style first",
+    "subtext_accent": "up to $250",
     "hint": "Tap your choice",
     "card_aria": "Choose {label}",
     "steps": [
@@ -2069,11 +2067,11 @@
   ],
   "analyzing": {
     "duration_ms": 2500,
-    "text": "Analyzing your choices",
+    "text": "Finding your style — and where you can save...",
     "messages": [
       "Analyzing your 9 choices…",
       "Comparing against thousands of windows…",
-      "Finding where your style overpays…"
+      "Finding your style — and where you can save…"
     ]
   },
   "analyzing_echo": true,
@@ -2268,7 +2266,7 @@
     "locked_aria": "Locked"
   },
   "pricing": {
-    "amount_cents": 299,
+    "amount_cents": 199,
     "currency": "usd",
     "cta": "Unlock my full guide"
   },
@@ -2279,7 +2277,7 @@
     "single_page": true,
     "express": true,
     "commerce": {
-      "anchor_head": "A {price} guide against a mistake that costs up to $250",
+      "anchor_head": "A {price} guide that could save you up to $250",
       "anchor_head_accent": "up to $250",
       "price_suffix": "one-time · no subscription",
       "consent": "One-time {price} — no subscription, ever. My guide unlocks instantly.",
@@ -2288,13 +2286,13 @@
         "One-time — no recurring charges",
         "Instant delivery"
       ],
-      "mid_line": "Your style, and how not to overpay for it — starting now.",
-      "mid_line_accent": "not to overpay",
+      "mid_line": "Save up to $250 on your blinds — starting now.",
+      "mid_line_accent": "up to $250",
       "mid_button": "See what's inside ↓",
       "sticky_label": "Unlock full guide — {price}",
       "sample_link": "See a sample page",
       "sample_caption": "An example page. Yours is written from your own choices.",
-      "price_anchor": "against a mistake that costs up to $250",
+      "price_anchor": "{price} — could save you up to $250 on your order",
       "price_anchor_accent": "up to $250",
       "price_note": "one-time",
       "badges": [
@@ -2314,8 +2312,8 @@
     ],
     "manifest_hero": "mistakes",
     "manifest_head": "What's inside — {n} sections, yours forever",
-    "anchor_head": "A {price} decision against a mistake that costs up to $250",
-    "anchor": "One wrong made-to-measure order costs up to $250. The guide flags the five priciest traps for your style before you order.",
+    "anchor_head": "A {price} guide that could save you up to $250",
+    "anchor": "One wrong made-to-measure order costs up to $250. The guide flags the five priciest mistakes for your style before you order.",
     "reframe": "Less than a coffee. Cheaper than one blind ordered the wrong size.",
     "price_suffix": "one-time",
     "cta_label": "Get my guide for {price}",
@@ -2346,8 +2344,8 @@
     "error_consent": "Please tick the box above to continue."
   },
   "result": {
-    "mistakes_teaser": "You've seen mistake #1. The other four are what send {style} buyers back for a re-order — and one involves your {material}.",
-    "value_banner": "One wrong made-to-measure order costs up to $250. The guide flags the five priciest traps for your style before you order."
+    "mistakes_teaser": "You've seen mistake #1. The other four are the ones that cost {style} buyers most — and one involves your {material}.",
+    "value_banner": "One wrong made-to-measure order costs up to $250. The guide flags the five priciest mistakes for your style before you order."
   },
   "result_copy": {
     "kicker": "YOUR WINDOW STYLE",
@@ -2437,7 +2435,7 @@
       ],
       "formula": "{lead}-led · {second} undercurrent",
       "offer_head": "Your {style_bare} guide — how not to overpay for it",
-      "unlock_head": "What you unlock:",
+      "unlock_head": "WHAT YOU UNLOCK",
       "unlock": [
         {
           "id": "mistakes",
@@ -2695,12 +2693,12 @@
     },
     "mail": {
       "headline": "Smart move.",
-      "subject": "Your {style} guide — how not to overpay for it — Mazzin",
+      "subject": "Your {style} guide — save up to $250 on your blinds",
       "body": "Your personalized {style} guide is attached: the five priciest mistakes for your style, the cheaper equivalents, the label terms that change nothing, and the checklist ordered by cost of error.",
       "keep": "It stays available at that link, and the PDF is yours to keep.",
       "keep_no_link": "The PDF is yours to keep.",
-      "opening": "You just spent {price} against a mistake that costs up to $250.",
-      "opening_bare": "The guide against the mistake that costs up to $250."
+      "opening": "You just spent {price} on the guide that could save you up to $250.",
+      "opening_bare": "The guide that could save you up to $250 on your blinds."
     },
     "banned": [],
     "pdf_note": "Keep this — your guide also stays available at the link you were sent back to after checkout."

@@ -49,7 +49,7 @@ serves, `/go?v=blinds&l=hu` lands on it, and a purchase gets a Hungarian
 guide, PDF and mail. `--no-llm` pseudo-translates for a free dry walk.
 
 To add a *new* language, add its row to `scripts/locales.json`: language
-name, currency, `amount_cents` in that currency's minor units, and the
+name, currency, `amount_cents` in that currency's minor units (the EN master prices at 199), and the
 `price_format` / `decimal_mark` engine.js reads. Stripe's rules are encoded
 per row — `amount_multiple` (100 for HUF, which is charged in whole
 forints) and `stripe_min_cents` — and the generator refuses an amount that
@@ -123,7 +123,7 @@ carry it, all of them in the master and translated by the generator
 | `result_copy.profile.chips`, `formula`, `split_caption`, `offer_head` | filled from `{style}`, `{style_bare}`, `{lead}`, `{second}`, `{sections}`, one `{<tag>}` per split tag, one `{<scale id>}` per scale |
 | `result_copy.profile.unlock[]`, `unlock_head`, `unlock_tail`, `cards[]` | the checklist in the offer card and the keyword over each delivered chapter |
 
-| `value_framing.amount` (frozen), `amount_format`, `counter.kicker`, `counter.lead`, `counter.note`, `counter.aria`, `scale.label`, `scale.value`, `scale.note`, `scale.aria` | the one money figure: the cost of a purchase mistake, "up to {amount}", counted up once on the page above the unlock list; `scale` feeds the PDF cover's cost line and the phrase the report's prompt is held to |
+| `value_framing.amount` (frozen), `amount_format`, `unlock_row.key`, `unlock_row.line`, `scale.label`, `scale.value`, `scale.note`, `scale.aria` | the one money figure: "up to {amount}". `unlock_row` is the gold first row of the unlock list (`{amount}`, `{style}`); `scale` feeds the PDF cover's cost line and the phrase the report's prompt is held to |
 
 The module reads the generic table only when the profile declares no
 `subtypes`; a zodiac config is drawn exactly as before, and

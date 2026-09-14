@@ -219,6 +219,16 @@ READ = """() => {
               ws: getComputedStyle(n).whiteSpace, overflow: getComputedStyle(n).overflow,
               ellipsis: getComputedStyle(n).textOverflow}))},
     offerHasList: !!r.querySelector('.zr-offer .zr-checklist'),
+    headLock: !!r.querySelector('.zr-unlock-head .zr-unlock-lock svg'),
+    money: (() => { const m = r.querySelector('.zr-check.is-money'); if (!m) return null;
+      const line = m.querySelector('.zr-check-line'); const key = m.querySelector('.zr-check-key');
+      const other = r.querySelector('.zr-check:not(.is-money) .zr-check-line');
+      return {first: m === m.parentNode.firstElementChild,
+              shield: !!m.querySelector('.zr-check-mark.is-shield svg'),
+              line: line.textContent.split(' — ').slice(1).join(' — ').trim(),
+              size: parseFloat(getComputedStyle(line).fontSize),
+              otherSize: other ? parseFloat(getComputedStyle(other).fontSize) : 0,
+              keyColour: getComputedStyle(key).color}; })(),
     rows: [...r.querySelectorAll('.zr-checklist .zr-check')].map(n => ({
       key: (n.querySelector('.zr-check-key') || {}).textContent || '', text: n.querySelector('.zr-check-line').textContent.trim()})),
     anchor: t('.zr-anchor'), gold: t('.zr-anchor .zr-gold'), price: t('.zr-price-now'), note: t('.zr-price-note'),
@@ -302,10 +312,9 @@ try:
                                                 "rgba(14,20,48,1)"),
               free["body"])
         check("  the engine's own report is hidden", free["engineReport"])
-        check("the page is kicker, lux hero, taps, counter, unlock list, offer",
+        check("the page is kicker, lux hero, taps, unlock list, offer",
               free["shape"] == ["zr-kicker is-framed", "zr-hero is-rich is-lux",
-                                "zr-taps", "zr-cost", "zr-unlock is-list",
-                                "zr-offer"],
+                                "zr-taps", "zr-unlock is-list", "zr-offer"],
               str(free["shape"]))
         check("  the kicker is the config's, framed in two stars",
               free["kicker"].strip("✦ ") == BLINDS["result_copy"]["kicker"]
@@ -344,33 +353,34 @@ try:
               "%s / %s" % (free["taps"], free["tapsCaption"]))
         check("no rarity card and no question cards — nothing zodiac",
               free["rarity"] == 0 and free["cards"] == 0)
-        check("  and no teaser boxes: the counter took their screen",
-              free["teasers"] == [])
+        check("  and no teaser boxes, no counter card",
+              free["teasers"] == [] and free["cost"] is None)
         VF = BLINDS["value_framing"]
         ANCHOR = "up to $250"
-        cost = free["cost"] or {}
-        check("the counter card carries the config's words around the anchor",
-              cost.get("kicker") == VF["counter"]["kicker"]
-              and cost.get("lead") == VF["counter"]["lead"]
-              and cost.get("figure") == "$250"
-              and cost.get("aria") == ANCHOR
-              and cost.get("note") == VF["counter"]["note"].replace(
-                  "{style}", free["subtype"]), str(cost))
         check("the hero carries three scales and no cost row",
               free["costRow"] is None and len(free["scales"]) == 3)
-        check("  honest: no personal saving, no range, no rate",
-              not re.search(r"\d\s*[-–]\s*\d|%|\bsave", cost.get("note") or "",
-                            re.I))
-        check("the unlock list stands between the counter and the offer, "
-              "keyed on the chapter titles",
-              free["unlockHead"] == PROFILE["unlock_head"]
-              and [r["key"] for r in free["rows"]]
+        money = free["money"] or {}
+        check("the money row leads the unlock list: gold key, a size up, "
+              "a shield",
+              free["rows"] and free["rows"][0]["key"]
+              == "Save up to $250 on your blinds"
+              and money.get("first") and money.get("shield")
+              and money.get("line") == VF["unlock_row"]["line"].replace(
+                  "{style}", free["subtype"])
+              and money.get("size", 0) > money.get("otherSize", 0)
+              and money.get("keyColour", "").replace(" ", "")
+              == "rgb(232,200,120)", str(money))
+        check("  the head is WHAT YOU UNLOCK behind an inline lock glyph",
+              free["unlockHead"] == "WHAT YOU UNLOCK"
+              and free["headLock"] is True)
+        check("the chapter rows follow, keyed on the section titles",
+              [r["key"] for r in free["rows"]][1:]
               == [next(s["title"] for s in SECTIONS if s["id"] == row["id"])
                   for row in PROFILE["unlock"]] + [PROFILE["unlock_tail"]["key"]],
               str([r["key"] for r in free["rows"]]))
         check("  worded from the config's unlock lines",
               all(row["line"] in text["text"] for row, text
-                  in zip(PROFILE["unlock"], free["rows"])))
+                  in zip(PROFILE["unlock"], free["rows"][1:])))
         check("  and the offer card carries no list of its own",
               free["offerHasList"] is False)
         check("chips wrap rather than truncate",
@@ -384,10 +394,11 @@ try:
               and free["subtype"] in free["offerHead"], free["offerHead"])
         check("the anchor is the commerce price anchor with its accent",
               free["anchor"] == BLINDS["checkout"]["commerce"]["price_anchor"]
+              .replace("{price}", "$1.99")
               and free["gold"] == BLINDS["checkout"]["commerce"]
               ["price_anchor_accent"], free["anchor"])
         check("  the price is the charm price with its note and badges",
-              free["price"] == "$2.99" and free["note"] == "one-time"
+              free["price"] == "$1.99" and free["note"] == "one-time"
               and free["badges"] == BLINDS["checkout"]["commerce"]["badges"])
         check("  the offer sub and trust row are the config's",
               free["sub"] == BLINDS["result_copy"]["offer_sub"]
@@ -446,16 +457,18 @@ check("the generic reader exists and is only reached without subtypes",
 check("  the badge, the pitch and the checklist rows are its only hooks",
       "glyph(heroPick(ctx, data))" in JS
       and "if (data.generic) {" in JS
-      and "var pitch = costCounter(ctx, data) || sectionTeasers(ctx);" in JS
+      and "root.appendChild(list || sectionTeasers(ctx) || elm(\"span\"));"
+      in JS
+      and "var money = moneyRow(ctx, data);" in JS
       and "rows = sectionRows(ctx);" in JS)
 check("  the generic page draws its list above the offer, the zodiac page "
       "inside it",
       "var list = unlockList(ctx, data);" in JS
       and "if (list && !data.generic) card.appendChild(list);" in JS
       and "costScale" not in JS)
-check("  the counter respects reduced motion and writes the final figure",
-      "prefers-reduced-motion: reduce" in JS
-      and "node.textContent = amountText(block, target);" in JS)
+check("  the counter card is gone with its animation",
+      "costCounter" not in JS and "countUp" not in JS
+      and "requestAnimationFrame" not in JS)
 check("  the element strip is gated on a style that has an element",
       "if (hasElement(ctx.style)) card.appendChild(deliveredElements(ctx));"
       in JS)
