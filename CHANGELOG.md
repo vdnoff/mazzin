@@ -642,3 +642,6 @@ bottom.
 
 ## 2026-09-13 — claude/blinds-savings-v2
 - blinds: savings-first result + report + PDF
+
+## 2026-09-14 — claude/blinds-result-v3
+- blinds result v3: clean hero, single counter, unlock list
