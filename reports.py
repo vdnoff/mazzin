@@ -5101,7 +5101,8 @@ def _value_anchor(framing):
     """The one money phrase a guide funnel may print, or "".
 
     `value_framing.scale.value` phrased around the amount — "up to {amount}"
-    with the amount formatted by `amount_format` — which is the same string
+    with the amount formatted by `amount_format`, its thousands split by
+    `amount_group` when the market writes them apart — the same string
     the result page's cost row shows. One source, so the report and the page
     that sold it name the same figure in the same words.
     """
@@ -5112,7 +5113,15 @@ def _value_anchor(framing):
             or amount <= 0:
         return ""
     shape = _guide_text(framing.get("amount_format"), "{n}")
-    text = shape.replace("{n}", str(int(round(amount))))
+    digits = str(int(round(amount)))
+    group = framing.get("amount_group")
+    if isinstance(group, str) and group and len(digits) > 3:
+        # A market that writes its thousands apart (100 000 Ft, 1.800 kr.):
+        # the separator is the locale's, written by the generator.
+        head = len(digits) % 3
+        digits = group.join(([digits[:head]] if head else []) + [
+            digits[i:i + 3] for i in range(head, len(digits), 3)])
+    text = shape.replace("{n}", digits)
     value = _guide_text((framing.get("scale") or {}).get("value"),
                         "up to {amount}")
     return value.replace("{amount}", text)

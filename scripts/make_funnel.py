@@ -20,7 +20,11 @@ What it does, in order:
      chunks, asking for JSON and only JSON, retrying a chunk that comes back
      unparsable, incomplete, with a {token} changed or a banned word in it;
   3. applies scripts/locales.json: currency, charm price in local minor
-     units, the price format and decimal mark engine.js reads;
+     units, the price format and decimal mark engine.js reads, and the
+     value-framing anchor — the one money figure the copy names — in the
+     market's own currency and number convention, swapped for the master's
+     literal ("$250") in every translated string; a non-English funnel with
+     that literal, or any "$", still in it is refused, not written;
   4. names it <vertical>-<lang> / <vertical>_<lang>_v1;
   5. writes funnels/<vertical>-<lang>.json and the byte-identical
      static/funnels/ copy the browser fetches;
@@ -80,6 +84,8 @@ FROZEN_KEYS = frozenset((
     "moodboard_step", "material_steps", "echo_steps", "emphasized_section",
     "pdf_filename", "verdict", "element", "result_template", "scoring",
     "after_step", "auto_advance_ms", "duration_ms", "ends",
+    # The value-framing anchor's shape: the locale writes it, not the model.
+    "amount_format", "amount_group",
     # The minimal template's own structure: tag sets a scale is read on,
     # the step a badge is taken from, how a card labels itself.
     "left_tags", "right_tags", "glyph_step", "band_step", "hero_step",
@@ -230,8 +236,15 @@ def _parse_json(text):
         return None
 
 
-def check_chunk(source, answer, banned):
-    """Problems with one chunk's answer, or [] when it is usable."""
+def check_chunk(source, answer, banned, anchor=""):
+    """Problems with one chunk's answer, or [] when it is usable.
+
+    `anchor` is the master's literal money figure ("$250"): a string that
+    carries it must hand it back as many times, character for character,
+    because the locale pass swaps that literal for the market's own and a
+    "250 $" the model rephrased would slip through it as a dollar sign in a
+    forint funnel.
+    """
     notes = []
     if not isinstance(answer, dict):
         return ["not a JSON object"]
@@ -243,6 +256,9 @@ def check_chunk(source, answer, banned):
         if tokens_of(got) != tokens_of(original):
             notes.append("%s: {tokens} changed — keep %s exactly"
                          % (key, " ".join(tokens_of(original)) or "none"))
+        if anchor and got.count(anchor) != original.count(anchor):
+            notes.append("%s: keep the figure %s exactly as written, %d "
+                         "time(s)" % (key, anchor, original.count(anchor)))
         if "\n" in got:
             notes.append("%s: contains a line break" % key)
         hit = reports._banned_hit(got, banned)
@@ -321,7 +337,8 @@ class ChunkRefused(TranslationError):
         self.raw = raw
 
 
-def translate_chunk(client, model, language, source, banned, debug=False):
+def translate_chunk(client, model, language, source, banned, debug=False,
+                    anchor=""):
     """{key: translated} for one chunk, or raise ChunkRefused.
 
     `debug` prints every refused raw answer to stderr, for --only-chunk.
@@ -335,7 +352,7 @@ def translate_chunk(client, model, language, source, banned, debug=False):
         if answer is None:
             problems = ["the answer was not valid JSON"]
         else:
-            problems = check_chunk(source, answer, banned)
+            problems = check_chunk(source, answer, banned, anchor)
         if not problems:
             return dict((k, answer[k].strip()) for k in source)
         last = problems
@@ -348,7 +365,8 @@ def translate_chunk(client, model, language, source, banned, debug=False):
     raise ChunkRefused(last, raw)
 
 
-def translate_items(client, model, language, items, banned, kept, depth=0):
+def translate_items(client, model, language, items, banned, kept, depth=0,
+                    anchor=""):
     """{path: translated} for `items`, bisecting a chunk that stays refused.
 
     A chunk that fails TRIES times is split in half and each half is asked
@@ -360,7 +378,8 @@ def translate_items(client, model, language, items, banned, kept, depth=0):
     """
     source = dict(("s%d" % i, text) for i, (_, text) in enumerate(items))
     try:
-        answer = translate_chunk(client, model, language, source, banned)
+        answer = translate_chunk(client, model, language, source, banned,
+                                 anchor=anchor)
     except ChunkRefused as err:
         if len(items) == 1:
             path, text = items[0]
@@ -372,9 +391,9 @@ def translate_items(client, model, language, items, banned, kept, depth=0):
               % ("  " * depth, len(items), err.problems[0][:50], half,
                  len(items) - half))
         out = translate_items(client, model, language, items[:half], banned,
-                              kept, depth + 1)
+                              kept, depth + 1, anchor)
         out.update(translate_items(client, model, language, items[half:],
-                                   banned, kept, depth + 1))
+                                   banned, kept, depth + 1, anchor))
         return out
     return dict((path, answer["s%d" % i]) for i, (path, _) in enumerate(items))
 
@@ -399,7 +418,7 @@ def chunks_of(items):
 
 
 def translate_all(items, language, banned, model=MODEL, client=None,
-                  kept=None):
+                  kept=None, anchor=""):
     """{path: translated} for every (path, string) in `items`.
 
     `kept` collects the (path, English) pairs that stayed English.
@@ -410,14 +429,14 @@ def translate_all(items, language, banned, model=MODEL, client=None,
     done = 0
     for chunk in chunks_of(items):
         out.update(translate_items(client, model, language, chunk, banned,
-                                   kept))
+                                   kept, anchor=anchor))
         done += len(chunk)
         print("  translated %d/%d" % (done, len(items)))
     return out
 
 
 def translate_one_chunk(items, number, language, banned, model=MODEL,
-                        client=None):
+                        client=None, anchor=""):
     """--only-chunk: chunk `number` (1-based) on its own, no bisect, raw
     answers to stderr when it fails. Returns {path: translated}."""
     groups = chunks_of(items)
@@ -427,7 +446,7 @@ def translate_one_chunk(items, number, language, banned, model=MODEL,
     client = _connect(client)
     source = dict(("s%d" % i, text) for i, (_, text) in enumerate(chunk))
     answer = translate_chunk(client, model, language, source, banned,
-                             debug=True)
+                             debug=True, anchor=anchor)
     return dict((path, answer["s%d" % i]) for i, (path, _) in enumerate(chunk))
 
 
@@ -457,6 +476,129 @@ def check_locale(lang, loc):
                          % (lang, cents, loc.get("currency")))
     if not isinstance(loc.get("currency"), str) or len(loc["currency"]) != 3:
         raise ValueError("%s: currency must be a three-letter code" % lang)
+    if "anchor_amount" in loc or "anchor_format" in loc:
+        amount = loc.get("anchor_amount")
+        if isinstance(amount, bool) or not isinstance(amount, int) \
+                or amount <= 0:
+            raise ValueError("%s: anchor_amount must be a positive integer"
+                             % lang)
+        if not isinstance(loc.get("anchor_format"), str) \
+                or "{n}" not in loc["anchor_format"]:
+            raise ValueError("%s: anchor_format must be written around {n}"
+                             % lang)
+        if not isinstance(loc.get("anchor_group", ""), str):
+            raise ValueError("%s: anchor_group must be a string" % lang)
+
+
+# --- the anchor ----------------------------------------------------------------
+#
+# The value framing names one money figure — "up to $250" — and the master
+# names it in words as well as in the block: the swipe subtext, the anchor
+# above the price, the mail subject. A market has its own figure in its own
+# currency, written its own way (100 000 Ft, 1.800 kr.), so the locale
+# carries all three parts and the generator writes them to the block and
+# swaps the master's literal for the market's in every translated string.
+# The prompt tells the model to keep the figure as written and check_chunk
+# holds it to that, which is what makes the literal findable afterwards.
+
+def group_digits(n, group):
+    """`n` as digits with `group` between every three, from the right."""
+    digits = str(int(n))
+    if not group or len(digits) <= 3:
+        return digits
+    head = len(digits) % 3
+    parts = ([digits[:head]] if head else []) + [
+        digits[i:i + 3] for i in range(head, len(digits), 3)]
+    return group.join(parts)
+
+
+def anchor_text(amount, shape, group=""):
+    """The figure as the copy prints it, or "" without an amount."""
+    if isinstance(amount, bool) or not isinstance(amount, (int, float)) \
+            or amount <= 0:
+        return ""
+    shape = shape if isinstance(shape, str) and shape else "{n}"
+    return shape.replace("{n}", group_digits(round(amount), group or ""))
+
+
+def master_anchor(master):
+    """The literal the master's copy names ("$250"), or ""."""
+    framing = master.get("value_framing")
+    if not isinstance(framing, dict):
+        return ""
+    return anchor_text(framing.get("amount"), framing.get("amount_format"),
+                       framing.get("amount_group"))
+
+
+def locale_anchor(loc):
+    """The market's figure from the locale row, or "" when it has none."""
+    if "anchor_amount" not in loc:
+        return ""
+    return anchor_text(loc["anchor_amount"], loc.get("anchor_format"),
+                       loc.get("anchor_group"))
+
+
+def _all_strings(node, path="", out=None):
+    """[(path, string)] for every string in the config, frozen or not."""
+    if out is None:
+        out = []
+    if isinstance(node, dict):
+        for key, value in node.items():
+            _all_strings(value, "%s.%s" % (path, key) if path else key, out)
+    elif isinstance(node, list):
+        for index, value in enumerate(node):
+            _all_strings(value, "%s[%d]" % (path, index), out)
+    elif isinstance(node, str):
+        out.append((path, node))
+    return out
+
+
+def apply_anchor(cfg, loc, literal):
+    """Write the locale's anchor to value_framing and swap `literal` for it
+    in every string of `cfg`. Returns the number of strings changed."""
+    framing = cfg.get("value_framing")
+    if not isinstance(framing, dict) or "anchor_amount" not in loc:
+        return 0
+    framing["amount"] = loc["anchor_amount"]
+    framing["amount_format"] = loc["anchor_format"]
+    framing.pop("amount_group", None)
+    if loc.get("anchor_group"):
+        # Right after the format it belongs to, so the block's key order
+        # stays the master's with one key added, not one appended.
+        rows = list(framing.items())
+        at = [k for k, _ in rows].index("amount_format") + 1
+        rows.insert(at, ("amount_group", loc["anchor_group"]))
+        framing.clear()
+        framing.update(rows)
+    if not literal:
+        return 0
+    local = locale_anchor(loc)
+    changed = 0
+    for path, text in _all_strings(cfg):
+        if literal in text:
+            _set(cfg, path, text.replace(literal, local))
+            changed += 1
+    return changed
+
+
+def check_anchor(cfg, loc, literal):
+    """Refuse a non-English funnel that still names the master's figure, or
+    any dollar sign at all — a "$" in a forint funnel is a bug wherever it
+    sits. A market that itself prices in dollars is exempt from the second
+    half, not the first."""
+    local = locale_anchor(loc)
+    bad = []
+    for path, text in _all_strings(cfg):
+        if path == "value_framing.amount_format":
+            continue
+        if literal and literal in text:
+            bad.append("%s: still names %s" % (path, literal))
+        elif "$" in text and "$" not in local and not text.startswith("/"):
+            bad.append("%s: a dollar sign survived: %r" % (path, text[:60]))
+    if bad:
+        raise TranslationError(
+            "%d string(s) still carry the English money figure — nothing "
+            "written:\n  " % len(bad) + "\n  ".join(bad[:12]))
 
 
 def apply_locale(cfg, vertical, lang, loc):
@@ -545,6 +687,7 @@ def build(vertical, lang, root=ROOT, no_llm=False, dry_run=False,
     profile = reports.build_guide_profile(master) \
         if isinstance(master.get("report_profile"), dict) else None
     banned = profile["banned"] if profile else reports.GUIDE_BANNED
+    literal = master_anchor(master)
 
     items = collect(master)
     chars = sum(len(t) for _, t in items)
@@ -554,6 +697,8 @@ def build(vertical, lang, root=ROOT, no_llm=False, dry_run=False,
     print("  price %s %d (%s), %s"
           % (loc["currency"], loc["amount_cents"], loc["language_name"],
              "pseudo-translation" if no_llm else model))
+    if literal:
+        print("  anchor %s -> %s" % (literal, locale_anchor(loc) or "(none)"))
     if dry_run:
         # Input is the strings plus the prompt around them, output is about
         # the same length again; four characters a token is the usual rule.
@@ -572,7 +717,7 @@ def build(vertical, lang, root=ROOT, no_llm=False, dry_run=False,
             one = pseudo_translate(groups[only_chunk - 1], lang)
         else:
             one = translate_one_chunk(items, only_chunk, loc["language_name"],
-                                      banned, model, client)
+                                      banned, model, client, anchor=literal)
         for path, text in one.items():
             print("  %s => %s" % (path, text))
         return None, []
@@ -582,12 +727,16 @@ def build(vertical, lang, root=ROOT, no_llm=False, dry_run=False,
         translated = pseudo_translate(items, lang)
     else:
         translated = translate_all(items, loc["language_name"], banned,
-                                   model, client, kept)
+                                   model, client, kept, anchor=literal)
 
     cfg = json.loads(json.dumps(master))     # a deep copy, key order kept
     for path, text in translated.items():
         _set(cfg, path, text)
     apply_locale(cfg, vertical, lang, loc)
+    swapped = apply_anchor(cfg, loc, literal)
+    if swapped:
+        print("  anchor swapped in %d string(s)" % swapped)
+    check_anchor(cfg, loc, literal)
     write_both(root, cfg["slug"], cfg)
     if ensure_gitignore(root, vertical):
         print("appended  .gitignore")

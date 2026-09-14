@@ -167,7 +167,6 @@ try:
     check("  questions, labels, buttons, sections, stubs, mail, words",
           all(any(p.startswith(pre) for p in paths)
               for pre in ("value_framing.unlock_row.key", "value_framing.scale.label",
-                          "value_framing.amount_format",
                           "result_copy.kicker", "result_copy.profile.chips",
                           "result_copy.profile.split.names",
                           "result_copy.profile.scales[0].left",
@@ -217,6 +216,9 @@ try:
               "value_framing.amount")
     frozen_hit = [p for p in FROZEN if p in paths]
     check("nothing structural is copy", not frozen_hit, str(frozen_hit))
+    check("  nor the anchor's shape — the locale writes it",
+          "value_framing.amount_format" not in paths
+          and "value_framing.amount" not in paths)
     check("  the sentinel the report module reads is not copy",
           not [p for p, t in items if t == reports.FROM_CONFIG])
     check("  no path, URL or hex is copy",
@@ -249,6 +251,25 @@ try:
               src, {"s0": "X {n} {price}", "s1": "Z", "s9": "?"}, ())))
     check("  a non-object is refused",
           mf.check_chunk(src, ["X"], ()) == ["not a JSON object"])
+    money = {"s0": "Save up to $250 on your blinds", "s1": "Tap"}
+    check("  the money figure must come back as written",
+          mf.check_chunk(money, {"s0": "Spórolj akár $250", "s1": "Koppints"},
+                         (), anchor="$250") == [])
+    check("  rephrased to 250 $, it is refused",
+          any("$250" in n for n in mf.check_chunk(
+              money, {"s0": "Spórolj akár 250 $", "s1": "Koppints"}, (),
+              anchor="$250")))
+    check("  dropped, it is refused",
+          any("figure" in n for n in mf.check_chunk(
+              money, {"s0": "Spórolj sokat", "s1": "Koppints"}, (),
+              anchor="$250")))
+    check("  and named twice where it was named once, too",
+          any("1 time" in n for n in mf.check_chunk(
+              money, {"s0": "$250 — $250", "s1": "Koppints"}, (),
+              anchor="$250")))
+    check("  without an anchor the old contract holds",
+          mf.check_chunk(money, {"s0": "Spórolj sokat", "s1": "Koppints"},
+                         ()) == [])
 
     class FakeMessage:
         def __init__(self, text):
@@ -444,8 +465,9 @@ try:
         return "nope" if HOOK_Q in asked.values() else echo(kw)
 
     saved_key, saved_client = mf.api_key, mf._client
+    rc_hook = RecordingClient(hook_broken)
     mf.api_key = lambda: "k"
-    mf._client = lambda key: RecordingClient(hook_broken)
+    mf._client = lambda key: rc_hook
     log = io.StringIO()
     try:
         with contextlib.redirect_stdout(log):
@@ -466,6 +488,16 @@ try:
     check("  the locale still landed",
           written["pricing"]["currency"] == "huf"
           and written["report_profile"]["language_name"] == "Hungarian")
+    check("  and the model's copy names the forint figure, not the dollar",
+          written["swipe"]["subtext"] == "T Save up to 100 000 Ft on your "
+          "blinds — find your style first"
+          and "anchor $250 -> 100 000 Ft" in log.getvalue()
+          and "anchor swapped in" in log.getvalue(),
+          written["swipe"]["subtext"])
+    check("  the figure went to the model as written, for it to hand back",
+          any("$250" in c["messages"][0]["content"] for c in rc_hook.calls)
+          and all("100 000" not in c["messages"][0]["content"]
+                  for c in rc_hook.calls))
 
     print("\n--- --only-chunk ---")
     last = (len(mf.collect(MASTER)) + mf.CHUNK - 1) // mf.CHUNK
@@ -519,9 +551,23 @@ try:
               and gen["locale"] == lang)
         gen_shape, master_shape = shape(gen), shape(MASTER)
         gen_shape.pop("pricing"), master_shape.pop("pricing")
+        gen_framing = gen_shape.pop("value_framing")
+        master_framing = master_shape.pop("value_framing")
         check("  the structure is byte-frozen: same keys, same order, same "
               "non-strings",
               gen_shape == master_shape)
+        want_keys = list(MASTER["value_framing"])
+        if loc["anchor_group"]:
+            want_keys.insert(want_keys.index("amount_format") + 1,
+                             "amount_group")
+        check("  value_framing keeps its order, the group key beside the "
+              "format when the market writes thousands apart",
+              list(gen["value_framing"]) == want_keys
+              and dict((k, v) for k, v in gen_framing.items()
+                       if k not in ("amount", "amount_group"))
+              == dict((k, v) for k, v in master_framing.items()
+                      if k != "amount"),
+              str(list(gen["value_framing"])))
         check("  pricing gains exactly the two format keys the locale adds",
               list(gen["pricing"]) == list(MASTER["pricing"])
               + ["price_format", "decimal_mark"], str(list(gen["pricing"])))
@@ -532,15 +578,41 @@ try:
         LOCALE_PATHS = {"slug", "funnel_id", "locale", "pricing.amount_cents",
                         "pricing.currency", "pricing.price_format",
                         "pricing.decimal_mark", "report_profile.language_name",
-                        "report_profile.pdf_lang"}
+                        "report_profile.pdf_lang", "value_framing.amount",
+                        "value_framing.amount_format",
+                        "value_framing.amount_group"}
         stray = [p for p in changed if p not in translatable
                  and p not in LOCALE_PATHS]
         check("  only copy and the locale keys changed", not stray, str(stray))
         untouched = [p for p in translatable if m_leaves[p] == g_leaves[p]]
         check("  and every piece of copy changed", not untouched, str(untouched))
-        check("  each as '[%s] <original>'" % lang,
-              all(g_leaves[p] == "[%s] %s" % (lang, m_leaves[p])
+        anchor = mf.locale_anchor(loc)
+        check("  each as '[%s] <original>', the money figure swapped" % lang,
+              all(g_leaves[p]
+                  == "[%s] %s" % (lang, m_leaves[p].replace("$250", anchor))
                   for p in translatable))
+        named = [p for p in translatable if "$250" in m_leaves[p]]
+        check("  the figure is named in the subtext, the price anchor and "
+              "the mail subject, and every one now reads %s" % anchor,
+              {"swipe.subtext", "checkout.commerce.price_anchor",
+               "report_profile.mail.subject"} <= set(named)
+              and len(named) >= 10
+              and all(anchor in g_leaves[p] and "$" not in g_leaves[p]
+                      for p in named), str(named))
+        check("  and no dollar sign is left anywhere in the funnel",
+              not [p for p, t in mf._all_strings(gen)
+                   if "$" in t and p != "value_framing.amount_format"],
+              str([p for p, t in mf._all_strings(gen) if "$" in t][:5]))
+        check("  value_framing carries the market's amount, format and group",
+              gen["value_framing"]["amount"] == loc["anchor_amount"]
+              and gen["value_framing"]["amount_format"] == loc["anchor_format"]
+              and gen["value_framing"].get("amount_group",
+                                           "") == loc["anchor_group"],
+              str(gen["value_framing"]))
+        check("  so the report's one money phrase is the market's",
+              reports._value_anchor(gen["value_framing"])
+              == "[%s] up to %s" % (lang, anchor),
+              reports._value_anchor(gen["value_framing"]))
         check("  ids, tags, images and paths are the master's",
               [i["id"] for s in gen["swipe"]["steps"] for p in s["pairs"]
                for i in p["images"]]
@@ -606,6 +678,132 @@ try:
           reports._written_price(results["hu"], 79000) == "790 Ft"
           and reports._written_price(results["de"], 199) == "1,99 €"
           and reports._written_price(results["hu"], 79050) == "790,50 Ft")
+
+    print("\n--- the anchor: one figure per market ---")
+    WANT = {"en": "$250", "nl": "€250", "de": "€250", "sk": "€250",
+            "el": "€250", "hu": "100 000 Ft", "cs": "6 000 Kč",
+            "pl": "1000 zł", "da": "1.800 kr."}
+    got = dict((l, mf.locale_anchor(loc)) for l, loc in locales.items())
+    check("every locale formats its anchor the way its market writes money",
+          got == WANT, str(got))
+    check("  from the three keys: amount, a format around {n}, a group",
+          all("{n}" in loc["anchor_format"]
+              and isinstance(loc["anchor_amount"], int)
+              and isinstance(loc["anchor_group"], str)
+              for loc in locales.values())
+          and locales["hu"]["anchor_amount"] == 100000
+          and locales["cs"]["anchor_amount"] == 6000
+          and locales["pl"]["anchor_amount"] == 1000
+          and locales["da"]["anchor_amount"] == 1800
+          and all(locales[l]["anchor_amount"] == 250
+                  for l in ("en", "nl", "de", "sk", "el")))
+    check("  thousands are grouped from the right, only past three digits",
+          mf.group_digits(100000, " ") == "100 000"
+          and mf.group_digits(1234567, ".") == "1.234.567"
+          and mf.group_digits(1800, ".") == "1.800"
+          and mf.group_digits(250, " ") == "250"
+          and mf.group_digits(1000, "") == "1000")
+    check("  the master's literal is read off its own block",
+          mf.master_anchor(MASTER) == "$250"
+          and mf.master_anchor({}) == "")
+    check("  and the reports module prints the grouped figure the same way",
+          reports._value_anchor({"amount": 100000, "amount_format": "{n} Ft",
+                                 "amount_group": " "}) == "up to 100 000 Ft"
+          and reports._value_anchor({"amount": 1800,
+                                     "amount_format": "{n} kr.",
+                                     "amount_group": "."}) == "up to 1.800 kr."
+          and reports._value_anchor({"amount": 250, "amount_format": "${n}"})
+          == "up to $250")
+    JS = open(os.path.join(ROOT, "static", "js", "result_zodiac.js"),
+              encoding="utf-8").read()
+    check("  as does the result page",
+          'typeof block.amount_group === "string"' in JS
+          and 'digits.replace(/\\B(?=(\\d{3})+(?!\\d))/g, group)' in JS)
+    for lang, bad in (("hu", {"anchor_amount": 0}),
+                      ("hu", {"anchor_amount": "100000"}),
+                      ("hu", {"anchor_format": "Ft"}),
+                      ("hu", {"anchor_group": 1})):
+        refused = False
+        try:
+            mf.check_locale(lang, dict(locales[lang], **bad))
+        except ValueError:
+            refused = True
+        check("  a bad anchor row is refused: %s" % bad, refused)
+    check("  a row without an anchor is still a valid locale",
+          mf.locale_anchor({"currency": "eur"}) == "")
+    plain = json.loads(json.dumps(MASTER))
+    for path, text in mf.pseudo_translate(mf.collect(plain), "hu").items():
+        mf._set(plain, path, text)
+    hu = locales["hu"]
+    swapped = mf.apply_anchor(plain, hu, "$250")
+    check("apply_anchor swaps the literal in every string and says how many",
+          swapped >= 10 and not [p for p, t in mf._all_strings(plain)
+                                 if "$250" in t], swapped)
+    check("  and check_anchor lets the result through",
+          mf.check_anchor(plain, hu, "$250") is None)
+    plain["swipe"]["subtext"] = "[hu] Save up to $250 on your blinds"
+    refused = ""
+    try:
+        mf.check_anchor(plain, hu, "$250")
+    except mf.TranslationError as exc:
+        refused = str(exc)
+    check("  a surviving $250 is refused, loudly, by path",
+          "swipe.subtext" in refused and "$250" in refused
+          and "nothing written" in refused, refused[:120])
+    plain["swipe"]["subtext"] = "[hu] Save 250 $ on your blinds"
+    refused = ""
+    try:
+        mf.check_anchor(plain, hu, "$250")
+    except mf.TranslationError as exc:
+        refused = str(exc)
+    check("  and so is a stray dollar sign", "dollar sign" in refused
+          and "swipe.subtext" in refused, refused[:120])
+    plain["swipe"]["subtext"] = "[hu] Save up to 100 000 Ft on your blinds"
+    check("  a market that prices in dollars keeps its own sign",
+          mf.check_anchor({"a": "up to $99"}, locales["en"], "") is None)
+    unpriced = json.loads(json.dumps(MASTER))
+    unpriced.pop("value_framing")
+    check("  a master without a value framing has no anchor and swaps "
+          "nothing",
+          mf.master_anchor(unpriced) == ""
+          and mf.apply_anchor(unpriced, hu, "") == 0
+          and "value_framing" not in unpriced)
+    dollar = dict(hu, anchor_format="{n} $", anchor_group="")
+    check("  a market whose own format carries the sign is not refused for "
+          "it",
+          mf.check_anchor({"a": "up to 100000 $"}, dollar, "$250") is None)
+
+    def sneaks_a_sign(kw, n):
+        """A correct answer that slips a dollar sign into a line the master
+        never priced — past check_chunk, which only holds the figure."""
+        asked = json.loads(kw["messages"][0]["content"]
+                           .split("\n\nYour previous")[0])
+        return json.dumps(dict(
+            (k, "T " + v + (" ($)" if v == HOOK_Q else ""))
+            for k, v in asked.items()))
+
+    for name in ("blinds-pl.json",):
+        for directory in ("funnels", os.path.join("static", "funnels")):
+            try:
+                os.remove(os.path.join(scratch, directory, name))
+            except OSError:
+                pass
+    mf.api_key = lambda: "k"
+    mf._client = lambda key: RecordingClient(sneaks_a_sign)
+    log = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(log):
+            code = mf.main(["blinds", "pl", "--root", scratch])
+    finally:
+        mf.api_key, mf._client = saved_key, saved_client
+    check("a build whose copy carries a stray dollar sign exits 1",
+          code == 1 and "dollar sign survived" in log.getvalue()
+          and "swipe.steps[0].question" in log.getvalue(),
+          log.getvalue()[-200:])
+    check("  and writes nothing",
+          not os.path.exists(os.path.join(scratch, "funnels", "blinds-pl.json"))
+          and not os.path.exists(os.path.join(scratch, "static", "funnels",
+                                              "blinds-pl.json")))
 
     print("\n--- .gitignore ---")
     ignore = open(os.path.join(scratch, ".gitignore"), encoding="utf-8").read()
