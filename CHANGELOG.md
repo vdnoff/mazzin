@@ -651,3 +651,6 @@ bottom.
 
 ## 2026-09-14 — claude/anchor-currency
 - generator: per-locale anchor currency
+
+## 2026-09-16 — claude/blinds-price-099
+- blinds: $0.99 price test, all markets
