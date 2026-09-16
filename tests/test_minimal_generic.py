@@ -394,11 +394,11 @@ try:
               and free["subtype"] in free["offerHead"], free["offerHead"])
         check("the anchor is the commerce price anchor with its accent",
               free["anchor"] == BLINDS["checkout"]["commerce"]["price_anchor"]
-              .replace("{price}", "$1.99")
+              .replace("{price}", "$0.99")
               and free["gold"] == BLINDS["checkout"]["commerce"]
               ["price_anchor_accent"], free["anchor"])
         check("  the price is the charm price with its note and badges",
-              free["price"] == "$1.99" and free["note"] == "one-time"
+              free["price"] == "$0.99" and free["note"] == "one-time"
               and free["badges"] == BLINDS["checkout"]["commerce"]["badges"])
         check("  the offer sub and trust row are the config's",
               free["sub"] == BLINDS["result_copy"]["offer_sub"]

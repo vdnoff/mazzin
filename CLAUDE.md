@@ -35,6 +35,7 @@ free style result, sees a partially-locked report, hits a paywall.
 | `schema_migrations.sql` | Append-only `ALTER`s applied on top of `schema.sql` | Being rewritten or reordered |
 | `funnels/*.json` | Funnel content, styles, pricing, copy; a `report_profile` block where the funnel is factory-made | — |
 | `scripts/make_funnel.py` / `scripts/locales.json` | Localized funnels from a master (see `docs/funnel-factory.md`) | Being run by a deploy or a test with a real key |
+| `scripts/set_price.py` | Re-pricing a funnel that is on disk from `scripts/locales.json`, byte-frozen otherwise; the price test's tool | A model call, a database, generating a funnel that is not there |
 | `scripts/galleries/*.json` / `scripts/make_gallery.py` | A vertical's image spec, and drawing it on the server | Committing the images |
 | `static/js/engine.js` | Swipe UX, scoring, screens, tracking calls, checkout redirect + report polling | Holding payment state it can't prove |
 | `static/css/mazzin.css` | Mobile portrait styling | Desktop layout |

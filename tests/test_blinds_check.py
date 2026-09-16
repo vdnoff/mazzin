@@ -351,7 +351,7 @@ check("price is an integer number of cents",
       isinstance(cfg["pricing"]["amount_cents"], int)
       and not isinstance(cfg["pricing"]["amount_cents"], bool))
 check("  a charm price in dollars, no format override",
-      cfg["pricing"]["amount_cents"] == 199 and cfg["pricing"]["currency"] == "usd"
+      cfg["pricing"]["amount_cents"] == 99 and cfg["pricing"]["currency"] == "usd"
       and "price_format" not in cfg["pricing"]
       and "decimal_mark" not in cfg["pricing"])
 check("  no sale block", "sale" not in cfg)
@@ -1025,12 +1025,12 @@ def walk():
                   page.inner_text("#result-module").count("$250") == 2)
             check("  the price anchor names the price and the saving",
                   page.inner_text(".zr-anchor")
-                  == "$1.99 — could save you up to $250 on your order")
+                  == "$0.99 — could save you up to $250 on your order")
             check("  the engine's own report is not drawn",
                   page.evaluate("document.getElementById('report').hidden"))
             check("  the price is the new charm price",
-                  page.inner_text(".zr-price-now") == "$1.99"
-                  and "$2.99" not in page.inner_text("#result-module"))
+                  page.inner_text(".zr-price-now") == "$0.99"
+                  and "$1.99" not in page.inner_text("#result-module"))
             check("  the consent box gates the button",
                   page.locator("#result-module #withdrawal").count() == 1
                   and page.locator("#result-module #pay-button").count() == 1)
