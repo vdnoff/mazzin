@@ -157,7 +157,7 @@ try:
           all(l["decimal_mark"] == "," and "{amount}" in l["price_format"]
               for k, l in locales.items() if k != "en"))
     check("  and English writes dollars the way kitchen does",
-          locales["en"]["currency"] == "usd" and locales["en"]["amount_cents"] == 199
+          locales["en"]["currency"] == "usd" and locales["en"]["amount_cents"] == 99
           and not locales["en"]["price_format"])
 
     print("\n--- the walk: what is copy and what is not ---")
@@ -662,22 +662,26 @@ try:
               and "\\u" not in open(static, encoding="utf-8").read())
     check("the table carries the language pass's prices",
           [locales[l]["amount_cents"] for l in ("en", "nl", "de", "sk", "el")]
-          == [199] * 5 and locales["hu"]["amount_cents"] == 79000
-          and locales["cs"]["amount_cents"] == 4900
-          and locales["pl"]["amount_cents"] == 899
-          and locales["da"]["amount_cents"] == 1495)
+          == [99] * 5 and locales["hu"]["amount_cents"] == 39000
+          and locales["cs"]["amount_cents"] == 2500
+          and locales["pl"]["amount_cents"] == 499
+          and locales["da"]["amount_cents"] == 795)
+    check("  every one at or above Stripe's minimum charge, on its step",
+          all(l["amount_cents"] >= l["stripe_min_cents"]
+              and l["amount_cents"] % l["amount_multiple"] == 0
+              for l in locales.values()))
     check("HUF amount is divisible by 100 in the generated file",
           results["hu"]["pricing"]["amount_cents"] % 100 == 0
           and results["hu"]["pricing"]["currency"] == "huf"
           and results["hu"]["pricing"]["price_format"] == "{amount} Ft")
     check("  and the German one is euro cents with a comma",
-          results["de"]["pricing"]["amount_cents"] == 199
+          results["de"]["pricing"]["amount_cents"] == 99
           and results["de"]["pricing"]["currency"] == "eur"
           and results["de"]["pricing"]["decimal_mark"] == ",")
     check("the reports module writes that price the way the page does",
-          reports._written_price(results["hu"], 79000) == "790 Ft"
-          and reports._written_price(results["de"], 199) == "1,99 €"
-          and reports._written_price(results["hu"], 79050) == "790,50 Ft")
+          reports._written_price(results["hu"], 39000) == "390 Ft"
+          and reports._written_price(results["de"], 99) == "0,99 €"
+          and reports._written_price(results["hu"], 39050) == "390,50 Ft")
 
     print("\n--- the anchor: one figure per market ---")
     WANT = {"en": "$250", "nl": "€250", "de": "€250", "sk": "€250",
@@ -804,6 +808,157 @@ try:
           not os.path.exists(os.path.join(scratch, "funnels", "blinds-pl.json"))
           and not os.path.exists(os.path.join(scratch, "static", "funnels",
                                               "blinds-pl.json")))
+
+    print("\n--- set_price: a price test without a regeneration ---")
+    spec = importlib.util.spec_from_file_location(
+        "set_price", os.path.join(ROOT, "scripts", "set_price.py"))
+    sp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(sp)
+    OLD = dict((k, dict(v)) for k, v in locales.items())
+    OLD["hu"]["amount_cents"], OLD["de"]["amount_cents"] = 79000, 199
+    OLD["da"]["amount_cents"] = 1495
+    with contextlib.redirect_stdout(io.StringIO()):
+        for lang in ("hu", "de", "da"):
+            mf.build("blinds", lang, scratch, no_llm=True, locales=OLD)
+    hu_path = os.path.join(scratch, "funnels", "blinds-hu.json")
+    before = json.load(open(hu_path, encoding="utf-8"))
+    check("the funnel starts at the old price",
+          before["pricing"]["amount_cents"] == 79000
+          and sp.written(before) == "790 Ft")
+    # A line that names the price literally, as a hand edit might.
+    before["checkout"]["cta_label"] += " — 790 Ft"
+    before["report_profile"]["mail"]["opening"] += " (790 Ft)"
+    open(hu_path, "w", encoding="utf-8").write(
+        json.dumps(before, indent=2, ensure_ascii=False) + "\n")
+    log = io.StringIO()
+    with contextlib.redirect_stdout(log):
+        cfg, twin = sp.set_price("blinds", "hu", scratch, locales=locales)
+    after = json.load(open(hu_path, encoding="utf-8"))
+    check("set_price writes the table's price to the pricing block",
+          after["pricing"]["amount_cents"] == 39000
+          and after["pricing"]["currency"] == "huf"
+          and after["pricing"]["price_format"] == "{amount} Ft"
+          and after["pricing"]["decimal_mark"] == ","
+          and list(after["pricing"]) == list(before["pricing"]),
+          str(after["pricing"]))
+    check("  and swaps the old written price in every line that named it",
+          after["checkout"]["cta_label"].endswith(" — 390 Ft")
+          and after["report_profile"]["mail"]["opening"].endswith("(390 Ft)")
+          and "swapped in 2 string(s)" in log.getvalue(), log.getvalue())
+    b_leaves, a_leaves = dict(leaves(before)), dict(leaves(after))
+    moved = sorted(p for p in b_leaves if b_leaves[p] != a_leaves.get(p))
+    check("  nothing else changed — every other leaf is byte-frozen",
+          moved == ["checkout.cta_label", "pricing.amount_cents",
+                    "report_profile.mail.opening"]
+          and list(after) == list(before), str(moved))
+    check("  no stale price literal remains",
+          not [p for p, t in mf._all_strings(after) if "790" in t])
+    check("  the static mirror is byte-identical",
+          open(hu_path, "rb").read()
+          == open(os.path.join(scratch, "static", "funnels",
+                               "blinds-hu.json"), "rb").read())
+    check("  the log says what moved",
+          "blinds-hu: huf 79000 -> huf 39000  (790 Ft -> 390 Ft)"
+          in log.getvalue(), log.getvalue()[:120])
+    check("  no translation was asked for — no client, no key",
+          twin is None and cfg["swipe"]["subtext"].startswith("[hu] "))
+    r = subprocess.run([sys.executable,
+                        os.path.join(ROOT, "scripts", "set_price.py"),
+                        "blinds", "de", "--root", scratch],
+                       capture_output=True, text=True, cwd=ROOT)
+    de = json.load(open(os.path.join(scratch, "funnels", "blinds-de.json"),
+                        encoding="utf-8"))
+    check("the command line does the same: de from 1,99 € to 0,99 €",
+          r.returncode == 0 and de["pricing"]["amount_cents"] == 99
+          and "(1,99 € -> 0,99 €)" in r.stdout, r.stdout[-200:] + r.stderr)
+    r = subprocess.run([sys.executable,
+                        os.path.join(ROOT, "scripts", "set_price.py"),
+                        "blinds", "da", "--root", scratch, "--dry-run"],
+                       capture_output=True, text=True, cwd=ROOT)
+    da = json.load(open(os.path.join(scratch, "funnels", "blinds-da.json"),
+                        encoding="utf-8"))
+    check("  --dry-run says 14,95 kr. -> 7,95 kr. and writes nothing",
+          r.returncode == 0 and "(14,95 kr. -> 7,95 kr.)" in r.stdout
+          and "nothing written" in r.stdout
+          and da["pricing"]["amount_cents"] == 1495, r.stdout[-200:])
+    r = subprocess.run([sys.executable,
+                        os.path.join(ROOT, "scripts", "set_price.py"),
+                        "blinds", "de", "--root", scratch],
+                       capture_output=True, text=True, cwd=ROOT)
+    check("  rerun, it says the price already stands and rewrites the same "
+          "bytes",
+          r.returncode == 0 and "already there" in r.stdout
+          and json.load(open(os.path.join(scratch, "funnels",
+                                          "blinds-de.json"),
+                             encoding="utf-8")) == de, r.stdout[-200:])
+    r = subprocess.run([sys.executable,
+                        os.path.join(ROOT, "scripts", "set_price.py"),
+                        "blinds", "pl", "--root", scratch],
+                       capture_output=True, text=True, cwd=ROOT)
+    check("a language not on disk is a plain error, not a generation",
+          r.returncode == 1 and "generate it first" in r.stdout
+          and not os.path.exists(os.path.join(scratch, "funnels",
+                                              "blinds-pl.json")),
+          r.stdout[-200:])
+    master_path = os.path.join(scratch, "funnels", "blinds.json")
+    en_before = json.load(open(master_path, encoding="utf-8"))
+    en_before["pricing"]["amount_cents"] = 199
+    open(master_path, "w", encoding="utf-8").write(
+        json.dumps(en_before, indent=2, ensure_ascii=False) + "\n")
+    twin_cfg = json.loads(json.dumps(en_before))
+    twin_cfg["slug"], twin_cfg["funnel_id"] = "blinds-test", "blinds_v1_test"
+    twin_cfg["stripe_mode"] = "test"
+    twin_cfg["checkout"]["cta_label"] += " for $1.99"
+    for directory in ("funnels", os.path.join("static", "funnels")):
+        open(os.path.join(scratch, directory, "blinds-test.json"), "w",
+             encoding="utf-8").write(
+            json.dumps(twin_cfg, indent=2, ensure_ascii=False) + "\n")
+    log = io.StringIO()
+    with contextlib.redirect_stdout(log):
+        cfg, twin = sp.set_price("blinds", "en", scratch, locales=locales)
+    en_after = json.load(open(master_path, encoding="utf-8"))
+    twin_after = json.load(open(os.path.join(scratch, "funnels",
+                                             "blinds-test.json"),
+                                encoding="utf-8"))
+    check("en patches the master itself: $1.99 to $0.99, dollars unformatted",
+          en_after["pricing"] == {"amount_cents": 99, "currency": "usd",
+                                  "cta": MASTER["pricing"]["cta"]}
+          and "($1.99 -> $0.99)" in log.getvalue(), str(en_after["pricing"]))
+    check("  and its -test twin follows, its own literal swapped",
+          twin_after["pricing"]["amount_cents"] == 99
+          and twin_after["checkout"]["cta_label"].endswith(" for $0.99")
+          and twin_after["stripe_mode"] == "test"
+          and twin_after["slug"] == "blinds-test", str(twin_after["pricing"]))
+    stale = json.loads(json.dumps(after))
+    stale["pricing"]["amount_cents"] = 79000
+    stale["result_copy"]["kicker"] += " 790 Ft"
+    stale["checkout"]["cta_label"] = "[hu] x 790,00 Ft"
+    refused = ""
+    try:
+        old_w, new_w, _ = sp.reprice(stale, locales["hu"])
+        sp.check_stale(stale, old_w, new_w)
+    except sp.PriceError as exc:
+        refused = str(exc)
+    check("a whole-forint price is found by its written form alone — "
+          "'790,00 Ft' is not it, the kicker's '790 Ft' is",
+          refused == "" and stale["result_copy"]["kicker"].endswith("390 Ft")
+          and stale["checkout"]["cta_label"] == "[hu] x 790,00 Ft",
+          refused[:120])
+    loose = json.loads(json.dumps(de))
+    loose["pricing"]["amount_cents"] = 199
+    loose["checkout"]["cta_label"] = "[de] nur 1,99 heute"
+    refused = ""
+    try:
+        old_w, new_w, _ = sp.reprice(loose, locales["de"])
+        sp.check_stale(loose, old_w, new_w)
+    except sp.PriceError as exc:
+        refused = str(exc)
+    check("  a bare '1,99' that lost its sign is still the old price",
+          "checkout.cta_label" in refused and "nothing written" in refused,
+          refused[:120])
+    check("  the swap machinery is the generator's own",
+          os.path.samefile(sp.mf.__file__, mf.__file__)
+          and sp.reprice.__code__.co_names.count("apply_pricing") == 1)
 
     print("\n--- .gitignore ---")
     ignore = open(os.path.join(scratch, ".gitignore"), encoding="utf-8").read()

@@ -66,6 +66,22 @@ to handing that literal back unchanged so the swap can find it. A
 non-English funnel that still names the literal — or carries any `$` at
 all — is refused and nothing is written.
 
+**A price test costs a table edit, not a regeneration.** Change the
+`amount_cents` column in `scripts/locales.json` (and the master's own
+pricing block for `en`), then re-price each funnel that is on disk:
+
+```bash
+for l in nl de hu cs pl da sk el; do python3 scripts/set_price.py blinds $l; done
+```
+
+`set_price.py` patches the existing file in place — the pricing block from
+the locale row, the old written price ("790 Ft", "1,99 €") swapped for the
+new in any line that named it literally, everything else byte-frozen, the
+static mirror and the `-test` twin rewritten to match. No model call, so the
+translation stays and the report cache is untouched; it refuses to write a
+funnel in which the old figure still survives. `blinds en` re-prices the
+master itself.
+
 Every string the model touches is checked before it is accepted: same keys,
 every `{token}` intact, no line breaks, no banned word. The answer is asked
 for as a structured output (a JSON schema of the chunk's keys), so it is

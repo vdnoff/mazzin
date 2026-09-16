@@ -601,10 +601,11 @@ def check_anchor(cfg, loc, literal):
             "written:\n  " % len(bad) + "\n  ".join(bad[:12]))
 
 
-def apply_locale(cfg, vertical, lang, loc):
-    cfg["slug"] = "%s-%s" % (vertical, lang)
-    cfg["funnel_id"] = "%s_%s_v1" % (vertical, lang)
-    cfg["locale"] = lang
+def apply_pricing(cfg, loc):
+    """The locale's price on the config's pricing block — the charm price in
+    local minor units, the currency, and the two format keys engine.js and
+    reports.py read. Nothing else of the config is touched; set_price.py
+    leans on exactly that."""
     pricing = cfg.setdefault("pricing", {})
     pricing["amount_cents"] = loc["amount_cents"]
     pricing["currency"] = loc["currency"]
@@ -613,6 +614,14 @@ def apply_locale(cfg, vertical, lang, loc):
             pricing[key] = loc[key]
         else:
             pricing.pop(key, None)
+    return pricing
+
+
+def apply_locale(cfg, vertical, lang, loc):
+    cfg["slug"] = "%s-%s" % (vertical, lang)
+    cfg["funnel_id"] = "%s_%s_v1" % (vertical, lang)
+    cfg["locale"] = lang
+    apply_pricing(cfg, loc)
     profile = cfg.get("report_profile")
     if isinstance(profile, dict):
         profile["language_name"] = loc["language_name"]
