@@ -131,6 +131,19 @@ class Rig:
               currency TEXT NOT NULL,
               status TEXT NOT NULL
             );
+            CREATE TABLE leads (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              email TEXT NOT NULL,
+              funnel TEXT NOT NULL,
+              lang TEXT NOT NULL,
+              style_key TEXT,
+              scores_json TEXT,
+              subid TEXT,
+              session_id TEXT,
+              marketing_opt_in INTEGER DEFAULT 0,
+              report_sent_at TEXT,
+              created_at TEXT NOT NULL
+            );
         """)
         self.statements = []
         self.writes = []
@@ -356,9 +369,10 @@ for _name in ("STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET",
               "STRIPE_TEST_WEBHOOK_SECRET", "STRIPE_TEST_PUBLISHABLE_KEY"):
     setattr(config, _name, "notreal_" + _name.lower())
 
-PAGE_ROUTES = ["/admin", "/admin/", "/admin/funnel/kitchen"]
+PAGE_ROUTES = ["/admin", "/admin/", "/admin/funnel/kitchen", "/admin/leads"]
 API_ROUTES = ["/admin/api/overview", "/admin/api/funnels",
-              "/admin/api/funnel/kitchen", "/admin/api/variants/persona"]
+              "/admin/api/funnel/kitchen", "/admin/api/variants/persona",
+              "/admin/api/leads"]
 ALL_ROUTES = PAGE_ROUTES + API_ROUTES
 
 CSRF_RE = re.compile(r'name="csrf" value="([^"]+)"')
@@ -392,7 +406,7 @@ config.ADMIN_USER = ""
 config.ADMIN_PASSWORD_HASH = ""
 admin.configure(app)
 with app.test_client() as client:
-    for route in ALL_ROUTES + ["/admin/login"]:
+    for route in ALL_ROUTES + ["/admin/login", "/admin/leads.csv"]:
         eq("503 with no credentials: %s" % route,
            client.get(route).status_code, 503)
     body = client.get("/admin/api/overview").get_json()
@@ -407,7 +421,7 @@ admin.configure(app)
 print("\n--- unauthenticated ---")
 admin.reset_rate_limit()
 with app.test_client() as client:
-    for route in PAGE_ROUTES:
+    for route in PAGE_ROUTES + ["/admin/leads.csv"]:
         response = client.get(route)
         eq("page redirects to login: %s" % route, response.status_code, 302)
         check("redirect target is the login page: %s" % route,

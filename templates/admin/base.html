@@ -128,6 +128,7 @@
   <h1><a href="{{ url_for('admin.index') }}" style="text-decoration:none;color:inherit">Mazzin admin</a></h1>
   {% block subtitle %}{% endblock %}
   <span class="spacer"></span>
+  <a class="navlink" href="{{ url_for('admin.leads_page') }}">Leads</a>
   <a class="navlink" href="{{ url_for('admin.modes') }}">Modes</a>
   <form method="post" action="{{ url_for('admin.logout') }}">
     <input type="hidden" name="csrf" value="{{ csrf }}">

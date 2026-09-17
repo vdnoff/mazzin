@@ -22,17 +22,21 @@ dashboard, and never a server that refuses to boot over it.
 """
 
 import base64
+import csv
 import datetime
+import io
 import functools
 import hashlib
 import hmac
 import ipaddress
 import logging
+import re
 import secrets
 import threading
 import time
 
-from flask import (Blueprint, jsonify, redirect, render_template, request,
+from flask import (Blueprint, Response, jsonify, redirect, render_template,
+                   request,
                    session, url_for)
 
 import analytics
@@ -990,6 +994,140 @@ def funnel(slug):
 # feature is going to want it. Same functions, same window parsing, same
 # session check — the pages are one renderer of these payloads and not a
 # second source of them.
+
+# --- leads -----------------------------------------------------------------
+#
+# The email gate's rows, behind the same door as everything else here: the
+# blueprint's before_request is the auth, the after_request is the no-store,
+# and this page holds addresses, which is exactly why it lives here and not
+# on a route of its own. Read-only, like the rest of the dashboard — every
+# statement analytics issues for it is a SELECT.
+
+LEAD_VERTICAL_RE = re.compile(r"^[a-z0-9_]{1,32}$")
+LEAD_LANG_RE = re.compile(r"^[a-z]{2,8}$")
+SUBID_MAX = 128
+
+
+def resolve_lead_filters(args):
+    """The three filters off the query string, or nothing for each.
+
+    A vertical is a slug's stem and a lang its suffix, so both are held to
+    the characters a slug can carry; anything else is "all". The subid is a
+    contains-match and is only bounded in length — the wildcards inside it
+    are escaped by the query, not refused here.
+    """
+    vertical = (args.get("vertical") or "").strip().lower()
+    lang = (args.get("lang") or "").strip().lower()
+    subid = (args.get("subid") or "").strip()
+    return {
+        "vertical": vertical if LEAD_VERTICAL_RE.match(vertical) else None,
+        "lang": lang if LEAD_LANG_RE.match(lang) else None,
+        "subid": subid[:SUBID_MAX] or None,
+    }
+
+
+def _lead_page(args):
+    try:
+        page = int(args.get("page") or 1)
+    except ValueError:
+        page = 1
+    return max(1, page)
+
+
+def lead_slugs(filters):
+    """The funnels the filter names, from the configs on disk — so the
+    conversion's denominator counts a market with no lead yet."""
+    out = []
+    for slug in analytics.funnel_slugs():
+        if config.is_test_slug(slug):
+            continue
+        if filters["vertical"] and analytics.vertical_of(slug) != filters["vertical"]:
+            continue
+        if filters["lang"] and analytics.lang_of(slug) != filters["lang"]:
+            continue
+        out.append(slug)
+    return out
+
+
+def leads_data(filters, page, now=None):
+    """Everything the leads page shows, for one filter and one page."""
+    now = now or datetime.datetime.now()
+    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start = midnight - datetime.timedelta(days=6)
+    end = midnight + datetime.timedelta(days=1)
+    counts = analytics.lead_counts(filters, midnight, week_start)
+    conversion = analytics.lead_conversion(lead_slugs(filters), week_start,
+                                           end, filters["subid"])
+    matching = analytics.lead_count(filters)
+    pages = max(1, (matching + analytics.LEADS_PER_PAGE - 1)
+                // analytics.LEADS_PER_PAGE)
+    page = min(page, pages)
+    return {
+        "filters": filters,
+        "facets": analytics.lead_facets(),
+        "counts": counts,
+        "conversion": conversion,
+        "groups": analytics.lead_groups(filters),
+        "matching": matching,
+        "page": page,
+        "pages": pages,
+        "per_page": analytics.LEADS_PER_PAGE,
+        "rows": analytics.lead_rows(filters, page),
+    }
+
+
+def _filter_query(filters, **extra):
+    query = {k: v for k, v in filters.items() if v}
+    query.update({k: v for k, v in extra.items() if v})
+    return query
+
+
+@bp.get("/leads")
+@_guarded("the leads")
+def leads_page():
+    filters = resolve_lead_filters(request.args)
+    data = leads_data(filters, _lead_page(request.args))
+    return render_template("leads.html", csrf=csrf_token(),
+                           filter_query=_filter_query(filters), **data)
+
+
+@bp.get("/api/leads")
+@_guarded("the leads")
+def api_leads():
+    filters = resolve_lead_filters(request.args)
+    data = leads_data(filters, _lead_page(request.args))
+    data["rows"] = [dict((k, _stamp(r.get(k))) for k in ("id",)
+                         + analytics.LEAD_COLUMNS) for r in data["rows"]]
+    data["groups"] = [dict(g, last_at=_stamp(g["last_at"]))
+                      for g in data["groups"]]
+    return jsonify(data)
+
+
+def _stamp(value):
+    if isinstance(value, datetime.datetime):
+        return value.strftime("%Y-%m-%d %H:%M:%S")
+    return value
+
+
+@bp.get("/leads.csv")
+@_guarded("the leads export")
+def leads_csv():
+    """Every lead the filter matches, as the table's seven columns. The same
+    door as the page: the address is in every row."""
+    filters = resolve_lead_filters(request.args)
+    rows = analytics.lead_rows(filters, per_page=None)
+    out = io.StringIO()
+    writer = csv.writer(out)
+    writer.writerow(analytics.LEAD_COLUMNS)
+    for row in rows:
+        writer.writerow([_stamp(row.get(col)) if row.get(col) is not None
+                         else "" for col in analytics.LEAD_COLUMNS])
+    name = "-".join(["leads"] + [v for v in (filters["vertical"],
+                                             filters["lang"]) if v])
+    return Response(out.getvalue(), mimetype="text/csv; charset=utf-8",
+                    headers={"Content-Disposition":
+                             'attachment; filename="%s.csv"' % name})
+
 
 @bp.get("/api/funnels")
 @_guarded("the funnel list")

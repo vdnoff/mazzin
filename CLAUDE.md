@@ -30,7 +30,7 @@ free style result, sees a partially-locked report, hits a paywall.
 | `reports.py` | `generate_report()` — builds and stores report content | HTTP routes, Stripe calls |
 | `visualizer.py` | `/api/visualizer/*` — photo intake, EXIF stripping, the image-edit call, generation credits | Running on an unpaid purchase, writing under `static/`, putting a photo in a log line |
 | `admin.py` | `/admin` + `/admin/api/*` — login, session, rate limit, page rendering, the Stripe mode switch | Holding SQL of its own; writing anything but a mode override |
-| `analytics.py` | Read-only aggregate SQL over `events` / `purchases`, shared by the dashboard and the console scripts | Any statement that is not a SELECT |
+| `analytics.py` | Read-only aggregate SQL over `events` / `purchases` / `leads`, shared by the dashboard and the console scripts | Any statement that is not a SELECT |
 | `templates/admin/` | The dashboard's markup and its inline CSS | Living under `static/`, where it would be public |
 | `schema.sql` | Table definitions (from scratch) | Being edited after a migration ships |
 | `schema_migrations.sql` | Append-only `ALTER`s applied on top of `schema.sql` | Being rewritten or reordered |
