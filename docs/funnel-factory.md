@@ -110,12 +110,16 @@ the article URL anchored to the style; the browser goes there. The gate
 reaching the reader is `lead_view`, fired from the same observer, with the
 same `src`, at the same moment `paywall_view` fires on a priced funnel.
 
-The report is mailed off the request by `scripts/send_lead_reports.py`,
-run by cron every minute: it takes the leads whose `report_sent_at` is
-NULL, builds each report from the warmed style cache and the stubs
-(`reports.lead_content` — never a model call), mails it through Resend
-with the article button and the PDF attached, and stamps the row. Keep
-`warm_cache.py` warm for every language, or a lead gets stub chapters.
+The report is mailed inline, on the same request, by
+`leads.send_report_for`: the report from the warmed style cache and the
+stubs (`reports.lead_content` — never a model call), the light PDF, one
+Resend POST with the article button, then `report_sent_at` is stamped.
+One log line carries the render+send time in milliseconds. A render or a
+send that fails is logged by lead id and type, leaves the stamp NULL and
+does not touch the answer — the reader reaches the article either way.
+`scripts/send_lead_reports.py`, run by hand, sends whatever is still NULL
+through the same routine. Keep `warm_cache.py` warm for every language,
+or a lead gets stub chapters.
 
 The eight generated funnels take the gate without a regeneration:
 `scripts/lead_gate.json` carries each language's article URL, gate copy
@@ -126,8 +130,8 @@ A new master string goes into the table in every language first.
 ```bash
 # apply schema_migrations.sql's `leads` table by hand, then:
 cd ~/mazzin && for l in nl de hu cs pl da sk el; do python3 scripts/set_gate.py blinds $l; done
-# cron, every minute:
-* * * * *  cd ~/mazzin && ~/.virtualenvs/mazzin/bin/python scripts/send_lead_reports.py >> ~/mazzin_leads.log 2>&1
+# after a failure in the log, by hand:
+cd ~/mazzin && python3 scripts/send_lead_reports.py
 ```
 
 Every string the model touches is checked before it is accepted: same keys,

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Mail every lead their report: the email gate's delivery, off the request.
+"""Re-send the lead reports that did not go: the email gate's second try.
 
-Console use only, run by cron. `/api/lead` writes the row and redirects the
-reader in one round trip; this is the other half — the PDF render and the
-mail call it deliberately did not do. Each run takes the leads whose
-`report_sent_at` is NULL, builds each report from the warmed style cache
-and the stubs (never a model call — see reports.lead_content), mails it
-with the article link, and stamps the row.
+Console use only, run by hand. `/api/lead` renders and mails the report
+inline, on the request, and stamps `report_sent_at`; a render or a send
+that failed there leaves the stamp NULL and is logged by lead id. This is
+how those rows are sent afterwards — the same routine the route ran,
+`leads.send_report_for`, over every lead still NULL: the report from the
+warmed style cache and the stubs (never a model call), the mail with the
+article link, the stamp.
 
     python3 scripts/send_lead_reports.py               # the queue
     python3 scripts/send_lead_reports.py --dry-run     # list, send nothing
@@ -22,24 +23,20 @@ No address is ever printed or logged: the id is what names a lead here.
 Exit status 0 when every claimed lead was mailed (or there were none), 1
 when any was put back.
 
-Cron, on the server, every minute:
-
-    * * * * *  cd ~/mazzin && ~/.virtualenvs/mazzin/bin/python \\
-               scripts/send_lead_reports.py >> ~/mazzin_leads.log 2>&1
+Not scheduled: nothing runs this but a person, after a failure in the
+log. It is safe to run any time — a queue with nothing in it is a line
+saying so.
 """
 import argparse
 import fcntl
-import json
 import logging
 import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import config                                   # noqa: E402
 import database                                 # noqa: E402
 import leads                                    # noqa: E402
-import reports                                  # noqa: E402
 
 log = logging.getLogger("send_lead_reports")
 
@@ -51,44 +48,21 @@ CLAIM_SQL = ("UPDATE leads SET report_sent_at = NOW() "
              "WHERE id = %s AND report_sent_at IS NULL")
 RECLAIM_SQL = "UPDATE leads SET report_sent_at = NOW() WHERE id = %s"
 RELEASE_SQL = "UPDATE leads SET report_sent_at = NULL WHERE id = %s"
-LOCK_PATH = os.path.join(config.BASE_DIR, ".send_lead_reports.lock")
+LOCK_PATH = os.path.join(leads.config.BASE_DIR, ".send_lead_reports.lock")
 
 
-def scores_of(row):
-    raw = row.get("scores_json")
-    if not raw:
-        return None
+def deliver(row, send=None):
+    """One lead's report, by the route's own routine. True when it went;
+    a failure is logged by type and lead id, never by address."""
     try:
-        data = json.loads(raw)
-    except ValueError:
-        return None
-    return data if isinstance(data, dict) else None
-
-
-def deliver(row, send=reports.send_lead_email):
-    """Build and mail one lead's report. True when it went."""
-    try:
-        cfg = config.load_funnel(row["funnel"])
-    except Exception:
-        log.warning("lead %s: funnel %s cannot be loaded", row["id"],
-                    row["funnel"])
-        return False
-    gate = leads.gate_of(cfg)
-    if gate is None:
-        log.warning("lead %s: %s has no lead_gate", row["id"], row["funnel"])
-        return False
-    scores = scores_of(row)
-    try:
-        content = reports.lead_content(row["funnel"], row["style_key"], scores)
-    except Exception as exc:
-        log.warning("lead %s: report not built (%s)", row["id"],
+        return leads.send_report_for(row, send)
+    except Exception as exc:                    # noqa: BLE001
+        log.warning("lead %s: report not sent (%s)", row["id"],
                     type(exc).__name__)
         return False
-    link = leads.article_link(gate, row["style_key"], leads.UTM_EMAIL)
-    return bool(send(row["id"], row["email"], cfg, content, scores, link))
 
 
-def run(limit=50, dry_run=False, only_id=None, send=reports.send_lead_email):
+def run(limit=50, dry_run=False, only_id=None, send=None):
     """Work the queue. Returns (sent, failed)."""
     if only_id is not None:
         row = database.query_one(SELECT_ONE_SQL, (only_id,))

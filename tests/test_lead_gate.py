@@ -98,7 +98,26 @@ def fake_execute(query, params=None):
 
 
 database.execute = fake_execute
+database.query_all = lambda q, p=None: []
+database.query_one = lambda q, p=None: None
+stamps = []
+database.execute_rowcount = lambda q, p=None: stamps.append((q, p)) or 1
 client = app.test_client()
+
+# The inline send, under test control: what it was handed, what it answers.
+mail = {"calls": [], "answer": True}
+
+
+def fake_send_lead_email(lead_id, email, cfg, content, scores, link):
+    mail["calls"].append((lead_id, email, cfg.get("slug"),
+                          content.get("style_id"), scores, link))
+    if isinstance(mail["answer"], Exception):
+        raise mail["answer"]
+    return mail["answer"]
+
+
+REAL_SEND = reports.send_lead_email
+reports.send_lead_email = fake_send_lead_email
 
 
 def body(**over):
@@ -114,6 +133,8 @@ def body(**over):
 
 def post(payload, raw=None):
     writes.clear()
+    stamps.clear()
+    mail["calls"].clear()
     catch.lines.clear()
     if raw is not None:
         return client.post("/api/lead", data=raw,
@@ -197,6 +218,55 @@ check("  and the address is in no log line",
       not any("example.com" in line.lower() for line in catch.lines))
 check("  the language is the funnel's, not the client's",
       lead_rows[0][1][2] == "en")
+check("  the report went inline: rendered from the cache and the stubs, "
+      "mailed with the email-tagged article link, once",
+      len(mail["calls"]) == 1
+      and mail["calls"][0][1] == "reader@example.com"
+      and mail["calls"][0][2] == "blinds"
+      and mail["calls"][0][3] == "modern_minimal"
+      and mail["calls"][0][4] == {"bright": 3, "cool": 2, "metal": 1,
+                                  "minimal": 4, "warm": -0.5}
+      and mail["calls"][0][5] == ARTICLE.replace("utm_medium=redirect",
+                                                 "utm_medium=email"),
+      str(mail["calls"]))
+check("  and report_sent_at is stamped, conditionally, by the row's id",
+      stamps == [(leads.STAMP_SQL, (writes.index(lead_rows[0]) + 1,))],
+      str(stamps))
+check("  one timing line, by lead id, in milliseconds, no address",
+      any("report rendered and sent in" in line and " ms" in line
+          for line in catch.lines)
+      and not any("example.com" in line.lower() for line in catch.lines),
+      str([l for l in catch.lines if "lead" in l][-2:]))
+mail["answer"] = RuntimeError("weasyprint fell over")
+r = post(body())
+check("a render or send that raises still answers 200 with the redirect",
+      r.status_code == 200 and (r.get_json() or {}) == {"redirect_url": ARTICLE})
+check("  the row stands, report_sent_at stays NULL, the mail was attempted "
+      "once",
+      [w for w in writes if "INSERT INTO leads" in w[0]]
+      and not stamps and len(mail["calls"]) == 1)
+check("  logged by type and lead id, left for the script — never the "
+      "address",
+      any("report not sent (RuntimeError)" in line
+          and "send_lead_reports.py" in line for line in catch.lines)
+      and not any("example.com" in line.lower() for line in catch.lines),
+      str(catch.lines[-3:]))
+mail["answer"] = False
+r = post(body())
+check("  a send Resend refused is the same: 200, no stamp",
+      r.status_code == 200 and not stamps and len(mail["calls"]) == 1
+      and any("report not sent after" in line for line in catch.lines))
+mail["answer"] = True
+saved_content = reports.lead_content
+reports.lead_content = lambda *a, **k: (_ for _ in ()).throw(
+    ValueError("no such style"))
+r = post(body())
+reports.lead_content = saved_content
+check("  a report that will not build is the same: 200, nothing mailed, "
+      "no stamp",
+      r.status_code == 200 and (r.get_json() or {}) == {"redirect_url": ARTICLE}
+      and not mail["calls"] and not stamps
+      and any("(ValueError)" in line for line in catch.lines))
 without = body()
 del without["marketing_opt_in"]
 r = post(without)
@@ -218,9 +288,12 @@ check("a duplicate address is the same 200 and the same redirect",
 check("  counted as lead_dup, no second row",
       len(events) == 1 and events[0][1][2] == "lead_dup"
       and len([w for w in writes if "INSERT INTO leads" in w[0]]) == 1)
+check("  and nothing is sent again, nothing stamped",
+      not mail["calls"] and not stamps)
 fail_with.update(exc=pymysql.err.OperationalError(2003, "gone"), on=None)
 r = post(body())
-check("any other database failure is a 500", r.status_code == 500)
+check("any other database failure is a 500, and no mail goes",
+      r.status_code == 500 and not mail["calls"])
 check("  logged by type, without the address",
       any("OperationalError" in line for line in catch.lines)
       and not any("example.com" in line.lower() for line in catch.lines),
@@ -378,8 +451,7 @@ saved_key = config.RESEND_API_KEY
 sys.modules["requests"] = fake_requests
 config.RESEND_API_KEY = "re_test"
 catch.lines.clear()
-ok = reports.send_lead_email(7, "reader@example.com", MASTER, content,
-                             {"warm": 3}, link)
+ok = REAL_SEND(7, "reader@example.com", MASTER, content, {"warm": 3}, link)
 check("send_lead_email posts the payload to Resend with the key",
       ok is True and len(sent) == 1 and sent[0][0] == reports.RESEND_URL
       and sent[0][2]["Authorization"] == "Bearer re_test"
@@ -388,13 +460,40 @@ check("  and logs the id, never the address",
       any("lead 7" in line for line in catch.lines)
       and not any("example.com" in line for line in catch.lines))
 config.RESEND_API_KEY = ""
-check("  no key, no send", reports.send_lead_email(
+check("  no key, no send", REAL_SEND(
     8, "r@x.test", MASTER, content, {}, link) is False and len(sent) == 1)
 config.RESEND_API_KEY = saved_key
 del sys.modules["requests"]
 reports.build_pdf = saved_pdf
 
-print("\n--- the worker ---")
+print("\n--- send_report_for: the one routine both callers share ---")
+row = {"id": 9, "email": "r@x.test", "funnel": "blinds",
+       "style_key": "bold_statement", "scores_json": '{"dark": 3, "metal": 2}'}
+mail["calls"].clear()
+check("it loads the funnel, builds from the cache and the stubs, and hands "
+      "the mailer the row's scores and the email link",
+      leads.send_report_for(row) is True and len(mail["calls"]) == 1
+      and mail["calls"][0][:4] == (9, "r@x.test", "blinds", "bold_statement")
+      and mail["calls"][0][4] == {"dark": 3, "metal": 2}
+      and mail["calls"][0][5].endswith("utm_medium=email&utm_campaign=blinds"
+                                       "#bold-statement"))
+check("  a caller may hand in its own sender",
+      leads.send_report_for(row, lambda *a: False) is False)
+try:
+    leads.send_report_for(dict(row, funnel="zodiac30", style_key="fire"))
+    refused = False
+except ValueError:
+    refused = True
+check("  a funnel without a gate raises rather than mails", refused)
+check("  scores come back out of the row as stored, or None",
+      leads.scores_of({"scores_json": '{"a": 1}'}) == {"a": 1}
+      and leads.scores_of({"scores_json": {"a": 1}}) == {"a": 1}
+      and leads.scores_of({"scores_json": "nope"}) is None
+      and leads.scores_of({"scores_json": None}) is None)
+check("  and the route's timing never calls a model",
+      reports._api() is None)
+
+print("\n--- the worker: the second try, by hand ---")
 worker = load_script("send_lead_reports")
 queue = [{"id": 1, "email": "a@x.test", "funnel": "blinds", "lang": "en",
           "style_key": "modern_minimal", "scores_json": '{"minimal": 3}'},
@@ -460,8 +559,12 @@ check("  --id re-sends one lead whether or not it is stamped",
       mailed and mailed[0][0] == 2
       and claims[-2][0] == worker.RECLAIM_SQL)
 reports.lead_content = saved_lead_content
-check("the worker documents its cron line",
-      "* * * * *" in worker.__doc__ and "send_lead_reports.py" in worker.__doc__)
+check("the worker is the route's routine over the rows still NULL, run by "
+      "hand — no cron line",
+      "leads.send_report_for" in worker.__doc__
+      and "* * * * *" not in worker.__doc__
+      and "leads.send_report_for(row, send)" in read(
+          "scripts/send_lead_reports.py"))
 
 print("\n--- set_gate: every language, nothing else moved ---")
 sg = load_script("set_gate")

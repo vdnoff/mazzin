@@ -3,11 +3,19 @@
 A funnel that carries a `lead_gate` block asks for an address where the
 others ask for a price. This route is the whole of what happens when the
 reader gives one: the address is validated, one row goes into `leads`, one
-tracking event is written, and the browser is handed the URL of the article
-to open — the funnel's own article in the reader's language, anchored to
-the section for their style. The report itself is not built here: that is
-a PDF render and a mail call, and scripts/send_lead_reports.py does both
-off the request, from the row this route wrote.
+tracking event is written, the report is rendered and mailed, and the
+browser is handed the URL of the article to open — the funnel's own
+article in the reader's language, anchored to the section for their style.
+
+The mail goes inline, on the request, because there is no runner on the
+server to hand it to. It is kept fast by construction: the report is the
+warmed style cache plus the stubs (never a model call — see
+reports.lead_content), the PDF is the light renderer, and Resend is one
+POST. A render or a send that fails is logged by type, leaves
+`report_sent_at` NULL and does not touch the answer: the reader is
+redirected to the article either way, and scripts/send_lead_reports.py
+re-sends what is still NULL by hand. One log line carries the render+send
+time in milliseconds.
 
 Idempotent on (email, funnel). A second submit of the same address hits the
 unique key, is answered exactly as the first — same redirect, 200 — and
@@ -20,12 +28,14 @@ exception message this module writes. A bad request is a bare 400.
 import json
 import logging
 import re
+import time
 
 from flask import Blueprint, jsonify, request
 
 import config
 import database
 import payments
+import reports
 import tracking
 
 log = logging.getLogger(__name__)
@@ -45,6 +55,10 @@ INSERT_SQL = (
     "INSERT INTO leads (email, funnel, lang, style_key, scores_json, subid, "
     "session_id, marketing_opt_in) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
 )
+# The receipt. Conditional, so a row the script is re-sending at the same
+# moment is stamped once and a stamp never moves an earlier one.
+STAMP_SQL = ("UPDATE leads SET report_sent_at = NOW() "
+             "WHERE id = %s AND report_sent_at IS NULL")
 
 
 def clean_email(value):
@@ -81,6 +95,70 @@ def article_link(gate, style_key, medium=UTM_REDIRECT):
     if anchor:
         link += anchor if anchor.startswith("#") else "#" + anchor
     return link
+
+
+def scores_of(row):
+    """The stored tag scores back out of a row, or None."""
+    raw = row.get("scores_json")
+    if not raw:
+        return None
+    if isinstance(raw, dict):
+        return raw
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def send_report_for(row, send=None):
+    """Render and mail one lead's report. True when Resend took it.
+
+    The one routine for both callers: the route, right after the row is
+    written, and scripts/send_lead_reports.py for a row still NULL. `row` is
+    the leads row — id, email, funnel, style_key, scores_json — and `send`
+    is reports.send_lead_email unless a test hands in another. Raises
+    whatever the render or the send raises; the callers decide what a
+    failure costs, and here it costs the reader nothing.
+    """
+    send = send or reports.send_lead_email
+    cfg = config.load_funnel(row["funnel"])
+    gate = gate_of(cfg)
+    if gate is None:
+        raise ValueError("%s has no lead_gate" % row["funnel"])
+    scores = scores_of(row)
+    content = reports.lead_content(row["funnel"], row["style_key"], scores)
+    link = article_link(gate, row["style_key"], UTM_EMAIL)
+    return bool(send(row["id"], row["email"], cfg, content, scores, link))
+
+
+def _deliver(row):
+    """The inline send: render, mail, stamp — and never fail the request.
+
+    Timed and logged as one line by lead id, with the outcome and the
+    exception's type when there was one. Never the address: the row holds
+    it, the mail carries it, the log does not.
+    """
+    started = time.monotonic()
+    try:
+        sent = send_report_for(row)
+    except Exception as exc:                    # noqa: BLE001
+        log.error("lead %s: report not sent (%s) after %d ms — left for "
+                  "send_lead_reports.py", row["id"], type(exc).__name__,
+                  int((time.monotonic() - started) * 1000))
+        return False
+    elapsed = int((time.monotonic() - started) * 1000)
+    if not sent:
+        log.warning("lead %s: report not sent after %d ms — left for "
+                    "send_lead_reports.py", row["id"], elapsed)
+        return False
+    try:
+        database.execute_rowcount(STAMP_SQL, (row["id"],))
+    except Exception as exc:                    # noqa: BLE001
+        log.error("lead %s: sent but not stamped (%s)", row["id"],
+                  type(exc).__name__)
+    log.info("lead %s: report rendered and sent in %d ms", row["id"], elapsed)
+    return True
 
 
 def _is_duplicate(exc):
@@ -127,13 +205,14 @@ def lead():
                                      tracking.ATTRIBUTION_FIELDS["subid"])
     opt_in = 1 if body.get("marketing_opt_in") is True else 0
 
+    scores_json = (json.dumps(scores, separators=(",", ":"), sort_keys=True)
+                   if scores else None)
     event = "lead_submit"
+    lead_id = None
     try:
-        database.execute(INSERT_SQL, (
-            email, funnel, lang, style_key,
-            json.dumps(scores, separators=(",", ":"), sort_keys=True)
-            if scores else None,
-            subid, session_id, opt_in))
+        lead_id = database.execute(INSERT_SQL, (
+            email, funnel, lang, style_key, scores_json, subid, session_id,
+            opt_in))
     except Exception as exc:
         if not _is_duplicate(exc):
             # The type only. The body carries the address.
@@ -143,4 +222,11 @@ def lead():
         event = "lead_dup"
 
     tracking.record_event(funnel, session_id, event, {"subid": subid})
+    # The mail, for a new row only: a duplicate already had its report, and
+    # is redirected exactly as the first time. Whatever happens in here, the
+    # answer below is the same — the article is not held hostage to Resend.
+    if event == "lead_submit":
+        _deliver({"id": lead_id, "email": email, "funnel": funnel,
+                  "lang": lang, "style_key": style_key,
+                  "scores_json": scores_json})
     return jsonify({"redirect_url": article_link(gate, style_key)})
