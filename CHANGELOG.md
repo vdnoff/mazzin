@@ -654,3 +654,6 @@ bottom.
 
 ## 2026-09-16 — claude/blinds-price-099
 - blinds: $0.99 price test, all markets
+
+## 2026-09-17 — claude/email-gate
+- email gate replaces paywall, article redirect + free PDF report
