@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Mazzin admin — leads{% endblock %}
+{% block subtitle %}
+  <span style="color:var(--muted);font-size:13px">leads — the email gate</span>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* The summary: four numbers and the rate, as cards that wrap on a phone. */
+  .cards { display: flex; gap: 10px; flex-wrap: wrap; margin: 0 0 14px; }
+  .card { flex: 1 1 130px; background: var(--card); border: 1px solid var(--line);
+          border-radius: 10px; padding: 10px 12px; }
+  .card b { display: block; font-size: 10.5px; text-transform: uppercase;
+            letter-spacing: .06em; color: var(--muted); margin: 0 0 4px; }
+  .card span { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .card small { display: block; color: var(--muted); font-size: 11.5px; }
+
+  /* The filters: two selects, a text box, apply, export. */
+  form.filters { display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+                 margin: 0 0 14px; font-size: 13px; }
+  form.filters select, form.filters input[type=text] {
+    font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--line);
+    border-radius: 6px; background: var(--card); color: var(--ink);
+  }
+  form.filters button, form.filters a.export {
+    font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 6px;
+    cursor: pointer; text-decoration: none;
+  }
+  form.filters button { border: 1px solid var(--ink); background: var(--ink); color: #fff; }
+  form.filters a.export { border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+
+  /* The two tables side by side where there is room. */
+  .split { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) { .split { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } }
+  td.sent { color: var(--good); }
+  td.unsent { color: #9b3232; }
+  td.email { text-align: left; }
+  nav.pages { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 0; font-size: 13px; }
+  nav.pages a, nav.pages span { padding: 5px 10px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--card); text-decoration: none; color: var(--ink); }
+  nav.pages span.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+</style>
+{% endblock %}
+
+{% block body %}
+<form class="filters" method="get" action="{{ url_for('admin.leads_page') }}">
+  <label>vertical
+    <select name="vertical">
+      <option value="">all</option>
+      {% for v in facets.verticals %}
+        <option value="{{ v }}" {{ 'selected' if filters.vertical == v }}>{{ v }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>market
+    <select name="lang">
+      <option value="">all</option>
+      {% for l in facets.langs %}
+        <option value="{{ l }}" {{ 'selected' if filters.lang == l }}>{{ l }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>subid contains
+    <input type="text" name="subid" value="{{ filters.subid or '' }}" placeholder="tigerjar_article_" maxlength="128">
+  </label>
+  <button type="submit">Apply</button>
+  <a class="export" href="{{ url_for('admin.leads_csv', **filter_query) }}">Export CSV</a>
+</form>
+
+<div class="cards">
+  <div class="card"><b>Leads</b><span>{{ counts.total }}</span><small>all time, this filter</small></div>
+  <div class="card"><b>Today</b><span>{{ counts.today }}</span><small>since midnight</small></div>
+  <div class="card"><b>Last 7 days</b><span>{{ counts.week }}</span><small>including today</small></div>
+  <div class="card"><b>Gate conversion</b><span>{{ '%.1f'|format(conversion.rate) }}%</span>
+    <small>{{ conversion.lead_submit }} of {{ conversion.result_view }} result views, 7 days</small></div>
+</div>
+
+<div class="split">
+<div>
+<p class="note">{{ matching }} lead{{ '' if matching == 1 else 's' }} match{{ 'es' if matching == 1 else '' }}
+  {% if pages > 1 %}— page {{ page }} of {{ pages }}, {{ per_page }} a page{% endif %}</p>
+<div class="scroll">
+<table>
+  <thead>
+    <tr>
+      <th>Created</th><th>Email</th><th>Funnel</th><th>Lang</th>
+      <th>Style</th><th>Subid</th><th>Report</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for row in rows %}
+    <tr>
+      <td>{{ row.created_at }}</td>
+      <td class="email">{{ row.email }}</td>
+      <td>{{ row.funnel }}</td>
+      <td>{{ row.lang }}</td>
+      <td>{{ row.style_key or '—' }}</td>
+      <td>{{ row.subid or '—' }}</td>
+      {% if row.report_sent_at %}
+        <td class="sent">✓ {{ row.report_sent_at }}</td>
+      {% else %}
+        <td class="unsent">—</td>
+      {% endif %}
+    </tr>
+  {% else %}
+    <tr><td colspan="7" style="text-align:center;color:var(--muted)">No leads match.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if pages > 1 %}
+<nav class="pages">
+  {% if page > 1 %}<a href="{{ url_for('admin.leads_page', page=page - 1, **filter_query) }}">‹ newer</a>{% endif %}
+  <span class="on">{{ page }} / {{ pages }}</span>
+  {% if page < pages %}<a href="{{ url_for('admin.leads_page', page=page + 1, **filter_query) }}">older ›</a>{% endif %}
+</nav>
+{% endif %}
+</div>
+
+<div>
+<p class="note">Per market, this filter</p>
+<div class="scroll">
+<table>
+  <thead><tr><th>Funnel</th><th>Lang</th><th>Leads</th><th>Unsent</th><th>Last lead</th></tr></thead>
+  <tbody>
+  {% for g in groups %}
+    <tr>
+      <td>{{ g.funnel }}</td><td>{{ g.lang }}</td><td>{{ g.leads }}</td>
+      <td class="{{ 'unsent' if g.unsent else 'zero' }}">{{ g.unsent }}</td>
+      <td>{{ g.last_at }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="5" style="text-align:center;color:var(--muted)">Nothing yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+</div>
+</div>
+
+<p class="note">
+  Gate conversion is sessions that submitted an address over sessions that saw
+  a result, in the last 7 days, on the funnels the filter names. A report
+  column of — is a lead whose PDF has not gone; scripts/send_lead_reports.py
+  re-sends those.
+</p>
+{% endblock %}

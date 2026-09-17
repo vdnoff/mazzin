@@ -175,3 +175,14 @@ CREATE TABLE IF NOT EXISTS leads (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uq_lead (email, funnel)
 );
+
+-- 2026-09-18 — the leads index the dashboard reads through
+--
+-- MUST BE APPLIED BY HAND BEFORE THE DEPLOY THAT SHIPS /admin/leads.
+--
+-- Every filter the leads page offers is on funnel, lang and created_at, in
+-- that order: a vertical is `funnel = v OR funnel LIKE 'v-%'`, a market is
+-- `lang = x`, and the page and the summary are ordered and bounded by
+-- created_at. One index in that order serves all three and the newest-first
+-- page. Without it the page still answers — it reads the table.
+ALTER TABLE leads ADD INDEX idx_leads_funnel_lang_created (funnel, lang, created_at);

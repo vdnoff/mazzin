@@ -117,6 +117,14 @@ NULL, builds each report from the warmed style cache and the stubs
 with the article button and the PDF attached, and stamps the row. Keep
 `warm_cache.py` warm for every language, or a lead gets stub chapters.
 
+The leads are read on the dashboard, at `/admin/leads`, behind the same
+login as the rest of it: total, today, last 7 days and the gate's
+conversion (submits over result views, 7 days) at the top, a per-market
+table beside them, the rows fifty a page newest first with the report
+column reading ✓ or —, filters by vertical, market and a subid
+contains-match, and a CSV export of whatever the filter matches. It reads
+through the `(funnel, lang, created_at)` index the migration adds.
+
 The eight generated funnels take the gate without a regeneration:
 `scripts/lead_gate.json` carries each language's article URL, gate copy
 and mail copy, and `scripts/set_gate.py blinds <lang>` writes the block

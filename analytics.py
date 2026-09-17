@@ -613,6 +613,173 @@ def fold_variants(rows):
 
 # --- arithmetic ------------------------------------------------------------
 
+# --- leads -----------------------------------------------------------------
+#
+# The email gate's rows, read for the dashboard. The same rules as everything
+# above: SELECTs only, bounded, index-friendly — every filter here is on
+# `funnel`, `lang` and `created_at`, which is the order of the index the
+# migration adds, and a vertical is asked for as `funnel = v OR funnel LIKE
+# 'v-%'`, a prefix the index can range over. The subid filter is a contains
+# and is the one thing here that reads rows rather than ranges, which is why
+# it comes after the other two in every WHERE.
+
+LEADS_PER_PAGE = 50
+
+
+def vertical_of(slug):
+    """`blinds` from `blinds-hu`; a master's slug is its own vertical."""
+    return (slug or "").split("-", 1)[0]
+
+
+def lang_of(slug):
+    """`hu` from `blinds-hu`; a master with no suffix is English."""
+    return (slug or "").split("-", 1)[1] if "-" in (slug or "") else "en"
+
+
+# The LIKE escape character. An exclamation mark rather than the backslash
+# MySQL defaults to, because a backslash inside a quoted SQL literal means
+# two different things to MySQL and to the SQLite the suite runs on, and one
+# character that means itself everywhere is worth more than the default.
+LIKE_ESCAPE = "!"
+
+
+def _like_contains(text):
+    """`%text%` with the wildcards in `text` itself escaped."""
+    escaped = (text.replace(LIKE_ESCAPE, LIKE_ESCAPE + LIKE_ESCAPE)
+               .replace("%", LIKE_ESCAPE + "%")
+               .replace("_", LIKE_ESCAPE + "_"))
+    return "%" + escaped + "%"
+
+
+def leads_where(vertical=None, lang=None, subid=None, alias="l"):
+    """`(sql, params)` — the WHERE for the current filter, `1=1` when none."""
+    parts = ["1=1"]
+    params = []
+    if vertical:
+        parts.append("(%s.funnel = %%s OR %s.funnel LIKE %%s)" % (alias, alias))
+        params += [vertical, vertical + "-%"]
+    if lang:
+        parts.append("%s.lang = %%s" % alias)
+        params.append(lang)
+    if subid:
+        parts.append("%s.subid LIKE %%s ESCAPE '!'" % alias)
+        params.append(_like_contains(subid))
+    return " AND ".join(parts), params
+
+
+LEAD_FACETS_SQL = "SELECT DISTINCT funnel, lang FROM leads ORDER BY funnel, lang"
+
+
+def lead_facets():
+    """The verticals and the markets the table has seen, for the dropdowns."""
+    rows = database.query_all(LEAD_FACETS_SQL) or []
+    verticals = sorted({vertical_of(r["funnel"]) for r in rows if r["funnel"]})
+    langs = sorted({r["lang"] for r in rows if r["lang"]})
+    return {"verticals": verticals, "langs": langs}
+
+
+LEAD_COUNTS_SQL = """
+SELECT COUNT(*) AS total,
+       SUM(CASE WHEN l.created_at >= %s THEN 1 ELSE 0 END) AS today,
+       SUM(CASE WHEN l.created_at >= %s THEN 1 ELSE 0 END) AS week
+FROM leads l
+WHERE {where}
+"""
+
+
+def lead_counts(filters, midnight, week_start):
+    """`{total, today, week}` for the filter — one pass over the rows."""
+    where, params = leads_where(**filters)
+    row = database.query_one(LEAD_COUNTS_SQL.format(where=where),
+                             tuple([midnight, week_start] + params)) or {}
+    return {key: int(row.get(key) or 0) for key in ("total", "today", "week")}
+
+
+LEAD_CONVERSION_SQL = """
+SELECT e.event AS event, COUNT(DISTINCT e.session_id) AS sessions
+FROM events e
+WHERE e.funnel IN ({slugs})
+  AND e.event IN ('result_view', 'lead_submit')
+  AND e.created_at >= %s AND e.created_at < %s
+  {subid}
+GROUP BY e.event
+"""
+
+
+def lead_conversion(slugs, start, end, subid=None):
+    """`{result_view, lead_submit, rate}` — sessions that saw a result and
+    sessions that gave an address, over the funnels the filter names."""
+    out = {"result_view": 0, "lead_submit": 0, "rate": 0.0}
+    if not slugs:
+        return out
+    where, params = ("AND e.subid LIKE %s ESCAPE '!'",
+                     [_like_contains(subid)]) \
+        if subid else ("", [])
+    rows = database.query_all(
+        LEAD_CONVERSION_SQL.format(slugs=", ".join(["%s"] * len(slugs)),
+                                   subid=where),
+        tuple(list(slugs) + [start, end] + params)) or []
+    for row in rows:
+        out[row["event"]] = int(row["sessions"] or 0)
+    out["rate"] = rate(out["lead_submit"], out["result_view"])
+    return out
+
+
+LEAD_GROUPS_SQL = """
+SELECT l.funnel AS funnel, l.lang AS lang, COUNT(*) AS leads,
+       MAX(l.created_at) AS last_at,
+       SUM(CASE WHEN l.report_sent_at IS NULL THEN 1 ELSE 0 END) AS unsent
+FROM leads l
+WHERE {where}
+GROUP BY l.funnel, l.lang
+ORDER BY leads DESC, l.funnel, l.lang
+"""
+
+
+def lead_groups(filters):
+    """One row per (funnel, lang) in the filter: count, last lead, unsent."""
+    where, params = leads_where(**filters)
+    rows = database.query_all(LEAD_GROUPS_SQL.format(where=where),
+                              tuple(params)) or []
+    return [{"funnel": r["funnel"], "lang": r["lang"],
+             "leads": int(r["leads"] or 0), "last_at": r["last_at"],
+             "unsent": int(r["unsent"] or 0)} for r in rows]
+
+
+LEAD_COUNT_SQL = "SELECT COUNT(*) AS n FROM leads l WHERE {where}"
+LEAD_ROWS_SQL = """
+SELECT l.id, l.created_at, l.email, l.funnel, l.lang, l.style_key, l.subid,
+       l.report_sent_at
+FROM leads l
+WHERE {where}
+ORDER BY l.created_at DESC, l.id DESC
+{limit}
+"""
+LEAD_COLUMNS = ("created_at", "email", "funnel", "lang", "style_key", "subid",
+                "report_sent_at")
+
+
+def lead_count(filters):
+    where, params = leads_where(**filters)
+    row = database.query_one(LEAD_COUNT_SQL.format(where=where),
+                             tuple(params)) or {}
+    return int(row.get("n") or 0)
+
+
+def lead_rows(filters, page=1, per_page=LEADS_PER_PAGE):
+    """One page of leads, newest first. `per_page=None` is every row — the
+    CSV export — and is the only caller that may ask for that."""
+    where, params = leads_where(**filters)
+    if per_page:
+        page = max(1, int(page or 1))
+        limit = "LIMIT %s OFFSET %s"
+        params = params + [int(per_page), (page - 1) * int(per_page)]
+    else:
+        limit = ""
+    return database.query_all(LEAD_ROWS_SQL.format(where=where, limit=limit),
+                              tuple(params)) or []
+
+
 def rate(part, whole):
     """`part / whole` as a percentage, and 0.0 rather than an exception."""
     part = int(part or 0)
