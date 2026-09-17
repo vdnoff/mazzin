@@ -744,8 +744,62 @@ check("a real draw with no key refuses rather than guesses",
       gen.key_from_env_file([os.path.join(ROOT, "no-such-env")]) == "")
 check("the real mode calls images/generations at the portrait size",
       "images/generations" in read("scripts/make_gallery.py")
-      and gen.API_PORTRAIT == "1024x1536")
+      and gen.API_PORTRAIT == "1024x1536"
+      and gen.api_size(loaded) == "1024x1536"
+      and gen.byte_ceiling(loaded) == gen.MAX_BYTES)
+
 ignore = read(".gitignore")
+print("\n--- the editorial gallery: six landscape stills for the article ---")
+ED = gen.load_spec("blinds_editorial")
+check("the editorial spec loads by its file stem, six frames, no share card",
+      len(ED["images"]) == 6 and "og" not in ED and ED["vertical"] == "blinds"
+      and ED["dir"] == "static/galleries/blinds_editorial")
+check("  ids and files in the order the article wants them",
+      [i["id"] for i in ED["images"]]
+      == ["e_hero", "e_minimal", "e_scandi", "e_classic", "e_natural", "e_bold"]
+      and all(i["filename"] == i["id"] + ".webp" for i in ED["images"]))
+check("  landscape 1536x1024, drawn at the model's landscape size, under "
+      "200 KB",
+      gen.frame_size(ED) == (1536, 1024) and gen.api_size(ED) == "1536x1024"
+      and gen.byte_ceiling(ED) == 200 * 1024)
+check("  every prompt is landscape, editorial, and empty of people and text",
+      all("landscape" in i["prompt"] and "editorial" in i["prompt"]
+          and "No people" in i["prompt"] and "no text" in i["prompt"]
+          and "no brand logos" in i["prompt"] for i in ED["images"]))
+check("  each names its blind and its room",
+      all(word in ED["images"][n]["prompt"] for n, word in enumerate(
+          ("oatmeal linen roman blind", "stone-grey cassette roller blind",
+           "linen roman blind", "velvet roman blind", "woven bamboo shade",
+           "venetian blinds")))
+      and all(i["alt"] and len(i["tags"]) >= 2 for i in ED["images"]))
+scratch = tempfile.mkdtemp(prefix="blinds-editorial-")
+try:
+    code = gen.main(["blinds_editorial", "--placeholders", "--out", scratch])
+    files = sorted(f for f in os.listdir(scratch) if f.endswith(".webp"))
+    check("--placeholders draws the six at 1536x1024 and no card, exit 0",
+          code == 0 and files == sorted(i["filename"] for i in ED["images"]),
+          "%s exit %s" % (files, code))
+    from PIL import Image
+    with Image.open(os.path.join(scratch, "e_hero.webp")) as im:
+        check("  landscape WebP, under the spec's ceiling",
+              im.size == (1536, 1024) and im.format == "WEBP"
+              and os.path.getsize(os.path.join(scratch, "e_hero.webp"))
+              <= 200 * 1024)
+    code = gen.main(["blinds", "--spec",
+                     os.path.join(ROOT, "scripts", "galleries",
+                                  "blinds_editorial.json"),
+                     "--placeholders", "--out", scratch, "--dry-run"])
+    check("  --spec <path> reads the same file", code == 0)
+finally:
+    shutil.rmtree(scratch, ignore_errors=True)
+check("  its directory is gitignored, its spec is not",
+      "static/galleries/blinds_editorial/" in ignore.splitlines()
+      and subprocess.run(["git", "check-ignore", "-q",
+                          "static/galleries/blinds_editorial/e_hero.webp"],
+                         cwd=ROOT).returncode == 0
+      and subprocess.run(["git", "check-ignore", "-q",
+                          "scripts/galleries/blinds_editorial.json"],
+                         cwd=ROOT).returncode != 0)
 check("the gallery directory is gitignored",
       "static/galleries/blinds/" in ignore.splitlines())
 check("  and git agrees",

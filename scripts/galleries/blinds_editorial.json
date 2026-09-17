@@ -1,0 +1,80 @@
+{
+  "vertical": "blinds",
+  "purpose": "editorial — landscape stills for the TigerJar article, not the swipe gallery",
+  "dir": "static/galleries/blinds_editorial",
+  "size": [
+    1536,
+    1024
+  ],
+  "max_bytes": 204800,
+  "images": [
+    {
+      "id": "e_hero",
+      "filename": "e_hero.webp",
+      "tags": [
+        "hero",
+        "bright",
+        "warm",
+        "natural"
+      ],
+      "alt": "Oatmeal linen roman blind half-raised over a large window in a bright, airy living room",
+      "prompt": "Photorealistic interior photograph, landscape orientation (3:2), eye-level, editorial interior-magazine quality, natural light, true-to-life colour, no HDR look. The window treatment is the clear subject and reads at a glance. No people, no hands, no pets, no text, no lettering, no brand logos, no watermarks, no captions. Scene: a bright, airy living room with a large window, an oatmeal linen roman blind half-raised in soft, even folds, warm morning light spilling across a wide-plank oak floor, minimal styling — a low linen sofa, one ceramic vessel, nothing on the walls — calm and uncluttered, the blind and the light the whole story."
+    },
+    {
+      "id": "e_minimal",
+      "filename": "e_minimal.webp",
+      "tags": [
+        "minimal",
+        "cool",
+        "bright"
+      ],
+      "alt": "Stone-grey cassette roller blind in a minimal living room with flat-front furniture",
+      "prompt": "Photorealistic interior photograph, landscape orientation (3:2), eye-level, editorial interior-magazine quality, natural light, true-to-life colour, no HDR look. The window treatment is the clear subject and reads at a glance. No people, no hands, no pets, no text, no lettering, no brand logos, no watermarks, no captions. Scene: a minimal living room with a stone-grey cassette roller blind lowered two thirds of the way over a wide window, its cassette flush and hardware hidden, flat-front pale furniture, diffused daylight with no hard shadows, clean lines, a restrained palette of white, stone and pale grey, empty surfaces."
+    },
+    {
+      "id": "e_scandi",
+      "filename": "e_scandi.webp",
+      "tags": [
+        "scandi",
+        "warm",
+        "bright",
+        "natural"
+      ],
+      "alt": "Linen roman blind glowing with filtered amber light in a warm Scandinavian bedroom",
+      "prompt": "Photorealistic interior photograph, landscape orientation (3:2), eye-level, editorial interior-magazine quality, natural light, true-to-life colour, no HDR look. The window treatment is the clear subject and reads at a glance. No people, no hands, no pets, no text, no lettering, no brand logos, no watermarks, no captions. Scene: a warm Scandinavian bedroom, a natural linen roman blind lowered over the window and glowing with filtered amber late-afternoon light, light oak bed and floor, a chunky wool throw and knitted cushion, a small pine side table, soft textures everywhere, quiet and warm."
+    },
+    {
+      "id": "e_classic",
+      "filename": "e_classic.webp",
+      "tags": [
+        "classic",
+        "dark",
+        "warm"
+      ],
+      "alt": "Chocolate velvet roman blind with visible lining folds in an elegant study at dusk",
+      "prompt": "Photorealistic interior photograph, landscape orientation (3:2), eye-level, editorial interior-magazine quality, natural light, true-to-life colour, no HDR look. The window treatment is the clear subject and reads at a glance. No people, no hands, no pets, no text, no lettering, no brand logos, no watermarks, no captions. Scene: an elegant study at dusk, a chocolate-brown velvet roman blind lowered over a tall sash window with its lining folds clearly visible and softly lit, a brass desk lamp glowing on a dark wood desk, deep tones — walnut, forest green, aged leather — a shelf of books, rich and hushed."
+    },
+    {
+      "id": "e_natural",
+      "filename": "e_natural.webp",
+      "tags": [
+        "natural",
+        "warm",
+        "bright"
+      ],
+      "alt": "Woven bamboo shade casting sun patterns through its weave in a plant-filled kitchen corner",
+      "prompt": "Photorealistic interior photograph, landscape orientation (3:2), eye-level, editorial interior-magazine quality, natural light, true-to-life colour, no HDR look. The window treatment is the clear subject and reads at a glance. No people, no hands, no pets, no text, no lettering, no brand logos, no watermarks, no captions. Scene: a plant-filled kitchen corner, a woven bamboo shade lowered over the window with strong sun casting a fine pattern through the weave onto a worn wooden worktop and a terracotta pot, trailing pothos and a fig in a basket, earth tones — clay, sand, olive — warm and lived-in."
+    },
+    {
+      "id": "e_bold",
+      "filename": "e_bold.webp",
+      "tags": [
+        "bold",
+        "dark",
+        "cool"
+      ],
+      "alt": "Matte black venetian blinds as a graphic contrast element in a pale living room",
+      "prompt": "Photorealistic interior photograph, landscape orientation (3:2), eye-level, editorial interior-magazine quality, natural light, true-to-life colour, no HDR look. The window treatment is the clear subject and reads at a glance. No people, no hands, no pets, no text, no lettering, no brand logos, no watermarks, no captions. Scene: a pale, near-white living room with matte black aluminium venetian blinds across a wide window as the one graphic element, hard midday light through the tilted slats throwing crisp striped shadows across a white wall and a pale concrete floor, a single black-framed chair, high contrast, sharp and deliberate."
+    }
+  ]
+}

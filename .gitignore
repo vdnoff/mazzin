@@ -16,3 +16,4 @@ data/
 # Factory galleries: drawn on the server by scripts/make_gallery.py from the
 # spec in scripts/galleries/, never committed. The spec is the code.
 static/galleries/blinds/
+static/galleries/blinds_editorial/

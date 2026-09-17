@@ -121,7 +121,11 @@ cd ~/mazzin && python3 scripts/make_funnel.py blinds hu --only-chunk 4   # raw a
    copies. It is the one `<vertical>-*.json` that is committed.
 5. **Gallery** — `python3 scripts/make_gallery.py <vertical> --placeholders`
    locally to walk it; the real draw runs on the server. Add
-   `static/galleries/<vertical>/` to `.gitignore`.
+   `static/galleries/<vertical>/` to `.gitignore`. A second spec for the
+   same vertical (editorial stills for an article: `blinds_editorial.json`,
+   six landscape frames at 1536x1024 under 200 KB) is drawn by its file
+   stem — `python3 scripts/make_gallery.py blinds_editorial` — into its own
+   `dir`, at the orientation its `size` implies, under its own `max_bytes`.
 6. **Check** — a `tests/test_<vertical>_check.py` in the shape of
    `tests/test_blinds_check.py`, including the simulation and the browser
    walk.

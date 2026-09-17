@@ -13,7 +13,14 @@ code — static/galleries/<vertical>/ is gitignored for every factory vertical
 
 The spec is scripts/galleries/<vertical>.json: one entry per image with its
 id, filename, tags, alt text and the generation prompt, plus the frame size
-the swipe UI wants (640x982, the kitchen gallery's) and the share card.
+the swipe UI wants (640x982, the kitchen gallery's) and the share card. A
+second spec for the same vertical — editorial stills for an article, say —
+is its own file under scripts/galleries/ and is named by that file's stem
+(`make_gallery.py blinds_editorial`) or handed over with --spec; its own
+`dir` says where the frames go, its `size` decides the orientation the
+model is asked for (landscape when the frame is wider than tall), and an
+optional `max_bytes` sets the WebP ceiling per frame in place of the swipe
+gallery's 150 KB.
 
 --placeholders paints every frame as a flat colour taken from the image's
 identity tag with the id centred on it, so a funnel can be walked end to end
@@ -101,6 +108,21 @@ def out_dir(spec, override=None):
 def frame_size(spec):
     size = spec.get("size") or [640, 982]
     return (int(size[0]), int(size[1]))
+
+
+def api_size(spec):
+    """The size the model is asked for: the orientation of the frame."""
+    width, height = frame_size(spec)
+    return API_LANDSCAPE if width > height else API_PORTRAIT
+
+
+def byte_ceiling(spec):
+    """The WebP ceiling per frame: the spec's `max_bytes`, else the swipe
+    gallery's."""
+    value = spec.get("max_bytes")
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        return MAX_BYTES
+    return value
 
 
 # --- the key -------------------------------------------------------------------
@@ -334,6 +356,8 @@ def main(argv=None):
         return 1
     directory = out_dir(spec, args.out)
     size = frame_size(spec)
+    ask = api_size(spec)
+    ceiling = byte_ceiling(spec)
     only = [s for s in (args.only or "").split(",") if s]
     todo = plan(spec, directory, args.placeholders, args.force, only)
 
@@ -341,10 +365,12 @@ def main(argv=None):
         MODEL, IMAGE_QUALITY)
     cost = "" if args.placeholders else " — ~$%.2f estimated" % (
         len(todo) * COST_PER_IMAGE.get(IMAGE_QUALITY, 0.04))
-    print("%s: %d of %d frame(s) to write into %s (%s)%s"
+    print("%s: %d of %d frame(s) to write into %s (%s, %dx%d from %s, "
+          "under %d KB)%s"
           % (args.vertical, len(todo), len(spec["images"]),
              os.path.relpath(directory, ROOT) if directory.startswith(ROOT)
-             else directory, mode, cost))
+             else directory, mode, size[0], size[1], ask, ceiling // 1024,
+             cost))
     for item, path, reason in todo:
         print("  %-8s %-14s %s" % (item["id"], reason, " ".join(item["tags"])))
     if args.dry_run:
@@ -370,10 +396,10 @@ def main(argv=None):
                 img = placeholder(item, size)
                 kind = "placeholder"
             else:
-                raw = generate(item["prompt"], API_PORTRAIT, key)
+                raw = generate(item["prompt"], ask, key)
                 img = fit(raw, size)
                 kind = "generated"
-            data = encode(img)
+            data = encode(img, ceiling=ceiling)
             with open(path, "wb") as fh:
                 fh.write(data)
             manifest[item["id"]] = {"kind": kind, "filename": item["filename"],
@@ -393,7 +419,7 @@ def main(argv=None):
         if os.path.isfile(source):
             og_size = tuple(int(v) for v in (og.get("size") or [1200, 630]))
             card = og_from(source, og_size)
-            data = encode(card, ceiling=MAX_BYTES * 2)
+            data = encode(card, ceiling=ceiling * 2)
             with open(os.path.join(directory, og["filename"]), "wb") as fh:
                 fh.write(data)
             print("  wrote %-8s %6d bytes  (share card)" % (og["filename"],
