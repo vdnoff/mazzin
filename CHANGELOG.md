@@ -660,3 +660,6 @@ bottom.
 
 ## 2026-09-17 — claude/lead-gate-no-checkbox
 - lead gate: notice line replaces checkbox
+
+## 2026-09-17 — claude/leads-dashboard
+- leads dashboard section
