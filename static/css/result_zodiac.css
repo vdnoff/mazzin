@@ -1661,24 +1661,6 @@ body:has(.result-module) {
 
 .zr-gate-input:focus { border-color: var(--zr-gold); }
 
-.zr-gate-tick {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin: 0 0 12px;
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--zr-muted);
-}
-
-.zr-gate-tick input {
-  flex: none;
-  width: 18px;
-  height: 18px;
-  margin: 1px 0 0;
-  accent-color: var(--zr-gold);
-}
-
 .zr-gate-button {
   display: block;
   width: 100%;
@@ -1703,12 +1685,17 @@ body:has(.result-module) {
   color: #F0A0A0;
 }
 
-.zr-gate-privacy {
+.zr-gate-notice {
   margin: 12px 0 0;
   text-align: center;
   font-size: 12.5px;
   line-height: 1.4;
   color: var(--zr-muted);
+}
+
+.zr-gate-notice a {
+  color: var(--zr-muted);
+  text-decoration: underline;
 }
 
 .zr-gate .legal-links { margin-top: 14px; }

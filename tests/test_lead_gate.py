@@ -136,12 +136,12 @@ check("  the five styles map one to one onto the article's anchors",
                           "natural_organic": "#natural-organic",
                           "bold_statement": "#bold-statement"}
       and set(GATE["anchors"]) == {s["id"] for s in MASTER["styles"]})
-check("  the copy is the brief's, the box unticked by construction",
+check("  the copy is the brief's: no box, a notice under the button",
       GATE["copy"]["headline"] == "Get your full personal report — free"
       and GATE["copy"]["button"] == "Send my report"
-      and GATE["copy"]["privacy"] == "No spam. One email with your report."
-      and GATE["copy"]["checkbox"]
-      == "Also send me occasional style & price tips"
+      and "checkbox" not in GATE["copy"] and "privacy" not in GATE["copy"]
+      and GATE["copy"]["notice"] == "You'll receive your free report at this "
+      "email. No spam — one report. [Privacy policy]."
       and "prices and traps" in GATE["copy"]["subline"])
 check("  the mail names the style and the scales",
       "{style}" in GATE["mail"]["subject"] and "{scales}" in GATE["mail"]["summary"]
@@ -197,12 +197,15 @@ check("  and the address is in no log line",
       not any("example.com" in line.lower() for line in catch.lines))
 check("  the language is the funnel's, not the client's",
       lead_rows[0][1][2] == "en")
-r = post(body(marketing_opt_in=True))
-check("the box ticked writes 1", [w for w in writes
-                                   if "INSERT INTO leads" in w[0]][0][1][-1] == 1)
+without = body()
+del without["marketing_opt_in"]
+r = post(without)
+check("a post with no consent field at all is the same 200, opt-in 0",
+      r.status_code == 200 and [w for w in writes
+                                if "INSERT INTO leads" in w[0]][0][1][-1] == 0)
 r = post(body(marketing_opt_in="yes"))
-check("  and anything but true writes 0", [w for w in writes
-                                           if "INSERT INTO leads" in w[0]][0][1][-1] == 0)
+check("  and anything but a literal true writes 0", [w for w in writes
+                                                     if "INSERT INTO leads" in w[0]][0][1][-1] == 0)
 
 import pymysql                                  # noqa: E402
 fail_with.update(exc=pymysql.err.IntegrityError(1062, "Duplicate entry"),
@@ -489,6 +492,13 @@ check("  every language carries every key of the master's copy and mail, "
           and all(mf.tokens_of(table[l]["mail"][k])
                   == mf.tokens_of(GATE["mail"][k]) for k in GATE["mail"])
           for l in LANGS))
+check("  every notice says what the address is for and links the policy "
+      "from its brackets, in its own words",
+      all("[" in table[l]["copy"]["notice"] and "]." in table[l]["copy"]["notice"]
+          and "spam" in table[l]["copy"]["notice"].lower()
+          and "checkbox" not in table[l]["copy"]
+          and "privacy" not in table[l]["copy"] for l in table)
+      and len({table[l]["copy"]["notice"] for l in table}) == 9)
 check("  and none of them prices anything",
       not any("$" in json.dumps(table[l]) or "0.99" in json.dumps(table[l])
               for l in table))
@@ -593,6 +603,153 @@ try:
 finally:
     shutil.rmtree(scratch, ignore_errors=True)
 
+print("\n--- the gate at 390px, in all nine languages ---")
+import http.server                              # noqa: E402
+import socketserver                             # noqa: E402
+import threading                                # noqa: E402
+from playwright.sync_api import sync_playwright  # noqa: E402
+
+PORT = 8814
+CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
+PINNED = "2026-09-15T12:00:00Z"
+CLOCK = """(() => { const AT = Date.parse(%s); const Real = Date;
+  class Stub extends Real {
+    constructor(...a) { super(...(a.length ? a : [AT])); }
+    static now() { return AT; } }
+  window.Date = Stub; })();""" % json.dumps(PINNED)
+SEED = """(() => { let s = 0x2f6e2b1;
+  Math.random = () => { s |= 0; s = (s + 0x6D2B79F5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; })();"""
+LAID = ("() => { const c=document.querySelector('#screen-swipe #cards .card');"
+        " return !!c && c.getBoundingClientRect().width>1; }")
+SETTLED = ("() => [...document.querySelectorAll('#screen-swipe #cards .card')]"
+           ".every(c=>{const t=getComputedStyle(c).transform;"
+           " return t==='none'||/matrix\\(1, 0, 0, 1/.test(t);})")
+READ_GATE = """() => { const g = document.querySelector('#result-module .zr-gate');
+  if (!g) return null;
+  const t = s => { const n = g.querySelector(s); return n ? n.textContent.trim() : null; };
+  const a = g.querySelector('.zr-gate-notice a');
+  return {notice: t('.zr-gate-notice'), link: a ? a.textContent : null,
+          href: a ? a.getAttribute('href') : null,
+          boxes: g.querySelectorAll('input[type=checkbox]').length,
+          privacyLine: !!g.querySelector('.zr-gate-privacy'),
+          button: t('.zr-gate-button'), width: g.getBoundingClientRect().width,
+          overflow: document.documentElement.scrollWidth > window.innerWidth}; }"""
+
+site = tempfile.mkdtemp(prefix="lead-gate-site-")
+langs_ok = {}
+try:
+    os.makedirs(os.path.join(site, "static", "funnels"))
+    os.makedirs(os.path.join(site, "funnels"))
+    for name in os.listdir(os.path.join(ROOT, "static")):
+        if name != "funnels":
+            os.symlink(os.path.join(ROOT, "static", name),
+                       os.path.join(site, "static", name))
+    shutil.copy(os.path.join(ROOT, "funnels", "blinds.json"),
+                os.path.join(site, "funnels", "blinds.json"))
+    shutil.copy(os.path.join(ROOT, "funnels", "blinds.json"),
+                os.path.join(site, "static", "funnels", "blinds.json"))
+    with contextlib.redirect_stdout(io.StringIO()):
+        for lang in LANGS:
+            mf.build("blinds", lang, site, no_llm=True)
+            sg.set_gate("blinds", lang, site)
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *a, **kw):
+            super().__init__(*a, directory=site, **kw)
+
+        def log_message(self, *a):
+            pass
+
+        def do_GET(self):
+            path = self.path.split("?")[0].strip("/")
+            if path == "api/pixel-config":
+                return self._json({})
+            if path == "blinds" or path.startswith("blinds-"):
+                self.path = "/static/funnel.html"
+            return super().do_GET()
+
+        def do_POST(self):
+            self.rfile.read(int(self.headers.get("content-length") or 0))
+            self._json({"ok": True})
+
+        def _json(self, payload):
+            raw = json.dumps(payload).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(raw)))
+            self.end_headers()
+            self.wfile.write(raw)
+
+    socketserver.TCPServer.allow_reuse_address = True
+    httpd = socketserver.TCPServer(("127.0.0.1", PORT), Handler)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+
+    def walk(page, slug, steps):
+        page.add_init_script(CLOCK)
+        page.add_init_script(SEED)
+        page.add_init_script("try{sessionStorage.setItem('mazzin_sid',"
+                             "'a1b2c3d4-0000-4000-8000-000000000007');}"
+                             "catch(e){}")
+        page.goto("http://127.0.0.1:%d/%s" % (PORT, slug))
+        page.wait_for_selector("#screen-swipe #cards .card", timeout=20000)
+        for _ in range(steps + 10):
+            if page.locator("#screen-result.is-active").count():
+                break
+            try:
+                page.wait_for_function(LAID, timeout=6000)
+                page.wait_for_function(SETTLED, timeout=3000)
+            except Exception:
+                page.wait_for_timeout(800)
+                continue
+            try:
+                page.locator("#screen-swipe #cards .card").first.click(
+                    timeout=6000)
+            except Exception:
+                page.wait_for_timeout(700)
+                continue
+            page.wait_for_timeout(1900)
+        page.wait_for_selector("#result-module .zr-gate", timeout=25000)
+        page.wait_for_timeout(600)
+        return page.evaluate(READ_GATE)
+
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(executable_path=CHROME)
+            steps = len(MASTER["swipe"]["steps"])
+            for lang in ("en",) + LANGS:
+                slug = "blinds" if lang == "en" else "blinds-" + lang
+                page = browser.new_page(viewport={"width": 390,
+                                                  "height": 844})
+                errors = []
+                page.on("pageerror", lambda e: errors.append(str(e)))
+                try:
+                    got = walk(page, slug, steps) or {}
+                except Exception as exc:          # noqa: BLE001
+                    got = {"error": "%s: %s" % (type(exc).__name__, exc)}
+                page.close()
+                want = table[lang]["copy"]["notice"]
+                plain = want.replace("[", "").replace("]", "")
+                label = want[want.index("[") + 1:want.index("]")]
+                langs_ok[lang] = (
+                    got.get("notice") == plain and got.get("link") == label
+                    and got.get("href") == "/privacy" and got.get("boxes") == 0
+                    and not got.get("privacyLine")
+                    and got.get("button") == table[lang]["copy"]["button"]
+                    and got.get("width") and got.get("width") <= 390
+                    and not got.get("overflow") and not errors)
+                check("  %s: the notice in its words, the policy linked, no "
+                      "box, fits 390" % lang, langs_ok[lang], str(got)[:220])
+            browser.close()
+    finally:
+        httpd.shutdown()
+finally:
+    shutil.rmtree(site, ignore_errors=True)
+check("all nine languages render the gate the same way",
+      len(langs_ok) == 9 and all(langs_ok.values()))
+
 print("\n--- the page's side, pinned in source ---")
 ENGINE = read("static/js/engine.js")
 MODULE = read("static/js/result_zodiac.js")
@@ -616,8 +773,30 @@ check("module: the gate stands where the offer stood, and only there",
       "      root.appendChild(offer(ctx, copy, data, template));\n    }" in MODULE
       and "function gate(ctx, data) {" in MODULE
       and 'elm("section", "zr-offer zr-gate")' in MODULE
-      and "window.location.href = res.redirect_url;" in MODULE
-      and "box.checked = false;" in MODULE)
+      and "window.location.href = res.redirect_url;" in MODULE)
+GATE_SRC = MODULE.split("function gate(ctx, data) {")[1].split("\n  }\n")[0]
+check("  the gate draws no box and reads none: the submit carries the "
+      "address alone",
+      "checkbox" not in GATE_SRC and "marketing_opt_in" not in GATE_SRC
+      and "zr-gate-tick" not in MODULE
+      and "ctx.submitLead({ email: email })" in GATE_SRC)
+check("  and says in so many words that a marketing opt-in is a separate "
+      "unchecked box",
+      "delivery of the REQUESTED report" in GATE_SRC
+      and "UNCHECKED box" in GATE_SRC)
+check("  the notice links the policy from its brackets, to the page's own "
+      "privacy link",
+      "function gateNotice(text, legal) {" in MODULE
+      and 'var href = "/privacy";' in MODULE
+      and "/privacy/i.test(links[i].getAttribute(\"href\")" in MODULE
+      and 'elm("a", "zr-gate-privacy-link", text.slice(open + 1, close))'
+      in MODULE and ".zr-gate-notice a {" in CSS
+      and ".zr-gate-tick" not in CSS)
+check("  the paid offer's consent box is exactly where it was",
+      "var wantsConsent = ctx.cfg.checkout.withdrawal_consent !== false;"
+      in MODULE
+      and "[wantsConsent ? nodes.consent : null, nodes.walletSummary, "
+      "nodes.wallet," in MODULE)
 check("  the styles are before the boxes arm's",
       CSS.index(".zr-gate-input {") < CSS.index("the boxes arm"))
 check("payments.py is not touched by any of this",

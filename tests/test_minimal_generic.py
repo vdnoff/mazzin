@@ -235,12 +235,14 @@ READ = """() => {
     badges: all('.zr-badge'), sub: t('.zr-offer-sub'), trust: t('.zr-trust'),
     consent: !!r.querySelector('#withdrawal') && !r.querySelector('#withdrawal').hidden,
     gate: (() => { const g = r.querySelector('.zr-gate'); if (!g) return null;
-      const tick = g.querySelector('.zr-gate-tick input');
+      const a = g.querySelector('.zr-gate-notice a');
       return {head: t('.zr-gate-head'), sub: t('.zr-gate-sub'),
               input: !!g.querySelector('.zr-gate-input[type=email]'),
               placeholder: (g.querySelector('.zr-gate-input') || {}).placeholder || '',
-              tick: tick ? tick.checked : null, tickText: t('.zr-gate-tick-text'),
-              button: t('.zr-gate-button'), privacy: t('.zr-gate-privacy'),
+              boxes: g.querySelectorAll('input[type=checkbox]').length,
+              notice: t('.zr-gate-notice'), link: a ? a.textContent : null,
+              href: a ? a.getAttribute('href') : null,
+              button: t('.zr-gate-button'),
               error: !!g.querySelector('.zr-gate-error') && g.querySelector('.zr-gate-error').hidden,
               legal: !!g.querySelector('.legal-links')}; })(),
     pay: !!r.querySelector('#pay-button'),
@@ -404,9 +406,10 @@ try:
         check("the gate stands where the offer stood, worded from the config",
               gate.get("head") == G["headline"] and gate.get("sub") == G["subline"]
               and gate.get("input") and gate.get("placeholder") == G["placeholder"]
-              and gate.get("tick") is False and gate.get("tickText") == G["checkbox"]
+              and gate.get("boxes") == 0
+              and gate.get("notice") == G["notice"].replace("[", "").replace("]", "")
+              and gate.get("link") == "Privacy policy" and gate.get("href") == "/privacy"
               and gate.get("button") == G["button"]
-              and gate.get("privacy") == G["privacy"]
               and gate.get("error") is True and gate.get("legal"), str(gate))
         check("  no price, no anchor, no badges, no trust row — nothing sold",
               free["anchor"] is None and free["price"] is None

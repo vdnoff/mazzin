@@ -2359,10 +2359,9 @@
       "placeholder": "you@example.com",
       "button": "Send my report",
       "sending": "Sending…",
-      "privacy": "No spam. One email with your report.",
-      "checkbox": "Also send me occasional style & price tips",
       "error_email": "Please enter a valid email address.",
       "error_send": "Couldn't send it. Please try again.",
+      "notice": "You'll receive your free report at this email. No spam — one report. [Privacy policy].",
       "sticky": "Get my free report ↓"
     },
     "mail": {
