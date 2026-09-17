@@ -86,6 +86,9 @@ FROZEN_KEYS = frozenset((
     "after_step", "auto_advance_ms", "duration_ms", "ends",
     # The value-framing anchor's shape: the locale writes it, not the model.
     "amount_format", "amount_group",
+    # The email gate's article anchors and its UTM campaign: the same on
+    # every language, and scripts/set_gate.py writes the rest of the block.
+    "anchors", "utm_campaign",
     # The minimal template's own structure: tag sets a scale is read on,
     # the step a badge is taken from, how a card labels itself.
     "left_tags", "right_tags", "glyph_step", "band_step", "hero_step",

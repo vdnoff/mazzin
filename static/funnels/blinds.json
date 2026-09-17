@@ -2343,6 +2343,37 @@
     "error_payment": "That payment didn't go through. Please try again.",
     "error_consent": "Please tick the box above to continue."
   },
+  "lead_gate": {
+    "article_url": "https://tigerjar.com/?p=3396",
+    "utm_campaign": "blinds",
+    "anchors": {
+      "modern_minimal": "#modern-minimal",
+      "warm_scandi": "#warm-scandinavian",
+      "classic_elegant": "#classic-elegant",
+      "natural_organic": "#natural-organic",
+      "bold_statement": "#bold-statement"
+    },
+    "copy": {
+      "headline": "Get your full personal report — free",
+      "subline": "We'll email you your report as a PDF and open the full style guide with prices and traps for your style.",
+      "placeholder": "you@example.com",
+      "button": "Send my report",
+      "sending": "Sending…",
+      "privacy": "No spam. One email with your report.",
+      "checkbox": "Also send me occasional style & price tips",
+      "error_email": "Please enter a valid email address.",
+      "error_send": "Couldn't send it. Please try again.",
+      "sticky": "Get my free report ↓"
+    },
+    "mail": {
+      "subject": "Your {style} report — Mazzin",
+      "headline": "Your {style} report is attached.",
+      "summary": "You came out {style}: {scales}. The PDF has the five priciest mistakes for your style, the cheaper equivalents and your palette.",
+      "scale": "{pct}% {label}",
+      "cta": "Open the full {style} guide",
+      "keep": "The PDF is yours to keep."
+    }
+  },
   "result": {
     "mistakes_teaser": "You've seen mistake #1. The other four are the ones that cost {style} buyers most — and one involves your {material}.",
     "value_banner": "One wrong made-to-measure order costs up to $250. The guide flags the five priciest mistakes for your style before you order."

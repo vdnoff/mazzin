@@ -25,6 +25,7 @@ free style result, sees a partially-locked report, hits a paywall.
 | `database.py` | MySQL (PyMySQL) connections, `execute` / `execute_rowcount` / `query_all` / `query_one` | Query construction for callers, ORM anything |
 | `tracking.py` | `POST /api/track` — validate + one INSERT | Reads, joins, anything slow |
 | `router.py` | `GET /go` — vertical + language → slug, the two fallback tiers, the one `gen_queue` upsert | Rendering, LLM calls, anything slower than a redirect |
+| `leads.py` | `POST /api/lead` — the email gate: validate, one `leads` INSERT (a duplicate is the same success), one server-side event, the article redirect | Building the report, sending the mail, logging an address, touching a purchase |
 | `payments.py` | `POST /api/checkout`, `POST /api/stripe/webhook`, `GET /api/report`, `effective_mode()` and the mode-override table | Trusting a client-supplied amount, report copy, deciding a mode anywhere but `effective_mode()` |
 | `reports.py` | `generate_report()` — builds and stores report content | HTTP routes, Stripe calls |
 | `visualizer.py` | `/api/visualizer/*` — photo intake, EXIF stripping, the image-edit call, generation credits | Running on an unpaid purchase, writing under `static/`, putting a photo in a log line |
@@ -35,6 +36,8 @@ free style result, sees a partially-locked report, hits a paywall.
 | `schema_migrations.sql` | Append-only `ALTER`s applied on top of `schema.sql` | Being rewritten or reordered |
 | `funnels/*.json` | Funnel content, styles, pricing, copy; a `report_profile` block where the funnel is factory-made | — |
 | `scripts/make_funnel.py` / `scripts/locales.json` | Localized funnels from a master (see `docs/funnel-factory.md`) | Being run by a deploy or a test with a real key |
+| `scripts/set_gate.py` / `scripts/lead_gate.json` | Writing a language's email gate into a funnel on disk, byte-frozen otherwise | A model call, generating a funnel |
+| `scripts/send_lead_reports.py` | Mailing each lead's report from the warmed cache and the stubs, off the request, by cron | A model call, printing an address |
 | `scripts/set_price.py` | Re-pricing a funnel that is on disk from `scripts/locales.json`, byte-frozen otherwise; the price test's tool | A model call, a database, generating a funnel that is not there |
 | `scripts/galleries/*.json` / `scripts/make_gallery.py` | A vertical's image spec, and drawing it on the server | Committing the images |
 | `static/js/engine.js` | Swipe UX, scoring, screens, tracking calls, checkout redirect + report polling | Holding payment state it can't prove |
@@ -60,6 +63,8 @@ free style result, sees a partially-locked report, hits a paywall.
    `DELETE`.
 7. **No PII in logs.** No emails, no session payloads, no raw request bodies.
    `/api/track` returns a bare 400 on bad input and logs nothing about it.
+   A lead's address lives in `leads` and in the mail it is sent; a log line
+   names the lead by id.
 8. **Mobile portrait only.** Desktop layout is not a goal.
 9. **`schema.sql` is history, not a worksheet.** Schema changes go into
    `schema_migrations.sql` as appended `ALTER` statements and are applied by

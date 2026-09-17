@@ -1,0 +1,210 @@
+{
+  "_note": "Per-language email gate for scripts/set_gate.py: the article each market's readers are sent to (tigerjar.com's canonical ?p= form, which 301s to the pretty URL and keeps the #anchor), the gate's copy and the report mail's copy. Anchors and the UTM campaign come from the master's lead_gate block and are the same in every language. `en` mirrors funnels/blinds.json and is what the others were translated from; a new master string goes here in every language before set_gate runs.",
+  "en": {
+    "article_url": "https://tigerjar.com/?p=3396",
+    "copy": {
+      "headline": "Get your full personal report — free",
+      "subline": "We'll email you your report as a PDF and open the full style guide with prices and traps for your style.",
+      "placeholder": "you@example.com",
+      "button": "Send my report",
+      "sending": "Sending…",
+      "privacy": "No spam. One email with your report.",
+      "checkbox": "Also send me occasional style & price tips",
+      "error_email": "Please enter a valid email address.",
+      "error_send": "Couldn't send it. Please try again.",
+      "sticky": "Get my free report ↓"
+    },
+    "mail": {
+      "subject": "Your {style} report — Mazzin",
+      "headline": "Your {style} report is attached.",
+      "summary": "You came out {style}: {scales}. The PDF has the five priciest mistakes for your style, the cheaper equivalents and your palette.",
+      "scale": "{pct}% {label}",
+      "cta": "Open the full {style} guide",
+      "keep": "The PDF is yours to keep."
+    }
+  },
+  "nl": {
+    "article_url": "https://tigerjar.com/?p=3415",
+    "copy": {
+      "headline": "Ontvang je volledige persoonlijke rapport — gratis",
+      "subline": "We mailen je rapport als PDF en openen de volledige stijlgids met prijzen en valkuilen voor jouw stijl.",
+      "placeholder": "jij@voorbeeld.nl",
+      "button": "Stuur mijn rapport",
+      "sending": "Versturen…",
+      "privacy": "Geen spam. Eén e-mail met je rapport.",
+      "checkbox": "Stuur me ook af en toe stijl- en prijstips",
+      "error_email": "Vul een geldig e-mailadres in.",
+      "error_send": "Versturen is niet gelukt. Probeer het opnieuw.",
+      "sticky": "Mijn gratis rapport ↓"
+    },
+    "mail": {
+      "subject": "Je {style}-rapport — Mazzin",
+      "headline": "Je {style}-rapport zit in de bijlage.",
+      "summary": "Je kwam uit op {style}: {scales}. In de PDF vind je de vijf duurste fouten voor jouw stijl, de goedkopere alternatieven en je kleurenpalet.",
+      "scale": "{pct}% {label}",
+      "cta": "Open de volledige {style}-gids",
+      "keep": "De PDF is van jou, voor altijd."
+    }
+  },
+  "de": {
+    "article_url": "https://tigerjar.com/?p=3416",
+    "copy": {
+      "headline": "Hol dir deinen vollständigen persönlichen Report — kostenlos",
+      "subline": "Wir schicken dir deinen Report als PDF per E-Mail und öffnen den kompletten Style-Guide mit Preisen und Fallen für deinen Stil.",
+      "placeholder": "du@beispiel.de",
+      "button": "Report an mich senden",
+      "sending": "Wird gesendet…",
+      "privacy": "Kein Spam. Eine E-Mail mit deinem Report.",
+      "checkbox": "Schick mir auch ab und zu Stil- und Preistipps",
+      "error_email": "Bitte gib eine gültige E-Mail-Adresse ein.",
+      "error_send": "Senden hat nicht geklappt. Bitte versuch es noch mal.",
+      "sticky": "Mein Gratis-Report ↓"
+    },
+    "mail": {
+      "subject": "Dein {style}-Report — Mazzin",
+      "headline": "Dein {style}-Report ist im Anhang.",
+      "summary": "Dein Ergebnis: {style} — {scales}. Im PDF findest du die fünf teuersten Fehler für deinen Stil, die günstigeren Alternativen und deine Farbpalette.",
+      "scale": "{pct}% {label}",
+      "cta": "Den kompletten {style}-Guide öffnen",
+      "keep": "Das PDF gehört dir, für immer."
+    }
+  },
+  "hu": {
+    "article_url": "https://tigerjar.com/?p=3419",
+    "copy": {
+      "headline": "Kérd a teljes személyes jelentésed — ingyen",
+      "subline": "E-mailben elküldjük a jelentésed PDF-ben, és megnyitjuk a teljes stílusútmutatót az árakkal és a buktatókkal a te stílusodhoz.",
+      "placeholder": "te@pelda.hu",
+      "button": "Küldjétek a jelentésem",
+      "sending": "Küldés…",
+      "privacy": "Semmi spam. Egyetlen e-mail a jelentéseddel.",
+      "checkbox": "Néha küldjetek stílus- és ártippeket is",
+      "error_email": "Adj meg egy érvényes e-mail-címet.",
+      "error_send": "Nem sikerült elküldeni. Próbáld újra.",
+      "sticky": "Ingyenes jelentésem ↓"
+    },
+    "mail": {
+      "subject": "A {style} jelentésed — Mazzin",
+      "headline": "A {style} jelentésed csatolva.",
+      "summary": "Az eredményed: {style} — {scales}. A PDF-ben megtalálod a stílusod öt legdrágább hibáját, az olcsóbb megfelelőket és a színpalettádat.",
+      "scale": "{pct}% {label}",
+      "cta": "A teljes {style} útmutató megnyitása",
+      "keep": "A PDF a tiéd, örökre."
+    }
+  },
+  "cs": {
+    "article_url": "https://tigerjar.com/?p=3420",
+    "copy": {
+      "headline": "Získej celý osobní report — zdarma",
+      "subline": "Pošleme ti report jako PDF e-mailem a otevřeme kompletního průvodce stylem s cenami a pastmi pro tvůj styl.",
+      "placeholder": "ty@priklad.cz",
+      "button": "Poslat můj report",
+      "sending": "Odesílám…",
+      "privacy": "Žádný spam. Jeden e-mail s tvým reportem.",
+      "checkbox": "Občas mi pošlete i tipy na styl a ceny",
+      "error_email": "Zadej platnou e-mailovou adresu.",
+      "error_send": "Odeslání se nepovedlo. Zkus to znovu.",
+      "sticky": "Můj report zdarma ↓"
+    },
+    "mail": {
+      "subject": "Tvůj report {style} — Mazzin",
+      "headline": "Tvůj report {style} je v příloze.",
+      "summary": "Vyšel ti styl {style}: {scales}. V PDF najdeš pět nejdražších chyb pro tvůj styl, levnější alternativy a tvou barevnou paletu.",
+      "scale": "{pct}% {label}",
+      "cta": "Otevřít kompletního průvodce {style}",
+      "keep": "PDF je tvoje, napořád."
+    }
+  },
+  "pl": {
+    "article_url": "https://tigerjar.com/?p=3421",
+    "copy": {
+      "headline": "Odbierz swój pełny osobisty raport — za darmo",
+      "subline": "Wyślemy ci raport w PDF na maila i otworzymy pełny przewodnik po stylu z cenami i pułapkami dla twojego stylu.",
+      "placeholder": "ty@przyklad.pl",
+      "button": "Wyślij mój raport",
+      "sending": "Wysyłanie…",
+      "privacy": "Zero spamu. Jeden mail z twoim raportem.",
+      "checkbox": "Wysyłajcie mi też czasem porady o stylu i cenach",
+      "error_email": "Podaj poprawny adres e-mail.",
+      "error_send": "Nie udało się wysłać. Spróbuj jeszcze raz.",
+      "sticky": "Mój darmowy raport ↓"
+    },
+    "mail": {
+      "subject": "Twój raport {style} — Mazzin",
+      "headline": "Twój raport {style} jest w załączniku.",
+      "summary": "Twój wynik to {style}: {scales}. W PDF znajdziesz pięć najdroższych błędów dla twojego stylu, tańsze odpowiedniki i twoją paletę kolorów.",
+      "scale": "{pct}% {label}",
+      "cta": "Otwórz pełny przewodnik {style}",
+      "keep": "PDF jest twój, na zawsze."
+    }
+  },
+  "da": {
+    "article_url": "https://tigerjar.com/?p=3422",
+    "copy": {
+      "headline": "Få din fulde personlige rapport — gratis",
+      "subline": "Vi mailer dig din rapport som PDF og åbner den fulde stilguide med priser og faldgruber for din stil.",
+      "placeholder": "dig@eksempel.dk",
+      "button": "Send min rapport",
+      "sending": "Sender…",
+      "privacy": "Ingen spam. Én mail med din rapport.",
+      "checkbox": "Send mig også stil- og pristips en gang imellem",
+      "error_email": "Indtast en gyldig e-mailadresse.",
+      "error_send": "Det lykkedes ikke at sende. Prøv igen.",
+      "sticky": "Min gratis rapport ↓"
+    },
+    "mail": {
+      "subject": "Din {style}-rapport — Mazzin",
+      "headline": "Din {style}-rapport er vedhæftet.",
+      "summary": "Du landede på {style}: {scales}. I PDF'en finder du de fem dyreste fejl for din stil, de billigere alternativer og din farvepalet.",
+      "scale": "{pct}% {label}",
+      "cta": "Åbn den fulde {style}-guide",
+      "keep": "PDF'en er din, for altid."
+    }
+  },
+  "sk": {
+    "article_url": "https://tigerjar.com/?p=3423",
+    "copy": {
+      "headline": "Získaj celý osobný report — zadarmo",
+      "subline": "Pošleme ti report ako PDF e-mailom a otvoríme kompletného sprievodcu štýlom s cenami a pascami pre tvoj štýl.",
+      "placeholder": "ty@priklad.sk",
+      "button": "Poslať môj report",
+      "sending": "Odosielam…",
+      "privacy": "Žiadny spam. Jeden e-mail s tvojím reportom.",
+      "checkbox": "Občas mi pošlite aj tipy na štýl a ceny",
+      "error_email": "Zadaj platnú e-mailovú adresu.",
+      "error_send": "Odoslanie sa nepodarilo. Skús to znova.",
+      "sticky": "Môj report zadarmo ↓"
+    },
+    "mail": {
+      "subject": "Tvoj report {style} — Mazzin",
+      "headline": "Tvoj report {style} je v prílohe.",
+      "summary": "Vyšiel ti štýl {style}: {scales}. V PDF nájdeš päť najdrahších chýb pre tvoj štýl, lacnejšie alternatívy a tvoju farebnú paletu.",
+      "scale": "{pct}% {label}",
+      "cta": "Otvoriť kompletného sprievodcu {style}",
+      "keep": "PDF je tvoje, navždy."
+    }
+  },
+  "el": {
+    "article_url": "https://tigerjar.com/?p=3424",
+    "copy": {
+      "headline": "Πάρε την πλήρη προσωπική σου αναφορά — δωρεάν",
+      "subline": "Θα σου στείλουμε την αναφορά σου σε PDF με email και θα ανοίξουμε τον πλήρη οδηγό στιλ με τιμές και παγίδες για το στιλ σου.",
+      "placeholder": "esy@paradeigma.gr",
+      "button": "Στείλτε μου την αναφορά",
+      "sending": "Αποστολή…",
+      "privacy": "Χωρίς spam. Ένα email με την αναφορά σου.",
+      "checkbox": "Στείλτε μου και πού και πού συμβουλές για στιλ και τιμές",
+      "error_email": "Γράψε μια έγκυρη διεύθυνση email.",
+      "error_send": "Δεν στάλθηκε. Δοκίμασε ξανά.",
+      "sticky": "Η δωρεάν αναφορά μου ↓"
+    },
+    "mail": {
+      "subject": "Η αναφορά σου {style} — Mazzin",
+      "headline": "Η αναφορά σου {style} είναι συνημμένη.",
+      "summary": "Το αποτέλεσμά σου: {style} — {scales}. Στο PDF θα βρεις τα πέντε πιο ακριβά λάθη για το στιλ σου, τις φθηνότερες εναλλακτικές και την παλέτα χρωμάτων σου.",
+      "scale": "{pct}% {label}",
+      "cta": "Άνοιξε τον πλήρη οδηγό {style}",
+      "keep": "Το PDF είναι δικό σου, για πάντα."
+    }
+  }
+}

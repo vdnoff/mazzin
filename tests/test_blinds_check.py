@@ -401,6 +401,7 @@ check("the only money on the page is the anchor, phrased exactly — no "
       "other figure, no range, no invented rate",
       not [p for p, t in strings_of(cfg)
            if MONEY.search(framed(t)) and not p.startswith("swipe.steps")
+           and p != "lead_gate.article_url"
            and ".colors[" not in p and "rgb" not in p
            # "{at} out of 100" is an aria template, not a price
            and not p.startswith("result_copy.labels")],
@@ -987,9 +988,10 @@ def walk():
                 "() => [...document.querySelector('#result-module').children]"
                 ".map(n => n.className)")
             check("  the result is: kicker, lux hero, taps, the unlock list, "
-                  "offer — no counter card",
+                  "the email gate — no counter card, no offer",
                   shape == ["zr-kicker is-framed", "zr-hero is-rich is-lux",
-                            "zr-taps", "zr-unlock is-list", "zr-offer"],
+                            "zr-taps", "zr-unlock is-list",
+                            "zr-offer zr-gate"],
                   str(shape))
             name = page.inner_text("#result-module .zr-subtype")
             check("  a style was named, and it is one of the five",
@@ -1021,19 +1023,84 @@ def walk():
             check("  and the offer card opens on the price, no list inside",
                   page.locator(".zr-offer .zr-unlock").count() == 0
                   and page.locator(".zr-offer .zr-checklist").count() == 0)
-            check("  the figure appears in the money row and the price anchor",
-                  page.inner_text("#result-module").count("$250") == 2)
-            check("  the price anchor names the price and the saving",
-                  page.inner_text(".zr-anchor")
-                  == "$0.99 — could save you up to $250 on your order")
+            check("  the figure appears once, in the money row",
+                  page.inner_text("#result-module").count("$250") == 1)
             check("  the engine's own report is not drawn",
                   page.evaluate("document.getElementById('report').hidden"))
-            check("  the price is the new charm price",
-                  page.inner_text(".zr-price-now") == "$0.99"
-                  and "$1.99" not in page.inner_text("#result-module"))
-            check("  the consent box gates the button",
-                  page.locator("#result-module #withdrawal").count() == 1
-                  and page.locator("#result-module #pay-button").count() == 1)
+            G = cfg["lead_gate"]["copy"]
+            module_text = page.inner_text("#result-module")
+            check("  no price anywhere on the page — the gate is free",
+                  page.locator(".zr-price-now").count() == 0
+                  and page.locator(".zr-anchor").count() == 0
+                  and "$0.99" not in module_text and "$1.99" not in module_text
+                  and "Stripe" not in module_text)
+            check("  the gate: headline, subline, an email box, an unticked "
+                  "box, the button, the privacy line",
+                  page.inner_text(".zr-gate-head") == G["headline"]
+                  and page.inner_text(".zr-gate-sub") == G["subline"]
+                  and page.locator(".zr-gate-input[type=email]").count() == 1
+                  and page.get_attribute(".zr-gate-input", "placeholder")
+                  == G["placeholder"]
+                  and page.is_checked(".zr-gate-tick input") is False
+                  and page.inner_text(".zr-gate-tick-text") == G["checkbox"]
+                  and page.inner_text(".zr-gate-button") == G["button"]
+                  and page.inner_text(".zr-gate-privacy") == G["privacy"])
+            check("  the pay control and the consent box are off the page",
+                  page.is_visible("#pay-button") is False
+                  and page.is_visible("#withdrawal") is False
+                  and page.locator(".zr-gate .legal-links").count() == 1)
+            events = []
+            page.route("**/api/track", lambda route: (
+                events.append(json.loads(route.request.post_data or "{}")),
+                route.fulfill(status=204, body="")))
+            page.locator(".zr-gate").scroll_into_view_if_needed()
+            page.wait_for_timeout(600)
+            names = [e.get("event") for e in events]
+            check("  the gate reaching the reader is lead_view, never "
+                  "paywall_view",
+                  "lead_view" in names and "paywall_view" not in names,
+                  str(names))
+            check("    with the same src the paywall view carried",
+                  any(e.get("event") == "lead_view"
+                      and (e.get("extra") or {}).get("src") for e in events),
+                  str([e for e in events if e.get("event") == "lead_view"]))
+            posted = []
+            ARTICLE = ("https://tigerjar.com/?p=3396&utm_source=mazzin"
+                       "&utm_medium=redirect&utm_campaign=blinds"
+                       "#modern-minimal")
+            page.route("**/api/lead", lambda route: (
+                posted.append(json.loads(route.request.post_data or "{}")),
+                route.fulfill(status=200, content_type="application/json",
+                              body=json.dumps({"redirect_url": ARTICLE}))))
+            page.route("https://tigerjar.com/**", lambda route: route.fulfill(
+                status=200, content_type="text/html",
+                body="<html><body>article</body></html>"))
+            page.fill(".zr-gate-input", "not-an-address")
+            page.click(".zr-gate-button")
+            page.wait_for_timeout(200)
+            check("  a bad address is refused on the page, nothing posted",
+                  page.is_visible(".zr-gate-error")
+                  and page.inner_text(".zr-gate-error") == G["error_email"]
+                  and posted == [] and page.is_disabled(".zr-gate-button")
+                  is False)
+            page.fill(".zr-gate-input", "Reader@Example.com")
+            page.check(".zr-gate-tick input")
+            page.click(".zr-gate-button")
+            page.wait_for_url("https://tigerjar.com/**", timeout=10000)
+            check("  a good one posts the run and the browser goes to the "
+                  "article, anchored to the style",
+                  page.url == ARTICLE and len(posted) == 1, page.url)
+            body = posted[0] if posted else {}
+            check("    the body: funnel, session, lang, style, scores, subid, "
+                  "the address, the box",
+                  body.get("funnel") == SLUG
+                  and re.match(r"^[0-9a-f-]{36}$", body.get("session_id") or "")
+                  and body.get("lang") == "en"
+                  and body.get("style_key") in [s["id"] for s in cfg["styles"]]
+                  and isinstance(body.get("scores"), dict)
+                  and body["scores"] and "subid" in body
+                  and body.get("email") == "Reader@Example.com"
+                  and body.get("marketing_opt_in") is True, str(body)[:300])
             check("  no page errors", not errors, str(errors[:2]))
             browser.close()
     finally:
