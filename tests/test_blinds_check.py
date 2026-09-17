@@ -1034,17 +1034,21 @@ def walk():
                   and page.locator(".zr-anchor").count() == 0
                   and "$0.99" not in module_text and "$1.99" not in module_text
                   and "Stripe" not in module_text)
-            check("  the gate: headline, subline, an email box, an unticked "
-                  "box, the button, the privacy line",
+            check("  the gate: headline, subline, an email box, the button, "
+                  "the notice — and no box to tick",
                   page.inner_text(".zr-gate-head") == G["headline"]
                   and page.inner_text(".zr-gate-sub") == G["subline"]
                   and page.locator(".zr-gate-input[type=email]").count() == 1
                   and page.get_attribute(".zr-gate-input", "placeholder")
                   == G["placeholder"]
-                  and page.is_checked(".zr-gate-tick input") is False
-                  and page.inner_text(".zr-gate-tick-text") == G["checkbox"]
+                  and page.locator(".zr-gate input[type=checkbox]").count()
+                  == 0
                   and page.inner_text(".zr-gate-button") == G["button"]
-                  and page.inner_text(".zr-gate-privacy") == G["privacy"])
+                  and page.inner_text(".zr-gate-notice")
+                  == G["notice"].replace("[", "").replace("]", "")
+                  and page.inner_text(".zr-gate-notice a") == "Privacy policy"
+                  and page.get_attribute(".zr-gate-notice a", "href")
+                  == "/privacy")
             check("  the pay control and the consent box are off the page",
                   page.is_visible("#pay-button") is False
                   and page.is_visible("#withdrawal") is False
@@ -1084,7 +1088,6 @@ def walk():
                   and posted == [] and page.is_disabled(".zr-gate-button")
                   is False)
             page.fill(".zr-gate-input", "Reader@Example.com")
-            page.check(".zr-gate-tick input")
             page.click(".zr-gate-button")
             page.wait_for_url("https://tigerjar.com/**", timeout=10000)
             check("  a good one posts the run and the browser goes to the "
@@ -1100,7 +1103,7 @@ def walk():
                   and isinstance(body.get("scores"), dict)
                   and body["scores"] and "subid" in body
                   and body.get("email") == "Reader@Example.com"
-                  and body.get("marketing_opt_in") is True, str(body)[:300])
+                  and body.get("marketing_opt_in") is False, str(body)[:300])
             check("  no page errors", not errors, str(errors[:2]))
             browser.close()
     finally:

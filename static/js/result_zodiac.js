@@ -1642,6 +1642,37 @@
   // the reader and the sticky bar scrolls to it.
   var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+  // The line under the button: what the address is for, in the funnel's
+  // language, with the privacy policy linked. The link's words are the
+  // part of the copy in [square brackets]; its target is the privacy link
+  // the page already carries in its legal row, or /privacy without one.
+  function gateNotice(text, legal) {
+    if (!text) return null;
+    var href = "/privacy";
+    var links = legal ? legal.querySelectorAll("a") : [];
+    for (var i = 0; i < links.length; i++) {
+      if (/privacy/i.test(links[i].getAttribute("href") || "")) {
+        href = links[i].getAttribute("href");
+        break;
+      }
+    }
+    var note = elm("p", "zr-gate-notice");
+    var open = text.indexOf("[");
+    var close = text.indexOf("]", open + 1);
+    if (open === -1 || close === -1) {
+      note.textContent = text;
+      return note;
+    }
+    note.appendChild(document.createTextNode(text.slice(0, open)));
+    var link = elm("a", "zr-gate-privacy-link", text.slice(open + 1, close));
+    link.href = href;
+    link.target = "_blank";
+    link.rel = "noopener";
+    note.appendChild(link);
+    note.appendChild(document.createTextNode(text.slice(close + 1)));
+    return note;
+  }
+
   function gate(ctx, data) {
     var block = ctx.leadGate || {};
     var copy = block.copy || {};
@@ -1665,17 +1696,11 @@
     input.setAttribute("aria-label", copy.placeholder || "email");
     form.appendChild(input);
 
-    var box = elm("input");
-    box.type = "checkbox";
-    box.name = "marketing_opt_in";
-    box.checked = false;
-    if (copy.checkbox) {
-      var tick = elm("label", "zr-gate-tick");
-      tick.appendChild(box);
-      tick.appendChild(elm("span", "zr-gate-tick-text", copy.checkbox));
-      form.appendChild(tick);
-    }
-
+    // No consent box. The address is asked for one thing — delivering the
+    // report the reader just asked for — and the notice under the button
+    // says exactly that. This form covers delivery of the REQUESTED report
+    // only: any future marketing or newsletter opt-in must be a separate,
+    // UNCHECKED box of its own, never folded into this submit.
     var button = elm("button", "zr-gate-button", copy.button || "");
     button.type = "submit";
     form.appendChild(button);
@@ -1683,7 +1708,8 @@
     error.hidden = true;
     error.setAttribute("role", "alert");
     form.appendChild(error);
-    if (copy.privacy) form.appendChild(elm("p", "zr-gate-privacy", copy.privacy));
+    var note = gateNotice(copy.notice, ctx.nodes && ctx.nodes.legal);
+    if (note) form.appendChild(note);
 
     function fail(text) {
       error.textContent = text || "";
@@ -1703,7 +1729,7 @@
       button.disabled = true;
       button.textContent = copy.sending || label;
       var sent = (typeof ctx.submitLead === "function")
-        ? ctx.submitLead({ email: email, marketing_opt_in: box.checked })
+        ? ctx.submitLead({ email: email })
         : Promise.reject(new Error("no engine"));
       sent.then(function (res) {
         window.location.href = res.redirect_url;
