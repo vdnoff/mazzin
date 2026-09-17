@@ -108,7 +108,21 @@ ALLOWED_EVENTS = {
     # a join, which is what keeps a new arm a config edit instead of a
     # migration.
     "paywall_variant",
+    # The email gate reaching the reader, on a funnel that asks for an address
+    # where the others ask for a price. It is fired from the same observer and
+    # the same moment `paywall_view` is, with the same `src`, so the two are
+    # one column read across the two eras of the funnel. The submit and the
+    # duplicate are not in this set: they are written by /api/lead itself,
+    # the way `purchase` is written by the webhook, because a client that
+    # could assert a lead could assert a hundred.
+    "lead_view",
 }
+
+# Written server-side by leads.py, never accepted on /api/track. `lead_submit`
+# is a row in `leads` that did not exist a moment ago; `lead_dup` is the same
+# address on the same funnel a second time, redirected exactly as the first
+# and sent nothing more.
+SERVER_EVENTS = frozenset(("lead_submit", "lead_dup"))
 
 # How many cells one swipe step can have drawn. This is engine.js's GRID_SIZE
 # plus the pair, and it is a closed set for the same reason the event names
@@ -551,7 +565,7 @@ def _clean_extra(funnel, event, value):
         return None
     if not isinstance(value, dict):
         raise ValueError("extra")
-    if event == "paywall_view":
+    if event in ("paywall_view", "lead_view"):
         return _clean_paywall_view(value)
     if event == "viz_upload":
         return _clean_viz_upload(value)
@@ -686,6 +700,33 @@ def _mirror(funnel, session_id, event, body):
            or None,
            meta_ids=payments._clean_meta_ids(body),
            event_time=int(time.time()))
+    return True
+
+
+def record_event(funnel, session_id, event, attribution=None):
+    """One event row written by our own code rather than by a client.
+
+    The same INSERT the route makes, for the two events a browser must not be
+    able to assert (`SERVER_EVENTS`). The attribution dict is cleaned to the
+    same lengths as a posted one; a session id that is not a UUID writes no
+    row, because the column is what every join here is on. Never raises —
+    a lost event is a gap in a count, and the request it rode on has already
+    done its real work.
+    """
+    if event not in SERVER_EVENTS:
+        raise ValueError("not a server event: %s" % event)
+    if not isinstance(session_id, str) or not UUID_RE.match(session_id):
+        return False
+    fields = {name: _clean_optional((attribution or {}).get(name), max_len)
+              for name, max_len in ATTRIBUTION_FIELDS.items()}
+    try:
+        database.execute(INSERT_SQL, (
+            funnel, session_id, event, None, fields["subid"],
+            fields["utm_source"], fields["utm_campaign"],
+            fields["utm_content"], fields["utm_term"], None))
+    except Exception:
+        log.exception("%s insert failed", event)
+        return False
     return True
 
 

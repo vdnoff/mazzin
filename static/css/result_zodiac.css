@@ -1619,6 +1619,100 @@ body:has(.result-module) {
   stroke-linejoin: round;
 }
 
+/* --- the email gate ------------------------------------------------------
+   The offer's panel with an address where the price was. One column, the
+   input and the button full width so a thumb finds both, the tick row and
+   the privacy line small and quiet under them. */
+.result-module.is-minimal .zr-gate { text-align: left; }
+
+.result-module.is-minimal .zr-gate-head {
+  text-align: center;
+  font-size: 20px;
+  line-height: 1.25;
+  margin: 0 0 8px;
+}
+
+.zr-gate-sub {
+  margin: 0 0 16px;
+  text-align: center;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--zr-muted);
+}
+
+.zr-gate-form { margin: 0; }
+
+.zr-gate-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 10px;
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--zr-text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--zr-line);
+  border-radius: 14px;
+  outline: none;
+}
+
+.zr-gate-input::placeholder { color: var(--zr-muted); opacity: 0.8; }
+
+.zr-gate-input:focus { border-color: var(--zr-gold); }
+
+.zr-gate-tick {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--zr-muted);
+}
+
+.zr-gate-tick input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: var(--zr-gold);
+}
+
+.zr-gate-button {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 16px 18px;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  color: #221A05;
+  background: var(--zr-gold);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.zr-gate-button:disabled { opacity: 0.6; cursor: default; }
+
+.zr-gate-error {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 13.5px;
+  color: #F0A0A0;
+}
+
+.zr-gate-privacy {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--zr-muted);
+}
+
+.zr-gate .legal-links { margin-top: 14px; }
+
 /* --- the boxes arm ---------------------------------------------------------
  *
  * The second paywall layout, live on /zodiac-bg against `minimal`. Every rule

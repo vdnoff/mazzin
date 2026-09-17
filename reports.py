@@ -9064,6 +9064,201 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
     return opening
 
 
+# --- the email gate's report -----------------------------------------------
+#
+# A lead is not a purchase. It writes no report row, starts no thread and
+# calls no model: the content is whatever the style cache holds plus the
+# stubs for whatever it does not, assembled in memory and handed straight to
+# the PDF and the mail. That is the bargain the gate makes — the warmed
+# cache is the report — and scripts/warm_cache.py is what keeps it a good
+# one. A cold cache costs a stub chapter, never a model call on a lead.
+
+
+def lead_content(funnel_slug, style_id, tag_scores=None, choices=None):
+    """The report for a lead, built from the cache and the stubs alone.
+
+    Same shape as a stored purchase report — `build_pdf` reads it — minus
+    the row: nothing is written and nothing is generated. Raises KeyError
+    on a funnel that does not exist and ValueError on a style it does not
+    name.
+    """
+    cfg = config.load_funnel(funnel_slug)
+    style = _style(cfg, style_id)
+    if style is None:
+        raise ValueError("no style %r in %s" % (style_id, funnel_slug))
+    name = _style_name(cfg, style_id)
+    profile = _profile(funnel_slug)
+    built = dict(_read_cache(funnel_slug, style_id) or {})
+    paths = dict((section_id, "cache") for section_id in built)
+    elements = [item["id"] for item in _pick_elements(cfg, choices, tag_scores)
+                if item.get("id")]
+    visuals = _visuals(cfg, style_id, choices)
+    card = _profile_for(cfg, funnel_slug, style, tag_scores, choices)
+    if card:
+        visuals = dict(visuals or {})
+        visuals["profile"] = card
+    months = _months_for(profile)
+    for section in cfg.get("report", {}).get("sections", []):
+        section_id = section.get("id")
+        if section_id and section_id not in built:
+            built[section_id] = _stub_for(section_id, name, style,
+                                          profile["stubs"], months,
+                                          profile.get("stub_colors"))
+            paths[section_id] = "stub"
+    return _assemble(cfg, funnel_slug, style_id, name, built, paths, True,
+                     elements, visuals, _sign(cfg, choices) if choices
+                     else None, _purpose(cfg, choices))
+
+
+def lead_scales(cfg, tag_scores):
+    """[(label, pct)] — which side of each profile scale the reader leaned
+    to and by how much, read off the tally the way the result page reads
+    it. Empty without scales or without scores."""
+    block = ((cfg.get("result_copy") or {}).get("profile") or {})
+    out = []
+    for scale in block.get("scales") or []:
+        if not isinstance(scale, dict):
+            continue
+        left = sum(max(0, (tag_scores or {}).get(t, 0) or 0)
+                   for t in scale.get("left_tags") or [])
+        right = sum(max(0, (tag_scores or {}).get(t, 0) or 0)
+                    for t in scale.get("right_tags") or [])
+        total = left + right
+        if total <= 0:
+            continue
+        side, label = (left, scale.get("left")) if left >= right \
+            else (right, scale.get("right"))
+        if label:
+            out.append((str(label), int(round(100 * side / total))))
+    return out
+
+
+LEAD_EMAIL_HTML = """\
+<table role="presentation" width="100%%" cellpadding="0" cellspacing="0" \
+border="0" bgcolor="#0E1430" style="background-color:#0E1430">
+<tr><td align="center" style="padding:28px 16px">
+<table role="presentation" width="100%%" cellpadding="0" cellspacing="0" \
+border="0" style="max-width:520px">
+<tr><td align="center" style="padding:0 0 22px"><img src="%(logo)s" \
+width="114" height="26" alt="Mazzin" style="display:block;border:0"></td></tr>
+<tr><td align="center" style="font-family:Helvetica,Arial,sans-serif;\
+font-size:12px;letter-spacing:0.14em;color:#C4A660;padding:0 0 10px">\
+%(kicker)s</td></tr>
+<tr><td align="center" style="font-family:Georgia,'Times New Roman',serif;\
+font-size:26px;line-height:1.25;font-weight:600;color:#F4EFE4;\
+padding:0 0 18px">%(headline)s</td></tr>
+<tr><td style="font-family:Helvetica,Arial,sans-serif;font-size:16px;\
+line-height:1.6;color:#D7D2C6;padding:0 0 22px">%(summary)s</td></tr>
+<tr><td align="center" style="padding:0 0 26px">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0">
+<tr><td align="center" bgcolor="#E8C878" \
+style="background-color:#E8C878;border-radius:999px">
+<a href="%(link)s" style="display:block;padding:14px 30px;\
+font-family:Helvetica,Arial,sans-serif;font-size:16px;font-weight:bold;\
+color:#221A05;text-decoration:none">%(cta)s</a>
+</td></tr></table></td></tr>
+<tr><td style="font-family:Helvetica,Arial,sans-serif;font-size:13px;\
+line-height:1.5;color:#8F8A7E;padding:18px 0 6px;\
+border-top:1px solid #26305A">%(keep)s</td></tr>
+<tr><td style="font-family:Helvetica,Arial,sans-serif;font-size:13px;\
+color:#8F8A7E"><a href="%(home)s" style="color:#8F8A7E;\
+text-decoration:none">mazzin.com</a></td></tr>
+</table></td></tr></table>"""
+
+LEAD_MAIL = {
+    "subject": "Your {style} report — Mazzin",
+    "headline": "Your {style} report is attached.",
+    "summary": "You came out {style}: {scales}. The PDF has the five "
+               "priciest mistakes for your style, the cheaper equivalents "
+               "and your palette.",
+    "scale": "{pct}% {label}",
+    "cta": "Open the full {style} guide",
+    "keep": "The PDF is yours to keep.",
+}
+
+
+def _lead_fill(text, values):
+    for key, value in values.items():
+        text = text.replace("{%s}" % key, value)
+    return text
+
+
+def lead_mail_payload(cfg, email, content, tag_scores, link):
+    """The Resend payload for a lead's report: the funnel's own mail copy in
+    its own language, the style and the scale percentages filled in, the
+    article button, the PDF attached. None when the PDF will not render."""
+    pdf = build_pdf(content)
+    if not pdf:
+        return None
+    gate = cfg.get("lead_gate") or {}
+    copy = dict(LEAD_MAIL)
+    for key, value in (gate.get("mail") or {}).items():
+        if isinstance(value, str) and value.strip():
+            copy[key] = value
+    name = content.get("style_name") or ""
+    scales = ", ".join(_lead_fill(copy["scale"], {"pct": str(pct),
+                                                  "label": label})
+                       for label, pct in lead_scales(cfg, tag_scores))
+    values = {"style": name, "scales": scales or "\u2014"}
+    profile = _profile(content.get("funnel") or "")
+    words = _words(profile)
+    return {
+        "from": config.EMAIL_FROM,
+        "to": [email],
+        "subject": _lead_fill(copy["subject"], values),
+        "html": LEAD_EMAIL_HTML % {
+            "logo": html.escape(config.BASE_URL + "/static/brand/logo.svg"),
+            "home": html.escape(config.BASE_URL),
+            "kicker": html.escape(((cfg.get("result_copy") or {})
+                                   .get("kicker") or "")),
+            "headline": html.escape(_lead_fill(copy["headline"], values)),
+            "summary": html.escape(_lead_fill(copy["summary"], values)),
+            "cta": html.escape(_lead_fill(copy["cta"], values)),
+            "link": html.escape(link),
+            "keep": html.escape(_lead_fill(copy["keep"], values)),
+        },
+        "attachments": [{
+            "filename": words["pdf_filename"] % _slug(name),
+            "content": base64.b64encode(pdf).decode("ascii"),
+        }],
+    }
+
+
+def send_lead_email(lead_id, email, cfg, content, tag_scores, link):
+    """Mail a lead their report. True when Resend took it.
+
+    The same posture as `send_report_email`: quiet, best effort, and the
+    address is never in a log line — only the lead id, which finds it.
+    """
+    if not email or not config.RESEND_API_KEY:
+        return False
+    payload = lead_mail_payload(cfg, email, content, tag_scores, link)
+    if payload is None:
+        log.warning("no pdf for lead %s — email skipped", lead_id)
+        return False
+    try:
+        import requests
+    except ImportError:
+        log.error("requests not installed — lead emails are skipped")
+        return False
+    try:
+        response = requests.post(
+            RESEND_URL, json=payload,
+            headers={"Authorization": "Bearer %s" % config.RESEND_API_KEY,
+                     "Content-Type": "application/json"},
+            timeout=config.RESEND_TIMEOUT_S)
+    except Exception as exc:
+        log.warning("lead email failed for lead %s: %s", lead_id,
+                    type(exc).__name__)
+        return False
+    if response.status_code >= 300:
+        log.warning("lead email rejected for lead %s: HTTP %s", lead_id,
+                    response.status_code)
+        return False
+    log.info("report emailed for lead %s", lead_id)
+    return True
+
+
 # --- offline cache warmer --------------------------------------------------
 
 

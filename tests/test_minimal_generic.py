@@ -234,6 +234,15 @@ READ = """() => {
     anchor: t('.zr-anchor'), gold: t('.zr-anchor .zr-gold'), price: t('.zr-price-now'), note: t('.zr-price-note'),
     badges: all('.zr-badge'), sub: t('.zr-offer-sub'), trust: t('.zr-trust'),
     consent: !!r.querySelector('#withdrawal') && !r.querySelector('#withdrawal').hidden,
+    gate: (() => { const g = r.querySelector('.zr-gate'); if (!g) return null;
+      const tick = g.querySelector('.zr-gate-tick input');
+      return {head: t('.zr-gate-head'), sub: t('.zr-gate-sub'),
+              input: !!g.querySelector('.zr-gate-input[type=email]'),
+              placeholder: (g.querySelector('.zr-gate-input') || {}).placeholder || '',
+              tick: tick ? tick.checked : null, tickText: t('.zr-gate-tick-text'),
+              button: t('.zr-gate-button'), privacy: t('.zr-gate-privacy'),
+              error: !!g.querySelector('.zr-gate-error') && g.querySelector('.zr-gate-error').hidden,
+              legal: !!g.querySelector('.legal-links')}; })(),
     pay: !!r.querySelector('#pay-button'),
     engineReport: document.getElementById('report').hidden,
     body: getComputedStyle(document.body).backgroundColor,
@@ -312,9 +321,10 @@ try:
                                                 "rgba(14,20,48,1)"),
               free["body"])
         check("  the engine's own report is hidden", free["engineReport"])
-        check("the page is kicker, lux hero, taps, unlock list, offer",
+        check("the page is kicker, lux hero, taps, unlock list, the email gate",
               free["shape"] == ["zr-kicker is-framed", "zr-hero is-rich is-lux",
-                                "zr-taps", "zr-unlock is-list", "zr-offer"],
+                                "zr-taps", "zr-unlock is-list",
+                                "zr-offer zr-gate"],
               str(free["shape"]))
         check("  the kicker is the config's, framed in two stars",
               free["kicker"].strip("✦ ") == BLINDS["result_copy"]["kicker"]
@@ -389,23 +399,21 @@ try:
         check("  and so do the split names — no ellipsis anywhere",
               all(n["ws"] == "normal" and n["ellipsis"] != "ellipsis"
                   for n in free["wrap"]["names"]), str(free["wrap"]["names"]))
-        check("the offer head names the style and the promise",
-              free["offerHead"] and "overpay" in free["offerHead"]
-              and free["subtype"] in free["offerHead"], free["offerHead"])
-        check("the anchor is the commerce price anchor with its accent",
-              free["anchor"] == BLINDS["checkout"]["commerce"]["price_anchor"]
-              .replace("{price}", "$0.99")
-              and free["gold"] == BLINDS["checkout"]["commerce"]
-              ["price_anchor_accent"], free["anchor"])
-        check("  the price is the charm price with its note and badges",
-              free["price"] == "$0.99" and free["note"] == "one-time"
-              and free["badges"] == BLINDS["checkout"]["commerce"]["badges"])
-        check("  the offer sub and trust row are the config's",
-              free["sub"] == BLINDS["result_copy"]["offer_sub"]
-              and free["trust"] == " · ".join(
-                  BLINDS["checkout"]["commerce"]["trust"]))
-        check("the EU consent stays on the page, gating the button",
-              free["consent"] and free["pay"])
+        G = BLINDS["lead_gate"]["copy"]
+        gate = free["gate"] or {}
+        check("the gate stands where the offer stood, worded from the config",
+              gate.get("head") == G["headline"] and gate.get("sub") == G["subline"]
+              and gate.get("input") and gate.get("placeholder") == G["placeholder"]
+              and gate.get("tick") is False and gate.get("tickText") == G["checkbox"]
+              and gate.get("button") == G["button"]
+              and gate.get("privacy") == G["privacy"]
+              and gate.get("error") is True and gate.get("legal"), str(gate))
+        check("  no price, no anchor, no badges, no trust row — nothing sold",
+              free["anchor"] is None and free["price"] is None
+              and free["badges"] == [] and free["trust"] is None
+              and free["offerHead"] == G["headline"])
+        check("the consent box and the pay button are off the page",
+              not free["consent"] and not free["pay"])
         check("no money amount anywhere on the page",
               "$400" not in free["text"] and "$1,500" not in free["text"])
 

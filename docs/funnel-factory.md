@@ -82,6 +82,54 @@ translation stays and the report cache is untouched; it refuses to write a
 funnel in which the old figure still survives. `blinds en` re-prices the
 master itself.
 
+## The email gate
+
+A funnel that carries a `lead_gate` block asks for an address where the
+others ask for a price. The result page is the same page down to the unlock
+list; where the offer stood, the module draws a form — headline, subline,
+email box, an unticked tips box, the button, the privacy line — and the
+commerce nodes stay hidden. Payments are not removed: `payments.py`, the
+webhook, the purchase tables and the price configs are exactly what they
+were, and a funnel without the block is the funnel it was, to the byte.
+
+The block, on the master (`funnels/blinds.json`):
+
+| key | what it is |
+|---|---|
+| `article_url` | the article the reader is sent to, in this funnel's language — tigerjar.com's canonical `?p=` form, which 301s to the pretty URL and keeps the anchor |
+| `utm_campaign` | the campaign on the UTM triplet the server appends (`utm_source=mazzin&utm_medium=redirect` on the redirect, `email` on the mail) |
+| `anchors` | style id → the article's section anchor, the same in every language |
+| `copy` | the gate's words: `headline`, `subline`, `placeholder`, `button`, `sending`, `privacy`, `checkbox`, `error_email`, `error_send`, `sticky` (empty hides the sticky bar) |
+| `mail` | the report mail: `subject`, `headline`, `summary` (`{style}`, `{scales}`), `scale` (`{pct}`, `{label}`), `cta`, `keep` |
+
+What happens on submit: the page validates the address, `POST /api/lead`
+(`leads.py`) validates it again, writes one `leads` row with the run's
+facts, writes `lead_submit` (or `lead_dup` when the address is already
+there for this funnel — same redirect, nothing re-sent), and answers with
+the article URL anchored to the style; the browser goes there. The gate
+reaching the reader is `lead_view`, fired from the same observer, with the
+same `src`, at the same moment `paywall_view` fires on a priced funnel.
+
+The report is mailed off the request by `scripts/send_lead_reports.py`,
+run by cron every minute: it takes the leads whose `report_sent_at` is
+NULL, builds each report from the warmed style cache and the stubs
+(`reports.lead_content` — never a model call), mails it through Resend
+with the article button and the PDF attached, and stamps the row. Keep
+`warm_cache.py` warm for every language, or a lead gets stub chapters.
+
+The eight generated funnels take the gate without a regeneration:
+`scripts/lead_gate.json` carries each language's article URL, gate copy
+and mail copy, and `scripts/set_gate.py blinds <lang>` writes the block
+into the funnel on disk, byte-frozen otherwise, mirror and twin included.
+A new master string goes into the table in every language first.
+
+```bash
+# apply schema_migrations.sql's `leads` table by hand, then:
+cd ~/mazzin && for l in nl de hu cs pl da sk el; do python3 scripts/set_gate.py blinds $l; done
+# cron, every minute:
+* * * * *  cd ~/mazzin && ~/.virtualenvs/mazzin/bin/python scripts/send_lead_reports.py >> ~/mazzin_leads.log 2>&1
+```
+
 Every string the model touches is checked before it is accepted: same keys,
 every `{token}` intact, no line breaks, no banned word. The answer is asked
 for as a structured output (a JSON schema of the chunk's keys), so it is

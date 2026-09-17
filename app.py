@@ -14,6 +14,7 @@ import config
 import database
 import visualizer
 from admin import bp as admin_bp
+from leads import bp as leads_bp
 from payments import bp as payments_bp
 from router import bp as router_bp
 from tracking import bp as tracking_bp
@@ -43,6 +44,7 @@ app = Flask(__name__, static_folder="static", static_url_path="/static")
 app.config["MAX_CONTENT_LENGTH"] = config.VISUALIZER_MAX_BYTES + 512 * 1024
 
 app.register_blueprint(tracking_bp)
+app.register_blueprint(leads_bp)
 app.register_blueprint(payments_bp)
 app.register_blueprint(visualizer_bp)
 app.register_blueprint(admin_bp)

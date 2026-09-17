@@ -145,3 +145,33 @@ CREATE TABLE IF NOT EXISTS gen_queue (
   status ENUM('new','generating','live','rejected') NOT NULL DEFAULT 'new',
   UNIQUE KEY uq_vertical_lang (vertical, lang)
 );
+
+-- 2026-09-17 — the email gate's leads
+--
+-- MUST BE APPLIED BY HAND BEFORE THE DEPLOY THAT SHIPS /api/lead.
+--
+-- One row per address per funnel: the reader who traded an email for the
+-- report on a funnel that carries a `lead_gate` block instead of a price.
+-- `style_key` and `scores_json` are what the report is written from, later
+-- and off the request, by scripts/send_lead_reports.py; `report_sent_at` is
+-- that script's claim and its receipt, NULL until the mail has gone.
+-- `marketing_opt_in` is the unchecked box under the form, and it is the only
+-- thing here that says anything about consent beyond the report itself.
+-- The unique key is what makes a second submit idempotent: the row stands,
+-- nothing is re-sent, and the reader is redirected exactly as the first time.
+-- An address is the one piece of PII this schema holds; it is never written
+-- to a log line, and purchases stay in their own table, untouched.
+CREATE TABLE IF NOT EXISTS leads (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(320) NOT NULL,
+  funnel VARCHAR(32) NOT NULL,
+  lang VARCHAR(8) NOT NULL,
+  style_key VARCHAR(64),
+  scores_json TEXT,
+  subid VARCHAR(128),
+  session_id VARCHAR(64),
+  marketing_opt_in TINYINT(1) DEFAULT 0,
+  report_sent_at DATETIME NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_lead (email, funnel)
+);

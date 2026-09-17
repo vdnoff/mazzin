@@ -4189,6 +4189,11 @@
       },
       checkout: startCheckout,
       track: function (name, extra) { track(name, null, extra); },
+      // The email gate, when this funnel has one, and the call that submits
+      // it. Null on every priced funnel, which is what keeps their modules'
+      // pages exactly what they were.
+      leadGate: leadGate(),
+      submitLead: submitLead,
       // The card a module drew its offer into, so `paywall_view` and
       // InitiateCheckout fire when that card reaches the reader rather than
       // when a hidden container does.
@@ -7653,7 +7658,7 @@
     // The bar's default label, before the gate has had a look at it. A funnel
     // with no gate keeps exactly this; a gated one has it replaced a line
     // below, which is why this is written first and not last.
-    if (el.sticky) el.sticky.textContent = withPrice(copy.sticky_label || "");
+    if (el.sticky) el.sticky.textContent = stickyLabel();
     // After the block is on screen: the slot is measured against the pay
     // button, and a button inside a hidden container has no height to match.
     // `renderGate` is what calls `xpStart` now — it only starts once there is
@@ -7880,7 +7885,8 @@
   function updateSticky() {
     var bar = el.sticky;
     if (!bar || !singlePage) return;
-    var want = (stickyArmed || pastPalette()) && !commerceInView;
+    var want = (stickyArmed || pastPalette()) && !commerceInView
+      && !(leadGate() && !stickyLabel());
     if (want === stickyOn) return;
     stickyOn = want;
     bar.hidden = !want;
@@ -7943,6 +7949,59 @@
     if (node) offerBlock = node;
   }
 
+  // --- the email gate -----------------------------------------------------
+  //
+  // A funnel that carries a `lead_gate` block asks for an address where the
+  // others ask for a price. The result module draws the form; this file owns
+  // the two things a module must not: the call to our own API, with the
+  // run's facts on it, and the event that says the gate reached the reader.
+  // Nothing about payments moves — the commerce nodes are built as they
+  // always were and the module hides them — so a funnel without the block
+  // is the funnel it was, to the byte.
+  function leadGate() {
+    var block = cfg && cfg.lead_gate;
+    return (block && typeof block === "object" && block.article_url)
+      ? block : null;
+  }
+
+  // The bar's label: the gate's own line on a gated funnel, the priced one
+  // everywhere else. Empty means no bar at all.
+  function stickyLabel() {
+    var gate = leadGate();
+    if (gate) return ((gate.copy || {}).sticky) || "";
+    return withPrice(commerceCopy().sticky_label || "");
+  }
+
+  // `POST /api/lead`, with the same facts about the run the order carries:
+  // the funnel, the session, the winning style and the raw tag scores the
+  // report is written from, plus the click id so the lead is attributed.
+  // Resolves with the server's `{redirect_url}`; rejects on anything else,
+  // and the module says so beside the button and lets them try again.
+  function submitLead(fields) {
+    var body = {
+      funnel: slug,
+      session_id: sessionId,
+      lang: (cfg && cfg.locale) || "en",
+      style_key: winnerStyleId,
+      scores: scores,
+      subid: attribution.subid || null,
+      email: (fields && fields.email) || "",
+      marketing_opt_in: !!(fields && fields.marketing_opt_in)
+    };
+    return fetch("/api/lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (data && typeof data.redirect_url === "string" && data.redirect_url) {
+          return data;
+        }
+        throw new Error("no redirect");
+      });
+  }
+
   function offerNode() { return offerBlock || el.commerce; }
 
   // `paywall_view` means the commerce block reached the reader, once per
@@ -7985,6 +8044,12 @@
     // button are not on it yet is not a checkout anybody has reached.
     if (payHeld) return;
     paywallTracked = true;
+    // The gate reaching the reader is the same moment with a different
+    // name and no checkout pixel: nobody has arrived at a checkout.
+    if (leadGate()) {
+      track("lead_view", null, { src: payIntent });
+      return;
+    }
     track("paywall_view", null, { src: payIntent }, fireCheckoutPixel());
   }
 

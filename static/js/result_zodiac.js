@@ -1631,6 +1631,94 @@
     return card;
   }
 
+  // --- e2) the email gate ----------------------------------------------------
+  //
+  // On a funnel that carries `lead_gate`, this stands where the offer does:
+  // the same panel, no price on it, an address instead. The free profile
+  // and the unlock list above are unchanged and are the whole reason to
+  // fill it in. engine.js owns the call and the event — `ctx.submitLead`
+  // posts the run's facts with the address and resolves with where to go;
+  // `ctx.watchOffer` names this card so `lead_view` fires when it reaches
+  // the reader and the sticky bar scrolls to it.
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+  function gate(ctx, data) {
+    var block = ctx.leadGate || {};
+    var copy = block.copy || {};
+    var words = (data && data.words) || {};
+    var card = elm("section", "zr-offer zr-gate");
+    var head = fill(copy.headline || "", words);
+    if (head) card.appendChild(elm("p", "zr-offer-head zr-gate-head", head));
+    if (copy.subline) {
+      card.appendChild(elm("p", "zr-gate-sub", fill(copy.subline, words)));
+    }
+
+    var form = elm("form", "zr-gate-form");
+    form.noValidate = true;
+    var input = elm("input", "zr-gate-input");
+    input.type = "email";
+    input.name = "email";
+    input.autocomplete = "email";
+    input.inputMode = "email";
+    input.required = true;
+    input.placeholder = copy.placeholder || "";
+    input.setAttribute("aria-label", copy.placeholder || "email");
+    form.appendChild(input);
+
+    var box = elm("input");
+    box.type = "checkbox";
+    box.name = "marketing_opt_in";
+    box.checked = false;
+    if (copy.checkbox) {
+      var tick = elm("label", "zr-gate-tick");
+      tick.appendChild(box);
+      tick.appendChild(elm("span", "zr-gate-tick-text", copy.checkbox));
+      form.appendChild(tick);
+    }
+
+    var button = elm("button", "zr-gate-button", copy.button || "");
+    button.type = "submit";
+    form.appendChild(button);
+    var error = elm("p", "zr-gate-error");
+    error.hidden = true;
+    error.setAttribute("role", "alert");
+    form.appendChild(error);
+    if (copy.privacy) form.appendChild(elm("p", "zr-gate-privacy", copy.privacy));
+
+    function fail(text) {
+      error.textContent = text || "";
+      error.hidden = !text;
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var email = (input.value || "").trim();
+      if (!EMAIL_RE.test(email)) {
+        fail(copy.error_email);
+        input.focus();
+        return;
+      }
+      fail("");
+      var label = button.textContent;
+      button.disabled = true;
+      button.textContent = copy.sending || label;
+      var sent = (typeof ctx.submitLead === "function")
+        ? ctx.submitLead({ email: email, marketing_opt_in: box.checked })
+        : Promise.reject(new Error("no engine"));
+      sent.then(function (res) {
+        window.location.href = res.redirect_url;
+      }).catch(function () {
+        fail(copy.error_send);
+        button.disabled = false;
+        button.textContent = label;
+      });
+    });
+    card.appendChild(form);
+    if (ctx.nodes && ctx.nodes.legal) card.appendChild(ctx.nodes.legal);
+    if (typeof ctx.watchOffer === "function") ctx.watchOffer(card);
+    return card;
+  }
+
   // --- render ----------------------------------------------------------------
 
   // --- paywall variants ------------------------------------------------------
@@ -1890,7 +1978,13 @@
     } else {
       root.appendChild(path(ctx, copy, elements));
     }
-    root.appendChild(offer(ctx, copy, data, template));
+    // The email gate where the funnel asks for one; the offer everywhere
+    // else, node for node.
+    if (ctx.leadGate) {
+      root.appendChild(gate(ctx, data));
+    } else {
+      root.appendChild(offer(ctx, copy, data, template));
+    }
 
     // The container engine.js moved the offer rows into is empty now and its
     // own border would draw a line under nothing.
