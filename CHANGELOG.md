@@ -657,3 +657,6 @@ bottom.
 
 ## 2026-09-17 — claude/email-gate
 - email gate replaces paywall, article redirect + free PDF report
+
+## 2026-09-17 — claude/lead-gate-no-checkbox
+- lead gate: notice line replaces checkbox
