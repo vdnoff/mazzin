@@ -308,11 +308,13 @@ try:
                 check("  and the fixture is a whole page",
                       want is not None and len(want) > 4000)
 
-        print("\n--- the blinds free page is the zodiac30 minimal page ---")
+        print("\n--- the blinds free page (after_result) is the zodiac30 minimal page ---")
         page = browser.new_page(viewport={"width": 390, "height": 844})
         errors = []
         page.on("pageerror", lambda e: errors.append(str(e)))
-        walk(page, "blinds")
+        # The layout as it first shipped, asked for by the URL override the
+        # module honours; the master now says gate_first.
+        walk(page, "blinds", "?gate_mode=after_result")
         free = page.evaluate(READ)
         page.close()
         check("no page errors", not errors, str(errors[:2]))

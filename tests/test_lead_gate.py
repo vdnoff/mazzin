@@ -22,6 +22,7 @@ import io
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -129,6 +130,17 @@ check("the master carries lead_gate after checkout",
       list(MASTER).index("lead_gate") == list(MASTER).index("checkout") + 1
       and GATE["article_url"] == "https://tigerjar.com/?p=3396"
       and GATE["utm_campaign"] == "blinds")
+check("  gate first, by the flag, beside the campaign",
+      GATE["gate_mode"] == "gate_first"
+      and list(GATE) == ["article_url", "utm_campaign", "gate_mode",
+                         "anchors", "copy", "mail"])
+check("  the ready line and its subline, never a {style} in them",
+      GATE["copy"]["gate_headline"] == "Your style result is ready"
+      and GATE["copy"]["gate_subline"].startswith("Enter your email and "
+                                                  "we'll reveal your style")
+      and "{" not in GATE["copy"]["gate_headline"] + GATE["copy"]["gate_subline"]
+      and list(GATE["copy"])[:4] == ["headline", "subline", "gate_headline",
+                                     "gate_subline"])
 check("  the five styles map one to one onto the article's anchors",
       GATE["anchors"] == {"modern_minimal": "#modern-minimal",
                           "warm_scandi": "#warm-scandinavian",
@@ -550,7 +562,8 @@ try:
           "and campaign",
           all(after[l]["lead_gate"] == {
               "article_url": table[l]["article_url"],
-              "utm_campaign": "blinds", "anchors": GATE["anchors"],
+              "utm_campaign": "blinds", "gate_mode": "gate_first",
+              "anchors": GATE["anchors"],
               "copy": dict((k, table[l]["copy"][k]) for k in GATE["copy"]),
               "mail": dict((k, table[l]["mail"][k]) for k in GATE["mail"])}
               for l in LANGS))
@@ -593,13 +606,14 @@ try:
         refused = True
     check("  a row missing a copy key is refused", refused)
     check("  the make_funnel walk translates the gate's copy and freezes "
-          "its anchors and campaign",
+          "its anchors, campaign and mode",
           "lead_gate.copy.headline" in [p for p, _ in mf.collect(MASTER)]
+          and "lead_gate.copy.gate_headline" in [p for p, _ in mf.collect(MASTER)]
           and "lead_gate.mail.subject" in [p for p, _ in mf.collect(MASTER)]
           and not [p for p, _ in mf.collect(MASTER)
                    if p.startswith("lead_gate.anchors")
                    or p in ("lead_gate.article_url",
-                            "lead_gate.utm_campaign")])
+                            "lead_gate.utm_campaign", "lead_gate.gate_mode")])
 finally:
     shutil.rmtree(scratch, ignore_errors=True)
 
@@ -629,9 +643,15 @@ SETTLED = ("() => [...document.querySelectorAll('#screen-swipe #cards .card')]"
            " return t==='none'||/matrix\\(1, 0, 0, 1/.test(t);})")
 READ_GATE = """() => { const g = document.querySelector('#result-module .zr-gate');
   if (!g) return null;
+  const r = document.querySelector('#result-module');
   const t = s => { const n = g.querySelector(s); return n ? n.textContent.trim() : null; };
   const a = g.querySelector('.zr-gate-notice a');
   return {notice: t('.zr-gate-notice'), link: a ? a.textContent : null,
+          shape: [...r.children].map(n => n.className), cls: r.className,
+          html: r.innerHTML, head: t('.zr-gate-head'), sub: t('.zr-gate-sub'),
+          sealedText: (r.querySelector('.zr-sealed') || {textContent: ''}).textContent.trim(),
+          bars: r.querySelectorAll('.zr-sealed .zr-sealed-bar').length,
+          computed: r.querySelectorAll('.zr-hero, .zr-taps, .zr-unlock, .zr-scales, .zr-subtype, .zr-chip').length,
           href: a ? a.getAttribute('href') : null,
           boxes: g.querySelectorAll('input[type=checkbox]').length,
           privacyLine: !!g.querySelector('.zr-gate-privacy'),
@@ -655,6 +675,15 @@ try:
         for lang in LANGS:
             mf.build("blinds", lang, site, no_llm=True)
             sg.set_gate("blinds", lang, site)
+    # The same funnel with the flag the other way: the layout as it first
+    # shipped, reached by config alone.
+    after_cfg = json.loads(read("funnels/blinds.json"))
+    after_cfg["slug"] = "blinds-after"
+    after_cfg["lead_gate"]["gate_mode"] = "after_result"
+    for directory in ("funnels", os.path.join("static", "funnels")):
+        open(os.path.join(site, directory, "blinds-after.json"), "w",
+             encoding="utf-8").write(json.dumps(after_cfg, indent=2,
+                                                ensure_ascii=False) + "\n")
 
     class Handler(http.server.SimpleHTTPRequestHandler):
         def __init__(self, *a, **kw):
@@ -687,13 +716,13 @@ try:
     httpd = socketserver.TCPServer(("127.0.0.1", PORT), Handler)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
 
-    def walk(page, slug, steps):
+    def walk(page, slug, steps, query=""):
         page.add_init_script(CLOCK)
         page.add_init_script(SEED)
         page.add_init_script("try{sessionStorage.setItem('mazzin_sid',"
                              "'a1b2c3d4-0000-4000-8000-000000000007');}"
                              "catch(e){}")
-        page.goto("http://127.0.0.1:%d/%s" % (PORT, slug))
+        page.goto("http://127.0.0.1:%d/%s%s" % (PORT, slug, query))
         page.wait_for_selector("#screen-swipe #cards .card", timeout=20000)
         for _ in range(steps + 10):
             if page.locator("#screen-result.is-active").count():
@@ -733,15 +762,59 @@ try:
                 want = table[lang]["copy"]["notice"]
                 plain = want.replace("[", "").replace("]", "")
                 label = want[want.index("[") + 1:want.index("]")]
+                names = [st["name"] for st in json.load(open(os.path.join(
+                    site, "funnels", slug + ".json"), encoding="utf-8"))["styles"]]
+                html = got.get("html") or ""
                 langs_ok[lang] = (
                     got.get("notice") == plain and got.get("link") == label
                     and got.get("href") == "/privacy" and got.get("boxes") == 0
                     and not got.get("privacyLine")
                     and got.get("button") == table[lang]["copy"]["button"]
+                    and got.get("head") == table[lang]["copy"]["gate_headline"]
+                    and got.get("sub") == table[lang]["copy"]["gate_subline"]
+                    and got.get("shape") == ["zr-kicker is-framed", "zr-sealed",
+                                             "zr-offer zr-gate"]
+                    and got.get("cls") == "result-module is-minimal is-gate-first"
+                    and got.get("computed") == 0 and got.get("bars") == 3
+                    and got.get("sealedText") == ""
+                    and not any(n in html for n in names)
+                    and not re.search(r"\d+\s*%", html)
                     and got.get("width") and got.get("width") <= 390
                     and not got.get("overflow") and not errors)
-                check("  %s: the notice in its words, the policy linked, no "
-                      "box, fits 390" % lang, langs_ok[lang], str(got)[:220])
+                check("  %s: gate first — the ready line, the notice, the "
+                      "policy linked, nothing computed, fits 390" % lang,
+                      langs_ok[lang], str({k: v for k, v in got.items()
+                                           if k != "html"})[:220])
+            page = browser.new_page(viewport={"width": 390, "height": 844})
+            errors = []
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            got = walk(page, "blinds-after", steps) or {}
+            page.close()
+            check("the flag the other way is the page as it first shipped: "
+                  "hero, taps, unlock list, the gate last, its own headline",
+                  got.get("shape") == ["zr-kicker is-framed",
+                                       "zr-hero is-rich is-lux", "zr-taps",
+                                       "zr-unlock is-list", "zr-offer zr-gate"]
+                  and got.get("cls") == "result-module is-minimal is-generic"
+                  and got.get("head") == GATE["copy"]["headline"]
+                  and got.get("sub") == GATE["copy"]["subline"]
+                  and any(n in (got.get("html") or "") for n in
+                          [st["name"] for st in MASTER["styles"]])
+                  and not errors, str({k: v for k, v in got.items()
+                                       if k != "html"})[:220])
+            page = browser.new_page(viewport={"width": 390, "height": 844})
+            got = walk(page, "blinds-after", steps, "?gate_mode=gate_first") \
+                or {}
+            page.close()
+            check("  and ?gate_mode= on the URL overrides the flag for a look",
+                  got.get("shape") == ["zr-kicker is-framed", "zr-sealed",
+                                       "zr-offer zr-gate"]
+                  and got.get("computed") == 0)
+            page = browser.new_page(viewport={"width": 390, "height": 844})
+            got = walk(page, "blinds", steps, "?gate_mode=after_result") or {}
+            page.close()
+            check("  in both directions",
+                  got.get("shape") and got["shape"][1] == "zr-hero is-rich is-lux")
             browser.close()
     finally:
         httpd.shutdown()
@@ -768,13 +841,28 @@ check("  engine owns the POST and hands the module the block and the call",
 check("  the sticky bar carries the gate's line or stays away",
       "function stickyLabel()" in ENGINE
       and "&& !(leadGate() && !stickyLabel());" in ENGINE)
+check("module: gate first is a render-path switch on the block's flag, "
+      "with the URL override, and draws nothing computed",
+      'var first = !!ctx.leadGate && gateMode(ctx) === "gate_first";' in MODULE
+      and 'root.classList.toggle("is-gate-first", first);' in MODULE
+      and "root.appendChild(sealedCard());" in MODULE
+      and "root.appendChild(gate(ctx, null, true));" in MODULE
+      and 'new RegExp("[?&]gate_mode=([^&#]+)")' in MODULE
+      and 'return GATE_MODES[mode] ? mode : "after_result";' in MODULE
+      and "var words = first ? {} : ((data && data.words) || {});" in MODULE
+      and "function sealedCard() {" in MODULE
+      and ".zr-sealed {" in CSS)
+check("  the hidden blocks are not deleted — the old path stands whole",
+      "richHero(ctx, glyph(heroPick(ctx, data)), data, { lean: lean })" in MODULE
+      and "var list = unlockList(ctx, data);" in MODULE
+      and "var strip = taps(ctx, copy);" in MODULE)
 check("module: the gate stands where the offer stood, and only there",
       "if (ctx.leadGate) {\n      root.appendChild(gate(ctx, data));\n    } else {\n"
       "      root.appendChild(offer(ctx, copy, data, template));\n    }" in MODULE
-      and "function gate(ctx, data) {" in MODULE
+      and "function gate(ctx, data, first) {" in MODULE
       and 'elm("section", "zr-offer zr-gate")' in MODULE
       and "window.location.href = res.redirect_url;" in MODULE)
-GATE_SRC = MODULE.split("function gate(ctx, data) {")[1].split("\n  }\n")[0]
+GATE_SRC = MODULE.split("function gate(ctx, data, first) {")[1].split("\n  }\n")[0]
 check("  the gate draws no box and reads none: the submit carries the "
       "address alone",
       "checkbox" not in GATE_SRC and "marketing_opt_in" not in GATE_SRC

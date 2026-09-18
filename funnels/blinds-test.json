@@ -2346,6 +2346,7 @@
   "lead_gate": {
     "article_url": "https://tigerjar.com/?p=3396",
     "utm_campaign": "blinds",
+    "gate_mode": "gate_first",
     "anchors": {
       "modern_minimal": "#modern-minimal",
       "warm_scandi": "#warm-scandinavian",
@@ -2356,6 +2357,8 @@
     "copy": {
       "headline": "Get your full personal report — free",
       "subline": "We'll email you your report as a PDF and open the full style guide with prices and traps for your style.",
+      "gate_headline": "Your style result is ready",
+      "gate_subline": "Enter your email and we'll reveal your style, send your full report as a PDF and open your personalized guide.",
       "placeholder": "you@example.com",
       "button": "Send my report",
       "sending": "Sending…",

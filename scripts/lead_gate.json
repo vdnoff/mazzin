@@ -1,10 +1,12 @@
 {
-  "_note": "Per-language email gate for scripts/set_gate.py: the article each market's readers are sent to (tigerjar.com's canonical ?p= form, which 301s to the pretty URL and keeps the #anchor), the gate's copy and the report mail's copy. The gate asks for nothing but the address: `notice` is the line under the button saying what it is for, with the privacy policy linked from the words in [square brackets]; there is no consent box, and a future marketing opt-in is a separate unchecked box, never this form. Anchors and the UTM campaign come from the master's lead_gate block and are the same in every language. `en` mirrors funnels/blinds.json and is what the others were translated from; a new master string goes here in every language before set_gate runs.",
+  "_note": "Per-language email gate for scripts/set_gate.py: the article each market's readers are sent to (tigerjar.com's canonical ?p= form, which 301s to the pretty URL and keeps the #anchor), the gate's copy and the report mail's copy. The gate asks for nothing but the address: `notice` is the line under the button saying what it is for, with the privacy policy linked from the words in [square brackets]; there is no consent box, and a future marketing opt-in is a separate unchecked box, never this form. Anchors and the UTM campaign come from the master's lead_gate block and are the same in every language. `en` mirrors funnels/blinds.json and is what the others were translated from; a new master string goes here in every language before set_gate runs. `gate_headline` and `gate_subline` are the gate-first screen's two lines (the master's lead_gate.gate_mode says which screen a funnel shows; set_gate carries it through with the anchors).",
   "en": {
     "article_url": "https://tigerjar.com/?p=3396",
     "copy": {
       "headline": "Get your full personal report — free",
       "subline": "We'll email you your report as a PDF and open the full style guide with prices and traps for your style.",
+      "gate_headline": "Your style result is ready",
+      "gate_subline": "Enter your email and we'll reveal your style, send your full report as a PDF and open your personalized guide.",
       "placeholder": "you@example.com",
       "button": "Send my report",
       "sending": "Sending…",
@@ -27,6 +29,8 @@
     "copy": {
       "headline": "Ontvang je volledige persoonlijke rapport — gratis",
       "subline": "We mailen je rapport als PDF en openen de volledige stijlgids met prijzen en valkuilen voor jouw stijl.",
+      "gate_headline": "Je stijlresultaat is klaar",
+      "gate_subline": "Vul je e-mailadres in en we onthullen je stijl, mailen je volledige rapport als PDF en openen je persoonlijke gids.",
       "placeholder": "jij@voorbeeld.nl",
       "button": "Stuur mijn rapport",
       "sending": "Versturen…",
@@ -49,6 +53,8 @@
     "copy": {
       "headline": "Hol dir deinen vollständigen persönlichen Report — kostenlos",
       "subline": "Wir schicken dir deinen Report als PDF per E-Mail und öffnen den kompletten Style-Guide mit Preisen und Fallen für deinen Stil.",
+      "gate_headline": "Dein Stil-Ergebnis ist fertig",
+      "gate_subline": "Gib deine E-Mail-Adresse ein und wir zeigen dir deinen Stil, schicken dir den vollständigen Report als PDF und öffnen deinen persönlichen Guide.",
       "placeholder": "du@beispiel.de",
       "button": "Report an mich senden",
       "sending": "Wird gesendet…",
@@ -71,6 +77,8 @@
     "copy": {
       "headline": "Kérd a teljes személyes jelentésed — ingyen",
       "subline": "E-mailben elküldjük a jelentésed PDF-ben, és megnyitjuk a teljes stílusútmutatót az árakkal és a buktatókkal a te stílusodhoz.",
+      "gate_headline": "A stílus-eredményed elkészült",
+      "gate_subline": "Add meg az e-mail-címed, és felfedjük a stílusod, elküldjük a teljes jelentésed PDF-ben, és megnyitjuk a személyes útmutatód.",
       "placeholder": "te@pelda.hu",
       "button": "Küldjétek a jelentésem",
       "sending": "Küldés…",
@@ -93,6 +101,8 @@
     "copy": {
       "headline": "Získej celý osobní report — zdarma",
       "subline": "Pošleme ti report jako PDF e-mailem a otevřeme kompletního průvodce stylem s cenami a pastmi pro tvůj styl.",
+      "gate_headline": "Výsledek tvého stylu je hotový",
+      "gate_subline": "Zadej svůj e-mail a my ti odhalíme tvůj styl, pošleme celý report jako PDF a otevřeme tvého osobního průvodce.",
       "placeholder": "ty@priklad.cz",
       "button": "Poslat můj report",
       "sending": "Odesílám…",
@@ -115,6 +125,8 @@
     "copy": {
       "headline": "Odbierz swój pełny osobisty raport — za darmo",
       "subline": "Wyślemy ci raport w PDF na maila i otworzymy pełny przewodnik po stylu z cenami i pułapkami dla twojego stylu.",
+      "gate_headline": "Twój wynik stylu jest gotowy",
+      "gate_subline": "Podaj swój e-mail, a odsłonimy twój styl, wyślemy pełny raport w PDF i otworzymy twój spersonalizowany przewodnik.",
       "placeholder": "ty@przyklad.pl",
       "button": "Wyślij mój raport",
       "sending": "Wysyłanie…",
@@ -137,6 +149,8 @@
     "copy": {
       "headline": "Få din fulde personlige rapport — gratis",
       "subline": "Vi mailer dig din rapport som PDF og åbner den fulde stilguide med priser og faldgruber for din stil.",
+      "gate_headline": "Dit stilresultat er klar",
+      "gate_subline": "Skriv din e-mail, så afslører vi din stil, sender din fulde rapport som PDF og åbner din personlige guide.",
       "placeholder": "dig@eksempel.dk",
       "button": "Send min rapport",
       "sending": "Sender…",
@@ -159,6 +173,8 @@
     "copy": {
       "headline": "Získaj celý osobný report — zadarmo",
       "subline": "Pošleme ti report ako PDF e-mailom a otvoríme kompletného sprievodcu štýlom s cenami a pascami pre tvoj štýl.",
+      "gate_headline": "Výsledok tvojho štýlu je hotový",
+      "gate_subline": "Zadaj svoj e-mail a my ti odhalíme tvoj štýl, pošleme celý report ako PDF a otvoríme tvojho osobného sprievodcu.",
       "placeholder": "ty@priklad.sk",
       "button": "Poslať môj report",
       "sending": "Odosielam…",
@@ -181,6 +197,8 @@
     "copy": {
       "headline": "Πάρε την πλήρη προσωπική σου αναφορά — δωρεάν",
       "subline": "Θα σου στείλουμε την αναφορά σου σε PDF με email και θα ανοίξουμε τον πλήρη οδηγό στιλ με τιμές και παγίδες για το στιλ σου.",
+      "gate_headline": "Το αποτέλεσμα του στιλ σου είναι έτοιμο",
+      "gate_subline": "Γράψε το email σου και θα σου αποκαλύψουμε το στιλ σου, θα σου στείλουμε την πλήρη αναφορά σε PDF και θα ανοίξουμε τον προσωπικό σου οδηγό.",
       "placeholder": "esy@paradeigma.gr",
       "button": "Στείλτε μου την αναφορά",
       "sending": "Αποστολή…",

@@ -1673,16 +1673,57 @@
     return note;
   }
 
-  function gate(ctx, data) {
+  // Which side of the gate the result stands on. `after_result` is the page
+  // as it shipped — the free profile above, the gate below; `gate_first`
+  // is the gate alone, with nothing computed on the screen until the
+  // address is given. The config decides per funnel; `?gate_mode=` on the
+  // URL overrides it for a look, the way `?arm=` does for a variant.
+  var GATE_MODES = { after_result: true, gate_first: true };
+
+  function gateMode(ctx) {
+    var want = "";
+    try {
+      want = (new RegExp("[?&]gate_mode=([^&#]+)").exec(
+        window.location.search) || [])[1] || "";
+      want = decodeURIComponent(want);
+    } catch (e) {
+      want = "";
+    }
+    if (GATE_MODES[want]) return want;
+    var mode = (ctx.leadGate || {}).gate_mode;
+    return GATE_MODES[mode] ? mode : "after_result";
+  }
+
+  // The "result is ready" moment on the gate-first screen: a sealed card,
+  // purely decorative. Three soft bars behind a lock, no text, no number,
+  // nothing read off the run — it stands for the result without showing a
+  // character of it.
+  function sealedCard() {
+    var card = elm("section", "zr-sealed");
+    card.setAttribute("aria-hidden", "true");
+    var lines = elm("div", "zr-sealed-lines");
+    for (var i = 0; i < 3; i++) {
+      lines.appendChild(elm("span", "zr-sealed-bar is-" + (i + 1)));
+    }
+    card.appendChild(lines);
+    var seal = elm("span", "zr-sealed-lock");
+    seal.appendChild(drawn(ICONS.lock));
+    card.appendChild(seal);
+    return card;
+  }
+
+  // `first` is the gate-first screen: the ready-line copy, and no words
+  // filled in — a {style} in that copy would name the result the screen is
+  // built to withhold, so the tokens are left as they are.
+  function gate(ctx, data, first) {
     var block = ctx.leadGate || {};
     var copy = block.copy || {};
-    var words = (data && data.words) || {};
+    var words = first ? {} : ((data && data.words) || {});
     var card = elm("section", "zr-offer zr-gate");
-    var head = fill(copy.headline || "", words);
+    var head = fill((first ? copy.gate_headline : copy.headline) || "", words);
     if (head) card.appendChild(elm("p", "zr-offer-head zr-gate-head", head));
-    if (copy.subline) {
-      card.appendChild(elm("p", "zr-gate-sub", fill(copy.subline, words)));
-    }
+    var sub = first ? copy.gate_subline : copy.subline;
+    if (sub) card.appendChild(elm("p", "zr-gate-sub", fill(sub, words)));
 
     var form = elm("form", "zr-gate-form");
     form.noValidate = true;
@@ -1960,8 +2001,21 @@
     // card names four, so its names row is set a size down. Toggled off
     // on a zodiac page, which leaves that page's class list exactly as it
     // was.
-    root.classList.toggle("is-generic", !!(data && data.generic));
+    // Gate first: the kicker, a sealed card and the form, and nothing the
+    // run produced — no name, no number, no strip, no chapter. Everything
+    // below this branch is the page as it was, and a funnel whose block
+    // says `after_result` (or says nothing) takes it exactly as before.
+    var first = !!ctx.leadGate && gateMode(ctx) === "gate_first";
+    root.classList.toggle("is-generic", !first && !!(data && data.generic));
+    root.classList.toggle("is-gate-first", first);
     root.appendChild(kicker(copy, lean));
+    if (first) {
+      root.appendChild(sealedCard());
+      root.appendChild(gate(ctx, null, true));
+      if (ctx.nodes.commerce) ctx.nodes.commerce.hidden = true;
+      root.hidden = false;
+      return;
+    }
     // The rich card, or the one this page drew before there was a table to
     // draw it from. Below the hero the two pages differ entirely, which is
     // why the branch is the whole body rather than one node.

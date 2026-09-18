@@ -928,6 +928,13 @@ def walk():
             browser = pw.chromium.launch(
                 executable_path="/opt/pw-browsers/chromium-1194/chrome-linux/chrome")
             page = browser.new_page(viewport={"width": 390, "height": 844})
+            # Every event from the first screen on: the gate is the result
+            # screen now, so lead_view fires the moment it renders, before
+            # anything could scroll to it.
+            events = []
+            page.route("**/api/track", lambda route: (
+                events.append(json.loads(route.request.post_data or "{}")),
+                route.fulfill(status=204, body="")))
             errors = []
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.goto("http://127.0.0.1:%d/%s" % (PORT, SLUG))
@@ -987,57 +994,44 @@ def walk():
             shape = page.evaluate(
                 "() => [...document.querySelector('#result-module').children]"
                 ".map(n => n.className)")
-            check("  the result is: kicker, lux hero, taps, the unlock list, "
-                  "the email gate — no counter card, no offer",
-                  shape == ["zr-kicker is-framed", "zr-hero is-rich is-lux",
-                            "zr-taps", "zr-unlock is-list",
-                            "zr-offer zr-gate"],
-                  str(shape))
-            name = page.inner_text("#result-module .zr-subtype")
-            check("  a style was named, and it is one of the five",
-                  name in {s["name"] for s in cfg["styles"]}, name)
-            money = page.text_content(".zr-check.is-money .zr-check-line")
-            check("  the money row leads the list, behind a shield",
-                  money and money.startswith("Save up to $250 on your blinds")
-                  and name in money
-                  and page.locator(".zr-check.is-money .zr-check-mark"
-                                   ".is-shield svg").count() == 1
-                  and page.locator(".zr-boxes-grid").count() == 0
-                  and page.locator(".zr-cost").count() == 0, money)
-            check("  the head is stepped up and wears the lock glyph",
-                  page.text_content(".zr-unlock-head").strip()
-                  == "WHAT YOU UNLOCK"
-                  and page.locator(".zr-unlock-head .zr-unlock-lock svg")
-                  .count() == 1)
-            check("  the hero carries the three style scales and nothing priced",
-                  page.locator(".zr-scales .zr-scale").count() == 3
-                  and page.locator(".zr-hero .is-cost").count() == 0
-                  and ANCHOR not in page.inner_text(".zr-hero"))
-            check("  the unlock list: the money row, the five chapters, the tail",
-                  page.eval_on_selector_all(
-                      ".zr-unlock.is-list .zr-check-key",
-                      "ns => ns.map(n => n.textContent)")
-                  == ["Save up to $250 on your blinds"]
-                  + [TITLES[r["id"]] for r in P["unlock"]]
-                  + [P["unlock_tail"]["key"]])
-            check("  and the offer card opens on the price, no list inside",
-                  page.locator(".zr-offer .zr-unlock").count() == 0
-                  and page.locator(".zr-offer .zr-checklist").count() == 0)
-            check("  the figure appears once, in the money row",
-                  page.inner_text("#result-module").count("$250") == 1)
+            check("  gate first: the kicker, a sealed card, the gate — and "
+                  "nothing of the result",
+                  shape == ["zr-kicker is-framed", "zr-sealed",
+                            "zr-offer zr-gate"]
+                  and page.evaluate("document.getElementById('result-module')"
+                                    ".className")
+                  == "result-module is-minimal is-gate-first",
+                  str(shape) + " " + page.evaluate(
+                      "document.getElementById('result-module').className"))
+            module_html = page.evaluate(
+                "document.getElementById('result-module').innerHTML")
+            module_text = page.inner_text("#result-module")
+            check("  no style name, no percentage, no strip, no chapter, no "
+                  "money anywhere in the DOM",
+                  not any(st["name"] in module_html for st in cfg["styles"])
+                  and not re.search(r"\d+\s*%", module_html)
+                  and "$250" not in module_html
+                  and page.locator(".zr-hero, .zr-taps, .zr-unlock, .zr-scales,"
+                                   " .zr-subtype, .zr-chip, .zr-split")
+                  .count() == 0
+                  and page.locator(".zr-sealed").get_attribute("aria-hidden")
+                  == "true"
+                  and page.inner_text(".zr-sealed").strip() == ""
+                  and page.locator(".zr-sealed .zr-sealed-bar").count() == 3
+                  and page.locator(".zr-sealed .zr-sealed-lock svg").count()
+                  == 1)
             check("  the engine's own report is not drawn",
                   page.evaluate("document.getElementById('report').hidden"))
             G = cfg["lead_gate"]["copy"]
-            module_text = page.inner_text("#result-module")
             check("  no price anywhere on the page — the gate is free",
                   page.locator(".zr-price-now").count() == 0
                   and page.locator(".zr-anchor").count() == 0
                   and "$0.99" not in module_text and "$1.99" not in module_text
                   and "Stripe" not in module_text)
-            check("  the gate: headline, subline, an email box, the button, "
-                  "the notice — and no box to tick",
-                  page.inner_text(".zr-gate-head") == G["headline"]
-                  and page.inner_text(".zr-gate-sub") == G["subline"]
+            check("  the gate: the ready line and its subline, an email box, "
+                  "the button, the notice — and no box to tick",
+                  page.inner_text(".zr-gate-head") == G["gate_headline"]
+                  and page.inner_text(".zr-gate-sub") == G["gate_subline"]
                   and page.locator(".zr-gate-input[type=email]").count() == 1
                   and page.get_attribute(".zr-gate-input", "placeholder")
                   == G["placeholder"]
@@ -1053,16 +1047,13 @@ def walk():
                   page.is_visible("#pay-button") is False
                   and page.is_visible("#withdrawal") is False
                   and page.locator(".zr-gate .legal-links").count() == 1)
-            events = []
-            page.route("**/api/track", lambda route: (
-                events.append(json.loads(route.request.post_data or "{}")),
-                route.fulfill(status=204, body="")))
-            page.locator(".zr-gate").scroll_into_view_if_needed()
             page.wait_for_timeout(600)
             names = [e.get("event") for e in events]
-            check("  the gate reaching the reader is lead_view, never "
-                  "paywall_view",
-                  "lead_view" in names and "paywall_view" not in names,
+            check("  result_view fired where it always did, and the gate "
+                  "reaching the reader is lead_view, never paywall_view",
+                  "result_view" in names and "lead_view" in names
+                  and "paywall_view" not in names
+                  and names.index("result_view") < names.index("lead_view"),
                   str(names))
             check("    with the same src the paywall view carried",
                   any(e.get("event") == "lead_view"

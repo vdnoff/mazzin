@@ -98,8 +98,9 @@ The block, on the master (`funnels/blinds.json`):
 |---|---|
 | `article_url` | the article the reader is sent to, in this funnel's language — tigerjar.com's canonical `?p=` form, which 301s to the pretty URL and keeps the anchor |
 | `utm_campaign` | the campaign on the UTM triplet the server appends (`utm_source=mazzin&utm_medium=redirect` on the redirect, `email` on the mail) |
+| `gate_mode` | `gate_first` — the result screen is the gate alone: the kicker, a sealed card that shows nothing computed, the form; nothing of the run (no style name, no number, no strip, no chapter) until the address is given. `after_result` (or absent) is the free profile above the gate as it first shipped. A per-funnel switch, no deploy; `?gate_mode=` on the URL overrides it for a look, like `?arm=` |
 | `anchors` | style id → the article's section anchor, the same in every language |
-| `copy` | the gate's words: `headline`, `subline`, `placeholder`, `button`, `sending`, `privacy`, `checkbox`, `error_email`, `error_send`, `sticky` (empty hides the sticky bar) |
+| `copy` | the gate's words: `headline` and `subline` (after the result), `gate_headline` and `gate_subline` (gate first — never filled with `{style}`), `placeholder`, `button`, `sending`, `error_email`, `error_send`, `notice` (the line under the button, the privacy policy linked from its [brackets]), `sticky` (empty hides the sticky bar) |
 | `mail` | the report mail: `subject`, `headline`, `summary` (`{style}`, `{scales}`), `scale` (`{pct}`, `{label}`), `cta`, `keep` |
 
 What happens on submit: the page validates the address, `POST /api/lead`
