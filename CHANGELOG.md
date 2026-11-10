@@ -666,3 +666,6 @@ bottom.
 
 ## 2026-09-18 — claude/gate-first
 - gate-first result screen
+
+## 2026-11-10 — claude/loans-funnel-phase1-wvgrcu
+- Loan Options funnel at /loans — phase 1 (pre-feed)
