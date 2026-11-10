@@ -186,3 +186,39 @@ CREATE TABLE IF NOT EXISTS leads (
 -- created_at. One index in that order serves all three and the newest-first
 -- page. Without it the page still answers — it reads the table.
 ALTER TABLE leads ADD INDEX idx_leads_funnel_lang_created (funnel, lang, created_at);
+
+-- 2026-11-10 — the Loan Options funnel's answers
+--
+-- MUST BE APPLIED BY HAND BEFORE THE DEPLOY THAT SHIPS /loans.
+--
+-- One row per browser session that reached the end of the /loans questions:
+-- the amount and the five closed answers, each a short token loans.py checks
+-- against a set it enumerates, plus the same five attribution columns
+-- `events` carries. The unique key on session_id is what makes a second
+-- submit an overwrite: a visitor who edits an answer changes their row, and
+-- `updated_at` says when.
+--
+-- This table holds no contact or identity data, by design: no name, email,
+-- phone, address, date of birth, SSN, bank detail, IP address or User-Agent,
+-- and no free text. The session id is a random UUID made in the browser and
+-- kept for the tab's lifetime.
+--
+-- If the deploy lands first anyway, /api/loans/lead answers 500 until this
+-- is applied and the page carries on without it; the events are unaffected.
+CREATE TABLE loan_leads (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  session_id CHAR(36) NOT NULL,
+  amount_usd SMALLINT UNSIGNED NOT NULL,
+  purpose VARCHAR(16) NOT NULL,
+  employment VARCHAR(16) NOT NULL,
+  income_band VARCHAR(16) NOT NULL,
+  credit_band VARCHAR(16) NOT NULL,
+  state CHAR(2) NOT NULL,
+  subid VARCHAR(128) NULL, utm_source VARCHAR(64) NULL,
+  utm_campaign VARCHAR(128) NULL, utm_content VARCHAR(128) NULL,
+  utm_term VARCHAR(128) NULL,
+  UNIQUE KEY uq_loan_lead_session (session_id),
+  INDEX idx_loan_lead_created (created_at)
+);
