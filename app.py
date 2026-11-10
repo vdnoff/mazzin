@@ -15,6 +15,7 @@ import database
 import visualizer
 from admin import bp as admin_bp
 from leads import bp as leads_bp
+from loans import bp as loans_bp
 from payments import bp as payments_bp
 from router import bp as router_bp
 from tracking import bp as tracking_bp
@@ -45,6 +46,7 @@ app.config["MAX_CONTENT_LENGTH"] = config.VISUALIZER_MAX_BYTES + 512 * 1024
 
 app.register_blueprint(tracking_bp)
 app.register_blueprint(leads_bp)
+app.register_blueprint(loans_bp)
 app.register_blueprint(payments_bp)
 app.register_blueprint(visualizer_bp)
 app.register_blueprint(admin_bp)
@@ -158,6 +160,17 @@ def persona_share(persona):
     # as the legal pages: the only thing that changes it is a redeploy.
     resp.headers["Cache-Control"] = (
         "public, max-age=%d" % config.PAGE_HTML_MAX_AGE)
+    return resp
+
+
+# The Loan Options funnel. One static page that is not a swipe quiz: it has no
+# funnels/*.json and does not load engine.js, so it cannot be served through
+# /<slug>. A static rule, so it wins over that one whatever the order.
+@app.get("/loans")
+def loans_page():
+    resp = send_from_directory(config.STATIC_DIR, "loans.html")
+    resp.headers["Cache-Control"] = (
+        "public, max-age=%d" % config.FUNNEL_HTML_MAX_AGE)
     return resp
 
 

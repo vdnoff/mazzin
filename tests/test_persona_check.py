@@ -1109,11 +1109,14 @@ check("app.py still serves the funnel page without naming it",
 check("  and names persona only for the share route",
       app_py.count('@app.get("/persona/s/<persona>")') == 1
       and app_py.count('load_funnel("persona")') == 1)
-# Three GET routes in the file: /health, the share page, and /<slug>. The
-# count is the guard — a second persona route, or a template being rendered
-# here, is the change this check exists to catch.
+# Four GET routes in the file: /health, the share page, /loans and /<slug>.
+# The count is the guard — a second persona route, or a template being
+# rendered here, is the change this check exists to catch. /loans made it
+# four, deliberately: the Loan Options funnel's one static page, which names
+# no persona and renders nothing.
 check("  which is one route and not a second page renderer",
-      app_py.count("@app.get(") == 3
+      app_py.count("@app.get(") == 4
+      and app_py.count('@app.get("/loans")') == 1
       and "render_template" not in app_py
       and "PERSONA_SHARE_DIR" in app_py,
       str(app_py.count("@app.get(")))

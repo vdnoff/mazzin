@@ -10,7 +10,9 @@ free style result, sees a partially-locked report, hits a paywall.
 - The funnel page (HTML, CSS, JS, funnel config JSON) is served straight from
   `/static/` by the web server / Cloudflare. No Flask worker is involved.
 - Flask handles exactly three things: `/api/*`, `/health`, and the `/<slug>`
-  route that hands back `static/funnel.html` with a cache header.
+  route that hands back `static/funnel.html` with a cache header. (`/loans`
+  is the same idea for a page that is not a swipe quiz: `static/loans.html`,
+  its own CSS and JS, no `engine.js`.)
 - `funnels/*.json` is the source of truth for funnel content. `deploy.sh`
   copies it to `static/funnels/` so the browser can fetch it from the CDN.
   Never edit `static/funnels/` by hand.
@@ -26,6 +28,7 @@ free style result, sees a partially-locked report, hits a paywall.
 | `tracking.py` | `POST /api/track` — validate + one INSERT | Reads, joins, anything slow |
 | `router.py` | `GET /go` — vertical + language → slug, the two fallback tiers, the one `gen_queue` upsert | Rendering, LLM calls, anything slower than a redirect |
 | `leads.py` | `POST /api/lead` — the email gate: validate, one `leads` INSERT (a duplicate is the same success), one server-side event, the article redirect | Building the report, sending the mail, logging an address, touching a purchase |
+| `loans.py` | `/api/loans/*` — the Loan Options funnel's API: validate + one write each (the `loan_leads` upsert, one `events` row with `funnel = 'loans'`) | Reads, PII (no contact or identity field, no IP, no User-Agent, no free text), anything slow |
 | `payments.py` | `POST /api/checkout`, `POST /api/stripe/webhook`, `GET /api/report`, `effective_mode()` and the mode-override table | Trusting a client-supplied amount, report copy, deciding a mode anywhere but `effective_mode()` |
 | `reports.py` | `generate_report()` — builds and stores report content | HTTP routes, Stripe calls |
 | `visualizer.py` | `/api/visualizer/*` — photo intake, EXIF stripping, the image-edit call, generation credits | Running on an unpaid purchase, writing under `static/`, putting a photo in a log line |
@@ -42,6 +45,7 @@ free style result, sees a partially-locked report, hits a paywall.
 | `scripts/galleries/*.json` / `scripts/make_gallery.py` | A vertical's image spec, and drawing it on the server | Committing the images |
 | `static/js/engine.js` | Swipe UX, scoring, screens, tracking calls, checkout redirect + report polling | Holding payment state it can't prove |
 | `static/css/mazzin.css` | Mobile portrait styling | Desktop layout |
+| `static/loans.html` / `static/css/loans.css` / `static/js/loans.js` | The Loan Options funnel at `/loans`: its one page, its styles, its script, the `OFFERS` list. `/loans` does not use `engine.js`, `mazzin.css` or a `funnels/*.json` | Collecting anything but the six closed answers; an unlabelled ad; a link with no destination |
 | `deploy.sh` / `rollback.sh` | Server deploy + recovery | Being run from anywhere but the server |
 | `tests/` | Every suite, plus `run.sh` | Talking to a real database, Stripe or OpenAI |
 
