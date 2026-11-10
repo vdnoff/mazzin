@@ -166,15 +166,12 @@ def persona_share(persona):
 # The Loan Options funnel. One static page that is not a swipe quiz: it has no
 # funnels/*.json and does not load engine.js, so it cannot be served through
 # /<slug>. A static rule, so it wins over that one whatever the order.
+@app.get("/loans")
 def loans_page():
     resp = send_from_directory(config.STATIC_DIR, "loans.html")
     resp.headers["Cache-Control"] = (
         "public, max-age=%d" % config.FUNNEL_HTML_MAX_AGE)
     return resp
-
-
-app.add_url_rule("/loans", endpoint="loans_page", view_func=loans_page,
-                 methods=["GET"])
 
 
 @app.get("/<slug>")
