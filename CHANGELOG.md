@@ -672,3 +672,6 @@ bottom.
 
 ## 2026-11-12 — claude/home-all-verticals
 - home: all English verticals in Analyses
+
+## 2026-11-12 — claude/home-blinds-card-image
+- home: Window Style card image from the quiz
