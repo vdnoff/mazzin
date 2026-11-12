@@ -675,3 +675,6 @@ bottom.
 
 ## 2026-11-12 — claude/home-blinds-card-image
 - home: Window Style card image from the quiz
+
+## 2026-11-12 — claude/home-language-flags
+- home: language flags on Cosmic Profile and Window Style
