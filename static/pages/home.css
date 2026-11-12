@@ -462,6 +462,39 @@ body {
 
 .card-cta:active { transform: scale(0.99); }
 
+/* The same analysis in another language. Flags, under the button and smaller
+   than it: the button is the English funnel and stays the one obvious tap;
+   a flag is the only way to a translation. Each is 40px tall; eight fit one row at 360px. */
+.card-langs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  margin: 11px -4px -6px;
+}
+
+.card-langs__label {
+  flex: 0 0 100%;
+  margin: 0 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.card-lang {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 40px;
+  font-size: 21px;
+  line-height: 1;
+  text-decoration: none;
+  border-radius: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card-lang:active { background: var(--accent-soft); }
+
 .grid-note {
   margin: 0 0 8px;
   font-size: 12.5px;
