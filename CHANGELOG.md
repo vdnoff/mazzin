@@ -669,3 +669,6 @@ bottom.
 
 ## 2026-11-10 — claude/loans-funnel-phase1-wvgrcu
 - Loan Options funnel at /loans — phase 1 (pre-feed)
+
+## 2026-11-12 — claude/home-all-verticals
+- home: all English verticals in Analyses
