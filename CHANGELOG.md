@@ -699,3 +699,6 @@ bottom.
 
 ## 2026-11-18 — claude/loans-summary-copy
 - Loans — summary copy: next-step heading and action labels
+
+## 2026-11-18 — claude/loans-summary-polish
+- Loans — summary polish: heading, title-case labels, pill under the rows
