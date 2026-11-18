@@ -5255,3 +5255,110 @@ body.theme-brain .mid.is-flash .mz-timer { margin: 18px auto 16px; }
 
 .tile-out i:first-child { transform: rotate(45deg); }
 .tile-out i:last-child { transform: rotate(-45deg); }
+
+/* --- text answers: `text4` and `text6` -------------------------------------- */
+
+/* A step whose answers are sentences. Four or six full-width rows, stacked,
+   each a button holding the answer's own words — nothing to crop, nothing to
+   decode, and the type follows the reader's text size like any other text.
+
+   Opt-in by format name, and every rule here hangs off `.is-text4`,
+   `.is-text6` or `.card.is-text`, three classes engine.js puts on nothing
+   else. A funnel that names neither format matches none of this.
+
+   The row is the elastic part of the column on every other format, sized to
+   fill the screen with pictures. Here it is as tall as its sentences and no
+   taller, starts under the question, and scrolls inside itself on the one
+   phone short enough for six two-line answers not to fit. */
+.cards.is-text4,
+.cards.is-text6 {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 10px;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Room for the chosen row's ring and lift, which `overflow` would clip. */
+  margin: 0 -6px;
+  padding: 4px 6px 8px;
+}
+
+.cards.is-text6 { gap: 8px; }
+
+.card.is-text {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: auto;
+  min-height: 56px;
+  padding: 14px 16px;
+  border: 1.5px solid rgba(20, 24, 32, 0.14);
+  border-radius: 14px;
+  background: #fff;
+  overflow: visible;
+  box-shadow: 0 1px 3px rgba(20, 24, 32, 0.05);
+  font: inherit;
+  text-align: left;
+  color: var(--ink);
+}
+
+.card.is-text::after { border-radius: 14px; }
+
+.card.is-text .card-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+
+/* Full-width rows have no room to grow sideways: the 5% the picture cards
+   take on selection would push a 358px row past the screen edge. */
+.card.is-text:active { transform: scale(0.985); }
+.card.is-text.is-chosen { transform: scale(1.012); }
+.cards.is-picking .card.is-text:not(.is-chosen) { transform: none; }
+
+/* One confirmation, at the end of the row. The centred mark the `check` mode
+   draws over a picture would sit on top of the words it is confirming, so on
+   a text row the corner tick answers instead, whatever the label mode. */
+.card.is-text .card-check { display: none; }
+
+.card.is-text .check,
+.cards.is-check .card.is-text .check {
+  position: static;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  font-size: 14px;
+}
+
+/* The question is a sentence too, and a long one. At the picture formats'
+   31px a ninety-character question is five lines and the answers start below
+   the fold. */
+.stage:has(> .cards.is-text4) .caption,
+.stage:has(> .cards.is-text6) .caption {
+  font-size: 23px;
+  line-height: 1.2;
+  text-wrap: pretty;
+}
+
+/* The brain theme's own blue, where a funnel on that theme uses the format:
+   the ring is `--accent` everywhere else and this keeps it the round's. */
+body.theme-brain .card.is-text.is-chosen {
+  border-color: #378ADD;
+  box-shadow: 0 6px 18px rgba(12, 68, 124, 0.16);
+}
+
+body.theme-brain .card.is-text.is-chosen::after {
+  box-shadow: inset 0 0 0 2px #378ADD;
+}
+
+body.theme-brain .card.is-text .check { background: #378ADD; }

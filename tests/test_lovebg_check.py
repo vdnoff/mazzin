@@ -972,7 +972,7 @@ check("  three frames with three colours each, on disk",
           and os.path.isfile(os.path.join(ROOT, i["img"].lstrip("/")))
           for i in GENDER["pairs"][0]["images"]))
 check("the engine knows the format, by that name and no other new one",
-      "var GRID_SIZE = { grid3: 3, grid4: 4, grid6: 6, grid12: 12 };"
+      "var GRID_SIZE = { grid3: 3, grid4: 4, grid6: 6, grid12: 12, text4: 4, text6: 6 };"
       in ENGINE_JS)
 check("  and the sheet lays it out: one row of three, the badge stepped down",
       ".cards.is-grid3 {" in CSS
