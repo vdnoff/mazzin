@@ -702,3 +702,6 @@ bottom.
 
 ## 2026-11-18 — claude/loans-summary-polish
 - Loans — summary polish: heading, title-case labels, pill under the rows
+
+## 2026-11-18 — claude/ai-navigator-redesign
+- AI Navigator redesign: 12 steps, dark theme, instant feedback, 3-block result
