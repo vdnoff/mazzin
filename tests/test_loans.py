@@ -437,7 +437,7 @@ check("it says what Mazzin is not, on the landing and the summary view",
               .split("</section>")[0] for v in ("landing", "options")))
 SUMMARY = PAGE[PAGE.index('id="view-options"'):].split("</section>")[0]
 check("the guides sit on the summary view, labelled Partner site",
-      'Guides for you <span class="pill">Partner site</span>' in SUMMARY
+      'Your next step <span class="pill">Partner site</span>' in SUMMARY
       and '<ul class="card guides" id="guides"></ul>' in SUMMARY)
 check("  in a block that is hidden until the script finds a click to pass on",
       '<div class="guides-block" id="guides-block" hidden>' in SUMMARY
@@ -457,9 +457,8 @@ check("the note says where the guides go and how Mazzin earns",
 for needle in ("How much do you need?", "What is the loan for?",
                "How do you earn your income?",
                "How would you rate your credit?",
-               "Guides for you",
-               "Each link opens evoseekly.com, a partner site that shows "
-               "ads."):
+               "Your next step",
+               "Picked from your answers. Start with the first one."):
     check("copy: %s" % needle, needle in PAGE)
 gone = [w for w in ("sponsored", "related searches", "pick a search",
                     "offers are not available", "view sponsored",
@@ -579,6 +578,36 @@ check("  byte for byte the links that were given",
       hashlib.sha256("\n".join("%s %s" % (a[0], a[2]) for a in ARTICLES)
                      .encode()).hexdigest()
       == "b4b19fb81b68fd7242cbe5889818f4f2ec834de5273af494504e46ee035429d6")
+check("  the labels say what the reader will do there",
+      dict((a[0], a[1]) for a in ARTICLES) == {
+          "purpose_emergency":
+          "See ways to cover an unexpected expense",
+          "purpose_debt":
+          "See how debt consolidation loans work",
+          "purpose_car":
+          "See ways to pay for a car repair",
+          "purpose_home":
+          "Compare home improvement loan options",
+          "purpose_medical":
+          "See options for paying medical bills",
+          "purpose_other":
+          "See how personal loans work",
+          "credit_excellent":
+          "Find the lowest rates for strong credit",
+          "credit_good":
+          "Compare offers for good credit",
+          "credit_fair":
+          "See loan options for fair credit",
+          "credit_building":
+          "See options for low or thin credit",
+          "general_small":
+          "Find where to get a small personal loan",
+          "general_apr":
+          "Learn to spot the real cost of an offer",
+      })
+check("  the copy that was replaced is gone",
+      "Guides for you" not in PAGE and "Each link opens" not in PAGE
+      and "evoseekly" not in PAGE + JS)
 check("the four rows: purpose, credit, then the two general ones",
       '["purpose_" + a.purpose, "credit_" + a.credit].concat(GENERAL)' in JS
       and 'var GENERAL = ["general_small", "general_apr"];' in JS)
