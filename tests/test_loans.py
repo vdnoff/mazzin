@@ -523,6 +523,28 @@ wrong = [k for k, v in tokens.items() if "%s: %s;" % (k, v) not in CSS]
 check("the thirteen colour tokens", not wrong, wrong)
 check("a visible focus ring", ":focus-visible" in CSS)
 
+print("\n--- the asset versions: new HTML never runs against an old script ---")
+# /static/* is cached for hours and the page for minutes. An unversioned
+# asset URL let a deploy pair the new page with the previous loans.js, which
+# looked up elements that were gone and drew nothing. The ?v= is the first
+# ten hex characters of the file's sha256, so changing either file without
+# changing the page fails here, and the message says what to put in.
+for rel, pattern in (
+        ("static/css/loans.css",
+         r'<link rel="stylesheet" href="/static/css/loans\.css(?:\?v=([^"]*))?">'),
+        ("static/js/loans.js",
+         r'<script src="/static/js/loans\.js(?:\?v=([^"]*))?" defer></script>')):
+    with open(os.path.join(REPO, rel), "rb") as fh:
+        want = hashlib.sha256(fh.read()).hexdigest()[:10]
+    tags = re.findall(pattern, PAGE)
+    got = tags[0] if len(tags) == 1 else None
+    name = rel.rsplit("/", 1)[1]
+    check("loans.html loads %s once, as /%s?v=%s" % (name, rel, want),
+          got == want and PAGE.count("/" + rel) == 1,
+          "static/loans.html has %s — set it to /%s?v=%s"
+          % ("no single tag for this file" if got is None
+             else "no ?v=" if got == "" else "?v=" + got, rel, want))
+
 print("\n--- loans.js: the offers, the events, the storage ---")
 check("one IIFE, strict",
       JS.lstrip().startswith("/*") and "(function () {" in JS
