@@ -678,3 +678,6 @@ bottom.
 
 ## 2026-11-12 — claude/home-language-flags
 - home: language flags on Cosmic Profile and Window Style
+
+## 2026-11-18 — claude/ai-navigator-funnel
+- AI Navigator funnel: 18-step quiz + free result (phase 1)
