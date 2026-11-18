@@ -164,9 +164,34 @@ SUMMARY = """() => {
     .map(n => n.id || n.className.split(' ')[0]);
   return {
     block: shown(block), none: shown(none), noneText: none.textContent,
-    label: block.querySelector('.eyebrow').textContent.replace(/\\s+/g, ' ')
-      .trim(),
+    label: block.querySelector('h2').textContent,
+    head: (() => { const h = block.querySelector('h2');
+                   const cs = getComputedStyle(h);
+                   const b = h.getBoundingClientRect();
+                   const prev = v.querySelector('#options-chips')
+                     .getBoundingClientRect();
+                   const next = block.querySelector('.lede')
+                     .getBoundingClientRect();
+                   return { tag: h.tagName, family: cs.fontFamily,
+                            size: cs.fontSize, weight: cs.fontWeight,
+                            lines: Math.round(b.height
+                                              / parseFloat(cs.lineHeight)),
+                            lineHeight: parseFloat(cs.lineHeight),
+                            spacing: cs.letterSpacing, color: cs.color,
+                            ink: getComputedStyle(h1).color,
+                            above: Math.round(b.top - prev.bottom),
+                            below: Math.round(next.top - b.bottom),
+                            kids: h.children.length }; })(),
     pill: block.querySelector('.pill').textContent,
+    pillBox: (() => { const p = block.querySelector('.pill')
+                        .getBoundingClientRect();
+                      const c = list.getBoundingClientRect();
+                      return { gap: Math.round(p.top - c.bottom),
+                               left: Math.round(p.left - c.left),
+                               last: block.lastElementChild
+                                 .contains(block.querySelector('.pill')),
+                               blockOrder: [...block.children]
+                                 .map(n => n.tagName) }; })(),
     lede: block.querySelector('.lede').textContent,
     links: [...document.querySelectorAll('#guides a')].map(a => ({
       href: a.getAttribute('href'), text: a.textContent, target: a.target,
@@ -238,12 +263,26 @@ def main():
         got = page.evaluate(SUMMARY)
         check("it shows the guides block, not the unavailable line",
               got["block"] and not got["none"])
-        check("  labelled Your next step / Partner site",
-              got["label"].startswith("Your next step")
-              and got["pill"] == "Partner site", [got["label"], got["pill"]])
+        check("  under an h2 that stands alone: Your next step",
+              got["label"] == "Your next step" and got["head"]["tag"] == "H2"
+              and got["head"]["kids"] == 0, [got["label"], got["head"]])
+        hd = got["head"]
+        check("  Fraunces 600, 26px, 1.15, -0.02em, ink, on one line",
+              "Fraunces" in hd["family"] and hd["size"] == "26px"
+              and hd["weight"] == "600"
+              and abs(hd["lineHeight"] - 29.9) < 0.11
+              and abs(float(hd["spacing"][:-2]) + 0.52) < 0.011
+              and hd["color"] == hd["ink"] and hd["lines"] == 1, hd)
+        check("  28px above it and 6px below", hd["above"] == 28
+              and hd["below"] == 6, [hd["above"], hd["below"]])
         check("  saying how the rows were picked",
-              got["lede"] == "Picked from your answers. Start with the "
-                             "first one.", got["lede"])
+              got["lede"] == "Picked from your answers.", got["lede"])
+        pb = got["pillBox"]
+        check("  heading, subline, card, then the Partner site pill",
+              pb["blockOrder"] == ["H2", "P", "UL", "P"] and pb["last"]
+              and got["pill"] == "Partner site", pb)
+        check("  the pill is left-aligned, 12px under the card",
+              pb["gap"] == 12 and pb["left"] == 0, pb)
         check("  in order: eyebrow, h1, chips, guides, note, footer",
               got["order"] == ["eyebrow", "options-title", "options-chips",
                                "guides-block", "note", "foot"], got["order"])
@@ -441,6 +480,8 @@ def main():
             got = page.evaluate(SUMMARY)
             check("%d: no horizontal scroll" % width,
                   got["sw"] <= got["vw"] == width, [got["sw"], got["vw"]])
+            check("%d: the heading fits on one line" % width,
+                  got["head"]["lines"] == 1, got["head"])
             check("%d: every row is a touch target of 44px or more" % width,
                   len(got["links"]) == 4
                   and all(l["rect"][2] >= 44 for l in got["links"]),
