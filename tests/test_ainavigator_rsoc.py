@@ -4,7 +4,7 @@
 The result page of this funnel can carry up to two links out to a partner's
 articles. The partner pays on what happens over there, and only when the click
 that brought the reader here travels with them — so what is walked here is the
-whole trip an identifier makes: on the landing URL, through eighteen steps, a
+whole trip an identifier makes: on the landing URL, through twelve steps, a
 reload and a second arrival on a bare URL, into the query of a link.
 
 Three arrivals, 390x844:
@@ -106,11 +106,11 @@ class Server(socketserver.ThreadingMixIn, http.server.HTTPServer):
 
 
 # Which card is tapped on each step. The skill is design; the four zones score
-# 3, 2, 1 and 0, so the zone with the most room is the last one, `spa`. The
+# 2, 2, 1 and 0, so the zone with the most room is the last one, `spa`. The
 # first card listed on a scored step is the hit.
 SKILL = "skill_design"
 ZONE = "spa"
-MISSES = {"foc3", "chg2", "chg3", "spa1", "spa2", "spa3"}
+MISSES = {"chg2", "spa1", "spa2"}
 
 
 def label_for(step):
@@ -157,7 +157,7 @@ def advance(page, until=None):
         elif state == "mid":
             page.wait_for_timeout(400)
             try:
-                page.locator("#screen-interstitial").click(timeout=1500)
+                page.locator("#mid-cta").click(timeout=1500)
             except Exception:
                 pass                         # it advanced on its own
             page.wait_for_timeout(500)
@@ -169,6 +169,14 @@ def advance(page, until=None):
                     "^" + re.escape(label_for(step)) + "$"))).first.click()
             done.append(step["id"])
             idle = 0
+            # A scenario answers the tap with a panel that moves on by itself;
+            # its Next button moves on at once, which is what a walk wants.
+            if step.get("why"):
+                page.wait_for_timeout(450)
+                try:
+                    page.locator(".step-feedback-next").click(timeout=1500)
+                except Exception:
+                    pass                     # it had already moved on
             page.wait_for_timeout(500)
             if until and step["id"] == until:
                 return done
@@ -259,7 +267,7 @@ def main():
         del events[:]
         ctx, page, errors = arrive(browser, want_tail)
         first = advance(page, until="time")
-        check("the walk reaches the fourth step", first[-1:] == ["time"],
+        check("the walk reaches the hours step", first[-1:] == ["time"],
               first)
         check("the three are held once the config is in",
               held(page) == {"fbclid": "AbC_123-x", "ad_id": "111",
@@ -313,9 +321,10 @@ def main():
         check("no article link anywhere else on the page",
               got["anchorsOutside"] == 0 and got["sticky"] == 0)
         check("no horizontal scroll", got["sw"] <= got["vw"], got["sw"])
-        check("the block sits between the offer and the footer",
-              got["order"][-3:] == ["ai-offer", "ai-rsoc", "ai-foot"],
-              got["order"])
+        check("the page is the three blocks, what it unlocks, guides, footer",
+              got["order"] == ["ai-profile", "ai-scorecard", "ai-offer",
+                               "ai-unlock", "ai-divider", "ai-rsoc",
+                               "ai-foot"], got["order"])
         check("the pay button is in the offer card, above the block",
               got["payIn"] and all(l["afterPay"] for l in got["links"]))
         with_block = got
@@ -355,8 +364,9 @@ def main():
         check("no block and no article link in the DOM",
               not got["box"] and got["anchorsOutside"] == 0
               and "ai-rsoc" not in got["order"], got["order"])
-        check("the page ends offer, footer",
-              got["order"][-2:] == ["ai-offer", "ai-foot"], got["order"])
+        check("the page ends on the divider and the footer",
+              got["order"][-3:] == ["ai-unlock", "ai-divider", "ai-foot"],
+              got["order"])
         check("the offer card is the same markup with and without the block",
               got["offer"] == with_block["offer"])
         check("  and so are the consent box, its place and the pay button",

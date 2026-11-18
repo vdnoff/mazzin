@@ -1006,6 +1006,14 @@
       words_.setAttribute("aria-hidden", "true");   // the button already says it
       words_.textContent = item.label || "";
       card.appendChild(words_);
+      // A second, quieter line under the answer, where the card names one.
+      if (typeof item.sub === "string" && item.sub) {
+        var sub_ = document.createElement("span");
+        sub_.className = "card-sub";
+        sub_.setAttribute("aria-hidden", "true");
+        sub_.textContent = item.sub;
+        card.appendChild(sub_);
+      }
       var tick = document.createElement("span");
       tick.className = "check";
       tick.setAttribute("aria-hidden", "true");
@@ -1103,8 +1111,35 @@
     startStepTimer(st);
     setStepKicker(st);
     setCaption((st && st.question) || "");
+    setStepExtras(st);
     renderProgress();
     prepareNext();
+  }
+
+  // Two optional lines a step may carry: a counter chip above everything in
+  // the stage, and a sentence under the question. No node is built for either
+  // until some step names one, so a funnel that names neither has neither.
+  function setStepExtras(st) {
+    var chip = (st && typeof st.chip === "string") ? st.chip : "";
+    if (chip && !el.stepChip && el.stage) {
+      el.stepChip = elm("p", "step-chip");
+      el.stepChip.id = "step-chip";
+      el.stage.insertBefore(el.stepChip, el.stage.firstChild);
+    }
+    if (el.stepChip) {
+      el.stepChip.hidden = !chip;
+      el.stepChip.textContent = chip;
+    }
+    var sub = (st && typeof st.sub === "string") ? st.sub : "";
+    if (sub && !el.stepSub && el.caption && el.caption.parentNode) {
+      el.stepSub = elm("p", "step-sub");
+      el.stepSub.id = "step-sub";
+      el.caption.parentNode.insertBefore(el.stepSub, el.caption.nextSibling);
+    }
+    if (el.stepSub) {
+      el.stepSub.hidden = !sub;
+      el.stepSub.textContent = sub;
+    }
   }
 
   // A line over the question, naming where in the walk this step sits — the
@@ -1539,6 +1574,11 @@
     var total = cfg.swipe.pairs_count;
     var current = Math.min(step + 1, total);
     var label = current + " of " + total;
+    // A step may say where it is in its own words ("Scenario 3 of 8").
+    var here = stepAt(step);
+    if (here && typeof here.progress_label === "string" && here.progress_label) {
+      label = here.progress_label;
+    }
 
     fillPips(el.pips, total);
     fillPips(el.midPips, total);
@@ -1770,6 +1810,11 @@
   function choose(item, card) {
     if (picking || !pair.length) return;   // one tap per pair
     picking = true;
+    // Read before the counter moves and the pair is emptied: the step that
+    // was answered and the cards it showed, for a step that answers back.
+    var fbStep = stepAt(step);
+    var fb = card ? feedbackFor(fbStep) : null;
+    var fbShown = pair.slice();
     // Whoever got here first, the clock is done. A tap clears it; so does the
     // clock's own expiry, which arrives through this same function.
     stopStepTimer();
@@ -1798,7 +1843,11 @@
 
     // Show the choice landing, and hold it, before anything moves. Tracking
     // already fired above at tap time — the hold must not shift analytics.
-    if (card) {
+    if (fb) {
+      // The step answers the tap itself, below; no mark, badge or chip.
+      card.classList.add("is-chosen");
+      el.cards.classList.add("is-picking");
+    } else if (card) {
       card.classList.add("is-chosen");
       el.cards.classList.add("is-picking");
       // A step that names nothing until it is answered names it here: the
@@ -1831,7 +1880,7 @@
     // reading the name of a card they did not pick.
     var late = (card && labels === "on_tap") ? LABEL_FLASH_MS : 0;
     var reduced = prefersReducedMotion();
-    setTimeout(function () {
+    var leave = function () {
       // The pip fills as the set leaves, not as the card is tapped. It used to
       // pop a second and a half before anything else moved, which read as a
       // fourth event in a step that only has three; on the exit it is the same
@@ -1848,7 +1897,97 @@
         // invisible one must not advance the quiz twice.
         advance();
       }, reduced ? SWAP_REDUCED_MS : EXIT_MS + EXIT_CHOSEN_MS);
-    }, (reduced ? HOLD_REDUCED_MS : HOLD_MS) + late);
+    };
+    if (fb) { runFeedback(fb, fbStep, item, fbShown, leave); return; }
+    setTimeout(leave, (reduced ? HOLD_REDUCED_MS : holdMs()) + late);
+  }
+
+  // How long a chosen card is held before the set leaves. The platform's
+  // figure, unless the funnel names its own.
+  function holdMs() {
+    var own = cfg && cfg.swipe && cfg.swipe.hold_ms;
+    return (typeof own === "number" && own >= 0 && own <= 5000) ? own : HOLD_MS;
+  }
+
+  // --- a step that answers back ----------------------------------------------
+  //
+  // Opt-in twice over: the funnel carries a `swipe.feedback` block, and the
+  // step carries a `why`. Such a step does not hold and leave on a tap; it
+  // marks the right card, marks the tapped one if it was not the right one,
+  // says in a panel under the cards which it was and why, and moves on by
+  // itself after `swipe.feedback_ms`, or at once on a tap anywhere.
+  //
+  // The swipe event, the scores and the choice were all recorded before this
+  // runs, by the same lines as on every other step, so nothing here can be
+  // counted twice and nothing here is counted at all. A funnel without the
+  // block never reaches this section.
+  function feedbackFor(st) {
+    var block = cfg && cfg.swipe && cfg.swipe.feedback;
+    if (!block || typeof block !== "object") return null;
+    if (!st || typeof st.why !== "string" || !st.why) return null;
+    return block;
+  }
+
+  function runFeedback(block, st, item, shown, leave) {
+    var suffix = (typeof block.hit_suffix === "string" && block.hit_suffix)
+      ? block.hit_suffix : "_hit";
+    function isHit(g) {
+      return (g.tags || []).some(function (t) {
+        return typeof t === "string" && t.slice(-suffix.length) === suffix;
+      });
+    }
+    function flag(node, text) {
+      var mark = elm("span", "card-flag", text);
+      mark.setAttribute("aria-hidden", "true");
+      node.appendChild(mark);
+    }
+    var good = isHit(item);
+    var nodes = el.cards.children;
+    shown.forEach(function (g, i) {
+      var node = nodes[i];
+      if (!node) return;
+      if (isHit(g)) {
+        node.classList.add("is-right");
+        flag(node, block.right || "Right");
+      } else if (g === item) {
+        node.classList.add("is-wrong");
+        flag(node, block.yours || "Your pick");
+      }
+    });
+    el.cards.classList.add("is-feedback");
+
+    var panel = elm("div", "step-feedback " + (good ? "is-good" : "is-bad"));
+    panel.id = "step-feedback";
+    panel.setAttribute("role", "status");
+    panel.appendChild(elm("p", "step-feedback-head",
+                          good ? (block.good || "Right call.")
+                               : (block.bad || "Costly move.")));
+    panel.appendChild(elm("p", "step-feedback-why", st.why));
+    var next = elm("button", "step-feedback-next", block.next || "Next");
+    next.type = "button";
+    panel.appendChild(next);
+    el.cards.parentNode.insertBefore(panel, el.cards.nextSibling);
+
+    var done = false;
+    var timer = null;
+    var armed = null;
+    function go() {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      clearTimeout(armed);
+      document.removeEventListener("click", go, true);
+      if (panel.parentNode) panel.parentNode.removeChild(panel);
+      el.cards.classList.remove("is-feedback");
+      leave();
+    }
+    var own = cfg.swipe.feedback_ms;
+    var ms = (typeof own === "number" && own >= 0 && own <= 20000) ? own : 2000;
+    timer = setTimeout(go, ms);
+    // A tap anywhere moves on, but not the tail of the tap that answered.
+    armed = setTimeout(function () {
+      if (!done) document.addEventListener("click", go, true);
+    }, 350);
   }
 
   // The mark a `check` step answers a tap with: a circle over the middle of
@@ -2088,6 +2227,7 @@
     el.midSub.hidden = !entry.sub;
     el.midCta.textContent = entry.cta || "Continue analysis";
     el.midCta.hidden = midAuto;
+    setCut(entry);
     // Kicker, line, grid. A subline on a flash is a sentence competing with
     // the frames somebody is being asked to hold in their head.
     if (flash) {
@@ -2136,7 +2276,58 @@
     // Its own beat, or four seconds and a button — whichever this entry asked
     // for. Either way a tap gets there first: a screen that only ever waits is
     // a screen somebody sits through.
+    // A screen with something to read can ask to wait for its button.
+    if (entry.hold === true && !auto) return;
     midTimer = setTimeout(closeInterstitial, auto || INTERSTITIAL_MS);
+  }
+
+  // The "many down to few" screen: two figures with an arrow between them
+  // over the line, and a short list of locked rows under it. Built only for
+  // an entry that carries a `cut` block; hidden again for any that does not.
+  function setCut(entry) {
+    var cut = entry && entry.cut;
+    var on = !!(cut && typeof cut === "object");
+    var screen = document.getElementById("screen-interstitial");
+    if (screen && (on || el.midCut)) screen.classList.toggle("is-cut", on);
+    if (!on) {
+      if (el.midCut) el.midCut.hidden = true;
+      if (el.midLocks) el.midLocks.hidden = true;
+      return;
+    }
+    if (!el.midCut && el.midLine && el.midLine.parentNode) {
+      el.midCut = elm("p", "mid-cut");
+      el.midCut.setAttribute("aria-hidden", "true");
+      el.midLine.parentNode.insertBefore(el.midCut, el.midLine);
+    }
+    if (!el.midLocks && el.midSub && el.midSub.parentNode) {
+      el.midLocks = elm("ul", "mid-locks");
+      el.midSub.parentNode.insertBefore(el.midLocks, el.midSub);
+    }
+    if (el.midCut) {
+      el.midCut.hidden = false;
+      el.midCut.textContent = "";
+      el.midCut.appendChild(elm("span", "mid-cut-from", String(cut.from || "")));
+      el.midCut.appendChild(elm("span", "mid-cut-arrow", "\u2192"));
+      el.midCut.appendChild(elm("span", "mid-cut-to", String(cut.to || "")));
+    }
+    if (el.midLocks) {
+      el.midLocks.hidden = false;
+      el.midLocks.textContent = "";
+      (Array.isArray(cut.rows) ? cut.rows : []).forEach(function (text) {
+        var row = elm("li", "mid-lock");
+        var ns = "http://www.w3.org/2000/svg";
+        var icon = document.createElementNS(ns, "svg");
+        icon.setAttribute("viewBox", "0 0 16 16");
+        icon.setAttribute("aria-hidden", "true");
+        var d = document.createElementNS(ns, "path");
+        d.setAttribute("d", "M5 8V5.5a3 3 0 0 1 6 0V8M4 8h8v6H4z");
+        icon.appendChild(d);
+        row.appendChild(icon);
+        row.appendChild(elm("span", "mid-lock-name", String(text)));
+        row.appendChild(elm("span", "mid-lock-bar"));
+        el.midLocks.appendChild(row);
+      });
+    }
   }
 
   function closeInterstitial() {
@@ -8363,6 +8554,9 @@
     });
     card.appendChild(button);
     if (block.foot) card.appendChild(elm("p", "intro-foot", block.foot));
+    if (typeof block.foot_note === "string" && block.foot_note) {
+      card.appendChild(elm("p", "intro-foot-note", block.foot_note));
+    }
 
     el.stage.insertBefore(card, el.stage.firstChild);
     el.swipe.classList.add("is-intro");
@@ -8578,26 +8772,51 @@
         keepPassthrough(params);
         document.title = (cfg.meta && cfg.meta.title) || document.title;
         applyTheme();
-        wire();
-        // The arrival ground, for the path that could not ask for it. The
-        // unlocked screen is put up at script execution — before this fetch is
-        // even issued, on purpose, so somebody back from Stripe sees their
-        // report loading rather than the quiz they finished — and the colour
-        // it lands on is this funnel's to name, so it can only be applied
-        // once the config is here. `darkNow` is idempotent.
-        if (unlockedStarted) darkNow();
-        if (unlocked) { applyStyleCopy(); reflowUnlocked(); }
-        else startQuiz();
+        // A theme that lives in the funnel's own stylesheet has to be on the
+        // page before the first screen is, or the walk would paint once in
+        // this file's colours and again in its own. Opt-in: a config without
+        // `theme_css` takes the line below it synchronously, as it always did.
+        if (themeCss()) {
+          loadAsset(themeCss(), function () {
+            try { begin(unlocked); } catch (e) { lost(unlocked); }
+          });
+          return;
+        }
+        begin(unlocked);
       })
-      .catch(function () {
-        // Nothing is coming. Whatever the report says its own order is, is now
-        // the best order there is.
-        configLost = true;
-        if (unlocked) reflowUnlocked();
-        // The kicker this used to write into is gone; the caption is the
-        // loudest slot on an otherwise empty screen, so the failure goes there.
-        if (!unlocked) el.caption.textContent = "This quiz is unavailable right now.";
-      });
+      .catch(function () { lost(unlocked); });
+  }
+
+  function themeCss() {
+    var url = (cfg && cfg.theme_css) || "";
+    return (typeof url === "string"
+            && /^\/static\/css\/[a-z0-9_.-]{1,48}\.css$/.test(url)) ? url : "";
+  }
+
+  // Everything boot does once the config is in. A function of its own so a
+  // funnel that waits for its stylesheet runs the same lines a moment later;
+  // every other funnel calls it from where these lines used to be.
+  function begin(unlocked) {
+    wire();
+    // The arrival ground, for the path that could not ask for it. The
+    // unlocked screen is put up at script execution — before this fetch is
+    // even issued, on purpose, so somebody back from Stripe sees their
+    // report loading rather than the quiz they finished — and the colour
+    // it lands on is this funnel's to name, so it can only be applied
+    // once the config is here. `darkNow` is idempotent.
+    if (unlockedStarted) darkNow();
+    if (unlocked) { applyStyleCopy(); reflowUnlocked(); }
+    else startQuiz();
+  }
+
+  function lost(unlocked) {
+    // Nothing is coming. Whatever the report says its own order is, is now
+    // the best order there is.
+    configLost = true;
+    if (unlocked) reflowUnlocked();
+    // The kicker this used to write into is gone; the caption is the
+    // loudest slot on an otherwise empty screen, so the failure goes there.
+    if (!unlocked) el.caption.textContent = "This quiz is unavailable right now.";
   }
 
   // Someone coming back from Stripe has already paid; the first thing they see

@@ -84,7 +84,7 @@ def check(label, ok, detail=""):
 
 
 def run_of(hits, skill="skill_design", time="time_3_7", goal="goal_side",
-           predict="predict_7_9", tool="tool_chat", exp="exp_weekly"):
+           predict="predict_5_6"):
     """(choices, tag_scores) for a walk that hits `hits[zone]` of each zone.
 
     Built by walking the config the way a reader does, one card a step, so
@@ -93,8 +93,7 @@ def run_of(hits, skill="skill_design", time="time_3_7", goal="goal_side",
     """
     want = dict((key, hits) for key in DOMAINS) if isinstance(hits, int) \
         else dict(hits)
-    warm = {"skill": skill, "time": time, "goal": goal, "predict": predict,
-            "tool": tool, "exp": exp}
+    warm = {"skill": skill, "time": time, "goal": goal, "predict": predict}
     got = dict((key, 0) for key in DOMAINS)
     choices, scores = [], {}
     for step in STEPS:
@@ -134,7 +133,7 @@ check("the four shared ids, and the config titles them as sold",
       sorted(profile["spec"]) == sorted(SECTIONS)
       and [(s["id"], s["title"]) for s in CFG["report"]["sections"]]
       == [("dna", "Your AI Profile & Your Edge"),
-          ("materials", "Your 3 Best-Fit Paths"),
+          ("materials", "Your 3 Best-Fit Strategies"),
           ("mistakes", "5 Strengths to Sell & 2 Traps to Avoid"),
           ("shopping", "Your First 7 Days")])
 check("one cached per type, three written per purchase",
@@ -153,7 +152,7 @@ check("the furniture is as specified",
       and profile["mail"] is reports.COPY_AI)
 check("the shapes ask for three paths that fit and two to skip",
       profile["spec"]["materials"].count('"combo"') == 5
-      and "Invent no path" in profile["spec"]["materials"])
+      and "Invent no strategy" in profile["spec"]["materials"])
 check("  seven items of strengths and traps, seven days",
       "SEVEN items" in profile["spec"]["mistakes"]
       and "SEVEN items" in profile["spec"]["shopping"]
@@ -243,7 +242,7 @@ def client(counts, predict):
 BANDS = list(BLOCK["predict"]["bands"]) + [None]
 wrong = []
 walked = 0
-for combo in itertools.product(range(4), repeat=4):
+for combo in itertools.product(range(3), repeat=4):
     counts = dict(zip(DOMAINS, combo))
     for predict in BANDS:
         choices, scores = run_of(counts, predict=predict)
@@ -251,36 +250,37 @@ for combo in itertools.product(range(4), repeat=4):
         want = client(counts, predict)
         walked += 1
         if got["counts"] != counts or any(got[k] != want[k] for k in want) \
-                or got["predict"] != predict or got["scored"] != 12:
+                or got["predict"] != predict or got["scored"] != 8:
             wrong.append((combo, predict, got, want))
 check("every hits-per-zone combination, on every prediction (%d runs)"
-      % walked, walked == 256 * 5 and not wrong, str(wrong[:1]))
-choices, scores = run_of({"mem": 3, "foc": 2, "chg": 1, "spa": 0})
+      % walked, walked == 81 * 5 and not wrong, str(wrong[:1]))
+choices, scores = run_of({"mem": 2, "foc": 2, "chg": 1, "spa": 0},
+                         predict="predict_7_8")
 numbers = reports._ai_numbers(CFG, STYLE, scores, choices)
 check("the three levels sit where the page draws them",
       [reports._ai_numbers(CFG, STYLE, *reversed(run_of(n)))["level"]
-       for n in (0, 1, 2, 3)]
-      == ["Explorer", "Explorer", "Builder", "Operator"]
-      and [row.get("max") for row in BLOCK["levels"]][:2] == [4, 8])
+       for n in (0, 1, 2)]
+      == ["Explorer", "Builder", "Operator"]
+      and [row.get("max") for row in BLOCK["levels"]][:2] == [2, 5])
 check("an even run has no zone with the most room",
       all(reports._ai_numbers(CFG, STYLE, *reversed(run_of(n)))["weakest"]
-          is None for n in range(4)))
+          is None for n in range(3)))
 check("it is counted off the choices, not off what the browser added up",
-      reports._ai_numbers(CFG, STYLE, {"mem_hit": 3, "foc_hit": 3,
-                                       "chg_hit": 3, "spa_hit": 3},
-                          choices)["hits"] == 6
-      and reports._ai_numbers(CFG, STYLE, None, choices)["hits"] == 6)
+      reports._ai_numbers(CFG, STYLE, {"mem_hit": 2, "foc_hit": 2,
+                                       "chg_hit": 2, "spa_hit": 2},
+                          choices)["hits"] == 5
+      and reports._ai_numbers(CFG, STYLE, None, choices)["hits"] == 5)
 check("  a tally is only the fallback, clamped to what a zone can hold",
       reports._ai_numbers(CFG, STYLE, {"mem_hit": 9, "foc_hit": 1},
                           None)["counts"]
-      == {"mem": 3, "foc": 1, "chg": 0, "spa": 0})
+      == {"mem": 2, "foc": 1, "chg": 0, "spa": 0})
 check("  and a run with neither stores nothing",
       reports._ai_numbers(CFG, STYLE, None, None) is None
       and reports._ai_numbers({}, STYLE, scores, choices) is None)
 check("the warm-ups travel as the tag and the words on the card",
       numbers["skill"] == "skill_design" and numbers["time"] == "time_3_7"
       and numbers["goal"] == "goal_side"
-      and numbers["said"]["skill"] == "Design & visuals"
+      and numbers["said"]["skill"] == "Design"
       and numbers["said"]["time"] == "3–7")
 bare, bare_scores = run_of(1, skill=None, time=None, goal=None, predict=None)
 check("  and one nobody answered is None, never a guess",
@@ -348,7 +348,7 @@ check("  keyed on the skills, hours and goals the quiz really asks",
       and sorted(RULES["default_skill_by_type"]) == sorted(STYLES))
 
 print("\n--- the paths: every reader ---")
-LEVELS = {"explorer": 1, "builder": 2, "operator": 3}      # hits per zone
+LEVELS = {"explorer": 0, "builder": 1, "operator": 2}      # hits per zone
 bad = []
 seen = 0
 for skill, (level, per), time, goal in itertools.product(
@@ -437,18 +437,22 @@ check("no table, or no numbers, is no paths rather than a guess",
       and reports._ai_paths(CFG, [], None) is None)
 
 print("\n--- the answer key ---")
-KEY = CFG["answer_key"]
 SCORED = [s for s in STEPS if s["pairs"][0]["images"][0]["tags"][0]
           .split("_")[0] in DOMAINS]
-check("one line of why for each scored step, and for nothing else",
-      list(KEY) == [s["id"] for s in SCORED] and len(KEY) == 12)
-check("  each a plain sentence or two, 160 characters at most",
-      all(isinstance(v, str) and 40 <= len(v) <= 160 and v.endswith(".")
+# The line a scenario answers a tap with is the line the report gives for it.
+KEY = dict((s["id"], s.get("why")) for s in SCORED)
+check("one line of why on each scored step, and on no other",
+      len(KEY) == 8 and all(KEY.values())
+      and [s["id"] for s in STEPS if "why" in s] == list(KEY)
+      and "answer_key" not in CFG)
+check("  each a plain sentence or two, 140 characters at most",
+      all(isinstance(v, str) and 40 <= len(v) <= 140 and v.endswith(".")
           for v in KEY.values()),
-      str({k: len(v) for k, v in KEY.items() if len(v) > 160}))
-choices, scores = run_of({"mem": 3, "foc": 2, "chg": 1, "spa": 0})
+      str({k: len(v) for k, v in KEY.items() if len(v or "") > 140}))
+choices, scores = run_of({"mem": 2, "foc": 2, "chg": 1, "spa": 0},
+                         predict="predict_7_8")
 rows = reports._ai_answer_key(CFG, choices)
-check("twelve rows, in the order the questions were asked",
+check("eight rows, in the order the scenarios were asked",
       [r["id"] for r in rows] == [s["id"] for s in SCORED])
 check("  each with the question, theirs, the right one, hit or miss, why",
       all(list(r) == ["id", "zone", "question", "yours", "right", "hit",
@@ -462,13 +466,13 @@ check("  theirs is the card they tapped, and the mark is whether it was",
                              if c["id"] in choices)
           and r["hit"] == (r["yours"] == r["right"])
           for r, s in zip(rows, SCORED))
-      and [r["hit"] for r in rows].count(True) == 6)
+      and [r["hit"] for r in rows].count(True) == 5)
 check("  why is the config's line, never anything else",
       all(r["why"] == KEY[r["id"]] and r["question"] == s["question"]
           for r, s in zip(rows, SCORED)))
 check("a question nobody answered is a miss with no answer of theirs",
       [(r["yours"], r["hit"]) for r in reports._ai_answer_key(CFG, [])]
-      == [("", False)] * 12)
+      == [("", False)] * 8)
 check("the free page still has no way to reach a right answer",
       "answer_key" not in MODULE.split("function render(root, ctx) {", 1)[1]
       .split("function storedProfile", 1)[0]
@@ -483,12 +487,12 @@ check("with no key the report is whole, and says it is stubs",
       content["version"] == "stub-" + reports.SCHEMA
       and [s["id"] for s in content["sections"]] == list(SECTIONS))
 check("the numbers, under the key the delivered page reads",
-      brain.get("hits") == 6 and brain.get("scored") == 12
-      and brain.get("counts") == {"mem": 3, "foc": 2, "chg": 1, "spa": 0}
+      brain.get("hits") == 5 and brain.get("scored") == 8
+      and brain.get("counts") == {"mem": 2, "foc": 2, "chg": 1, "spa": 0}
       and brain.get("level") == "Builder"
       and brain.get("calibration") == "bold"
       and brain.get("weakest") == "spa" and brain.get("strongest") == "mem"
-      and brain.get("predict") == "predict_7_9"
+      and brain.get("predict") == "predict_7_8"
       and "stored.hits" in MODULE and "stored.counts" in MODULE
       and "stored.predict" in MODULE)
 check("  with the reader's skill, time and goal tags beside them",
@@ -499,7 +503,7 @@ check("the paths, three and two with their facts",
       and [c["id"] for c in visuals["paths"]["avoid"]] == ["P6", "P7"]
       and visuals["paths"]["format"]
       == "a productized service with fixed scope")
-check("the answer key, twelve rows",
+check("the eight scenarios, as rows",
       visuals.get("answer_key") == rows)
 stored = dict((s["id"], s["data"]) for s in content["sections"])
 check("the paths chapter names the reader's own five, in order",
@@ -511,7 +515,7 @@ check("  and is still a section its validator takes",
       all(reports.VALIDATORS[k](stored[k]) is not None for k in SECTIONS))
 check("the shipped stub itself is not written on",
       reports.AI_STUBS["materials"]["pairs"][0]["combo"]
-      == "Your primary path")
+      == "Your primary strategy")
 model = {"intro": "x" * 40, "rule": "y" * 40, "pairs": [
     {"combo": "Something else", "verdict": "avoid", "why": "w" * 30}] * 5}
 fixed = reports._ai_personal_fix("materials", model, visuals)
@@ -531,23 +535,23 @@ prompts = dict(
     (section_id, reports._section_prompt(
         STYLE, STYLE["name"], scores, section_id, cfg=CFG, choices=choices,
         funnel_slug=SLUG)) for section_id in profile["personal"])
-check("every personal prompt carries the zones, by name, x of 3",
-      all("- How AI works: 3 of 3" in p and "- Business sense: 0 of 3" in p
+check("every personal prompt carries the zones, by name, x of 2",
+      all("- How AI works: 2 of 2" in p and "- Business sense: 0 of 2" in p
           and "The zone with the most room is Business sense." in p
           for p in prompts.values()))
 check("  the score, the level and the calibration word",
-      all("They scored 6 out of 12, which this funnel calls Builder." in p
-          and "They predicted 7–9" in p and "bold" in p
+      all("They scored 5 out of 8, which this funnel calls Builder." in p
+          and "They predicted 7–8" in p and "bold" in p
           for p in prompts.values()))
-check("  and their own words for skill, hours, goal, tool and experience",
-      all("- What they are best at: Design & visuals" in p
+check("  and their own words for skill, hours and goal, and nothing dropped",
+      all("- What they are best at: Design" in p
           and "- Hours a week they can put in: 3–7" in p
-          and "- What they are after: A side project" in p
-          and "- The kind of AI tool they use most: Chat assistants" in p
-          and "- How often they use AI today: Weekly" in p
+          and "- What they are after: A side income" in p
+          and "AI tool they use most" not in p
+          and "How often they use AI" not in p
           for p in prompts.values()))
 check("the paths prompt lists the five, with verdicts, as REQUIRED",
-      "REQUIRED — these are this reader's five paths" in
+      "REQUIRED — these are this reader's five strategies" in
       prompts["materials"]
       and [m for m in re.findall(r"^- (.+) — (works|avoid)$",
                                  prompts["materials"], re.M)]
@@ -558,7 +562,7 @@ check("  with the offer format for their level",
       "The offer format for this reader's level is: a productized service "
       "with fixed scope." in prompts["materials"])
 check("the week is on the primary path, and day one on the zone with room",
-      "the seven days are on this reader's primary path, Brand & social "
+      "the seven days are on this reader's primary strategy, Brand & social "
       "design service." in prompts["shopping"]
       and "Day one is a fifteen-minute action on Business sense" in
       prompts["shopping"]
@@ -569,10 +573,10 @@ even_choices, even_scores = run_of(2)
 even = reports._section_prompt(STYLE, STYLE["name"], even_scores, "shopping",
                                cfg=CFG, choices=even_choices,
                                funnel_slug=SLUG)
-check("  on an even run, day one is the path's first step instead",
+check("  on an even run, day one is the strategy's first step instead",
       "This was an even run" in even
       and "day one is a fifteen-minute action on the first step of that "
-      "path" in even and "The zone with the most room is " not in even)
+      "strategy" in even and "The zone with the most room is " not in even)
 check("the kitchen blocks are not in it",
       not any("The %d choices they made" % 18 in p or "Leaning" in p
               or "style elements" in p for p in prompts.values()))
@@ -580,7 +584,7 @@ cached = reports._cached_prompt(STYLE, STYLE["name"], funnel_slug=SLUG)
 check("the cached chapter opens on the strength already given away",
       "Strength #1 of 5" in cached
       and reports._mistake_one(STYLE)["title"] in cached
-      and "They scored" not in cached and "five paths" not in cached)
+      and "They scored" not in cached and "five strategies" not in cached)
 every_prompt = "\n".join(prompts.values()) + cached
 check("no prompt this profile builds carries a banned phrase",
       reports._banned_hit(every_prompt.replace(reports.AI_SYSTEM, ""),
@@ -701,8 +705,8 @@ check("the cover, the paths page, the chapters and the end are its own",
       and profile["pdf_section_shots"] is False)
 html_doc = reports._pdf_html(content)
 check("the cover carries the score, the prediction, the level, the zones",
-      '<span class="n">6</span><span class="of">/12</span>' in html_doc
-      and "You predicted 7–9. You scored 6." in html_doc
+      '<span class="n">5</span><span class="of">/8</span>' in html_doc
+      and "You predicted 7–8. You scored 5." in html_doc
       and "<b>Builder</b>" in html_doc
       and html_doc.count('class="bar-name"') == 4
       and "The zone with the most room:" in html_doc)
@@ -714,11 +718,13 @@ check("the paths page: three with all five facts, two to skip",
       and all(reports._e(CATALOG[pid]["risk"]) in html_doc
               for pid in ("P6", "P7"))
       and "Two to skip for now" in html_doc)
-check("the answer key: twelve rows, theirs, the right one and why",
-      html_doc.count('class="ai-key-row"') == 12
+check("the eight scenarios: theirs, the right move and why",
+      html_doc.count('class="ai-key-row"') == 8
+      and "Your 8 scenarios" in html_doc and "Answer Key" not in html_doc
       and all(reports._e(r["why"]) in html_doc
               and reports._e(r["right"]) in html_doc for r in rows)
-      and html_doc.count(">RIGHT<") == 6 and html_doc.count(">MISSED<") == 6)
+      and html_doc.count(">RIGHT CALL<") == 5
+      and html_doc.count(">COSTLY MOVE<") == 3)
 check("the disclaimer closes the document, once, and is furniture",
       html_doc.count(reports._e(reports.AI_DISCLAIMER)) == 1
       and html_doc.rstrip().endswith(
@@ -739,7 +745,8 @@ check("a report with nothing stored still renders, with no empty blocks",
 copy = reports._email_copy(content)
 check("the mail is this product's",
       copy is reports.COPY_AI and "AI Navigator Report" in copy["subject"]
-      and "three best-fit paths" in copy["body"])
+      and "three best-fit strategies" in copy["body"]
+      and "your 8 scenarios" in copy["body"])
 real_price = reports._price_paid
 try:
     reports._price_paid = lambda content, purchase_id=None: None
@@ -749,9 +756,9 @@ try:
 finally:
     reports._price_paid = real_price
 check("  its opening names the price when there is one, and not otherwise",
-      bare_opening == "A plan built from your own twelve answers."
+      bare_opening == "A plan built from your own eight answers."
       and priced_opening == "You just spent $6 on a plan built from your "
-                            "own twelve answers."
+                            "own eight answers."
       and "opening" not in copy)
 check("  and its footer carries the disclaimer, with and without a link",
       reports.html.escape(reports.AI_DISCLAIMER) in copy["keep"]
@@ -764,15 +771,15 @@ check("the delivered page is told where the PDF went, the row is not",
 print("\n--- the delivered page reads the report ---")
 DELIVERED = MODULE.split("function delivered(root, ctx) {", 1)[1]
 check("it draws the paths card and the answer key from the stored report",
-      "pathsCard(ctx, copy)" in DELIVERED and "answerKey(ctx, copy)" in
+      "pathsCard(ctx, copy)" in DELIVERED and "scenarios(ctx, copy)" in
       DELIVERED and "ctx.visuals.paths" in MODULE
       and "ctx.visuals.answer_key" in MODULE)
 check("  in order: numbers, paths, chapters, key, articles, footer",
       DELIVERED.index("bars(ctx, copy, data)")
       < DELIVERED.index("pathsCard(") < DELIVERED.index("deliveredNode(")
-      < DELIVERED.index("answerKey(")
+      < DELIVERED.index("scenarios(")
       < DELIVERED.index('articles(ctx, data, "delivered")')
-      < DELIVERED.index("footer(copy)"))
+      < DELIVERED.index("footer(ctx, copy)"))
 check("  every word on both cards is the config's",
       sorted(CFG["result_copy"]["paths_card"]) == sorted(
           ["title", "lead", "format", "skip_title", "facts", "badge_works",
@@ -803,7 +810,7 @@ for slug, tally in OTHERS:
     text += reports._cached_prompt(style, style["name"], funnel_slug=slug)
     check("%s: no paths, no answer key, no ai block in a prompt" % slug,
           "paths" not in seen_visuals and "answer_key" not in seen_visuals
-          and "five paths" not in text and "FOUR ZONES THIS PERSON WAS "
+          and "five strategies" not in text and "FOUR ZONES THIS PERSON WAS "
           "SCORED ON" not in text and 'as "Strength #1 of 5"' not in text
           and reports._profile(slug) is not reports.AI_PROFILE
           and not reports._profile(slug).get("pdf_end")

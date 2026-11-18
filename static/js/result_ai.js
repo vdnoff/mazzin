@@ -1,33 +1,27 @@
 /* The AI Navigator funnel's result page, before and after the money.
  *
- * Same contract as static/js/result_focus.js, which this file was cut from —
- * engine.js loads this when a config names it, hands it the finished run, and
- * the two things that must not be got wrong, the withdrawal-right consent and
+ * engine.js loads this when a config names it and hands it the finished run.
+ * The two things that must not be got wrong, the withdrawal-right consent and
  * the button that charges, are engine.js's own live nodes moved into this
  * layout rather than rebuilt in it. There is no payment path in this file and
  * no call that starts one.
  *
- * What differs from focus is the game. Focus is played against a clock and
- * its one number is a score out of a hundred; this is twelve questions with
- * one right answer each, no clock, and the number is simply how many were
- * right. So everything focus computes about time is gone from this file, not
- * switched off: no speed points, no reaction times, no time-up tiles. So are
- * the share button, the play-again line and the comparison with a last run.
+ * The free page is three blocks: who the reader is (the type and one line),
+ * how they scored against their own prediction (a ring and a sentence), and
+ * the offer, with engine.js's pay button inside it. Under those, what the
+ * report unlocks, the partner guides where the visit carries a click to pass
+ * on, and the disclaimer. The page never names a strategy and never says
+ * which answer was right: the rows in the offer card are labels and empty
+ * bars, and nothing of the report's text is in the DOM before it is bought.
  *
- * What it adds is the prediction. Before the test the reader says how many of
- * the twelve they expect to get right, and the page sets that against what
- * they scored — inside the band, above it or below it — in the reader's own
- * numbers and nobody else's.
+ * The paid page adds the zone bars, the strategies card, the four sections
+ * and the eight scenarios with the reader's move, the right move and why.
  *
- * Nothing here holds a number of its own. How many questions there are, how
- * many per zone, what the zones are called, where the three levels start and
- * which band each prediction means all come off `brain_age` in the config —
- * the block keeps the key focus and brain use because the report machinery
- * reads it by that name — and every sentence comes off `result_copy`. The
- * tallies are the ones engine.js scored on the way through.
- *
- * The page never says which answer was right. The strip shows twelve marks,
- * right or missed, and the answers themselves are in the report.
+ * Nothing here holds a number of its own. How many scenarios there are, how
+ * many per zone, what the zones are called, where the levels start and which
+ * band each prediction means all come off `brain_age` in the config — the
+ * block keeps the key focus and brain use because the report machinery reads
+ * it by that name — and every sentence comes off `result_copy`.
  */
 (function () {
   "use strict";
@@ -165,12 +159,12 @@
   //
   // `hits` is counted off the hit tags engine.js tallied, so a question
   // nobody answered — a reader who reloaded mid-quiz — is a miss, and the
-  // number shown is always out of the full twelve.
+  // number shown is always out of the full eight.
   function profileOf(ctx) {
     var block = numbers(ctx);
     if (!block) return null;
     var scores = ctx.scores || {};
-    var per = typeof block.per_domain === "number" ? block.per_domain : 3;
+    var per = typeof block.per_domain === "number" ? block.per_domain : 2;
     var counts = {};
     var hits = 0;
     DOMAINS.forEach(function (key) {
@@ -201,89 +195,70 @@
     };
   }
 
-  // --- 1) the score, and the prediction it is set against --------------------
+  // --- 1) who they are -------------------------------------------------------
 
-  function kicker(copy) {
-    return elm("p", "ai-kicker", copy.score_kicker || copy.kicker || "");
-  }
-
-  function hero(ctx, copy, data) {
-    var card = elm("section", "ai-hero");
-    if (copy.score_lead) card.appendChild(elm("p", "ai-hero-lead",
-                                              copy.score_lead));
-    var figure = elm("p", "ai-score");
-    var text = fill(copy.score_of || "{n} / {total}",
-                    { n: data.hits, total: data.total });
-    // The first number is the loud one; " / 12" is its unit.
-    var cut = text.indexOf(String(data.hits));
-    if (cut === 0) {
-      figure.appendChild(elm("span", "ai-score-n", String(data.hits)));
-      figure.appendChild(elm("span", "ai-score-of",
-                             text.slice(String(data.hits).length)));
-    } else {
-      figure.textContent = text;
-    }
-    card.appendChild(figure);
-
-    if (data.band) {
-      card.appendChild(elm("p", "ai-predict", fill(
-        copy.calibration_line || "You predicted {band}. You scored {n}.",
-        { band: data.band.label || (data.band.min + "–" + data.band.max),
-          n: data.hits })));
-      var word = (copy.calibration || {})[data.calibration] || "";
-      if (word) {
-        card.appendChild(elm("p", "ai-calibration is-" + data.calibration,
-                             word));
-      }
-    }
-    return card;
-  }
-
-  // --- 2) the level ----------------------------------------------------------
-
-  function levelChip(ctx, copy, data) {
-    if (!data.level || !data.level.label) return null;
-    var wrap = elm("section", "ai-level");
-    var chip = elm("p", "ai-level-chip");
-    if (copy.level_lead) {
-      chip.appendChild(elm("span", "ai-level-lead", copy.level_lead));
-    }
-    chip.appendChild(elm("span", "ai-level-name", data.level.label));
-    wrap.appendChild(chip);
-
-    // The whole scale, with this run's rung marked, so the chip is a place on
-    // something rather than a bare word.
-    var rows = (numbers(ctx) || {}).levels || [];
-    var scale = elm("ol", "ai-level-scale");
-    var from = 0;
-    rows.forEach(function (row) {
-      var to = typeof row.max === "number" ? row.max : data.total;
-      var item = elm("li", "ai-level-step");
-      if (row === data.level) {
-        item.classList.add("is-here");
-        item.setAttribute("aria-current", "true");
-      }
-      item.appendChild(elm("span", "ai-level-step-name", row.label || ""));
-      item.appendChild(elm("span", "ai-level-step-range", from + "–" + to));
-      scale.appendChild(item);
-      from = to + 1;
-    });
-    wrap.appendChild(scale);
-    return wrap;
-  }
-
-  // --- 3) the type -----------------------------------------------------------
-
-  function typeCard(ctx) {
-    var card = elm("section", "ai-type");
+  function profileBlock(ctx, copy) {
+    var card = elm("section", "ai-profile");
     if (ctx.style.id) card.setAttribute("data-type", ctx.style.id);
+    if (copy.kicker) card.appendChild(elm("p", "ai-kicker", copy.kicker));
     card.appendChild(elm("h1", "ai-type-name", ctx.style.name || ""));
     var essence = (profileCopy(ctx).essence || {})[ctx.style.id] || "";
     if (essence) card.appendChild(elm("p", "ai-type-essence", essence));
     return card;
   }
 
-  // --- 4) the four zones -----------------------------------------------------
+  // --- 2) the score, against their own prediction ----------------------------
+
+  var RING_R = 34;
+
+  function ring(data, copy) {
+    var size = 2 * RING_R + 16;
+    var mid = size / 2;
+    var around = 2 * Math.PI * RING_R;
+    var share = data.total ? Math.max(0, Math.min(1, data.hits / data.total))
+      : 0;
+    var box = elm("div", "ai-ring");
+    var svg = svgEl("svg", { viewBox: "0 0 " + size + " " + size,
+                             "aria-hidden": "true" });
+    svg.appendChild(svgEl("circle", { cx: mid, cy: mid, r: RING_R,
+                                      "class": "ai-ring-track" }));
+    var arc = svgEl("circle", { cx: mid, cy: mid, r: RING_R,
+                                "class": "ai-ring-arc",
+                                transform: "rotate(-90 " + mid + " " + mid + ")" });
+    arc.setAttribute("stroke-dasharray",
+                     (around * share).toFixed(2) + " " + around.toFixed(2));
+    if (share > 0) svg.appendChild(arc);
+    box.appendChild(svg);
+    box.appendChild(elm("p", "ai-ring-n", fill(copy.score_of || "{n}/{total}",
+                                               { n: data.hits,
+                                                 total: data.total })));
+    return box;
+  }
+
+  function scoreCard(ctx, copy, data) {
+    var card = elm("section", "ai-scorecard");
+    card.appendChild(ring(data, copy));
+    var text = elm("div", "ai-score-text");
+    if (data.band) {
+      text.appendChild(elm("p", "ai-predict", fill(
+        copy.calibration_line || "You predicted {band}. You scored {n}.",
+        { band: data.band.label || (data.band.min + "–" + data.band.max),
+          n: data.hits })));
+      var word = (copy.calibration || {})[data.calibration] || "";
+      if (word) {
+        text.appendChild(elm("p", "ai-calibration is-" + data.calibration,
+                             word));
+      }
+    } else {
+      text.appendChild(elm("p", "ai-predict", fill(
+        copy.score_only || "You scored {n} of {total}.",
+        { n: data.hits, total: data.total })));
+    }
+    card.appendChild(text);
+    return card;
+  }
+
+  // --- the four zones (the paid page only) -----------------------------------
 
   function bars(ctx, copy, data) {
     var card = elm("section", "ai-zones");
@@ -320,58 +295,6 @@
     return card;
   }
 
-  // --- 5) the twelve marks ---------------------------------------------------
-
-  var MARK_CHECK = "M4.6 8.3 6.9 10.7 11.5 5.6";
-  var MARK_CROSS = "M5.5 5.5 10.5 10.5M10.5 5.5 5.5 10.5";
-
-  // One mark a question, right or missed, grouped by zone. Which of the four
-  // answers was the right one is not on this page in any form — no label, no
-  // id, no attribute — because that is what the Answer Key is.
-  function strip(ctx, copy) {
-    var list = rounds(ctx.cfg);
-    if (!list.length) return null;
-    var card = elm("section", "ai-strip");
-    if (copy.strip_title) {
-      card.appendChild(elm("h2", "ai-h2", copy.strip_title));
-    }
-    var row = elm("ol", "ai-marks");
-    var picks = ctx.picks || {};
-    list.forEach(function (round, index) {
-      var ok = isHit(picks[round.id], round.zone);
-      var item = elm("li", "ai-mark is-" + round.zone
-                     + (ok ? " is-hit" : " is-miss"));
-      item.setAttribute("aria-label", (index + 1) + ": "
-                        + (ok ? (copy.strip_hit || "right")
-                           : (copy.strip_miss || "missed")));
-      item.appendChild(glyph(ok ? MARK_CHECK : MARK_CROSS));
-      row.appendChild(item);
-    });
-    card.appendChild(row);
-    if (copy.strip_note) {
-      card.appendChild(elm("p", "ai-caption", copy.strip_note));
-    }
-    return card;
-  }
-
-  // --- 6) strength #1, free and in full --------------------------------------
-
-  function strength(ctx, copy) {
-    var one = ctx.strength;
-    if (!one || !one.title) return null;
-    var card = elm("section", "ai-strength");
-    var title = (ctx.strengthCopy || {}).title || "";
-    var lead = [copy.strength_lead, title].filter(Boolean).join(" ");
-    if (lead) card.appendChild(elm("p", "ai-strength-lead", lead));
-    card.appendChild(elm("h2", "ai-strength-title", one.title));
-    if (one.body) card.appendChild(elm("p", "ai-body", one.body));
-    if (one.fix) card.appendChild(elm("p", "ai-strength-fix", one.fix));
-    var note = (ctx.strengthCopy || {}).locked_note || "";
-    if (note) card.appendChild(elm("p", "ai-strength-note", note));
-    return card;
-  }
-
-  // --- 7) what is locked -----------------------------------------------------
 
   var LOCK_PATH = "M5 8V5.5a3 3 0 0 1 6 0V8M4 8h8v6H4z";
 
@@ -399,23 +322,6 @@
     return "";
   }
 
-  function lockedNode(ctx, copy, title, key, line, lead) {
-    var item = node("locked", title);
-    if (lead) item.classList.add("is-lead");
-    var body = item.querySelector(".ai-node-body");
-    if (key) {
-      body.insertBefore(elm("p", "ai-node-key", key + ":"), body.firstChild);
-    }
-    if (line) body.appendChild(elm("p", "ai-teaser", line));
-    var lock = elm("span", "ai-lock", copy.locked_note || "Locked");
-    lock.setAttribute("aria-hidden", "true");
-    item.appendChild(lock);
-    return item;
-  }
-
-  // The reason somebody gave for being here, as the config maps it: which
-  // chapter leads, and one line for the offer. Found by tag, off whichever
-  // step carried it. A config with no map changes nothing.
   function purposeRule(ctx) {
     var map = copyOf(ctx).purpose_map;
     if (!map || typeof map !== "object") return null;
@@ -438,121 +344,68 @@
     return head.concat(rest);
   }
 
-  function path(ctx, copy) {
-    var card = elm("section", "ai-path-card");
-    if (copy.path_teaser) {
-      card.appendChild(elm("p", "ai-path-teaser", copy.path_teaser));
-    }
-    if (copy.path_title) card.appendChild(elm("h2", "ai-h2", copy.path_title));
-    var list = elm("ol", "ai-path");
-    var want = (purposeRule(ctx) || {}).emphasized_section || "";
-    var shut = (ctx.sections || []).filter(function (s) { return s.locked; });
-    firstly(shut, want).forEach(function (section) {
-      var line = typeof ctx.fillHook === "function"
-        ? ctx.fillHook(section.teaser_line || "")
-        : (section.teaser_line || "");
-      list.appendChild(lockedNode(ctx, copy, section.title,
-                                  keywordOf(ctx, section.id), line,
-                                  section.id === want));
-    });
-    var key = profileCopy(ctx).answer_key;
-    if (key && key.title) {
-      list.appendChild(lockedNode(ctx, copy, key.title, key.key || "",
-                                  key.hook || "", false));
-    }
-    card.appendChild(list);
-    return card;
-  }
-
-  // --- 8) the offer ----------------------------------------------------------
+  // --- 3) the offer ----------------------------------------------------------
   //
-  // The card is this file's; everything on it that touches money is not. The
-  // consent box, the wallet, the button, its error line and the legal links
-  // are engine.js's own nodes, already wired, moved here.
+  // Labels and empty bars. The strategy's name and everything about it are
+  // in the report and nowhere on this page: a bar is a decorative span with
+  // no text in it, so there is nothing for a reader, a screen reader or a
+  // scraper to lift.
 
   var OFFER_ID = "ai-offer";
 
-  var OFFER_ICONS = {
-    target: "M8 2.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM8 5.5a2.5 2.5 0 1 "
-      + "0 0 5 2.5 2.5 0 0 0 0-5z",
-    calendar: "M3 4.5h10v8.5H3zM3 7h10M5.5 3v2.5M10.5 3v2.5",
-    bolt: "M9 2 4 9h3.5L7 14l5-7H8.5L9 2z",
-    key: "M9.5 6.5a3 3 0 1 0-2.3 2.9L8.5 10.5H10V12h1.5v1.5H13V11l-3.6-3.6"
-      + "c.1-.3.1-.6.1-.9z"
-  };
+  function bar(cls) {
+    var node = elm("span", "ai-bar" + (cls ? " " + cls : ""));
+    node.setAttribute("aria-hidden", "true");
+    return node;
+  }
 
-  function offerBenefits(ctx) {
-    var cards = profileCopy(ctx).offer_cards || [];
-    if (!cards.length) return null;
-    var grid = elm("ul", "ai-benefits");
-    cards.forEach(function (row) {
-      var item = elm("li", "ai-benefit");
-      if (OFFER_ICONS[row.icon]) {
-        var mark = elm("span", "ai-benefit-icon");
-        mark.appendChild(glyph(OFFER_ICONS[row.icon]));
-        item.appendChild(mark);
+  // "your 3–7 hours a week", from the card they tapped. Empty when the step
+  // was never answered, and the line then says "your hours".
+  function hoursOf(ctx, words) {
+    var table = words.hours || {};
+    var picks = ctx.picks || {};
+    for (var id in picks) {
+      if (!Object.prototype.hasOwnProperty.call(picks, id)) continue;
+      var tags = (picks[id] && picks[id].tags) || [];
+      for (var i = 0; i < tags.length; i++) {
+        if (typeof table[tags[i]] === "string") return table[tags[i]];
       }
-      var text = elm("div", "ai-benefit-text");
-      text.appendChild(elm("p", "ai-benefit-title", row.title || ""));
-      if (row.sub) text.appendChild(elm("p", "ai-benefit-sub", row.sub));
-      item.appendChild(text);
-      grid.appendChild(item);
-    });
-    return grid;
-  }
-
-  function offerPersonal(ctx, data) {
-    var table = profileCopy(ctx);
-    if (!data) return "";
-    if (data.room && table.offer_personal) {
-      return fill(table.offer_personal, { zone: zoneName(ctx, data.room) });
     }
-    return table.offer_personal_even || "";
+    return "";
   }
 
-  function accented(text, accent, cls) {
-    var line = elm("p", cls);
-    if (accent && text.indexOf(accent) !== -1) {
-      var cut = text.split(accent);
-      line.appendChild(document.createTextNode(cut[0]));
-      line.appendChild(elm("span", "ai-accent", accent));
-      line.appendChild(document.createTextNode(cut.slice(1).join(accent)));
-    } else {
-      line.textContent = text;
-    }
-    return line;
-  }
-
-  function offer(ctx, copy, data) {
+  function offer(ctx, copy) {
+    var words = copy.offer || {};
     var card = elm("section", "ai-offer");
     card.id = OFFER_ID;
     var nodes = ctx.nodes || {};
-    var commerce = ctx.commerce || {};
     var checkout = (ctx.cfg && ctx.cfg.checkout) || {};
 
-    var head = ctx.withPrice(profileCopy(ctx).offer_head || "");
-    if (head) card.appendChild(elm("h2", "ai-offer-head", head));
-    var personal = offerPersonal(ctx, data);
-    if (personal) card.appendChild(elm("p", "ai-offer-personal", personal));
-    var sub = (purposeRule(ctx) || {}).offer_sub || copy.offer_sub || "";
-    if (sub) card.appendChild(elm("p", "ai-offer-sub", ctx.withPrice(sub)));
-    var grid = offerBenefits(ctx);
-    if (grid) card.appendChild(grid);
+    var label = elm("p", "ai-offer-label");
+    label.appendChild(elm("span", "", words.label || ""));
+    label.appendChild(glyph(LOCK_PATH, "ai-lock-icon"));
+    card.appendChild(label);
+    card.appendChild(bar("is-name"));
 
-    // `ctx.price` is whatever the checkout is about to charge. Formatted by
-    // engine.js off the config's own amount; no figure is written here.
-    var price = elm("p", "ai-price");
-    price.appendChild(elm("span", "ai-price-now", ctx.price));
-    if (commerce.price_note) {
-      price.appendChild(elm("span", "ai-price-note", commerce.price_note));
-    }
-    card.appendChild(price);
+    var hours = hoursOf(ctx, words);
+    var line = hours ? fill(words.line || "", { hours: hours })
+      : (words.line_bare || "");
+    if (line) card.appendChild(elm("p", "ai-offer-line", line));
 
-    // Live nodes, not copies of them. The consent box is placed only where a
-    // funnel asks for one: `withdrawal_consent: false` takes it off the page
-    // for everybody. Taken off, it still has to be satisfied — it is what
-    // enables the pay button — so it is ticked here rather than left to
-    // whatever `consent_prechecked` happens to say.
+    var rows = elm("ul", "ai-locked");
+    (words.rows || []).forEach(function (text) {
+      var row = elm("li", "ai-locked-row");
+      row.appendChild(glyph(LOCK_PATH, "ai-lock-icon"));
+      row.appendChild(elm("span", "ai-locked-label", text));
+      row.appendChild(bar(""));
+      rows.appendChild(row);
+    });
+    card.appendChild(rows);
+
+    // A funnel that asks for no consent tick still has the box: engine.js
+    // gates the pay button on it. Ticked here, announced the way a real tick
+    // is, and kept out of sight. Where the funnel does ask, the row is the
+    // engine's own and goes above the button.
     var wantsConsent = checkout.withdrawal_consent !== false;
     if (!wantsConsent && nodes.consent) {
       var box = nodes.consent.querySelector("input[type=checkbox]");
@@ -566,48 +419,49 @@
      nodes.payButton, nodes.payError]
       .forEach(function (n) { if (n) card.appendChild(n); });
 
-    // What this is and is not, straight under the button that buys it.
-    var plain = checkout.disclaimer || copy.disclaimer || "";
-    if (plain) card.appendChild(elm("p", "ai-disclaimer", plain));
+    if (words.under) card.appendChild(elm("p", "ai-offer-under", words.under));
 
-    var chips = profileCopy(ctx).offer_chips || [];
-    if (chips.length) {
-      var row = elm("ul", "ai-chips");
-      chips.forEach(function (text) {
-        row.appendChild(elm("li", "ai-chip", text));
-      });
-      card.appendChild(row);
-    }
-    var trust = commerce.trust || checkout.trust || [];
-    if (trust.length) {
-      card.appendChild(elm("p", "ai-trust", trust.join(" · ")));
-    }
-    if (nodes.legal) card.appendChild(nodes.legal);
-    // Last and quietest: what the thing is, in one line. Not a comparison
-    // with what anything else costs.
-    var anchor = ctx.withPrice(commerce.price_anchor || commerce.anchor_head
-                               || checkout.anchor_head || "");
-    if (anchor) {
-      card.appendChild(accented(anchor, commerce.price_anchor_accent
-                                || commerce.anchor_head_accent || "",
-                                "ai-anchor"));
-    }
-
-    // The rows this layout does not use. Hidden rather than removed: they are
-    // the same elements the paid view still wants.
+    // The paywall's own rows have nothing left to say on this page.
     [nodes.manifest, nodes.anchor, nodes.price, nodes.trust]
       .forEach(function (n) { if (n) n.hidden = true; });
 
-    // This card is the offer now; engine.js fires `paywall_view` when the
-    // node it is told to watch reaches the reader. Guarded because this file
-    // and engine.js sit behind a CDN and can be a version apart.
     if (typeof ctx.watchOffer === "function") ctx.watchOffer(card);
     return card;
   }
 
-  function footer(copy) {
-    if (!copy.disclaimer) return null;
-    return elm("p", "ai-foot", copy.disclaimer);
+  var CHECK_PATH = "M3.5 8.6l3.1 3.1 5.9-6.4";
+
+  function unlocks(copy) {
+    var words = copy.offer || {};
+    var list = words.unlock || [];
+    if (!list.length) return null;
+    var card = elm("section", "ai-unlock");
+    if (words.unlock_title) {
+      card.appendChild(elm("h2", "ai-h2", words.unlock_title));
+    }
+    var rows = elm("ul", "ai-checks");
+    list.forEach(function (text) {
+      var row = elm("li", "ai-check");
+      row.appendChild(glyph(CHECK_PATH, "ai-check-icon"));
+      row.appendChild(elm("span", "", text));
+      rows.appendChild(row);
+    });
+    card.appendChild(rows);
+    return card;
+  }
+
+  function divider() {
+    var rule = elm("hr", "ai-divider");
+    rule.setAttribute("aria-hidden", "true");
+    return rule;
+  }
+
+  function footer(ctx, copy) {
+    var foot = elm("footer", "ai-foot");
+    if (copy.disclaimer) foot.appendChild(elm("p", "", copy.disclaimer));
+    var legal = ctx.nodes && ctx.nodes.legal;
+    if (legal && !ctx.delivered) foot.appendChild(legal);
+    return foot.childNodes.length ? foot : null;
   }
 
   // --- partner articles -------------------------------------------------------
@@ -624,6 +478,7 @@
   // query or a fragment, is not drawn. With nothing to draw there is no box.
 
   var RSOC_KEY = "mazzin_ai_rsoc";
+  var ARROW_PATH = "M3.5 8h9M8.5 4l4 4-4 4";
 
   function rsocOf(ctx) {
     var block = ctx.cfg && ctx.cfg.rsoc;
@@ -732,7 +587,9 @@
     var head = slot === "delivered" ? block.head_delivered : block.head;
     if (head) box.appendChild(elm("p", "ai-rsoc-head", head));
     chosen.forEach(function (item) {
-      var link = elm("a", "ai-rsoc-link", item.label);
+      var link = elm("a", "ai-rsoc-link");
+      link.appendChild(elm("span", "ai-rsoc-text", item.label));
+      link.appendChild(glyph(ARROW_PATH, "ai-rsoc-arrow"));
       link.href = item.link + (tail ? "?" + tail : "");
       link.target = "_blank";
       link.rel = "noopener";
@@ -748,7 +605,7 @@
     return box;
   }
 
-  // --- render ----------------------------------------------------------------
+  // --- the free page ---------------------------------------------------------
 
   function render(root, ctx) {
     var copy = copyOf(ctx);
@@ -757,52 +614,29 @@
     root.innerHTML = "";
     root.classList.add("is-ai");
     root.classList.remove("is-delivered");
-    root.appendChild(kicker(copy));
-    // Top to bottom, the order somebody asks in: how did I do, against what I
-    // thought; where does that put me; what kind of run was it; where exactly;
-    // question by question; one thing I can use now; and what the rest is.
-    // A config with no number block still draws the type and the offer.
-    if (data) {
-      root.appendChild(hero(ctx, copy, data));
-      var chip = levelChip(ctx, copy, data);
-      if (chip) root.appendChild(chip);
-    }
-    root.appendChild(typeCard(ctx));
-    if (data) {
-      root.appendChild(bars(ctx, copy, data));
-      var marks = strip(ctx, copy);
-      if (marks) root.appendChild(marks);
-    }
-    var one = strength(ctx, copy);
-    if (one) root.appendChild(one);
-    root.appendChild(path(ctx, copy));
-    root.appendChild(offer(ctx, copy, data));
-    // Under the offer, never in it: the pay button is the page's one loud ask.
+    root.appendChild(profileBlock(ctx, copy));
+    if (data) root.appendChild(scoreCard(ctx, copy, data));
+    root.appendChild(offer(ctx, copy));
+    var more = unlocks(copy);
+    if (more) root.appendChild(more);
+    root.appendChild(divider());
     var guides = articles(ctx, data, "below_paywall");
     if (guides) root.appendChild(guides);
-    var foot = footer(copy);
+    var foot = footer(ctx, copy);
     if (foot) root.appendChild(foot);
 
-    // The container engine.js moved the offer rows into is empty now and its
-    // own border would draw a line under nothing.
+    // The engine's commerce block is replaced by the offer card above.
     if (ctx.nodes && ctx.nodes.commerce) ctx.nodes.commerce.hidden = true;
     root.hidden = false;
   }
 
-  // --- the delivered report --------------------------------------------------
-  //
-  // The same page after the money, opened in a tab that never ran the quiz.
-  // The run is gone by then, so the head is rebuilt from whatever the report
-  // stored under `visuals.brain` — the block the report machinery writes for
-  // a game. The report's own profile writes it: the four counts, the
-  // prediction, and the skill the reader named. A report stored without one
-  // still draws — the type card over the chapters as they arrive.
+  // --- the paid page ---------------------------------------------------------
 
   function storedProfile(ctx) {
     var stored = (ctx.visuals && ctx.visuals.brain) || null;
     var block = numbers(ctx);
     if (!stored || !block || typeof stored.hits !== "number") return null;
-    var per = typeof block.per_domain === "number" ? block.per_domain : 3;
+    var per = typeof block.per_domain === "number" ? block.per_domain : 2;
     var counts = {};
     var low = null;
     var level = true;
@@ -827,11 +661,6 @@
     };
   }
 
-  var CHECK_PATH = "M3.5 8.6l3.1 3.1 5.9-6.4";
-
-  // The first thing a buyer sees, on both ways in: seconds after paying, and
-  // a week later from the link in the mail. The address comes off the
-  // authenticated report payload and is never touched again.
   function deliveryNote(ctx, copy) {
     if (!ctx.delivered) return null;
     var email = (((ctx.visuals || {}).delivery || {}).email || "").trim();
@@ -996,13 +825,9 @@
     return card;
   }
 
-  // --- the answer key ---------------------------------------------------------
-  //
-  // Every question, what the reader answered, what was right and why. Only
-  // ever on this page: the rows come out of the paid report, and the free
-  // page has no way to reach them.
-
-  function answerKey(ctx, copy) {
+  // The eight scenarios: the question, their move, the right move and what it
+  // means. Stored with the report; nothing here is recomputed on the page.
+  function scenarios(ctx, copy) {
     var rows = (ctx.visuals && ctx.visuals.answer_key) || null;
     if (!Array.isArray(rows) || !rows.length) return null;
     var words = copy.key_card || {};
@@ -1012,12 +837,9 @@
     var list = elm("ol", "ai-key-list");
     rows.forEach(function (row) {
       var item = elm("li", "ai-key-row is-" + (row.hit ? "hit" : "miss"));
-      var head = elm("p", "ai-key-q", row.question || "");
-      head.appendChild(document.createTextNode(" "));
-      head.appendChild(elm("span", "ai-badge is-" + (row.hit ? "hit" : "miss"),
+      item.appendChild(elm("span", "ai-badge is-" + (row.hit ? "hit" : "miss"),
                            (row.hit ? words.hit : words.miss) || ""));
-      item.appendChild(head);
-      item.appendChild(elm("p", "ai-key-zone", zoneName(ctx, row.zone)));
+      item.appendChild(elm("p", "ai-key-q", row.question || ""));
       var mine = elm("p", "ai-key-line");
       mine.appendChild(elm("span", "ai-key-lab", (words.yours || "") + " "));
       mine.appendChild(document.createTextNode(
@@ -1043,13 +865,11 @@
     root.classList.add("is-ai", "is-delivered");
     var note = deliveryNote(ctx, copy);
     if (note) root.appendChild(note);
+    root.appendChild(profileBlock(ctx, copy));
     if (data) {
-      root.appendChild(hero(ctx, copy, data));
-      var chip = levelChip(ctx, copy, data);
-      if (chip) root.appendChild(chip);
+      root.appendChild(scoreCard(ctx, copy, data));
+      root.appendChild(bars(ctx, copy, data));
     }
-    root.appendChild(typeCard(ctx));
-    if (data) root.appendChild(bars(ctx, copy, data));
     var fits = pathsCard(ctx, copy);
     if (fits) root.appendChild(fits);
 
@@ -1059,17 +879,15 @@
       list.appendChild(deliveredNode(ctx, section));
     });
     root.appendChild(list);
-    var key = answerKey(ctx, copy);
+    var key = scenarios(ctx, copy);
     if (key) root.appendChild(key);
 
-    // No offer here. What replaces it is the one line the reader still
-    // needs — where else this document is — and what it is not.
     if (ctx.complete && copy.delivered_note) {
       root.appendChild(elm("p", "ai-footnote", copy.delivered_note));
     }
     var guides = articles(ctx, data, "delivered");
     if (guides) root.appendChild(guides);
-    var foot = footer(copy);
+    var foot = footer(ctx, copy);
     if (foot) root.appendChild(foot);
     root.hidden = false;
   }
