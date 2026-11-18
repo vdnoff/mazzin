@@ -142,7 +142,6 @@ h1:focus { outline: none; }
   text-transform: uppercase;
   color: var(--accent);
 }
-.eyebrow-row { display: flex; align-items: center; gap: 10px; }
 
 .pill {
   padding: 3px 9px;
@@ -498,9 +497,19 @@ h1:focus { outline: none; }
   color: var(--accent-ink);
 }
 
-.guides-block { margin-top: 24px; }
-.guides-block .lede { margin-top: 8px; font-size: 15px; }
+.guides-block { margin-top: 28px; }
+.guides-title {
+  margin: 0 0 6px;
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.guides-block .lede { margin-top: 0; font-size: 15px; }
 .guides-block .guides { margin-top: 12px; }
+.guides-tag { display: flex; margin: 12px 0 0; }
 
 .note {
   margin: 16px 0 0;

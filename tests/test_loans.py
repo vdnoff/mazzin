@@ -436,9 +436,16 @@ check("it says what Mazzin is not, on the landing and the summary view",
       and all("Mazzin is not a lender" in PAGE[PAGE.index('id="view-%s"' % v):]
               .split("</section>")[0] for v in ("landing", "options")))
 SUMMARY = PAGE[PAGE.index('id="view-options"'):].split("</section>")[0]
-check("the guides sit on the summary view, labelled Partner site",
-      'Your next step <span class="pill">Partner site</span>' in SUMMARY
-      and '<ul class="card guides" id="guides"></ul>' in SUMMARY)
+check("the guides sit on the summary view, under a real heading",
+      '<h2 class="guides-title">Your next step</h2>' in SUMMARY
+      and '<ul class="card guides" id="guides"></ul>' in SUMMARY
+      and SUMMARY.count("<h2") == 1)
+check("  heading, subline, the card of rows, then the Partner site pill",
+      re.search(r'<h2 class="guides-title">Your next step</h2>\s*'
+                r'<p class="lede">Picked from your answers\.</p>\s*'
+                r'<ul class="card guides" id="guides"></ul>\s*'
+                r'<p class="guides-tag"><span class="pill">Partner site</span>'
+                r'</p>\s*</div>', SUMMARY))
 check("  in a block that is hidden until the script finds a click to pass on",
       '<div class="guides-block" id="guides-block" hidden>' in SUMMARY
       and '<p class="guides-none" id="guides-none" hidden>Guides are not '
@@ -458,7 +465,7 @@ for needle in ("How much do you need?", "What is the loan for?",
                "How do you earn your income?",
                "How would you rate your credit?",
                "Your next step",
-               "Picked from your answers. Start with the first one."):
+               "Picked from your answers."):
     check("copy: %s" % needle, needle in PAGE)
 gone = [w for w in ("sponsored", "related searches", "pick a search",
                     "offers are not available", "view sponsored",
@@ -521,6 +528,14 @@ tokens = {"--ground": "#F5F7FB", "--card": "#FFFFFF", "--ink": "#131A2B",
 wrong = [k for k, v in tokens.items() if "%s: %s;" % (k, v) not in CSS]
 check("the thirteen colour tokens", not wrong, wrong)
 check("a visible focus ring", ":focus-visible" in CSS)
+TITLE = re.search(r"\.guides-title \{(.*?)\}", CSS, re.S)
+check("the guides heading: Fraunces 600, 26px, 1.15, -0.02em, ink",
+      TITLE and all(d in TITLE.group(1) for d in
+                    ("font-family: var(--serif);", "font-size: 26px;",
+                     "font-weight: 600;", "line-height: 1.15;",
+                     "letter-spacing: -0.02em;", "color: var(--ink);",
+                     "margin: 0 0 6px;"))
+      and ".guides-block { margin-top: 28px; }" in CSS)
 
 print("\n--- the asset versions: new HTML never runs against an old script ---")
 # /static/* is cached for hours and the page for minutes. An unversioned
@@ -581,32 +596,34 @@ check("  byte for byte the links that were given",
 check("  the labels say what the reader will do there",
       dict((a[0], a[1]) for a in ARTICLES) == {
           "purpose_emergency":
-          "See ways to cover an unexpected expense",
+          "See Ways to Cover an Unexpected Expense",
           "purpose_debt":
-          "See how debt consolidation loans work",
+          "See How Debt Consolidation Loans Work",
           "purpose_car":
-          "See ways to pay for a car repair",
+          "See Ways to Pay for a Car Repair",
           "purpose_home":
-          "Compare home improvement loan options",
+          "Compare Home Improvement Loan Options",
           "purpose_medical":
-          "See options for paying medical bills",
+          "See Options for Paying Medical Bills",
           "purpose_other":
-          "See how personal loans work",
+          "See How Personal Loans Work",
           "credit_excellent":
-          "Find the lowest rates for strong credit",
+          "Find the Lowest Rates for Strong Credit",
           "credit_good":
-          "Compare offers for good credit",
+          "Compare Offers for Good Credit",
           "credit_fair":
-          "See loan options for fair credit",
+          "See Loan Options for Fair Credit",
           "credit_building":
-          "See options for low or thin credit",
+          "See Options for Low or Thin Credit",
           "general_small":
-          "Find where to get a small personal loan",
+          "Find Where to get a Small Personal Loan",
           "general_apr":
-          "Learn to spot the real cost of an offer",
+          "Learn to Spot the Real Cost of an Offer",
       })
 check("  the copy that was replaced is gone",
       "Guides for you" not in PAGE and "Each link opens" not in PAGE
+      and "Start with the first one" not in PAGE
+      and "eyebrow-row" not in PAGE + CSS
       and "evoseekly" not in PAGE + JS)
 check("the four rows: purpose, credit, then the two general ones",
       '["purpose_" + a.purpose, "credit_" + a.credit].concat(GENERAL)' in JS
