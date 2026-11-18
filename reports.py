@@ -13427,9 +13427,6 @@ COPY_AI = {
     "body": "Your full report as %s is attached: your four zones, your three "
             "best-fit paths, five strengths and two traps, your first seven "
             "days and your answer key.",
-    "opening": "You just spent %s on a plan built from your own twelve "
-               "answers.",
-    "opening_bare": "A plan built from your own twelve answers.",
     "keep": ("It stays available at that link, and the PDF is yours to keep."
              "<br><br>" + html.escape(AI_DISCLAIMER)),
     "keep_no_link": (KEEP_NO_LINK + "<br><br>" + html.escape(AI_DISCLAIMER)),
@@ -13636,6 +13633,11 @@ def _email_opening(content, purchase_id=None):
             return ("You just spent %s on the week that raises the score you "
                     "were shown." % html.escape(price))
         return "The week that raises the score you were shown."
+    if copy is COPY_AI:
+        if price:
+            return ("You just spent %s on a plan built from your own twelve "
+                    "answers." % html.escape(price))
+        return "A plan built from your own twelve answers."
     if copy is COPY_VISUALIZER:
         if price:
             return ("Your own kitchen, redrawn in the style your choices "

@@ -749,9 +749,10 @@ try:
 finally:
     reports._price_paid = real_price
 check("  its opening names the price when there is one, and not otherwise",
-      bare_opening == copy["opening_bare"]
-      and priced_opening == copy["opening"] % "$6"
-      and "twelve answers" in bare_opening)
+      bare_opening == "A plan built from your own twelve answers."
+      and priced_opening == "You just spent $6 on a plan built from your "
+                            "own twelve answers."
+      and "opening" not in copy)
 check("  and its footer carries the disclaimer, with and without a link",
       reports.html.escape(reports.AI_DISCLAIMER) in copy["keep"]
       and reports.html.escape(reports.AI_DISCLAIMER) in copy["keep_no_link"])
