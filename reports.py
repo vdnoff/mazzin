@@ -4822,13 +4822,16 @@ AI_BANNED = AI_BANNED_CORE + (
 
 
 AI_SYSTEM = """You write the paid report for people who have just taken an \
-eighteen-question quiz about AI and bought the plan that comes after it.
+short quiz about making money with AI and bought the plan that comes after \
+it.
 
-The quiz is six questions about the reader — how often they use AI, which \
-tools, what they are best at, the hours they have, what they are after, and \
-how many they expected to get right — then twelve scored questions across \
-four zones: how AI works, prompting, judgment and risk, and business sense. \
-It ends on a score out of twelve, a level and a type. What you write is what \
+The quiz is four questions about the reader — what people could pay them \
+for, the hours they have, what they are after, and how many they expected \
+to get right — then eight scored money scenarios across four zones, two \
+each: how AI works, prompting, judgment and risk, and business sense. It \
+ends on a score out of eight, a level and a type. The reader was shown the \
+word "strategy" for a way of earning with AI; use that word, and never \
+"path". What you write is what \
 they do next: which way of working with AI fits them, what to offer, and \
 what to do this week. Every field has to give them something to DO. A \
 sentence that would read the same for a different reader is a wasted \
@@ -4876,9 +4879,9 @@ prose around it, no code fence, no extra keys."""
 _AI_SHAPES = {
     "dna": '''"dna": {
   "narrative": [
-    "THE SCORE, THE CALIBRATION, AND THE EDGE: open on the score out of twelve and the calibration word, both given above, each named once and only here. Say the score is a reading of these twelve answers and of nothing else, and that it moves. Then, in the same paragraph, the zone this reader is strongest in and what that lets them do with these tools that others have to learn (max %(narrative)d chars)",
+    "THE SCORE, THE CALIBRATION, AND THE EDGE: open on the score out of eight and the calibration word, both given above, each named once and only here. Say the score is a reading of these eight scenarios and of nothing else, and that it moves. Then, in the same paragraph, the zone this reader is strongest in and what that lets them do with these tools that others have to learn (max %(narrative)d chars)",
     "HOW THE FOUR SIT TOGETHER: one paragraph on the pattern across the four zones, by name: which two carry the other two, and what that combination is good for in real work for somebody with the skill they named (max %(narrative)d chars)",
-    "WHERE IT GOES NEXT: one paragraph on how to point the strongest zone at the zone with the most room, in the hours they said they have. On an even run, say which zone to build on first for the goal they named, and why. This is the bridge to the paths (max %(narrative)d chars)"
+    "WHERE IT GOES NEXT: one paragraph on how to point the strongest zone at the zone with the most room, in the hours they said they have. On an even run, say which zone to build on first for the goal they named, and why. This is the bridge to the strategies (max %(narrative)d chars)"
   ],
   "implications": [
     "ONE LINE, imperative, starting with a verb: a thing to do this week that uses their strongest zone on purpose (max %(implications)d chars)",
@@ -4899,29 +4902,29 @@ takes a few minutes, uses a tool by category, and produces a thing they can
 look at afterwards.''',
 
     "materials": '''"materials": {
-  "intro": "THE PRIMARY PATH: 2-3 sentences naming the first path on the list above and why it is the one to start with for THIS reader: the skill they named, the hours they have, and the zones they scored highest on. Honest about what it asks of them (max %(intro)d chars)",
+  "intro": "THE PRIMARY STRATEGY: 2-3 sentences naming the first strategy on the list above and why it is the one to start with for THIS reader: the skill they named, the hours they have, and the zones they scored highest on. Honest about what it asks of them (max %(intro)d chars)",
   "pairs": [
-    {"combo": "COPY THE FIRST PATH NAME FROM THE LIST ABOVE, EXACTLY (max %(combo)d chars)",
+    {"combo": "COPY THE FIRST STRATEGY NAME FROM THE LIST ABOVE, EXACTLY (max %(combo)d chars)",
      "verdict": "COPY ITS VERDICT FROM THE LIST ABOVE - the word works or the word avoid",
-     "why": "TWO SENTENCES. Why this path fits this reader's skill, hours and zones, and the first concrete step on it. For a path marked avoid: why it is one to skip for now, for this reader, and what would have to change first (max %(why)d chars)"},
-    {"combo": "the second path from the list, exactly", "verdict": "its verdict, exactly", "why": "two sentences"},
-    {"combo": "the third path from the list, exactly", "verdict": "its verdict, exactly", "why": "two sentences"},
-    {"combo": "the fourth path from the list, exactly", "verdict": "its verdict, exactly", "why": "two sentences"},
-    {"combo": "the fifth path from the list, exactly", "verdict": "its verdict, exactly", "why": "two sentences"}
+     "why": "TWO SENTENCES. Why this strategy fits this reader's skill, hours and zones, and the first concrete step on it. For a strategy marked avoid: why it is one to skip for now, for this reader, and what would have to change first (max %(why)d chars)"},
+    {"combo": "the second strategy from the list, exactly", "verdict": "its verdict, exactly", "why": "two sentences"},
+    {"combo": "the third strategy from the list, exactly", "verdict": "its verdict, exactly", "why": "two sentences"},
+    {"combo": "the fourth strategy from the list, exactly", "verdict": "its verdict, exactly", "why": "two sentences"},
+    {"combo": "the fifth strategy from the list, exactly", "verdict": "its verdict, exactly", "why": "two sentences"}
   ],
-  "rule": "THE OFFER AND THE FIRST STEP: 2-3 sentences. The offer format given above for this reader's level, applied to the primary path: what exactly they would offer, to whom, with what scope. Then the first concrete step, small enough to do this week (max %(rule)d chars)"
+  "rule": "THE OFFER AND THE FIRST STEP: 2-3 sentences. The offer format given above for this reader's level, applied to the primary strategy: what exactly they would offer, to whom, with what scope. Then the first concrete step, small enough to do this week (max %(rule)d chars)"
 }
 
-THE FIVE PATHS ARE NOT YOURS TO CHOOSE. All five are given above, each with
+THE FIVE STRATEGIES ARE NOT YOURS TO CHOOSE. All five are given above, each with
 its verdict and the facts about it. Reproduce all five, in that order, with
-`combo` and `verdict` exactly as written. Invent no path, rename no path and
+`combo` and `verdict` exactly as written. Invent no strategy, rename no strategy and
 never change a verdict.
 
 `verdict` is the word "works" or the word "avoid" and nothing else. "avoid"
-here means skip for now: a path that asks for something this reader has not
+here means skip for now: a strategy that asks for something this reader has not
 told you they have yet. Say what, plainly, and never as a fault.
 
-Use the facts given with each path and add none of your own: no figure for
+Use the facts given with each strategy and add none of your own: no figure for
 what it earns, no time by which it pays, no number of clients. How long a
 first client typically takes is given above as a range in weeks; you may
 repeat it as given and you may not shorten it.''',
@@ -4966,7 +4969,7 @@ scene-setting, every "which is why", and every restatement of the title.''',
     {"name": "Day 4 - <its task>", "priority_note": "same"},
     {"name": "Day 5 - <its task>", "priority_note": "same"},
     {"name": "Day 6 - <its task>", "priority_note": "same"},
-    {"name": "Day 7 - Ask one person", "priority_note": "One real person, named by the kind of person they are, asked one real question about the primary path's offer. Say who to pick, what to ask, and what to do with a yes and with a no. Two to three sentences (max %(priority_note)d chars)"}
+    {"name": "Day 7 - Ask one person", "priority_note": "One real person, named by the kind of person they are, asked one real question about the primary strategy's offer. Say who to pick, what to ask, and what to do with a yes and with a no. Two to three sentences (max %(priority_note)d chars)"}
   ],
   "skip": []
 }
@@ -4979,7 +4982,7 @@ it.
 followed by a short name for that day's task. The last one is named exactly
 "Day 7 - Ask one person".
 
-THE WEEK IS SEVEN DAYS ON THE PRIMARY PATH, AND IT ENDS ON A DEMAND TEST. Day
+THE WEEK IS SEVEN DAYS ON THE PRIMARY STRATEGY, AND IT ENDS ON A DEMAND TEST. Day
 seven is one real person asked one real question: would they pay for this,
 or commit to trying it. Not a friend asked whether it sounds good. Say
 nothing about what the answer will be: you do not know, and the day promises
@@ -5001,7 +5004,7 @@ The register, exactly:
         your list, start to end, and save it as a single file you could
         send."
 
-If a day would survive being moved to a reader on a different path, it is
+If a day would survive being moved to a reader on a different strategy, it is
 the wrong day.''',
 }
 
@@ -5024,16 +5027,16 @@ AI_WORDS = dict(
 
 
 # What a reader gets when there is no key. Same lengths, same structure, same
-# voice as the keyed chapters, and banned-clean, because this is the path
-# where nothing is checking. The paths chapter is the one that cannot be
+# voice as the keyed chapters, and banned-clean, because this is the strategy
+# where nothing is checking. The strategies chapter is the one that cannot be
 # generic: `_ai_personal_stub` writes the reader's own five over the pairs
 # below before it is stored.
 AI_STUBS = {
     "dna": {
         "narrative": [
             "Your score is on the first page of this report, next to how it "
-            "compared with your own prediction. It is a reading of twelve "
-            "answers and of nothing else, and it moves. What holds it where "
+            "compared with your own prediction. It is a reading of eight "
+            "scenarios and of nothing else, and it moves. What holds it where "
             "it is: the zone you scored highest in is the one you can "
             "already work from, and it is worth more than it looks, because "
             "it is the part of using these tools that takes longest to pick "
@@ -5059,25 +5062,25 @@ AI_STUBS = {
         ],
     },
     "materials": {
-        "intro": "Your three best-fit paths are matched from the skill you "
+        "intro": "Your three best-fit strategies are matched from the skill you "
                  "named, the hours you said you have and your score. The "
                  "first one is the place to start: it leans on what you "
                  "already do well, and it asks for nothing you have not "
                  "already told us you have.",
         "pairs": [
-            {"combo": "Your primary path", "verdict": "works",
+            {"combo": "Your primary strategy", "verdict": "works",
              "why": "It starts from the skill you named. Take the first "
                     "step on it this week, before reading further."},
-            {"combo": "Your second path", "verdict": "works",
+            {"combo": "Your second strategy", "verdict": "works",
              "why": "It uses the same skill with a different buyer. Keep it "
                     "in reserve until the first has had a fair try."},
-            {"combo": "Your third path", "verdict": "works",
+            {"combo": "Your third strategy", "verdict": "works",
              "why": "It fits your hours and asks for one more thing you can "
                     "learn on the way. Come back to it in a month."},
-            {"combo": "First path to skip for now", "verdict": "avoid",
+            {"combo": "First strategy to skip for now", "verdict": "avoid",
              "why": "It asks for a skill you did not name. Leave it until "
                     "one of the three above is running."},
-            {"combo": "Second path to skip for now", "verdict": "avoid",
+            {"combo": "Second strategy to skip for now", "verdict": "avoid",
              "why": "It needs more hours, or a longer wait, than you said "
                     "you have. Look again when that changes."},
         ],
@@ -5140,11 +5143,11 @@ AI_STUBS = {
             {"name": "Day 1 - Fifteen minutes",
              "priority_note": "Take the zone with the most room on your "
                               "result and spend fifteen minutes on one "
-                              "question from it: open your Answer Key, "
+                              "scenario from it: open Your 8 Scenarios, "
                               "read the reason, and try it once on a real "
                               "task. Write one line on what changed."},
             {"name": "Day 2 - One customer, one problem",
-             "priority_note": "For your primary path, write down one kind "
+             "priority_note": "For your primary strategy, write down one kind "
                               "of customer and one recurring problem they "
                               "have. One sentence each. If you cannot name "
                               "the customer, pick the one you know best."},
@@ -7992,7 +7995,7 @@ def _focus_plan_block(cfg, numbers, tag_scores):
 # taken from a figure the browser computed: the page and this arrive at the
 # same numbers because they apply the same rules to the same taps.
 
-AI_WARMUPS = ("exp", "tool", "skill", "time", "goal")
+AI_WARMUPS = ("skill", "time", "goal")
 
 AI_CALIBRATION_WORDS = {
     "on_target": "on target",
@@ -8222,6 +8225,8 @@ def _ai_answer_key(cfg, choices):
     question nobody answered — a reload into the test — is a miss with no
     answer of theirs, which is what the page showed for it too.
     """
+    # The line each scenario answers a tap with is the line the report gives
+    # for it; an older config kept them in a block of their own.
     why = (cfg or {}).get("answer_key") or {}
     picks = _ai_picks(cfg, choices)
     rows = []
@@ -8242,7 +8247,7 @@ def _ai_answer_key(cfg, choices):
             "yours": (mine or {}).get("label") or "",
             "right": right,
             "hit": bool(mine and (zone + "_hit") in (mine.get("tags") or [])),
-            "why": why.get(step.get("id")) or "",
+            "why": step.get("why") or why.get(step.get("id")) or "",
         })
     return rows
 
@@ -8290,8 +8295,6 @@ AI_WARMUP_LINES = (
     ("skill", "What they are best at"),
     ("time", "Hours a week they can put in"),
     ("goal", "What they are after"),
-    ("tool", "The kind of AI tool they use most"),
-    ("exp", "How often they use AI today"),
 )
 
 
@@ -8313,7 +8316,7 @@ def _ai_warmups_block(numbers):
 
 
 def _ai_paths_block(cfg, choices, numbers):
-    """The five paths and their verdicts, from the table, not the model."""
+    """The five strategies and their verdicts, from the table."""
     paths = _ai_paths(cfg, choices, numbers)
     if not paths:
         return None
@@ -8325,19 +8328,19 @@ def _ai_paths_block(cfg, choices, numbers):
                 "    first client: %s\n    to start: %s\n    risk: %s"
                 % (card["name"], verdict, card["sells"], card["buyer"],
                    card["first_client"], card["startup"], card["risk"]))
-    text = ("REQUIRED — these are this reader's five paths, the verdict each "
-            "one carries and the facts about it, in this order. The first is "
-            "their primary path:\n"
+    text = ("REQUIRED — these are this reader's five strategies, the verdict "
+            "each one carries and the facts about it, in this order. The first is "
+            "their primary strategy:\n"
             + "\n".join(rows)
             + "\nReproduce all five as `pairs`, in this order, with `combo` "
-              "the path's name exactly as written here and `verdict` the "
-              "word beside it. Invent no path and never change a verdict. "
+              "the strategy's name exactly as written here and `verdict` the "
+              "word beside it. Invent no strategy and never change a verdict. "
               "Write why each fits, or is one to skip for now, for THIS "
               "reader's skill, hours and zones, and add no fact about a "
-              "path that is not above.")
+              "strategy that is not above.")
     if paths.get("format"):
         text += ("\nThe offer format for this reader's level is: %s. `rule` "
-                 "applies that format to the primary path and ends on the "
+                 "applies that format to the primary strategy and ends on the "
                  "first concrete step." % paths["format"])
     return text
 
@@ -8348,15 +8351,15 @@ def _ai_plan_block(cfg, choices, numbers):
     if not paths:
         return None
     primary = paths["works"][0]
-    text = ("REQUIRED — the seven days are on this reader's primary path, "
+    text = ("REQUIRED — the seven days are on this reader's primary strategy, "
             "%s. " % primary["name"])
     if numbers.get("weakest"):
         text += ("Day one is a fifteen-minute action on %s, which is the "
                  "zone with the most room for this reader, pointed at that "
-                 "path. " % _brain_round_name(numbers, numbers["weakest"]))
+                 "strategy. " % _brain_round_name(numbers, numbers["weakest"]))
     else:
         text += ("This was an even run, so day one is a fifteen-minute "
-                 "action on the first step of that path. ")
+                 "action on the first step of that strategy. ")
     hours = (numbers.get("said") or {}).get("time")
     if hours:
         text += ("They said they have %s hours a week: size every day to "
@@ -12760,7 +12763,7 @@ AI_LABELS = {
     "level": "Level",
     "room": "The zone with the most room:",
     "even": "An even run across all four zones.",
-    "paths_title": "Your 3 best-fit paths",
+    "paths_title": "Your 3 best-fit strategies",
     "paths_lead": ("Matched from the skill you named, the hours you have and "
                    "your score. The first is the one to start with."),
     "skip_title": "Two to skip for now",
@@ -12773,12 +12776,13 @@ AI_LABELS = {
     "traps": "Two traps to step around",
     "instead": "Instead:",
     "instead_chip": "STEP AROUND",
-    "key_title": "Your Answer Key",
-    "key_lead": "Every question, your answer, the right one, and why.",
-    "yours": "Your answer:",
-    "right": "Right answer:",
+    "key_title": "Your 8 scenarios",
+    "key_lead": ("Every scenario, your move, the right move, and what it "
+                 "means for your plan."),
+    "yours": "Your move:",
+    "right": "The right move:",
     "none": "not answered",
-    "chips": {"hit": "RIGHT", "miss": "MISSED"},
+    "chips": {"hit": "RIGHT CALL", "miss": "COSTLY MOVE"},
 }
 
 # The page's three words for the same three cases, so the document can print
@@ -13019,6 +13023,10 @@ AI_PROFILE["pdf_body"] = {
     "mistakes": _ai_pdf_mistakes,
 }
 AI_PROFILE["section_fix"] = _ai_personal_fix
+# The cached chapter was first written when the product said "paths" and
+# counted twelve questions. Rows from then are stale under this revision and
+# are regenerated by the next purchase of that type, or by warm_cache.py.
+AI_PROFILE["cache_rev"] = {"mistakes": "strategies8"}
 
 
 def _pdf_html(content):
@@ -13425,8 +13433,8 @@ COPY_AI = {
     "headline": "Your AI Navigator Report is ready.",
     "subject": "%s — your AI Navigator Report",
     "body": "Your full report as %s is attached: your four zones, your three "
-            "best-fit paths, five strengths and two traps, your first seven "
-            "days and your answer key.",
+            "best-fit strategies, five strengths and two traps, your first "
+            "seven days and your 8 scenarios.",
     "keep": ("It stays available at that link, and the PDF is yours to keep."
              "<br><br>" + html.escape(AI_DISCLAIMER)),
     "keep_no_link": (KEEP_NO_LINK + "<br><br>" + html.escape(AI_DISCLAIMER)),
@@ -13635,9 +13643,9 @@ def _email_opening(content, purchase_id=None):
         return "The week that raises the score you were shown."
     if copy is COPY_AI:
         if price:
-            return ("You just spent %s on a plan built from your own twelve "
+            return ("You just spent %s on a plan built from your own eight "
                     "answers." % html.escape(price))
-        return "A plan built from your own twelve answers."
+        return "A plan built from your own eight answers."
     if copy is COPY_VISUALIZER:
         if price:
             return ("Your own kitchen, redrawn in the style your choices "

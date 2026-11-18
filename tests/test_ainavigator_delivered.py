@@ -55,7 +55,7 @@ TAIL = "?fbclid=AbC_123-x&ad_id=111&asid=222"
 CFG = walk.CFG
 ARTICLES = CFG["rsoc"]["articles"]
 CATALOG = dict((row["id"], row) for row in CFG["paths"]["catalog"])
-KEY = CFG["answer_key"]
+KEY = dict((s["id"], s["why"]) for s in CFG["swipe"]["steps"] if "why" in s)
 COPY = CFG["result_copy"]
 IMAGES = set(c["id"] for s in CFG["swipe"]["steps"]
              for c in s["pairs"][0]["images"])
@@ -132,10 +132,22 @@ class Server(socketserver.ThreadingMixIn, http.server.HTTPServer):
 
 FREE = """() => {
   const root = document.querySelector('#result-module');
-  return { text: root.innerText,
+  const pay = document.querySelector('#pay-button');
+  const offer = root.querySelector('.ai-offer');
+  // The markup, not the rendered text: nothing of the report may be in the
+  // DOM at all, shown or hidden.
+  return { text: root.innerHTML,
+           order: [...root.children].map(c => c.className.split(' ')[0]),
            key: !!root.querySelector('.ai-key'),
            paths: !!root.querySelector('.ai-paths'),
-           pay: !document.querySelector('#pay-button').disabled };
+           score: (root.querySelector('.ai-ring-n') || {}).innerText || '',
+           payIn: offer.contains(pay), payText: pay.textContent,
+           bars: offer.querySelectorAll('.ai-bar').length,
+           barText: [...offer.querySelectorAll('.ai-bar')]
+             .map(b => b.textContent).join(''),
+           rows: [...offer.querySelectorAll('.ai-locked-label')]
+             .map(n => n.textContent),
+           pay: !pay.disabled };
 }"""
 
 PAID = """() => {
@@ -158,8 +170,9 @@ PAID = """() => {
   return {
     delivered: root.classList.contains('is-delivered'),
     order: [...root.children].map(c => c.className.split(' ')[0]),
-    score: q('.ai-score'), predict: q('.ai-predict'),
-    calibration: q('.ai-calibration'), level: q('.ai-level-name'),
+    score: q('.ai-ring-n'), predict: q('.ai-predict'),
+    calibration: q('.ai-calibration'), type: q('.ai-type-name'),
+    kicker: q('.ai-kicker'),
     zones: all('.ai-zone').map(z => z.querySelector('.ai-zone-name')
       .textContent + ' ' + z.querySelector('.ai-zone-count').textContent),
     room: q('.ai-zone.is-room .ai-zone-name'),
@@ -225,8 +238,24 @@ def main():
         page.wait_for_selector("#result-module .ai-offer", timeout=30000)
         page.wait_for_timeout(900)
         free = page.evaluate(FREE)
-        check("eighteen steps, to the result", len(answered) == 18,
+        check("twelve steps, to the result", len(answered) == 12,
               len(answered))
+        check("the free page is the three blocks, in order, then the rest",
+              free["order"] == ["ai-profile", "ai-scorecard", "ai-offer",
+                                "ai-unlock", "ai-divider", "ai-rsoc",
+                                "ai-foot"], free["order"])
+        check("  the pay button is engine.js's own, inside the offer card",
+              free["payIn"] and free["payText"].startswith(
+                  "Unlock my strategy"), free["payText"])
+        check("  no strategy's name and no right answer anywhere in it",
+              not [row["name"] for row in CATALOG.values()
+                   if row["name"] in free["text"]]
+              and not [c["label"] for s in CFG["swipe"]["steps"]
+                       if "why" in s for c in s["pairs"][0]["images"]
+                       if c["label"] in free["text"]])
+        check("  the locked rows are labels and empty bars",
+              free["bars"] == 4 and free["barText"] == ""
+              and free["rows"] == COPY["offer"]["rows"], free["rows"])
         check("the free page draws no answer key and no paths card",
               not free["key"] and not free["paths"])
         check("  and no reason from the key, and no path's facts",
@@ -242,8 +271,8 @@ def main():
         order = state["order"] or {}
         report = state["report"] or {}
         visuals = report.get("visuals") or {}
-        check("checkout carried the choices, all eighteen, known ids",
-              len(order.get("choices") or []) == 18
+        check("checkout carried the choices, all twelve, known ids",
+              len(order.get("choices") or []) == 12
               and all(c in IMAGES for c in order["choices"])
               and order.get("funnel") == "ai-navigator")
         check("the report behind the link is whole, with its three blocks",
@@ -257,21 +286,23 @@ def main():
 
         print("\n--- the delivered page: the numbers ---")
         brain = visuals["brain"]
-        check("the score the free page showed, out of twelve",
-              paid["score"].replace("\n", "").replace(" ", "") == "6/12"
-              and brain["hits"] == 6, paid["score"])
+        check("the score the free page showed, out of eight",
+              paid["score"].replace("\n", "").replace(" ", "") == "5/8"
+              and brain["hits"] == 5 and free["score"] == paid["score"],
+              paid["score"])
         check("  against the prediction, in the config's words",
-              paid["predict"] == "You predicted 0–3. You scored 6."
+              paid["predict"] == "You predicted 0–2. You scored 5."
               and paid["calibration"] == COPY["calibration"]["under"]
               and brain["calibration"] == "underrated",
               [paid["predict"], paid["calibration"]])
-        check("  the level, and the four zones in play order",
-              paid["level"] == "Builder"
-              and paid["zones"] == ["How AI works 3 of 3",
-                                    "Prompting 2 of 3",
-                                    "Judgment & risk 1 of 3",
-                                    "Business sense 0 of 3"],
-              [paid["level"], paid["zones"]])
+        check("  the type, and the four zones in play order, x of 2",
+              paid["type"] == "The Mechanic" and brain["level"] == "Builder"
+              and paid["kicker"] == COPY["kicker"]
+              and paid["zones"] == ["How AI works 2 of 2",
+                                    "Prompting 2 of 2",
+                                    "Judgment & risk 1 of 2",
+                                    "Business sense 0 of 2"],
+              [paid["type"], paid["zones"]])
         check("  the zone with the most room, and where the PDF went",
               paid["room"] == "Business sense"
               and "reader@example.com" in paid["sent"])
@@ -324,9 +355,10 @@ def main():
 
         print("\n--- the delivered page: the answer key ---")
         rows = visuals["answer_key"]
-        check("twelve rows, in the order the questions were asked",
+        check("eight rows, in the order the scenarios were asked",
               [r["q"].strip() for r in paid["rows"]]
-              == [r["question"] for r in rows] and len(rows) == 12)
+              == [r["question"] for r in rows] and len(rows) == 8
+              and paid["keyTitle"] == COPY["key_card"]["title"])
         check("  theirs and the right one on every row",
               all(shown["lines"] == [
                   "%s %s" % (COPY["key_card"]["yours"], r["yours"]),
@@ -335,9 +367,9 @@ def main():
               paid["rows"][0]["lines"])
         check("  the reason on every row, as the config wrote it",
               [r["why"] for r in paid["rows"]] == [KEY[r["id"]] for r in rows])
-        check("  six right and six missed, marked as the report says",
+        check("  five right and three missed, marked as the report says",
               [r["hit"] for r in paid["rows"]] == [r["hit"] for r in rows]
-              and [r["hit"] for r in rows].count(True) == 6
+              and [r["hit"] for r in rows].count(True) == 5
               and all(shown["badge"] == (COPY["key_card"]["hit"] if r["hit"]
                                          else COPY["key_card"]["miss"])
                       for shown, r in zip(paid["rows"], rows)))
@@ -394,8 +426,8 @@ def main():
         page.goto("%s/ai-navigator?cs=%s" % (BASE, CS))
         paid = delivered(page)
         check("the report is all there: numbers, paths, chapters, key",
-              paid["level"] == "Builder" and len(paid["cards"]) == 5
-              and len(paid["chapters"]) == 4 and len(paid["rows"]) == 12)
+              paid["type"] == "The Mechanic" and len(paid["cards"]) == 5
+              and len(paid["chapters"]) == 4 and len(paid["rows"]) == 8)
         check("  and with no click held there is no article block",
               paid["rsoc"] is None and "ai-rsoc" not in paid["order"])
         check("no script errors", not errors, errors)

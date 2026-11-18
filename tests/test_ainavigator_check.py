@@ -89,7 +89,7 @@ TEXT_FORMATS = set(re.findall(
 DOMAINS = ("mem", "foc", "chg", "spa")
 NAMES = {"mem": "How AI works", "foc": "Prompting",
          "chg": "Judgment & risk", "spa": "Business sense"}
-WARMUPS = ("exp", "tool", "skill", "time", "goal", "predict")
+WARMUPS = ("skill", "time", "goal", "predict")
 DISCLAIMER = ("Educational content. No income is promised or guaranteed — "
               "results depend on your effort, skills and market.")
 
@@ -126,8 +126,12 @@ check("  written the way the others are: two-space JSON, one newline",
 check("the funnels directory and its static copy agree",
       sorted(os.listdir(os.path.join(ROOT, "funnels")))
       == sorted(os.listdir(os.path.join(ROOT, "static/funnels"))))
-check("the theme it names is one the stylesheet knows",
-      ("body.theme-%s {" % cfg["theme"]) in MAZZIN_CSS, cfg["theme"])
+check("the theme is its own, declared in its own stylesheet",
+      cfg["theme"] == "ai" and "body.theme-ai {" in RESULT_CSS
+      and "theme-ai" not in MAZZIN_CSS, cfg["theme"])
+check("  which the engine loads before the first screen",
+      cfg["theme_css"] == cfg["result_css"]
+      and "if (themeCss()) {" in ENGINE)
 check("it draws its result with its own module",
       cfg["result_module"] == "/static/js/result_ai.js"
       and cfg["result_css"] == "/static/css/result_ai.css")
@@ -135,9 +139,8 @@ check("  both on disk",
       os.path.isfile(os.path.join(ROOT, cfg["result_module"].lstrip("/")))
       and os.path.isfile(os.path.join(ROOT, cfg["result_css"].lstrip("/"))))
 check("  and the analysing fade lands on the result page's own ground",
-      cfg["swipe"]["analyzing_fade_to"] == "#ECE6DA"
-      and "background-color: #ECE6DA;" in RESULT_CSS
-      and "--ai-ground: #ECE6DA;" in RESULT_CSS)
+      cfg["swipe"]["analyzing_fade_to"] == "#0B0F14"
+      and "--ai-ground: #0B0F14;" in RESULT_CSS)
 
 print("\n--- it cannot take a live charge ---")
 # There is no report profile for this funnel until its second phase, so a
@@ -168,32 +171,44 @@ check("its report profile is registered, and the flag stays on test anyway",
       and cfg.get("stripe_mode") == "test")
 
 print("\n--- what it says it is ---")
-HEADLINE = "Find the AI business that fits you"
+HEADLINE = "People make money with AI in 11 ways. Which one is yours?"
 check("the headline, on the intro card and over the walk",
       cfg["intro"]["headline"] == HEADLINE
       and cfg["swipe"]["headline"] == HEADLINE)
-check("the intro says it is free, ends in a profile, and the plan is optional",
-      all(word in cfg["intro"]["sub"].lower()
-          for word in ("free", "profile", "optional")))
-check("  and the line over the walk says free, and keeps its accent",
-      "free" in cfg["swipe"]["subtext"].lower()
-      and cfg["swipe"]["subtext_accent"] in cfg["swipe"]["subtext"])
+check("the intro: kicker, sub, six chips, button",
+      cfg["intro"]["kicker"] == "AI NAVIGATOR"
+      and cfg["intro"]["sub"] == "12 quick taps. We match your skill, your "
+      "free hours and how well you really know AI to the strategy that fits "
+      "you."
+      and cfg["intro"]["chips"]
+      == ["Content service", "Automation for small businesses",
+          "Design service", "Workshops and tutoring", "Outreach service",
+          "+ 6 more"]
+      and cfg["intro"]["cta"] == "Find my strategy")
+check("  under it: free, optional, and the disclaimer",
+      cfg["intro"]["foot"] == "No sign-up. The test and your profile are "
+      "free. Your full personal strategy is optional."
+      and cfg["intro"]["foot_note"] == cfg["checkout"]["disclaimer"])
+check("  eleven ways is the catalog's own count",
+      len(cfg["paths"]["catalog"]) == 11)
+check("  and the line over the walk keeps its accent",
+      cfg["swipe"]["subtext_accent"] in cfg["swipe"]["subtext"])
 
 print("\n--- cut from focus: what is kept and what is dropped ---")
 DROPPED = ["track_timing", "result_template", "preview_gallery",
            "style_elements", "analyzing_echo", "sale", "pairings",
-           "share_cards"]
-# Three keys are this funnel's own, last, after everything focus has: `rsoc`,
-# the partner-article block, which has a section to itself further down;
-# `paths`, the table its report matches a reader's paths from; and
-# `answer_key`, one line of why for each scored question. The last two are
-# held to their shape in tests/test_ainavigator_report.py.
-OWN = ["rsoc", "paths", "answer_key"]
-check("every top-level key is one focus carries, bar the one of its own",
+           "share_cards", "interstitial_working"]
+# Three keys are this funnel's own: `theme_css`, beside the theme it loads;
+# and, last, `rsoc`, the partner-article block, and `paths`, the table its
+# report matches a reader's strategies from.
+OWN = ["theme_css", "rsoc", "paths"]
+check("every top-level key is one focus carries, bar its own three",
       [k for k in cfg if k not in FOCUS] == OWN,
       str([k for k in cfg if k not in FOCUS]))
-check("  in focus's order, its own key last",
-      list(cfg) == [k for k in FOCUS if k in cfg] + OWN)
+check("  in focus's order, the theme's stylesheet beside the theme",
+      [k for k in cfg if k != "theme_css"]
+      == [k for k in FOCUS if k in cfg] + OWN[1:]
+      and list(cfg).index("theme_css") == list(cfg).index("theme") + 1)
 check("  and the ones with no meaning here are gone, not emptied",
       sorted(k for k in FOCUS if k not in cfg) == sorted(DROPPED),
       str(sorted(k for k in FOCUS if k not in cfg)))
@@ -202,8 +217,6 @@ check("no clock, no memorise screen, no time-up line",
       and not any(m.get("template") == "flash" or "flash" in m
                   for m in cfg["interstitials"])
       and "timeup_line" not in cfg["swipe"])
-check("no echo row of pictures between zones",
-      not any("echo_steps" in m for m in cfg["interstitials"]))
 check("the number block keeps brain's key, without brain's formula",
       set(cfg["brain_age"]) == {"scored", "per_domain", "domains", "levels",
                                 "predict"})
@@ -220,50 +233,51 @@ check("  the only image named anywhere is the brand icon Stripe shows",
       [v for _, v in ALL if re.search(r"\.(webp|png|jpe?g|svg)$", v)]
       == ["/static/brand/icon-512.png"])
 
-print("\n--- eighteen steps ---")
-check("eighteen, and the walk says so",
-      len(steps) == 18 and cfg["swipe"]["pairs_count"] == 18)
+print("\n--- twelve steps ---")
+SCORED = ["%s%d" % (d, n) for d in DOMAINS for n in (1, 2)]
+check("twelve, and the walk says so",
+      len(steps) == 12 and cfg["swipe"]["pairs_count"] == 12)
 check("  ids unique, one pair each",
-      len(by_id) == 18 and all(len(s["pairs"]) == 1 for s in steps))
-check("  six warm-ups first, in order",
-      [s["id"] for s in steps[:6]] == list(WARMUPS))
-check("  then three questions a zone, in zone order",
-      [s["id"] for s in steps[6:]]
-      == ["%s%d" % (d, n) for d in DOMAINS for n in (1, 2, 3)])
+      len(by_id) == 12 and all(len(s["pairs"]) == 1 for s in steps))
+check("  four warm-ups first, in order",
+      [s["id"] for s in steps[:4]] == list(WARMUPS))
+check("  then two scenarios a zone, in zone order",
+      [s["id"] for s in steps[4:]] == SCORED)
 for step in steps:
     fmt = step.get("format")
     check("  %s: %s is a format engine.js declares, drawn as text"
           % (step["id"], fmt),
           fmt in GRID_SIZE and fmt in TEXT_FORMATS
           and len(images(step)) == GRID_SIZE.get(fmt), fmt)
-check("every card is an id, a label and tags — nothing else",
-      all(set(card) == {"id", "label", "tags"} and card["label"].strip()
+check("every card is an id, a label and tags; the skill cards add one line",
+      all(set(card) == ({"id", "label", "sub", "tags"} if s["id"] == "skill"
+                        else {"id", "label", "tags"})
+          and card["label"].strip()
           for s in steps for card in images(s)))
 ids = [card["id"] for s in steps for card in images(s)]
 check("  card ids unique across the walk", len(ids) == len(set(ids)))
-# The longest is the spec's own sixty-five characters, which is two lines of a
-# 390px row; the cap is here so a third line cannot arrive unnoticed.
 check("  and no answer is longer than two lines of a row",
-      max(len(card["label"]) for s in steps for card in images(s)) <= 70,
+      max(len(card["label"]) for s in steps for card in images(s)) <= 50,
       str(max(len(card["label"]) for s in steps for card in images(s))))
+check("the counter chip: eleven in play for three steps, then three left",
+      [s.get("chip") for s in steps]
+      == ["11 strategies still in play"] * 3 + ["3 strategies left"] * 9)
+check("the scenarios count themselves, the warm-ups use the walk's count",
+      [s.get("progress_label") for s in steps]
+      == [None] * 4 + ["Scenario %d of 8" % n for n in range(1, 9)])
 
-print("\n--- the six warm-ups: service tags, scoring nothing ---")
+print("\n--- the four warm-ups: service tags, scoring nothing ---")
 WARM = {
-    "exp": ("How often do you use AI today?",
-            ["Never really", "A few times", "Weekly", "Daily"]),
-    "tool": ("Which do you use most?",
-             ["Chat assistants", "Image tools", "Automation tools",
-              "Coding tools", "Built into my apps", "None yet"]),
-    "skill": ("What are you best at?",
-              ["Writing", "Design & visuals", "Tech & code",
-               "Sales & people", "Organizing", "Teaching"]),
-    "time": ("Hours a week you could put in?",
+    "skill": ("What could people pay you for today?",
+              ["Writing", "Design", "Tech", "Sales", "Organizing",
+               "Teaching"]),
+    "time": ("How many hours a week can you really put in?",
              ["Under 3", "3–7", "8–15", "15+"]),
-    "goal": ("What are you after?",
-             ["A side project", "A full business",
-              "Level up my current work", "Not sure yet"]),
-    "predict": ("12 questions on how AI really works. How many will you get "
-                "right?", ["0–3", "4–6", "7–9", "10–12"]),
+    "goal": ("What should AI money be for you?",
+             ["A side income", "A full business", "More from my current job",
+              "Not sure yet"]),
+    "predict": ("8 money scenarios are next. How many will you get right?",
+                ["0–2", "3–4", "5–6", "7–8"]),
 }
 STYLE_TAGS = {t for st in cfg["styles"] for t in st["tags"]}
 for sid, (question, labels) in WARM.items():
@@ -272,7 +286,8 @@ for sid, (question, labels) in WARM.items():
           step["question"] == question
           and [c["label"] for c in images(step)] == labels,
           str([c["label"] for c in images(step)]))
-    check("  dealt as listed", step.get("shuffle") is False)
+    check("  dealt as listed, with no feedback line",
+          step.get("shuffle") is False and "why" not in step)
     check("  one service tag a card, on its own stem",
           all(len(c["tags"]) == 1 and c["tags"][0].startswith(sid + "_")
               and c["tags"][0] == c["id"] for c in images(step)),
@@ -280,31 +295,42 @@ for sid, (question, labels) in WARM.items():
     check("  scoring nothing: no hit, no miss, no type counts it",
           not any(re.search(r"_(hit|miss)$", t) or t in STYLE_TAGS
                   for c in images(step) for t in c["tags"]))
+check("the skill step says why it matters, and each card adds a line",
+      by_id["skill"]["sub"] == "Pick the closest one. AI multiplies a skill "
+      "you already have, so this decides which strategies stay."
+      and [c["sub"] for c in images(by_id["skill"])]
+      == ["Words that get read", "Things that look right",
+          "Making tools talk", "Getting a yes", "Order out of chaos",
+          "Making it click"])
+check("the skill, time and goal tags are the ones the rules are keyed on",
+      [c["id"] for c in images(by_id["skill"])]
+      == ["skill_" + k for k in cfg["paths"]["rules"]["by_skill"]]
+      and [c["id"] for c in images(by_id["time"])]
+      == ["time_under3", "time_3_7", "time_8_15", "time_15plus"]
+      and [c["id"] for c in images(by_id["goal"])]
+      == ["goal_side", "goal_business", "goal_levelup", "goal_unsure"])
 check("the prediction's four tags are the four bands",
       [c["tags"][0] for c in images(by_id["predict"])]
-      == ["predict_0_3", "predict_4_6", "predict_7_9", "predict_10_12"])
+      == ["predict_0_2", "predict_3_4", "predict_5_6", "predict_7_8"])
+check("no warm-up about usage or tools is left",
+      "exp" not in by_id and "tool" not in by_id)
 
-print("\n--- the twelve questions: one right answer each ---")
-ZONE_KICKER = {"mem": "ZONE 1 · HOW AI WORKS", "foc": "ZONE 2 · PROMPTING",
-               "chg": "ZONE 3 · JUDGMENT & RISK",
-               "spa": "ZONE 4 · BUSINESS SENSE"}
+print("\n--- the eight scenarios: one right answer each ---")
 HITS = {
-    "mem1": "Nothing — it can sound sure and be wrong",
-    "mem2": "How much text the model can consider at once",
-    "mem3": "It picks among likely next words, with some randomness",
-    "foc1": "Specific context, audience and format",
-    "foc2": "Say exactly what to change and iterate",
-    "foc3": "Give 2–3 real examples to imitate",
-    "chg1": "Open the source and check it first",
-    "chg2": "A draft of your own blog post",
-    "chg3": "The tool's terms for commercial use",
-    "spa1": "It fixes one specific, recurring problem for one kind of "
-            "customer",
-    "spa2": "Get a few people to pay or commit first",
-    "spa3": "Your judgment, process and accountability",
+    "mem1": ("YOUR NAME IS ON IT", "Nothing. Sounding sure isn't proof"),
+    "mem2": ("HALF A JOB", "It can only hold so much text at once"),
+    "foc1": ("THE CLOCK IS RUNNING", "Tell it exactly what to change"),
+    "foc2": ("A CLIENT'S VOICE", "Give it 2–3 of their real posts"),
+    "chg1": ("A CLIENT'S MONEY IS ON THE LINE",
+             "Open the source and check it first"),
+    "chg2": ("BEFORE YOU TAKE THE MONEY",
+             "The tool's terms for commercial use"),
+    "spa1": ("BEFORE YOU BUILD", "Get a few people to pay or commit first"),
+    "spa2": ("THE HARD QUESTION",
+             "You pay for judgment and a result I answer for"),
 }
 per_stem = dict.fromkeys(DOMAINS, 0)
-for step in steps[6:]:
+for step in steps[4:]:
     stem = step["id"][:3]
     tags = [t for c in images(step) for t in c["tags"]]
     check("%s: four answers, one tag each, all on %s" % (step["id"], stem),
@@ -317,56 +343,76 @@ for step in steps[6:]:
     hit = [c for c in images(step) if c["tags"] == [stem + "_hit"]]
     check("  the hit is the first listed, and it is the right sentence",
           hit and hit[0] is images(step)[0]
-          and hit[0]["label"] == HITS[step["id"]],
+          and hit[0]["label"] == HITS[step["id"]][1],
           hit[0]["label"] if hit else "")
     check("  the answers are shuffled when dealt",
           "shuffle" not in step and "pin_first" not in step)
-    check("  the reader sees the zone's name, never the stem",
-          step["kicker"] == "%s · %s/3" % (ZONE_KICKER[stem], step["id"][3])
+    check("  its kicker is the situation, never the stem",
+          step["kicker"] == HITS[step["id"]][0]
           and not re.search(r"\b(mem|foc|chg|spa)\b",
                             step["kicker"] + step["question"]),
           step["kicker"])
+    check("  a feedback line of 140 characters or fewer, promising nothing",
+          isinstance(step.get("why"), str) and 20 <= len(step["why"]) <= 140
+          and not re.search(r"\$|guarant|you will earn", step["why"]),
+          step.get("why"))
     per_stem[stem] += 1
-check("three questions a zone, twelve in all",
-      per_stem == dict.fromkeys(DOMAINS, 3)
-      and cfg["brain_age"]["scored"] == 12
-      and cfg["brain_age"]["per_domain"] == 3, str(per_stem))
+check("two scenarios a zone, eight in all",
+      per_stem == dict.fromkeys(DOMAINS, 2)
+      and cfg["brain_age"]["scored"] == 8
+      and cfg["brain_age"]["per_domain"] == 2, str(per_stem))
 check("the zones are named once, in the number block",
       cfg["brain_age"]["domains"] == NAMES)
 check("the engine scores on those four stems and no others here",
       all(("var %s_AXIS = [\"%s_hit\", \"%s_miss\"];"
            % (d.upper(), d, d)) in ENGINE for d in DOMAINS))
 
-print("\n--- the beats between ---")
+print("\n--- instant feedback, switched on from the config ---")
+check("the funnel carries the feedback block and its delay",
+      cfg["swipe"]["feedback"]
+      == {"right": "Right", "yours": "Your pick", "good": "Right call.",
+          "bad": "Costly move.", "next": "Next"}
+      and cfg["swipe"]["feedback_ms"] == 2000)
+check("  and a shorter hold on the steps that have none",
+      cfg["swipe"]["hold_ms"] == 450)
+check("the engine answers back only where both are declared",
+      "var block = cfg && cfg.swipe && cfg.swipe.feedback;" in ENGINE
+      and 'if (!st || typeof st.why !== "string" || !st.why) return null;'
+      in ENGINE)
+FEEDBACK = ENGINE[ENGINE.index("function runFeedback("):
+                  ENGINE.index("// --- interstitials")]
+check("  it tracks nothing and scores nothing of its own",
+      "track(" not in FEEDBACK and "scores[" not in FEEDBACK
+      and "chosen.push" not in FEEDBACK)
+check("  the swipe event still fires at the tap, before any of it",
+      ENGINE.index('track("swipe", step, extra);')
+      < ENGINE.index("if (fb) { runFeedback("))
+no_feedback = [f for f in os.listdir(os.path.join(ROOT, "funnels"))
+               if f != SLUG + ".json"
+               and any(k in read("funnels/" + f) for k in
+                       ('"feedback"', '"theme_css"', '"hold_ms"', '"chip"',
+                        '"progress_label"', '"foot_note"', '"cut"'))]
+check("no other funnel declares any of the new switches", not no_feedback,
+      no_feedback)
+
+print("\n--- the one screen between ---")
 mids = cfg["interstitials"]
-check("one after the warm-ups, one after each zone, one before the result",
-      [m["after_step"] for m in mids] == [6, 9, 12, 15, 18])
-check("  on the templates the engine already has",
-      [m["template"] for m in mids]
-      == ["confirm", "confirm", "confirm", "confirm", "almost"])
-check("  the first says the test starts, and that there is no clock",
-      mids[0]["line"] == "Now the test."
-      and mids[0]["sub"] == "12 questions, no clock.")
-for m, stem in zip(mids[:4], DOMAINS):
-    check("  the one after step %d names the zone that follows"
-          % m["after_step"], NAMES[stem] in m["kicker"], m["kicker"])
-for m, stem in zip(mids[1:4], DOMAINS):
-    lines = m["personal"]["lines"]
-    check("  the one after step %d echoes %s, hit and miss"
-          % (m["after_step"], stem),
-          m["personal"]["axis"] == stem
-          and set(lines) == {stem + "_hit", stem + "_miss"}
-          and all(v.get("line") and v.get("sub") for v in lines.values()))
-    check("    and a miss is room, never a verdict",
-          "room" in lines[stem + "_miss"]["sub"]
-          and not re.search(r"weak|worst|fail|wrong|bad at",
-                            json.dumps(lines).lower()))
-check("  all short enough to read before they move on",
-      all(len(m["line"]) <= 40 and len(m.get("sub", "")) <= 110
-          for m in mids)
-      and all(len(v["line"]) <= 40 and len(v["sub"]) <= 110
-              for m in mids for v in (m.get("personal") or
-                                      {"lines": {}})["lines"].values()))
+check("one interstitial, after the fourth step, and no other",
+      len(mids) == 1 and mids[0]["after_step"] == 4)
+check("  eleven cut down to three, with three locked rows",
+      mids[0]["kicker"] == "MATCH IN PROGRESS"
+      and mids[0]["cut"] == {"from": "11", "to": "3",
+                             "rows": ["Strategy 1", "Strategy 2",
+                                      "Strategy 3"]}
+      and mids[0]["line"] == "Your skill, hours and goal just cut 11 "
+      "strategies down to 3.")
+check("  what is next, and a button that waits to be tapped",
+      mids[0]["sub"] == "Next: 8 real money situations. How you handle them "
+      "shapes your plan: where to start, what to offer and what to skip."
+      and mids[0]["cta"] == "Show me scenario 1" and mids[0]["hold"] is True
+      and "auto_advance_ms" not in mids[0])
+check("the analysing screen is kept",
+      cfg["analyzing"]["duration_ms"] > 0 and cfg["analyzing"]["messages"])
 
 print("\n--- the four types, won the way engine.js wins them ---")
 
@@ -392,26 +438,26 @@ check("four types, on the four hit tags, in zone order",
       == [(i, n, [t]) for i, n, t in STYLES])
 for sid, _name, tag in STYLES:
     check("  a run that hits only its own zone wins %s" % sid,
-          winner({tag: 3}) == sid, winner({tag: 3}))
+          winner({tag: 2}) == sid, winner({tag: 2}))
 check("  an all-hit run resolves to the first: A > B > C > D",
-      winner({t: 3 for _, _, t in STYLES}) == "mechanic")
+      winner({t: 2 for _, _, t in STYLES}) == "mechanic")
 check("  and every two-way tie goes to the earlier zone",
       winner({"foc_hit": 2, "chg_hit": 2}) == "director"
       and winner({"chg_hit": 1, "spa_hit": 1}) == "editor"
       and winner({"mem_hit": 2, "spa_hit": 2}) == "mechanic")
 check("  a run that hits nothing still resolves to a type",
       winner({}) == "mechanic")
-check("each is named, blurbed, and carries strength #1 in full",
-      all(s.get("blurb") and s.get("accent")
-          and set(s["reveals"]) == {"dna", "materials", "mistakes",
-                                    "shopping", "mistake_one"}
-          and all(s["reveals"]["mistake_one"].get(k)
-                  for k in ("title", "body", "fix"))
-          for s in cfg["styles"]))
-check("  and an essence line the result page prints under the name",
-      set(cfg["result_copy"]["profile"]["essence"])
-      == {s["id"] for s in cfg["styles"]}
-      and all(cfg["result_copy"]["profile"]["essence"].values()))
+ESSENCE = {
+    "mechanic": "You know how the machine really works. That keeps your work "
+                "from breaking.",
+    "director": "You get results out of AI fast. Speed is what you sell.",
+    "editor": "You catch what AI gets wrong. That is the part clients cannot "
+              "get from the tool.",
+    "dealmaker": "You see where the money is. The tool is just how you "
+                 "deliver.",
+}
+check("each has the essence line the result page prints under the name",
+      cfg["result_copy"]["profile"]["essence"] == ESSENCE)
 for style in cfg["styles"]:
     text = json.dumps(style, ensure_ascii=False).lower()
     check("  %s: the low zone is room, never a weakness" % style["id"],
@@ -427,9 +473,9 @@ check("the bands are read off the step that asks",
 check("  each says what its card says",
       [b["label"] for b in bands.values()]
       == [c["label"] for c in images(by_id["predict"])])
-check("  and together they cover 0 to 12 with no gap and no overlap",
+check("  and together they cover 0 to 8 with no gap and no overlap",
       [(b["min"], b["max"]) for b in bands.values()]
-      == [(0, 3), (4, 6), (7, 9), (10, 12)])
+      == [(0, 2), (3, 4), (5, 6), (7, 8)])
 
 
 def calibration(band, hits):
@@ -447,29 +493,26 @@ check("the module compares them exactly that way",
       and 'return "on";' in MODULE)
 seen = {}
 for tag, band in bands.items():
-    for hits in range(13):
+    for hits in range(9):
         seen.setdefault(calibration(band, hits), []).append((tag, hits))
 LABELS = cfg["result_copy"]["calibration"]
-check("all three labels are reachable", set(seen) == {"on", "under", "over"})
-check("  inside the band is on target",
-      LABELS["on"] == "On target"
-      and calibration(bands["predict_7_9"], 8) == "on")
-check("  above it is underrated",
-      LABELS["under"] == "Underrated — better than you think"
-      and calibration(bands["predict_4_6"], 9) == "under")
-check("  below it is bold",
-      LABELS["over"] == "Bold — confidence ahead of skill, the easiest gap "
-                        "to close"
-      and calibration(bands["predict_7_9"], 5) == "over")
+check("all three headlines are reachable", set(seen) == {"on", "under", "over"})
+check("  inside the band", LABELS["on"] == "You know exactly where you stand."
+      and calibration(bands["predict_5_6"], 6) == "on")
+check("  above it", LABELS["under"] == "Better than you think."
+      and calibration(bands["predict_3_4"], 6) == "under")
+check("  below it",
+      LABELS["over"] == "Confidence is ahead of skill. Easy to fix."
+      and calibration(bands["predict_7_8"], 5) == "over")
 check("  the lowest band cannot be bold and the highest cannot be underrated",
-      not any(t == "predict_0_3" for t, _ in seen["over"])
-      and not any(t == "predict_10_12" for t, _ in seen["under"]))
+      not any(t == "predict_0_2" for t, _ in seen["over"])
+      and not any(t == "predict_7_8" for t, _ in seen["under"]))
 check("the line is the reader's two numbers and nobody else's",
       cfg["result_copy"]["calibration_line"]
       == "You predicted {band}. You scored {n}."
-      and cfg["result_copy"]["score_of"] == "{n} / {total}")
+      and cfg["result_copy"]["score_of"] == "{n}/{total}")
 check("a skipped prediction shows the score alone",
-      "if (data.band) {" in MODULE
+      "if (data.band) {" in MODULE and "copy.score_only" in MODULE
       and "return null;" in MODULE.split("function predictionOf", 1)[1]
       .split("function calibrationOf", 1)[0])
 
@@ -480,15 +523,15 @@ def level(hits):
             return row["label"]
 
 
-check("three levels: Explorer 0–4, Builder 5–8, Operator 9–12",
-      [level(n) for n in range(13)]
-      == ["Explorer"] * 5 + ["Builder"] * 4 + ["Operator"] * 4)
+check("three levels: Explorer 0–2, Builder 3–5, Operator 6–8",
+      [level(n) for n in range(9)]
+      == ["Explorer"] * 3 + ["Builder"] * 3 + ["Operator"] * 3)
 check("  read off the config's table by the module, top to bottom",
       "typeof rows[i].max !== \"number\" || hits <= rows[i].max" in MODULE)
 
 print("\n--- the report, as it is promised ---")
 SECTIONS = [("dna", "Your AI Profile & Your Edge"),
-            ("materials", "Your 3 Best-Fit Paths"),
+            ("materials", "Your 3 Best-Fit Strategies"),
             ("mistakes", "5 Strengths to Sell & 2 Traps to Avoid"),
             ("shopping", "Your First 7 Days")]
 check("four sections, on the shared ids, under this funnel's titles",
@@ -501,13 +544,21 @@ check("  all locked, each with a teaser and two preview lines",
           and s["teaser_line"] and len(s["preview"]) == 2
           for s in cfg["report"]["sections"]))
 key_rows = [r for r in cfg["report"]["also"]["rows"] if "title" in r]
-check("plus the manifest line: Your Answer Key",
-      key_rows == [{"title": "Your Answer Key",
-                    "hook": "Every question, your answer, the right one, "
-                            "and why."}])
-check("  which the result page lists under the four, locked",
-      cfg["result_copy"]["profile"]["answer_key"]["title"]
-      == "Your Answer Key")
+check("plus the manifest line: Your 8 Scenarios",
+      key_rows == [{"title": "Your 8 Scenarios",
+                    "hook": "Every scenario, your move, the right move, and "
+                            "what it means for your plan."}])
+check("  and nothing the reader sees still says path or answer key",
+      not [(at, v) for at, v in ALL
+           if not at.startswith((".paths", ".rsoc"))
+           and re.search(r"\bpaths?\b|answer key|twelve", v, re.I)],
+      str([(at, v) for at, v in ALL
+           if not at.startswith((".paths", ".rsoc"))
+           and re.search(r"\bpaths?\b|answer key|twelve", v, re.I)][:3]))
+check("  the catalog says plan on, never typically",
+      all(row["first_client"].startswith("Plan on ")
+          for row in cfg["paths"]["catalog"])
+      and "Typically" not in RAW)
 slots = cfg["report"]["hook_slots"]
 check("the teaser words come off the reader's own warm-ups",
       {k: v["step"] for k, v in slots.items()}
@@ -519,10 +570,23 @@ check("  and every token a teaser uses is one of them",
 check("strength #1 is free, and says what stays locked",
       cfg["report"]["mistake_one"]["title"] == "Strength #1 of 5"
       and cfg["report"]["mistake_one"]["locked_note"])
-check("the locked teaser is the line the page was asked to carry",
-      cfg["result_copy"]["path_teaser"]
-      == "Your best-fit path: ▒▒▒▒ — matched from your skill, your hours "
-         "and your score")
+OFFER = cfg["result_copy"]["offer"]
+check("the offer card: label, line, three locked rows, the line under",
+      OFFER["label"] == "YOUR #1 STRATEGY"
+      and OFFER["line"] == "Matched from your skill, your {hours} a week and "
+      "your score. It is ready."
+      and OFFER["rows"] == ["What you sell", "Who pays for it",
+                            "Your first 7 days"]
+      and OFFER["under"] == "One-time. Instant. PDF copy to your email.")
+check("  the hours are the four the time step offers",
+      set(OFFER["hours"]) == {c["id"] for c in images(by_id["time"])})
+check("  and what it unlocks is four lines",
+      OFFER["unlock_title"] == "What you unlock"
+      and OFFER["unlock"]
+      == ["Your 3 best-fit strategies, and 2 to skip for now",
+          "A day-by-day first week, sized to your hours",
+          "5 strengths you can sell, 2 traps to avoid",
+          "Your 8 scenarios, with what each one means for your plan"])
 
 print("\n--- the price ---")
 check("six dollars", cfg["pricing"]["amount_cents"] == 600
@@ -538,7 +602,7 @@ co = cfg["checkout"]
 check("the product is Your AI Navigator Report",
       co["product_name"] == "Your AI Navigator Report")
 check("the button says what it unlocks, and the price is a token",
-      co["cta_label"] == "Unlock my AI Navigator — {price}"
+      co["cta_label"] == "Unlock my strategy · {price}"
       and co["commerce"]["sticky_label"] == co["cta_label"])
 literal = [(at, v) for at, v in ALL
            if re.search(r"[$€£]\s?\d|\d\s?(usd|dollars?|bucks)\b|\b6\.00\b",
@@ -570,15 +634,12 @@ check("every checkout key is one focus's checkout has, plus the disclaimer",
       and set(co["commerce"]) == set(FOCUS["checkout"]["commerce"]))
 
 print("\n--- the disclaimer ---")
-check("near the button", co["disclaimer"] == DISCLAIMER)
-check("and in the footer of the result",
-      cfg["result_copy"]["disclaimer"] == DISCLAIMER)
-check("  the module prints one under the pay button",
-      MODULE.index("nodes.payButton, nodes.payError]")
-      < MODULE.index('elm("p", "ai-disclaimer", plain)')
-      < MODULE.index("var chips = profileCopy(ctx).offer_chips"))
-check("  and one as the last thing on both pages",
-      MODULE.count("var foot = footer(copy);") == 2
+check("in the checkout block", co["disclaimer"] == DISCLAIMER)
+check("on the intro, and in the footer of the result",
+      cfg["intro"]["foot_note"] == DISCLAIMER
+      and cfg["result_copy"]["disclaimer"] == DISCLAIMER)
+check("  the module prints it as the last thing on both pages",
+      MODULE.count("var foot = footer(ctx, copy);") == 2
       and MODULE.count("if (foot) root.appendChild(foot);") == 2)
 
 print("\n--- nothing in it promises money ---")
@@ -596,12 +657,13 @@ check("the list is the one reports.py holds the model to",
       [rx.pattern for rx in reports.AI_BANNED_CORE] == BANNED)
 # The one string the spec itself requires that trips the scan: the disclaimer
 # says that nothing is guaranteed. Allowlisted by exact path and exact text,
-# in the two places it is printed, so a third string cannot hide behind it.
+# in the three places it is printed, so no other string can hide behind it.
 ALLOW = {
     (".checkout.disclaimer", DISCLAIMER),
     (".result_copy.disclaimer", DISCLAIMER),
+    (".intro.foot_note", DISCLAIMER),
 }
-check("the two exceptions are where the allowlist says they are",
+check("the three exceptions are where the allowlist says they are",
       all(pair in set(ALL) for pair in ALLOW))
 hits = [(at, v) for at, v in ALL if (at, v) not in ALLOW
         and any(re.search(p, v, re.I) for p in BANNED)]
@@ -701,27 +763,34 @@ check("it holds no number of its own about the game",
       not re.search(r"\b(12|600)\b", CODE)
       and "block.scored" in CODE and "block.per_domain" in CODE
       and "block.levels" in CODE)
-check("the free page is in the order it was specified",
-      [m for m in re.findall(
-          r"root\.appendChild\((\w+)\(", MODULE.split(
-              "function render(root, ctx) {", 1)[1].split(
-              "// --- the delivered report", 1)[0])]
-      == ["kicker", "hero", "typeCard", "bars", "path", "offer"]
-      and re.search(r"hero\(ctx, copy, data\)\);\s+var chip = levelChip",
-                    MODULE)
-      and MODULE.index("root.appendChild(typeCard(ctx));")
-      < MODULE.index("var marks = strip(ctx, copy);")
-      < MODULE.index("var one = strength(ctx, copy);")
-      < MODULE.index("root.appendChild(path(ctx, copy));")
-      < MODULE.index("root.appendChild(offer(ctx, copy, data));"))
-strip_fn = MODULE.split("function strip(ctx, copy) {", 1)[1].split(
-    "// --- 6)", 1)[0]
-check("the strip marks right or missed and names no answer",
-      "is-hit" in strip_fn and "is-miss" in strip_fn
-      and ".label" not in strip_fn and "pick.id" not in strip_fn
-      and "data-" not in strip_fn)
-check("  twelve marks come off the config's own scored steps",
-      "rounds(ctx.cfg)" in strip_fn)
+FREE = MODULE.split("function render(root, ctx) {", 1)[1].split(
+    "// --- the paid page", 1)[0]
+check("the free page is three blocks, then what it unlocks, guides, footer",
+      re.findall(r"root\.appendChild\((\w+)\(", FREE)
+      == ["profileBlock", "scoreCard", "offer", "divider"]
+      and FREE.index("root.appendChild(offer(ctx, copy));")
+      < FREE.index("var more = unlocks(copy);")
+      < FREE.index("root.appendChild(divider());")
+      < FREE.index('articles(ctx, data, "below_paywall")')
+      < FREE.index("var foot = footer(ctx, copy);"))
+check("  with no zone bars, round strip, level chip or free strength",
+      not re.search(r"bars\(|strip\(|levelChip|strength\(|path\(", FREE)
+      and "function strip(" not in MODULE
+      and "function levelChip(" not in MODULE
+      and "function strength(" not in MODULE)
+OFFER_FN = MODULE.split("function offer(ctx, copy) {", 1)[1].split(
+    "var CHECK_PATH", 1)[0]
+check("the offer card's rows are a label and an empty bar",
+      'row.appendChild(bar(""));' in OFFER_FN
+      and 'card.appendChild(bar("is-name"));' in OFFER_FN
+      and 'node.setAttribute("aria-hidden", "true");' in MODULE.split(
+          "function bar(cls) {", 1)[1].split("}", 1)[0])
+check("  and it reads nothing of the strategies, sections or right answers",
+      not re.search(r"visuals|paths|catalog|sections|_hit|\.why|reveals",
+                    OFFER_FN))
+check("the zone bars are on the paid page only",
+      "root.appendChild(bars(ctx, copy, data));" in MODULE.split(
+          "function delivered(root, ctx) {", 1)[1])
 check("the lowest zone is the one with the most room, and only that",
       cfg["result_copy"]["zone_room"] == "the zone with the most room"
       and not re.search(r"weak|worst|deficien|fail|poor",
@@ -733,15 +802,34 @@ check("the delivered page draws stub prose when a section has no data",
       in MODULE and "function delivered(root, ctx) {" in MODULE)
 check("  and carries no offer",
       "offer(" not in MODULE.split("function delivered(root, ctx) {", 1)[1])
-check("the stylesheet is scoped to this module",
-      all(re.search(r"\.ai-|\.result-module\.is-ai|result-module\.is-ai",
-                    sel)
-          for sel in re.findall(r"^([^\s/@}][^{]*)\{", RESULT_CSS, re.M)),
-      str([sel for sel in re.findall(r"^([^\s/@}][^{]*)\{", RESULT_CSS, re.M)
-           if not re.search(r"\.ai-|result-module\.is-ai", sel)][:3]))
-check("  with no image and no web font",
-      "url(" not in RESULT_CSS and "@font-face" not in RESULT_CSS
-      and "@import" not in RESULT_CSS)
+SELECTORS = [sel.strip() for block in re.findall(
+    r"^([^\s/@}][^{]*)\{", re.sub(r"/\*.*?\*/", "", RESULT_CSS, flags=re.S),
+    re.M) for sel in block.split(",")]
+LOOSE = [sel for sel in SELECTORS
+         if not re.match(r"(body\.theme-ai\b|\.is-ai\b|\.ai-)", sel)
+         and sel not in ("from", "to")]
+check("the stylesheet is scoped to this theme and this module (%d selectors)"
+      % len(SELECTORS), len(SELECTORS) > 150 and not LOOSE, str(LOOSE[:4]))
+check("  the tokens are the ones specified",
+      all(("--ai-%s: %s;" % pair) in RESULT_CSS for pair in (
+          ("ground", "#0B0F14"), ("card", "#151B23"), ("border", "#26303B"),
+          ("track", "#1C242E"), ("text", "#F2F5F7"), ("soft", "#C3CCD6"),
+          ("muted", "#9AA7B4"), ("accent", "#C8F53B"),
+          ("on-accent", "#0B0F14"), ("tint", "#1B2410"), ("miss", "#FF9A7A"),
+          ("miss-tint", "#2A1712"), ("offer", "#131A12"),
+          ("locked", "#33402A"))))
+check("  one web font, on this site, with display swap; no image, no gradient",
+      re.findall(r'url\("([^"]+)"\)', RESULT_CSS)
+      == ["/static/fonts/space-grotesk-latin-var.woff2"]
+      and os.path.isfile(os.path.join(
+          ROOT, "static/fonts/space-grotesk-latin-var.woff2"))
+      and RESULT_CSS.count("@font-face") == 1
+      and "font-display: swap;" in RESULT_CSS
+      and "@import" not in RESULT_CSS and "gradient" not in RESULT_CSS)
+check("  the wordmark stays Fraunces, with the dot in the accent",
+      'font-family: "Fraunces var", Georgia, serif;' in RESULT_CSS
+      and 'body.theme-ai .swipe-brand::after { content: "."; '
+          'color: var(--ai-accent); }' in RESULT_CSS)
 
 print("\n--- the partner articles: the block ---")
 RSOC = cfg.get("rsoc") or {}
@@ -826,9 +914,11 @@ check("the tracker does not send them",
       "passthrough" not in ENGINE.split("function track(event,", 1)[1]
       .split("\n  }\n", 1)[0]
       and "console." not in KEEP and "console." not in HELD)
-RS = MODULE.split("// --- partner articles", 1)[1].split("// --- render", 1)[0]
+RS = MODULE.split("// --- partner articles", 1)[1].split(
+    "// --- the free page", 1)[0]
 check("the module builds real anchors, a new tab, noopener",
-      'elm("a", "ai-rsoc-link", item.label)' in RS
+      'elm("a", "ai-rsoc-link")' in RS
+      and 'elm("span", "ai-rsoc-text", item.label)' in RS
       and 'link.target = "_blank";' in RS and 'link.rel = "noopener";' in RS)
 check("  the query with URLSearchParams, from the held keys only",
       "new URLSearchParams()" in RS and "ctx.passthrough" in RS
