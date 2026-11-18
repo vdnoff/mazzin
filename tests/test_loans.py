@@ -431,38 +431,53 @@ banned = [w for w in ("congratulations", "pre-qualif", "prequalif",
                       "% of", "people have")
           if w in visible.lower() or w in JS.lower()]
 check("no approval, urgency or statistic in the copy", not banned, banned)
-check("it says what Mazzin is not, on the landing, options and guides views",
-      visible.count("Mazzin is not a lender") == 3)
-check("the options card is labelled as a partner site that shows ads",
-      '<div class="partner-row"><span>Partner site</span><span>Shows ads</span>'
-      '</div>' in PAGE)
-check("  and is hidden until the script finds a click to pass on",
-      '<div class="card partner-card" id="partner-card" hidden>' in PAGE
+check("it says what Mazzin is not, on the landing and the summary view",
+      visible.count("Mazzin is not a lender") == 2
+      and all("Mazzin is not a lender" in PAGE[PAGE.index('id="view-%s"' % v):]
+              .split("</section>")[0] for v in ("landing", "options")))
+SUMMARY = PAGE[PAGE.index('id="view-options"'):].split("</section>")[0]
+check("the guides sit on the summary view, labelled Partner site",
+      'Guides for you <span class="pill">Partner site</span>' in SUMMARY
+      and '<ul class="card guides" id="guides"></ul>' in SUMMARY)
+check("  in a block that is hidden until the script finds a click to pass on",
+      '<div class="guides-block" id="guides-block" hidden>' in SUMMARY
       and '<p class="guides-none" id="guides-none" hidden>Guides are not '
-          'available for this visit.</p>' in PAGE)
-check("the guides view is labelled Partner site",
-      'Guides for you <span class="pill">Partner site</span>' in PAGE)
+          'available for this visit.</p>' in SUMMARY)
+check("  in order: chips, guides, the not-a-lender box, the footer links",
+      SUMMARY.index('id="options-chips"') < SUMMARY.index('id="guides-block"')
+      < SUMMARY.index('id="guides-none"') < SUMMARY.index('class="note"')
+      < SUMMARY.index('class="foot"'))
+check("  and its footer is Contact, Privacy, Terms",
+      '<nav class="foot-links"><a href="mailto:support@mazzin.com">Contact'
+      '</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav>'
+      in SUMMARY)
 check("the note says where the guides go and how Mazzin earns",
       "The guides open a partner site that shows ads, and we may earn money "
       "when you visit it.</p>" in PAGE)
 for needle in ("How much do you need?", "What is the loan for?",
                "How do you earn your income?",
                "How would you rate your credit?",
-               "Free guides matched to your answers",
-               "Picked from your loan purpose and credit range",
-               "Explain costs and what to compare",
-               "Open on evoseekly.com, a partner site",
-               "See my guides", "Pick a guide to read",
+               "Guides for you",
                "Each link opens evoseekly.com, a partner site that shows "
                "ads."):
     check("copy: %s" % needle, needle in PAGE)
 gone = [w for w in ("sponsored", "related searches", "pick a search",
-                    "offers are not available", "view sponsored")
+                    "offers are not available", "view sponsored",
+                    "pick a guide to read", "see my guides",
+                    "free guides matched to your answers", "options_cta",
+                    "partner-card", "go-guides", "view-guides", "btn-white")
         if w in (PAGE + JS + CSS).lower()]
 check("nothing of the pre-feed wording is left", not gone, gone)
 check("no anchor to an article is written in the page itself",
       not re.search(r'<a\b[^>]*href="https?:', PAGE))
-check("six views", len(re.findall(r'<section class="view"', PAGE)) == 6)
+check("five views, the summary last",
+      re.findall(r'<section class="view" id="view-\w+" data-view="(\w+)"',
+                 PAGE) == ["landing", "purpose", "income", "credit",
+                           "options"]
+      and 'var VIEWS = ["landing", "purpose", "income", "credit", "options"];'
+      in JS)
+check("  a tab left on a view that is gone resumes on the summary",
+      'var RETIRED = { guides: "options", offers: "options" };' in JS)
 check("six purposes, four employments, four credit bands, five incomes",
       set(re.findall(r'class="tile" type="button" data-value="(\w+)"', PAGE))
       == loans.PURPOSES
@@ -528,7 +543,7 @@ check("  every purpose and every credit band has one",
       | {"general_small", "general_apr"})
 check("  every key is a slot the server accepts",
       all(loans.SLOT_RE.fullmatch(a[0]) for a in ARTICLES)
-      and loans.SLOT_RE.fullmatch("options_cta"))
+      and "options_cta" not in JS)
 bad = [a[0] for a in ARTICLES
        if not a[2].startswith("https://") or "?" in a[2] or "#" in a[2]
        or not re.fullmatch(r"https://[a-z]+\.com/[A-Za-z0-9_-]{200,320}", a[2])]
@@ -561,7 +576,8 @@ check("a link is refused unless it is bare https",
       and 'link.indexOf("?") >= 0 || link.indexOf("#") >= 0' in JS)
 check("  and there is none at all without an fbclid",
       "if (!article || !held.fbclid) return \"\";" in JS
-      and 'return ready("options") && hasClick();' in JS)
+      and "if (!hasClick()) return 0;" in JS
+      and "var on = hasClick() && renderGuides() > 0;" in JS)
 check("  the href is the link, a question mark and the held keys only",
       'return link + "?" + query.toString();' in JS
       and JS.count(".href =") == 1 and "row.href = href;" in JS)
@@ -573,7 +589,7 @@ check("  built with DOM calls, never from a string of markup",
       and "document.write" not in JS)
 check("a tap is reported and never waited for",
       'track("offer_tap", null, { slot: key });' in JS
-      and 'track("offer_tap", null, { slot: "options_cta" });' in JS
+      and JS.count('"offer_tap"') == 1
       and "preventDefault" not in JS)
 SENT = JS[JS.index("function withAttribution"):JS.index("function sendLead")]
 check("nothing posted carries a click identifier",
