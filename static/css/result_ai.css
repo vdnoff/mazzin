@@ -560,7 +560,7 @@ body.theme-ai #screen-result.is-active { padding-top: 16px; }
 
 .is-ai {
   display: grid;
-  gap: 16px;
+  gap: 20px;
   font-family: var(--ai-body);
   color: var(--ai-text);
   text-align: left;
@@ -678,11 +678,15 @@ body.theme-ai #screen-result.is-active { padding-top: 16px; }
 /* 3) the offer */
 
 .ai-offer {
-  padding: 18px;
+  display: grid;
+  gap: 16px;
+  padding: 20px;
   border: 2px solid var(--ai-accent);
   border-radius: 18px;
   background: var(--ai-offer);
 }
+.ai-offer-top,
+.ai-offer-list { display: grid; gap: 12px; }
 .ai-offer-label {
   display: flex;
   align-items: center;
@@ -691,62 +695,42 @@ body.theme-ai #screen-result.is-active { padding-top: 16px; }
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--ai-accent);
 }
 .ai-lock-icon { flex: none; width: 16px; height: 16px; color: var(--ai-accent); }
+.ai-offer-head {
+  font-family: var(--ai-head);
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: var(--ai-text);
+}
 .ai-bar {
   display: block;
   height: 12px;
   border-radius: 6px;
   background: var(--ai-locked);
 }
-.ai-bar.is-name { width: 78%; height: 26px; margin-top: 12px; border-radius: 8px; }
-.ai-offer-line {
-  margin-top: 12px !important;
-  font-size: 15px;
-  line-height: 1.45;
-  color: var(--ai-soft);
+.ai-bar.is-name { width: 82%; height: 34px; border-radius: 10px; }
+.ai-offer-line { font-size: 15px; line-height: 1.45; color: #F2F5F7; }
+.ai-offer-rule {
+  width: 100%;
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: #33402A;
 }
-.ai-locked { display: grid; gap: 10px; margin-top: 16px !important; }
-.ai-locked-row {
-  display: grid;
-  grid-template-columns: 16px auto 1fr;
-  align-items: center;
-  gap: 10px;
+.ai-offer-sublabel {
   font-family: var(--ai-head);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
-  color: var(--ai-text);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #C3CCD6;
 }
-body.theme-ai .ai-offer #pay-button { margin-top: 18px; }
-/* The express-pay holder takes the height of what it shows and no more.
-   engine.js keeps whichever of the two controls is not live in the layout,
-   invisible, so the block never jumps; in this card that reserved space is a
-   hole under the live one. Out of the layout instead: the slot when there is
-   no wallet, the pay button when the wallet is the control. Nothing that is
-   drawn is hidden, and no node is moved. */
-body.theme-ai .ai-offer .xp { min-height: 0; margin: 18px 0 0; }
-body.theme-ai .ai-offer .xp__slot.xp__off,
-body.theme-ai .ai-offer #pay-button.xp__off { display: none; }
-body.theme-ai .ai-offer .xp:has(> .xp__slot.xp__off:only-child),
-body.theme-ai .ai-offer .xp:not(:has(*)) { display: none; }
-body.theme-ai .ai-offer .xp #pay-button { margin-top: 0; }
-body.theme-ai #pay-button:disabled { opacity: 0.6; }
-.ai-offer .withdrawal {
-  margin-top: 14px;
-  font-size: 12.5px;
-  color: var(--ai-soft);
-}
-.ai-offer .pay-error { margin-top: 10px; color: var(--ai-miss); font-size: 14px; }
-.ai-offer-under {
-  margin-top: 10px !important;
-  text-align: center;
-  font-size: 12.5px;
-  color: var(--ai-muted);
-}
-
-.ai-unlock { padding: 4px 0 0; }
-.ai-checks { display: grid; gap: 10px; margin-top: 12px !important; }
+.ai-checks { display: grid; gap: 12px; }
 .ai-check {
   display: grid;
   grid-template-columns: 18px 1fr;
@@ -754,27 +738,48 @@ body.theme-ai #pay-button:disabled { opacity: 0.6; }
   align-items: start;
   font-size: 15px;
   line-height: 1.4;
-  color: var(--ai-soft);
+  color: var(--ai-text);
 }
+.ai-check:first-child { font-weight: 600; }
 .ai-check-icon { width: 18px; height: 18px; margin-top: 1px; color: var(--ai-accent); }
 
-.ai-divider {
-  width: 100%;
-  height: 1px;
-  margin: 4px 0;
-  border: 0;
-  background: var(--ai-border);
+/* The payment area is engine.js's own nodes, in the order they need. The
+   card's gap spaces them; nothing here adds to it.
+
+   The express-pay holder takes the height of what it shows and no more.
+   engine.js keeps whichever of the two controls is not live in the layout,
+   invisible, so the block never jumps; in this card that reserved space is a
+   hole under the live one. Out of the layout instead: the slot when there is
+   no wallet, the pay button when the wallet is the control. Nothing that is
+   drawn is hidden, and no node is moved. */
+body.theme-ai .ai-offer #pay-button { margin: 0; }
+body.theme-ai .ai-offer .xp { min-height: 0; margin: 0; }
+body.theme-ai .ai-offer .xp-summary { margin: 0; }
+body.theme-ai .ai-offer .xp__slot.xp__off,
+body.theme-ai .ai-offer #pay-button.xp__off { display: none; }
+body.theme-ai .ai-offer .xp:has(> .xp__slot.xp__off:only-child),
+body.theme-ai .ai-offer .xp:not(:has(*)) { display: none; }
+body.theme-ai .ai-offer [hidden] { display: none; }
+body.theme-ai #pay-button:disabled { opacity: 0.6; }
+.ai-offer .withdrawal { margin: 0; font-size: 12.5px; color: var(--ai-soft); }
+.ai-offer .pay-error { margin: 0; color: var(--ai-miss); font-size: 14px; }
+.ai-offer-under {
+  margin-top: -4px !important;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #C3CCD6;
 }
 
-/* the partner guides: a card of its own, the second way out of the page */
+/* the partner guides: a light card on a dark page, the second way out */
 
 .ai-rsoc {
   display: grid;
-  gap: 10px;
-  padding: 18px;
-  border: 2px solid #F2F5F7;
+  gap: 16px;
+  padding: 20px;
   border-radius: 18px;
-  background: #151B23;
+  background: #F2F5F7;
+  color: #0B0F14;
 }
 .ai-rsoc-kicker {
   font-family: var(--ai-head);
@@ -782,22 +787,24 @@ body.theme-ai #pay-button:disabled { opacity: 0.6; }
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #C8F53B;
+  color: #3A5A00;
 }
 .ai-rsoc-head {
+  margin-top: -4px !important;
   font-family: var(--ai-head);
   font-size: 26px;
   font-weight: 700;
-  line-height: 1.12;
+  line-height: 1.1;
   letter-spacing: -0.01em;
-  color: var(--ai-text);
+  color: #0B0F14;
 }
 .ai-rsoc-sub {
-  margin-bottom: 6px !important;
-  font-size: 16px;
-  line-height: 1.4;
-  color: #C3CCD6;
+  margin-top: -4px !important;
+  font-size: 15px;
+  line-height: 1.45;
+  color: #2A3440;
 }
+.ai-rsoc-list { display: grid; gap: 10px; }
 .ai-rsoc-link {
   display: flex;
   align-items: center;
@@ -805,10 +812,17 @@ body.theme-ai #pay-button:disabled { opacity: 0.6; }
   gap: 12px;
   min-height: 68px;
   padding: 12px 16px;
+  border: 1px solid #C9D1DA;
   border-radius: 16px;
-  background: #F2F5F7;
+  background: #FFFFFF;
   color: #0B0F14;
   text-decoration: none;
+}
+.ai-rsoc-link.is-featured {
+  min-height: 76px;
+  border-color: #0B0F14;
+  background: #0B0F14;
+  color: #F2F5F7;
 }
 .ai-rsoc-words { display: grid; gap: 4px; min-width: 0; }
 .ai-rsoc-tag {
@@ -817,8 +831,9 @@ body.theme-ai #pay-button:disabled { opacity: 0.6; }
   line-height: 1.3;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #3A4654;
+  color: #4A5563;
 }
+.ai-rsoc-link.is-featured .ai-rsoc-tag { color: #C8F53B; }
 .ai-rsoc-text {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -828,9 +843,11 @@ body.theme-ai #pay-button:disabled { opacity: 0.6; }
   line-height: 1.2;
   color: #0B0F14;
 }
+.ai-rsoc-link.is-featured .ai-rsoc-text { font-size: 18px; color: #F2F5F7; }
 .ai-rsoc-arrow { flex: none; width: 20px; height: 20px; color: #0B0F14; }
+.ai-rsoc-link.is-featured .ai-rsoc-arrow { color: #F2F5F7; }
 .is-ai .ai-rsoc-arrow { stroke-width: 1.8; }
-.ai-rsoc-note { margin-top: 2px !important; font-size: 12px; color: #9AA7B4; }
+.ai-rsoc-note { margin-top: -4px !important; font-size: 12px; color: #4A5563; }
 
 .ai-foot {
   padding-bottom: 8px;
@@ -838,7 +855,7 @@ body.theme-ai #pay-button:disabled { opacity: 0.6; }
   line-height: 1.5;
   color: var(--ai-muted);
 }
-.ai-foot .legal-links { margin-top: 10px; }
+.ai-foot .legal-links { margin: 10px 0 0; padding: 0; }
 .ai-foot .legal-links a { color: var(--ai-muted); }
 
 /* --- the paid page ------------------------------------------------------------ */

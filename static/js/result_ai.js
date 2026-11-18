@@ -380,27 +380,41 @@
     card.id = OFFER_ID;
     var nodes = ctx.nodes || {};
     var checkout = (ctx.cfg && ctx.cfg.checkout) || {};
+    var priced = typeof ctx.withPrice === "function"
+      ? ctx.withPrice : function (text) { return text; };
 
+    // What it is, in the words the reader came for, and the one thing the
+    // page will not show: a bar where the strategy's name will be.
+    var top = elm("div", "ai-offer-top");
     var label = elm("p", "ai-offer-label");
     label.appendChild(elm("span", "", words.label || ""));
     label.appendChild(glyph(LOCK_PATH, "ai-lock-icon"));
-    card.appendChild(label);
-    card.appendChild(bar("is-name"));
+    top.appendChild(label);
+    if (words.head) top.appendChild(elm("h2", "ai-offer-head", words.head));
+    top.appendChild(bar("is-name"));
+    if (words.line) top.appendChild(elm("p", "ai-offer-line", words.line));
+    card.appendChild(top);
 
-    var hours = hoursOf(ctx, words);
-    var line = hours ? fill(words.line || "", { hours: hours })
-      : (words.line_bare || "");
-    if (line) card.appendChild(elm("p", "ai-offer-line", line));
-
-    var rows = elm("ul", "ai-locked");
-    (words.rows || []).forEach(function (text) {
-      var row = elm("li", "ai-locked-row");
-      row.appendChild(glyph(LOCK_PATH, "ai-lock-icon"));
-      row.appendChild(elm("span", "ai-locked-label", text));
-      row.appendChild(bar(""));
-      rows.appendChild(row);
-    });
-    card.appendChild(rows);
+    var list = words.unlock || [];
+    if (list.length) {
+      var rule = elm("hr", "ai-offer-rule");
+      rule.setAttribute("aria-hidden", "true");
+      card.appendChild(rule);
+      var group = elm("div", "ai-offer-list");
+      if (words.unlock_title) {
+        group.appendChild(elm("p", "ai-offer-sublabel", words.unlock_title));
+      }
+      var hours = hoursOf(ctx, words) || words.hours_bare || "";
+      var rows = elm("ul", "ai-checks");
+      list.forEach(function (text) {
+        var row = elm("li", "ai-check");
+        row.appendChild(glyph(CHECK_PATH, "ai-check-icon"));
+        row.appendChild(elm("span", "", fill(text, { hours: hours })));
+        rows.appendChild(row);
+      });
+      group.appendChild(rows);
+      card.appendChild(group);
+    }
 
     // A funnel that asks for no consent tick still has the box: engine.js
     // gates the pay button on it. Ticked here, announced the way a real tick
@@ -419,7 +433,9 @@
      nodes.payButton, nodes.payError]
       .forEach(function (n) { if (n) card.appendChild(n); });
 
-    if (words.under) card.appendChild(elm("p", "ai-offer-under", words.under));
+    if (words.under) {
+      card.appendChild(elm("p", "ai-offer-under", priced(words.under)));
+    }
 
     // The paywall's own rows have nothing left to say on this page.
     [nodes.manifest, nodes.anchor, nodes.price, nodes.trust]
@@ -430,31 +446,6 @@
   }
 
   var CHECK_PATH = "M3.5 8.6l3.1 3.1 5.9-6.4";
-
-  function unlocks(copy) {
-    var words = copy.offer || {};
-    var list = words.unlock || [];
-    if (!list.length) return null;
-    var card = elm("section", "ai-unlock");
-    if (words.unlock_title) {
-      card.appendChild(elm("h2", "ai-h2", words.unlock_title));
-    }
-    var rows = elm("ul", "ai-checks");
-    list.forEach(function (text) {
-      var row = elm("li", "ai-check");
-      row.appendChild(glyph(CHECK_PATH, "ai-check-icon"));
-      row.appendChild(elm("span", "", text));
-      rows.appendChild(row);
-    });
-    card.appendChild(rows);
-    return card;
-  }
-
-  function divider() {
-    var rule = elm("hr", "ai-divider");
-    rule.setAttribute("aria-hidden", "true");
-    return rule;
-  }
 
   function footer(ctx, copy) {
     var foot = elm("footer", "ai-foot");
@@ -479,6 +470,9 @@
 
   var RSOC_KEY = "mazzin_ai_rsoc";
   var ARROW_PATH = "M3.5 8h9M8.5 4l4 4-4 4";
+  // The one article that is the same for every reader. Drawn first, and
+  // only when the config carries an article under this key.
+  var FEATURED = "start";
 
   function rsocOf(ctx) {
     var block = ctx.cfg && ctx.cfg.rsoc;
@@ -606,7 +600,9 @@
 
     var keys = rsocKeys(ctx, block, data);
     var chosen = [];
-    [keys.skill, DOMAINS.indexOf(keys.zone) !== -1 ? keys.zone : ""]
+    // The featured guide first, where the config has one; then the skill's;
+    // then the zone's. Never the same article twice.
+    [FEATURED, keys.skill, DOMAINS.indexOf(keys.zone) !== -1 ? keys.zone : ""]
       .forEach(function (key) {
         var item = articleOf(block, key);
         if (!item) return;
@@ -625,13 +621,19 @@
     if (kicker) box.appendChild(elm("p", "ai-rsoc-kicker", kicker));
     var head = late ? block.head_delivered : block.head;
     if (head) box.appendChild(elm("h2", "ai-rsoc-head", head));
-    if (block.sub) box.appendChild(elm("p", "ai-rsoc-sub", block.sub));
+    if (block.sub) {
+      box.appendChild(elm("p", "ai-rsoc-sub",
+                          fill(block.sub, { n: chosen.length })));
+    }
+    var list = elm("div", "ai-rsoc-list");
     chosen.forEach(function (item) {
-      var link = elm("a", "ai-rsoc-link");
+      var first = item.key === FEATURED;
+      var link = elm("a", "ai-rsoc-link" + (first ? " is-featured" : ""));
       var words = elm("span", "ai-rsoc-words");
-      var tag = item.key === keys.skill
-        ? fill(block.tag_skill || "", { skill: skillLabel(ctx, item.key) })
-        : fill(block.tag_zone || "", { zone: zoneName(ctx, item.key) });
+      var tag = first ? (block.tag_start || "")
+        : item.key === keys.skill
+          ? fill(block.tag_skill || "", { skill: skillLabel(ctx, item.key) })
+          : fill(block.tag_zone || "", { zone: zoneName(ctx, item.key) });
       if (tag) words.appendChild(elm("span", "ai-rsoc-tag", tag));
       words.appendChild(elm("span", "ai-rsoc-text", item.label));
       link.appendChild(words);
@@ -645,8 +647,9 @@
           ctx.track("article_tap", { article: item.key, slot: slot });
         }
       });
-      box.appendChild(link);
+      list.appendChild(link);
     });
+    box.appendChild(list);
     if (block.note) box.appendChild(elm("p", "ai-rsoc-note", block.note));
     return box;
   }
@@ -667,9 +670,6 @@
     // under the offer, so still after the pay button, and above the list.
     var guides = articles(ctx, data, "below_paywall");
     if (guides) root.appendChild(guides);
-    var more = unlocks(copy);
-    if (more) root.appendChild(more);
-    root.appendChild(divider());
     var foot = footer(ctx, copy);
     if (foot) root.appendChild(foot);
 

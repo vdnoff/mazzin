@@ -145,8 +145,9 @@ FREE = """() => {
            bars: offer.querySelectorAll('.ai-bar').length,
            barText: [...offer.querySelectorAll('.ai-bar')]
              .map(b => b.textContent).join(''),
-           rows: [...offer.querySelectorAll('.ai-locked-label')]
+           rows: [...offer.querySelectorAll('.ai-check')]
              .map(n => n.textContent),
+           locked: root.querySelectorAll('.ai-locked, .ai-unlock').length,
            pay: !pay.disabled };
 }"""
 
@@ -244,8 +245,7 @@ def main():
               len(answered))
         check("the free page is the three blocks, in order, then the rest",
               free["order"] == ["ai-profile", "ai-scorecard", "ai-offer",
-                                "ai-rsoc", "ai-unlock", "ai-divider",
-                                "ai-foot"], free["order"])
+                                "ai-rsoc", "ai-foot"], free["order"])
         check("  the pay button is engine.js's own, inside the offer card",
               free["payIn"] and free["payText"].startswith(
                   "Unlock my strategy"), free["payText"])
@@ -255,9 +255,10 @@ def main():
               and not [c["label"] for s in CFG["swipe"]["steps"]
                        if "why" in s for c in s["pairs"][0]["images"]
                        if c["label"] in free["text"]])
-        check("  the locked rows are labels and empty bars",
-              free["bars"] == 4 and free["barText"] == ""
-              and free["rows"] == COPY["offer"]["rows"], free["rows"])
+        check("  one empty bar for the name, four unlock rows, no locked rows",
+              free["bars"] == 1 and free["barText"] == ""
+              and len(free["rows"]) == 4 and free["locked"] == 0,
+              [free["bars"], free["rows"]])
         check("the free page draws no answer key and no paths card",
               not free["key"] and not free["paths"])
         check("  and no reason from the key, and no path's facts",
@@ -384,7 +385,7 @@ def main():
               and paid["rsoc"]["kicker"] == "KEEP GOING"
               and paid["rsoc"]["tags"]
               == ["PICKED FOR YOUR SKILL: Design",
-                  "PICKED FOR WHERE YOU HAVE THE MOST ROOM: Business sense"],
+                  "PICKED FOR WHERE YOU HAVE THE MOST ROOM"],
               paid["rsoc"])
         links = (paid["rsoc"] or {}).get("links") or []
         check("two anchors: the skill's article, then the zone's",

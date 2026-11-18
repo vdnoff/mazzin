@@ -919,7 +919,7 @@
         "One-time",
         "No subscription, ever"
       ],
-      "price_suffix": "one-time · no subscription",
+      "price_suffix": "",
       "trust": [
         "Secure via Stripe",
         "PDF to your email"
@@ -936,7 +936,7 @@
     "anchor_head": "A {price} plan built from your own 12 answers",
     "anchor": "A personal plan built from 12 answers and your own skill, hours and goal. Your complete report — {price}, once.",
     "reframe": "One report, written from your answers. Yours to keep.",
-    "price_suffix": "one-time",
+    "price_suffix": "",
     "cta_label": "Unlock my strategy · {price}",
     "consent_prechecked": true,
     "trust": [
@@ -1077,28 +1077,24 @@
     },
     "score_only": "You scored {n} of {total}.",
     "offer": {
-      "label": "YOUR #1 STRATEGY",
-      "line": "Matched from your skill, your {hours} a week and your score. It is ready.",
-      "line_bare": "Matched from your skill, your hours and your score. It is ready.",
+      "label": "YOUR WAY TO MAKE MONEY WITH AI",
+      "head": "Your answers point to one strategy for making money with AI.",
+      "line": "Unlock your report to see which one it is, and exactly how to start.",
       "hours": {
         "time_under3": "under 3 hours",
         "time_3_7": "3–7 hours",
         "time_8_15": "8–15 hours",
         "time_15plus": "15+ hours"
       },
-      "rows": [
-        "What you sell",
-        "Who pays for it",
-        "Your first 7 days"
-      ],
-      "under": "One-time. Instant. PDF copy to your email.",
-      "unlock_title": "What you unlock",
+      "hours_bare": "hours",
+      "unlock_title": "WHAT YOU UNLOCK",
       "unlock": [
-        "Your 3 best-fit strategies, and 2 to skip for now",
-        "A day-by-day first week, sized to your hours",
-        "5 strengths you can sell, 2 traps to avoid",
-        "Your 8 scenarios, with what each one means for your plan"
-      ]
+        "The strategy for making money with AI that fits you, matched to your answers",
+        "What to sell, and who pays for it",
+        "Your first 7 days, sized to your {hours} a week",
+        "2 backup strategies, 2 to skip, and your 8 scenarios explained"
+      ],
+      "under": "{price} one-time. No subscription. PDF copy to your email."
     },
     "zone_room": "the zone with the most room"
   },
@@ -1114,13 +1110,14 @@
       "ad_id",
       "asid"
     ],
-    "kicker": "TOO EARLY FOR A REAL PROJECT?",
+    "kicker": "NOT READY TO PAY YET?",
     "kicker_delivered": "KEEP GOING",
-    "head": "Learn more before you jump in.",
+    "head": "Learn how people make money with AI. Free.",
     "head_delivered": "Keep going: free guides for your profile",
-    "sub": "We picked these free guides for you, based on your profile.",
+    "sub": "{n} free guides, picked from your answers. Read them first, start when you are ready.",
+    "tag_start": "START HERE",
     "tag_skill": "PICKED FOR YOUR SKILL: {skill}",
-    "tag_zone": "PICKED FOR WHERE YOU HAVE THE MOST ROOM: {zone}",
+    "tag_zone": "PICKED FOR WHERE YOU HAVE THE MOST ROOM",
     "note": "Opens evoseekly.com, a partner site that shows ads.",
     "articles": {
       "skill_writing": {

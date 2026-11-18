@@ -215,8 +215,87 @@ PAGE = """() => {
       : '',
     sub: box ? (box.querySelector('.ai-rsoc-sub') || {}).textContent : '',
     card: box ? (() => { const cs = getComputedStyle(box);
-      return [cs.backgroundColor, cs.borderTopWidth, cs.borderTopColor,
+      return [cs.backgroundColor, cs.borderTopWidth, cs.color,
               cs.borderTopLeftRadius, cs.paddingTop]; })() : null,
+    linkStyle: links.map(a => { const cs = getComputedStyle(a);
+      const tag = a.querySelector('.ai-rsoc-tag');
+      const text = a.querySelector('.ai-rsoc-text');
+      return [cs.backgroundColor, cs.borderTopWidth, cs.borderTopColor,
+              cs.borderTopLeftRadius, getComputedStyle(tag).color,
+              getComputedStyle(text).color, getComputedStyle(text).fontSize,
+              a.classList.contains('is-featured')]; }),
+    linkGaps: links.slice(1).map((a, i) => Math.round(
+      a.getBoundingClientRect().top
+      - links[i].getBoundingClientRect().bottom)),
+    money: [offer.textContent, box ? box.textContent : '']
+      .map(t => /make money with ai/i.test(t)),
+    unlock: (() => { const list = offer.querySelector('.ai-checks');
+      return { rows: list ? [...list.children].map(r => r.textContent) : [],
+               first: list ? getComputedStyle(list.children[0]).fontWeight
+                 : '',
+               abovePay: !!(list && (list.compareDocumentPosition(pay)
+                 & Node.DOCUMENT_POSITION_FOLLOWING)),
+               title: (offer.querySelector('.ai-offer-sublabel') || {})
+                 .textContent || '' }; })(),
+    stale: root.querySelectorAll('.ai-unlock, .ai-locked, .ai-locked-row, '
+      + '.ai-divider').length,
+    under: (offer.querySelector('.ai-offer-under') || {}).textContent || '',
+    offerHead: (offer.querySelector('.ai-offer-head') || {}).textContent
+      || '',
+    offerLabel: (offer.querySelector('.ai-offer-label') || {}).textContent
+      || '',
+    nameBar: (() => { const b = offer.querySelector('.ai-bar.is-name');
+      const r = b.getBoundingClientRect();
+      return [b.textContent, Math.round(r.height),
+              Math.round(100 * r.width
+                / b.parentNode.getBoundingClientRect().width)]; })(),
+    // Every pair of neighbours, on the page and inside each card: how far
+    // apart they are, so one that is tight or loose is named.
+    rhythm: (() => { const out = [];
+      const walk = (host, name) => {
+        const shown = [...host.children].filter(n => n.offsetParent !== null
+          && n.getBoundingClientRect().height > 0);
+        for (let i = 0; i + 1 < shown.length; i++) {
+          const gap = Math.round(shown[i + 1].getBoundingClientRect().top
+            - shown[i].getBoundingClientRect().bottom);
+          out.push([name, shown[i].className.split(' ')[0] || shown[i].id,
+                    shown[i + 1].className.split(' ')[0] || shown[i + 1].id,
+                    gap]);
+        }
+        if (host !== root && shown.length) {
+          const h = host.getBoundingClientRect();
+          out.push([name, 'top edge', shown[0].className.split(' ')[0],
+                    Math.round(shown[0].getBoundingClientRect().top - h.top)]);
+          out.push([name, shown[shown.length - 1].className.split(' ')[0]
+                    || shown[shown.length - 1].id, 'bottom edge',
+                    Math.round(h.bottom - shown[shown.length - 1]
+                      .getBoundingClientRect().bottom)]);
+        }
+      };
+      walk(root, 'page'); walk(offer, 'offer'); if (box) walk(box, 'guides');
+      return out; })(),
+    // WCAG contrast of every piece of body text against what is behind it.
+    contrast: (() => {
+      const lum = c => { const v = c.match(/[\d.]+/g).slice(0, 3).map(Number)
+        .map(x => { x /= 255; return x <= 0.03928 ? x / 12.92
+          : Math.pow((x + 0.055) / 1.055, 2.4); });
+        return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+      const behind = n => { for (let e = n; e; e = e.parentElement) {
+          const bg = getComputedStyle(e).backgroundColor;
+          if (bg && !/rgba\(.*, 0\)$/.test(bg) && bg !== 'transparent') {
+            return bg; } }
+        return 'rgb(11, 15, 20)'; };
+      const low = [];
+      for (const n of root.querySelectorAll('p, li, h1, h2, span, a')) {
+        if (n.offsetParent === null || n.closest('#pay-button')) continue;
+        const own = [...n.childNodes].some(c => c.nodeType === 3
+          && c.textContent.trim());
+        if (!own) continue;
+        const a = lum(getComputedStyle(n).color), b = lum(behind(n));
+        const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+        if (ratio < 4.5) low.push([n.className, Math.round(ratio * 10) / 10]);
+      }
+      return low; })(),
     headStyle: box ? (() => { const cs = getComputedStyle(
       box.querySelector('.ai-rsoc-head'));
       return [cs.fontSize, cs.fontWeight, cs.fontFamily.indexOf(
@@ -284,7 +363,8 @@ def arrive(browser, query, size=(390, 844)):
     page = ctx.new_page()
     errors = []
     page.on("pageerror", lambda e: errors.append(str(e)))
-    page.goto(BASE + "/ai-navigator" + query)
+    if query is not None:
+        page.goto(BASE + "/ai-navigator" + query)
     return ctx, page, errors
 
 
@@ -338,8 +418,8 @@ def main():
             check("  %s: an arrow, and the tag that says why it was picked"
                   % key, link["arrow"] == 1 and link["tag"] == (
                       "PICKED FOR YOUR SKILL: Design" if key == SKILL else
-                      "PICKED FOR WHERE YOU HAVE THE MOST ROOM: "
-                      "Business sense"), link["tag"])
+                      "PICKED FOR WHERE YOU HAVE THE MOST ROOM"),
+                  link["tag"])
             check("  %s: the config's label, a new tab, noopener" % key,
                   link["text"] == ARTICLES[key]["label"]
                   and link["target"] == "_blank"
@@ -355,18 +435,62 @@ def main():
                   and link["rect"][0] == got["vw"] - link["rect"][1]
                   and link["rect"][1] - link["rect"][0]
                   >= got["offerRect"][1] - got["offerRect"][0] - 48
-                  and link["weight"] == "rgb(242, 245, 247)"
+                  and link["weight"] == "rgb(255, 255, 255)"
                   and got["payBg"] == "rgb(200, 245, 59)",
                   [link["rect"], link["weight"], got["payBg"]])
         check("the kicker, headline, line and note are the config's",
               got["kicker"] == RSOC["kicker"] and got["head"] == RSOC["head"]
-              and got["sub"] == RSOC["sub"] and got["note"] == RSOC["note"],
+              and got["sub"] == RSOC["sub"].replace("{n}", "2")
+              and got["sub"].startswith("2 free guides")
+              and got["note"] == RSOC["note"],
               [got["kicker"], got["head"], got["sub"], got["note"]])
-        check("  a card of its own: #151B23, 2px #F2F5F7, radius 18, pad 18",
-              got["card"] == ["rgb(21, 27, 35)", "2px", "rgb(242, 245, 247)",
-                              "18px", "18px"]
+        check("  a light card: #F2F5F7, dark text, no border, radius 18, "
+              "pad 20",
+              got["card"] == ["rgb(242, 245, 247)", "0px", "rgb(11, 15, 20)",
+                              "18px", "20px"]
               and got["headStyle"] == ["26px", "700", True],
               [got["card"], got["headStyle"]])
+        check("  two white buttons, 1px #C9D1DA, 10px apart, none featured",
+              got["linkStyle"] == [["rgb(255, 255, 255)", "1px",
+                                    "rgb(201, 209, 218)", "16px",
+                                    "rgb(74, 85, 99)", "rgb(11, 15, 20)",
+                                    "17px", False]] * 2
+              and got["linkGaps"] == [10], [got["linkStyle"], got["linkGaps"]])
+        check("both cards say it is about making money with AI",
+              got["money"] == [True, True]
+              and got["offerLabel"] == "YOUR WAY TO MAKE MONEY WITH AI"
+              and got["offerHead"] == "Your answers point to one strategy "
+              "for making money with AI.", got["money"])
+        check("  the strategy's name is a 34px bar, 82% wide, with no text",
+              got["nameBar"][0] == "" and got["nameBar"][1] == 34
+              and 81 <= got["nameBar"][2] <= 83, got["nameBar"])
+        check("  the unlock list is inside the offer card, above the button",
+              got["unlock"]["title"] == "WHAT YOU UNLOCK"
+              and len(got["unlock"]["rows"]) == 4
+              and got["unlock"]["abovePay"]
+              and got["unlock"]["first"] == "600"
+              and got["unlock"]["rows"][2] == "Your first 7 days, sized to "
+              "your under 3 hours a week", got["unlock"])
+        check("  no standalone unlock section, no locked rows, no divider",
+              got["stale"] == 0)
+        check("  the price line under the button, said once",
+              got["under"] == "$6 one-time. No subscription. PDF copy to "
+              "your email."
+              and got["offer"].lower().count("no subscription") == 1,
+              got["under"])
+        tight = [g for g in got["rhythm"] if not 12 <= g[3] <= 28]
+        check("  no neighbours closer than 12px or further than 28px",
+              not tight, tight)
+        check("  the page's blocks are 20px apart, the cards padded 20px",
+              all(g[3] == 20 for g in got["rhythm"] if g[0] == "page")
+              # Measured from the outer edge: the offer card's 2px border
+              # sits outside its 20px of padding.
+              and all(g[3] == (22 if g[0] == "offer" else 20)
+                      for g in got["rhythm"] if "edge" in g[1] + g[2]),
+              [g for g in got["rhythm"] if g[0] == "page"
+               or "edge" in g[1] + g[2]])
+        check("  body text is 4.5:1 or better on the dark ground and the "
+              "light card", not got["contrast"], got["contrast"])
         check("  nothing overlaps, nothing is off the screen",
               not got["overlaps"], got["overlaps"])
         check("  no empty holder in the offer card: under 16px below the "
@@ -375,10 +499,9 @@ def main():
         check("no article link anywhere else on the page",
               got["anchorsOutside"] == 0 and got["sticky"] == 0)
         check("no horizontal scroll", got["sw"] <= got["vw"], got["sw"])
-        check("the guides card is right under the offer, above what unlocks",
+        check("the page is hero, score card, offer card, guides card, footer",
               got["order"] == ["ai-profile", "ai-scorecard", "ai-offer",
-                               "ai-rsoc", "ai-unlock", "ai-divider",
-                               "ai-foot"], got["order"])
+                               "ai-rsoc", "ai-foot"], got["order"])
         check("the pay button is in the offer card, above the block",
               got["payIn"] and all(l["afterPay"] for l in got["links"]))
         with_block = got
@@ -418,10 +541,12 @@ def main():
         check("no block and no article link in the DOM",
               not got["box"] and got["anchorsOutside"] == 0
               and "ai-rsoc" not in got["order"], got["order"])
-        check("the offer is followed by what it unlocks, with no card",
+        check("the offer is followed by the footer, with no card",
               got["order"] == ["ai-profile", "ai-scorecard", "ai-offer",
-                               "ai-unlock", "ai-divider", "ai-foot"],
-              got["order"])
+                               "ai-foot"], got["order"])
+        tight = [g for g in got["rhythm"] if not 12 <= g[3] <= 28]
+        check("  and the spacing and contrast hold without it",
+              not tight and not got["contrast"], [tight, got["contrast"]])
         check("the offer card is the same markup with and without the block",
               got["offer"] == with_block["offer"])
         check("  and so are the consent box, its place and the pay button",
@@ -468,7 +593,7 @@ def main():
                 [got["score"], [l["key"] for l in got["links"]]])
             check("  the tie is broken to business sense, and says so",
                   got["links"][-1]["tag"] == "PICKED FOR WHERE YOU HAVE THE "
-                  "MOST ROOM: Business sense"
+                  "MOST ROOM"
                   and got["links"][-1]["href"]
                   == ARTICLES["spa"]["link"] + want_tail)
             check("  each 68px or more, inside the card, nothing overlapping",
@@ -479,6 +604,10 @@ def main():
             check("  the gap under the pay button is under 16px",
                   0 <= got["gap"] < 16 and got["holder"] == 0,
                   [got["gap"], got["holder"]])
+            tight = [g for g in got["rhythm"] if not 12 <= g[3] <= 28]
+            check("  no gap under 12px or over 28px, contrast 4.5:1 or more",
+                  not tight and not got["contrast"],
+                  [tight, got["contrast"]])
             check("  the pay button and the consent state are what they were",
                   got["payIn"] and got["consent"] == with_block["consent"]
                   and got["payDisabled"] == with_block["payDisabled"]
@@ -509,6 +638,75 @@ def main():
             check("  no script errors", not errors, errors)
             ctx.close()
         MISSES = normal
+
+        print("\n--- 5. a featured guide, when the config has one ---")
+        # Not shipped: its link does not exist yet. The config is handed to
+        # the page with one more article under the key the module looks for.
+        START = {"label": "How people make money with AI: the 11 ways",
+                 "link": "https://topiclisting.com/AaStartFixture_0123-xyz"}
+        fixture = json.loads(json.dumps(CFG))
+        fixture["rsoc"]["articles"]["start"] = START
+        for size in ((390, 844), (360, 640)):
+            del events[:]
+            ctx, page, errors = arrive(browser, None, size)
+            ctx.route("**/static/funnels/ai-navigator.json",
+                      lambda route: route.fulfill(
+                          status=200, content_type="application/json",
+                          body=json.dumps(fixture)))
+            page.goto(BASE + "/ai-navigator" + want_tail)
+            advance(page)
+            wait_result(page)
+            got = page.evaluate(PAGE)
+            check("%dx%d: three anchors, featured, then skill, then zone"
+                  % size, [l["key"] for l in got["links"]]
+                  == ["start", SKILL, ZONE], [l["key"] for l in got["links"]])
+            check("  every href built by the same rule",
+                  [l["href"] for l in got["links"]]
+                  == [START["link"] + want_tail,
+                      ARTICLES[SKILL]["link"] + want_tail,
+                      ARTICLES[ZONE]["link"] + want_tail]
+                  and all(l["target"] == "_blank" and l["rel"] == "noopener"
+                          for l in got["links"]))
+            check("  the line counts three",
+                  got["sub"].startswith("3 free guides"), got["sub"])
+            check("  the featured one is dark, 76px or more, tagged START "
+                  "HERE",
+                  got["links"][0]["tag"] == "START HERE"
+                  and got["links"][0]["text"] == START["label"]
+                  and got["links"][0]["rect"][2] >= 76
+                  and got["linkStyle"][0][0] == "rgb(11, 15, 20)"
+                  and got["linkStyle"][0][4:] == ["rgb(200, 245, 59)",
+                                                  "rgb(242, 245, 247)",
+                                                  "18px", True]
+                  and got["linkGaps"] == [10, 10],
+                  [got["links"][0], got["linkStyle"][0], got["linkGaps"]])
+            tight = [g for g in got["rhythm"] if not 12 <= g[3] <= 28]
+            check("  nothing overlaps, spacing and contrast hold",
+                  not got["overlaps"] and not tight and not got["contrast"],
+                  [got["overlaps"], tight, got["contrast"]])
+            with ctx.expect_page() as popup:
+                page.locator('.ai-rsoc-link[data-article="start"]').click()
+            popup.value.close()
+            page.wait_for_timeout(600)
+            taps = [e for e in events if e.get("event") == "article_tap"]
+            check("  a tap posts article_tap with article start",
+                  len(taps) == 1 and taps[0].get("extra")
+                  == {"article": "start", "slot": "below_paywall"},
+                  [t.get("extra") for t in taps])
+            check("  no script errors", not errors, errors)
+            ctx.close()
+        import tracking
+        real = tracking._funnel_index
+        try:
+            tracking._funnel_index = lambda slug: {
+                "articles": frozenset(fixture["rsoc"]["articles"])}
+            check("tracking accepts that tap once the key is in the config",
+                  tracking._clean_article_tap(
+                      "ai-navigator", {"article": "start",
+                                       "slot": "below_paywall"})
+                  == {"article": "start", "slot": "below_paywall"})
+        finally:
+            tracking._funnel_index = real
 
         browser.close()
     server.shutdown()

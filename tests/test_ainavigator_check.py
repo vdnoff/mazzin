@@ -571,22 +571,30 @@ check("strength #1 is free, and says what stays locked",
       cfg["report"]["mistake_one"]["title"] == "Strength #1 of 5"
       and cfg["report"]["mistake_one"]["locked_note"])
 OFFER = cfg["result_copy"]["offer"]
-check("the offer card: label, line, three locked rows, the line under",
-      OFFER["label"] == "YOUR #1 STRATEGY"
-      and OFFER["line"] == "Matched from your skill, your {hours} a week and "
-      "your score. It is ready."
-      and OFFER["rows"] == ["What you sell", "Who pays for it",
-                            "Your first 7 days"]
-      and OFFER["under"] == "One-time. Instant. PDF copy to your email.")
-check("  the hours are the four the time step offers",
-      set(OFFER["hours"]) == {c["id"] for c in images(by_id["time"])})
-check("  and what it unlocks is four lines",
-      OFFER["unlock_title"] == "What you unlock"
+check("the offer card says it is about making money with AI",
+      OFFER["label"] == "YOUR WAY TO MAKE MONEY WITH AI"
+      and OFFER["head"] == "Your answers point to one strategy for making "
+      "money with AI."
+      and OFFER["line"] == "Unlock your report to see which one it is, and "
+      "exactly how to start.")
+check("  what it unlocks is four lines, inside the card",
+      OFFER["unlock_title"] == "WHAT YOU UNLOCK"
       and OFFER["unlock"]
-      == ["Your 3 best-fit strategies, and 2 to skip for now",
-          "A day-by-day first week, sized to your hours",
-          "5 strengths you can sell, 2 traps to avoid",
-          "Your 8 scenarios, with what each one means for your plan"])
+      == ["The strategy for making money with AI that fits you, matched to "
+          "your answers",
+          "What to sell, and who pays for it",
+          "Your first 7 days, sized to your {hours} a week",
+          "2 backup strategies, 2 to skip, and your 8 scenarios explained"])
+check("  the hours are the four the time step offers",
+      set(OFFER["hours"]) == {c["id"] for c in images(by_id["time"])}
+      and OFFER["hours_bare"] == "hours")
+check("  one line under the button, and it is the only place that says so",
+      OFFER["under"] == "{price} one-time. No subscription. PDF copy to "
+      "your email."
+      and cfg["checkout"]["price_suffix"] == ""
+      and cfg["checkout"]["commerce"]["price_suffix"] == "")
+check("  no locked rows and no second list",
+      "rows" not in OFFER and "line_bare" not in OFFER)
 
 print("\n--- the price ---")
 check("six dollars", cfg["pricing"]["amount_cents"] == 600
@@ -611,7 +619,8 @@ check("no literal price in any string", not literal, str(literal[:3]))
 priced = [at for at, v in ALL if "{price}" in v]
 check("  the strings that name one interpolate it",
       {"checkout.cta_label", "checkout.anchor", "checkout.anchor_head",
-       "checkout.commerce.anchor_head", "checkout.commerce.sticky_label"}
+       "checkout.commerce.anchor_head", "checkout.commerce.sticky_label",
+       "result_copy.offer.under"}
       <= {at.lstrip(".") for at in priced}, str(priced))
 money_anchor = [(at, v) for at, v in ALL if at.startswith(".checkout")
                 and re.search(r"coffee|costs more|cheaper|less than|worth "
@@ -765,26 +774,32 @@ check("it holds no number of its own about the game",
       and "block.levels" in CODE)
 FREE = MODULE.split("function render(root, ctx) {", 1)[1].split(
     "// --- the paid page", 1)[0]
-check("the free page is three blocks, the guides card, what it unlocks",
+check("the free page is hero, score card, offer card, guides card, footer",
       re.findall(r"root\.appendChild\((\w+)\(", FREE)
-      == ["profileBlock", "scoreCard", "offer", "divider"]
+      == ["profileBlock", "scoreCard", "offer"]
       and FREE.index("root.appendChild(offer(ctx, copy));")
       < FREE.index('articles(ctx, data, "below_paywall")')
-      < FREE.index("var more = unlocks(copy);")
-      < FREE.index("root.appendChild(divider());")
       < FREE.index("var foot = footer(ctx, copy);"))
 check("  with no zone bars, round strip, level chip or free strength",
       not re.search(r"bars\(|strip\(|levelChip|strength\(|path\(", FREE)
       and "function strip(" not in MODULE
       and "function levelChip(" not in MODULE
       and "function strength(" not in MODULE)
+check("  and no standalone unlock section, divider or locked rows",
+      "function unlocks(" not in MODULE and "function divider(" not in MODULE
+      and "ai-locked" not in MODULE and "ai-unlock" not in MODULE
+      and ".ai-locked" not in RESULT_CSS and ".ai-unlock" not in RESULT_CSS
+      and ".ai-divider" not in RESULT_CSS)
 OFFER_FN = MODULE.split("function offer(ctx, copy) {", 1)[1].split(
     "var CHECK_PATH", 1)[0]
-check("the offer card's rows are a label and an empty bar",
-      'row.appendChild(bar(""));' in OFFER_FN
-      and 'card.appendChild(bar("is-name"));' in OFFER_FN
+check("the strategy's name is an empty bar, never text",
+      'top.appendChild(bar("is-name"));' in OFFER_FN
       and 'node.setAttribute("aria-hidden", "true");' in MODULE.split(
           "function bar(cls) {", 1)[1].split("}", 1)[0])
+check("  the unlock list is built before the payment nodes are moved in",
+      OFFER_FN.index('elm("ul", "ai-checks")')
+      < OFFER_FN.index("nodes.payButton, nodes.payError]")
+      < OFFER_FN.index('elm("p", "ai-offer-under"'))
 check("  and it reads nothing of the strategies, sections or right answers",
       not re.search(r"visuals|paths|catalog|sections|_hit|\.why|reveals",
                     OFFER_FN))
@@ -839,7 +854,8 @@ SKILL_TAGS = [t for card in next(s for s in steps if s["id"] == "skill")
 check("the block has exactly the keys it was specified with",
       list(RSOC) == ["enabled", "placement", "require_fbclid", "passthrough",
                      "kicker", "kicker_delivered", "head", "head_delivered",
-                     "sub", "tag_skill", "tag_zone", "note", "articles"],
+                     "sub", "tag_start", "tag_skill", "tag_zone", "note",
+                     "articles"],
       str(list(RSOC)))
 check("  on, in both places, and only for a reader who came from a click",
       RSOC.get("enabled") is True
@@ -848,10 +864,10 @@ check("  on, in both places, and only for a reader who came from a click",
 check("  passing on the three identifiers, in this order",
       RSOC.get("passthrough") == ["fbclid", "ad_id", "asid"])
 check("  the card's own words: kicker, headline, line, and the note",
-      RSOC.get("kicker") == "TOO EARLY FOR A REAL PROJECT?"
-      and RSOC.get("head") == "Learn more before you jump in."
-      and RSOC.get("sub") == "We picked these free guides for you, based on "
-      "your profile."
+      RSOC.get("kicker") == "NOT READY TO PAY YET?"
+      and RSOC.get("head") == "Learn how people make money with AI. Free."
+      and RSOC.get("sub") == "{n} free guides, picked from your answers. "
+      "Read them first, start when you are ready."
       and RSOC.get("note")
       == "Opens evoseekly.com, a partner site that shows ads.")
 check("  the same card after the money, under its own kicker and headline",
@@ -859,9 +875,19 @@ check("  the same card after the money, under its own kicker and headline",
       and RSOC.get("head_delivered")
       == "Keep going: free guides for your profile")
 check("  and a tag over each button saying why it was picked",
-      RSOC.get("tag_skill") == "PICKED FOR YOUR SKILL: {skill}"
-      and RSOC.get("tag_zone")
-      == "PICKED FOR WHERE YOU HAVE THE MOST ROOM: {zone}")
+      RSOC.get("tag_start") == "START HERE"
+      and RSOC.get("tag_skill") == "PICKED FOR YOUR SKILL: {skill}"
+      and RSOC.get("tag_zone") == "PICKED FOR WHERE YOU HAVE THE MOST ROOM")
+check("  no featured article is shipped: its link does not exist yet",
+      "start" not in ARTICLES)
+check("  but the module draws one first when the config carries it",
+      'var FEATURED = "start";' in MODULE
+      and "[FEATURED, keys.skill, DOMAINS.indexOf(keys.zone) !== -1 ? "
+          "keys.zone : \"\"]" in MODULE)
+import tracking as _tracking                                 # noqa: E402
+check("  and tracking takes its tap with no change: keys come off the config",
+      "if isinstance(key, str) and isinstance(article, dict):" in
+      read("tracking.py") and "articles.add(key)" in read("tracking.py"))
 check("  no label repeats that it is a free guide",
       not [a["label"] for a in ARTICLES.values()
            if re.search(r"free guide", a["label"], re.I)
@@ -888,7 +914,7 @@ check("  no link twice, no label twice",
 # it. This says so out loud, for the strings a reader actually sees.
 SHOWN = ([RSOC.get(k, "") for k in
           ("kicker", "kicker_delivered", "head", "head_delivered", "sub",
-           "tag_skill", "tag_zone", "note")]
+           "tag_start", "tag_skill", "tag_zone", "note")]
          + [a["label"] for a in ARTICLES.values()])
 check("  and the lines a reader sees pass the banned scan",
       all(text in {v for _, v in ALL} for text in SHOWN)
@@ -944,7 +970,7 @@ check("the offer card's wallet holder collapses in theme CSS only",
       "body.theme-ai .ai-offer #pay-button.xp__off { display: none; }"
       in RESULT_CSS and "xp" not in MODULE)
 check("the module builds real anchors, a new tab, noopener",
-      'elm("a", "ai-rsoc-link")' in RS
+      'elm("a", "ai-rsoc-link" + (first ? " is-featured" : ""))' in RS
       and 'elm("span", "ai-rsoc-text", item.label)' in RS
       and 'link.target = "_blank";' in RS and 'link.rel = "noopener";' in RS)
 check("  the query with URLSearchParams, from the held keys only",
