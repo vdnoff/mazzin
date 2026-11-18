@@ -696,3 +696,6 @@ bottom.
 
 ## 2026-11-18 — claude/loans-cache-bust
 - Loans — versioned asset URLs (fix stale JS after deploy)
+
+## 2026-11-18 — claude/loans-summary-copy
+- Loans — summary copy: next-step heading and action labels
