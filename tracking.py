@@ -55,6 +55,11 @@ ALLOWED_EVENTS = {
     "paywall_open",
     "pay_tap",
     "checkout_error",
+    # A tap on one of the partner-article buttons a funnel with an `rsoc`
+    # block draws under its offer and at the end of its report. The reader
+    # leaves for another site on this tap, so it is the last thing this
+    # funnel hears from that tab. `_clean_article_tap` says what it carries.
+    "article_tap",
     # After the money, not before it. These four are the visualizer's funnel
     # inside the funnel — a photo chosen, a transformation asked for, and
     # which way it ended — and they are the only events here that describe
@@ -430,8 +435,19 @@ def _funnel_index(slug):
         if isinstance(variant, dict) and isinstance(variant.get("id"), str):
             variants.add(variant["id"])
 
+    # The articles a funnel's `rsoc` block declares, by key. A funnel without
+    # the block has none, which is what keeps `article_tap` off it.
+    articles = set()
+    rsoc = cfg.get("rsoc")
+    listed = rsoc.get("articles") if isinstance(rsoc, dict) else None
+    if isinstance(listed, dict):
+        for key, article in listed.items():
+            if isinstance(key, str) and isinstance(article, dict):
+                articles.add(key)
+
     index = {"pairs": frozenset(pairs), "images": frozenset(images),
-             "shares": frozenset(shares), "variants": frozenset(variants)}
+             "shares": frozenset(shares), "variants": frozenset(variants),
+             "articles": frozenset(articles)}
     _INDEX[slug] = (stamp, index)
     return index
 
@@ -522,6 +538,31 @@ def _clean_share_tap(funnel, value):
     return {"persona": persona}
 
 
+# What an article tap says: which article, and which of the two places its
+# button stood. The article is checked against the funnel's own
+# `rsoc.articles`, the same rule a share card follows; the slot is a closed
+# set kept here. The link itself, and the click identifiers the browser
+# appends to it, are never part of the event.
+ARTICLE_TAP_KEYS = frozenset(("article", "slot"))
+ARTICLE_TAP_SLOT = frozenset(("below_paywall", "delivered"))
+
+
+def _clean_article_tap(funnel, value):
+    """`{"article": "<rsoc.articles key>", "slot": ...}`, rebuilt."""
+    if set(value) != ARTICLE_TAP_KEYS:
+        raise ValueError("extra")
+    index = _funnel_index(funnel)
+    if index is None:
+        raise ValueError("extra")
+    article = value["article"]
+    if not isinstance(article, str) or article not in index["articles"]:
+        raise ValueError("extra")
+    slot = value["slot"]
+    if not isinstance(slot, str) or slot not in ARTICLE_TAP_SLOT:
+        raise ValueError("extra")
+    return {"article": article, "slot": slot}
+
+
 def _clean_paywall_variant(funnel, value):
     """`{"variant": "<variant id>"}`, checked against the config.
 
@@ -577,6 +618,8 @@ def _clean_extra(funnel, event, value):
         return _clean_share_tap(funnel, value)
     if event == "paywall_variant":
         return _clean_paywall_variant(funnel, value)
+    if event == "article_tap":
+        return _clean_article_tap(funnel, value)
     if event != "swipe":
         raise ValueError("extra")
     keys = set(value)

@@ -246,6 +246,69 @@
     return out;
   }
 
+  // --- click identifiers a funnel passes on ---------------------------------
+  //
+  // Opt-in, and off on every funnel without an `rsoc` block: such a funnel
+  // never reaches the storage call below and its contexts carry no extra key.
+  //
+  // A funnel that sends its readers on to a partner's articles has to hand
+  // the partner the click that brought them. The keys it names in
+  // `rsoc.passthrough` are read off the landing URL once the config is here,
+  // checked against the rule for that key, and kept in sessionStorage for
+  // this tab and this funnel, so they outlive the quiz, a reload and the
+  // trip to the payment page. A value that fails its rule — an unresolved
+  // ad macro, for one — is not kept, and a key with no rule here is never
+  // read at all. Nothing in this block is logged or posted anywhere: the
+  // only reader is the result module, which writes the values into a link.
+  var PASS_RULES = {
+    fbclid: /^[A-Za-z0-9_-]{1,512}$/,
+    ad_id: /^[0-9]{1,32}$/,
+    asid: /^[0-9]{1,32}$/
+  };
+  var passMemory = {};
+
+  function passKeys() {
+    var list = cfg && cfg.rsoc && cfg.rsoc.passthrough;
+    if (!Array.isArray(list)) return [];
+    return list.filter(function (k) {
+      return typeof k === "string" && PASS_RULES.hasOwnProperty(k);
+    });
+  }
+
+  function passValid(source) {
+    var out = {};
+    passKeys().forEach(function (k) {
+      var v = source ? source[k] : null;
+      if (typeof v === "string" && PASS_RULES[k].test(v)) out[k] = v;
+    });
+    return out;
+  }
+
+  function heldPassthrough() {
+    if (!cfg || !cfg.rsoc) return {};
+    var stored = null;
+    try {
+      stored = JSON.parse(sessionStorage.getItem("mazzin_pass_" + slug) || "null");
+    } catch (e) { stored = null; }
+    return passValid(stored && typeof stored === "object" ? stored : passMemory);
+  }
+
+  function keepPassthrough(params) {
+    if (!cfg || !cfg.rsoc) return;
+    var held = heldPassthrough();
+    var seen = {};
+    passKeys().forEach(function (k) {
+      var v = params.get(k);
+      if (v !== null) seen[k] = v;
+    });
+    var fresh = passValid(seen);
+    for (var k in fresh) held[k] = fresh[k];
+    passMemory = held;
+    try {
+      sessionStorage.setItem("mazzin_pass_" + slug, JSON.stringify(held));
+    } catch (e) { /* private mode: held for this page load only */ }
+  }
+
   // --- Meta pixel ----------------------------------------------------------
 
   // Off unless the server hands back an id. The id is fetched rather than
@@ -4246,6 +4309,8 @@
     // the key is added rather than left empty, so a funnel without
     // `track_timing` hands its module exactly the context it always did.
     if (timingTracked()) ctx.elapsed = JSON.parse(JSON.stringify(stepTimes));
+    // The click identifiers, on the funnels that pass them on and no other.
+    if (cfg.rsoc) ctx.passthrough = heldPassthrough();
     return ctx;
   }
 
@@ -4264,7 +4329,7 @@
         locked: false
       };
     });
-    return {
+    var out = {
       cfg: cfg,
       delivered: true,
       complete: !!complete,
@@ -4294,6 +4359,15 @@
       version: content.version || "",
       typed: isTyped(content.version)
     };
+    // The same two additions the page before the money gets, and under the
+    // same condition: the identifiers, and the tracker a tap on a partner
+    // link reports through. Every funnel without the block is handed exactly
+    // the context it always was.
+    if (cfg && cfg.rsoc) {
+      out.passthrough = heldPassthrough();
+      out.track = function (name, extra) { track(name, null, extra); };
+    }
+    return out;
   }
 
   function _imagesById() {
@@ -8501,6 +8575,7 @@
       .then(function (r) { if (!r.ok) throw new Error("config"); return r.json(); })
       .then(function (data) {
         cfg = data;
+        keepPassthrough(params);
         document.title = (cfg.meta && cfg.meta.title) || document.title;
         applyTheme();
         wire();

@@ -610,6 +610,136 @@
     return elm("p", "ai-foot", copy.disclaimer);
   }
 
+  // --- partner articles -------------------------------------------------------
+  //
+  // Up to two quiet links out to a partner's articles: one for the skill the
+  // reader named, one for the zone with the most room. They stand under the
+  // offer on the free page and at the end of the paid one, and nowhere else.
+  //
+  // Everything is the config's: which articles exist, their labels and links,
+  // the lines around them, and which click identifiers ride along. Those
+  // identifiers are held by engine.js and handed over as `ctx.passthrough`;
+  // this writes them into the link's query, in the config's order, and adds
+  // nothing else to it. A link that is not https, or that already carries a
+  // query or a fragment, is not drawn. With nothing to draw there is no box.
+
+  var RSOC_KEY = "mazzin_ai_rsoc";
+
+  function rsocOf(ctx) {
+    var block = ctx.cfg && ctx.cfg.rsoc;
+    return block && typeof block === "object" && block.enabled === true
+      ? block : null;
+  }
+
+  function articleOf(block, key) {
+    var all = block.articles;
+    if (!key || !all || !Object.prototype.hasOwnProperty.call(all, key)) {
+      return null;
+    }
+    var item = all[key];
+    if (!item || typeof item.label !== "string" || !item.label) return null;
+    var link = item.link;
+    if (typeof link !== "string" || link.indexOf("https://") !== 0) return null;
+    if (link.indexOf("?") !== -1 || link.indexOf("#") !== -1) return null;
+    return { key: key, label: item.label, link: link };
+  }
+
+  // The skill the reader named, as the tag of the card they tapped: whichever
+  // tapped tag is also an article key that is not a zone.
+  function skillKey(ctx, block) {
+    var picks = ctx.picks || {};
+    for (var id in picks) {
+      if (!Object.prototype.hasOwnProperty.call(picks, id)) continue;
+      var tags = (picks[id] && picks[id].tags) || [];
+      for (var i = 0; i < tags.length; i++) {
+        if (DOMAINS.indexOf(tags[i]) === -1 && articleOf(block, tags[i])) {
+          return tags[i];
+        }
+      }
+    }
+    return "";
+  }
+
+  // The two keys of this run. The free page works them out and leaves them in
+  // sessionStorage, because the paid page is opened after the run is gone and
+  // has only what the report stored. Keys of the config, nothing of the
+  // reader's beyond that.
+  function rsocKeys(ctx, block, data) {
+    var keys = { skill: "", zone: "" };
+    if (!ctx.delivered) {
+      keys.skill = skillKey(ctx, block);
+      keys.zone = (data && data.room) || "";
+      try { sessionStorage.setItem(RSOC_KEY, JSON.stringify(keys)); }
+      catch (e) { /* private mode */ }
+      return keys;
+    }
+    var stored = null;
+    try { stored = JSON.parse(sessionStorage.getItem(RSOC_KEY) || "null"); }
+    catch (e) { stored = null; }
+    if (stored && typeof stored === "object") {
+      if (typeof stored.skill === "string") keys.skill = stored.skill;
+      if (typeof stored.zone === "string") keys.zone = stored.zone;
+    }
+    if (!keys.zone && data && data.room) keys.zone = data.room;
+    return keys;
+  }
+
+  function rsocQuery(ctx, block) {
+    var held = ctx.passthrough || {};
+    var query = new URLSearchParams();
+    (Array.isArray(block.passthrough) ? block.passthrough : [])
+      .forEach(function (name) {
+        if (typeof name === "string" && typeof held[name] === "string"
+            && held[name] && !query.has(name)) {
+          query.append(name, held[name]);
+        }
+      });
+    return query;
+  }
+
+  function articles(ctx, data, slot) {
+    var block = rsocOf(ctx);
+    if (!block) return null;
+    if ((Array.isArray(block.placement) ? block.placement : [])
+        .indexOf(slot) === -1) return null;
+    var query = rsocQuery(ctx, block);
+    if (block.require_fbclid !== false && !query.has("fbclid")) return null;
+
+    var keys = rsocKeys(ctx, block, data);
+    var chosen = [];
+    [keys.skill, DOMAINS.indexOf(keys.zone) !== -1 ? keys.zone : ""]
+      .forEach(function (key) {
+        var item = articleOf(block, key);
+        if (!item) return;
+        for (var i = 0; i < chosen.length; i++) {
+          if (chosen[i].key === item.key || chosen[i].link === item.link) return;
+        }
+        chosen.push(item);
+      });
+    if (!chosen.length) return null;
+
+    var tail = query.toString();
+    var box = elm("section", "ai-rsoc");
+    box.setAttribute("data-slot", slot);
+    var head = slot === "delivered" ? block.head_delivered : block.head;
+    if (head) box.appendChild(elm("p", "ai-rsoc-head", head));
+    chosen.forEach(function (item) {
+      var link = elm("a", "ai-rsoc-link", item.label);
+      link.href = item.link + (tail ? "?" + tail : "");
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.setAttribute("data-article", item.key);
+      link.addEventListener("click", function () {
+        if (typeof ctx.track === "function") {
+          ctx.track("article_tap", { article: item.key, slot: slot });
+        }
+      });
+      box.appendChild(link);
+    });
+    if (block.note) box.appendChild(elm("p", "ai-rsoc-note", block.note));
+    return box;
+  }
+
   // --- render ----------------------------------------------------------------
 
   function render(root, ctx) {
@@ -639,6 +769,9 @@
     if (one) root.appendChild(one);
     root.appendChild(path(ctx, copy));
     root.appendChild(offer(ctx, copy, data));
+    // Under the offer, never in it: the pay button is the page's one loud ask.
+    var guides = articles(ctx, data, "below_paywall");
+    if (guides) root.appendChild(guides);
     var foot = footer(copy);
     if (foot) root.appendChild(foot);
 
@@ -820,6 +953,8 @@
     if (ctx.complete && copy.delivered_note) {
       root.appendChild(elm("p", "ai-footnote", copy.delivered_note));
     }
+    var guides = articles(ctx, data, "delivered");
+    if (guides) root.appendChild(guides);
     var foot = footer(copy);
     if (foot) root.appendChild(foot);
     root.hidden = false;

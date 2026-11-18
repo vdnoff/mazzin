@@ -1353,5 +1353,63 @@
         "hook": "Every question, your answer, the right one, and why."
       }
     }
+  },
+  "rsoc": {
+    "enabled": true,
+    "placement": [
+      "below_paywall",
+      "delivered"
+    ],
+    "require_fbclid": true,
+    "passthrough": [
+      "fbclid",
+      "ad_id",
+      "asid"
+    ],
+    "head": "Not ready yet? Start with a free guide",
+    "head_delivered": "Keep going: free guides for your profile",
+    "note": "Opens evoseekly.com, a partner site that shows ads.",
+    "articles": {
+      "skill_writing": {
+        "label": "Free guide: AI writing tools compared",
+        "link": "https://generalentrypage.com/AoYGLx1i4n_RVNY_h-fj3wSv6EqpIk6ZEwc3HLQUyhK9WA93fk-rIGo3R28kMLVcjL3a4KSMwtAkYjCThgV0MB42vqMcCoqcHF4I38ONfgYx-ObIAoWgcxlVmOh8j6Jzn1mBQHq6WMsybjuzhynfKUmEXG_8nXArHCawLBjhw-iBbur_W_lhqJ27VqZK-5cYP9MBEByUkZf1sVDU5xcn9Sj6aO1u3Axp9qdJkSonErYyQRgjp35cBS0HA5VArp7uqs5zwFymwXAp0_CJLmll0G94Swu1xCs82HgjWGpHviNiLsgPE6VJMycHG_jgRcjrzAS8Su6Omz4IhSMVeYixrI8K"
+      },
+      "skill_design": {
+        "label": "Free guide: AI design tools compared",
+        "link": "https://topiclisting.com/AurFHCClm4j6hD34sM-R9dNihZOHpGDwDgjO3ieaBhFgG7NYSlwDaGSWd8qriVsFUrbvzoi1NZHRyB04G5xpWP0z_C1BRgA9YwsR_457ML3v6zcIJdDoIMjYOsjwu8OLrKsVrKvvjjn9G9BcSwX7nOR8DytcOWhfmKybKp4j5YriLACsactmLF2PReMm4g5NJON24xYaAv8AbePtYPciiFYbI0SqW9nQfJuFcdABjqt9SDyQkVTAh_i13JwF9pM_obDbf8nNi_BNI6fmA-zlTjkTcSsunBV_hu5h7JCU1bYuauwYaArKZgvmaodIRhuDhuljuCzooQ"
+      },
+      "skill_tech": {
+        "label": "Free guide: no-code AI automation platforms",
+        "link": "https://plainaccesspoint.com/AoJXmFk-fBDT-yp_4_DDRTerpUtjKwzA3SG1KfTwxYC4wXHc4DqsG7ix1sI0Sw5H7yjsTHcGvA0974LJKxbq5ZntlE6weRTQyIJQNaPwsa7zFd8GbgaaqJF0d6v0-Ydnmrh7LYfJkp7iSG_8qx5UjbcIcnJQ9Z5Q_RyTx_MDE94vRm1-SzyfqSPn8zl3prK0eSi-nqkJLOJvVj5YhatSlJMTT4mx07zWnMe32Pf6kFOP0f6mGYo-0M3fVSftUDfZ6cHdx1442QaUlGxGwZJNJAsjbkf9vwKlDipHrIHqpXuIQXjUeeeRxH0nTiCoHVd4vyH8AskoXFE-wyJUJntdHVTpiF9DSe8"
+      },
+      "skill_sales": {
+        "label": "Free guide: AI sales and CRM tools",
+        "link": "https://topiclisting.com/ApSCFuvKttC6xUuwOQGLZqqlZKKTYVCTxA2Oyf49ZPNQb9WmswvGvKYjabkQ_evtPR17P4fwkQBsuCSiakW4I3FtjAT3csMHgn1jQJNc2ETHTB_7lBZlUqxM8ulCdvLDQDg4S8Qiikml5CD8xoMuBQAl0eJaJF1Qe05k0_jL2yYF0eKPGgekpfbXr-803QZ_OFOxiiOF27G55QTYc3KjlSZqJQPI3as1BEffR9niA3cOIHn-vicNsITzIH8G3xS6qquWIcnnqtH_wAgBFPht3VmJKJnpqS-02igrJccD"
+      },
+      "skill_organizing": {
+        "label": "Free guide: AI assistants for scheduling and projects",
+        "link": "https://basicsitecatalog.com/Auw3RUwD5WASywUYyYy1xPnWXcHlsUTb8XwXVGvyUtAUhTzWFlA25ozynrGB6fCdcOwrW5K9sm04LqG2OQKtNlakm0U4K6aezR1u8NsTbqvjgDjdVIYdpVZzi-SckUNA-eHAh69uBMhMUWyASssldmNzhbRslEH3hapcfbwvdSGUdvzDeCS9Hpr71jd1UKy25VvoC_96yxyVPNceWlv86zC7GovfFvHuvNKKzMWaOZVljSFWcUplqH0H4KsxTIdsh9GCwCnvW_dlR5OOqoLQEoIIRVabrAXUAnNhPIZU9YGZKWkV66W-cTTbRcMEjH0y0sRWODKOcjc"
+      },
+      "skill_teaching": {
+        "label": "Free guide: building an online course with AI",
+        "link": "https://basicwebregister.com/AgKWdA-lrDog0h8dLIUER_vFPV8D1eid3-lpA0sgSD01AU-A0--mDNRs7hWPBA7vOMx9p7uYerYKPj1mE6z8M-QQkHOeHzfatfWvcQ68xgGvgpBeqwYD_NANlS--zjmiv5JP-L-PcUF-KPDuJuRe2WbWPxdmDPW0VKHWStpcK_0TdAOGsHuyuBb73geSvI6cOt1iXCVPymztKMCz5Kw2ox3CbZcU4otnHzAk9JlCVsTABE2jSPlCBaRJ7QW10eLKOhcaOUXgGmdGTbpixt5bPc9D"
+      },
+      "mem": {
+        "label": "Free guide: AI courses and certificates for beginners",
+        "link": "https://browserreference.com/AsP0I6GUHpGQx9Ail6X2tpM3FNpIkdDmrKufiN6qDsajVIYgcsqOkOnqzqlzz5Hwn2uSjxOh_5A08g-YHNLojRl60w2ekzOWvBtQTrK-WI7VkXHHrLt3EOuA1L5nTc7HK-aJ0i6pZIlBYbVfr21HGYnNTTKsAOLlRlEvDjmwxKhMx6xcIGJY581uGS26BAAs_p4zDQpA06CSjevx2tw6N6RIuud30upR30bML0_tIvwZGyZNPukyKS4cRIVnUY8eozc_5eJdVHFTtBPqE1zvhslDC3LWO_-ItEKr6TIWARerCeyOXafXJvbu38tcF98aq68GxRNDuWWfpQ-SA2GYP4Xu"
+      },
+      "foc": {
+        "label": "Free guide: prompt engineering training",
+        "link": "https://browserreference.com/AhLwCqryx5IDu1EzN16lw_Ekftfik32JX7fTOOMCe0XrfgLJ2URM_Da03dkQsdfzgPsza4JUx9S9FZEyidD5x9DH7YHyenVGEVTdE5SfHfKUSOhINKJfaveMNrlpO1_VKp2Yg8bvnXDwM7d0rO9el3UyzfSQV-T2cgJiGdv-DIplAv1SkO-feCW6-pM5GPhSuXmHT9lve4KwvYN1Nvk800yEdi0zPK-AshuTwI4iZ9zcezFDmaKmc7omlZi280YDo5bDyPQ1ayLbdVYqT8zeeO4g8OVFUrVhVWOx9A"
+      },
+      "chg": {
+        "label": "Free guide: using AI safely at work",
+        "link": "https://basicwebregister.com/Aq5KaD1iLtsL7WycXeJYQUQ11Cnz96s0VXU1VhIRjKhXRONCffA7S2-5B1mbnlbse1D6MjSntmaElR_5GEUPD2awvgMr--WKRJ8TW0zCGGAwRYj1YBpI29xF2kxpmbhvo_DHq3ZwYRwlktOgPqX5KswQiDF7mbhRG-weQdJP0DvgQNJ6KkQETzPX17frK8Sewq51ELMoFsvdwTUFARJzsLDMpPuNuCteSIRDUbXe_I3iSy_BzfNUMy-tJzsGHicssT74o5WsIRPOBi1R7tCJeR4chGm0L7GtOBIZcN_-e8Bx9LVL4x-RsQrezc7JbOF7PeP7_zddMpa1d9DwgYxqUA"
+      },
+      "spa": {
+        "label": "Free guide: starting a small online business",
+        "link": "https://generalentrypage.com/AthKVyfDLlgQgfibdtvd03BBtYDhfTDEr_kS8_JNnFj8EcbjXoiN7UrPqM_2TmMezyJS0VS26bO6O2NnMMztVYdmgfvKeqhom-YwxtbOAjv9VDxkYYxMXZwhAYQNdRr3Njj4Eu9HPxSrOhqM_I_T8o7QURF3LcOzyXCNV6tL9WTgvsRztyf-xoI9_datFYSA4JIcsObP4uAUJs-ekdJUMHaYkStm4np2WVwnCInqHr6-NlE3tmrRjhVwpF56_W1eGVulvoo7VHkOD6U8pfi45ySe1Ee2p5atJQgma7e5fstDwBq6MoS6-s2lmtQ_fIxWgcM-Ug"
+      }
+    }
   }
 }
