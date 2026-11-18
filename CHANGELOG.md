@@ -687,3 +687,6 @@ bottom.
 
 ## 2026-11-18 — claude/ai-navigator-report
 - AI Navigator: paid report, path matching, answer key (phase 2)
+
+## 2026-11-18 — claude/loans-rsoc-phase2
+- Loans phase 2 — partner article links with fbclid passthrough
