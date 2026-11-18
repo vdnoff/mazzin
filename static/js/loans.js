@@ -15,51 +15,51 @@
   // identifiers held below are the only thing ever added to it.
   var ARTICLES = {
     "purpose_emergency": {
-      label: "Covering an unexpected expense",
+      label: "See ways to cover an unexpected expense",
       link: "https://openresourcelist.com/AsTm9Loi4hUFQfGXTBPbhLzQ690-EuCOvXUZSznAKRbjb9AhKrJCCfgwdDxTCoBFq_yxr4Tfx9_CbwPnw1ZqO9CE8_N74n4fjbvkNYU7Gy_CAqk9Wz8AzyToPiqpzVHO5Op2WYC6Y3mYigtpjomIN7QEUDYVEcS4gXsSZJIL1IVatpuHC4t8W622YRyNRg0K6PV1nf3jR0L2yAGVx2Zh57CtwZbcNEyzeQDYqskuw5KCX85XMVX0KtJ093NlaNJALlJuAM0jYn9-QTfA"
     },
     "purpose_debt": {
-      label: "How debt consolidation loans work",
+      label: "See how debt consolidation loans work",
       link: "https://basicsitecatalog.com/AoN_2NvrLJdndkLBEjLS5oxsCyhaysmabsNida28jQzfns5W343mjhYDK3uZFC9TilHiv1YGI5MpPTyed66bwj0CgotWHKXa6SmL33vXD6UY-ypLwbR7v4uMyNuPpnqbDy_6bAFX9aqnEUpotSWQXGOcQEIA7F_UWXbNXG5kHlpYRCn5OnAMWJMACDbiL0CkblUb-hEwcoKLl2ef5AWrELiT7ulLJQ0FXfwhwbWzGAGovtPcTYM"
     },
     "purpose_car": {
-      label: "Paying for a car repair",
+      label: "See ways to pay for a car repair",
       link: "https://basicwebregister.com/AqMxslxaBo5A2-FtLJd6eoUD3kYuKG24uSm6vkInpP74sYNzFUcJdd6_rDfnedCfU_IfzqNOyEBSqMf4wWLvj6hu7UyHjef9TbVm4WCAErYWquSlTqGIHggygBG-uZM-EEs38fvE3zF6y3ZN-NgrdWObTBt4vju-e5vxg_x3kjgocN-w_cMOMIwriiXeY-TvtwVqeMEpLT9O0FK3hRE6_KFucWADm4yUrdd2ewMqHVmTVkTpfQ"
     },
     "purpose_home": {
-      label: "Home improvement loans: what to compare",
+      label: "Compare home improvement loan options",
       link: "https://topicregister.com/AlazqAPb1H0_NbTR8i_sxdjMyFOCIPQ8HoJLdfIy2UilNX_cRBT7ZmxKl258GtWBuBuS1uziKD-GsS8j1paULNNWFUlvSaAgjZbUFXB0MqCHqveAuJuChbRMJvLwKvK54J2X_26n0_Aa2Mf9O0QDGkr1w4c-bpHyS5VIDqbKbiPSBi41UdPDqKhJHfaP5zEWS0ZenvmbL7J92M-1BKbbvUgcwo2bSCrBVd2R0g0Slk01gw"
     },
     "purpose_medical": {
-      label: "Medical bills: plans, help and loans",
+      label: "See options for paying medical bills",
       link: "https://browserreference.com/Ag61mGNyCYbKRJWtQdw474-q6xYlVMF4__D6DpxK2eZa6IK4wr-oY9wCZnrLTca8EntIQR3isbiVjz6VDIpEs5dFAyWtYNuxA4TZPnF_i_rBWMSYR_efAmbd4rSMLFDzwUkiKb3BcirGdhcCgnc-7y3NlMetnf3yRDUafTlJ7bqdTgsZvNiRNzM0TVVhEEJdgtLnFe_woSdYG8pyQ0crA7Spixsniy3ELLP-IrqAH9sD4IPsQ-Wr5UI"
     },
     "purpose_other": {
-      label: "How personal loans work",
+      label: "See how personal loans work",
       link: "https://browserreference.com/AtoHmw03FDNwu_xiOzJDItfQNOFSqChO5V3gCUzYHwCiJeu1t7ZD1hdUlw7R-nTYkdCjyxFRuz1Fi_OTII3OOHEwyERnUnhdFxJbFmNgCJYRWUdBjBTx7nk6SOfalFm7aagqX8aByil4GhsgdFmZLj803eoQTzcFUbPXsY-OEYOLl7KZT5VLkPKjSrpu-EJ66dqxE2WBif0ylXXYpkOIJiVsnFcTjSfYFMShlELcRyZYbWC_SPhMUw"
     },
     "credit_excellent": {
-      label: "Getting the lowest rate with strong credit",
+      label: "Find the lowest rates for strong credit",
       link: "https://generalentrypage.com/AoMm9dGPeVkm4oYwLfKNvejnMD0EJteD89wCr2v27kDm4g2iSGilnoTsqiDohLHMIcp72gG0q22M5U0lEPaAlWXEIrocWDLhAXwdGl4PEao-lB07rHyKUzeaFEDDKXt_b7eRLjM2nIYMMZ7i-x8AM57wZLbW9qlnCRXqG2-WP11VNPVd82lLBfXGDdnPSkVzDJJUaJooRKLC5RQDCuvSLNRMyHNuJJSCEDVGxCgxcNKtD3XsTOoPkQ"
     },
     "credit_good": {
-      label: "Comparing offers with good credit",
+      label: "Compare offers for good credit",
       link: "https://topiclisting.com/Atb9pM40PGeRJa5RTZvvjCuVOI2wrA4S0zQ7G6JowBwR9ysm009h1aSJwSskn_c1Du7zzg6TgmVZ4J2e5kzbdKK263eXoPbgEN-BqqUlQulgdJQN27b5A-qIhYSJkA--Wf3eGNfE-9mggEn3NvgqolN-maA9q297LKgkgmtaPLxxAXE5JZlbtLaTYZqlze4AUTsEHp7nLCK2TlU1lsb7AS8tvskd8fCjuxJixDpdpShWQD_oqD7Xc1blkUrPvKMkklwufHnEzA65-Cjy"
     },
     "credit_fair": {
-      label: "Personal loans for fair credit",
+      label: "See loan options for fair credit",
       link: "https://topiclisting.com/AoIIaqhTcpPf3gqLuhLWqdBDJbcLV9UzoUmRcsswu_xPXl4PnvAJixOrnCmAIHPSc8Rs8iribg_XvXacd8J5H8JalOkDv5876By09mhLZHETstgPkop8UBiJ23hrA5qDdQBp6l53aJ2JHx3caW8UcStGX_PDb-2RERJ3-hKZJIchFFQj_LM76t08LNHXaXo0LnwvFeRyJ_YNawomxSpEXeUnnWeE6g6GAaeiaL0jpkX8GR9e_X6GKZ3l"
     },
     "credit_building": {
-      label: "Borrowing with low or thin credit",
+      label: "See options for low or thin credit",
       link: "https://browseroverview.com/AjN2kqdWFs_u4gir7AgI3rApZ3-gxHGS6KMYHU7iJto7TPIh1-c3qWOo6BlsSzgmppSg8idVTurZUA2SETCJu5VlPc_uLVOtEQ3bxHeRNVMQiEG3-YfXwNTD8xgrx2DEg-2cGXbYBvILS_qA0Ye0n72lKdbfbK4Mb1knSewewFf-7kybCeL3GjGbtu2UfwmXpQpgleg8jBEuFdgKlRbrS54rJc9lLEdjnGmrnPqF8gKPtUP_DXep6zJr6okmPb4O3NjDLa_3RV1_Sw"
     },
     "general_small": {
-      label: "Small personal loans: costs and options",
+      label: "Find where to get a small personal loan",
       link: "https://topiclisting.com/AkBkm3gpDHDLnx3SkWJ9_eTmTBJT0waawtlcmiga-X5vD7cb53Vp5L8tOPJKK-HJz7wiEzDuBzDLYPTD1zbQtIk2MYuukvN4mzHsuVrNUI87muMcKAO5TJ-H8kIxYi2_8oE-bJgEzfHlrfvE8fq4PMZo7htZw-GVR6BIbeNMRooMg2hnXuLy_0Qkupu7GlJhztgzHWN-uMbz00j24hyU3S8zYBS09zEx5JAW90my7oI-nJE"
     },
     "general_apr": {
-      label: "How to read a loan offer",
+      label: "Learn to spot the real cost of an offer",
       link: "https://topicregister.com/AsvAFZVmmbNgk20XqJQo9SVb9LvCIErHGXvAv6Lm6a3kxATLEr1WFv0svEtys-CJzLKMGqiRMakhB4BG437NW-ZSs8d5745_8uUmiyl_GXWk8b-EAKBGvms275vnTB1KcWwmjlxwawvw8_J60sC6O78DYA_Ly0PzUrJ_Km-rFZmCjSQWYfY-pPmIs03NyAwRwu-U9QDI8Cl9c65nfCtsMBZ6"
     }
   };

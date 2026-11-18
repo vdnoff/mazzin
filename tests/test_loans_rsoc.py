@@ -238,12 +238,12 @@ def main():
         got = page.evaluate(SUMMARY)
         check("it shows the guides block, not the unavailable line",
               got["block"] and not got["none"])
-        check("  labelled Guides for you / Partner site",
-              got["label"].startswith("Guides for you")
+        check("  labelled Your next step / Partner site",
+              got["label"].startswith("Your next step")
               and got["pill"] == "Partner site", [got["label"], got["pill"]])
-        check("  saying where the links go",
-              got["lede"] == "Each link opens evoseekly.com, a partner site "
-                             "that shows ads.", got["lede"])
+        check("  saying how the rows were picked",
+              got["lede"] == "Picked from your answers. Start with the "
+                             "first one.", got["lede"])
         check("  in order: eyebrow, h1, chips, guides, note, footer",
               got["order"] == ["eyebrow", "options-title", "options-chips",
                                "guides-block", "note", "foot"], got["order"])
