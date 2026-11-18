@@ -708,3 +708,6 @@ bottom.
 
 ## 2026-11-18 — claude/ai-navigator-guides
 - AI Navigator: prominent guides card, always two guides, offer card gap
+
+## 2026-11-18 — claude/ai-navigator-result-v2
+- AI Navigator: result page v2 (money-with-AI offer card, light guides card, featured guide slot)
