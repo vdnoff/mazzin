@@ -693,3 +693,6 @@ bottom.
 
 ## 2026-11-18 — claude/loans-guides-on-summary
 - Loans — guides moved onto the summary view, last step removed
+
+## 2026-11-18 — claude/loans-cache-bust
+- Loans — versioned asset URLs (fix stale JS after deploy)
