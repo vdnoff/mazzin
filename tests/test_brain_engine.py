@@ -553,7 +553,10 @@ OWNER = "brain.json"
 # cut from it, with its sandbox twin. Every exclusivity check below reads
 # this list; the positive checks — "and the one that does names both" —
 # still read the one funnel the file was written against.
-OWNERS = ("brain.json", "focus-test.json", "focus.json")
+OWNERS = ("ai-navigator.json", "brain.json", "focus-test.json", "focus.json")
+# The third game, ai-navigator, is cut from focus without its clock: no
+# reaction times and no pools. The two checks on those read this list.
+TIMED = tuple(n for n in OWNERS if n != "ai-navigator.json")
 
 print("\n--- 6. a step that says which round it is ---")
 kick_fn = body("setStepKicker")
@@ -812,7 +815,7 @@ check("  and the funnel that does names every one of them",
       and own["swipe"].get("label_mode") == "check"
       and not [s for s in own["swipe"]["steps"] if s.get("label_mode")])
 check("no funnel but the memory game asks for reaction times",
-      [n for n, c in CONFIGS.items() if c.get("track_timing")] == list(OWNERS),
+      [n for n, c in CONFIGS.items() if c.get("track_timing")] == list(TIMED),
       str([n for n, c in CONFIGS.items() if c.get("track_timing")]))
 DOMAIN = {"%s_%s" % (a, s) for a in ("mem", "spa", "chg", "foc")
           for s in ("hit", "miss")}
@@ -1418,7 +1421,7 @@ check("  and a forced pick out of range falls back to the roll",
 check("no funnel but the memory game names a pool",
       [n for n, c in CONFIGS.items()
        if [s for s in (c.get("swipe") or {}).get("steps", []) if s.get("pool")]]
-      == list(OWNERS),
+      == list(TIMED),
       str([n for n, c in CONFIGS.items()
            if [s for s in (c.get("swipe") or {}).get("steps", [])
                if s.get("pool")]]))

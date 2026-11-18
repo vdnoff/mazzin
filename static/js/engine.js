@@ -572,8 +572,25 @@
   // rather than naming a format, so a new one is an entry here plus the CSS
   // that lays it out. A step gets a format only by naming it, so a funnel
   // that names none of these renders the pair it always did.
-  var GRID_SIZE = { grid3: 3, grid4: 4, grid6: 6, grid12: 12 };
+  var GRID_SIZE = { grid3: 3, grid4: 4, grid6: 6, grid12: 12, text4: 4, text6: 6 };
   var GRID_NAMES = Object.keys(GRID_SIZE);
+
+  // The two formats whose cards are sentences rather than pictures: four or
+  // six full-width rows, stacked, each one the answer's own words. A quiz
+  // whose answers are "Open the source and check it first" has nothing to
+  // photograph, and a sentence drawn into an image is a sentence nobody's
+  // screen reader, translator or text-size setting can reach.
+  //
+  // They are sizes in the table above like any other — one question, one
+  // tap, the same swipe payload — and what differs is only what `cardNode`
+  // puts inside the button and that there is no image to wait for. Opt-in by
+  // name: a step that does not ask for one draws exactly what it drew before
+  // these existed.
+  var TEXT_FORMATS = { text4: true, text6: true };
+
+  function isTextStep(st) {
+    return !!TEXT_FORMATS[stepFormat(st)];
+  }
 
   function stepFormat(st) {
     var f = st && st.format;
@@ -811,6 +828,11 @@
       clearTimeout(timer);
       done();
     }
+    // A text step has no images at all. Nothing to wait for, and asking the
+    // browser for one would be a request for a file called "undefined".
+    items = items.filter(function (item) { return item && item.img; });
+    remaining = items.length;
+    if (!remaining) { done(); return; }
     var timer = setTimeout(finish, PRELOAD_TIMEOUT_MS);
     items.forEach(function (item) {
       preloaded[item.img] = true;
@@ -834,6 +856,8 @@
   // The timeout is the guarantee: a step change is never held longer than
   // DECODE_TIMEOUT_MS by an image, whatever the network is doing.
   function whenDecoded(items, done) {
+    // Cards with no image — a text step's — are ready the moment they exist.
+    items = items.filter(function (item) { return item && item.img; });
     var remaining = items.length;
     var fired = false;
     function finish() {
@@ -908,6 +932,25 @@
     card.setAttribute("aria-label", fillWords(
       words("swipe.card_aria", "Choose {label}"),
       { label: item.label || item.id }));
+
+    // A text step's card is its label and nothing else: no image node, so
+    // no placeholder for a missing one and no badge over it. The corner tick
+    // and the tap are the same as every other card's.
+    if (isTextStep(stepAt(step))) {
+      card.className = "card is-text";
+      var words_ = document.createElement("span");
+      words_.className = "card-text";
+      words_.setAttribute("aria-hidden", "true");   // the button already says it
+      words_.textContent = item.label || "";
+      card.appendChild(words_);
+      var tick = document.createElement("span");
+      tick.className = "check";
+      tick.setAttribute("aria-hidden", "true");
+      tick.textContent = "\u2713";
+      card.appendChild(tick);
+      card.addEventListener("click", function () { choose(item, card); });
+      return card;
+    }
 
     var img = document.createElement("img");
     img.className = "card-img";
