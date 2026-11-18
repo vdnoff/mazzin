@@ -684,3 +684,6 @@ bottom.
 
 ## 2026-11-18 — claude/ai-navigator-rsoc
 - AI Navigator: RSOC article buttons with fbclid passthrough
+
+## 2026-11-18 — claude/ai-navigator-report
+- AI Navigator: paid report, path matching, answer key (phase 2)
