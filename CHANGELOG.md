@@ -690,3 +690,6 @@ bottom.
 
 ## 2026-11-18 — claude/loans-rsoc-phase2
 - Loans phase 2 — partner article links with fbclid passthrough
+
+## 2026-11-18 — claude/loans-guides-on-summary
+- Loans — guides moved onto the summary view, last step removed
