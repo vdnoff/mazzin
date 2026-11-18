@@ -170,10 +170,14 @@ print("\n--- cut from focus: what is kept and what is dropped ---")
 DROPPED = ["track_timing", "result_template", "preview_gallery",
            "style_elements", "analyzing_echo", "sale", "pairings",
            "share_cards"]
-check("every top-level key is one focus carries",
-      [k for k in cfg if k not in FOCUS] == [],
+# One key is this funnel's own: `rsoc`, the partner-article block, which has
+# a section to itself further down. It is last, after everything focus has.
+OWN = ["rsoc"]
+check("every top-level key is one focus carries, bar the one of its own",
+      [k for k in cfg if k not in FOCUS] == OWN,
       str([k for k in cfg if k not in FOCUS]))
-check("  in focus's order", list(cfg) == [k for k in FOCUS if k in cfg])
+check("  in focus's order, its own key last",
+      list(cfg) == [k for k in FOCUS if k in cfg] + OWN)
 check("  and the ones with no meaning here are gone, not emptied",
       sorted(k for k in FOCUS if k not in cfg) == sorted(DROPPED),
       str(sorted(k for k in FOCUS if k not in cfg)))
@@ -719,6 +723,161 @@ check("the stylesheet is scoped to this module",
 check("  with no image and no web font",
       "url(" not in RESULT_CSS and "@font-face" not in RESULT_CSS
       and "@import" not in RESULT_CSS)
+
+print("\n--- the partner articles: the block ---")
+RSOC = cfg.get("rsoc") or {}
+ARTICLES = RSOC.get("articles") or {}
+SKILL_TAGS = [t for card in next(s for s in steps if s["id"] == "skill")
+              ["pairs"][0]["images"] for t in card["tags"]]
+check("the block has exactly the keys it was specified with",
+      list(RSOC) == ["enabled", "placement", "require_fbclid", "passthrough",
+                     "head", "head_delivered", "note", "articles"],
+      str(list(RSOC)))
+check("  on, in both places, and only for a reader who came from a click",
+      RSOC.get("enabled") is True
+      and RSOC.get("placement") == ["below_paywall", "delivered"]
+      and RSOC.get("require_fbclid") is True)
+check("  passing on the three identifiers, in this order",
+      RSOC.get("passthrough") == ["fbclid", "ad_id", "asid"])
+check("  with the three lines around the buttons",
+      RSOC.get("head") == "Not ready yet? Start with a free guide"
+      and RSOC.get("head_delivered")
+      == "Keep going: free guides for your profile"
+      and RSOC.get("note")
+      == "Opens evoseekly.com, a partner site that shows ads.")
+check("ten articles", len(ARTICLES) == 10, str(len(ARTICLES)))
+check("  keyed by the six skill tags the quiz uses, then its four zones",
+      len(SKILL_TAGS) == 6
+      and list(ARTICLES) == SKILL_TAGS + list(DOMAINS),
+      str(list(ARTICLES)))
+check("  each a label and a link and nothing else",
+      all(isinstance(a, dict) and list(a) == ["label", "link"]
+          and isinstance(a["label"], str) and a["label"]
+          and isinstance(a["link"], str) for a in ARTICLES.values()))
+LINKS = [a["link"] for a in ARTICLES.values()]
+check("  every link https, with no query and no fragment",
+      all(re.fullmatch(r"https://[a-z0-9.-]+/[A-Za-z0-9_-]+", link)
+          for link in LINKS),
+      str([link[:40] for link in LINKS
+           if not re.fullmatch(r"https://[a-z0-9.-]+/[A-Za-z0-9_-]+", link)]))
+check("  no link twice, no label twice",
+      len(set(LINKS)) == 10
+      and len({a["label"] for a in ARTICLES.values()}) == 10)
+# The scan above walks every string in the file, so these are already inside
+# it. This says so out loud, for the strings a reader actually sees.
+SHOWN = ([RSOC.get("head", ""), RSOC.get("head_delivered", ""),
+          RSOC.get("note", "")] + [a["label"] for a in ARTICLES.values()])
+check("  and the lines a reader sees pass the banned scan",
+      all(text in {v for _, v in ALL} for text in SHOWN)
+      and not [text for text in SHOWN
+               if any(re.search(p, text, re.I) for p in BANNED)])
+check("no other funnel carries the block",
+      not [n for n in os.listdir(os.path.join(ROOT, "funnels"))
+           if n != SLUG + ".json"
+           and "rsoc" in json.loads(read("funnels/" + n))])
+
+print("\n--- the partner articles: the identifiers ---")
+PASS = ENGINE.split("var PASS_RULES = {", 1)[1].split("};", 1)[0]
+check("engine.js keeps three keys, each under its own rule",
+      re.findall(r"(\w+): (/[^\n]+/),?\n", PASS)
+      == [("fbclid", "/^[A-Za-z0-9_-]{1,512}$/"),
+          ("ad_id", "/^[0-9]{1,32}$/"), ("asid", "/^[0-9]{1,32}$/")], PASS)
+for value, key, ok in (("AbC_123-x", "fbclid", True),
+                       ("{{ad.id}}", "ad_id", False), ("111", "ad_id", True),
+                       ("12a", "asid", False), ("", "fbclid", False),
+                       ("a b", "fbclid", False), ("x" * 513, "fbclid", False),
+                       ("1" * 33, "asid", False)):
+    rule = dict(re.findall(r"(\w+): /([^\n]+)/,?\n", PASS))[key]
+    check("  %s=%r is %s" % (key, value[:12], "kept" if ok else "dropped"),
+          bool(re.fullmatch(rule.strip("^$"), value)) is ok)
+KEEP = ENGINE.split("function keepPassthrough(params) {", 1)[1].split(
+    "\n  }\n", 1)[0]
+HELD = ENGINE.split("function heldPassthrough() {", 1)[1].split(
+    "\n  }\n", 1)[0]
+check("only a funnel with the block reaches the store",
+      KEEP.lstrip().startswith("if (!cfg || !cfg.rsoc) return;")
+      and HELD.lstrip().startswith("if (!cfg || !cfg.rsoc) return {};"))
+check("  which is sessionStorage, under the funnel's own name",
+      'sessionStorage.setItem("mazzin_pass_" + slug' in KEEP
+      and "localStorage" not in KEEP and "document.cookie" not in KEEP)
+check("  and the contexts carry the key only on such a funnel",
+      "if (cfg.rsoc) ctx.passthrough = heldPassthrough();" in ENGINE
+      and ENGINE.count("heldPassthrough()") == 4)
+check("the tracker does not send them",
+      "passthrough" not in ENGINE.split("function track(event,", 1)[1]
+      .split("\n  }\n", 1)[0]
+      and "console." not in KEEP and "console." not in HELD)
+RS = MODULE.split("// --- partner articles", 1)[1].split("// --- render", 1)[0]
+check("the module builds real anchors, a new tab, noopener",
+      'elm("a", "ai-rsoc-link", item.label)' in RS
+      and 'link.target = "_blank";' in RS and 'link.rel = "noopener";' in RS)
+check("  the query with URLSearchParams, from the held keys only",
+      "new URLSearchParams()" in RS and "ctx.passthrough" in RS
+      and "location" not in RS and "session" not in RS.replace(
+          "sessionStorage", ""))
+check("  refusing a link that is not https or already has a query",
+      'link.indexOf("https://") !== 0' in RS
+      and 'link.indexOf("?") !== -1 || link.indexOf("#") !== -1' in RS)
+check("  with no markup written from a string",
+      "innerHTML" not in RS)
+
+print("\n--- the partner articles: the tap, server side ---")
+import database                                           # noqa: E402
+import tracking                                           # noqa: E402
+from app import app                                       # noqa: E402
+
+rows = []
+database.execute = lambda sql, params=None: rows.append(params) or 1
+tracking._mirror = lambda *a, **k: None
+client = app.test_client()
+SID = "3f1c2a54-9d6e-4b7a-8c21-0e5d4f6a7b8c"
+
+
+def tap(funnel, extra):
+    del rows[:]
+    answer = client.post("/api/track", json={
+        "funnel": funnel, "session_id": SID, "event": "article_tap",
+        "extra": extra})
+    return answer.status_code, (rows[0][-1] if rows else None)
+
+
+check("the event is on the list, and its keys are a closed pair",
+      "article_tap" in tracking.ALLOWED_EVENTS
+      and tracking.ARTICLE_TAP_KEYS == frozenset(("article", "slot"))
+      and tracking.ARTICLE_TAP_SLOT
+      == frozenset(("below_paywall", "delivered")))
+for key in ARTICLES:
+    for slot in ("below_paywall", "delivered"):
+        code, stored = tap(SLUG, {"slot": slot, "article": key})
+        check("  %s in %s is accepted, and stored rebuilt" % (key, slot),
+              code == 204
+              and stored == '{"article":"%s","slot":"%s"}' % (key, slot),
+              str((code, stored)))
+REFUSED = [
+    ("an article the config does not have", {"article": "skill_cooking",
+                                             "slot": "delivered"}),
+    ("a slot outside the set", {"article": "mem", "slot": "sticky"}),
+    ("an extra key", {"article": "mem", "slot": "delivered",
+                      "fbclid": "AbC_123-x"}),
+    ("a link in place of the key", {"article": ARTICLES["mem"]["link"],
+                                    "slot": "delivered"}),
+    ("a missing slot", {"article": "mem"}),
+    ("an article of the wrong type", {"article": 1, "slot": "delivered"}),
+    ("an article as a list", {"article": ["mem"], "slot": "delivered"}),
+    ("a slot of the wrong type", {"article": "mem", "slot": True}),
+    ("a payload that is not an object", ["mem", "delivered"]),
+]
+for label, extra in REFUSED:
+    code, stored = tap(SLUG, extra)
+    check("  %s is refused, and nothing is written" % label,
+          code == 400 and stored is None, str((code, stored)))
+for other in ("focus", "kitchen"):
+    code, stored = tap(other, {"article": "mem", "slot": "below_paywall"})
+    check("  the same event on %s is refused" % other,
+          code == 400 and stored is None, str((code, stored)))
+check("no schema change: it is one more row in the column every event uses",
+      "article" not in read("schema_migrations.sql")
+      and "article" not in tracking.INSERT_SQL)
 
 print("\n--- the neighbours ---")
 check("focus is the file it was",
