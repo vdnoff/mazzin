@@ -519,11 +519,47 @@
   // sessionStorage, because the paid page is opened after the run is gone and
   // has only what the report stored. Keys of the config, nothing of the
   // reader's beyond that.
+  // The zone the second guide is picked for. Where the run has a zone with
+  // the most room it is that one, the same one the score card and the report
+  // name. A level run has none, and a guides card with one button reads as
+  // half a card, so for this block only the tie is broken in a fixed order:
+  // business sense first, since that is the question a reader who is not
+  // buying yet is most likely asking.
+  var GUIDE_TIE = ["spa", "foc", "chg", "mem"];
+
+  function guideZone(data) {
+    if (!data) return "";
+    if (data.room) return data.room;
+    var counts = data.counts || {};
+    var low = null;
+    DOMAINS.forEach(function (key) {
+      if (low === null || counts[key] < low) low = counts[key];
+    });
+    for (var i = 0; i < GUIDE_TIE.length; i++) {
+      if (counts[GUIDE_TIE[i]] === low) return GUIDE_TIE[i];
+    }
+    return "";
+  }
+
+  // The words on the skill card they tapped, for the tag over its guide.
+  function skillLabel(ctx, tag) {
+    var steps = (ctx.cfg && ctx.cfg.swipe && ctx.cfg.swipe.steps) || [];
+    for (var i = 0; i < steps.length; i++) {
+      var cards = ((steps[i].pairs || [])[0] || {}).images || [];
+      for (var j = 0; j < cards.length; j++) {
+        if ((cards[j].tags || []).indexOf(tag) !== -1) {
+          return cards[j].label || "";
+        }
+      }
+    }
+    return "";
+  }
+
   function rsocKeys(ctx, block, data) {
     var keys = { skill: "", zone: "" };
     if (!ctx.delivered) {
       keys.skill = skillKey(ctx, block);
-      keys.zone = (data && data.room) || "";
+      keys.zone = guideZone(data);
       try { sessionStorage.setItem(RSOC_KEY, JSON.stringify(keys)); }
       catch (e) { /* private mode */ }
       return keys;
@@ -534,7 +570,7 @@
     // written before it stored them.
     var run = (ctx.visuals && ctx.visuals.brain) || {};
     if (typeof run.skill === "string") keys.skill = run.skill;
-    if (data && data.room) keys.zone = data.room;
+    if (data) keys.zone = guideZone(data);
     var stored = null;
     try { stored = JSON.parse(sessionStorage.getItem(RSOC_KEY) || "null"); }
     catch (e) { stored = null; }
@@ -582,13 +618,23 @@
     if (!chosen.length) return null;
 
     var tail = query.toString();
+    var late = slot === "delivered";
     var box = elm("section", "ai-rsoc");
     box.setAttribute("data-slot", slot);
-    var head = slot === "delivered" ? block.head_delivered : block.head;
-    if (head) box.appendChild(elm("p", "ai-rsoc-head", head));
+    var kicker = late ? block.kicker_delivered : block.kicker;
+    if (kicker) box.appendChild(elm("p", "ai-rsoc-kicker", kicker));
+    var head = late ? block.head_delivered : block.head;
+    if (head) box.appendChild(elm("h2", "ai-rsoc-head", head));
+    if (block.sub) box.appendChild(elm("p", "ai-rsoc-sub", block.sub));
     chosen.forEach(function (item) {
       var link = elm("a", "ai-rsoc-link");
-      link.appendChild(elm("span", "ai-rsoc-text", item.label));
+      var words = elm("span", "ai-rsoc-words");
+      var tag = item.key === keys.skill
+        ? fill(block.tag_skill || "", { skill: skillLabel(ctx, item.key) })
+        : fill(block.tag_zone || "", { zone: zoneName(ctx, item.key) });
+      if (tag) words.appendChild(elm("span", "ai-rsoc-tag", tag));
+      words.appendChild(elm("span", "ai-rsoc-text", item.label));
+      link.appendChild(words);
       link.appendChild(glyph(ARROW_PATH, "ai-rsoc-arrow"));
       link.href = item.link + (tail ? "?" + tail : "");
       link.target = "_blank";
@@ -617,11 +663,13 @@
     root.appendChild(profileBlock(ctx, copy));
     if (data) root.appendChild(scoreCard(ctx, copy, data));
     root.appendChild(offer(ctx, copy));
+    // The second way out, and for most readers the one they take: directly
+    // under the offer, so still after the pay button, and above the list.
+    var guides = articles(ctx, data, "below_paywall");
+    if (guides) root.appendChild(guides);
     var more = unlocks(copy);
     if (more) root.appendChild(more);
     root.appendChild(divider());
-    var guides = articles(ctx, data, "below_paywall");
-    if (guides) root.appendChild(guides);
     var foot = footer(ctx, copy);
     if (foot) root.appendChild(foot);
 
