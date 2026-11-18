@@ -11,8 +11,8 @@
   },
   "intro": {
     "kicker": "AI NAVIGATOR",
-    "headline": "How well do you really know AI?",
-    "sub": "6 quick questions about you, then 12 on how AI really works. Get your score, your type and your four zones.",
+    "headline": "Find the AI business that fits you",
+    "sub": "A free test: 6 quick questions about you, then 12 on how AI really works. It ends in your profile — your score, your type and your four zones. A full plan is optional.",
     "chips": [
       "3 MINUTES",
       "NO SIGN-UP",
@@ -24,8 +24,8 @@
   },
   "swipe": {
     "pairs_count": 18,
-    "headline": "How well do you really know AI?",
-    "subtext": "18 quick questions. No sign-up.",
+    "headline": "Find the AI business that fits you",
+    "subtext": "A free test, 18 quick questions. No sign-up.",
     "subtext_accent": "No sign-up.",
     "hint": "Tap your answer.",
     "label_mode": "check",
@@ -1352,6 +1352,30 @@
         "title": "Your Answer Key",
         "hook": "Every question, your answer, the right one, and why."
       }
+    },
+    "paths_card": {
+      "title": "Your 3 best-fit paths",
+      "lead": "Matched from the skill you named, the hours you have and your score. The first is the one to start with.",
+      "format": "The offer format for your level:",
+      "skip_title": "Two to skip for now",
+      "facts": {
+        "sells": "What you sell",
+        "buyer": "Who buys it",
+        "first_client": "First client",
+        "startup": "To start",
+        "risk": "Where it goes wrong"
+      },
+      "badge_works": "Best fit",
+      "badge_avoid": "Skip for now"
+    },
+    "key_card": {
+      "title": "Your Answer Key",
+      "lead": "Every question, your answer, the right one, and why.",
+      "yours": "Your answer:",
+      "right": "Right answer:",
+      "none": "not answered",
+      "hit": "Right",
+      "miss": "Missed"
     }
   },
   "rsoc": {
@@ -1411,5 +1435,208 @@
         "link": "https://generalentrypage.com/AthKVyfDLlgQgfibdtvd03BBtYDhfTDEr_kS8_JNnFj8EcbjXoiN7UrPqM_2TmMezyJS0VS26bO6O2NnMMztVYdmgfvKeqhom-YwxtbOAjv9VDxkYYxMXZwhAYQNdRr3Njj4Eu9HPxSrOhqM_I_T8o7QURF3LcOzyXCNV6tL9WTgvsRztyf-xoI9_datFYSA4JIcsObP4uAUJs-ekdJUMHaYkStm4np2WVwnCInqHr6-NlE3tmrRjhVwpF56_W1eGVulvoo7VHkOD6U8pfi45ySe1Ee2p5atJQgma7e5fstDwBq6MoS6-s2lmtQ_fIxWgcM-Ug"
       }
     }
+  },
+  "paths": {
+    "catalog": [
+      {
+        "id": "P1",
+        "name": "Niche content service",
+        "sells": "Written content for one industry — blog posts, product pages or email sequences — drafted with AI and edited by you.",
+        "buyer": "Small businesses and solo professionals in a field you already understand, who need content regularly and have nobody to write it.",
+        "first_client": "Typically 2–6 weeks, if you send samples to people in the niche every week.",
+        "startup": "The free tier of a chat assistant is enough to begin; a paid plan helps once the volume is regular.",
+        "risk": "It most often fails by staying general: content for anyone competes with everyone and is compared on price alone."
+      },
+      {
+        "id": "P2",
+        "name": "Niche newsletter or content brand",
+        "sells": "Attention on one narrow topic, which later carries sponsorships or your own products and services.",
+        "buyer": "Readers come first and pay nothing; the paying side is sponsors, or buyers of what you later offer that audience.",
+        "first_client": "Typically 12–26 weeks of regular publishing before there is an audience anybody would pay to reach.",
+        "startup": "The free tier of a newsletter tool and a chat assistant; a paid plan only once the list grows.",
+        "risk": "It most often fails by stopping: publishing fades after a few weeks, long before an audience has formed."
+      },
+      {
+        "id": "P3",
+        "name": "Brand & social design service",
+        "sells": "Brand kits and ready-to-post social graphics for small businesses, made with AI image and layout tools and finished by hand.",
+        "buyer": "Local shops, coaches and small online sellers who post regularly and are not happy with how their feed looks.",
+        "first_client": "Typically 2–6 weeks, with a small portfolio of sample sets made for businesses like theirs.",
+        "startup": "The free tier of a design tool to begin; a paid plan for an image tool once clients need commercial-use output.",
+        "risk": "It most often fails on revisions: unclear scope turns one set into endless rounds, so agree the number of rounds first."
+      },
+      {
+        "id": "P4",
+        "name": "Digital products: templates and printables",
+        "sells": "Downloadable files people use as they are — planners, templates, checklists or prompt packs for one specific job.",
+        "buyer": "Individuals searching a marketplace for a ready-made answer to a small, specific need.",
+        "first_client": "Typically 4–12 weeks to a first sale, because listings need time and several products before they are found.",
+        "startup": "The free tier of design and chat tools is enough; a paid plan is optional, and marketplaces charge a fee per listing or sale.",
+        "risk": "It most often fails by copying what already fills the marketplace, where a new shop with similar products is rarely seen."
+      },
+      {
+        "id": "P5",
+        "name": "Workflow automation for small businesses",
+        "sells": "A repetitive task taken off somebody's desk — intake forms, follow-up emails, report building — wired together with no-code and AI tools.",
+        "buyer": "Owners of small service businesses who lose hours every week to the same manual steps.",
+        "first_client": "Typically 3–8 weeks, usually through somebody who lets you watch how their week actually runs.",
+        "startup": "The free tier of an automation tool for the first build; a paid plan once a client's volume passes the free limits.",
+        "risk": "It most often fails after delivery: automations break quietly when a connected app changes, and nobody agreed who maintains them."
+      },
+      {
+        "id": "P6",
+        "name": "Small AI tools and custom assistants",
+        "sells": "A small tool or assistant built for one job, such as answering questions from a company's own documents or drafting one kind of reply.",
+        "buyer": "Teams with one narrow, repeated task and documents that already hold the answers.",
+        "first_client": "Typically 4–12 weeks, because a working demo on their own material usually has to come first.",
+        "startup": "A paid plan from the start in most cases, since building and running a tool uses metered model access.",
+        "risk": "It most often fails by building before asking: a finished tool for a problem nobody confirmed they have."
+      },
+      {
+        "id": "P7",
+        "name": "Outreach & lead-research service",
+        "sells": "Researched prospect lists and personalised first messages, prepared with AI and checked by you before anything is sent.",
+        "buyer": "Small sales teams, agencies and consultants who need conversations with one specific kind of customer.",
+        "first_client": "Typically 2–6 weeks, since the same method finds your own first client.",
+        "startup": "The free tier of a chat assistant and a spreadsheet; a paid plan for a data or sending tool comes later.",
+        "risk": "It most often fails on quality: generic messages sent in bulk are ignored and can damage the client's sender reputation."
+      },
+      {
+        "id": "P8",
+        "name": "AI setup consulting for local businesses",
+        "sells": "A few sessions that set a small business up with AI tools for its own everyday tasks, with short written how-tos to keep.",
+        "buyer": "Local business owners who keep hearing about AI and have no time to work out where it fits.",
+        "first_client": "Typically 2–6 weeks, most often through a business you already know or use.",
+        "startup": "The free tier of the tools you will be showing; the client pays for any paid plan they decide to keep.",
+        "risk": "It most often fails by staying vague: AI consulting with no named task and no finished result is hard to buy."
+      },
+      {
+        "id": "P9",
+        "name": "AI-powered virtual assistant and ops support",
+        "sells": "Ongoing admin support — inbox, calendar, documents, follow-ups — done faster because you use AI tools well.",
+        "buyer": "Busy solo professionals and small teams who need reliable help for a few hours every week.",
+        "first_client": "Typically 2–6 weeks, often starting with one small recurring task for one person.",
+        "startup": "The free tier of a chat assistant and the client's own apps; a paid plan is optional.",
+        "risk": "It most often fails on boundaries: an open-ended role of helping with everything grows until the hours stop making sense."
+      },
+      {
+        "id": "P10",
+        "name": "Workshops & tutoring: AI for a niche you know",
+        "sells": "Live sessions or one-to-one tutoring that teach people in one field how to use AI for their actual work.",
+        "buyer": "People in a profession or community you know well, who want a guide who speaks their language.",
+        "first_client": "Typically 3–8 weeks, starting with a free or low-cost pilot session for a small group.",
+        "startup": "The free tier of the tools you teach and of a video-call app; a paid plan only if a session needs it.",
+        "risk": "It most often fails by teaching tools instead of tasks: sessions about features are forgotten, sessions about their own work are not."
+      },
+      {
+        "id": "P11",
+        "name": "Productize what you already do at work",
+        "sells": "The thing you are already good at in your job, done faster with AI and offered as a clear internal service or a defined outside offer.",
+        "buyer": "Your current employer or team first; later, other companies with the same recurring need.",
+        "first_client": "Typically 1–4 weeks to a first internal user, since the people who need it already know you.",
+        "startup": "The free tier, or whichever paid plan your employer already approves; check their rules before using anything else.",
+        "risk": "It most often fails on permission: putting company or client data into tools your employer has not approved."
+      }
+    ],
+    "rules": {
+      "by_skill": {
+        "writing": [
+          "P1",
+          "P2",
+          "P10"
+        ],
+        "design": [
+          "P3",
+          "P4",
+          "P1"
+        ],
+        "tech": [
+          "P5",
+          "P6",
+          "P8"
+        ],
+        "sales": [
+          "P7",
+          "P8",
+          "P10"
+        ],
+        "organizing": [
+          "P9",
+          "P5",
+          "P8"
+        ],
+        "teaching": [
+          "P10",
+          "P2",
+          "P8"
+        ]
+      },
+      "skip_by_skill": {
+        "writing": [
+          "P6",
+          "P5"
+        ],
+        "design": [
+          "P6",
+          "P7"
+        ],
+        "tech": [
+          "P2",
+          "P3"
+        ],
+        "sales": [
+          "P6",
+          "P4"
+        ],
+        "organizing": [
+          "P6",
+          "P2"
+        ],
+        "teaching": [
+          "P6",
+          "P7"
+        ]
+      },
+      "goal_levelup": {
+        "when": "goal_levelup",
+        "primary": "P11"
+      },
+      "time_under_3": {
+        "when": "time_under3",
+        "not_in_works": "P2",
+        "replace_with": [
+          "P8",
+          "P10",
+          "P1",
+          "P9",
+          "P5"
+        ]
+      },
+      "format_by_level": {
+        "explorer": "one small done-for-you service, one niche",
+        "builder": "a productized service with fixed scope",
+        "operator": "a system or product: retainer, tool or library"
+      },
+      "default_skill_by_type": {
+        "mechanic": "tech",
+        "director": "writing",
+        "editor": "organizing",
+        "dealmaker": "sales"
+      }
+    }
+  },
+  "answer_key": {
+    "mem1": "Fluent, confident wording is how these tools write everything. Tone and detail tell you nothing about whether the content is true.",
+    "mem2": "The context window is the amount of text a model can take into account at one time. Anything beyond it is simply not seen.",
+    "mem3": "A model picks each next word from several likely ones, with a little randomness. That is why the same prompt can come back different.",
+    "foc1": "A model writes for the situation you describe. Saying who it is for, what it covers and the format you want removes most of the guessing.",
+    "foc2": "Naming exactly what to change keeps the part that already works. Starting over or switching tools throws that away and starts from zero.",
+    "foc3": "Two or three real examples show the voice directly. Describing a voice, or only naming the brand, leaves the model to guess.",
+    "chg1": "AI tools can produce sources that look real and are not, or that say something else. Opening the source is the only way to know.",
+    "chg2": "Your own draft is yours to share. Client lists, contracts and passwords are other people's data or secrets, and stay out of public tools.",
+    "chg3": "Whether you may sell AI-made output depends on each tool's own terms, and they differ between tools and plans. Check before you list anything.",
+    "spa1": "One specific, recurring problem for one kind of customer is easy to explain, easy to find buyers for and easy to say yes to.",
+    "spa2": "Paying or committing is the only answer that costs people something. Opinions, a finished build and a logo cost them nothing.",
+    "spa3": "The tool is open to everyone. A client pays for someone who knows what good looks like, runs the process and answers for the result."
   }
 }

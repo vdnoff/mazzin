@@ -695,3 +695,81 @@ body:has(.result-module.is-ai) {
   color: var(--ai-muted);
   text-align: center;
 }
+
+/* --- the paid page: the paths card and the answer key ----------------------
+   Both are drawn from what the report stored. */
+
+.ai-paths-format { margin: 10px 0 0; font-size: 14px; line-height: 1.4; color: var(--ai-muted); }
+.ai-paths-format b { color: var(--ai-ink); }
+
+.ai-pathcard {
+  margin: 14px 0 0;
+  padding: 14px;
+  border: 1px solid var(--ai-line);
+  border-radius: 14px;
+}
+
+.ai-pathcard.is-first { border: 2px solid var(--ai-mem); }
+
+.ai-pathcard-name { margin: 0 0 8px; font-size: 17px; font-weight: 700; line-height: 1.3; color: var(--ai-ink); }
+
+.ai-facts { margin: 0; }
+
+.ai-facts dt {
+  margin: 8px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ai-muted);
+}
+
+.ai-facts dd { margin: 2px 0 0; font-size: 15px; line-height: 1.45; color: var(--ai-ink); }
+
+.ai-paths-sub {
+  margin: 20px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ai-muted);
+}
+
+.ai-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  vertical-align: 2px;
+  white-space: nowrap;
+}
+
+.ai-badge.is-works, .ai-badge.is-hit { background: #E8F5EE; color: #1F7A4C; }
+.ai-badge.is-avoid { background: #EEF3FB; color: #2C5FA8; }
+.ai-badge.is-miss { background: #F1EEE8; color: #5C616B; }
+.ai-badge:empty { display: none; }
+
+.ai-key-list { margin: 6px 0 0; padding: 0; list-style: none; }
+
+.ai-key-row { padding: 14px 0; border-top: 1px solid var(--ai-line); }
+.ai-key-row:first-child { border-top: 0; }
+.ai-key-row:last-child { padding-bottom: 0; }
+
+.ai-key-q { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.35; color: var(--ai-ink); }
+
+.ai-key-zone {
+  margin: 4px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ai-muted);
+}
+
+.ai-key-line { margin: 6px 0 0; font-size: 15px; line-height: 1.45; color: var(--ai-ink); }
+.ai-key-lab { color: var(--ai-muted); }
+.ai-key-why { margin: 8px 0 0; font-size: 15px; line-height: 1.45; color: var(--ai-ink); }
