@@ -681,3 +681,6 @@ bottom.
 
 ## 2026-11-18 — claude/ai-navigator-funnel
 - AI Navigator funnel: 18-step quiz + free result (phase 1)
+
+## 2026-11-18 — claude/ai-navigator-rsoc
+- AI Navigator: RSOC article buttons with fbclid passthrough
