@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  // The partner's articles (Campaign Links). The last view shows four: the
+  // The partner's articles (Campaign Links). The summary view shows four: the
   // one for the loan purpose, the one for the credit range, and the two
   // general ones. A link is stored bare, with no query string; the click
   // identifiers held below are the only thing ever added to it.
@@ -102,7 +102,10 @@
 
   // The flow is a straight line, and the history stack is always a prefix of
   // it: forward is a pushState, back is the browser's own back.
-  var VIEWS = ["landing", "purpose", "income", "credit", "options", "guides"];
+  var VIEWS = ["landing", "purpose", "income", "credit", "options"];
+  // Views this page once had. A tab that was left on one resumes on the view
+  // that took its place, never on a blank page.
+  var RETIRED = { guides: "options", offers: "options" };
   var STEP_OF = { purpose: 1, income: 2, credit: 3 };
   var ATTRIBUTION = ["subid", "utm_source", "utm_campaign", "utm_content", "utm_term"];
   var STORE_KEY = "mazzin_loans";
@@ -171,6 +174,7 @@
   }
 
   var state = load();
+  if (RETIRED.hasOwnProperty(state.view)) state.view = RETIRED[state.view];
   var a = state.answers;
   if (!validAmount(a.amount)) a.amount = AMOUNT_DEFAULT;
   if (!LABELS.purpose[a.purpose]) delete a.purpose;
@@ -196,7 +200,7 @@
   // --- click identifiers passed on to the partner ---------------------------
   //
   // Read off the URL on every load and kept in sessionStorage for this tab,
-  // so they outlive all six views, a reload, back and forward, and a second
+  // so they outlive all five views, a reload, back and forward, and a second
   // arrival on a bare /loans URL. A load without them clears nothing. Their
   // only reader is articleHref(): they are never posted to /api/loans/* and
   // never put on an event.
@@ -309,9 +313,6 @@
       case "credit": return !!(a.purpose && a.employment && a.income);
       case "options":
         return !!(a.purpose && a.employment && a.income && a.credit && a.state);
-      case "guides":
-        // No click to pass on means no guides: the view cannot be reached.
-        return ready("options") && hasClick();
       default: return true;
     }
   }
@@ -354,7 +355,7 @@
     } else {
       label.hidden = true;
       link.hidden = false;
-      link.textContent = view === "options" ? "Edit answers" : "Back";
+      link.textContent = "Edit answers";
     }
   }
 
@@ -379,8 +380,9 @@
       li.textContent = text;
       chips.appendChild(li);
     });
-    var on = hasClick();
-    $("partner-card").hidden = !on;
+    // No click to pass on means no guides: no block and no anchor at all.
+    var on = hasClick() && renderGuides() > 0;
+    $("guides-block").hidden = !on;
     $("guides-none").hidden = on;
   }
 
@@ -399,6 +401,7 @@
   function renderGuides() {
     var list = $("guides");
     list.textContent = "";
+    if (!hasClick()) return 0;
     ["purpose_" + a.purpose, "credit_" + a.credit].concat(GENERAL)
       .forEach(function (key) {
         var href = articleHref(key);
@@ -422,6 +425,7 @@
         li.appendChild(row);
         list.appendChild(li);
       });
+    return list.children.length;
   }
 
   function syncButtons() {
@@ -448,7 +452,6 @@
       $("state").value = a.state || "";
     }
     if (view === "options") renderOptions();
-    if (view === "guides") renderGuides();
     syncButtons();
 
     current = view;
@@ -559,11 +562,6 @@
     go("options");
   });
 
-  $("go-guides").addEventListener("click", function () {
-    track("offer_tap", null, { slot: "options_cta" });
-    go("guides");
-  });
-
   $("top-link").addEventListener("click", back);
   var backs = document.querySelectorAll("[data-back]");
   for (var k = 0; k < backs.length; k++) backs[k].addEventListener("click", back);
@@ -573,6 +571,10 @@
   (function start() {
     var s = history.state;
     var view;
+    if (s && RETIRED.hasOwnProperty(s.v)) {
+      s = historyState(RETIRED[s.v]);
+      try { history.replaceState(s, ""); } catch (e) {}
+    }
     if (s && s.v && VIEWS.indexOf(s.v) >= 0) {
       // A reload, or the back button returning from another page: the stack
       // under this entry is already ours.

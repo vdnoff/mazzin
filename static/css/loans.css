@@ -155,7 +155,7 @@ h1:focus { outline: none; }
   color: var(--accent-ink);
 }
 
-.h1, .h2 {
+.h1 {
   margin: 0;
   font-family: var(--serif);
   font-weight: 600;
@@ -166,7 +166,6 @@ h1:focus { outline: none; }
 .h1-xl { font-size: 40px; line-height: 1.05; }
 .h1-lg { font-size: 32px; }
 .h1-md { font-size: 30px; }
-.h2 { font-size: 24px; line-height: 1.1; }
 
 .lede {
   margin: 14px 0 0;
@@ -333,9 +332,6 @@ h1:focus { outline: none; }
   cursor: default;
 }
 
-.btn-white { background: #fff; color: var(--navy); }
-.btn-white:hover, .btn-white:active { background: var(--tint); }
-.btn-white:focus-visible { outline-color: #fff; }
 
 .back {
   display: block;
@@ -502,36 +498,9 @@ h1:focus { outline: none; }
   color: var(--accent-ink);
 }
 
-.partner-card {
-  margin-top: 24px;
-  padding: 20px;
-  border: 0;
-  background: var(--navy);
-  color: #fff;
-}
-.partner-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 14px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  color: var(--navy-soft);
-}
-.partner-row span:first-child { text-transform: uppercase; }
-.partner-card .h2 { color: #fff; }
-
-.checks {
-  display: grid;
-  gap: 10px;
-  margin: 16px 0 0;
-  padding: 0;
-  list-style: none;
-  font-size: 15px;
-  line-height: 1.35;
-}
-.checks li { display: flex; gap: 10px; align-items: flex-start; }
-.checks .ico { width: 20px; height: 20px; color: var(--navy-soft); }
+.guides-block { margin-top: 24px; }
+.guides-block .lede { margin-top: 8px; font-size: 15px; }
+.guides-block .guides { margin-top: 12px; }
 
 .note {
   margin: 16px 0 0;
@@ -542,7 +511,7 @@ h1:focus { outline: none; }
   color: var(--ink-2);
 }
 
-/* --- V6 guides ----------------------------------------------------------- */
+/* --- the guide rows, on the summary view ---------------------------------- */
 
 .guides {
   margin: 20px 0 0;
