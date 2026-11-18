@@ -705,3 +705,6 @@ bottom.
 
 ## 2026-11-18 — claude/ai-navigator-redesign
 - AI Navigator redesign: 12 steps, dark theme, instant feedback, 3-block result
+
+## 2026-11-18 — claude/ai-navigator-guides
+- AI Navigator: prominent guides card, always two guides, offer card gap
