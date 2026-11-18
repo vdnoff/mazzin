@@ -16,8 +16,8 @@ Prompting, Judgment & risk and Business sense.
 Checked here:
 
   * The file, its static copy, and that it transacts on Stripe's test keys —
-    there is no report profile for this funnel yet, so it must not be able to
-    take a live charge.
+    going live is a later, separate step, so it must not be able to take a
+    live charge.
   * Eighteen steps: six warm-ups carrying service tags only, twelve scored,
     each with exactly one hit and the rest misses on one stem, three a stem.
   * Every format the funnel names is one engine.js declares, and the text
@@ -163,16 +163,32 @@ check("  the same flag focus ships on, read the same way",
       and 'return TEST if (cfg or {}).get("stripe_mode") == TEST else LIVE'
       in read("payments.py"))
 import reports                                               # noqa: E402
-check("there is no report profile for it yet, which is why",
-      SLUG not in reports.PROFILES)
+check("its report profile is registered, and the flag stays on test anyway",
+      reports.PROFILES.get(SLUG) is reports.AI_PROFILE
+      and cfg.get("stripe_mode") == "test")
+
+print("\n--- what it says it is ---")
+HEADLINE = "Find the AI business that fits you"
+check("the headline, on the intro card and over the walk",
+      cfg["intro"]["headline"] == HEADLINE
+      and cfg["swipe"]["headline"] == HEADLINE)
+check("the intro says it is free, ends in a profile, and the plan is optional",
+      all(word in cfg["intro"]["sub"].lower()
+          for word in ("free", "profile", "optional")))
+check("  and the line over the walk says free, and keeps its accent",
+      "free" in cfg["swipe"]["subtext"].lower()
+      and cfg["swipe"]["subtext_accent"] in cfg["swipe"]["subtext"])
 
 print("\n--- cut from focus: what is kept and what is dropped ---")
 DROPPED = ["track_timing", "result_template", "preview_gallery",
            "style_elements", "analyzing_echo", "sale", "pairings",
            "share_cards"]
-# One key is this funnel's own: `rsoc`, the partner-article block, which has
-# a section to itself further down. It is last, after everything focus has.
-OWN = ["rsoc"]
+# Three keys are this funnel's own, last, after everything focus has: `rsoc`,
+# the partner-article block, which has a section to itself further down;
+# `paths`, the table its report matches a reader's paths from; and
+# `answer_key`, one line of why for each scored question. The last two are
+# held to their shape in tests/test_ainavigator_report.py.
+OWN = ["rsoc", "paths", "answer_key"]
 check("every top-level key is one focus carries, bar the one of its own",
       [k for k in cfg if k not in FOCUS] == OWN,
       str([k for k in cfg if k not in FOCUS]))
@@ -566,38 +582,42 @@ check("  and one as the last thing on both pages",
       and MODULE.count("if (foot) root.appendChild(foot);") == 2)
 
 print("\n--- nothing in it promises money ---")
-BANNED = [
-    r"guarante", r"passive income", r"get rich", r"financial freedom",
-    r"quit your job", r"easy money", r"overnight", r"effortless", r"secret",
-    r"loophole", r"six[- ]figure", r"\$\s?\d[\d,.]*\s*(a|per|/)\s*(day|week|"
-    r"month)", r"earn \$", r"make \$", r"make money",
-]
-# Two strings the spec itself requires that trip the scan. The decoy answer
-# on the last question is a wrong answer about secrecy; the disclaimer says
-# that nothing is guaranteed. Allowlisted by exact path and exact text, so a
-# third string cannot hide behind either.
+# Exactly this, and no more. The funnel may talk plainly about earning with
+# AI and about business; what it may not do is promise it, or put a figure on
+# a day, a week or a month of it. The same core list reports.py holds the
+# model's own sentences to.
+PERIODIC = (r"(?:[$€£]\s?\d[\d,.]*\s?(?:k|m|thousand|million)?"
+            r"|\d[\d,.]*\s?(?:k\s)?(?:dollars|euros|pounds|usd|eur|gbp))"
+            r"\s*(?:\+\s*)?(?:a|an|per|each|every|/)\s*"
+            r"(?:hour|day|week|month|year|hr|wk|mo|yr)\b")
+BANNED = [r"\bguarant\w+", PERIODIC, r"\bget\s+rich\b",
+          r"\bpassive\s+income\b", r"\bquit\s+your\s+job\b"]
+check("the list is the one reports.py holds the model to",
+      [rx.pattern for rx in reports.AI_BANNED_CORE] == BANNED)
+# The one string the spec itself requires that trips the scan: the disclaimer
+# says that nothing is guaranteed. Allowlisted by exact path and exact text,
+# in the two places it is printed, so a third string cannot hide behind it.
 ALLOW = {
-    (".swipe.steps[17].pairs[0].images[1].label", "Secret prompts"),
     (".checkout.disclaimer", DISCLAIMER),
     (".result_copy.disclaimer", DISCLAIMER),
 }
 check("the two exceptions are where the allowlist says they are",
       all(pair in set(ALL) for pair in ALLOW))
-check("  the decoy is a miss, on the question about what a client pays for",
-      by_id["spa3"]["pairs"][0]["images"][1]["tags"] == ["spa_miss"])
 hits = [(at, v) for at, v in ALL if (at, v) not in ALLOW
         and any(re.search(p, v, re.I) for p in BANNED)]
 check("no banned phrase in any other string (%d scanned)" % len(ALL),
       not hits, str(hits[:3]))
-for pattern in BANNED:
-    probe = {"guarante": "Guaranteed results", "secret": "The secret",
-             r"six[- ]figure": "a six-figure year"}.get(pattern)
-    if probe:
-        check("  the scan would catch %r" % probe,
-              re.search(pattern, probe, re.I) is not None)
-check("  and it would catch a figure a day, a week or a month",
-      all(re.search(BANNED[11], s, re.I)
-          for s in ("$500 a day", "$1,000/week", "$ 3000 per month")))
+for probe in ("Guaranteed results", "a guarantee", "get rich with AI",
+              "Passive income", "quit your job", "$500 a day",
+              "$1,000/week", "$ 3000 per month", "$3,000/month",
+              "€2k per week",
+              "500 dollars a day"):
+    check("  the scan would catch %r" % probe,
+          any(re.search(p, probe, re.I) for p in BANNED))
+for fine in ("Secret prompts", "make money with AI", "an AI business",
+             "overnight", "a paid plan", "$6", "2–6 weeks"):
+    check("  and it lets %r through" % fine,
+          not any(re.search(p, fine, re.I) for p in BANNED))
 OTHERS = [r"most people", r"\d+\s?% of", r"\b\d[\d,]* (people|users|readers|"
           r"customers|students)\b", r"testimonial", r"\bhurry\b",
           r"limited time", r"last chance", r"only \d+ left", r"ends (today|"
@@ -606,11 +626,10 @@ hits = [(at, v) for at, v in ALL
         if any(re.search(p, v, re.I) for p in OTHERS)]
 check("no statistic about other people, no testimonial, no urgency",
       not hits, str(hits[:3]))
-income = [(at, v) for at, v in ALL if (at, v) not in ALLOW
-          and re.search(r"\b(income|salary|revenue|profit|earn(ing)?s?|"
-                        r"rich|wealth)\b", v, re.I)]
-check("no string talks about income at all, bar the disclaimer",
-      not income, str(income[:3]))
+check("no string puts a currency figure on what anybody earns",
+      not [(at, v) for at, v in ALL
+           if re.search(r"(earn|income|revenue|profit|make)\w*[^.]{0,40}"
+                        r"[$€£]\s?\d", v, re.I)])
 
 print("\n--- the text formats, in the engine ---")
 check("text4 and text6 are sizes in the engine's own table",

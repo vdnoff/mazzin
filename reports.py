@@ -4749,9 +4749,464 @@ FOCUS_PROFILE = {
     "delivery_note": True,
 }
 
+# --- /ai-navigator: the report an eighteen-question quiz buys ---------------
+#
+# The third game on the platform, cut from focus without its clock: six
+# warm-ups about the reader, then twelve questions over four zones — how AI
+# works, prompting, judgment and risk, business sense — that end on a score
+# out of twelve, a level and a type. Everything the two games before it
+# settled on holds: every section ends on an action, and the zone somebody
+# scored lowest on is the zone with the most room in it.
+#
+# What is new is that two of the things this document says are not the
+# model's to say at all. Which business paths fit a reader is worked out from
+# the config's own table by `_ai_paths`, and the answer key is read off the
+# config and the choices by `_ai_answer_key`. The model explains the first
+# and never sees the second.
+#
+# The tag stems and the number block keep brain's names, because engine.js
+# scores on them and the delivered page reads them.
+
+AI_DISCLAIMER = ("Educational content. No income is promised or guaranteed "
+                 "— results depend on your effort, skills and market.")
+
+# A currency figure, as a model writes one: a symbol and a number, or a
+# number and the word.
+_AI_AMOUNT = (r"(?:[$€£]\s?\d[\d,.]*\s?(?:k|m|thousand|million)?"
+              r"|\d[\d,.]*\s?(?:k\s)?(?:dollars|euros|pounds|usd|eur|gbp))")
+_AI_PERIOD = r"(?:hour|day|week|month|year|hr|wk|mo|yr)"
+
+
+class _AiMoney(object):
+    """Any currency figure that is not a tool's price inside its own phrase.
+
+    The report may say a tool has a free tier or a paid plan, and that is the
+    only sentence in it a currency figure may stand in. Shaped like a
+    compiled pattern because that is what `_banned_hit` walks: `search`
+    returns the match, and the match names the words that were refused.
+    """
+
+    _figure = re.compile(_AI_AMOUNT, re.IGNORECASE)
+    _allowed = re.compile(r"\bfree\s+tier\b|\bpaid\s+plan\b", re.IGNORECASE)
+
+    def search(self, text):
+        for found in self._figure.finditer(text or ""):
+            start = max(text.rfind(".", 0, found.start()),
+                        text.rfind("!", 0, found.start()),
+                        text.rfind("?", 0, found.start())) + 1
+            stops = [text.find(mark, found.end()) for mark in ".!?"]
+            stops = [at for at in stops if at != -1]
+            end = min(stops) if stops else len(text)
+            if not self._allowed.search(text[start:end]):
+                return found
+        return None
+
+
+# The line this product must not cross. It may talk about earning with AI in
+# plain words; what it may never do is promise it, put a figure on it or put
+# a date on it. The first four are the funnel's own list, the one its config
+# is held to; the last two are for a model, which reaches for them unasked.
+AI_BANNED_CORE = tuple(re.compile(p, re.IGNORECASE) for p in (
+    r"\bguarant\w+",
+    # An amount tied to a period: "$500 a day", "$3,000/month", "2k per week".
+    _AI_AMOUNT + r"\s*(?:\+\s*)?(?:a|an|per|each|every|/)\s*" + _AI_PERIOD
+    + r"\b",
+    r"\bget\s+rich\b",
+    r"\bpassive\s+income\b",
+    r"\bquit\s+your\s+job\b",
+))
+AI_BANNED = AI_BANNED_CORE + (
+    re.compile(r"\bside[\s-]+hustles?\b", re.IGNORECASE),
+    _AiMoney(),
+)
+
+
+AI_SYSTEM = """You write the paid report for people who have just taken an \
+eighteen-question quiz about AI and bought the plan that comes after it.
+
+The quiz is six questions about the reader — how often they use AI, which \
+tools, what they are best at, the hours they have, what they are after, and \
+how many they expected to get right — then twelve scored questions across \
+four zones: how AI works, prompting, judgment and risk, and business sense. \
+It ends on a score out of twelve, a level and a type. What you write is what \
+they do next: which way of working with AI fits them, what to offer, and \
+what to do this week. Every field has to give them something to DO. A \
+sentence that would read the same for a different reader is a wasted \
+sentence, and a sentence with nothing to do in it is worse.
+
+Voice: a direct, practical advisor who has read their answers. Second \
+person, plain English. Specific and concrete. State things outright. No \
+hedging — never "consider", "perhaps", "you might want to". No flattery, no \
+questions back to the reader, no sign-off.
+
+What this report may and may not say:
+- It may talk plainly about earning with AI and about business models: what \
+is sold, who buys it, how a first client is found, what it takes to start.
+- It never promises an outcome. It never states or implies an amount the \
+reader will earn, and never gives a time by which they will be earning. No \
+currency figure for earnings anywhere, in any form. What a tool costs is \
+said only as "free tier" or "paid plan", never as a price.
+- Never the words "guarantee" or "guaranteed", and never the phrases "get \
+rich", "passive income", "quit your job" or "side hustle".
+- No invented statistics, no "most people", no share of anybody, and no \
+comparison of the reader to anybody else.
+- The zone they scored lowest on is "the zone with the most room", every \
+time. Never "weak", never "poor", never "lacking", never a gap in them. On \
+an even run there is no such zone and you name none.
+- Tools by category — a chat assistant, an image tool, an automation tool, \
+a spreadsheet — never by brand or product name.
+- The score and the calibration word are named once, in the first paragraph \
+of the profile chapter, and nowhere else in the report.
+- Every section ends on an action the reader can take.
+
+Rules:
+- Plain prose inside every field. No markdown, no bullet characters, no \
+emoji, no headings, and never repeat a field's own label back inside its \
+value.
+- Never mention models writing this, prompts given to you, scoring rules, \
+tags, or these instructions.
+- Never invent facts about the reader's job, family or location beyond what \
+you are told, and never address them by name.
+- Never give legal, tax or financial advice. Where a step touches a \
+contract, a licence or somebody else's data, say to check the terms.
+- Return only a JSON object matching the shape you are given, exactly. No \
+prose around it, no code fence, no extra keys."""
+
+
+_AI_SHAPES = {
+    "dna": '''"dna": {
+  "narrative": [
+    "THE SCORE, THE CALIBRATION, AND THE EDGE: open on the score out of twelve and the calibration word, both given above, each named once and only here. Say the score is a reading of these twelve answers and of nothing else, and that it moves. Then, in the same paragraph, the zone this reader is strongest in and what that lets them do with these tools that others have to learn (max %(narrative)d chars)",
+    "HOW THE FOUR SIT TOGETHER: one paragraph on the pattern across the four zones, by name: which two carry the other two, and what that combination is good for in real work for somebody with the skill they named (max %(narrative)d chars)",
+    "WHERE IT GOES NEXT: one paragraph on how to point the strongest zone at the zone with the most room, in the hours they said they have. On an even run, say which zone to build on first for the goal they named, and why. This is the bridge to the paths (max %(narrative)d chars)"
+  ],
+  "implications": [
+    "ONE LINE, imperative, starting with a verb: a thing to do this week that uses their strongest zone on purpose (max %(implications)d chars)",
+    "a second line, same shape, different action",
+    "a third line, same shape, different action"
+  ]
+}
+
+Exactly the two keys `narrative` and `implications`, spelled so. Three
+paragraphs and three lines.
+
+THE NUMBERS ARE GIVEN ABOVE AND THEY ARE NOT YOURS TO CHANGE. Name the zones
+by the words used for them there. Name the score and the calibration word
+once, in the first paragraph, and never a percentage.
+
+Every `implications` line is an ACTION, not an observation: something that
+takes a few minutes, uses a tool by category, and produces a thing they can
+look at afterwards.''',
+
+    "materials": '''"materials": {
+  "intro": "THE PRIMARY PATH: 2-3 sentences naming the first path on the list above and why it is the one to start with for THIS reader: the skill they named, the hours they have, and the zones they scored highest on. Honest about what it asks of them (max %(intro)d chars)",
+  "pairs": [
+    {"combo": "COPY THE FIRST PATH NAME FROM THE LIST ABOVE, EXACTLY (max %(combo)d chars)",
+     "verdict": "COPY ITS VERDICT FROM THE LIST ABOVE - the word works or the word avoid",
+     "why": "TWO SENTENCES. Why this path fits this reader's skill, hours and zones, and the first concrete step on it. For a path marked avoid: why it is one to skip for now, for this reader, and what would have to change first (max %(why)d chars)"},
+    {"combo": "the second path from the list, exactly", "verdict": "its verdict, exactly", "why": "two sentences"},
+    {"combo": "the third path from the list, exactly", "verdict": "its verdict, exactly", "why": "two sentences"},
+    {"combo": "the fourth path from the list, exactly", "verdict": "its verdict, exactly", "why": "two sentences"},
+    {"combo": "the fifth path from the list, exactly", "verdict": "its verdict, exactly", "why": "two sentences"}
+  ],
+  "rule": "THE OFFER AND THE FIRST STEP: 2-3 sentences. The offer format given above for this reader's level, applied to the primary path: what exactly they would offer, to whom, with what scope. Then the first concrete step, small enough to do this week (max %(rule)d chars)"
+}
+
+THE FIVE PATHS ARE NOT YOURS TO CHOOSE. All five are given above, each with
+its verdict and the facts about it. Reproduce all five, in that order, with
+`combo` and `verdict` exactly as written. Invent no path, rename no path and
+never change a verdict.
+
+`verdict` is the word "works" or the word "avoid" and nothing else. "avoid"
+here means skip for now: a path that asks for something this reader has not
+told you they have yet. Say what, plainly, and never as a fault.
+
+Use the facts given with each path and add none of your own: no figure for
+what it earns, no time by which it pays, no number of clients. How long a
+first client typically takes is given above as a range in weeks; you may
+repeat it as given and you may not shorten it.''',
+
+    "mistakes": '''"mistakes": {
+  "items": [
+    {"title": "the strength, as a short phrase (max %(title)d chars)",
+     "body": "EXACTLY TWO SENTENCES and no more. The first says what this type does well with AI tools and where it shows up in real work. The second says why somebody would pay for that or rely on it. No third sentence, and do not join two with a semicolon to get around that (max %(body)d chars)",
+     "fix": "ONE imperative sentence starting with a verb: how to put this strength in front of a client or a colleague this week (max %(fix)d chars)"},
+    {"title": "the second strength", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the third strength", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the fourth strength", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the fifth strength", "body": "two sentences", "fix": "one sentence"},
+    {"title": "the first TRAP, as a short phrase", "body": "two sentences: what this type tends to do and when it costs them", "fix": "one imperative sentence: what to do instead"},
+    {"title": "the second trap", "body": "two sentences", "fix": "one sentence"}
+  ]
+}
+
+SEVEN items under the single key `items`, in this order: five strengths, then
+two traps. Each is an object with `title`, `body` and `fix` spelled exactly
+so.
+
+The five strengths belong to this type and are things it can SELL or be
+relied on for: specific enough to recognise, and each one something a client
+or an employer would notice. A strength nobody could fail to have is not a
+strength. No comparison to other people.
+
+The two traps are habits of this type, not faults: things it does because it
+is good at something else, each with what to do instead. `fix` on a trap is
+the replacement, in the imperative, and it is small enough to start today.
+
+All seven are the same shape and the same length: two sentences and one. This
+is read on a phone by somebody scrolling. Cut every clause that is
+scene-setting, every "which is why", and every restatement of the title.''',
+
+    "shopping": '''"shopping": {
+  "items": [
+    {"name": "Day 1 - <the task's name, two or three words> (max %(name)d chars)",
+     "priority_note": "What to do, in enough detail to do it without thinking, and what there is to show for it afterwards. Two to three sentences (max %(priority_note)d chars)"},
+    {"name": "Day 2 - <its task>", "priority_note": "what to do, and what there is to show for it"},
+    {"name": "Day 3 - <its task>", "priority_note": "same"},
+    {"name": "Day 4 - <its task>", "priority_note": "same"},
+    {"name": "Day 5 - <its task>", "priority_note": "same"},
+    {"name": "Day 6 - <its task>", "priority_note": "same"},
+    {"name": "Day 7 - Ask one person", "priority_note": "One real person, named by the kind of person they are, asked one real question about the primary path's offer. Say who to pick, what to ask, and what to do with a yes and with a no. Two to three sentences (max %(priority_note)d chars)"}
+  ],
+  "skip": []
+}
+
+Two keys, `items` and `skip`, spelled exactly so. SEVEN items under `items`,
+one per day, in order. `skip` is an empty list: send it, and put nothing in
+it.
+
+`name` opens with the day, exactly as "Day 1 - ", "Day 2 - " and so on,
+followed by a short name for that day's task. The last one is named exactly
+"Day 7 - Ask one person".
+
+THE WEEK IS SEVEN DAYS ON THE PRIMARY PATH, AND IT ENDS ON A DEMAND TEST. Day
+seven is one real person asked one real question: would they pay for this,
+or commit to trying it. Not a friend asked whether it sounds good. Say
+nothing about what the answer will be: you do not know, and the day promises
+the asking, not the result.
+
+EVERY DAY IS ONE TASK WITH SOMETHING TO SHOW FOR IT: a sample, a list, a
+one-line offer, a message sent. Sized to the hours this reader said they
+have, as stated above. Tools by category, on a free tier wherever one will
+do. No figure for what anything earns and no time by which it pays.
+
+The register, exactly:
+
+  BAD  "Day 2 - Research: look into your niche."
+  BAD  "Day 5 - Marketing: start promoting your service."
+  GOOD "Day 2 - Ten names: list ten businesses of the one kind you picked,
+        each with the page where the problem shows. A spreadsheet with two
+        columns is the whole deliverable."
+  GOOD "Day 4 - One sample: make one finished example for a business on
+        your list, start to end, and save it as a single file you could
+        send."
+
+If a day would survive being moved to a reader on a different path, it is
+the wrong day.''',
+}
+
+AI_SPEC = dict((section_id, _zodiac_spec(text, section_id))
+               for section_id, text in _AI_SHAPES.items())
+
+
+# The four zones, in the order they are played, which is the order every
+# surface of this product draws them and the order a tie is broken in. The
+# same four stems and the same order as focus.
+AI_DOMAINS = FOCUS_DOMAINS
+
+
+AI_WORDS = dict(
+    RENDER_WORDS,
+    verdicts={"works": "BEST FIT", "avoid": "SKIP FOR NOW"},
+    pdf_note=("Keep this — your report also stays available at the link "
+              "you were sent back to after checkout."),
+)
+
+
+# What a reader gets when there is no key. Same lengths, same structure, same
+# voice as the keyed chapters, and banned-clean, because this is the path
+# where nothing is checking. The paths chapter is the one that cannot be
+# generic: `_ai_personal_stub` writes the reader's own five over the pairs
+# below before it is stored.
+AI_STUBS = {
+    "dna": {
+        "narrative": [
+            "Your score is on the first page of this report, next to how it "
+            "compared with your own prediction. It is a reading of twelve "
+            "answers and of nothing else, and it moves. What holds it where "
+            "it is: the zone you scored highest in is the one you can "
+            "already work from, and it is worth more than it looks, because "
+            "it is the part of using these tools that takes longest to pick "
+            "up.",
+            "The four zones are not four separate skills. Knowing how the "
+            "tools work makes your prompts better, good prompts give you "
+            "output worth checking, and checking is what makes the work "
+            "safe to put in front of somebody. Business sense decides who "
+            "that somebody is. Your two highest zones carry the other two "
+            "for now.",
+            "The next move is to point your strongest zone at the one with "
+            "the most room, in the hours you said you have. Short, regular "
+            "sessions on one real task do more here than a long weekend of "
+            "reading. Your first seven days are built that way.",
+        ],
+        "implications": [
+            "Pick one real task from your week and do it with a chat "
+            "assistant from start to finish, then note what you had to fix.",
+            "Write down, in one line, the kind of work you would be glad to "
+            "be asked for.",
+            "Explain one thing you got right in the quiz to somebody else, "
+            "in your own words.",
+        ],
+    },
+    "materials": {
+        "intro": "Your three best-fit paths are matched from the skill you "
+                 "named, the hours you said you have and your score. The "
+                 "first one is the place to start: it leans on what you "
+                 "already do well, and it asks for nothing you have not "
+                 "already told us you have.",
+        "pairs": [
+            {"combo": "Your primary path", "verdict": "works",
+             "why": "It starts from the skill you named. Take the first "
+                    "step on it this week, before reading further."},
+            {"combo": "Your second path", "verdict": "works",
+             "why": "It uses the same skill with a different buyer. Keep it "
+                    "in reserve until the first has had a fair try."},
+            {"combo": "Your third path", "verdict": "works",
+             "why": "It fits your hours and asks for one more thing you can "
+                    "learn on the way. Come back to it in a month."},
+            {"combo": "First path to skip for now", "verdict": "avoid",
+             "why": "It asks for a skill you did not name. Leave it until "
+                    "one of the three above is running."},
+            {"combo": "Second path to skip for now", "verdict": "avoid",
+             "why": "It needs more hours, or a longer wait, than you said "
+                    "you have. Look again when that changes."},
+        ],
+        "rule": "Start with one small, clearly bounded offer for one kind "
+                "of customer, and say what is included in a single "
+                "sentence. This week, write that sentence, make one sample "
+                "that shows it, and send both to one person who has the "
+                "problem it fixes.",
+    },
+    "mistakes": {
+        "items": [
+            {"title": "You finish what you start with these tools",
+             "body": "You take a task from a blank page to something usable "
+                     "instead of stopping at the first draft. That is the "
+                     "part clients and colleagues actually see.",
+             "fix": "Show one finished piece, start to end, to somebody who "
+                    "could use it this week."},
+            {"title": "You say what you want clearly",
+             "body": "You describe the job, the audience and the format "
+                     "before you ask, so the first answer is already close. "
+                     "It makes your work quick to review and easy to trust.",
+             "fix": "Save the three prompts you reuse most as templates and "
+                    "offer them to one colleague."},
+            {"title": "You check before you send",
+             "body": "You read the output as a draft from somebody junior, "
+                     "not as a finished answer. People rely on work that "
+                     "has been checked, and they come back for it.",
+             "fix": "Add one line to your next piece of work saying what "
+                    "you verified and how."},
+            {"title": "You know one field from the inside",
+             "body": "You can tell a good result from a plausible one in "
+                     "the area you named, because you have done the work by "
+                     "hand. That judgment is what a buyer cannot get from "
+                     "the tool alone.",
+             "fix": "Write down five recurring tasks in that field that "
+                    "nobody enjoys doing."},
+            {"title": "You keep it small enough to finish",
+             "body": "You choose a task you can complete in the time you "
+                     "have. Small finished things are what turn into "
+                     "samples, and samples are what turn into "
+                     "conversations.",
+             "fix": "Pick one task you can finish in a single sitting and "
+                    "finish it today."},
+            {"title": "Learning instead of offering",
+             "body": "Another tutorial feels like progress, and it is "
+                     "easier than showing somebody your work. The cost is "
+                     "weeks in which nobody has been asked anything.",
+             "fix": "Put one sample in front of one person before you open "
+                    "the next tutorial."},
+            {"title": "Offering everything to everyone",
+             "body": "A wide offer feels safer because it rules nobody "
+                     "out. It also gives nobody a reason to say yes, "
+                     "because they cannot see themselves in it.",
+             "fix": "Name one kind of customer and one problem, and say no "
+                    "to the rest for a month."},
+        ],
+    },
+    "shopping": {
+        "items": [
+            {"name": "Day 1 - Fifteen minutes",
+             "priority_note": "Take the zone with the most room on your "
+                              "result and spend fifteen minutes on one "
+                              "question from it: open your Answer Key, "
+                              "read the reason, and try it once on a real "
+                              "task. Write one line on what changed."},
+            {"name": "Day 2 - One customer, one problem",
+             "priority_note": "For your primary path, write down one kind "
+                              "of customer and one recurring problem they "
+                              "have. One sentence each. If you cannot name "
+                              "the customer, pick the one you know best."},
+            {"name": "Day 3 - Ten names",
+             "priority_note": "List ten real people or businesses of that "
+                              "one kind, each with where you would reach "
+                              "them. A two-column spreadsheet is the whole "
+                              "deliverable."},
+            {"name": "Day 4 - One sample",
+             "priority_note": "Make one finished example of what you would "
+                              "deliver, start to end, using a free tier "
+                              "wherever one will do. Save it as a single "
+                              "file you could send."},
+            {"name": "Day 5 - Check it",
+             "priority_note": "Go through the sample as its buyer would. "
+                              "Verify every fact in it, remove anything you "
+                              "could not stand behind, and note what you "
+                              "checked."},
+            {"name": "Day 6 - The one-line offer",
+             "priority_note": "Write the offer in one sentence: who it is "
+                              "for, what they get, what is included. Read "
+                              "it aloud. If it needs a second sentence, "
+                              "narrow it."},
+            {"name": "Day 7 - Ask one person",
+             "priority_note": "Pick one person from your list of ten and "
+                              "send them the sample with one question: "
+                              "would you pay for this, or try it once? A "
+                              "yes means book it. A no means ask what "
+                              "would have to be different, and write the "
+                              "answer down."},
+        ],
+        "skip": [],
+    },
+}
+
+
+AI_PROFILE = {
+    "system": AI_SYSTEM,
+    "spec": AI_SPEC,
+    "stubs": AI_STUBS,
+    # Five strengths and two traps belong to the type rather than to the
+    # run, exactly as the other two games' do.
+    "cached": ("mistakes",),
+    # The other three are the run: this reader's zones, their paths and a
+    # week on the first of them.
+    "personal": ("dna", "materials", "shopping"),
+    "banned": AI_BANNED,
+    "verify": None,
+    "retry_detail": True,
+    "words": AI_WORDS,
+    "mail": None,           # filled below, once COPY_AI exists
+    "mail_link": None,      # filled below, once the shared button exists
+    "pdf_lead": "Your AI Navigator Report",
+    "pdf_note": ("Keep this — your report also stays available at the "
+                 "link you were sent back to after checkout."),
+    "delivery_note": True,
+}
+
 # The two games' strengths chapters ship seven items with nothing given away
 # free, so the stub helper leaves both alone. See `_stub_for`.
-GAME_MISTAKE_STUBS = (BRAIN_STUBS["mistakes"], FOCUS_STUBS["mistakes"])
+GAME_MISTAKE_STUBS = (BRAIN_STUBS["mistakes"], FOCUS_STUBS["mistakes"],
+                      AI_STUBS["mistakes"])
 
 
 PROFILES = {"zodiac": ZODIAC_PROFILE, "zodiac30": ZODIAC_PROFILE,
@@ -4764,7 +5219,8 @@ PROFILES = {"zodiac": ZODIAC_PROFILE, "zodiac30": ZODIAC_PROFILE,
             "love-zodiac-bg-test": LOVE_BG_PROFILE,
             "persona": PERSONA_PROFILE,
             "brain": BRAIN_PROFILE,
-            "focus": FOCUS_PROFILE}
+            "focus": FOCUS_PROFILE,
+            "ai-navigator": AI_PROFILE}
 
 
 # --- config-driven buyer's guide profiles ----------------------------------
@@ -5535,6 +5991,15 @@ def _stub_for(section_id, name, style=None, stubs=None, months=None,
             stub = dict(stub)
             # Four behind it: five items, inside the schema's own range.
             stub["items"] = [first] + list(stub["items"])[:4]
+    # The AI Navigator's chapter is five strengths and two traps as well, and
+    # its free page DOES hand the first strength over. So the promised one
+    # takes the first place and the six behind it stay: seven items, the two
+    # traps still at the end.
+    if section_id == "mistakes" and stub is AI_STUBS["mistakes"]:
+        first = _mistake_one(style)
+        if first:
+            stub = dict(stub)
+            stub["items"] = [first] + list(stub["items"])[1:]
     if section_id == "shopping" and (
             months or any(stubs is one for one in ZODIAC_STUB_SETS)):
         # The year stub carries positions rather than month names; the labels
@@ -7520,6 +7985,429 @@ def _focus_plan_block(cfg, numbers, tag_scores):
     return text
 
 
+# --- /ai-navigator: the run, read on the server ------------------------------
+#
+# Everything below is worked out from the choices the order carried — ids
+# already validated against this funnel — and from the config. Nothing is
+# taken from a figure the browser computed: the page and this arrive at the
+# same numbers because they apply the same rules to the same taps.
+
+AI_WARMUPS = ("exp", "tool", "skill", "time", "goal")
+
+AI_CALIBRATION_WORDS = {
+    "on_target": "on target",
+    "underrated": "underrated: they scored above their own prediction",
+    "bold": "bold: they predicted more than they scored",
+}
+
+
+def _ai_picks(cfg, choices):
+    """{step id: the card they tapped on it}, from the validated choices."""
+    by_id = {}
+    for step in ((cfg or {}).get("swipe") or {}).get("steps") or []:
+        for pair in (step.get("pairs") or []):
+            for item in (pair.get("images") or []):
+                if isinstance(item, dict) and item.get("id"):
+                    by_id[item["id"]] = (step, item)
+    picks = {}
+    for image_id in (choices or []):
+        found = by_id.get(image_id)
+        if found and found[0].get("id") not in picks:
+            picks[found[0].get("id")] = found[1]
+    return picks
+
+
+def _ai_zone_of(step):
+    """Which of the four zones a step scores, or None for a warm-up."""
+    for pair in (step.get("pairs") or []):
+        for item in (pair.get("images") or []):
+            for tag in (item.get("tags") or []):
+                stem, _, kind = str(tag).partition("_")
+                if stem in AI_DOMAINS and kind in ("hit", "miss"):
+                    return stem
+    return None
+
+
+def _ai_level(block, hits):
+    """The first level whose ceiling the score is under, as result_ai.js."""
+    for row in (block.get("levels") or []):
+        top = row.get("max")
+        if not isinstance(top, (int, float)) or hits <= top:
+            return row
+    return None
+
+
+def _ai_numbers(cfg, style, tag_scores, choices=None):
+    """This run's figures, recomputed here, or None.
+
+    None on a funnel with no `brain_age` table and on a run that left neither
+    choices nor tallies. With choices, every count is read off the cards the
+    reader tapped; the tallies are the fallback for an order that carried
+    none, clamped to what a zone can hold.
+
+    The rules are result_ai.js's, restated: a zone's count is its hits out of
+    `per_domain`; the strongest zone is the highest count, the earliest of
+    them in play order on a tie; the zone with the most room is the lowest
+    count, the earliest on a tie — and there is none at all when the four
+    are level, because then no zone has more room than another.
+    """
+    block = (cfg or {}).get("brain_age") or {}
+    scored = block.get("scored")
+    if not block or not isinstance(scored, int) or scored <= 0:
+        return None
+    if not choices and not tag_scores:
+        return None
+    per = block.get("per_domain")
+    per = per if isinstance(per, int) and per > 0 else scored // len(AI_DOMAINS)
+
+    picks = _ai_picks(cfg, choices)
+    tallies = tag_scores or {}
+
+    def tapped(tag):
+        if choices:
+            return any(tag in (item.get("tags") or [])
+                       for item in picks.values())
+        return (tallies.get(tag) or 0) > 0
+
+    counts = {}
+    for key in AI_DOMAINS:
+        if choices:
+            got = sum(1 for item in picks.values()
+                      if (key + "_hit") in (item.get("tags") or []))
+        else:
+            got = int(tallies.get(key + "_hit") or 0)
+        counts[key] = max(0, min(per, got))
+    hits = sum(counts.values())
+
+    level = all(counts[key] == counts[AI_DOMAINS[0]] for key in AI_DOMAINS)
+    weakest = None if level else min(
+        AI_DOMAINS, key=lambda key: (counts[key], AI_DOMAINS.index(key)))
+    strongest = max(
+        AI_DOMAINS, key=lambda key: (counts[key], -AI_DOMAINS.index(key)))
+
+    rule = block.get("predict") or {}
+    predict = None
+    band = None
+    for tag, row in (rule.get("bands") or {}).items():
+        if isinstance(row, dict) and isinstance(row.get("min"), int) \
+                and isinstance(row.get("max"), int) and tapped(tag):
+            predict = tag
+            band = {"min": row["min"], "max": row["max"],
+                    "label": row.get("label")
+                    or "%d–%d" % (row["min"], row["max"])}
+            break
+    if band is None:
+        calibration = "none"
+    elif hits > band["max"]:
+        calibration = "underrated"
+    elif hits < band["min"]:
+        calibration = "bold"
+    else:
+        calibration = "on_target"
+
+    row = _ai_level(block, hits) or {}
+    out = {
+        "hits": hits,
+        "misses": max(0, scored - hits),
+        "scored": scored,
+        "per_domain": per,
+        "counts": counts,
+        "weakest": weakest,
+        "strongest": strongest,
+        "domains": dict(block.get("domains") or {}),
+        "type": (style or {}).get("id") or "",
+        "type_name": (style or {}).get("name") or "",
+        "level": row.get("label") or "",
+        "level_key": (row.get("label") or "").strip().lower(),
+        "predict": predict,
+        "band": band,
+        "calibration": calibration,
+    }
+    # What they said about themselves on the warm-ups, as the tag of the card
+    # and the words on it. A warm-up nobody answered is None in both.
+    words = {}
+    for step in ((cfg or {}).get("swipe") or {}).get("steps") or []:
+        name = step.get("id")
+        if name not in AI_WARMUPS:
+            continue
+        out[name] = None
+        for pair in (step.get("pairs") or []):
+            for item in (pair.get("images") or []):
+                tag = next((t for t in (item.get("tags") or [])
+                            if isinstance(t, str)
+                            and t.startswith(name + "_")), None)
+                if tag and out[name] is None and tapped(tag):
+                    out[name] = tag
+                    words[name] = item.get("label") or ""
+    for name in AI_WARMUPS:
+        out.setdefault(name, None)
+    out["said"] = words
+    return out
+
+
+def _ai_path_rows(cfg):
+    """{path id: its catalog row}."""
+    return dict((row.get("id"), row) for row in
+                (((cfg or {}).get("paths") or {}).get("catalog") or [])
+                if isinstance(row, dict) and row.get("id"))
+
+
+def _ai_paths(cfg, choices, numbers):
+    """The reader's three paths and the two to skip, from the config's table.
+
+    Deterministic, and no model is asked: the skill they named picks three
+    and two, the goal and the hours adjust them, and the level picks the
+    offer format. A reader who named no skill gets the one their type
+    defaults to. None on a config with no table or a run with no numbers.
+
+    `choices` is in the signature for the call sites' sake; everything read
+    here is already on `numbers`, which was built from them.
+    """
+    block = (cfg or {}).get("paths") or {}
+    rules = block.get("rules") or {}
+    rows = _ai_path_rows(cfg)
+    if not rows or not rules or not numbers:
+        return None
+    skill = (numbers.get("skill") or "")[len("skill_"):]
+    if skill not in (rules.get("by_skill") or {}):
+        skill = (rules.get("default_skill_by_type") or {}).get(
+            numbers.get("type") or "") or ""
+    works = list((rules.get("by_skill") or {}).get(skill) or [])
+    avoid = list((rules.get("skip_by_skill") or {}).get(skill) or [])
+    if len(works) != 3 or len(avoid) != 2:
+        return None
+
+    rule = rules.get("goal_levelup") or {}
+    if rule.get("primary") and numbers.get("goal") == rule.get("when") \
+            and rule["primary"] not in works:
+        works = [rule["primary"]] + works[:2]
+
+    rule = rules.get("time_under_3") or {}
+    barred = rule.get("not_in_works")
+    if barred and numbers.get("time") == rule.get("when") \
+            and barred in works:
+        swap = next((pid for pid in (rule.get("replace_with") or [])
+                     if pid not in works and pid not in avoid
+                     and pid in rows), None)
+        if swap:
+            works[works.index(barred)] = swap
+            if barred not in avoid:
+                avoid[1] = barred
+
+    if len(set(works)) != 3 or len(set(avoid)) != 2 \
+            or set(works) & set(avoid) \
+            or any(pid not in rows for pid in works + avoid):
+        return None
+
+    def card(pid):
+        row = rows[pid]
+        return dict((field, row.get(field) or "") for field in
+                    ("id", "name", "sells", "buyer", "first_client",
+                     "startup", "risk"))
+
+    return {
+        "works": [card(pid) for pid in works],
+        "avoid": [card(pid) for pid in avoid],
+        "primary": works[0],
+        "skill": skill,
+        "format": (rules.get("format_by_level") or {}).get(
+            numbers.get("level_key") or "") or "",
+    }
+
+
+def _ai_answer_key(cfg, choices):
+    """One row a scored question: theirs, the right one, and why.
+
+    From the config and the validated choices and from nothing else. A
+    question nobody answered — a reload into the test — is a miss with no
+    answer of theirs, which is what the page showed for it too.
+    """
+    why = (cfg or {}).get("answer_key") or {}
+    picks = _ai_picks(cfg, choices)
+    rows = []
+    for step in ((cfg or {}).get("swipe") or {}).get("steps") or []:
+        zone = _ai_zone_of(step)
+        if not zone:
+            continue
+        right = ""
+        for pair in (step.get("pairs") or []):
+            for item in (pair.get("images") or []):
+                if (zone + "_hit") in (item.get("tags") or []):
+                    right = right or item.get("label") or ""
+        mine = picks.get(step.get("id"))
+        rows.append({
+            "id": step.get("id"),
+            "zone": zone,
+            "question": step.get("question") or "",
+            "yours": (mine or {}).get("label") or "",
+            "right": right,
+            "hit": bool(mine and (zone + "_hit") in (mine.get("tags") or [])),
+            "why": why.get(step.get("id")) or "",
+        })
+    return rows
+
+
+def _ai_rounds_block(numbers):
+    """How this reader scored, for the sections written for them."""
+    if not numbers:
+        return None
+    per = numbers["per_domain"]
+    lines = ["- %s: %d of %d" % (_brain_round_name(numbers, key),
+                                 numbers["counts"][key], per)
+             for key in AI_DOMAINS]
+    tail = ["THE FOUR ZONES THIS PERSON WAS SCORED ON, and how they did:",
+            "\n".join(lines)]
+    if numbers.get("weakest"):
+        tail.append(
+            "The zone with the most room is %s. Name it that way, every "
+            "time, and never as a weakness: it is where practice moves the "
+            "score most." % _brain_round_name(numbers, numbers["weakest"]))
+    else:
+        tail.append("This was an even run: all four zones scored the same, "
+                    "so there is no zone with the most room and you name "
+                    "none.")
+    tail.append("Their strongest zone is %s."
+                % _brain_round_name(numbers, numbers["strongest"]))
+    line = "They scored %d out of %d, which this funnel calls %s." % (
+        numbers["hits"], numbers["scored"], numbers.get("level") or "a level")
+    if numbers.get("band"):
+        line += (" They predicted %s, and the calibration word for that is "
+                 "%s." % (numbers["band"]["label"],
+                          AI_CALIBRATION_WORDS[numbers["calibration"]]))
+    else:
+        line += (" They made no prediction, so there is no calibration word "
+                 "and you name none.")
+    tail.append(line)
+    tail.append(
+        "Name the zones by the words above. The score and the calibration "
+        "word are named once, in the first paragraph of the profile chapter, "
+        "and nowhere else. Never a percentage, and never a comparison to "
+        "anybody.")
+    return "\n\n".join(tail)
+
+
+AI_WARMUP_LINES = (
+    ("skill", "What they are best at"),
+    ("time", "Hours a week they can put in"),
+    ("goal", "What they are after"),
+    ("tool", "The kind of AI tool they use most"),
+    ("exp", "How often they use AI today"),
+)
+
+
+def _ai_warmups_block(numbers):
+    """What the reader said about themselves, in the words on the cards."""
+    if not numbers:
+        return None
+    said = numbers.get("said") or {}
+    rows = ["- %s: %s" % (label, said[name])
+            for name, label in AI_WARMUP_LINES if said.get(name)]
+    if not rows:
+        return ("This reader answered none of the questions about "
+                "themselves. Invent nothing about their skill, hours or "
+                "goal.")
+    return ("REQUIRED — what this reader said about themselves, in their "
+            "own words:\n" + "\n".join(rows)
+            + "\nWrite to these and to nothing else about them. Where one "
+              "is missing, say nothing on that point rather than guess.")
+
+
+def _ai_paths_block(cfg, choices, numbers):
+    """The five paths and their verdicts, from the table, not the model."""
+    paths = _ai_paths(cfg, choices, numbers)
+    if not paths:
+        return None
+    rows = []
+    for verdict in ("works", "avoid"):
+        for card in paths[verdict]:
+            rows.append(
+                "- %s — %s\n    sells: %s\n    buyer: %s\n"
+                "    first client: %s\n    to start: %s\n    risk: %s"
+                % (card["name"], verdict, card["sells"], card["buyer"],
+                   card["first_client"], card["startup"], card["risk"]))
+    text = ("REQUIRED — these are this reader's five paths, the verdict each "
+            "one carries and the facts about it, in this order. The first is "
+            "their primary path:\n"
+            + "\n".join(rows)
+            + "\nReproduce all five as `pairs`, in this order, with `combo` "
+              "the path's name exactly as written here and `verdict` the "
+              "word beside it. Invent no path and never change a verdict. "
+              "Write why each fits, or is one to skip for now, for THIS "
+              "reader's skill, hours and zones, and add no fact about a "
+              "path that is not above.")
+    if paths.get("format"):
+        text += ("\nThe offer format for this reader's level is: %s. `rule` "
+                 "applies that format to the primary path and ends on the "
+                 "first concrete step." % paths["format"])
+    return text
+
+
+def _ai_plan_block(cfg, choices, numbers):
+    """What the seven days are on, and what the first and the last are."""
+    paths = _ai_paths(cfg, choices, numbers)
+    if not paths:
+        return None
+    primary = paths["works"][0]
+    text = ("REQUIRED — the seven days are on this reader's primary path, "
+            "%s. " % primary["name"])
+    if numbers.get("weakest"):
+        text += ("Day one is a fifteen-minute action on %s, which is the "
+                 "zone with the most room for this reader, pointed at that "
+                 "path. " % _brain_round_name(numbers, numbers["weakest"]))
+    else:
+        text += ("This was an even run, so day one is a fifteen-minute "
+                 "action on the first step of that path. ")
+    hours = (numbers.get("said") or {}).get("time")
+    if hours:
+        text += ("They said they have %s hours a week: size every day to "
+                 "that, and say so where a task has to be cut down to fit. "
+                 % hours)
+    else:
+        text += ("They did not say how many hours they have: keep every day "
+                 "under half an hour. ")
+    text += ("Day seven ends with one real person asked one real question "
+             "about the offer — whether they would pay for it or commit to "
+             "trying it — and it is named exactly \"Day 7 - Ask one "
+             "person\".")
+    return text
+
+
+def _ai_personal_fix(section_id, data, visuals):
+    """Put the reader's own five paths on the paths chapter.
+
+    The chapter is a table of five names and five verdicts, and which five
+    is worked out from the config's table and stored beside the report. So
+    whatever wrote the chapter — the model, which was told to copy them, or
+    the stub, which could not know them — the names and the verdicts that
+    are stored are the ones that are printed. A stub's lines are replaced by
+    the catalog's own facts; a written line is left as written.
+    """
+    paths = (visuals or {}).get("paths")
+    if section_id != "materials" or not paths or not isinstance(data, dict):
+        return data
+    cards = ([(card, "works") for card in paths.get("works") or []]
+             + [(card, "avoid") for card in paths.get("avoid") or []])
+    pairs = data.get("pairs") or []
+    if len(cards) != 5:
+        return data
+    stub = data is AI_STUBS["materials"] or pairs == AI_STUBS["materials"]["pairs"]
+    out = dict(data)
+    if stub or len(pairs) != 5:
+        out["pairs"] = [
+            {"combo": card["name"], "verdict": verdict,
+             "why": ("%s First client: %s" % (card["sells"],
+                                              card["first_client"]))
+             if verdict == "works" else card["risk"]}
+            for card, verdict in cards]
+        if stub and paths.get("format"):
+            out["rule"] = ("For your level, the format to start with is %s. "
+                           "%s" % (paths["format"], data.get("rule") or ""))
+        return out
+    out["pairs"] = [dict(pair, combo=card["name"], verdict=verdict)
+                    for pair, (card, verdict) in zip(pairs, cards)]
+    return out
+
+
 def _profile_for(cfg, funnel_slug, style, tag_scores, choices):
     """The stored block for a purchase, or None.
 
@@ -7769,7 +8657,8 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
     persona = profile is PERSONA_PROFILE
     brain = profile is BRAIN_PROFILE
     focus = profile is FOCUS_PROFILE
-    game = brain or focus
+    ai = profile is AI_PROFILE
+    game = brain or focus or ai
 
     parts = [_style_block(style, name)]
     # `_leaning_block` is kitchen's vocabulary — it asks the model to let the
@@ -7786,9 +8675,16 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
         numbers = _brain_numbers(cfg, style, tag_scores)
     elif focus:
         numbers = numbers or _focus_numbers(cfg, style, tag_scores, choices)
+    elif ai:
+        numbers = numbers or _ai_numbers(cfg, style, tag_scores, choices)
     else:
         numbers = None
-    if numbers:
+    if numbers and ai:
+        # The third game's own two: how the four zones went, and what the
+        # reader said about themselves on the warm-ups.
+        parts.append(_ai_rounds_block(numbers))
+        parts.append(_ai_warmups_block(numbers))
+    elif numbers:
         rounds = (_focus_rounds_block(cfg, numbers, tag_scores) if focus
                   else _brain_rounds_block(numbers))
         if rounds:
@@ -7805,6 +8701,12 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
             # The zodiac palette is a wardrobe rather than a paint schedule,
             # so the colour-family block kitchen builds for it does not apply.
             extra = _zodiac_choice_block(cfg, choices, tag_scores)
+        elif ai:
+            # Nothing: the choice block is a list of photographs somebody
+            # pointed at, and this funnel's taps are answers to a quiz. What
+            # the reader said about themselves is already in above, and which
+            # questions they missed is the answer key's business.
+            extra = None
         else:
             extra = (_palette_block(cfg, choices) if section_id == "palette"
                      else _choice_block(cfg, choices, tag_scores))
@@ -7905,12 +8807,20 @@ def _section_prompt(style, name, tag_scores, section_id, cfg=None,
     # the model, exactly as the love pairings do on the zodiac product: the
     # chapter is read as a table and a table the model invented would not be
     # the reader's own.
-    if numbers and section_id == "materials":
+    if numbers and ai:
+        # The same two slots, filled from the config's path table.
+        block = (_ai_paths_block(cfg, choices, numbers)
+                 if section_id == "materials"
+                 else _ai_plan_block(cfg, choices, numbers)
+                 if section_id == "shopping" else None)
+        if block:
+            parts.append(block)
+    elif numbers and section_id == "materials":
         pairs = (_focus_pairs_block(numbers) if focus
                  else _brain_pairs_block(numbers))
         if pairs:
             parts.append(pairs)
-    if numbers and section_id == "shopping":
+    elif numbers and section_id == "shopping":
         plan = (_focus_plan_block(cfg, numbers, tag_scores) if focus
                 else _brain_plan_block(numbers))
         if plan:
@@ -7977,6 +8887,20 @@ def _cached_prompt(style, name, ids=None, funnel_slug=None):
                 "  title: %s\n  body: %s\n  fix: %s\n"
                 "Items 2 onward are yours to write and must all be different "
                 "from it." % (first["title"], first["body"], first["fix"]))
+    # The same promise on the AI Navigator: its free page gives the type's
+    # first strength away in full, so the cached chapter opens on it.
+    if profile is AI_PROFILE and "mistakes" in ids:
+        first = _mistake_one(style)
+        if first:
+            parts.append(
+                "REQUIRED — item 1 of the seven was already given to this "
+                "person in full, for free, as \"Strength #1 of 5\". "
+                "Reproduce it as item 1, in these words:\n"
+                "  title: %s\n  body: %s\n  fix: %s\n"
+                "Items 2 to 5 are four more strengths and items 6 and 7 are "
+                "the two traps. All of them are yours to write and must be "
+                "different from it." % (first["title"], first["body"],
+                                        first["fix"]))
     parts.append(_sections_block(ids, profile["spec"]))
     return "\n\n".join(parts)
 
@@ -8743,10 +9667,25 @@ def _publish(job, complete=False):
     return content
 
 
+def _section_fix(funnel_slug, sections, visuals):
+    """Whatever a profile does to its own sections once they are written.
+
+    One profile declares one — the AI Navigator puts the reader's own paths
+    on the chapter that lists them — and for every other funnel this hands
+    back the very dict it was given.
+    """
+    fix = _profile(funnel_slug).get("section_fix")
+    if not fix or not sections:
+        return sections
+    return dict((section_id, fix(section_id, data, visuals))
+                for section_id, data in sections.items())
+
+
 def _absorb(job, task, result):
     """Fold one finished task into the job, or stub the sections it owed."""
     ids = task["ids"]
     if result:
+        result = _section_fix(job["funnel"], result, job.get("visuals"))
         job["built"].update(result)
         for section_id in ids:
             job["paths"][section_id] = "llm"
@@ -8762,6 +9701,9 @@ def _absorb(job, task, result):
             section_id, job["name"], _style(job["cfg"], job["style_id"]),
             stub_profile["stubs"], job.get("months"),
             stub_profile.get("stub_colors"))
+        job["built"].update(_section_fix(
+            job["funnel"], {section_id: job["built"][section_id]},
+            job.get("visuals")))
         job["paths"][section_id] = "stub"
     return False
 
@@ -8964,6 +9906,19 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
         if rounds:
             visuals = dict(visuals or {})
             visuals["timed_out"] = rounds
+    # The third game's figures, beside them: the numbers under the key the
+    # delivered page already reads, and the two things this product works
+    # out without a model — the reader's paths and their answer key.
+    if profile is AI_PROFILE:
+        numbers = _ai_numbers(cfg, style, tag_scores, choices)
+        if numbers:
+            visuals = dict(visuals or {})
+            visuals["brain"] = numbers
+            paths = _ai_paths(cfg, choices, numbers)
+            if paths:
+                visuals["paths"] = paths
+            visuals["answer_key"] = _ai_answer_key(cfg, choices)
+            game_numbers = numbers
     # The twelve months this purchase's year map runs over, read off the clock
     # once and then treated as a fact about the purchase. The prompt is built
     # from it, the check that polices the answer is bound to it, and it is
@@ -9037,6 +9992,7 @@ def start_report(purchase_id, funnel_slug, result_style, tag_scores=None,
                                               profile["stubs"], months,
                                               profile.get("stub_colors"))
                 paths[section_id] = "stub"
+        built.update(_section_fix(funnel_slug, dict(built), visuals))
         content = _assemble(cfg, funnel_slug, result_style, name, built, paths,
                             True, elements, visuals, sign, purpose)
         database.execute(
@@ -11791,6 +12747,280 @@ FOCUS_PROFILE["pdf_after_cover"] = _focus_table
 FOCUS_PROFILE["pdf_body"] = BRAIN_PROFILE["pdf_body"]
 
 
+# --- /ai-navigator's document -------------------------------------------------
+#
+# The same sheet as the two games before it, with three blocks of its own:
+# the score against the prediction on the cover, the reader's paths with the
+# catalog's facts on the page after it, and the answer key at the end. All
+# three are drawn from what `start_report` stored — none of it is the
+# model's, and none of it can be recomputed here.
+
+AI_LABELS = {
+    "score_cap": "Your score",
+    "level": "Level",
+    "room": "The zone with the most room:",
+    "even": "An even run across all four zones.",
+    "paths_title": "Your 3 best-fit paths",
+    "paths_lead": ("Matched from the skill you named, the hours you have and "
+                   "your score. The first is the one to start with."),
+    "skip_title": "Two to skip for now",
+    "format": "The offer format for your level:",
+    "facts": (("sells", "What you sell"), ("buyer", "Who buys it"),
+              ("first_client", "First client"), ("startup", "To start"),
+              ("risk", "Where it goes wrong")),
+    "offer": "Your offer and your first step",
+    "sell": "Use it:",
+    "traps": "Two traps to step around",
+    "instead": "Instead:",
+    "instead_chip": "STEP AROUND",
+    "key_title": "Your Answer Key",
+    "key_lead": "Every question, your answer, the right one, and why.",
+    "yours": "Your answer:",
+    "right": "Right answer:",
+    "none": "not answered",
+    "chips": {"hit": "RIGHT", "miss": "MISSED"},
+}
+
+# The page's three words for the same three cases, so the document can print
+# the config's own line beside the score.
+AI_CALIBRATION_COPY = {"on_target": "on", "underrated": "under",
+                       "bold": "over"}
+
+AI_PDF_CSS = """
+/* --- /ai-navigator: the paths card and the answer key --------------------- */
+.ai-line { margin: 0 0 3mm; font-size: 10.5pt; color: #3d424c; }
+.ai-line b { color: #16181d; }
+.ai-paths { break-after: page; margin: 0; }
+.ai-path { margin: 0 0 4mm; padding: 3.5mm 4mm; border: 0.3mm solid #D9DEE7;
+           border-radius: 2mm; break-inside: avoid-page; }
+.ai-path.is-first { border-color: #3B7DD8; background: #F7FAFE; }
+.ai-path-name { margin: 0 0 1.5mm; font-size: 11.5pt; font-weight: 600;
+                color: #16181d; }
+.ai-facts { width: 100%; border-collapse: collapse; }
+.ai-facts td { padding: 0.7mm 0; vertical-align: top; font-size: 9.5pt;
+               line-height: 1.35; color: #3d424c; }
+.ai-facts td.k { width: 27mm; font-size: 8pt; font-weight: 600;
+                 letter-spacing: 0.06em; text-transform: uppercase;
+                 color: #9aa0a6; padding-top: 1.1mm; }
+.ai-sub { margin: 6mm 0 3mm; font-size: 8.5pt; font-weight: 600;
+          letter-spacing: 0.10em; text-transform: uppercase; color: #9aa0a6;
+          break-after: avoid-page; }
+.ai-key { break-before: page; margin: 0; }
+.ai-key-row { margin: 0; padding: 2.6mm 0; border-bottom: 0.2mm solid #EDEFF2;
+              break-inside: avoid-page; }
+.ai-key-q { margin: 0 0 1mm; font-size: 10.5pt; font-weight: 600;
+            color: #16181d; }
+.ai-key-row p { margin: 0.5mm 0 0; font-size: 9.5pt; line-height: 1.35;
+                color: #3d424c; }
+.ai-key-row .lab { color: #6b7280; }
+.ai-key-row .why { color: #16181d; }
+.ai-key-zone { margin: 5mm 0 0; padding: 0 0 1.2mm; font-size: 8.5pt;
+               font-weight: 600; letter-spacing: 0.10em;
+               text-transform: uppercase; color: #3B7DD8;
+               border-bottom: 0.5mm solid #3B7DD8; }
+.ai-disclaimer { margin: 8mm 0 0; padding-top: 3mm;
+                 border-top: 0.2mm solid #D9DEE7; font-size: 8.5pt;
+                 line-height: 1.4; color: #6b7280; }
+"""
+
+
+def _ai_stored(content):
+    """(numbers, paths, answer key) as this report stored them."""
+    visuals = (content or {}).get("visuals") or {}
+    return (visuals.get("brain") or {}, visuals.get("paths") or {},
+            visuals.get("answer_key") or [])
+
+
+def _ai_cover(content, profile, cfg):
+    """Page one: the score, the prediction beside it, the level, the zones."""
+    numbers, _paths, _key = _ai_stored(content)
+    name = _e(content.get("style_name") or _pdf_words()["style_fallback"])
+    copy = (cfg or {}).get("result_copy") or {}
+    essence = (((copy.get("profile") or {}).get("essence") or {})
+               .get(content.get("style_id")) or "")
+    hero = ""
+    lines = []
+    if isinstance(numbers.get("hits"), int):
+        hero = (
+            '<table class="hero"><tr>'
+            '<td class="hero-score"><span class="hero-cap">%s</span>'
+            '<span class="n">%d</span><span class="of">/%d</span></td>'
+            "</tr></table>"
+            % (_e(copy.get("score_lead") or AI_LABELS["score_cap"]),
+               numbers["hits"], int(numbers.get("scored") or 0)))
+        band = numbers.get("band") or {}
+        word = (copy.get("calibration") or {}).get(
+            AI_CALIBRATION_COPY.get(numbers.get("calibration")) or "")
+        if band.get("label"):
+            said = (copy.get("calibration_line")
+                    or "You predicted {band}. You scored {n}.")
+            said = said.replace("{band}", band["label"]).replace(
+                "{n}", str(numbers["hits"]))
+            lines.append('<p class="hero-delta">%s%s</p>'
+                         % (_e(said), (" " + _e(word)) if word else ""))
+        if numbers.get("level"):
+            lines.append('<p class="ai-line">%s <b>%s</b></p>'
+                         % (_e(copy.get("level_lead") or AI_LABELS["level"]),
+                            _e(numbers["level"])))
+    room = ""
+    if hero:
+        if numbers.get("weakest"):
+            room = ('<p class="ai-line">%s <b>%s</b></p>'
+                    % (_e(AI_LABELS["room"]),
+                       _e(_brain_round_name(numbers, numbers["weakest"]))))
+        else:
+            room = '<p class="ai-line">%s</p>' % _e(AI_LABELS["even"])
+    return [
+        '<section class="cover">',
+        '<img class="cover-logo" src="%s" alt="Mazzin">'
+        % _e(profile.get("pdf_logo") or "brand/logo.svg"),
+        '<p class="cover-lead">%s</p>' % _e(profile["pdf_lead"]),
+        '<h1 class="cover-name">%s</h1>' % name,
+        ('<p class="cover-essence">%s</p>' % _e(essence)) if essence else "",
+        hero,
+        "".join(lines),
+        _brain_bars(numbers, AI_DOMAINS) if hero else "",
+        room,
+        '<p class="cover-note">%s</p>' % _e(profile.get("pdf_note") or ""),
+        "</section>",
+    ]
+
+
+def _ai_path_card(card, first=False, fields=None):
+    rows = "".join(
+        '<tr><td class="k">%s</td><td>%s</td></tr>'
+        % (_e(label), _e(card.get(field)))
+        for field, label in AI_LABELS["facts"]
+        if card.get(field) and (fields is None or field in fields))
+    return ('<div class="ai-path%s"><p class="ai-path-name">%s</p>'
+            '<table class="ai-facts">%s</table></div>'
+            % (" is-first" if first else "", _e(card.get("name")), rows))
+
+
+def _ai_paths_page(content, profile, cfg):
+    """Page two: the three paths with their facts, and the two to skip."""
+    _numbers, paths, _key = _ai_stored(content)
+    works = paths.get("works") or []
+    if not works:
+        return ""
+    out = ['<section class="ai-paths"><h2 class="rounds-title">%s</h2>'
+           '<p class="rounds-lead">%s</p>'
+           % (_e(AI_LABELS["paths_title"]), _e(AI_LABELS["paths_lead"]))]
+    if paths.get("format"):
+        out.append('<p class="ai-line">%s <b>%s</b></p>'
+                   % (_e(AI_LABELS["format"]), _e(paths["format"])))
+    out.extend(_ai_path_card(card, index == 0)
+               for index, card in enumerate(works))
+    skip = paths.get("avoid") or []
+    if skip:
+        out.append('<p class="ai-sub">%s</p>' % _e(AI_LABELS["skip_title"]))
+        out.extend(_ai_path_card(card, False, ("sells", "risk"))
+                   for card in skip)
+    out.append("</section>")
+    return "".join(out)
+
+
+def _ai_end(content, profile, cfg):
+    """The last pages: the answer key, then what this document is not."""
+    numbers, _paths, key = _ai_stored(content)
+    out = []
+    if key:
+        out.append('<section class="ai-key"><h2 class="rounds-title">%s</h2>'
+                   '<p class="rounds-lead">%s</p>'
+                   % (_e(AI_LABELS["key_title"]), _e(AI_LABELS["key_lead"])))
+        zone = None
+        for row in key:
+            if row.get("zone") != zone:
+                zone = row.get("zone")
+                out.append('<p class="ai-key-zone">%s</p>'
+                           % _e(_brain_round_name(numbers, zone)))
+            status = "hit" if row.get("hit") else "miss"
+            out.append(
+                '<div class="ai-key-row"><p class="ai-key-q">%s '
+                '<span class="chip %s">%s</span></p>'
+                '<p><span class="lab">%s</span> %s</p>'
+                '<p><span class="lab">%s</span> %s</p>'
+                '<p class="why">%s</p></div>'
+                % (_e(row.get("question")), status,
+                   _e(AI_LABELS["chips"][status]),
+                   _e(AI_LABELS["yours"]),
+                   _e(row.get("yours") or AI_LABELS["none"]),
+                   _e(AI_LABELS["right"]), _e(row.get("right")),
+                   _e(row.get("why"))))
+        out.append("</section>")
+    out.append('<p class="ai-disclaimer">%s</p>' % _e(AI_DISCLAIMER))
+    return "".join(out)
+
+
+def _ai_pdf_materials(d):
+    """The five paths as rows with a badge, then the offer in a card."""
+    badges = _pdf_words()["verdicts"]
+    rows = "".join(
+        '<div class="verdict"><b>%s</b> <span class="badge %s">%s</span>'
+        "<p>%s</p></div>"
+        % (_e(p["combo"]), p["verdict"],
+           _e(badges.get(p["verdict"]) or p["verdict"].upper()), _e(p["why"]))
+        for p in d["pairs"])
+    return ('<p class="intro">%s</p>%s'
+            '<div class="drill"><p class="drill-head">%s</p><p>%s</p></div>'
+            % (_e(d["intro"]), rows, _e(AI_LABELS["offer"]), _e(d["rule"])))
+
+
+def _ai_pdf_shopping(d):
+    """The week as seven cards, the last one — the asking — coloured."""
+    items = d["items"]
+    cards = []
+    for index, item in enumerate(items):
+        name = item.get("name") or ""
+        got = re.match(r"^\s*Day\s+(\d+)\s*[-–—:]\s*(.+)$", name)
+        cards.append(
+            '<div class="day%s"><span class="day-n">%s</span>'
+            '<span class="day-name">%s</span><p>%s</p></div>'
+            % (" is-last" if index == len(items) - 1 else "",
+               _e(got.group(1) if got else str(index + 1)),
+               _e(got.group(2) if got else name),
+               _e(item.get("priority_note") or "")))
+    return "".join(cards)
+
+
+def _ai_pdf_mistakes(d):
+    """Five strengths, then the two traps under a heading of their own."""
+    items = d["items"]
+    strengths = items[:5] if len(items) == 7 else items
+    traps = items[5:] if len(items) == 7 else []
+    out = ["".join(
+        '<div class="numbered"><span class="num">%d</span>'
+        '<div class="trait"><b>%s</b><p>%s</p>'
+        '<p class="do">%s %s</p></div></div>'
+        % (i + 1, _e(m["title"]), _e(m["body"]),
+           _e(AI_LABELS["sell"]), _e(m["fix"]))
+        for i, m in enumerate(strengths))]
+    if traps:
+        out.append('<p class="habits-head">%s</p>' % _e(AI_LABELS["traps"]))
+        out.append("".join(
+            '<div class="trait habit"><b>%s</b>'
+            '<span class="swap">%s</span><p>%s</p>'
+            '<p class="do">%s %s</p></div>'
+            % (_e(m["title"]), _e(AI_LABELS["instead_chip"]), _e(m["body"]),
+               _e(AI_LABELS["instead"]), _e(m["fix"]))
+            for m in traps))
+    return "".join(out)
+
+
+AI_PROFILE["pdf_css"] = BRAIN_PROFILE["pdf_css"] + AI_PDF_CSS
+AI_PROFILE["pdf_cover"] = _ai_cover
+AI_PROFILE["pdf_taps"] = False
+AI_PROFILE["pdf_section_shots"] = False
+AI_PROFILE["pdf_after_cover"] = _ai_paths_page
+AI_PROFILE["pdf_end"] = _ai_end
+AI_PROFILE["pdf_body"] = {
+    "materials": _ai_pdf_materials,
+    "shopping": _ai_pdf_shopping,
+    "mistakes": _ai_pdf_mistakes,
+}
+AI_PROFILE["section_fix"] = _ai_personal_fix
+
+
 def _pdf_html(content):
     structured = _is_schema2(content.get("version"))
     profile = _profile(content.get("funnel"))
@@ -11875,6 +13105,15 @@ def _pdf_html(content):
             '<div class="section">%s</div>'
             % _pdf_section_body(section, structured, head)
         )
+    # And whatever the funnel closes on, after its chapters. One funnel
+    # declares one — its answer key and the line about what the document is —
+    # and every other profile declares none and ends where it always ended.
+    end = profile.get("pdf_end")
+    if end:
+        try:
+            blocks.append(end(content, profile, cfg) or "")
+        except Exception:
+            log.exception("pdf end failed for %s", content.get("funnel"))
     # The document's own language, so WeasyPrint hyphenates and a reader
     # opens a file that says what it is. A profile that declares none is
     # English, exactly as every report before this one was.
@@ -12177,6 +13416,25 @@ COPY_ZODIAC_BG = {
     "keep_no_link": "PDF-ът е твой, без срок.",
 }
 
+# The AI Navigator's own, for the same reason the two games have one. The
+# opening and the footer are declared here rather than branched on in
+# `_email_opening`: the opening is the generic pair a config-driven guide
+# uses, and the footer carries the line this product prints wherever it is
+# read — what the report is, and that it promises no income.
+COPY_AI = {
+    "headline": "Your AI Navigator Report is ready.",
+    "subject": "%s — your AI Navigator Report",
+    "body": "Your full report as %s is attached: your four zones, your three "
+            "best-fit paths, five strengths and two traps, your first seven "
+            "days and your answer key.",
+    "opening": "You just spent %s on a plan built from your own twelve "
+               "answers.",
+    "opening_bare": "A plan built from your own twelve answers.",
+    "keep": ("It stays available at that link, and the PDF is yours to keep."
+             "<br><br>" + html.escape(AI_DISCLAIMER)),
+    "keep_no_link": (KEEP_NO_LINK + "<br><br>" + html.escape(AI_DISCLAIMER)),
+}
+
 ZODIAC_PROFILE["mail"] = COPY_ZODIAC
 ZODIAC_RO_PROFILE["mail"] = COPY_ZODIAC_RO
 ZODIAC_BG_PROFILE["mail"] = COPY_ZODIAC_BG
@@ -12188,6 +13446,8 @@ PERSONA_PROFILE["mail_link"] = ZODIAC_EMAIL_LINK
 # the browser", and there is nothing product-specific in it.
 BRAIN_PROFILE["mail_link"] = ZODIAC_EMAIL_LINK
 FOCUS_PROFILE["mail_link"] = ZODIAC_EMAIL_LINK
+AI_PROFILE["mail"] = COPY_AI
+AI_PROFILE["mail_link"] = ZODIAC_EMAIL_LINK
 
 
 def _email_copy(content):

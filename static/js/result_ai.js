@@ -673,14 +673,22 @@
       catch (e) { /* private mode */ }
       return keys;
     }
+    // The report first: it stores the skill the reader named and the four
+    // counts the zone is read off, and it is the same on every device this
+    // page is opened on. Session storage is what is left for a report
+    // written before it stored them.
+    var run = (ctx.visuals && ctx.visuals.brain) || {};
+    if (typeof run.skill === "string") keys.skill = run.skill;
+    if (data && data.room) keys.zone = data.room;
     var stored = null;
     try { stored = JSON.parse(sessionStorage.getItem(RSOC_KEY) || "null"); }
     catch (e) { stored = null; }
     if (stored && typeof stored === "object") {
-      if (typeof stored.skill === "string") keys.skill = stored.skill;
-      if (typeof stored.zone === "string") keys.zone = stored.zone;
+      if (!keys.skill && typeof stored.skill === "string") {
+        keys.skill = stored.skill;
+      }
+      if (!data && typeof stored.zone === "string") keys.zone = stored.zone;
     }
-    if (!keys.zone && data && data.room) keys.zone = data.room;
     return keys;
   }
 
@@ -786,9 +794,9 @@
   // The same page after the money, opened in a tab that never ran the quiz.
   // The run is gone by then, so the head is rebuilt from whatever the report
   // stored under `visuals.brain` — the block the report machinery writes for
-  // a game. Until this funnel has a report profile of its own nothing writes
-  // one, and the page is the type card over the sections as they arrive: the
-  // stub content a report without a profile is made of renders as prose.
+  // a game. The report's own profile writes it: the four counts, the
+  // prediction, and the skill the reader named. A report stored without one
+  // still draws — the type card over the chapters as they arrive.
 
   function storedProfile(ctx) {
     var stored = (ctx.visuals && ctx.visuals.brain) || null;
@@ -871,6 +879,9 @@
   // of items, a closing rule. Anything this does not recognise is skipped
   // rather than guessed at, and a section with no data at all falls back to
   // its prose.
+  // The two badges a path wears, set once per render from the config.
+  var BADGES = {};
+
   function sectionBody(data) {
     var frag = document.createDocumentFragment();
     if (typeof data === "string") {
@@ -883,7 +894,15 @@
     if (data.intro) frag.appendChild(elm("p", "ai-body", data.intro));
     (data.pairs || []).forEach(function (pair) {
       var row = elm("div", "ai-pair");
-      if (pair.combo) row.appendChild(elm("p", "ai-item-title", pair.combo));
+      if (pair.combo) {
+        var name = elm("p", "ai-item-title", pair.combo);
+        var word = BADGES[pair.verdict];
+        if (word) {
+          name.appendChild(document.createTextNode(" "));
+          name.appendChild(elm("span", "ai-badge is-" + pair.verdict, word));
+        }
+        row.appendChild(name);
+      }
       if (pair.why) row.appendChild(elm("p", "ai-body", pair.why));
       frag.appendChild(row);
     });
@@ -926,9 +945,100 @@
     return item;
   }
 
+  // --- the paths card ---------------------------------------------------------
+  //
+  // The reader's three paths with the facts about each, and the two to skip
+  // for now. Which five, and every sentence under them, is what the server
+  // worked out from the config's table and stored with the report: nothing
+  // here chooses a path and nothing here is the model's.
+
+  var FACTS = ["sells", "buyer", "first_client", "startup", "risk"];
+
+  function pathCard(card, words, first, only) {
+    var box = elm("div", "ai-pathcard" + (first ? " is-first" : ""));
+    box.appendChild(elm("p", "ai-pathcard-name", card.name || ""));
+    var list = elm("dl", "ai-facts");
+    FACTS.forEach(function (field) {
+      if (!card[field] || (only && only.indexOf(field) === -1)) return;
+      list.appendChild(elm("dt", "", (words.facts || {})[field] || field));
+      list.appendChild(elm("dd", "", card[field]));
+    });
+    box.appendChild(list);
+    return box;
+  }
+
+  function pathsCard(ctx, copy) {
+    var paths = (ctx.visuals && ctx.visuals.paths) || null;
+    if (!paths || !Array.isArray(paths.works) || !paths.works.length) {
+      return null;
+    }
+    var words = copy.paths_card || {};
+    var card = elm("section", "ai-paths");
+    if (words.title) card.appendChild(elm("h2", "ai-h2", words.title));
+    if (words.lead) card.appendChild(elm("p", "ai-caption", words.lead));
+    if (paths.format && words.format) {
+      var line = elm("p", "ai-paths-format", words.format + " ");
+      line.appendChild(elm("b", "", paths.format));
+      card.appendChild(line);
+    }
+    paths.works.forEach(function (row, index) {
+      card.appendChild(pathCard(row, words, index === 0, null));
+    });
+    var skip = Array.isArray(paths.avoid) ? paths.avoid : [];
+    if (skip.length) {
+      if (words.skip_title) {
+        card.appendChild(elm("p", "ai-paths-sub", words.skip_title));
+      }
+      skip.forEach(function (row) {
+        card.appendChild(pathCard(row, words, false, ["sells", "risk"]));
+      });
+    }
+    return card;
+  }
+
+  // --- the answer key ---------------------------------------------------------
+  //
+  // Every question, what the reader answered, what was right and why. Only
+  // ever on this page: the rows come out of the paid report, and the free
+  // page has no way to reach them.
+
+  function answerKey(ctx, copy) {
+    var rows = (ctx.visuals && ctx.visuals.answer_key) || null;
+    if (!Array.isArray(rows) || !rows.length) return null;
+    var words = copy.key_card || {};
+    var card = elm("section", "ai-key");
+    if (words.title) card.appendChild(elm("h2", "ai-h2", words.title));
+    if (words.lead) card.appendChild(elm("p", "ai-caption", words.lead));
+    var list = elm("ol", "ai-key-list");
+    rows.forEach(function (row) {
+      var item = elm("li", "ai-key-row is-" + (row.hit ? "hit" : "miss"));
+      var head = elm("p", "ai-key-q", row.question || "");
+      head.appendChild(document.createTextNode(" "));
+      head.appendChild(elm("span", "ai-badge is-" + (row.hit ? "hit" : "miss"),
+                           (row.hit ? words.hit : words.miss) || ""));
+      item.appendChild(head);
+      item.appendChild(elm("p", "ai-key-zone", zoneName(ctx, row.zone)));
+      var mine = elm("p", "ai-key-line");
+      mine.appendChild(elm("span", "ai-key-lab", (words.yours || "") + " "));
+      mine.appendChild(document.createTextNode(
+        row.yours || words.none || ""));
+      item.appendChild(mine);
+      var right = elm("p", "ai-key-line");
+      right.appendChild(elm("span", "ai-key-lab", (words.right || "") + " "));
+      right.appendChild(document.createTextNode(row.right || ""));
+      item.appendChild(right);
+      if (row.why) item.appendChild(elm("p", "ai-key-why", row.why));
+      list.appendChild(item);
+    });
+    card.appendChild(list);
+    return card;
+  }
+
   function delivered(root, ctx) {
     var copy = copyOf(ctx);
     var data = storedProfile(ctx);
+    var badge = copy.paths_card || {};
+    BADGES = { works: badge.badge_works || "", avoid: badge.badge_avoid || "" };
     root.innerHTML = "";
     root.classList.add("is-ai", "is-delivered");
     var note = deliveryNote(ctx, copy);
@@ -940,6 +1050,8 @@
     }
     root.appendChild(typeCard(ctx));
     if (data) root.appendChild(bars(ctx, copy, data));
+    var fits = pathsCard(ctx, copy);
+    if (fits) root.appendChild(fits);
 
     var list = elm("ol", "ai-path is-open");
     var want = (purposeRule(ctx) || {}).emphasized_section || "";
@@ -947,6 +1059,8 @@
       list.appendChild(deliveredNode(ctx, section));
     });
     root.appendChild(list);
+    var key = answerKey(ctx, copy);
+    if (key) root.appendChild(key);
 
     // No offer here. What replaces it is the one line the reader still
     // needs — where else this document is — and what it is not.
