@@ -361,9 +361,8 @@ def run(browser, width, height, reduced=False):
                  .length,
                sw: document.documentElement.scrollWidth, vw: innerWidth }; }""")
     check("the free result: three blocks in order, then the rest",
-          result["order"][:5] == ["ai-profile", "ai-scorecard", "ai-offer",
-                                  "ai-unlock", "ai-divider"]
-          and result["order"][-1] == "ai-foot", result["order"])
+          result["order"] == ["ai-profile", "ai-scorecard", "ai-offer",
+                              "ai-foot"], result["order"])
     check("  the type name at 46px, the ring N/8, the prediction line",
           result["nameSize"] == "46px" and result["ring"] == "4/8"
           and result["predict"] == "You predicted 3–4. You scored 4."
