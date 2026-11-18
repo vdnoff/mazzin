@@ -45,7 +45,7 @@ free style result, sees a partially-locked report, hits a paywall.
 | `scripts/galleries/*.json` / `scripts/make_gallery.py` | A vertical's image spec, and drawing it on the server | Committing the images |
 | `static/js/engine.js` | Swipe UX, scoring, screens, tracking calls, checkout redirect + report polling | Holding payment state it can't prove |
 | `static/css/mazzin.css` | Mobile portrait styling | Desktop layout |
-| `static/loans.html` / `static/css/loans.css` / `static/js/loans.js` | The Loan Options funnel at `/loans`: its one page, its styles, its script, the `OFFERS` list. `/loans` does not use `engine.js`, `mazzin.css` or a `funnels/*.json` | Collecting anything but the six closed answers; an unlabelled ad; a link with no destination |
+| `static/loans.html` / `static/css/loans.css` / `static/js/loans.js` | The Loan Options funnel at `/loans`: its one page, its styles, its script, the `ARTICLES` map of partner article links, and the click identifiers (`fbclid`, `ad_id`, `asid`) held in sessionStorage and written into those links. `/loans` does not use `engine.js`, `mazzin.css` or a `funnels/*.json` | Collecting anything but the six closed answers; an unlabelled partner link; a link with no destination or with no `fbclid` to carry; sending a click identifier to `/api/loans/*` |
 | `deploy.sh` / `rollback.sh` | Server deploy + recovery | Being run from anywhere but the server |
 | `tests/` | Every suite, plus `run.sh` | Talking to a real database, Stripe or OpenAI |
 

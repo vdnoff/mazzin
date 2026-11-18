@@ -502,14 +502,14 @@ h1:focus { outline: none; }
   color: var(--accent-ink);
 }
 
-.sponsor-card {
+.partner-card {
   margin-top: 24px;
   padding: 20px;
   border: 0;
   background: var(--navy);
   color: #fff;
 }
-.sponsor-row {
+.partner-row {
   display: flex;
   justify-content: space-between;
   margin-bottom: 14px;
@@ -518,8 +518,8 @@ h1:focus { outline: none; }
   letter-spacing: 0.12em;
   color: var(--navy-soft);
 }
-.sponsor-row span:first-child { text-transform: uppercase; }
-.sponsor-card .h2 { color: #fff; }
+.partner-row span:first-child { text-transform: uppercase; }
+.partner-card .h2 { color: #fff; }
 
 .checks {
   display: grid;
@@ -542,31 +542,32 @@ h1:focus { outline: none; }
   color: var(--ink-2);
 }
 
-/* --- V6 related searches ------------------------------------------------- */
+/* --- V6 guides ----------------------------------------------------------- */
 
-.offers {
+.guides {
   margin: 20px 0 0;
   padding: 0 16px;
   list-style: none;
 }
-.offers li + li { border-top: 1px solid var(--line); }
-.offer {
+.guides li + li { border-top: 1px solid var(--line); }
+.guide {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   min-height: 64px;
+  padding: 12px 0;
   font-size: 17px;
   font-weight: 600;
   line-height: 1.25;
   color: var(--accent);
   text-decoration: none;
 }
-.offer .ico { width: 20px; height: 20px; }
-.offer[aria-disabled="true"] { color: var(--muted); cursor: default; }
+.guide span { min-width: 0; overflow-wrap: anywhere; }
+.guide .ico { flex: none; width: 20px; height: 20px; }
 
-.offers-empty {
-  margin: 12px 0 0;
+.guides-none {
+  margin: 24px 0 0;
   font-size: 14px;
   text-align: center;
   color: var(--muted);

@@ -152,32 +152,32 @@
       <h1 class="h1 h1-lg" id="options-title" tabindex="-1">Options for your loan</h1>
       <ul class="chips" id="options-chips" aria-label="Your answers"></ul>
 
-      <div class="card sponsor-card">
-        <div class="sponsor-row"><span>Sponsored</span><span>Ad</span></div>
-        <h2 class="h2">Compare personal loan providers</h2>
+      <div class="card partner-card" id="partner-card" hidden>
+        <div class="partner-row"><span>Partner site</span><span>Shows ads</span></div>
+        <h2 class="h2">Free guides matched to your answers</h2>
         <ul class="checks">
-          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Several providers in one search</li>
-          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Read rates and terms before you apply</li>
-          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>You apply on the provider's own site</li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Picked from your loan purpose and credit range</li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Explain costs and what to compare</li>
+          <li><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Open on evoseekly.com, a partner site</li>
         </ul>
-        <button class="btn btn-white" id="go-offers" type="button">View sponsored offers</button>
+        <button class="btn btn-white" id="go-guides" type="button">See my guides</button>
       </div>
+      <p class="guides-none" id="guides-none" hidden>Guides are not available for this visit.</p>
 
-      <p class="note">Mazzin is not a lender. We don't approve loans or check your credit. The links on this page are ads, and we may earn money when you click them.</p>
+      <p class="note">Mazzin is not a lender. We don't approve loans or check your credit. The guides open a partner site that shows ads, and we may earn money when you visit it.</p>
 
       <footer class="foot">
         <nav class="foot-links"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav>
       </footer>
     </section>
 
-    <!-- V6 Related searches -->
-    <section class="view" id="view-offers" data-view="offers" hidden>
-      <p class="eyebrow eyebrow-row">Related searches <span class="pill">Sponsored</span></p>
-      <h1 class="h1 h1-md" tabindex="-1">Pick a search to see offers</h1>
-      <p class="lede">Each link opens a page of ads from third-party providers.</p>
+    <!-- V6 Guides -->
+    <section class="view" id="view-guides" data-view="guides" hidden>
+      <p class="eyebrow eyebrow-row">Guides for you <span class="pill">Partner site</span></p>
+      <h1 class="h1 h1-md" tabindex="-1">Pick a guide to read</h1>
+      <p class="lede">Each link opens evoseekly.com, a partner site that shows ads.</p>
 
-      <ul class="card offers" id="offers"></ul>
-      <p class="offers-empty" id="offers-empty" hidden>Offers are not available yet.</p>
+      <ul class="card guides" id="guides"></ul>
 
       <footer class="foot">
         <p>Mazzin is not a lender. We don't approve loans or check your credit. The links on this page are ads, and we may earn money when you click them.</p>
