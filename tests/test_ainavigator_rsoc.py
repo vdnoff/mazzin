@@ -211,9 +211,47 @@ PAGE = """() => {
     box: !!box,
     slot: box ? box.getAttribute('data-slot') : '',
     head: box ? (box.querySelector('.ai-rsoc-head') || {}).textContent : '',
+    kicker: box ? (box.querySelector('.ai-rsoc-kicker') || {}).textContent
+      : '',
+    sub: box ? (box.querySelector('.ai-rsoc-sub') || {}).textContent : '',
+    card: box ? (() => { const cs = getComputedStyle(box);
+      return [cs.backgroundColor, cs.borderTopWidth, cs.borderTopColor,
+              cs.borderTopLeftRadius, cs.paddingTop]; })() : null,
+    headStyle: box ? (() => { const cs = getComputedStyle(
+      box.querySelector('.ai-rsoc-head'));
+      return [cs.fontSize, cs.fontWeight, cs.fontFamily.indexOf(
+        'Space Grotesk') !== -1]; })() : null,
+    gap: Math.round(root.querySelector('.ai-offer-under')
+      .getBoundingClientRect().top - pay.getBoundingClientRect().bottom),
+    holder: (() => { const x = offer.querySelector('.xp');
+      return x ? Math.round(x.getBoundingClientRect().height) : 0; })(),
+    overlaps: (() => { const out = [];
+      const sets = [[...root.children],
+                    box ? [...box.children] : [], [...offer.children]];
+      for (const set of sets) {
+        const shown = set.filter(n => n.offsetParent !== null
+          && n.getBoundingClientRect().height > 0);
+        for (let i = 0; i + 1 < shown.length; i++) {
+          const a = shown[i].getBoundingClientRect();
+          const b = shown[i + 1].getBoundingClientRect();
+          if (b.top < a.bottom - 0.5) out.push(shown[i].className + ' / '
+                                               + shown[i + 1].className);
+        }
+      }
+      for (const n of root.querySelectorAll('*')) {
+        const b = n.getBoundingClientRect();
+        if (b.width && (b.left < -0.5 || b.right > innerWidth + 0.5)) {
+          out.push('off screen: ' + n.className);
+        }
+      }
+      return out; })(),
+    score: (root.querySelector('.ai-ring-n') || {}).textContent || '',
     note: box ? (box.querySelector('.ai-rsoc-note') || {}).textContent : '',
     links: links.map(a => ({
-      href: a.getAttribute('href'), text: a.textContent, target: a.target,
+      href: a.getAttribute('href'),
+      text: a.querySelector('.ai-rsoc-text').textContent,
+      tag: (a.querySelector('.ai-rsoc-tag') || {}).textContent || '',
+      arrow: a.querySelectorAll('svg').length, target: a.target,
       rel: a.rel, key: a.getAttribute('data-article'), rect: rect(a),
       weight: getComputedStyle(a).backgroundColor,
       inOffer: offer.contains(a), afterPay: after(pay, a),
@@ -238,8 +276,8 @@ PAGE = """() => {
 }"""
 
 
-def arrive(browser, query):
-    ctx = browser.new_context(viewport={"width": 390, "height": 844},
+def arrive(browser, query, size=(390, 844)):
+    ctx = browser.new_context(viewport={"width": size[0], "height": size[1]},
                               is_mobile=True, has_touch=True)
     # Nothing leaves the machine, the partner's pages included.
     ctx.route(lambda url: not url.startswith(BASE), lambda r: r.abort())
@@ -297,6 +335,11 @@ def main():
             check("  %s: href is the config link and the three" % key,
                   link["href"] == ARTICLES[key]["link"] + want_tail,
                   link["href"][-60:])
+            check("  %s: an arrow, and the tag that says why it was picked"
+                  % key, link["arrow"] == 1 and link["tag"] == (
+                      "PICKED FOR YOUR SKILL: Design" if key == SKILL else
+                      "PICKED FOR WHERE YOU HAVE THE MOST ROOM: "
+                      "Business sense"), link["tag"])
             check("  %s: the config's label, a new tab, noopener" % key,
                   link["text"] == ARTICLES[key]["label"]
                   and link["target"] == "_blank"
@@ -305,25 +348,36 @@ def main():
             check("  %s: below the offer, the consent box and the button"
                   % key, link["afterOffer"] and link["afterPay"]
                   and link["afterConsent"] and not link["inOffer"])
-            check("  %s: full width, 56px or more, outline not filled" % key,
-                  link["rect"][2] >= 56
+            check("  %s: full width of its card, 68px or more, a light fill"
+                  % key, link["rect"][2] >= 68
                   # The whole inner width of its card, which is the offer
                   # card's width less the padding every card here has.
                   and link["rect"][0] == got["vw"] - link["rect"][1]
                   and link["rect"][1] - link["rect"][0]
                   >= got["offerRect"][1] - got["offerRect"][0] - 48
-                  and link["weight"] == "rgba(0, 0, 0, 0)"
-                  and got["payBg"] != "rgba(0, 0, 0, 0)",
+                  and link["weight"] == "rgb(242, 245, 247)"
+                  and got["payBg"] == "rgb(200, 245, 59)",
                   [link["rect"], link["weight"], got["payBg"]])
-        check("the head and the note are the config's",
-              got["head"] == RSOC["head"] and got["note"] == RSOC["note"],
-              [got["head"], got["note"]])
+        check("the kicker, headline, line and note are the config's",
+              got["kicker"] == RSOC["kicker"] and got["head"] == RSOC["head"]
+              and got["sub"] == RSOC["sub"] and got["note"] == RSOC["note"],
+              [got["kicker"], got["head"], got["sub"], got["note"]])
+        check("  a card of its own: #151B23, 2px #F2F5F7, radius 18, pad 18",
+              got["card"] == ["rgb(21, 27, 35)", "2px", "rgb(242, 245, 247)",
+                              "18px", "18px"]
+              and got["headStyle"] == ["26px", "700", True],
+              [got["card"], got["headStyle"]])
+        check("  nothing overlaps, nothing is off the screen",
+              not got["overlaps"], got["overlaps"])
+        check("  no empty holder in the offer card: under 16px below the "
+              "button", 0 <= got["gap"] < 16 and got["holder"] == 0,
+              [got["gap"], got["holder"]])
         check("no article link anywhere else on the page",
               got["anchorsOutside"] == 0 and got["sticky"] == 0)
         check("no horizontal scroll", got["sw"] <= got["vw"], got["sw"])
-        check("the page is the three blocks, what it unlocks, guides, footer",
+        check("the guides card is right under the offer, above what unlocks",
               got["order"] == ["ai-profile", "ai-scorecard", "ai-offer",
-                               "ai-unlock", "ai-divider", "ai-rsoc",
+                               "ai-rsoc", "ai-unlock", "ai-divider",
                                "ai-foot"], got["order"])
         check("the pay button is in the offer card, above the block",
               got["payIn"] and all(l["afterPay"] for l in got["links"]))
@@ -364,8 +418,9 @@ def main():
         check("no block and no article link in the DOM",
               not got["box"] and got["anchorsOutside"] == 0
               and "ai-rsoc" not in got["order"], got["order"])
-        check("the page ends on the divider and the footer",
-              got["order"][-3:] == ["ai-unlock", "ai-divider", "ai-foot"],
+        check("the offer is followed by what it unlocks, with no card",
+              got["order"] == ["ai-profile", "ai-scorecard", "ai-offer",
+                               "ai-unlock", "ai-divider", "ai-foot"],
               got["order"])
         check("the offer card is the same markup with and without the block",
               got["offer"] == with_block["offer"])
@@ -393,6 +448,67 @@ def main():
               [l["href"][-40:] for l in got["links"]])
         check("no script errors", not errors, errors)
         ctx.close()
+
+        print("\n--- 4. always two guides: level runs, both screen sizes ---")
+        global MISSES
+        normal = MISSES
+        ALL_SCORED = set(s["id"] for s in STEPS if "why" in s)
+        for name, misses, score, size in (
+                ("nothing right", ALL_SCORED, "0/8", (390, 844)),
+                ("everything right", set(), "8/8", (360, 640))):
+            MISSES = misses
+            ctx, page, errors = arrive(browser, want_tail, size)
+            advance(page)
+            wait_result(page)
+            got = page.evaluate(PAGE)
+            check("%s (%s) at %dx%d: still two anchors" % (
+                name, score, size[0], size[1]),
+                got["score"] == score
+                and [l["key"] for l in got["links"]] == [SKILL, "spa"],
+                [got["score"], [l["key"] for l in got["links"]]])
+            check("  the tie is broken to business sense, and says so",
+                  got["links"][-1]["tag"] == "PICKED FOR WHERE YOU HAVE THE "
+                  "MOST ROOM: Business sense"
+                  and got["links"][-1]["href"]
+                  == ARTICLES["spa"]["link"] + want_tail)
+            check("  each 68px or more, inside the card, nothing overlapping",
+                  all(l["rect"][2] >= 68 and l["rect"][0] >= 0
+                      and l["rect"][1] <= got["vw"] for l in got["links"])
+                  and not got["overlaps"] and got["sw"] <= got["vw"],
+                  [got["overlaps"], [l["rect"] for l in got["links"]]])
+            check("  the gap under the pay button is under 16px",
+                  0 <= got["gap"] < 16 and got["holder"] == 0,
+                  [got["gap"], got["holder"]])
+            check("  the pay button and the consent state are what they were",
+                  got["payIn"] and got["consent"] == with_block["consent"]
+                  and got["payDisabled"] == with_block["payDisabled"]
+                  and got["payText"] == with_block["payText"])
+            # The other state engine.js can leave the holder in: a wallet
+            # button is the live control and the pay button is kept, unseen.
+            wallet = page.evaluate("""() => {
+              const offer = document.querySelector('.ai-offer');
+              const slot = offer.querySelector('.xp__slot');
+              const pay = document.querySelector('#pay-button');
+              if (!slot) return null;
+              slot.classList.remove('xp__off');
+              const mount = slot.querySelector('.xp__mount');
+              mount.classList.remove('xp__off');
+              mount.style.height = '55px';
+              const ghost = slot.querySelector('.xp__ghost');
+              if (ghost) ghost.remove();
+              pay.classList.add('xp__off');
+              const under = offer.querySelector('.ai-offer-under')
+                .getBoundingClientRect();
+              const b = mount.getBoundingClientRect();
+              return { shown: mount.offsetParent !== null,
+                       height: Math.round(b.height),
+                       gap: Math.round(under.top - b.bottom) }; }""")
+            check("  with a wallet button live: it shows, and no gap under it",
+                  wallet and wallet["shown"] and wallet["height"] == 55
+                  and 0 <= wallet["gap"] < 16, wallet)
+            check("  no script errors", not errors, errors)
+            ctx.close()
+        MISSES = normal
 
         browser.close()
     server.shutdown()

@@ -765,13 +765,13 @@ check("it holds no number of its own about the game",
       and "block.levels" in CODE)
 FREE = MODULE.split("function render(root, ctx) {", 1)[1].split(
     "// --- the paid page", 1)[0]
-check("the free page is three blocks, then what it unlocks, guides, footer",
+check("the free page is three blocks, the guides card, what it unlocks",
       re.findall(r"root\.appendChild\((\w+)\(", FREE)
       == ["profileBlock", "scoreCard", "offer", "divider"]
       and FREE.index("root.appendChild(offer(ctx, copy));")
+      < FREE.index('articles(ctx, data, "below_paywall")')
       < FREE.index("var more = unlocks(copy);")
       < FREE.index("root.appendChild(divider());")
-      < FREE.index('articles(ctx, data, "below_paywall")')
       < FREE.index("var foot = footer(ctx, copy);"))
 check("  with no zone bars, round strip, level chip or free strength",
       not re.search(r"bars\(|strip\(|levelChip|strength\(|path\(", FREE)
@@ -838,7 +838,8 @@ SKILL_TAGS = [t for card in next(s for s in steps if s["id"] == "skill")
               ["pairs"][0]["images"] for t in card["tags"]]
 check("the block has exactly the keys it was specified with",
       list(RSOC) == ["enabled", "placement", "require_fbclid", "passthrough",
-                     "head", "head_delivered", "note", "articles"],
+                     "kicker", "kicker_delivered", "head", "head_delivered",
+                     "sub", "tag_skill", "tag_zone", "note", "articles"],
       str(list(RSOC)))
 check("  on, in both places, and only for a reader who came from a click",
       RSOC.get("enabled") is True
@@ -846,12 +847,25 @@ check("  on, in both places, and only for a reader who came from a click",
       and RSOC.get("require_fbclid") is True)
 check("  passing on the three identifiers, in this order",
       RSOC.get("passthrough") == ["fbclid", "ad_id", "asid"])
-check("  with the three lines around the buttons",
-      RSOC.get("head") == "Not ready yet? Start with a free guide"
-      and RSOC.get("head_delivered")
-      == "Keep going: free guides for your profile"
+check("  the card's own words: kicker, headline, line, and the note",
+      RSOC.get("kicker") == "TOO EARLY FOR A REAL PROJECT?"
+      and RSOC.get("head") == "Learn more before you jump in."
+      and RSOC.get("sub") == "We picked these free guides for you, based on "
+      "your profile."
       and RSOC.get("note")
       == "Opens evoseekly.com, a partner site that shows ads.")
+check("  the same card after the money, under its own kicker and headline",
+      RSOC.get("kicker_delivered") == "KEEP GOING"
+      and RSOC.get("head_delivered")
+      == "Keep going: free guides for your profile")
+check("  and a tag over each button saying why it was picked",
+      RSOC.get("tag_skill") == "PICKED FOR YOUR SKILL: {skill}"
+      and RSOC.get("tag_zone")
+      == "PICKED FOR WHERE YOU HAVE THE MOST ROOM: {zone}")
+check("  no label repeats that it is a free guide",
+      not [a["label"] for a in ARTICLES.values()
+           if re.search(r"free guide", a["label"], re.I)
+           or not a["label"][0].isupper()])
 check("ten articles", len(ARTICLES) == 10, str(len(ARTICLES)))
 check("  keyed by the six skill tags the quiz uses, then its four zones",
       len(SKILL_TAGS) == 6
@@ -872,8 +886,10 @@ check("  no link twice, no label twice",
       and len({a["label"] for a in ARTICLES.values()}) == 10)
 # The scan above walks every string in the file, so these are already inside
 # it. This says so out loud, for the strings a reader actually sees.
-SHOWN = ([RSOC.get("head", ""), RSOC.get("head_delivered", ""),
-          RSOC.get("note", "")] + [a["label"] for a in ARTICLES.values()])
+SHOWN = ([RSOC.get(k, "") for k in
+          ("kicker", "kicker_delivered", "head", "head_delivered", "sub",
+           "tag_skill", "tag_zone", "note")]
+         + [a["label"] for a in ARTICLES.values()])
 check("  and the lines a reader sees pass the banned scan",
       all(text in {v for _, v in ALL} for text in SHOWN)
       and not [text for text in SHOWN
@@ -916,6 +932,17 @@ check("the tracker does not send them",
       and "console." not in KEEP and "console." not in HELD)
 RS = MODULE.split("// --- partner articles", 1)[1].split(
     "// --- the free page", 1)[0]
+check("always two guides: a level run breaks its tie spa, foc, chg, mem",
+      'var GUIDE_TIE = ["spa", "foc", "chg", "mem"];' in RS
+      and "if (data.room) return data.room;" in RS
+      and "keys.zone = guideZone(data);" in RS)
+check("  for the guides only: the score card's rule is where it was",
+      'room: level ? "" : low,' in MODULE
+      and "GUIDE_TIE" not in MODULE.split("// --- partner articles", 1)[0])
+check("the offer card's wallet holder collapses in theme CSS only",
+      "body.theme-ai .ai-offer .xp__slot.xp__off,\n"
+      "body.theme-ai .ai-offer #pay-button.xp__off { display: none; }"
+      in RESULT_CSS and "xp" not in MODULE)
 check("the module builds real anchors, a new tab, noopener",
       'elm("a", "ai-rsoc-link")' in RS
       and 'elm("span", "ai-rsoc-text", item.label)' in RS

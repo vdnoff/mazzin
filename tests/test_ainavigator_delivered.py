@@ -191,6 +191,8 @@ PAID = """() => {
     rsoc: box ? {
       slot: box.getAttribute('data-slot'),
       head: box.querySelector('.ai-rsoc-head').textContent,
+      kicker: box.querySelector('.ai-rsoc-kicker').textContent,
+      tags: [...box.querySelectorAll('.ai-rsoc-tag')].map(t => t.textContent),
       links: [...box.querySelectorAll('a')].map(a => [
         a.getAttribute('data-article'), a.getAttribute('href'),
         a.target, a.rel]) } : null,
@@ -242,7 +244,7 @@ def main():
               len(answered))
         check("the free page is the three blocks, in order, then the rest",
               free["order"] == ["ai-profile", "ai-scorecard", "ai-offer",
-                                "ai-unlock", "ai-divider", "ai-rsoc",
+                                "ai-rsoc", "ai-unlock", "ai-divider",
                                 "ai-foot"], free["order"])
         check("  the pay button is engine.js's own, inside the offer card",
               free["payIn"] and free["payText"].startswith(
@@ -378,7 +380,12 @@ def main():
         check("the block is drawn, in the delivered slot, with its own head",
               paid["rsoc"] is not None
               and paid["rsoc"]["slot"] == "delivered"
-              and paid["rsoc"]["head"] == CFG["rsoc"]["head_delivered"])
+              and paid["rsoc"]["head"] == CFG["rsoc"]["head_delivered"]
+              and paid["rsoc"]["kicker"] == "KEEP GOING"
+              and paid["rsoc"]["tags"]
+              == ["PICKED FOR YOUR SKILL: Design",
+                  "PICKED FOR WHERE YOU HAVE THE MOST ROOM: Business sense"],
+              paid["rsoc"])
         links = (paid["rsoc"] or {}).get("links") or []
         check("two anchors: the skill's article, then the zone's",
               [l[0] for l in links] == ["skill_design", "spa"],
