@@ -1,24 +1,69 @@
 /* Loan Options funnel (/loans). One IIFE, no framework, no build step.
  *
  * Not the swipe engine: this page does not load engine.js and has no funnel
- * config. It asks six closed questions, posts the answers once, and shows
- * labelled advertisements. It holds no name, contact detail or free text, and
- * a network call that fails is never shown and never blocks a tap.
+ * config. It asks six closed questions, posts the answers once, and links to
+ * a partner's articles, labelled as a partner site that shows ads. It holds
+ * no name, contact detail or free text, and a network call that fails is
+ * never shown and never blocks a tap.
  */
 (function () {
   "use strict";
 
-  // The related-search rows on the last view, in display order. PRE-FEED:
-  // while `url` is "" a row is drawn as a disabled non-link and the page says
-  // offers are not available yet. Phase 2 fills the urls in.
-  var OFFERS = [
-    { id: "personal-loans-online", label: "Personal Loans Online", url: "" },
-    { id: "small-personal-loans", label: "Small Personal Loans", url: "" },
-    { id: "personal-loans-near-me", label: "Personal Loans Near Me", url: "" },
-    { id: "compare-personal-loan-rates", label: "Compare Personal Loan Rates", url: "" },
-    { id: "loans-for-fair-credit", label: "Loans for Fair Credit", url: "" },
-    { id: "1-year-personal-loan", label: "1 Year Personal Loan", url: "" }
-  ];
+  // The partner's articles (Campaign Links). The last view shows four: the
+  // one for the loan purpose, the one for the credit range, and the two
+  // general ones. A link is stored bare, with no query string; the click
+  // identifiers held below are the only thing ever added to it.
+  var ARTICLES = {
+    "purpose_emergency": {
+      label: "Covering an unexpected expense",
+      link: "https://openresourcelist.com/AsTm9Loi4hUFQfGXTBPbhLzQ690-EuCOvXUZSznAKRbjb9AhKrJCCfgwdDxTCoBFq_yxr4Tfx9_CbwPnw1ZqO9CE8_N74n4fjbvkNYU7Gy_CAqk9Wz8AzyToPiqpzVHO5Op2WYC6Y3mYigtpjomIN7QEUDYVEcS4gXsSZJIL1IVatpuHC4t8W622YRyNRg0K6PV1nf3jR0L2yAGVx2Zh57CtwZbcNEyzeQDYqskuw5KCX85XMVX0KtJ093NlaNJALlJuAM0jYn9-QTfA"
+    },
+    "purpose_debt": {
+      label: "How debt consolidation loans work",
+      link: "https://basicsitecatalog.com/AoN_2NvrLJdndkLBEjLS5oxsCyhaysmabsNida28jQzfns5W343mjhYDK3uZFC9TilHiv1YGI5MpPTyed66bwj0CgotWHKXa6SmL33vXD6UY-ypLwbR7v4uMyNuPpnqbDy_6bAFX9aqnEUpotSWQXGOcQEIA7F_UWXbNXG5kHlpYRCn5OnAMWJMACDbiL0CkblUb-hEwcoKLl2ef5AWrELiT7ulLJQ0FXfwhwbWzGAGovtPcTYM"
+    },
+    "purpose_car": {
+      label: "Paying for a car repair",
+      link: "https://basicwebregister.com/AqMxslxaBo5A2-FtLJd6eoUD3kYuKG24uSm6vkInpP74sYNzFUcJdd6_rDfnedCfU_IfzqNOyEBSqMf4wWLvj6hu7UyHjef9TbVm4WCAErYWquSlTqGIHggygBG-uZM-EEs38fvE3zF6y3ZN-NgrdWObTBt4vju-e5vxg_x3kjgocN-w_cMOMIwriiXeY-TvtwVqeMEpLT9O0FK3hRE6_KFucWADm4yUrdd2ewMqHVmTVkTpfQ"
+    },
+    "purpose_home": {
+      label: "Home improvement loans: what to compare",
+      link: "https://topicregister.com/AlazqAPb1H0_NbTR8i_sxdjMyFOCIPQ8HoJLdfIy2UilNX_cRBT7ZmxKl258GtWBuBuS1uziKD-GsS8j1paULNNWFUlvSaAgjZbUFXB0MqCHqveAuJuChbRMJvLwKvK54J2X_26n0_Aa2Mf9O0QDGkr1w4c-bpHyS5VIDqbKbiPSBi41UdPDqKhJHfaP5zEWS0ZenvmbL7J92M-1BKbbvUgcwo2bSCrBVd2R0g0Slk01gw"
+    },
+    "purpose_medical": {
+      label: "Medical bills: plans, help and loans",
+      link: "https://browserreference.com/Ag61mGNyCYbKRJWtQdw474-q6xYlVMF4__D6DpxK2eZa6IK4wr-oY9wCZnrLTca8EntIQR3isbiVjz6VDIpEs5dFAyWtYNuxA4TZPnF_i_rBWMSYR_efAmbd4rSMLFDzwUkiKb3BcirGdhcCgnc-7y3NlMetnf3yRDUafTlJ7bqdTgsZvNiRNzM0TVVhEEJdgtLnFe_woSdYG8pyQ0crA7Spixsniy3ELLP-IrqAH9sD4IPsQ-Wr5UI"
+    },
+    "purpose_other": {
+      label: "How personal loans work",
+      link: "https://browserreference.com/AtoHmw03FDNwu_xiOzJDItfQNOFSqChO5V3gCUzYHwCiJeu1t7ZD1hdUlw7R-nTYkdCjyxFRuz1Fi_OTII3OOHEwyERnUnhdFxJbFmNgCJYRWUdBjBTx7nk6SOfalFm7aagqX8aByil4GhsgdFmZLj803eoQTzcFUbPXsY-OEYOLl7KZT5VLkPKjSrpu-EJ66dqxE2WBif0ylXXYpkOIJiVsnFcTjSfYFMShlELcRyZYbWC_SPhMUw"
+    },
+    "credit_excellent": {
+      label: "Getting the lowest rate with strong credit",
+      link: "https://generalentrypage.com/AoMm9dGPeVkm4oYwLfKNvejnMD0EJteD89wCr2v27kDm4g2iSGilnoTsqiDohLHMIcp72gG0q22M5U0lEPaAlWXEIrocWDLhAXwdGl4PEao-lB07rHyKUzeaFEDDKXt_b7eRLjM2nIYMMZ7i-x8AM57wZLbW9qlnCRXqG2-WP11VNPVd82lLBfXGDdnPSkVzDJJUaJooRKLC5RQDCuvSLNRMyHNuJJSCEDVGxCgxcNKtD3XsTOoPkQ"
+    },
+    "credit_good": {
+      label: "Comparing offers with good credit",
+      link: "https://topiclisting.com/Atb9pM40PGeRJa5RTZvvjCuVOI2wrA4S0zQ7G6JowBwR9ysm009h1aSJwSskn_c1Du7zzg6TgmVZ4J2e5kzbdKK263eXoPbgEN-BqqUlQulgdJQN27b5A-qIhYSJkA--Wf3eGNfE-9mggEn3NvgqolN-maA9q297LKgkgmtaPLxxAXE5JZlbtLaTYZqlze4AUTsEHp7nLCK2TlU1lsb7AS8tvskd8fCjuxJixDpdpShWQD_oqD7Xc1blkUrPvKMkklwufHnEzA65-Cjy"
+    },
+    "credit_fair": {
+      label: "Personal loans for fair credit",
+      link: "https://topiclisting.com/AoIIaqhTcpPf3gqLuhLWqdBDJbcLV9UzoUmRcsswu_xPXl4PnvAJixOrnCmAIHPSc8Rs8iribg_XvXacd8J5H8JalOkDv5876By09mhLZHETstgPkop8UBiJ23hrA5qDdQBp6l53aJ2JHx3caW8UcStGX_PDb-2RERJ3-hKZJIchFFQj_LM76t08LNHXaXo0LnwvFeRyJ_YNawomxSpEXeUnnWeE6g6GAaeiaL0jpkX8GR9e_X6GKZ3l"
+    },
+    "credit_building": {
+      label: "Borrowing with low or thin credit",
+      link: "https://browseroverview.com/AjN2kqdWFs_u4gir7AgI3rApZ3-gxHGS6KMYHU7iJto7TPIh1-c3qWOo6BlsSzgmppSg8idVTurZUA2SETCJu5VlPc_uLVOtEQ3bxHeRNVMQiEG3-YfXwNTD8xgrx2DEg-2cGXbYBvILS_qA0Ye0n72lKdbfbK4Mb1knSewewFf-7kybCeL3GjGbtu2UfwmXpQpgleg8jBEuFdgKlRbrS54rJc9lLEdjnGmrnPqF8gKPtUP_DXep6zJr6okmPb4O3NjDLa_3RV1_Sw"
+    },
+    "general_small": {
+      label: "Small personal loans: costs and options",
+      link: "https://topiclisting.com/AkBkm3gpDHDLnx3SkWJ9_eTmTBJT0waawtlcmiga-X5vD7cb53Vp5L8tOPJKK-HJz7wiEzDuBzDLYPTD1zbQtIk2MYuukvN4mzHsuVrNUI87muMcKAO5TJ-H8kIxYi2_8oE-bJgEzfHlrfvE8fq4PMZo7htZw-GVR6BIbeNMRooMg2hnXuLy_0Qkupu7GlJhztgzHWN-uMbz00j24hyU3S8zYBS09zEx5JAW90my7oI-nJE"
+    },
+    "general_apr": {
+      label: "How to read a loan offer",
+      link: "https://topicregister.com/AsvAFZVmmbNgk20XqJQo9SVb9LvCIErHGXvAv6Lm6a3kxATLEr1WFv0svEtys-CJzLKMGqiRMakhB4BG437NW-ZSs8d5745_8uUmiyl_GXWk8b-EAKBGvms275vnTB1KcWwmjlxwawvw8_J60sC6O78DYA_Ly0PzUrJ_Km-rFZmCjSQWYfY-pPmIs03NyAwRwu-U9QDI8Cl9c65nfCtsMBZ6"
+    }
+  };
+  var GENERAL = ["general_small", "general_apr"];
 
   var STATES = [
     ["AL", "Alabama"], ["AK", "Alaska"], ["AZ", "Arizona"], ["AR", "Arkansas"],
@@ -57,10 +102,20 @@
 
   // The flow is a straight line, and the history stack is always a prefix of
   // it: forward is a pushState, back is the browser's own back.
-  var VIEWS = ["landing", "purpose", "income", "credit", "options", "offers"];
+  var VIEWS = ["landing", "purpose", "income", "credit", "options", "guides"];
   var STEP_OF = { purpose: 1, income: 2, credit: 3 };
   var ATTRIBUTION = ["subid", "utm_source", "utm_campaign", "utm_content", "utm_term"];
   var STORE_KEY = "mazzin_loans";
+  var PASS_KEY = "mazzin_pass_loans";
+  // The click identifiers the partner needs, in the order they are written
+  // into a link, each with the rule a value must pass to be kept. An empty
+  // value and an unresolved ad-platform macro ("{{ad.id}}") both fail.
+  var PASS_ORDER = ["fbclid", "ad_id", "asid"];
+  var PASS_RULES = {
+    fbclid: /^[A-Za-z0-9_-]{1,512}$/,
+    ad_id: /^[0-9]{1,32}$/,
+    asid: /^[0-9]{1,32}$/
+  };
   var AMOUNT_MIN = 100, AMOUNT_MAX = 5000, AMOUNT_STEP = 100, AMOUNT_DEFAULT = 500;
 
   function $(id) { return document.getElementById(id); }
@@ -138,6 +193,66 @@
   })();
   save();
 
+  // --- click identifiers passed on to the partner ---------------------------
+  //
+  // Read off the URL on every load and kept in sessionStorage for this tab,
+  // so they outlive all six views, a reload, back and forward, and a second
+  // arrival on a bare /loans URL. A load without them clears nothing. Their
+  // only reader is articleHref(): they are never posted to /api/loans/* and
+  // never put on an event.
+  var passMemory = {};
+
+  function passValid(source) {
+    var out = {};
+    PASS_ORDER.forEach(function (k) {
+      var v = source ? source[k] : null;
+      if (typeof v === "string" && v.indexOf("{{") < 0 && v.indexOf("}}") < 0 &&
+          PASS_RULES[k].test(v)) out[k] = v;
+    });
+    return out;
+  }
+
+  function heldPass() {
+    var stored = null;
+    try { stored = JSON.parse(sessionStorage.getItem(PASS_KEY) || "null"); }
+    catch (e) { stored = null; }
+    return passValid(stored && typeof stored === "object" ? stored : passMemory);
+  }
+
+  (function keepPass() {
+    var held = heldPass(), seen = {};
+    try {
+      var params = new URLSearchParams(window.location.search);
+      PASS_ORDER.forEach(function (k) {
+        var v = params.get(k);
+        if (v !== null) seen[k] = v;
+      });
+    } catch (e) { /* no URLSearchParams: nothing new to keep */ }
+    var fresh = passValid(seen);
+    for (var k in fresh) held[k] = fresh[k];
+    passMemory = held;
+    try { sessionStorage.setItem(PASS_KEY, JSON.stringify(held)); }
+    catch (e) { /* private mode: held for this page load only */ }
+  })();
+
+  function hasClick() { return !!heldPass().fbclid; }
+
+  // The article's link plus the held identifiers and nothing else. No link at
+  // all without an fbclid, or for a link that is not a bare https URL.
+  function articleHref(key) {
+    var article = ARTICLES.hasOwnProperty(key) ? ARTICLES[key] : null;
+    var held = heldPass();
+    if (!article || !held.fbclid) return "";
+    var link = article.link;
+    if (typeof link !== "string" || link.indexOf("https://") !== 0 ||
+        link.indexOf("?") >= 0 || link.indexOf("#") >= 0) return "";
+    var query = new URLSearchParams();
+    PASS_ORDER.forEach(function (k) {
+      if (held[k]) query.append(k, held[k]);
+    });
+    return link + "?" + query.toString();
+  }
+
   // --- network: fire and forget --------------------------------------------
 
   function withAttribution(payload) {
@@ -193,8 +308,10 @@
       case "income": return !!a.purpose;
       case "credit": return !!(a.purpose && a.employment && a.income);
       case "options":
-      case "offers":
         return !!(a.purpose && a.employment && a.income && a.credit && a.state);
+      case "guides":
+        // No click to pass on means no guides: the view cannot be reached.
+        return ready("options") && hasClick();
       default: return true;
     }
   }
@@ -262,6 +379,9 @@
       li.textContent = text;
       chips.appendChild(li);
     });
+    var on = hasClick();
+    $("partner-card").hidden = !on;
+    $("guides-none").hidden = on;
   }
 
   function chevron() {
@@ -276,34 +396,32 @@
     return svg;
   }
 
-  function renderOffers() {
-    var list = $("offers"), pending = false;
+  function renderGuides() {
+    var list = $("guides");
     list.textContent = "";
-    OFFERS.forEach(function (offer) {
-      var li = document.createElement("li");
-      var row = document.createElement("a");
-      row.className = "offer";
-      var text = document.createElement("span");
-      text.textContent = offer.label;
-      row.appendChild(text);
-      if (offer.url) {
-        row.href = offer.url;
-        row.rel = "sponsored noopener";
+    ["purpose_" + a.purpose, "credit_" + a.credit].concat(GENERAL)
+      .forEach(function (key) {
+        var href = articleHref(key);
+        if (!href) return;         // refused: no row is better than a dead one
+        var li = document.createElement("li");
+        var row = document.createElement("a");
+        row.className = "guide";
+        row.href = href;
         row.target = "_blank";
+        row.rel = "noopener";
+        row.setAttribute("data-article", key);
+        var text = document.createElement("span");
+        text.textContent = ARTICLES[key].label;
+        row.appendChild(text);
         row.appendChild(chevron());
+        // Reported on the way out and never waited for: the tab opens
+        // whatever becomes of the request.
         row.addEventListener("click", function () {
-          track("offer_tap", null, { slot: offer.id });
+          track("offer_tap", null, { slot: key });
         });
-      } else {
-        // No href: a link that goes nowhere is never shipped.
-        pending = true;
-        row.setAttribute("role", "link");
-        row.setAttribute("aria-disabled", "true");
-      }
-      li.appendChild(row);
-      list.appendChild(li);
-    });
-    $("offers-empty").hidden = !pending;
+        li.appendChild(row);
+        list.appendChild(li);
+      });
   }
 
   function syncButtons() {
@@ -330,7 +448,7 @@
       $("state").value = a.state || "";
     }
     if (view === "options") renderOptions();
-    if (view === "offers") renderOffers();
+    if (view === "guides") renderGuides();
     syncButtons();
 
     current = view;
@@ -441,9 +559,9 @@
     go("options");
   });
 
-  $("go-offers").addEventListener("click", function () {
+  $("go-guides").addEventListener("click", function () {
     track("offer_tap", null, { slot: "options_cta" });
-    go("offers");
+    go("guides");
   });
 
   $("top-link").addEventListener("click", back);

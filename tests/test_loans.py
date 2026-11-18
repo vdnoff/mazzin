@@ -12,11 +12,15 @@ only on `offer_tap` and is rebuilt from a checked slot, an unknown event is a
 400. A database failure is a 500 whose log line carries nothing of the
 request. Neither route reads, and neither looks at an IP or a User-Agent.
 `/loans` is the static page with the funnel cache header and `/kitchen` still
-answers. The page collects no free text, labels its ads, ships no dead link
-in pre-feed mode and makes no third-party request.
+answers. The page collects no free text, says its guides open a partner site
+that shows ads, loads nothing from a third party, and links out only to the
+twelve partner articles in `ARTICLES` — each a bare https link that gets the
+held click identifiers and nothing else, and none at all without an fbclid.
+The identifiers are never part of anything posted to /api/loans/*.
 
 No database, no network, no key: every call is monkeypatched.
 """
+import hashlib
 import json
 import logging
 import os
@@ -257,10 +261,17 @@ r = event(ev(event="offer_tap", extra={"slot": "options_cta"}))
 check("offer_tap with a slot",
       r.status_code == 204 and writes[0][1][9] == '{"slot":"options_cta"}',
       writes)
-r = event(ev(event="offer_tap", extra={"slot": "1-year-personal-loan"}))
-check("  an OFFERS id is a slot",
+r = event(ev(event="offer_tap", extra={"slot": "purpose_emergency"}))
+check("  an ARTICLES key is a slot",
       r.status_code == 204
-      and json.loads(writes[0][1][9]) == {"slot": "1-year-personal-loan"})
+      and json.loads(writes[0][1][9]) == {"slot": "purpose_emergency"})
+for key in ("fbclid", "ad_id", "asid"):
+    check("  a click identifier is refused on an event: %s" % key,
+          refused(event(ev(**{key: "AbC_123"})))
+          and refused(event(ev(event="offer_tap",
+                               extra={"slot": "general_apr", key: "1"}))))
+    check("  and on a lead: %s" % key,
+          refused(lead(lead_body(**{key: "AbC_123"}))))
 bad_extra = [None, "options_cta", [], {}, {"slot": ""}, {"slot": "A"},
              {"slot": "has space"}, {"slot": "x" * 41}, {"slot": 3},
              {"slot": "a.b"}, {"slot": "a\n"}, {"slot": None},
@@ -420,20 +431,37 @@ banned = [w for w in ("congratulations", "pre-qualif", "prequalif",
                       "% of", "people have")
           if w in visible.lower() or w in JS.lower()]
 check("no approval, urgency or statistic in the copy", not banned, banned)
-check("it says what Mazzin is not, on the landing, options and offers views",
+check("it says what Mazzin is not, on the landing, options and guides views",
       visible.count("Mazzin is not a lender") == 3)
-check("the options card is labelled Sponsored and Ad",
-      '<div class="sponsor-row"><span>Sponsored</span><span>Ad</span></div>'
-      in PAGE)
-check("the related searches are labelled Sponsored",
-      'Related searches <span class="pill">Sponsored</span>' in PAGE)
+check("the options card is labelled as a partner site that shows ads",
+      '<div class="partner-row"><span>Partner site</span><span>Shows ads</span>'
+      '</div>' in PAGE)
+check("  and is hidden until the script finds a click to pass on",
+      '<div class="card partner-card" id="partner-card" hidden>' in PAGE
+      and '<p class="guides-none" id="guides-none" hidden>Guides are not '
+          'available for this visit.</p>' in PAGE)
+check("the guides view is labelled Partner site",
+      'Guides for you <span class="pill">Partner site</span>' in PAGE)
+check("the note says where the guides go and how Mazzin earns",
+      "The guides open a partner site that shows ads, and we may earn money "
+      "when you visit it.</p>" in PAGE)
 for needle in ("How much do you need?", "What is the loan for?",
                "How do you earn your income?",
                "How would you rate your credit?",
-               "Compare personal loan providers",
-               "Pick a search to see offers",
-               "Offers are not available yet."):
+               "Free guides matched to your answers",
+               "Picked from your loan purpose and credit range",
+               "Explain costs and what to compare",
+               "Open on evoseekly.com, a partner site",
+               "See my guides", "Pick a guide to read",
+               "Each link opens evoseekly.com, a partner site that shows "
+               "ads."):
     check("copy: %s" % needle, needle in PAGE)
+gone = [w for w in ("sponsored", "related searches", "pick a search",
+                    "offers are not available", "view sponsored")
+        if w in (PAGE + JS + CSS).lower()]
+check("nothing of the pre-feed wording is left", not gone, gone)
+check("no anchor to an article is written in the page itself",
+      not re.search(r'<a\b[^>]*href="https?:', PAGE))
 check("six views", len(re.findall(r'<section class="view"', PAGE)) == 6)
 check("six purposes, four employments, four credit bands, five incomes",
       set(re.findall(r'class="tile" type="button" data-value="(\w+)"', PAGE))
@@ -455,7 +483,17 @@ check("no image and no emoji",
 external = [u for u in re.findall(r"(?:https?:)?//[\w.-]+\.[a-z]{2,}[^\s\"')]*",
                                   PAGE + CSS + JS)
             if "www.w3.org/2000/svg" not in u]
-check("no third-party request", not external, external)
+ARTICLES = re.findall(r'    "(\w+)": \{\n      label: "([^"\n]+)",\n'
+                      r'      link: "([^"\n]+)"\n    \}', JS)
+LINKS = [a[2] for a in ARTICLES]
+check("the only addresses off the site are the partner's article links",
+      sorted(external) == sorted(LINKS) and not
+      [u for u in re.findall(r"(?:https?:)?//[\w.-]+\.[a-z]{2,}", PAGE + CSS)
+       if "www.w3.org/2000/svg" not in u], external[:3])
+check("  and none of them is loaded: no script, frame, image or fetch of one",
+      not re.search(r"<(script|iframe|img|link)\b[^>]*https?:", PAGE)
+      and JS.count("fetch(") == 1 and "fetch(url, {" in JS
+      and "XMLHttpRequest" not in JS and "import(" not in JS)
 check("the site's own two font files, and only those",
       set(re.findall(r'url\("([^"]+)"\)', CSS))
       == {"/static/fonts/inter-latin-var.woff2",
@@ -474,26 +512,74 @@ print("\n--- loans.js: the offers, the events, the storage ---")
 check("one IIFE, strict",
       JS.lstrip().startswith("/*") and "(function () {" in JS
       and JS.rstrip().endswith("})();") and '"use strict";' in JS)
-offers = re.findall(r'\{ id: "([a-z0-9-]+)", label: "([^"]+)", url: "([^"]*)" '
-                    r'\}', JS)
-check("the six seeded offers, in order",
-      [o[1] for o in offers]
-      == ["Personal Loans Online", "Small Personal Loans",
-          "Personal Loans Near Me", "Compare Personal Loan Rates",
-          "Loans for Fair Credit", "1 Year Personal Loan"]
-      and offers[0][0] == "personal-loans-online", offers)
-check("  every id is a slot the server accepts",
-      all(loans.SLOT_RE.fullmatch(o[0]) for o in offers)
+check("ARTICLES is one map at the top of the file, before any other data",
+      JS.index("var ARTICLES = {") < JS.index("var STATES = [")
+      and JS.count("var ARTICLES") == 1 and "OFFERS" not in JS)
+check("  twelve articles, in the order they were given",
+      [a[0] for a in ARTICLES]
+      == ["purpose_emergency", "purpose_debt", "purpose_car", "purpose_home",
+          "purpose_medical", "purpose_other", "credit_excellent",
+          "credit_good", "credit_fair", "credit_building", "general_small",
+          "general_apr"], [a[0] for a in ARTICLES])
+check("  every purpose and every credit band has one",
+      {a[0] for a in ARTICLES}
+      == {"purpose_" + p for p in loans.PURPOSES}
+      | {"credit_" + c for c in loans.CREDITS}
+      | {"general_small", "general_apr"})
+check("  every key is a slot the server accepts",
+      all(loans.SLOT_RE.fullmatch(a[0]) for a in ARTICLES)
       and loans.SLOT_RE.fullmatch("options_cta"))
-check("  pre-feed: every url is empty", all(o[2] == "" for o in offers))
-check("  an empty url is drawn disabled, never as a link",
-      'row.setAttribute("aria-disabled", "true")' in JS
-      and JS.index("if (offer.url) {") < JS.index("row.href = offer.url;")
-      < JS.index("} else {", JS.index("row.href = offer.url;"))
-      and JS.count(".href =") == 1)
-check("  a live one is rel sponsored noopener, in a new tab",
-      'row.rel = "sponsored noopener";' in JS
-      and 'row.target = "_blank";' in JS)
+bad = [a[0] for a in ARTICLES
+       if not a[2].startswith("https://") or "?" in a[2] or "#" in a[2]
+       or not re.fullmatch(r"https://[a-z]+\.com/[A-Za-z0-9_-]{200,320}", a[2])]
+check("  every link is https, with no query and no fragment", not bad, bad)
+check("  twelve different links, each with a label",
+      len(set(LINKS)) == 12 and all(a[1].strip() == a[1] and a[1]
+                                    for a in ARTICLES))
+# The links as they were handed over, pinned: one changed byte anywhere in
+# the twelve and this digest moves.
+check("  byte for byte the links that were given",
+      hashlib.sha256("\n".join("%s %s" % (a[0], a[2]) for a in ARTICLES)
+                     .encode()).hexdigest()
+      == "b4b19fb81b68fd7242cbe5889818f4f2ec834de5273af494504e46ee035429d6")
+check("the four rows: purpose, credit, then the two general ones",
+      '["purpose_" + a.purpose, "credit_" + a.credit].concat(GENERAL)' in JS
+      and 'var GENERAL = ["general_small", "general_apr"];' in JS)
+check("identifiers: fbclid, ad_id, asid, in that order, kept for the tab",
+      'var PASS_ORDER = ["fbclid", "ad_id", "asid"];' in JS
+      and 'var PASS_KEY = "mazzin_pass_loans";' in JS
+      and "sessionStorage.setItem(PASS_KEY" in JS
+      and "removeItem" not in JS)
+check("  an unresolved macro is dropped",
+      'v.indexOf("{{") < 0 && v.indexOf("}}") < 0' in JS)
+check("  the rules are the ones /ai-navigator holds them to",
+      all(rule in JS and rule in read("static/js/engine.js") for rule in
+          ("fbclid: /^[A-Za-z0-9_-]{1,512}$/", "ad_id: /^[0-9]{1,32}$/",
+           "asid: /^[0-9]{1,32}$/")))
+check("a link is refused unless it is bare https",
+      'link.indexOf("https://") !== 0' in JS
+      and 'link.indexOf("?") >= 0 || link.indexOf("#") >= 0' in JS)
+check("  and there is none at all without an fbclid",
+      "if (!article || !held.fbclid) return \"\";" in JS
+      and 'return ready("options") && hasClick();' in JS)
+check("  the href is the link, a question mark and the held keys only",
+      'return link + "?" + query.toString();' in JS
+      and JS.count(".href =") == 1 and "row.href = href;" in JS)
+check("a row is a real anchor: new tab, noopener, no noreferrer",
+      'row.target = "_blank";' in JS and 'row.rel = "noopener";' in JS
+      and "noreferrer" not in JS)
+check("  built with DOM calls, never from a string of markup",
+      "innerHTML" not in JS and "insertAdjacentHTML" not in JS
+      and "document.write" not in JS)
+check("a tap is reported and never waited for",
+      'track("offer_tap", null, { slot: key });' in JS
+      and 'track("offer_tap", null, { slot: "options_cta" });' in JS
+      and "preventDefault" not in JS)
+SENT = JS[JS.index("function withAttribution"):JS.index("function sendLead")]
+check("nothing posted carries a click identifier",
+      "fbclid" not in SENT and "heldPass" not in SENT and "PASS_" not in SENT
+      and "fbclid" not in JS[JS.index("function sendLead"):]
+      and not set(loans.ATTRIBUTION) & {"fbclid", "ad_id", "asid"})
 check("session id from crypto.randomUUID, kept in sessionStorage",
       "crypto.randomUUID()" in JS and "sessionStorage.setItem" in JS
       and "localStorage" not in JS and "document.cookie" not in JS)
@@ -523,6 +609,9 @@ check("CLAUDE.md names loans.py and what it never does",
 check("  and the three static files, off engine.js",
       "`static/loans.html` / `static/css/loans.css` / `static/js/loans.js`"
       in GUIDE and "`/loans` does not use `engine.js`" in GUIDE)
+check("  and the articles, and that the identifiers stay off the server",
+      "the `ARTICLES` map" in GUIDE
+      and "sending a click identifier to `/api/loans/*`" in GUIDE)
 
 print("\n%d checks, %d failed" % (checks[0], len(fails)))
 for f in fails:
