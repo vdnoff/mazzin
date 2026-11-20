@@ -1005,6 +1005,25 @@
       words_.className = "card-text";
       words_.setAttribute("aria-hidden", "true");   // the button already says it
       words_.textContent = item.label || "";
+      // A letter for the row, by where it was dealt, on a step that asks for
+      // them; or the card's own icon, by key, where it names one. Both go
+      // ahead of the words, and neither exists for a card that asks for
+      // neither.
+      if ((stepAt(step) || {}).letters === true) {
+        var letter_ = document.createElement("span");
+        letter_.className = "card-letter";
+        letter_.setAttribute("aria-hidden", "true");
+        letter_.textContent = String.fromCharCode(65 + index);
+        card.appendChild(letter_);
+      }
+      var icon_ = iconNode(item.icon);
+      if (icon_) {
+        var holder_ = document.createElement("span");
+        holder_.className = "card-icon";
+        holder_.setAttribute("aria-hidden", "true");
+        holder_.appendChild(icon_);
+        card.appendChild(holder_);
+      }
       card.appendChild(words_);
       // A second, quieter line under the answer, where the card names one.
       if (typeof item.sub === "string" && item.sub) {
@@ -1013,6 +1032,16 @@
         sub_.setAttribute("aria-hidden", "true");
         sub_.textContent = item.sub;
         card.appendChild(sub_);
+      }
+      // A short fact pinned to the far side of the row ("3–7h").
+      if (typeof item.badge === "string" && item.badge) {
+        var badge_ = document.createElement("span");
+        badge_.className = "card-badge";
+        badge_.setAttribute("aria-hidden", "true");
+        badge_.textContent = item.badge;
+        card.appendChild(badge_);
+        card.setAttribute("aria-label",
+                          card.getAttribute("aria-label") + ", " + item.badge);
       }
       var tick = document.createElement("span");
       tick.className = "check";
@@ -1119,7 +1148,123 @@
   // Two optional lines a step may carry: a counter chip above everything in
   // the stage, and a sentence under the question. No node is built for either
   // until some step names one, so a funnel that names neither has neither.
+  // An icon a config names by key, drawn from the path the same config holds
+  // for it under `icons`. A 24-unit grid, stroked, never filled. A key the
+  // table does not carry draws nothing, and a funnel with no table has no
+  // icons at all.
+  function iconNode(key) {
+    var table = cfg && cfg.icons;
+    if (!table || typeof key !== "string"
+        || !Object.prototype.hasOwnProperty.call(table, key)) return null;
+    var d = table[key];
+    if (typeof d !== "string" || !/^[MmLlHhVvCcSsQqTtAaZz0-9 ,.\-]+$/.test(d)) {
+      return null;
+    }
+    var ns = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("class", "mz-icon");
+    svg.setAttribute("data-icon", key);
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    var path = document.createElementNS(ns, "path");
+    path.setAttribute("d", d);
+    svg.appendChild(path);
+    return svg;
+  }
+
+  // --- the score strip ---------------------------------------------------------
+  //
+  // One segment for each step that answers back, coloured by how it went, on
+  // a funnel that carries `swipe.score_strip`. `fbResults` is filled by
+  // `runFeedback`, in walk order, and read by nothing else.
+  var fbResults = [];
+
+  function feedbackSteps() {
+    return ((cfg && cfg.swipe && cfg.swipe.steps) || []).filter(function (s) {
+      return s && typeof s.why === "string" && s.why;
+    });
+  }
+
+  function setStrip(st) {
+    var block = cfg && cfg.swipe && cfg.swipe.score_strip;
+    var on = !!(block && typeof block === "object" && feedbackFor(st));
+    if (on && !el.stepStrip && el.stage) {
+      el.stepStrip = elm("div", "step-strip");
+      el.stepStrip.id = "step-strip";
+      el.stepStrip.setAttribute("role", "img");
+      el.stage.insertBefore(el.stepStrip, el.stage.firstChild);
+    }
+    if (!el.stepStrip) return;
+    el.stepStrip.hidden = !on;
+    if (!on) return;
+    var all = feedbackSteps();
+    var here = all.indexOf(st);
+    var hit = 0;
+    var miss = 0;
+    var row = elm("span", "step-strip-row");
+    all.forEach(function (unused, i) {
+      var seg = elm("i", "step-strip-seg");
+      if (i < fbResults.length) {
+        seg.classList.add(fbResults[i] ? "is-hit" : "is-miss");
+        if (fbResults[i]) hit += 1; else miss += 1;
+      } else if (i === here) {
+        seg.classList.add("is-current");
+      }
+      row.appendChild(seg);
+    });
+    el.stepStrip.textContent = "";
+    el.stepStrip.appendChild(row);
+    el.stepStrip.appendChild(elm("span", "step-strip-count", fillWords(
+      block.label || "{n}", { n: hit })));
+    el.stepStrip.setAttribute("aria-label", fillWords(block.aria || "", {
+      hit: hit, miss: miss, left: all.length - hit - miss
+    }));
+  }
+
   function setStepExtras(st) {
+    setStrip(st);
+    // A step with a name of its own: an icon in a square, a line over the
+    // name, the name. Above the question, and only where a step carries one.
+    var title = (st && typeof st.title === "string") ? st.title : "";
+    if (title && !el.stepHead && el.caption && el.caption.parentNode) {
+      el.stepHead = elm("div", "step-head");
+      el.stepHead.id = "step-head";
+      el.caption.parentNode.insertBefore(el.stepHead, el.caption);
+    }
+    if (el.stepHead) {
+      el.stepHead.hidden = !title;
+      el.stepHead.textContent = "";
+      if (title) {
+        var art = iconNode(st.icon);
+        if (art) {
+          var square = elm("span", "step-head-icon");
+          square.appendChild(art);
+          el.stepHead.appendChild(square);
+        }
+        var words = elm("div", "step-head-words");
+        if (typeof st.title_kicker === "string" && st.title_kicker) {
+          words.appendChild(elm("p", "step-head-kicker", st.title_kicker));
+        }
+        words.appendChild(elm("h2", "step-head-title", title));
+        el.stepHead.appendChild(words);
+      }
+    }
+    // A line at the foot of the step.
+    var foot = (st && typeof st.foot === "string") ? st.foot : "";
+    if (foot && !el.stepFoot && el.stage) {
+      el.stepFoot = elm("p", "step-foot");
+      el.stepFoot.id = "step-foot";
+      el.stage.appendChild(el.stepFoot);
+    }
+    if (el.stepFoot) {
+      el.stepFoot.hidden = !foot;
+      el.stepFoot.textContent = foot;
+    }
     var chip = (st && typeof st.chip === "string") ? st.chip : "";
     if (chip && !el.stepChip && el.stage) {
       el.stepChip = elm("p", "step-chip");
@@ -1942,31 +2087,83 @@
       node.appendChild(mark);
     }
     var good = isHit(item);
+    // `flags: false` says the two states without the two words: the state
+    // goes into the row's own label for a screen reader, and a row that
+    // carries a letter trades it for a mark.
+    var worded = block.flags !== false;
+    function mark(node, text, key) {
+      if (worded) { flag(node, text); return; }
+      node.setAttribute("aria-label",
+                        (node.getAttribute("aria-label") || "") + ". " + text);
+      var letter = node.querySelector(".card-letter");
+      var art = letter ? iconNode(key) : null;
+      if (letter && art) {
+        letter.textContent = "";
+        letter.appendChild(art);
+        letter.classList.add("is-mark");
+      }
+    }
     var nodes = el.cards.children;
     shown.forEach(function (g, i) {
       var node = nodes[i];
       if (!node) return;
       if (isHit(g)) {
         node.classList.add("is-right");
-        flag(node, block.right || "Right");
+        mark(node, block.right || "Right", "check");
       } else if (g === item) {
         node.classList.add("is-wrong");
-        flag(node, block.yours || "Your pick");
+        mark(node, block.yours || "Your pick", "x");
       }
     });
     el.cards.classList.add("is-feedback");
+    // How it went, for the strip and for the streak. Appended once a step:
+    // this function runs once a tap, and a tap is taken once a step.
+    fbResults.push(good);
+    var streak = 0;
+    for (var r = fbResults.length - 1; r >= 0 && fbResults[r]; r--) streak += 1;
+    setStrip(st);
+    // The question has been answered; a stylesheet may fold it away so that
+    // what answers it fits on the screen.
+    if (el.swipe) el.swipe.classList.add("is-answered");
 
     var panel = elm("div", "step-feedback " + (good ? "is-good" : "is-bad"));
     panel.id = "step-feedback";
     panel.setAttribute("role", "status");
-    panel.appendChild(elm("p", "step-feedback-head",
-                          good ? (block.good || "Right call.")
-                               : (block.bad || "Costly move.")));
+    var verdict = elm("p", "step-feedback-head",
+                      good ? (block.good || "Right call.")
+                           : (block.bad || "Costly move."));
+    if (good && streak >= 2 && typeof block.streak === "string"
+        && block.streak) {
+      verdict.appendChild(elm("span", "step-feedback-streak",
+                              fillWords(block.streak, { n: streak })));
+    }
+    panel.appendChild(verdict);
     panel.appendChild(elm("p", "step-feedback-why", st.why));
-    var next = elm("button", "step-feedback-next", block.next || "Next");
-    next.type = "button";
-    panel.appendChild(next);
+    if (block.next !== false) {
+      var next = elm("button", "step-feedback-next", block.next || "Next");
+      next.type = "button";
+      panel.appendChild(next);
+    }
     el.cards.parentNode.insertBefore(panel, el.cards.nextSibling);
+
+    var own = cfg.swipe.feedback_ms;
+    var ms = (typeof own === "number" && own >= 0 && own <= 20000) ? own : 2000;
+    // A bar that fills over the wait, and a line saying what happens next.
+    var wait = null;
+    var all = feedbackSteps();
+    var line = (all.indexOf(st) === all.length - 1 && block.wait_last)
+      || block.wait || "";
+    if (typeof line === "string" && line) {
+      wait = elm("div", "step-wait");
+      wait.id = "step-wait";
+      var track_ = elm("span", "step-wait-bar");
+      var fill_ = elm("i", "step-wait-fill");
+      fill_.style.animationDuration = ms + "ms";
+      track_.appendChild(fill_);
+      wait.appendChild(track_);
+      wait.appendChild(elm("p", "step-wait-line", line));
+      panel.parentNode.insertBefore(wait, panel.nextSibling);
+    }
 
     var done = false;
     var timer = null;
@@ -1978,11 +2175,11 @@
       clearTimeout(armed);
       document.removeEventListener("click", go, true);
       if (panel.parentNode) panel.parentNode.removeChild(panel);
+      if (wait && wait.parentNode) wait.parentNode.removeChild(wait);
       el.cards.classList.remove("is-feedback");
+      if (el.swipe) el.swipe.classList.remove("is-answered");
       leave();
     }
-    var own = cfg.swipe.feedback_ms;
-    var ms = (typeof own === "number" && own >= 0 && own <= 20000) ? own : 2000;
     timer = setTimeout(go, ms);
     // A tap anywhere moves on, but not the tail of the tap that answered.
     armed = setTimeout(function () {
@@ -8538,8 +8735,26 @@
       card.appendChild(row);
     }
 
+    // A grid of small tiles, each an icon over a word, where the intro
+    // carries them. A tile with no icon is the "and more" one.
+    var tiles = Array.isArray(block.tiles) ? block.tiles : [];
+    if (tiles.length) {
+      var grid = elm("ul", "intro-tiles");
+      tiles.forEach(function (tile) {
+        if (!tile || typeof tile.label !== "string") return;
+        var cell = elm("li", "intro-tile");
+        var art = iconNode(tile.icon);
+        if (art) cell.appendChild(art); else cell.classList.add("is-more");
+        cell.appendChild(elm("span", "intro-tile-label", tile.label));
+        grid.appendChild(cell);
+      });
+      card.appendChild(grid);
+    }
+
     var button = elm("button", "intro-cta", block.cta);
     button.type = "button";
+    var ctaArt = iconNode(block.cta_icon);
+    if (ctaArt) button.appendChild(ctaArt);
     var fired = false;
     button.addEventListener("click", function () {
       // Once. A double tap on a phone is one start, and the event this fires

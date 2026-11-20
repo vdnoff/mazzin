@@ -171,20 +171,23 @@ check("its report profile is registered, and the flag stays on test anyway",
       and cfg.get("stripe_mode") == "test")
 
 print("\n--- what it says it is ---")
-HEADLINE = "People make money with AI in 11 ways. Which one is yours?"
+HEADLINE = "11 ways to make money with AI. One has your name on it."
 check("the headline, on the intro card and over the walk",
       cfg["intro"]["headline"] == HEADLINE
       and cfg["swipe"]["headline"] == HEADLINE)
-check("the intro: kicker, sub, six chips, button",
+check("the intro: kicker, sub, six icon tiles, button with an arrow",
       cfg["intro"]["kicker"] == "AI NAVIGATOR"
-      and cfg["intro"]["sub"] == "12 quick taps. We match your skill, your "
-      "free hours and how well you really know AI to the strategy that fits "
-      "you."
-      and cfg["intro"]["chips"]
-      == ["Content service", "Automation for small businesses",
-          "Design service", "Workshops and tutoring", "Outreach service",
-          "+ 6 more"]
-      and cfg["intro"]["cta"] == "Find my strategy")
+      and cfg["intro"]["sub"] == "12 taps. 8 money traps. Find the move "
+      "that fits your skill and your week."
+      and cfg["intro"]["tiles"]
+      == [{"icon": "pen", "label": "Content"},
+          {"icon": "bolt", "label": "Automation"},
+          {"icon": "shapes", "label": "Design"},
+          {"icon": "book", "label": "Workshops"},
+          {"icon": "chat", "label": "Outreach"}, {"label": "+6 more"}]
+      and "chips" not in cfg["intro"]
+      and cfg["intro"]["cta"] == "Find my money move"
+      and cfg["intro"]["cta_icon"] == "arrow")
 check("  under it: free, optional, and the disclaimer",
       cfg["intro"]["foot"] == "No sign-up. The test and your profile are "
       "free. Your full personal strategy is optional."
@@ -198,17 +201,18 @@ print("\n--- cut from focus: what is kept and what is dropped ---")
 DROPPED = ["track_timing", "result_template", "preview_gallery",
            "style_elements", "analyzing_echo", "sale", "pairings",
            "share_cards", "interstitial_working"]
-# Three keys are this funnel's own: `theme_css`, beside the theme it loads;
-# and, last, `rsoc`, the partner-article block, and `paths`, the table its
-# report matches a reader's strategies from.
-OWN = ["theme_css", "rsoc", "paths"]
-check("every top-level key is one focus carries, bar its own three",
+# Four keys are this funnel's own: `theme_css` and `icons`, beside the theme
+# they belong to; and, last, `rsoc`, the partner-article block, and `paths`,
+# the table its report matches a reader's strategies from.
+OWN = ["theme_css", "icons", "rsoc", "paths"]
+check("every top-level key is one focus carries, bar its own four",
       [k for k in cfg if k not in FOCUS] == OWN,
       str([k for k in cfg if k not in FOCUS]))
 check("  in focus's order, the theme's stylesheet beside the theme",
-      [k for k in cfg if k != "theme_css"]
-      == [k for k in FOCUS if k in cfg] + OWN[1:]
-      and list(cfg).index("theme_css") == list(cfg).index("theme") + 1)
+      [k for k in cfg if k not in ("theme_css", "icons")]
+      == [k for k in FOCUS if k in cfg] + OWN[2:]
+      and list(cfg)[list(cfg).index("theme"):][:3]
+      == ["theme", "theme_css", "icons"])
 check("  and the ones with no meaning here are gone, not emptied",
       sorted(k for k in FOCUS if k not in cfg) == sorted(DROPPED),
       str(sorted(k for k in FOCUS if k not in cfg)))
@@ -249,45 +253,108 @@ for step in steps:
           % (step["id"], fmt),
           fmt in GRID_SIZE and fmt in TEXT_FORMATS
           and len(images(step)) == GRID_SIZE.get(fmt), fmt)
-check("every card is an id, a label and tags; the skill cards add one line",
-      all(set(card) == ({"id", "label", "sub", "tags"} if s["id"] == "skill"
-                        else {"id", "label", "tags"})
+CARD_KEYS = {
+    "skill": {"id", "label", "sub", "icon", "tags"},
+    "time": {"id", "label", "sub", "icon", "badge", "said", "tags"},
+    "goal": {"id", "label", "sub", "icon", "said", "tags"},
+    "predict": {"id", "label", "icon", "badge", "tags"},
+}
+check("every card is an id, a label and tags, plus what its step draws",
+      all(set(card) == CARD_KEYS.get(s["id"], {"id", "label", "tags"})
           and card["label"].strip()
           for s in steps for card in images(s)))
 ids = [card["id"] for s in steps for card in images(s)]
 check("  card ids unique across the walk", len(ids) == len(set(ids)))
 check("  and no answer is longer than two lines of a row",
-      max(len(card["label"]) for s in steps for card in images(s)) <= 50,
+      max(len(card["label"]) for s in steps for card in images(s)) <= 56,
       str(max(len(card["label"]) for s in steps for card in images(s))))
-check("the counter chip: eleven in play for three steps, then three left",
+check("the counter chip is the warm-ups': eleven in play, then three left",
       [s.get("chip") for s in steps]
-      == ["11 strategies still in play"] * 3 + ["3 strategies left"] * 9)
-check("the scenarios count themselves, the warm-ups use the walk's count",
+      == ["11 strategies still in play"] * 3 + ["3 strategies left"]
+      + [None] * 8)
+check("the traps count themselves, the warm-ups use the walk's count",
       [s.get("progress_label") for s in steps]
-      == [None] * 4 + ["Scenario %d of 8" % n for n in range(1, 9)])
+      == [None] * 4 + ["Trap %d of 8" % n for n in range(1, 9)])
+
+print("\n--- the icons: the funnel's own table, drawn by key ---")
+ICONS = cfg["icons"]
+NEEDED = ["pen", "shapes", "code", "chat", "grid", "book", "cup", "moon",
+          "calendar", "bolt", "coins", "storefront", "trending-up", "compass",
+          "bars-1", "bars-2", "bars-3", "bars-4", "megaphone", "file-half",
+          "clock", "voice", "chart", "image", "thumbs-up", "question", "lock",
+          "check", "x", "arrow"]
+check("thirty keys, the ones that were asked for", list(ICONS) == NEEDED,
+      str(list(ICONS)))
+check("  each one path on a 24 grid: commands and numbers, nothing else",
+      all(isinstance(d, str) and re.fullmatch(r"[MmLlHhVvCcSsQqTtAaZz0-9 ,."
+                                              r"\-]+", d)
+          and d.startswith("M") and len(d) <= 220
+          and all(-1 <= float(n) <= 25 for n in re.findall(
+              r"(?<![\d.])\d+(?:\.\d+)?", d)) for d in ICONS.values()),
+      str([k for k, d in ICONS.items()
+           if not re.fullmatch(r"[MmLlHhVvCcSsQqTtAaZz0-9 ,.\-]+", d)]))
+USED = ([c["icon"] for s in steps for c in images(s) if "icon" in c]
+        + [s["icon"] for s in steps if "icon" in s]
+        + [t["icon"] for t in cfg["intro"]["tiles"] if "icon" in t]
+        + [cfg["intro"]["cta_icon"]])
+check("  every icon a card, a trap or the intro names is in the table",
+      USED and not [k for k in USED if k not in ICONS], str(USED))
+check("  the engine draws from the table: stroked, never filled, no network",
+      "var table = cfg && cfg.icons;" in ENGINE
+      and 'svg.setAttribute("fill", "none");' in ENGINE
+      and 'svg.setAttribute("stroke-width", "2");' in ENGINE
+      and 'svg.setAttribute("stroke-linecap", "round");' in ENGINE
+      and 'svg.setAttribute("viewBox", "0 0 24 24");' in ENGINE)
+check("  and an unknown key draws nothing",
+      "|| !Object.prototype.hasOwnProperty.call(table, key)) return null;"
+      in ENGINE)
+check("  no emoji and no icon font anywhere in the funnel",
+      not re.search("[\U0001F000-\U0001FAFF☀-➿]", RAW + RESULT_CSS + MODULE)
+      and RESULT_CSS.count("@font-face") == 1)
 
 print("\n--- the four warm-ups: service tags, scoring nothing ---")
 WARM = {
-    "skill": ("What could people pay you for today?",
-              ["Writing", "Design", "Tech", "Sales", "Organizing",
-               "Teaching"]),
-    "time": ("How many hours a week can you really put in?",
-             ["Under 3", "3–7", "8–15", "15+"]),
-    "goal": ("What should AI money be for you?",
-             ["A side income", "A full business", "More from my current job",
-              "Not sure yet"]),
-    "predict": ("8 money scenarios are next. How many will you get right?",
-                ["0–2", "3–4", "5–6", "7–8"]),
+    "skill": ("Which one would a stranger pay you for?",
+              "Be honest. AI multiplies what you are already good at.",
+              [("Writing", "pen", "Words that get read", None),
+               ("Design", "shapes", "Things that look right", None),
+               ("Tech", "code", "Making tools talk", None),
+               ("Sales", "chat", "Getting a yes", None),
+               ("Organizing", "grid", "Order out of chaos", None),
+               ("Teaching", "book", "Making it click", None)]),
+    "time": ("How much of your week can AI money have?",
+             "The real number, not the ambitious one.",
+             [("Lunch breaks", "cup", "Small, steady moves", "under 3h"),
+              ("A few evenings", "moon", "A side-project pace", "3–7h"),
+              ("Every weekend", "calendar", "Room to build something",
+               "8–15h"),
+              ("I'm all in", "bolt", "This is the plan", "15h+")]),
+    "goal": ("What's the dream?", None,
+             [("Extra cash on the side", "coins", "Something small that pays",
+               None),
+              ("My own business", "storefront", "The long game", None),
+              ("Getting paid more at my job", "trending-up",
+               "Same job, better at it", None),
+              ("Just curious, for now", "compass", "Show me what's possible",
+               None)]),
+    "predict": ("Gut check: how many of the 8 money traps will you dodge?",
+                None,
+                [("I'll walk into most", "bars-1", None, "0–2"),
+                 ("About half", "bars-2", None, "3–4"),
+                 ("Most of them", "bars-3", None, "5–6"),
+                 ("Nearly all. Watch me.", "bars-4", None, "7–8")]),
 }
 STYLE_TAGS = {t for st in cfg["styles"] for t in st["tags"]}
-for sid, (question, labels) in WARM.items():
+for sid, (question, sub, cards) in WARM.items():
     step = by_id[sid]
-    check("%s asks its question and lists its answers in order" % sid,
-          step["question"] == question
-          and [c["label"] for c in images(step)] == labels,
+    check("%s asks its question and lists its cards in order" % sid,
+          step["question"] == question and step.get("sub") == sub
+          and [(c["label"], c.get("icon"), c.get("sub"), c.get("badge"))
+               for c in images(step)] == cards,
           str([c["label"] for c in images(step)]))
-    check("  dealt as listed, with no feedback line",
-          step.get("shuffle") is False and "why" not in step)
+    check("  dealt as listed, with no feedback line and no letters",
+          step.get("shuffle") is False and "why" not in step
+          and "letters" not in step)
     check("  one service tag a card, on its own stem",
           all(len(c["tags"]) == 1 and c["tags"][0].startswith(sid + "_")
               and c["tags"][0] == c["id"] for c in images(step)),
@@ -295,13 +362,13 @@ for sid, (question, labels) in WARM.items():
     check("  scoring nothing: no hit, no miss, no type counts it",
           not any(re.search(r"_(hit|miss)$", t) or t in STYLE_TAGS
                   for c in images(step) for t in c["tags"]))
-check("the skill step says why it matters, and each card adds a line",
-      by_id["skill"]["sub"] == "Pick the closest one. AI multiplies a skill "
-      "you already have, so this decides which strategies stay."
-      and [c["sub"] for c in images(by_id["skill"])]
-      == ["Words that get read", "Things that look right",
-          "Making tools talk", "Getting a yes", "Order out of chaos",
-          "Making it click"])
+check("the report still hears the plain answer behind a livelier label",
+      [c["said"] for c in images(by_id["time"])]
+      == ["Under 3", "3–7", "8–15", "15+"]
+      and [c["said"] for c in images(by_id["goal"])]
+      == ["A side income", "A full business", "More from my current job",
+          "Not sure yet"]
+      and 'item.get("said") or item.get("label")' in read("reports.py"))
 check("the skill, time and goal tags are the ones the rules are keyed on",
       [c["id"] for c in images(by_id["skill"])]
       == ["skill_" + k for k in cfg["paths"]["rules"]["by_skill"]]
@@ -309,28 +376,33 @@ check("the skill, time and goal tags are the ones the rules are keyed on",
       == ["time_under3", "time_3_7", "time_8_15", "time_15plus"]
       and [c["id"] for c in images(by_id["goal"])]
       == ["goal_side", "goal_business", "goal_levelup", "goal_unsure"])
-check("the prediction's four tags are the four bands",
+check("the prediction's four tags are the four bands, shown as its badges",
       [c["tags"][0] for c in images(by_id["predict"])]
-      == ["predict_0_2", "predict_3_4", "predict_5_6", "predict_7_8"])
+      == ["predict_0_2", "predict_3_4", "predict_5_6", "predict_7_8"]
+      and [c["badge"] for c in images(by_id["predict"])]
+      == [b["label"] for b in cfg["brain_age"]["predict"]["bands"].values()])
 check("no warm-up about usage or tools is left",
       "exp" not in by_id and "tool" not in by_id)
 
-print("\n--- the eight scenarios: one right answer each ---")
+print("\n--- the eight money traps: one right answer each ---")
 HITS = {
-    "mem1": ("YOUR NAME IS ON IT", "Nothing. Sounding sure isn't proof"),
-    "mem2": ("HALF A JOB", "It can only hold so much text at once"),
-    "foc1": ("THE CLOCK IS RUNNING", "Tell it exactly what to change"),
-    "foc2": ("A CLIENT'S VOICE", "Give it 2–3 of their real posts"),
-    "chg1": ("A CLIENT'S MONEY IS ON THE LINE",
-             "Open the source and check it first"),
-    "chg2": ("BEFORE YOU TAKE THE MONEY",
-             "The tool's terms for commercial use"),
-    "spa1": ("BEFORE YOU BUILD", "Get a few people to pay or commit first"),
-    "spa2": ("THE HARD QUESTION",
-             "You pay for judgment and a result I answer for"),
+    "mem1": ("megaphone", "The Confident Liar",
+             "Nothing. Sure isn't the same as right"),
+    "mem2": ("file-half", "The 80-Page Blind Spot",
+             "It ran out of room. It can only hold so much"),
+    "foc1": ("clock", "The One-Hour Deadline", "Tell it exactly what to fix"),
+    "foc2": ("voice", "The Borrowed Voice",
+             "Two or three of their real posts"),
+    "chg1": ("chart", "The Perfect Statistic", "Open the source. Check it"),
+    "chg2": ("image", "The Images Nobody Checked",
+             "The tool's rules on selling"),
+    "spa1": ("thumbs-up", "The Idea Everyone Loves",
+             "Ask a few people to pay up front"),
+    "spa2": ("question", "“Why Should I Pay You?”",
+             "You're paying for judgment and a result I stand behind"),
 }
 per_stem = dict.fromkeys(DOMAINS, 0)
-for step in steps[4:]:
+for number, step in enumerate(steps[4:], 1):
     stem = step["id"][:3]
     tags = [t for c in images(step) for t in c["tags"]]
     check("%s: four answers, one tag each, all on %s" % (step["id"], stem),
@@ -343,21 +415,25 @@ for step in steps[4:]:
     hit = [c for c in images(step) if c["tags"] == [stem + "_hit"]]
     check("  the hit is the first listed, and it is the right sentence",
           hit and hit[0] is images(step)[0]
-          and hit[0]["label"] == HITS[step["id"]][1],
+          and hit[0]["label"] == HITS[step["id"]][2],
           hit[0]["label"] if hit else "")
-    check("  the answers are shuffled when dealt",
-          "shuffle" not in step and "pin_first" not in step)
-    check("  its kicker is the situation, never the stem",
-          step["kicker"] == HITS[step["id"]][0]
+    check("  shuffled when dealt, lettered by where each one lands",
+          "shuffle" not in step and "pin_first" not in step
+          and step.get("letters") is True)
+    check("  named and numbered: MONEY TRAP #%d, its title, its icon" % number,
+          step["title_kicker"] == "MONEY TRAP #%d" % number
+          and (step["icon"], step["title"]) == HITS[step["id"]][:2]
+          and "kicker" not in step and "chip" not in step
+          and step["foot"] == "Tap the move you would actually make."
           and not re.search(r"\b(mem|foc|chg|spa)\b",
-                            step["kicker"] + step["question"]),
-          step["kicker"])
+                            step["title"] + step["question"]),
+          step["title"])
     check("  a feedback line of 140 characters or fewer, promising nothing",
           isinstance(step.get("why"), str) and 20 <= len(step["why"]) <= 140
           and not re.search(r"\$|guarant|you will earn", step["why"]),
           step.get("why"))
     per_stem[stem] += 1
-check("two scenarios a zone, eight in all",
+check("two traps a zone, eight in all",
       per_stem == dict.fromkeys(DOMAINS, 2)
       and cfg["brain_age"]["scored"] == 8
       and cfg["brain_age"]["per_domain"] == 2, str(per_stem))
@@ -366,13 +442,23 @@ check("the zones are named once, in the number block",
 check("the engine scores on those four stems and no others here",
       all(("var %s_AXIS = [\"%s_hit\", \"%s_miss\"];"
            % (d.upper(), d, d)) in ENGINE for d in DOMAINS))
+check("nothing the reader sees still says scenario",
+      not [(at, v) for at, v in ALL if re.search(r"scenario", v, re.I)],
+      str([(at, v) for at, v in ALL if re.search(r"scenario", v, re.I)][:2]))
 
 print("\n--- instant feedback, switched on from the config ---")
 check("the funnel carries the feedback block and its delay",
       cfg["swipe"]["feedback"]
-      == {"right": "Right", "yours": "Your pick", "good": "Right call.",
-          "bad": "Costly move.", "next": "Next"}
+      == {"good": "Trap dodged.", "bad": "You walked into it.",
+          "right": "Right answer", "yours": "Your pick", "flags": False,
+          "next": False, "streak": "{n} in a row",
+          "wait": "Next trap in a moment. Tap to skip.",
+          "wait_last": "Your result in a moment."}
       and cfg["swipe"]["feedback_ms"] == 2000)
+check("  and a score strip that counts the dodges",
+      cfg["swipe"]["score_strip"]
+      == {"label": "{n} dodged",
+          "aria": "{hit} dodged, {miss} walked into, {left} still to come"})
 check("  and a shorter hold on the steps that have none",
       cfg["swipe"]["hold_ms"] == 450)
 check("the engine answers back only where both are declared",
@@ -387,11 +473,22 @@ check("  it tracks nothing and scores nothing of its own",
 check("  the swipe event still fires at the tap, before any of it",
       ENGINE.index('track("swipe", step, extra);')
       < ENGINE.index("if (fb) { runFeedback("))
-no_feedback = [f for f in os.listdir(os.path.join(ROOT, "funnels"))
-               if f != SLUG + ".json"
-               and any(k in read("funnels/" + f) for k in
-                       ('"feedback"', '"theme_css"', '"hold_ms"', '"chip"',
-                        '"progress_label"', '"foot_note"', '"cut"'))]
+STEP_KEYS = ("title", "title_kicker", "foot", "chip", "sub", "letters",
+             "icon", "progress_label", "why")
+no_feedback = []
+for name in sorted(os.listdir(os.path.join(ROOT, "funnels"))):
+    if name == SLUG + ".json":
+        continue
+    other = json.loads(read("funnels/" + name))
+    swipe = other.get("swipe") or {}
+    intro = other.get("intro") or {}
+    if ("icons" in other or "theme_css" in other
+            or any(k in swipe for k in ("feedback", "score_strip", "hold_ms"))
+            or any(k in intro for k in ("tiles", "cta_icon", "foot_note"))
+            or any(k in st for st in swipe.get("steps") or []
+                   for k in STEP_KEYS)
+            or any("cut" in m for m in other.get("interstitials") or [])):
+        no_feedback.append(name)
 check("no other funnel declares any of the new switches", not no_feedback,
       no_feedback)
 
@@ -407,9 +504,9 @@ check("  eleven cut down to three, with three locked rows",
       and mids[0]["line"] == "Your skill, hours and goal just cut 11 "
       "strategies down to 3.")
 check("  what is next, and a button that waits to be tapped",
-      mids[0]["sub"] == "Next: 8 real money situations. How you handle them "
-      "shapes your plan: where to start, what to offer and what to skip."
-      and mids[0]["cta"] == "Show me scenario 1" and mids[0]["hold"] is True
+      mids[0]["sub"] == "Next: 8 money traps. How you handle them shapes "
+      "your plan: where to start, what to offer and what to skip."
+      and mids[0]["cta"] == "Show me trap #1" and mids[0]["hold"] is True
       and "auto_advance_ms" not in mids[0])
 check("the analysing screen is kept",
       cfg["analyzing"]["duration_ms"] > 0 and cfg["analyzing"]["messages"])
@@ -470,9 +567,9 @@ bands = block["predict"]["bands"]
 check("the bands are read off the step that asks",
       block["predict"]["step"] == "predict"
       and list(bands) == [c["tags"][0] for c in images(by_id["predict"])])
-check("  each says what its card says",
+check("  each says what its card's badge says",
       [b["label"] for b in bands.values()]
-      == [c["label"] for c in images(by_id["predict"])])
+      == [c["badge"] for c in images(by_id["predict"])])
 check("  and together they cover 0 to 8 with no gap and no overlap",
       [(b["min"], b["max"]) for b in bands.values()]
       == [(0, 2), (3, 4), (5, 6), (7, 8)])
@@ -544,9 +641,9 @@ check("  all locked, each with a teaser and two preview lines",
           and s["teaser_line"] and len(s["preview"]) == 2
           for s in cfg["report"]["sections"]))
 key_rows = [r for r in cfg["report"]["also"]["rows"] if "title" in r]
-check("plus the manifest line: Your 8 Scenarios",
-      key_rows == [{"title": "Your 8 Scenarios",
-                    "hook": "Every scenario, your move, the right move, and "
+check("plus the manifest line: Your 8 Traps",
+      key_rows == [{"title": "Your 8 Traps",
+                    "hook": "Every trap, your move, the right move, and "
                             "what it means for your plan."}])
 check("  and nothing the reader sees still says path or answer key",
       not [(at, v) for at, v in ALL
@@ -584,7 +681,7 @@ check("  what it unlocks is four lines, inside the card",
           "your answers",
           "What to sell, and who pays for it",
           "Your first 7 days, sized to your {hours} a week",
-          "2 backup strategies, 2 to skip, and your 8 scenarios explained"])
+          "2 backup strategies, 2 to skip, and your 8 traps explained"])
 check("  the hours are the four the time step offers",
       set(OFFER["hours"]) == {c["id"] for c in images(by_id["time"])}
       and OFFER["hours_bare"] == "hours")
