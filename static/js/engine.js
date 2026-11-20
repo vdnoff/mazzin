@@ -367,10 +367,91 @@
   function pixelTrack(name, eventId) {
     var id = eventId || pixelEventId(name);
     if (!pixelReady) { pixelQueue.push({ name: name, id: id }); return; }
+    // A funnel with a pixel of its own fires what its block lists and
+    // nothing else. Every other funnel passes straight through.
+    if (!pixelAllows(name)) return;
+    if (name === "Lead" && leadMuted) return;
     try {
-      fbq()("track", name, {}, { eventID: id });
+      // Only the own-pixel Purchase has parameters, held under its id.
+      if (pixelParams[id]) fbq()("track", name, pixelParams[id], { eventID: id });
+      else fbq()("track", name, {}, { eventID: id });
     } catch (e) { /* measurement must never break the funnel */ }
   }
+  var pixelParams = {};
+  var leadMuted = false;      // own pixel, and this session's Lead is spent
+
+  // --- a funnel's own pixel ------------------------------------------------
+  //
+  // Opt-in, from the funnel's config:
+  //
+  //   "pixel": { "id": "…", "capi_token_env": "…", "events": ["PageView", …] }
+  //
+  // That pixel replaces the default one on this funnel: the default is never
+  // initialised here, only the listed events fire, Lead fires once a session,
+  // and Purchase fires on the delivered page once the server has said the
+  // purchase is real. A config without the block — or with an id that is not
+  // a pixel id — is every other funnel, and none of this runs for it.
+  var PIXEL_ID_RE = /^[0-9]{5,20}$/;
+  // Reserved for the partner's article page, whatever a config lists.
+  var PIXEL_NEVER = ["ViewContent"];
+
+  function ownPixel() {
+    var block = cfg && cfg.pixel;
+    if (!block || typeof block !== "object") return null;
+    if (typeof block.id !== "string" || !PIXEL_ID_RE.test(block.id)) return null;
+    return block;
+  }
+
+  function pixelAllows(name) {
+    var own = ownPixel();
+    if (!own) return true;
+    if (PIXEL_NEVER.indexOf(name) !== -1) return false;
+    return Array.isArray(own.events) && own.events.indexOf(name) !== -1;
+  }
+
+  // The config arriving, or being given up on. The pixel waits for it, since
+  // which pixel this page has is the config's to say.
+  var cfgSettle = null;
+  var cfgKnown = new Promise(function (resolve) { cfgSettle = resolve; });
+
+  // Lead on a funnel with its own pixel: once a session, so walking the quiz
+  // again in the same tab is not a second lead.
+  function ownLeadSpent() {
+    var key = "mazzin_lead_" + slug;
+    try {
+      if (sessionStorage.getItem(key)) return true;
+      sessionStorage.setItem(key, "1");
+    } catch (e) { /* private mode: once a load is the best there is */ }
+    return false;
+  }
+
+  // Purchase on a funnel with its own pixel. Only ever from what /api/report
+  // attached to a confirmed, live purchase — the amount Stripe charged and
+  // the payment intent as the event id, which is the id the server's own
+  // Purchase carries, so the pair is one conversion. Once per payment, on
+  // this device, for good.
+  function ownPurchase(paid) {
+    if (!paid || typeof paid !== "object") return;
+    var id = paid.event_id;
+    var value = Number(paid.value);
+    var currency = paid.currency;
+    if (typeof id !== "string" || !/^pi_[A-Za-z0-9_]{1,250}$/.test(id)) return;
+    if (!isFinite(value) || value <= 0) return;
+    if (typeof currency !== "string" || !/^[A-Z]{3}$/.test(currency)) return;
+    cfgKnown.then(function () {
+      if (!ownPixel() || !pixelAllows("Purchase")) return;
+      var key = "mazzin_purchase_" + id;
+      try {
+        if (localStorage.getItem(key)) return;
+        localStorage.setItem(key, "1");
+      } catch (e) { /* no storage: once a load */ }
+      if (ownPurchaseFired[id]) return;
+      ownPurchaseFired[id] = true;
+      pixelParams[id] = { value: value, currency: currency };
+      pixelTrack("Purchase", id);
+    });
+  }
+  var ownPurchaseFired = {};
 
   // Meta's own loader, verbatim in behaviour: define the stub queue, then
   // pull fbevents.js. Written out rather than pasted as a minified blob so
@@ -406,6 +487,22 @@
   function startPixel() {
     fetch("/api/pixel-config", { cache: "force-cache" })
       .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        // Which pixel is the config's to say, so this waits for it. A funnel
+        // that names none goes on with the id it was just handed.
+        return cfgKnown.then(function () {
+          var own = ownPixel();
+          if (!own) return data;
+          // Its own pixel, asked for by slug. The default id above is dropped
+          // unused, and so is any answer that is not the id the config names.
+          return fetch("/api/pixel-config?slug=" + encodeURIComponent(slug),
+                       { cache: "force-cache" })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (mine) {
+              return (mine && String(mine.pixel_id) === own.id) ? mine : null;
+            });
+        });
+      })
       .then(function (data) {
         var id = data && data.pixel_id;
         if (!id) return;
@@ -452,7 +549,7 @@
     if (stepNo) body.step = stepNo;
     if (extra) body.extra = extra;
     for (var k in attribution) body[k] = attribution[k];
-    if (pixelId) {
+    if (pixelId && !(leadMuted && event === "result_view")) {
       body.pixel_event_id = pixelId;
       var ids = metaIds();
       for (var m in ids) body[m] = ids[m];
@@ -4944,6 +5041,9 @@
     // A finished quiz with a result on screen is the qualified visitor Meta
     // should be optimising towards, so Lead sits exactly here and nowhere
     // earlier — and the tracking event of the same moment carries its id.
+    // Once a session where the funnel has a pixel of its own; every other
+    // funnel fires it on each result, under the session's one id.
+    leadMuted = !!ownPixel() && ownLeadSpent();
     var lead = pixelEventId("Lead");
     track("result_view", null, null, lead);
     pixelTrack("Lead", lead);
@@ -6597,6 +6697,11 @@
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (data) {
         if (data && data.email_masked) setEmailNote(data.email_masked);
+        // Only a funnel with its own pixel is ever sent this, and only for a
+        // purchase the server has confirmed and that is not a test one.
+        if (data && data.status === "ready" && data.purchase) {
+          ownPurchase(data.purchase);
+        }
 
         var report = data && data.report;
         var sections = (report && report.sections) || [];
@@ -8978,12 +9083,13 @@
 
     if (unlocked) startUnlocked(cs);   // no-op when the early path got there first
 
-    if (!/^[a-z0-9_-]{1,32}$/.test(slug)) return;
+    if (!/^[a-z0-9_-]{1,32}$/.test(slug)) { cfgSettle(); return; }
 
     fetch("/static/funnels/" + slug + ".json", { cache: "no-cache" })
       .then(function (r) { if (!r.ok) throw new Error("config"); return r.json(); })
       .then(function (data) {
         cfg = data;
+        cfgSettle();
         keepPassthrough(params);
         document.title = (cfg.meta && cfg.meta.title) || document.title;
         applyTheme();
@@ -8999,7 +9105,7 @@
         }
         begin(unlocked);
       })
-      .catch(function () { lost(unlocked); });
+      .catch(function () { cfgSettle(); lost(unlocked); });
   }
 
   function themeCss() {

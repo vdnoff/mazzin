@@ -201,18 +201,34 @@ print("\n--- cut from focus: what is kept and what is dropped ---")
 DROPPED = ["track_timing", "result_template", "preview_gallery",
            "style_elements", "analyzing_echo", "sale", "pairings",
            "share_cards", "interstitial_working"]
-# Four keys are this funnel's own: `theme_css` and `icons`, beside the theme
-# they belong to; and, last, `rsoc`, the partner-article block, and `paths`,
-# the table its report matches a reader's strategies from.
-OWN = ["theme_css", "icons", "rsoc", "paths"]
-check("every top-level key is one focus carries, bar its own four",
+# Five keys are this funnel's own: `theme_css` and `icons`, beside the theme
+# they belong to; `pixel`, beside the Stripe mode that silences its Purchase;
+# and, last, `rsoc`, the partner-article block, and `paths`, the table its
+# report matches a reader's strategies from.
+OWN = ["theme_css", "icons", "pixel", "rsoc", "paths"]
+check("every top-level key is one focus carries, bar its own five",
       [k for k in cfg if k not in FOCUS] == OWN,
       str([k for k in cfg if k not in FOCUS]))
 check("  in focus's order, the theme's stylesheet beside the theme",
-      [k for k in cfg if k not in ("theme_css", "icons")]
-      == [k for k in FOCUS if k in cfg] + OWN[2:]
+      [k for k in cfg if k not in ("theme_css", "icons", "pixel")]
+      == [k for k in FOCUS if k in cfg] + OWN[3:]
       and list(cfg)[list(cfg).index("theme"):][:3]
-      == ["theme", "theme_css", "icons"])
+      == ["theme", "theme_css", "icons"]
+      and list(cfg)[list(cfg).index("stripe_mode") + 1] == "pixel")
+check("its own pixel: the id, the token's variable by name, three events",
+      cfg["pixel"] == {"id": "762004311984135",
+                       "capi_token_env": "META_CAPI_TOKEN_VISYMO",
+                       "events": ["PageView", "Lead", "Purchase"]}
+      and re.match(r"^[0-9]{5,20}$", cfg["pixel"]["id"]) is not None)
+check("  no ViewContent, no InitiateCheckout, and no token in the file",
+      "ViewContent" not in cfg["pixel"]["events"]
+      and "InitiateCheckout" not in cfg["pixel"]["events"]
+      and "access_token" not in json.dumps(cfg)
+      and sorted(cfg["pixel"]) == ["capi_token_env", "events", "id"])
+check("  and no other funnel has a pixel block",
+      not [n for n in os.listdir(os.path.join(REPO, "funnels"))
+           if n.endswith(".json") and n != "ai-navigator.json"
+           and "pixel" in json.load(open(os.path.join(REPO, "funnels", n)))])
 check("  and the ones with no meaning here are gone, not emptied",
       sorted(k for k in FOCUS if k not in cfg) == sorted(DROPPED),
       str(sorted(k for k in FOCUS if k not in cfg)))
@@ -961,12 +977,15 @@ check("  on, in both places, and only for a reader who came from a click",
 check("  passing on the three identifiers, in this order",
       RSOC.get("passthrough") == ["fbclid", "ad_id", "asid"])
 check("  the card's own words: kicker, headline, line, and the note",
-      RSOC.get("kicker") == "NOT READY TO PAY YET?"
-      and RSOC.get("head") == "Learn how people make money with AI. Free."
-      and RSOC.get("sub") == "{n} free guides, picked from your answers. "
-      "Read them first, start when you are ready."
+      RSOC.get("kicker") == "NOT READY TO UNLOCK YET?"
+      and RSOC.get("head") == "Get the basics first. Free."
+      and RSOC.get("sub") == "{n} free guides on the tools and skills behind "
+      "your profile. Your money strategy stays in your report."
       and RSOC.get("note")
       == "Opens evoseekly.com, a partner site that shows ads.")
+check("  nothing in the guides card says \"make money\"",
+      not re.search(r"make money", json.dumps(
+          {k: v for k, v in RSOC.items()}), re.I))
 check("  the same card after the money, under its own kicker and headline",
       RSOC.get("kicker_delivered") == "KEEP GOING"
       and RSOC.get("head_delivered")
