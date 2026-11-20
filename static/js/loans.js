@@ -305,6 +305,71 @@
     }));
   }
 
+  // --- the partner's Meta pixel ---------------------------------------------
+  //
+  // The article partner's pixel, on this page only. It is not the site's own
+  // pixel and shares nothing with it: the id is the constant below, nothing
+  // is asked of the server, and nothing is sent from the server.
+  //
+  // Three events and no others: a page view on load, a lead when the summary
+  // is shown (once a session), and an add-to-cart when an article row is
+  // tapped. The view of the article itself is the partner's page's event to
+  // send, on this same pixel, and is never sent from here.
+  //
+  // Every call names the pixel (`trackSingle`), so nothing here can land on
+  // another one. No advanced matching and no user data: an event carries its
+  // name and, for a tap, the article's key. Meta's script is fetched async
+  // after the first view is on screen; if it never arrives the calls below
+  // sit in a queue nobody reads and the page is exactly what it was.
+  var PIXEL_ID = "762004311984135";
+
+  function pixel() {
+    try {
+      if (typeof window.fbq === "function") window.fbq.apply(window, arguments);
+    } catch (e) { /* measurement never breaks the page */ }
+  }
+
+  function pixelEvent(name, params) {
+    if (params) pixel("trackSingle", PIXEL_ID, name, params);
+    else pixel("trackSingle", PIXEL_ID, name);
+  }
+
+  // Meta's base loader: a queueing stub now, their script when it lands.
+  function pixelStart() {
+    try {
+      if (!window.fbq) {
+        var n = window.fbq = function () {
+          if (n.callMethod) n.callMethod.apply(n, arguments);
+          else n.queue.push(arguments);
+        };
+        if (!window._fbq) window._fbq = n;
+        n.push = n;
+        n.loaded = true;
+        n.version = "2.0";
+        n.queue = [];
+      }
+    } catch (e) { return; }
+    pixel("init", PIXEL_ID);
+    pixelEvent("PageView");
+  }
+
+  function pixelLoad() {
+    try {
+      var tag = document.createElement("script");
+      tag.async = true;
+      tag.src = "https://connect.facebook.net/en_US/fbevents.js";
+      document.head.appendChild(tag);
+    } catch (e) { /* blocked or offline: nothing depends on it */ }
+  }
+
+  // Once per session, on the same ledger as `result_view`.
+  function pixelOnce(key, name) {
+    if (state.sent[key]) return;
+    state.sent[key] = 1;
+    save();
+    pixelEvent(name);
+  }
+
   // --- views ---------------------------------------------------------------
 
   function ready(view) {
@@ -421,6 +486,8 @@
         // whatever becomes of the request.
         row.addEventListener("click", function () {
           track("offer_tap", null, { slot: key });
+          pixelEvent("AddToCart",
+                     { content_name: key, content_category: "loans" });
         });
         li.appendChild(row);
         list.appendChild(li);
@@ -463,7 +530,10 @@
       var h1 = $("view-" + view).querySelector("h1");
       if (h1) { try { h1.focus({ preventScroll: true }); } catch (e) { h1.focus(); } }
     }
-    if (view === "options") trackOnce("result", "result_view");
+    if (view === "options") {
+      trackOnce("result", "result_view");
+      pixelOnce("px_lead", "Lead");
+    }
   }
 
   function historyState(view) { return { v: view, i: VIEWS.indexOf(view) }; }
@@ -590,7 +660,9 @@
         for (var i = 1; i <= upto; i++) history.pushState(historyState(VIEWS[i]), "");
       } catch (e) {}
     }
+    pixelStart();
     show(view, false);
     trackOnce("start", "funnel_start");
+    pixelLoad();
   })();
 })();
