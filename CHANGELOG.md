@@ -714,3 +714,6 @@ bottom.
 
 ## 2026-11-20 — claude/ai-navigator-traps
 - AI Navigator v3: money traps, icons, bigger type, new copy
+
+## 2026-11-20 — claude/ai-navigator-pixel
+- AI Navigator: Visymo pixel (Lead at result, Purchase after payment), guides card copy
