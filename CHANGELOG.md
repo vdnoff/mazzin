@@ -711,3 +711,6 @@ bottom.
 
 ## 2026-11-18 — claude/ai-navigator-result-v2
 - AI Navigator: result page v2 (money-with-AI offer card, light guides card, featured guide slot)
+
+## 2026-11-20 — claude/ai-navigator-traps
+- AI Navigator v3: money traps, icons, bigger type, new copy
