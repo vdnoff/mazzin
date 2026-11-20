@@ -365,9 +365,14 @@ check("the email gate still owns /api/lead, untouched",
       and '@bp.post("/api/lead")' in read("leads.py"))
 
 print("\n--- the schema ---")
-check("the migration is appended, dated and last",
+# It was the last statement when it shipped. The file is append-only, so
+# later migrations follow it; what holds is that it is there once, whole, and
+# that nothing after it touches its table.
+check("the migration is appended and dated, and nothing later alters it",
       "-- 2026-11-10" in MIGRATIONS
-      and MIGRATIONS.rstrip().endswith(");")
+      and "  INDEX idx_loan_lead_created (created_at)\n);\n" in MIGRATIONS
+      and "loan_leads" not in MIGRATIONS.split(
+          "  INDEX idx_loan_lead_created (created_at)\n);\n")[1]
       and MIGRATIONS.count("CREATE TABLE loan_leads (") == 1
       and MIGRATIONS.index("CREATE TABLE loan_leads")
       > MIGRATIONS.index("idx_leads_funnel_lang_created"))
@@ -507,14 +512,77 @@ external = [u for u in re.findall(r"(?:https?:)?//[\w.-]+\.[a-z]{2,}[^\s\"')]*",
 ARTICLES = re.findall(r'    "(\w+)": \{\n      label: "([^"\n]+)",\n'
                       r'      link: "([^"\n]+)"\n    \}', JS)
 LINKS = [a[2] for a in ARTICLES]
-check("the only addresses off the site are the partner's article links",
-      sorted(external) == sorted(LINKS) and not
+# One origin is loaded from: Meta's, for the article partner's pixel. It is
+# named once, in loans.js, and it is the only address here that is not an
+# article link.
+META_SCRIPT = "https://connect.facebook.net/en_US/fbevents.js"
+check("the only addresses off the site: the article links and Meta's script",
+      sorted(external) == sorted(LINKS + [META_SCRIPT]) and not
       [u for u in re.findall(r"(?:https?:)?//[\w.-]+\.[a-z]{2,}", PAGE + CSS)
        if "www.w3.org/2000/svg" not in u], external[:3])
-check("  and none of them is loaded: no script, frame, image or fetch of one",
+check("  no article link is loaded: no frame, image or fetch of one",
       not re.search(r"<(script|iframe|img|link)\b[^>]*https?:", PAGE)
       and JS.count("fetch(") == 1 and "fetch(url, {" in JS
       and "XMLHttpRequest" not in JS and "import(" not in JS)
+check("  exactly one external origin is loaded from, connect.facebook.net",
+      sorted(set(re.findall(r"https?://([\w.-]+)", u)[0] for u in external
+                 if u not in LINKS)) == ["connect.facebook.net"]
+      and JS.count('createElement("script")') == 1
+      and 'tag.src = "%s";' % META_SCRIPT in JS and "tag.async = true;" in JS
+      and "<noscript><img" not in PAGE and "facebook" not in PAGE)
+
+print("\n--- the article partner's pixel: three events, this page only ---")
+PIXEL_ID = "762004311984135"
+check("the pixel id is in loans.js exactly once, as one constant",
+      JS.count(PIXEL_ID) == 1 and 'var PIXEL_ID = "%s";' % PIXEL_ID in JS
+      and PIXEL_ID not in PAGE and PIXEL_ID not in CSS)
+# /ai-navigator's own config names the same partner pixel in its `pixel`
+# block (and so does its sandbox twin). That is a funnel config read by
+# engine.js, not a page; no other static file may carry the id.
+elsewhere = []
+for folder, _dirs, files in os.walk(os.path.join(REPO, "static")):
+    for name in files:
+        path = os.path.join(folder, name)
+        rel = os.path.relpath(path, REPO)
+        if rel == os.path.join("static", "js", "loans.js"):
+            continue
+        if not name.endswith((".js", ".html", ".css", ".json", ".txt",
+                              ".xml", ".svg", ".webmanifest")):
+            continue
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            if PIXEL_ID in fh.read():
+                elsewhere.append(rel)
+check("  and in no other static file but /ai-navigator's own config",
+      sorted(elsewhere) == [
+          os.path.join("static", "funnels", "ai-navigator-test.json"),
+          os.path.join("static", "funnels", "ai-navigator.json")],
+      elsewhere)
+for word in ("ViewContent", "Purchase"):
+    check("  %r appears in neither loans.html nor loans.js" % word,
+          word not in PAGE and word not in JS)
+check("  every event names the pixel: init once, trackSingle for the rest",
+      JS.count('pixel("init", PIXEL_ID);') == 1
+      and JS.count('"trackSingle"') == 2
+      and 'pixel("trackSingle", PIXEL_ID, name, params);' in JS
+      and 'pixel("trackSingle", PIXEL_ID, name);' in JS
+      and not re.search(r'pixel\("track"', JS)
+      and not re.search(r'\bfbq\(', JS.replace("window.fbq.apply(", "")))
+check("  three event names and no others",
+      sorted(re.findall(r'pixel(?:Event|Once)\((?:"\w+", )?"([A-Z]\w+)"', JS))
+      == ["AddToCart", "Lead", "PageView"])
+check("  init carries no second argument: no advanced matching",
+      'pixel("init", PIXEL_ID);' in JS and "external_id" not in JS
+      and "/api/pixel-config" not in JS)
+check("  the tap's parameters are the article key and the category, only",
+      'pixelEvent("AddToCart",\n                     { content_name: key, '
+      'content_category: "loans" });' in JS)
+check("  Lead rides the once-a-session ledger result_view uses",
+      'trackOnce("result", "result_view");\n      pixelOnce("px_lead", "Lead");'
+      in JS and "if (state.sent[key]) return;" in JS)
+check("  every call is guarded, and the script is asked for after the view",
+      "try {\n      if (typeof window.fbq === \"function\") "
+      "window.fbq.apply(window, arguments);\n    } catch (e)" in JS
+      and JS.index("show(view, false);") < JS.index("pixelLoad();\n  })();"))
 check("the site's own two font files, and only those",
       set(re.findall(r'url\("([^"]+)"\)', CSS))
       == {"/static/fonts/inter-latin-var.woff2",
