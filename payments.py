@@ -276,6 +276,13 @@ INSERT_PURCHASE_SQL = (
     "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
 )
 
+# Stripe's own word on whether real money moved, written straight after the
+# row and never as part of it: the insert above is what the two unique keys
+# guard, and it has to succeed on a server where this column has not been
+# added yet. NULL — a row from before the column, or one this statement never
+# reached — is read everywhere as "not live".
+MARK_LIVEMODE_SQL = "UPDATE purchases SET livemode = %s WHERE id = %s"
+
 INSERT_PURCHASE_EVENT_SQL = (
     "INSERT INTO events (funnel, session_id, event) VALUES (%s, %s, 'purchase')"
 )
@@ -1767,6 +1774,50 @@ def _is_live_payment(event, checkout_session):
     return not str(checkout_session or "").startswith("cs_test_")
 
 
+def _livemode_of(event, obj, checkout_session):
+    """1, 0 or None: what Stripe said about this payment, for the row.
+
+    The event's `livemode` first, the paid object's own second — a payment
+    intent and a checkout session both carry it. A `cs_test_` session is a
+    test payment whatever else is said. With neither field there is nothing
+    to record, and nothing recorded is not live.
+    """
+    if str(checkout_session or "").startswith("cs_test_"):
+        return 0
+    said = event.get("livemode")
+    if not isinstance(said, bool):
+        said = (obj or {}).get("livemode")
+    if not isinstance(said, bool):
+        return None
+    return 1 if said else 0
+
+
+_livemode_unavailable_logged = False
+
+
+def _mark_livemode(purchase_id, livemode):
+    """Write `livemode` onto the purchase. True only if the row now says live.
+
+    Best effort, and it has to be: the deploy lands before the column does,
+    and a purchase must still be recorded and its report delivered on a table
+    that cannot hold this yet. A failure is one warning a process — class
+    only — and the purchase stays "not live", which costs a funnel with its
+    own pixel a Purchase event and costs nobody anything else.
+    """
+    global _livemode_unavailable_logged
+    if livemode is None:
+        return False
+    try:
+        database.execute(MARK_LIVEMODE_SQL, (livemode, purchase_id))
+    except Exception as exc:                      # noqa: BLE001 - best effort
+        if not _livemode_unavailable_logged:
+            _livemode_unavailable_logged = True
+            log.warning("purchases.livemode could not be written (%s) — "
+                        "apply schema_migrations.sql", type(exc).__name__)
+        return False
+    return livemode == 1
+
+
 def _claim_visualizer_photo(purchase_id, slug, session_id):
     """Hand this purchase the photo its session uploaded before paying.
 
@@ -1978,7 +2029,16 @@ def stripe_webhook():
     # event with no `livemode` at all behaves exactly as it did before this,
     # so a live purchase can never be dropped by a missing field.
     live_purchase = _is_live_payment(event, checkout_session)
-    if not live_purchase:
+    # The same fact, on the row. A funnel with a pixel of its own sends its
+    # Purchase only when the row says live — the browser's copy is decided by
+    # reading that row later, and the two must not disagree. Every other
+    # funnel is decided by the line above, as it always was.
+    row_live = _mark_livemode(
+        purchase_id, _livemode_of(event, obj, checkout_session))
+    if live_purchase and not row_live and funnel_pixel(slug):
+        log.info("purchase %s is not marked live — Meta purchase event "
+                 "skipped", purchase_id)
+    elif not live_purchase:
         # Names the payment, not the signature: an event can be signed with the
         # live secret and still be a test payment, and a line claiming
         # otherwise is the one you would read while wondering where a
@@ -2084,8 +2144,8 @@ def report():
 
 
 SELECT_PURCHASE_AMOUNT_SQL = (
-    "SELECT amount_cents, currency, payment_intent, checkout_session "
-    "FROM purchases WHERE id = %s"
+    "SELECT amount_cents, currency, payment_intent, checkout_session, "
+    "livemode FROM purchases WHERE id = %s"
 )
 PAYMENT_INTENT_RE = re.compile(r"^pi_[A-Za-z0-9_]{1,250}$")
 
@@ -2095,7 +2155,8 @@ def _browser_purchase(purchase):
 
     Only for a funnel whose `pixel` block lists Purchase, only once the
     purchase is a row the webhook wrote, and never for a test one: the funnel
-    in test mode, or a session Stripe itself marked as test. What is charged
+    in test mode, a row not marked live, or a session Stripe itself marked as
+    test. What is charged
     is read off the row — the amount Stripe reported, not the config's price —
     and the payment intent is the id the server's own Purchase goes out
     under, so Meta counts the pair once. No address, no session: three fields.
@@ -2112,6 +2173,11 @@ def _browser_purchase(purchase):
             return None
         row = database.query_one(SELECT_PURCHASE_AMOUNT_SQL, (purchase["id"],))
         if not row:
+            return None
+        # Live by the row's own word, written when the webhook confirmed it.
+        # NULL, 0, or a table without the column (the query above raises and
+        # the handler below answers None): not live, no Purchase.
+        if row.get("livemode") not in (1, True):
             return None
         intent = row.get("payment_intent") or ""
         if not PAYMENT_INTENT_RE.match(intent):

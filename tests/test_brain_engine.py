@@ -553,10 +553,11 @@ OWNER = "brain.json"
 # cut from it, with its sandbox twin. Every exclusivity check below reads
 # this list; the positive checks — "and the one that does names both" —
 # still read the one funnel the file was written against.
-OWNERS = ("ai-navigator.json", "brain.json", "focus-test.json", "focus.json")
+OWNERS = ("ai-navigator-test.json", "ai-navigator.json", "brain.json",
+          "focus-test.json", "focus.json")
 # The third game, ai-navigator, is cut from focus without its clock: no
 # reaction times and no pools. The two checks on those read this list.
-TIMED = tuple(n for n in OWNERS if n != "ai-navigator.json")
+TIMED = tuple(n for n in OWNERS if not n.startswith("ai-navigator"))
 
 print("\n--- 6. a step that says which round it is ---")
 kick_fn = body("setStepKicker")
