@@ -289,7 +289,8 @@ def server_half():
 
     print("\n--- /api/report: what the browser's Purchase is built from ---")
     row = {"amount_cents": 600, "currency": "usd",
-           "payment_intent": PI_LIVE, "checkout_session": None}
+           "payment_intent": PI_LIVE, "checkout_session": None,
+           "livemode": 1}
     bought = {"id": 41, "funnel": "ai-navigator", "session_id": "s",
               "result_style": "builder", "status": "paid",
               "email": "reader@example.com"}
@@ -329,6 +330,11 @@ def server_half():
     check("a session Stripe marked as test: no purchase block",
           "purchase" not in report())
     row["checkout_session"] = None
+    for said in (None, 0):
+        row["livemode"] = said
+        check("a row whose livemode is %r: no purchase block" % said,
+              "purchase" not in report())
+    row["livemode"] = 1
     row["payment_intent"] = None
     check("no payment intent to name it by: no purchase block",
           "purchase" not in report())

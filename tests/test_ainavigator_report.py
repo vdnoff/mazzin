@@ -157,8 +157,8 @@ check("  seven items of strengths and traps, seven days",
       "SEVEN items" in profile["spec"]["mistakes"]
       and "SEVEN items" in profile["spec"]["shopping"]
       and '"Day 7 - Ask one person"' in profile["spec"]["shopping"])
-check("the funnel still transacts on the test keys",
-      CFG.get("stripe_mode") == "test")
+check("the funnel transacts on the live keys",
+      CFG.get("stripe_mode") == "live")
 
 print("\n--- the stubs ---")
 for section_id in SECTIONS:

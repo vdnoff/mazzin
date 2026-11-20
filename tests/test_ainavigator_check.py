@@ -65,6 +65,9 @@ def read(rel):
 
 
 SLUG = "ai-navigator"
+# The funnel and its sandbox twin, which is the same config under a second
+# slug: neither is "another funnel" to a scan of the rest.
+OWN_FILES = (SLUG + ".json", SLUG + "-test.json")
 RAW = read("funnels/%s.json" % SLUG)
 cfg = json.loads(RAW)
 FOCUS = json.loads(read("funnels/focus.json"))
@@ -149,26 +152,31 @@ print("\n--- it cannot take a live charge ---")
 # payments.py refuses checkout rather than fall back to the live keys when
 # those are missing. An override row is the only thing that outranks it, and
 # that is a deliberate act by a signed-in owner.
-check("the config asks for the test key set", cfg.get("stripe_mode") == "test")
+#
+# That was the build. The funnel is live now: the config says so in as many
+# words, the way /zodiac's does, and its sandbox twin keeps the test path.
+check("the config asks for the live key set", cfg.get("stripe_mode") == "live")
 check("  which is what payments reads off it",
-      payments._stripe_mode(cfg) == payments.TEST
-      and payments._stripe_mode(config.load_funnel(SLUG)) == payments.TEST)
+      payments._stripe_mode(cfg) == payments.LIVE
+      and payments._stripe_mode(config.load_funnel(SLUG)) == payments.LIVE)
 _real = payments._read_override
 payments._read_override = lambda slug: None
 try:
     check("  and, with no override row, what it transacts on",
-          payments.effective_mode(SLUG) == payments.TEST
-          and payments.effective_mode(SLUG, cfg) == payments.TEST)
+          payments.effective_mode(SLUG) == payments.LIVE
+          and payments.effective_mode(SLUG, cfg) == payments.LIVE
+          and payments.effective_mode(SLUG + "-test") == payments.TEST)
 finally:
     payments._read_override = _real
-check("  the same flag focus ships on, read the same way",
-      FOCUS.get("stripe_mode") == "test"
+check("  the flag is read the way every funnel's is",
+      json.load(open(os.path.join(REPO, "funnels", "zodiac.json")))
+      .get("stripe_mode") == "live"
       and 'return TEST if (cfg or {}).get("stripe_mode") == TEST else LIVE'
       in read("payments.py"))
 import reports                                               # noqa: E402
-check("its report profile is registered, and the flag stays on test anyway",
+check("its report profile is registered, and the twin falls through to it",
       reports.PROFILES.get(SLUG) is reports.AI_PROFILE
-      and cfg.get("stripe_mode") == "test")
+      and reports._profile(SLUG + "-test") is reports.AI_PROFILE)
 
 print("\n--- what it says it is ---")
 HEADLINE = "11 ways to make money with AI. One has your name on it."
@@ -227,7 +235,7 @@ check("  no ViewContent, no InitiateCheckout, and no token in the file",
       and sorted(cfg["pixel"]) == ["capi_token_env", "events", "id"])
 check("  and no other funnel has a pixel block",
       not [n for n in os.listdir(os.path.join(REPO, "funnels"))
-           if n.endswith(".json") and n != "ai-navigator.json"
+           if n.endswith(".json") and n not in OWN_FILES
            and "pixel" in json.load(open(os.path.join(REPO, "funnels", n)))])
 check("  and the ones with no meaning here are gone, not emptied",
       sorted(k for k in FOCUS if k not in cfg) == sorted(DROPPED),
@@ -493,7 +501,7 @@ STEP_KEYS = ("title", "title_kicker", "foot", "chip", "sub", "letters",
              "icon", "progress_label", "why")
 no_feedback = []
 for name in sorted(os.listdir(os.path.join(ROOT, "funnels"))):
-    if name == SLUG + ".json":
+    if name in OWN_FILES:
         continue
     other = json.loads(read("funnels/" + name))
     swipe = other.get("swipe") or {}
@@ -861,7 +869,7 @@ check("  and every rule added for them is scoped to them",
       and all(re.search(r"is-text", sel) for sel in selectors),
       str([s for s in selectors if "is-text" not in s]))
 other = [name for name in sorted(os.listdir(os.path.join(ROOT, "funnels")))
-         if name != SLUG + ".json"
+         if name not in OWN_FILES
          and re.search(r'"format": "text\d"', read("funnels/" + name))]
 check("no other funnel names a text format", not other, str(other))
 
@@ -1038,7 +1046,7 @@ check("  and the lines a reader sees pass the banned scan",
                if any(re.search(p, text, re.I) for p in BANNED)])
 check("no other funnel carries the block",
       not [n for n in os.listdir(os.path.join(ROOT, "funnels"))
-           if n != SLUG + ".json"
+           if n not in OWN_FILES
            and "rsoc" in json.loads(read("funnels/" + n))])
 
 print("\n--- the partner articles: the identifiers ---")
@@ -1163,7 +1171,7 @@ check("focus is the file it was",
       and FOCUS["result_module"] == "/static/js/result_focus.js")
 check("no other config names this funnel's module or its sheet",
       not [n for n in os.listdir(os.path.join(ROOT, "funnels"))
-           if n != SLUG + ".json" and "result_ai" in read("funnels/" + n)])
+           if n not in OWN_FILES and "result_ai" in read("funnels/" + n)])
 check("result_focus.js and result_brain.js know nothing of it",
       "result_ai" not in read("static/js/result_focus.js")
       and "result_ai" not in read("static/js/result_brain.js")

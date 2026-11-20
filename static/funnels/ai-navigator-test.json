@@ -1,0 +1,1488 @@
+{
+  "slug": "ai-navigator-test",
+  "funnel_id": "ai_navigator_v1_test",
+  "locale": "en",
+  "theme": "ai",
+  "theme_css": "/static/css/result_ai.css",
+  "icons": {
+    "pen": "M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1zM14.5 6.5l3 3",
+    "shapes": "M4 4h6.5v6.5H4zM14 7.5a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0M12 14l4.5 7h-9z",
+    "code": "M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 5l-3 14",
+    "chat": "M4 5h16v11H10l-4 4v-4H4z",
+    "grid": "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
+    "book": "M4 5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2zM4 20a2 2 0 0 0 2 2h13v-4M9 7h6",
+    "cup": "M5 8h11v6a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5zM16 9h1.5a2.5 2.5 0 0 1 0 5H16M8 2v3M12 2v3",
+    "moon": "M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z",
+    "calendar": "M4 6h16v14H4zM4 10h16M8 3v4M16 3v4",
+    "bolt": "M13 2L5 13.5h6L10 22l9-12h-6.5z",
+    "coins": "M3.5 9a5.5 5.5 0 1 0 11 0a5.5 5.5 0 1 0-11 0M14.6 9.6A5.5 5.5 0 1 1 9.4 15",
+    "storefront": "M4 10v10h16V10M3 10l2-6h14l2 6a3 3 0 0 1-6 0a3 3 0 0 1-6 0a3 3 0 0 1-6 0M10 20v-5h4v5",
+    "trending-up": "M3 17l6-6 4 4 8-8M15 7h6v6",
+    "compass": "M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M15.5 8.5l-2 5-5 2 2-5z",
+    "bars-1": "M5 20v-4M10 20h.01M15 20h.01M20 20h.01",
+    "bars-2": "M5 20v-4M10 20v-8M15 20h.01M20 20h.01",
+    "bars-3": "M5 20v-4M10 20v-8M15 20v-12M20 20h.01",
+    "bars-4": "M5 20v-4M10 20v-8M15 20v-12M20 20V4",
+    "megaphone": "M4 10v4h3l7 4V6l-7 4zM17.5 9a4 4 0 0 1 0 6M7 14l1 5h2.5",
+    "file-half": "M6 3h8l4 4v14H6zM14 3v4h4M9 11h6M9 14h6M9 18h2",
+    "clock": "M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M12 7v5l3.5 2",
+    "voice": "M9 6a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0zM5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6",
+    "chart": "M4 4v16h16M8 16v-4M12 16V8M16 16v-6",
+    "image": "M4 5h16v14H4zM4 16l4.5-4.5 4 4 2.5-2.5 5 5M14 9.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0",
+    "thumbs-up": "M7 11v9H4v-9zM7 11l4-8a2.5 2.5 0 0 1 2.5 3L13 9.5h5a2 2 0 0 1 2 2.4l-1.3 6.5a2 2 0 0 1-2 1.6H7",
+    "question": "M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 17h.01",
+    "lock": "M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3",
+    "check": "M5 12.5l4.5 4.5L19 7.5",
+    "x": "M6 6l12 12M18 6L6 18",
+    "arrow": "M4 12h16M14 6l6 6-6 6"
+  },
+  "stripe_mode": "test",
+  "pixel": {
+    "id": "762004311984135",
+    "capi_token_env": "META_CAPI_TOKEN_VISYMO",
+    "events": [
+      "PageView",
+      "Lead",
+      "Purchase"
+    ]
+  },
+  "result_module": "/static/js/result_ai.js",
+  "result_css": "/static/css/result_ai.css",
+  "meta": {
+    "title": "AI Navigator"
+  },
+  "intro": {
+    "kicker": "AI NAVIGATOR",
+    "headline": "11 ways to make money with AI. One has your name on it.",
+    "sub": "12 taps. 8 money traps. Find the move that fits your skill and your week.",
+    "tiles": [
+      {
+        "icon": "pen",
+        "label": "Content"
+      },
+      {
+        "icon": "bolt",
+        "label": "Automation"
+      },
+      {
+        "icon": "shapes",
+        "label": "Design"
+      },
+      {
+        "icon": "book",
+        "label": "Workshops"
+      },
+      {
+        "icon": "chat",
+        "label": "Outreach"
+      },
+      {
+        "label": "+6 more"
+      }
+    ],
+    "cta": "Find my money move",
+    "cta_icon": "arrow",
+    "foot": "No sign-up. The test and your profile are free. Your full personal strategy is optional.",
+    "foot_note": "Educational content. No income is promised or guaranteed — results depend on your effort, skills and market."
+  },
+  "swipe": {
+    "pairs_count": 12,
+    "headline": "11 ways to make money with AI. One has your name on it.",
+    "subtext": "12 taps. No sign-up.",
+    "subtext_accent": "No sign-up.",
+    "hint": "Tap your answer.",
+    "label_mode": "check",
+    "analyzing_fade_to": "#0B0F14",
+    "steps": [
+      {
+        "id": "skill",
+        "chip": "11 strategies still in play",
+        "question": "Which one would a stranger pay you for?",
+        "sub": "Be honest. AI multiplies what you are already good at.",
+        "format": "text6",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "skill_writing",
+                "label": "Writing",
+                "sub": "Words that get read",
+                "icon": "pen",
+                "tags": [
+                  "skill_writing"
+                ]
+              },
+              {
+                "id": "skill_design",
+                "label": "Design",
+                "sub": "Things that look right",
+                "icon": "shapes",
+                "tags": [
+                  "skill_design"
+                ]
+              },
+              {
+                "id": "skill_tech",
+                "label": "Tech",
+                "sub": "Making tools talk",
+                "icon": "code",
+                "tags": [
+                  "skill_tech"
+                ]
+              },
+              {
+                "id": "skill_sales",
+                "label": "Sales",
+                "sub": "Getting a yes",
+                "icon": "chat",
+                "tags": [
+                  "skill_sales"
+                ]
+              },
+              {
+                "id": "skill_organizing",
+                "label": "Organizing",
+                "sub": "Order out of chaos",
+                "icon": "grid",
+                "tags": [
+                  "skill_organizing"
+                ]
+              },
+              {
+                "id": "skill_teaching",
+                "label": "Teaching",
+                "sub": "Making it click",
+                "icon": "book",
+                "tags": [
+                  "skill_teaching"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "time",
+        "chip": "11 strategies still in play",
+        "question": "How much of your week can AI money have?",
+        "sub": "The real number, not the ambitious one.",
+        "format": "text4",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "time_under3",
+                "label": "Lunch breaks",
+                "sub": "Small, steady moves",
+                "icon": "cup",
+                "badge": "under 3h",
+                "said": "Under 3",
+                "tags": [
+                  "time_under3"
+                ]
+              },
+              {
+                "id": "time_3_7",
+                "label": "A few evenings",
+                "sub": "A side-project pace",
+                "icon": "moon",
+                "badge": "3–7h",
+                "said": "3–7",
+                "tags": [
+                  "time_3_7"
+                ]
+              },
+              {
+                "id": "time_8_15",
+                "label": "Every weekend",
+                "sub": "Room to build something",
+                "icon": "calendar",
+                "badge": "8–15h",
+                "said": "8–15",
+                "tags": [
+                  "time_8_15"
+                ]
+              },
+              {
+                "id": "time_15plus",
+                "label": "I'm all in",
+                "sub": "This is the plan",
+                "icon": "bolt",
+                "badge": "15h+",
+                "said": "15+",
+                "tags": [
+                  "time_15plus"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "goal",
+        "chip": "11 strategies still in play",
+        "question": "What's the dream?",
+        "format": "text4",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "goal_side",
+                "label": "Extra cash on the side",
+                "sub": "Something small that pays",
+                "icon": "coins",
+                "said": "A side income",
+                "tags": [
+                  "goal_side"
+                ]
+              },
+              {
+                "id": "goal_business",
+                "label": "My own business",
+                "sub": "The long game",
+                "icon": "storefront",
+                "said": "A full business",
+                "tags": [
+                  "goal_business"
+                ]
+              },
+              {
+                "id": "goal_levelup",
+                "label": "Getting paid more at my job",
+                "sub": "Same job, better at it",
+                "icon": "trending-up",
+                "said": "More from my current job",
+                "tags": [
+                  "goal_levelup"
+                ]
+              },
+              {
+                "id": "goal_unsure",
+                "label": "Just curious, for now",
+                "sub": "Show me what's possible",
+                "icon": "compass",
+                "said": "Not sure yet",
+                "tags": [
+                  "goal_unsure"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "predict",
+        "chip": "3 strategies left",
+        "question": "Gut check: how many of the 8 money traps will you dodge?",
+        "format": "text4",
+        "shuffle": false,
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "predict_0_2",
+                "label": "I'll walk into most",
+                "icon": "bars-1",
+                "badge": "0–2",
+                "tags": [
+                  "predict_0_2"
+                ]
+              },
+              {
+                "id": "predict_3_4",
+                "label": "About half",
+                "icon": "bars-2",
+                "badge": "3–4",
+                "tags": [
+                  "predict_3_4"
+                ]
+              },
+              {
+                "id": "predict_5_6",
+                "label": "Most of them",
+                "icon": "bars-3",
+                "badge": "5–6",
+                "tags": [
+                  "predict_5_6"
+                ]
+              },
+              {
+                "id": "predict_7_8",
+                "label": "Nearly all. Watch me.",
+                "icon": "bars-4",
+                "badge": "7–8",
+                "tags": [
+                  "predict_7_8"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "mem1",
+        "title_kicker": "MONEY TRAP #1",
+        "title": "The Confident Liar",
+        "icon": "megaphone",
+        "progress_label": "Trap 1 of 8",
+        "question": "The AI says it with total confidence. Your client asks: \"Is this true?\" What do you actually know?",
+        "format": "text4",
+        "letters": true,
+        "foot": "Tap the move you would actually make.",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "mem1_c1",
+                "label": "Nothing. Sure isn't the same as right",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem1_c2",
+                "label": "It's solid. Look how sure it is",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem1_c3",
+                "label": "It must have checked online",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem1_c4",
+                "label": "That much detail can't be wrong",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "why": "AI is just as confident when it's wrong. And your name is on the invoice."
+      },
+      {
+        "id": "mem2",
+        "title_kicker": "MONEY TRAP #2",
+        "title": "The 80-Page Blind Spot",
+        "icon": "file-half",
+        "progress_label": "Trap 2 of 8",
+        "question": "You feed it a client's 80-page file. The summary quietly ignores the second half. What happened?",
+        "format": "text4",
+        "letters": true,
+        "foot": "Tap the move you would actually make.",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "mem2_c1",
+                "label": "It ran out of room. It can only hold so much",
+                "tags": [
+                  "mem_hit"
+                ]
+              },
+              {
+                "id": "mem2_c2",
+                "label": "The file is broken",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_c3",
+                "label": "It got bored and skipped ahead",
+                "tags": [
+                  "mem_miss"
+                ]
+              },
+              {
+                "id": "mem2_c4",
+                "label": "It never reads attachments",
+                "tags": [
+                  "mem_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "why": "Feed long files in parts, or you bill for half a job."
+      },
+      {
+        "id": "foc1",
+        "title_kicker": "MONEY TRAP #3",
+        "title": "The One-Hour Deadline",
+        "icon": "clock",
+        "progress_label": "Trap 3 of 8",
+        "question": "60 minutes to deadline. The draft is 70% there. What gets you paid on time?",
+        "format": "text4",
+        "letters": true,
+        "foot": "Tap the move you would actually make.",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "foc1_c1",
+                "label": "Tell it exactly what to fix",
+                "tags": [
+                  "foc_hit"
+                ]
+              },
+              {
+                "id": "foc1_c2",
+                "label": "Burn it down. New chat",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "foc1_c3",
+                "label": "Send it and pray",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "foc1_c4",
+                "label": "Try a different AI",
+                "tags": [
+                  "foc_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "why": "Fixing keeps the 70%. Starting over spends the hour."
+      },
+      {
+        "id": "foc2",
+        "title_kicker": "MONEY TRAP #4",
+        "title": "The Borrowed Voice",
+        "icon": "voice",
+        "progress_label": "Trap 4 of 8",
+        "question": "A client wants posts that sound exactly like them. What do you hand the AI?",
+        "format": "text4",
+        "letters": true,
+        "foot": "Tap the move you would actually make.",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "foc2_c1",
+                "label": "Two or three of their real posts",
+                "tags": [
+                  "foc_hit"
+                ]
+              },
+              {
+                "id": "foc2_c2",
+                "label": "The words \"be creative\"",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "foc2_c3",
+                "label": "Just their brand name",
+                "tags": [
+                  "foc_miss"
+                ]
+              },
+              {
+                "id": "foc2_c4",
+                "label": "A much longer prompt",
+                "tags": [
+                  "foc_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "why": "Examples show a voice. Descriptions leave the AI guessing, and you rewriting."
+      },
+      {
+        "id": "chg1",
+        "title_kicker": "MONEY TRAP #5",
+        "title": "The Perfect Statistic",
+        "icon": "chart",
+        "progress_label": "Trap 5 of 8",
+        "question": "You need one killer number for a paid report. AI delivers it, source and all. Your move?",
+        "format": "text4",
+        "letters": true,
+        "foot": "Tap the move you would actually make.",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "chg1_c1",
+                "label": "Open the source. Check it",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg1_c2",
+                "label": "Use it. It has a source",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_c3",
+                "label": "Ask the AI if it's sure",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg1_c4",
+                "label": "Round it and move on",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "why": "AI can invent sources that look real. One fake number in paid work, and the client is gone."
+      },
+      {
+        "id": "chg2",
+        "title_kicker": "MONEY TRAP #6",
+        "title": "The Images Nobody Checked",
+        "icon": "image",
+        "progress_label": "Trap 6 of 8",
+        "question": "A shop wants to buy your AI images. Cash is on the table. What do you check before you say yes?",
+        "format": "text4",
+        "letters": true,
+        "foot": "Tap the move you would actually make.",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "chg2_c1",
+                "label": "The tool's rules on selling",
+                "tags": [
+                  "chg_hit"
+                ]
+              },
+              {
+                "id": "chg2_c2",
+                "label": "Nothing. AI art is free to sell",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_c3",
+                "label": "Whether they look original enough",
+                "tags": [
+                  "chg_miss"
+                ]
+              },
+              {
+                "id": "chg2_c4",
+                "label": "How many likes they got",
+                "tags": [
+                  "chg_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "why": "Some tools and plans don't let you sell the output. Check before you take the money."
+      },
+      {
+        "id": "spa1",
+        "title_kicker": "MONEY TRAP #7",
+        "title": "The Idea Everyone Loves",
+        "icon": "thumbs-up",
+        "progress_label": "Trap 7 of 8",
+        "question": "Your friends say your AI service idea is genius. How do you find out if anyone will pay?",
+        "format": "text4",
+        "letters": true,
+        "foot": "Tap the move you would actually make.",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "spa1_c1",
+                "label": "Ask a few people to pay up front",
+                "tags": [
+                  "spa_hit"
+                ]
+              },
+              {
+                "id": "spa1_c2",
+                "label": "Build the whole thing first",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa1_c3",
+                "label": "Ask more friends",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa1_c4",
+                "label": "Design a great logo",
+                "tags": [
+                  "spa_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "why": "Compliments are free. A yes with money behind it is the only vote that counts."
+      },
+      {
+        "id": "spa2",
+        "title_kicker": "MONEY TRAP #8",
+        "title": "“Why Should I Pay You?”",
+        "icon": "question",
+        "progress_label": "Trap 8 of 8",
+        "question": "The client leans back: \"I have the same AI. Why would I pay you?\" What do you say?",
+        "format": "text4",
+        "letters": true,
+        "foot": "Tap the move you would actually make.",
+        "pairs": [
+          {
+            "id": "p1",
+            "images": [
+              {
+                "id": "spa2_c1",
+                "label": "You're paying for judgment and a result I stand behind",
+                "tags": [
+                  "spa_hit"
+                ]
+              },
+              {
+                "id": "spa2_c2",
+                "label": "I have secret prompts",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_c3",
+                "label": "Fair point. Never mind",
+                "tags": [
+                  "spa_miss"
+                ]
+              },
+              {
+                "id": "spa2_c4",
+                "label": "I type faster than you",
+                "tags": [
+                  "spa_miss"
+                ]
+              }
+            ]
+          }
+        ],
+        "why": "The tool is open to everyone. Clients pay for someone who knows what good looks like."
+      }
+    ],
+    "hold_ms": 450,
+    "feedback": {
+      "good": "Trap dodged.",
+      "bad": "You walked into it.",
+      "right": "Right answer",
+      "yours": "Your pick",
+      "flags": false,
+      "next": false,
+      "streak": "{n} in a row",
+      "wait": "Next trap in a moment. Tap to skip.",
+      "wait_last": "Your result in a moment."
+    },
+    "feedback_ms": 2000,
+    "score_strip": {
+      "label": "{n} dodged",
+      "aria": "{hit} dodged, {miss} walked into, {left} still to come"
+    }
+  },
+  "interstitials": [
+    {
+      "after_step": 4,
+      "template": "cut",
+      "kicker": "MATCH IN PROGRESS",
+      "cut": {
+        "from": "11",
+        "to": "3",
+        "rows": [
+          "Strategy 1",
+          "Strategy 2",
+          "Strategy 3"
+        ]
+      },
+      "line": "Your skill, hours and goal just cut 11 strategies down to 3.",
+      "sub": "Next: 8 money traps. How you handle them shapes your plan: where to start, what to offer and what to skip.",
+      "cta": "Show me trap #1",
+      "hold": true
+    }
+  ],
+  "styles": [
+    {
+      "id": "mechanic",
+      "name": "The Mechanic",
+      "tags": [
+        "mem_hit"
+      ],
+      "accent": "#3B7DD8",
+      "blurb": "You know what the machine is actually doing. When an answer comes back wrong you can usually say why, and that is where good judgment about these tools starts. The Mechanic grows fastest by pointing that understanding at one real problem — the zone with the most room is where your report begins.",
+      "reveals": {
+        "dna": {
+          "setup": "You read these tools the way a mechanic reads an engine, and the profile shows which of the other three zones that understanding",
+          "trigger": "has not been pointed at yet,"
+        },
+        "materials": {
+          "setup": "Three strategies fit somebody who understands the machinery, and the closest one starts from",
+          "trigger": "the skill you named yourself,"
+        },
+        "mistakes": {
+          "setup": "Your first strength is knowing why an output went wrong. The trap worth stepping around turns up",
+          "trigger": "when understanding it feels like finishing it,"
+        },
+        "shopping": {
+          "setup": "Seven days, one task each, sized to your hours — and day one is",
+          "trigger": "a thing you can finish in one sitting,"
+        },
+        "mistake_one": {
+          "title": "You know why it's wrong",
+          "body": "When an answer comes back off, you can usually say what happened: it guessed, it ran out of context, or it was never given the fact. That turns a bad output into a fixable one, and it is why your second attempt tends to land.",
+          "fix": "Before you retry, name the cause in five words. Then change that one thing."
+        }
+      }
+    },
+    {
+      "id": "director",
+      "name": "The Director",
+      "tags": [
+        "foc_hit"
+      ],
+      "accent": "#8E6FD8",
+      "blurb": "You get the output you meant to get. You give a tool an audience, a format and an example, the way you would brief a person, and you fix a draft by saying what to change. The Director grows fastest by adding a check at the end — the zone with the most room is where your report begins.",
+      "reveals": {
+        "dna": {
+          "setup": "Direction is the zone you already run on, and the profile shows which of the other three",
+          "trigger": "would make your briefs worth more,"
+        },
+        "materials": {
+          "setup": "Three strategies fit somebody who can steer an output, and the closest one starts from",
+          "trigger": "the skill you named yourself,"
+        },
+        "mistakes": {
+          "setup": "Your first strength is the brief. The trap worth stepping around turns up",
+          "trigger": "when a good-looking draft goes out unread,"
+        },
+        "shopping": {
+          "setup": "Seven days, one task each, sized to your hours — and day one is",
+          "trigger": "a brief you will reuse all week,"
+        },
+        "mistake_one": {
+          "title": "You brief instead of asking",
+          "body": "You tell the tool who it is writing for, what shape the answer should take and what good looks like. A lot of what gets called a better tool is a better brief, and yours are already specific.",
+          "fix": "Keep your three best briefs in one note. Reusing one beats rewriting it."
+        }
+      }
+    },
+    {
+      "id": "editor",
+      "name": "The Editor",
+      "tags": [
+        "chg_hit"
+      ],
+      "accent": "#F2B33D",
+      "blurb": "You check before you trust. A confident paragraph does not get past you because it is confident: you open the source, you notice what should not be pasted, you read the terms. The Editor grows fastest by producing more to check — the zone with the most room is where your report begins.",
+      "reveals": {
+        "dna": {
+          "setup": "Judgment is the zone you already run on, and the profile shows which of the other three",
+          "trigger": "gives it more to work with,"
+        },
+        "materials": {
+          "setup": "Three strategies fit somebody whose work is safe to put a name on, and the closest one starts from",
+          "trigger": "the skill you named yourself,"
+        },
+        "mistakes": {
+          "setup": "Your first strength is that you read before you ship. The trap worth stepping around turns up",
+          "trigger": "when checking becomes a reason not to start,"
+        },
+        "shopping": {
+          "setup": "Seven days, one task each, sized to your hours — and day one is",
+          "trigger": "your own five-line checklist,"
+        },
+        "mistake_one": {
+          "title": "You don't ship what you haven't read",
+          "body": "You open the source, you check the number and you notice what does not belong in a public tool. It is the least visible skill of the four, and it is the one that makes work safe to put your name on.",
+          "fix": "Write your checks down as a five-line list. A list is something you can show."
+        }
+      }
+    },
+    {
+      "id": "dealmaker",
+      "name": "The Dealmaker",
+      "tags": [
+        "spa_hit"
+      ],
+      "accent": "#4CAF7D",
+      "blurb": "You see what somebody would actually want. You ask who has the problem and how often before you ask what the tool can do, and you would rather test an idea than polish it. The Dealmaker grows fastest by getting hands-on with the tools — the zone with the most room is where your report begins.",
+      "reveals": {
+        "dna": {
+          "setup": "Business sense is the zone you already run on, and the profile shows which of the other three",
+          "trigger": "turns an idea into something you can show,"
+        },
+        "materials": {
+          "setup": "Three strategies fit somebody who starts from the customer, and the closest one starts from",
+          "trigger": "the skill you named yourself,"
+        },
+        "mistakes": {
+          "setup": "Your first strength is starting from the problem. The trap worth stepping around turns up",
+          "trigger": "when the pitch gets ahead of what you can deliver,"
+        },
+        "shopping": {
+          "setup": "Seven days, one task each, sized to your hours — and day one is",
+          "trigger": "one sentence about one customer,"
+        },
+        "mistake_one": {
+          "title": "You start from the problem",
+          "body": "You ask who has the problem and how often before you ask what the tool can do. That keeps you working on things somebody wants instead of things that are merely possible.",
+          "fix": "Write the problem as one sentence with one kind of customer in it. If you can't, it isn't specific yet."
+        }
+      }
+    }
+  ],
+  "analyzing": {
+    "duration_ms": 2500,
+    "text": "Building your profile",
+    "messages": [
+      "Adding up your eight traps…",
+      "Setting your score against your own prediction…",
+      "Matching your strategy…"
+    ],
+    "ink": "#F2F5F7"
+  },
+  "brain_age": {
+    "scored": 8,
+    "per_domain": 2,
+    "domains": {
+      "mem": "How AI works",
+      "foc": "Prompting",
+      "chg": "Judgment & risk",
+      "spa": "Business sense"
+    },
+    "levels": [
+      {
+        "max": 2,
+        "label": "Explorer"
+      },
+      {
+        "max": 5,
+        "label": "Builder"
+      },
+      {
+        "label": "Operator"
+      }
+    ],
+    "predict": {
+      "step": "predict",
+      "bands": {
+        "predict_0_2": {
+          "min": 0,
+          "max": 2,
+          "label": "0–2"
+        },
+        "predict_3_4": {
+          "min": 3,
+          "max": 4,
+          "label": "3–4"
+        },
+        "predict_5_6": {
+          "min": 5,
+          "max": 6,
+          "label": "5–6"
+        },
+        "predict_7_8": {
+          "min": 7,
+          "max": 8,
+          "label": "7–8"
+        }
+      }
+    }
+  },
+  "report": {
+    "generating_messages": [
+      "Reading your eight traps against the four zones…",
+      "Matching strategies to your skill, your hours and your goal…",
+      "Writing up your 8 traps…",
+      "Almost there — putting your first seven days in order…"
+    ],
+    "sections": [
+      {
+        "id": "dna",
+        "title": "Your AI Profile & Your Edge",
+        "teaser_line": "Where your four zones sit, and the one you can lean on from day one.",
+        "enabled": true,
+        "preview": [
+          "Four zone scores off your own answers, and what the pattern between them says.",
+          "It names the zone to lean on, the one with the most room, and how the first helps the second."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "materials",
+        "title": "Your 3 Best-Fit Strategies",
+        "teaser_line": "Three directions matched to {skill}, {hours} hours a week and your score — with a first step for each.",
+        "enabled": true,
+        "preview": [
+          "Each strategy says who it suits, what it asks of you and which of your zones it leans on.",
+          "They are ranked for your answers, and the first one starts from the skill you named."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "mistakes",
+        "title": "5 Strengths to Sell & 2 Traps to Avoid",
+        "teaser_line": "Five things you already do well, in plain words. And two traps worth stepping around.",
+        "enabled": true,
+        "preview": [
+          "The first strength reads as obvious written down, and it is the one the rest builds on.",
+          "Both traps come with what to do instead, and the easier one is first."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      },
+      {
+        "id": "shopping",
+        "title": "Your First 7 Days",
+        "teaser_line": "One small, concrete task a day for a week, sized to the hours you said you have.",
+        "enabled": true,
+        "preview": [
+          "Seven days, each a single task, in the order that builds on the day before.",
+          "Every day says which zone it works on, so you can see what you are practising."
+        ],
+        "reveal": {
+          "mode": "locked"
+        }
+      }
+    ],
+    "print_whole": true,
+    "mistake_one": {
+      "title": "Strength #1 of 5",
+      "locked_note": "Strengths 2–5 and both traps — inside your full report"
+    },
+    "also": {
+      "title": "Also in your report",
+      "rows": [
+        {
+          "section": "dna",
+          "hook": "How your four zones split, and which to lean on."
+        },
+        {
+          "section": "materials",
+          "hook": "Three strategies matched to your skill, hours and score."
+        },
+        {
+          "section": "shopping",
+          "hook": "Seven days, one task each, sized to your hours."
+        },
+        {
+          "title": "Your 8 Traps",
+          "hook": "Every trap, your move, the right move, and what it means for your plan."
+        }
+      ]
+    },
+    "hook_slots": {
+      "skill": {
+        "step": "skill",
+        "fallback": "your skill"
+      },
+      "hours": {
+        "step": "time",
+        "fallback": "your"
+      },
+      "goal": {
+        "step": "goal",
+        "fallback": "your goal"
+      }
+    }
+  },
+  "pricing": {
+    "amount_cents": 600,
+    "currency": "usd",
+    "cta": "Unlock my strategy"
+  },
+  "checkout": {
+    "kicker": "Your AI Navigator Report is ready",
+    "product_name": "Your AI Navigator Report",
+    "product_image": "/static/brand/icon-512.png",
+    "single_page": true,
+    "express": true,
+    "withdrawal_consent": false,
+    "commerce": {
+      "anchor_head": "A {price} plan built from your own 12 answers",
+      "anchor_head_accent": "built from your own 12 answers",
+      "price_anchor": "A personal plan built from 12 answers and your own skill, hours and goal",
+      "price_anchor_accent": "your own skill, hours and goal",
+      "price_note": "one-time",
+      "badges": [
+        "One-time",
+        "No subscription, ever"
+      ],
+      "price_suffix": "",
+      "trust": [
+        "Secure via Stripe",
+        "PDF to your email"
+      ],
+      "mid_line": "Your complete AI Navigator Report, built from your own answers.",
+      "mid_line_accent": "your own answers",
+      "mid_button": "See what's inside ↓",
+      "sticky_label": "Unlock my strategy · {price}"
+    },
+    "title": "Your {style} Report",
+    "proof_line": "Built from your 12 answers",
+    "manifest_hero": "strengths",
+    "manifest_head": "What's inside — {n} sections, yours to keep",
+    "anchor_head": "A {price} plan built from your own 12 answers",
+    "anchor": "A personal plan built from 12 answers and your own skill, hours and goal. Your complete report — {price}, once.",
+    "reframe": "One report, written from your answers. Yours to keep.",
+    "price_suffix": "",
+    "cta_label": "Unlock my strategy · {price}",
+    "consent_prechecked": true,
+    "trust": [
+      "Secure payment via Stripe",
+      "Instant delivery",
+      "PDF copy to your email"
+    ],
+    "eu_withdrawal_text": "Instant delivery — I waive my 14-day withdrawal right.",
+    "disclaimer": "Educational content. No income is promised or guaranteed — results depend on your effort, skills and market."
+  },
+  "result": {
+    "mistakes_teaser": "You have seen strength #1. The other four are what the report builds on — and one of them helps the zone with the most room on its own.",
+    "value_banner": "Four chapters, your first seven days and your 8 traps — built from your own answers, yours to keep."
+  },
+  "result_copy": {
+    "kicker": "YOUR AI MONEY PROFILE",
+    "score_of": "{n}/{total}",
+    "calibration_line": "You predicted {band}. You scored {n}.",
+    "calibration": {
+      "on": "You know exactly where you stand.",
+      "under": "Better than you think.",
+      "over": "Confidence is ahead of skill. Easy to fix."
+    },
+    "balance_title": "Your four zones",
+    "zone_of": "{n} of {total}",
+    "head_caption": "Four zones, two traps each, scored off your own answers.",
+    "offer_sub": "Your complete AI Navigator Report — once, yours to keep.",
+    "disclaimer": "Educational content. No income is promised or guaranteed — results depend on your effort, skills and market.",
+    "delivery_line": "Your PDF was sent to {email}",
+    "delivery_line_bare": "Your PDF was sent to your email",
+    "delivered_note": "A PDF of this report is in your inbox. This page stays at the link you were sent back to.",
+    "purpose_map": {
+      "goal_side": {
+        "emphasized_section": "materials",
+        "offer_sub": "A side project needs one strategy, not ten. Your three best fits are inside."
+      },
+      "goal_business": {
+        "emphasized_section": "materials",
+        "offer_sub": "A business starts with one offer. The three strategies that fit you are inside."
+      },
+      "goal_levelup": {
+        "emphasized_section": "mistakes",
+        "offer_sub": "Five strengths you can use in the work you already do are inside."
+      },
+      "goal_unsure": {
+        "emphasized_section": "dna",
+        "offer_sub": "Not sure yet is a fine place to start. Your profile says where."
+      }
+    },
+    "profile": {
+      "offer_head": "Your AI Navigator Report — built from your 12 answers",
+      "offer_personal": "Your zone with the most room is {zone}. Your first seven days start there.",
+      "offer_personal_even": "An even run across all four zones. Your report says which to build on first.",
+      "offer_cards": [
+        {
+          "icon": "target",
+          "title": "3 best-fit strategies",
+          "sub": "Matched to your skill, hours and score"
+        },
+        {
+          "icon": "calendar",
+          "title": "First 7 days",
+          "sub": "One concrete task a day"
+        },
+        {
+          "icon": "bolt",
+          "title": "5 strengths · 2 traps",
+          "sub": "What to lean on, what to step around"
+        },
+        {
+          "icon": "key",
+          "title": "Your 8 traps",
+          "sub": "Every trap, the right move, and why"
+        }
+      ],
+      "offer_chips": [
+        "One-time",
+        "No subscription, ever",
+        "Instant + email copy"
+      ],
+      "essence": {
+        "mechanic": "You know how the machine really works. That keeps your work from breaking.",
+        "director": "You get results out of AI fast. Speed is what you sell.",
+        "editor": "You catch what AI gets wrong. That is the part clients cannot get from the tool.",
+        "dealmaker": "You see where the money is. The tool is just how you deliver."
+      },
+      "cards": [
+        {
+          "id": "dna",
+          "key": "Your profile",
+          "promise": "the zone you already run on — and how to lean on it"
+        },
+        {
+          "id": "materials",
+          "key": "Best-fit strategies",
+          "promise": "three directions matched to your own answers"
+        },
+        {
+          "id": "mistakes",
+          "key": "Strengths and traps",
+          "promise": "five strengths to build on, and two traps to step around"
+        },
+        {
+          "id": "shopping",
+          "key": "Seven days",
+          "promise": "one concrete task a day, sized to your hours"
+        }
+      ],
+      "answer_key": {
+        "key": "Your 8 traps",
+        "title": "Your 8 Traps",
+        "hook": "Every trap, your move, the right move, and what it means for your plan."
+      }
+    },
+    "paths_card": {
+      "title": "Your 3 best-fit strategies",
+      "lead": "Matched from the skill you named, the hours you have and your score. The first is the one to start with.",
+      "format": "The offer format for your level:",
+      "skip_title": "Two to skip for now",
+      "facts": {
+        "sells": "What you sell",
+        "buyer": "Who buys it",
+        "first_client": "First client",
+        "startup": "To start",
+        "risk": "Where it goes wrong"
+      },
+      "badge_works": "Best fit",
+      "badge_avoid": "Skip for now"
+    },
+    "key_card": {
+      "title": "Your 8 traps",
+      "lead": "Every trap, your move, the right move, and what it means for your plan.",
+      "yours": "Your move:",
+      "right": "The right move:",
+      "none": "not answered",
+      "hit": "Right call",
+      "miss": "Costly move"
+    },
+    "score_only": "You scored {n} of {total}.",
+    "offer": {
+      "label": "YOUR WAY TO MAKE MONEY WITH AI",
+      "head": "Your answers point to one strategy for making money with AI.",
+      "line": "Unlock your report to see which one it is, and exactly how to start.",
+      "hours": {
+        "time_under3": "under 3 hours",
+        "time_3_7": "3–7 hours",
+        "time_8_15": "8–15 hours",
+        "time_15plus": "15+ hours"
+      },
+      "hours_bare": "hours",
+      "unlock_title": "WHAT YOU UNLOCK",
+      "unlock": [
+        "The strategy for making money with AI that fits you, matched to your answers",
+        "What to sell, and who pays for it",
+        "Your first 7 days, sized to your {hours} a week",
+        "2 backup strategies, 2 to skip, and your 8 traps explained"
+      ],
+      "under": "{price} one-time. No subscription. PDF copy to your email."
+    },
+    "zone_room": "the zone with the most room"
+  },
+  "rsoc": {
+    "enabled": true,
+    "placement": [
+      "below_paywall",
+      "delivered"
+    ],
+    "require_fbclid": true,
+    "passthrough": [
+      "fbclid",
+      "ad_id",
+      "asid"
+    ],
+    "kicker": "NOT READY TO UNLOCK YET?",
+    "kicker_delivered": "KEEP GOING",
+    "head": "Get the basics first. Free.",
+    "head_delivered": "Keep going: free guides for your profile",
+    "sub": "{n} free guides on the tools and skills behind your profile. Your money strategy stays in your report.",
+    "tag_start": "START HERE",
+    "tag_skill": "PICKED FOR YOUR SKILL: {skill}",
+    "tag_zone": "PICKED FOR WHERE YOU HAVE THE MOST ROOM",
+    "note": "Opens evoseekly.com, a partner site that shows ads.",
+    "articles": {
+      "skill_writing": {
+        "label": "AI writing tools compared",
+        "link": "https://generalentrypage.com/AoYGLx1i4n_RVNY_h-fj3wSv6EqpIk6ZEwc3HLQUyhK9WA93fk-rIGo3R28kMLVcjL3a4KSMwtAkYjCThgV0MB42vqMcCoqcHF4I38ONfgYx-ObIAoWgcxlVmOh8j6Jzn1mBQHq6WMsybjuzhynfKUmEXG_8nXArHCawLBjhw-iBbur_W_lhqJ27VqZK-5cYP9MBEByUkZf1sVDU5xcn9Sj6aO1u3Axp9qdJkSonErYyQRgjp35cBS0HA5VArp7uqs5zwFymwXAp0_CJLmll0G94Swu1xCs82HgjWGpHviNiLsgPE6VJMycHG_jgRcjrzAS8Su6Omz4IhSMVeYixrI8K"
+      },
+      "skill_design": {
+        "label": "AI design tools compared",
+        "link": "https://topiclisting.com/AurFHCClm4j6hD34sM-R9dNihZOHpGDwDgjO3ieaBhFgG7NYSlwDaGSWd8qriVsFUrbvzoi1NZHRyB04G5xpWP0z_C1BRgA9YwsR_457ML3v6zcIJdDoIMjYOsjwu8OLrKsVrKvvjjn9G9BcSwX7nOR8DytcOWhfmKybKp4j5YriLACsactmLF2PReMm4g5NJON24xYaAv8AbePtYPciiFYbI0SqW9nQfJuFcdABjqt9SDyQkVTAh_i13JwF9pM_obDbf8nNi_BNI6fmA-zlTjkTcSsunBV_hu5h7JCU1bYuauwYaArKZgvmaodIRhuDhuljuCzooQ"
+      },
+      "skill_tech": {
+        "label": "No-code AI automation platforms",
+        "link": "https://plainaccesspoint.com/AoJXmFk-fBDT-yp_4_DDRTerpUtjKwzA3SG1KfTwxYC4wXHc4DqsG7ix1sI0Sw5H7yjsTHcGvA0974LJKxbq5ZntlE6weRTQyIJQNaPwsa7zFd8GbgaaqJF0d6v0-Ydnmrh7LYfJkp7iSG_8qx5UjbcIcnJQ9Z5Q_RyTx_MDE94vRm1-SzyfqSPn8zl3prK0eSi-nqkJLOJvVj5YhatSlJMTT4mx07zWnMe32Pf6kFOP0f6mGYo-0M3fVSftUDfZ6cHdx1442QaUlGxGwZJNJAsjbkf9vwKlDipHrIHqpXuIQXjUeeeRxH0nTiCoHVd4vyH8AskoXFE-wyJUJntdHVTpiF9DSe8"
+      },
+      "skill_sales": {
+        "label": "AI sales and CRM tools",
+        "link": "https://topiclisting.com/ApSCFuvKttC6xUuwOQGLZqqlZKKTYVCTxA2Oyf49ZPNQb9WmswvGvKYjabkQ_evtPR17P4fwkQBsuCSiakW4I3FtjAT3csMHgn1jQJNc2ETHTB_7lBZlUqxM8ulCdvLDQDg4S8Qiikml5CD8xoMuBQAl0eJaJF1Qe05k0_jL2yYF0eKPGgekpfbXr-803QZ_OFOxiiOF27G55QTYc3KjlSZqJQPI3as1BEffR9niA3cOIHn-vicNsITzIH8G3xS6qquWIcnnqtH_wAgBFPht3VmJKJnpqS-02igrJccD"
+      },
+      "skill_organizing": {
+        "label": "AI assistants for scheduling and projects",
+        "link": "https://basicsitecatalog.com/Auw3RUwD5WASywUYyYy1xPnWXcHlsUTb8XwXVGvyUtAUhTzWFlA25ozynrGB6fCdcOwrW5K9sm04LqG2OQKtNlakm0U4K6aezR1u8NsTbqvjgDjdVIYdpVZzi-SckUNA-eHAh69uBMhMUWyASssldmNzhbRslEH3hapcfbwvdSGUdvzDeCS9Hpr71jd1UKy25VvoC_96yxyVPNceWlv86zC7GovfFvHuvNKKzMWaOZVljSFWcUplqH0H4KsxTIdsh9GCwCnvW_dlR5OOqoLQEoIIRVabrAXUAnNhPIZU9YGZKWkV66W-cTTbRcMEjH0y0sRWODKOcjc"
+      },
+      "skill_teaching": {
+        "label": "Building an online course with AI",
+        "link": "https://basicwebregister.com/AgKWdA-lrDog0h8dLIUER_vFPV8D1eid3-lpA0sgSD01AU-A0--mDNRs7hWPBA7vOMx9p7uYerYKPj1mE6z8M-QQkHOeHzfatfWvcQ68xgGvgpBeqwYD_NANlS--zjmiv5JP-L-PcUF-KPDuJuRe2WbWPxdmDPW0VKHWStpcK_0TdAOGsHuyuBb73geSvI6cOt1iXCVPymztKMCz5Kw2ox3CbZcU4otnHzAk9JlCVsTABE2jSPlCBaRJ7QW10eLKOhcaOUXgGmdGTbpixt5bPc9D"
+      },
+      "mem": {
+        "label": "AI courses and certificates for beginners",
+        "link": "https://browserreference.com/AsP0I6GUHpGQx9Ail6X2tpM3FNpIkdDmrKufiN6qDsajVIYgcsqOkOnqzqlzz5Hwn2uSjxOh_5A08g-YHNLojRl60w2ekzOWvBtQTrK-WI7VkXHHrLt3EOuA1L5nTc7HK-aJ0i6pZIlBYbVfr21HGYnNTTKsAOLlRlEvDjmwxKhMx6xcIGJY581uGS26BAAs_p4zDQpA06CSjevx2tw6N6RIuud30upR30bML0_tIvwZGyZNPukyKS4cRIVnUY8eozc_5eJdVHFTtBPqE1zvhslDC3LWO_-ItEKr6TIWARerCeyOXafXJvbu38tcF98aq68GxRNDuWWfpQ-SA2GYP4Xu"
+      },
+      "foc": {
+        "label": "Prompt engineering training",
+        "link": "https://browserreference.com/AhLwCqryx5IDu1EzN16lw_Ekftfik32JX7fTOOMCe0XrfgLJ2URM_Da03dkQsdfzgPsza4JUx9S9FZEyidD5x9DH7YHyenVGEVTdE5SfHfKUSOhINKJfaveMNrlpO1_VKp2Yg8bvnXDwM7d0rO9el3UyzfSQV-T2cgJiGdv-DIplAv1SkO-feCW6-pM5GPhSuXmHT9lve4KwvYN1Nvk800yEdi0zPK-AshuTwI4iZ9zcezFDmaKmc7omlZi280YDo5bDyPQ1ayLbdVYqT8zeeO4g8OVFUrVhVWOx9A"
+      },
+      "chg": {
+        "label": "Using AI safely at work",
+        "link": "https://basicwebregister.com/Aq5KaD1iLtsL7WycXeJYQUQ11Cnz96s0VXU1VhIRjKhXRONCffA7S2-5B1mbnlbse1D6MjSntmaElR_5GEUPD2awvgMr--WKRJ8TW0zCGGAwRYj1YBpI29xF2kxpmbhvo_DHq3ZwYRwlktOgPqX5KswQiDF7mbhRG-weQdJP0DvgQNJ6KkQETzPX17frK8Sewq51ELMoFsvdwTUFARJzsLDMpPuNuCteSIRDUbXe_I3iSy_BzfNUMy-tJzsGHicssT74o5WsIRPOBi1R7tCJeR4chGm0L7GtOBIZcN_-e8Bx9LVL4x-RsQrezc7JbOF7PeP7_zddMpa1d9DwgYxqUA"
+      },
+      "spa": {
+        "label": "Starting a small online business",
+        "link": "https://generalentrypage.com/AthKVyfDLlgQgfibdtvd03BBtYDhfTDEr_kS8_JNnFj8EcbjXoiN7UrPqM_2TmMezyJS0VS26bO6O2NnMMztVYdmgfvKeqhom-YwxtbOAjv9VDxkYYxMXZwhAYQNdRr3Njj4Eu9HPxSrOhqM_I_T8o7QURF3LcOzyXCNV6tL9WTgvsRztyf-xoI9_datFYSA4JIcsObP4uAUJs-ekdJUMHaYkStm4np2WVwnCInqHr6-NlE3tmrRjhVwpF56_W1eGVulvoo7VHkOD6U8pfi45ySe1Ee2p5atJQgma7e5fstDwBq6MoS6-s2lmtQ_fIxWgcM-Ug"
+      }
+    }
+  },
+  "paths": {
+    "catalog": [
+      {
+        "id": "P1",
+        "name": "Niche content service",
+        "sells": "Written content for one industry — blog posts, product pages or email sequences — drafted with AI and edited by you.",
+        "buyer": "Small businesses and solo professionals in a field you already understand, who need content regularly and have nobody to write it.",
+        "first_client": "Plan on 2–6 weeks, if you send samples to people in the niche every week.",
+        "startup": "The free tier of a chat assistant is enough to begin; a paid plan helps once the volume is regular.",
+        "risk": "It most often fails by staying general: content for anyone competes with everyone and is compared on price alone."
+      },
+      {
+        "id": "P2",
+        "name": "Niche newsletter or content brand",
+        "sells": "Attention on one narrow topic, which later carries sponsorships or your own products and services.",
+        "buyer": "Readers come first and pay nothing; the paying side is sponsors, or buyers of what you later offer that audience.",
+        "first_client": "Plan on 12–26 weeks of regular publishing before there is an audience anybody would pay to reach.",
+        "startup": "The free tier of a newsletter tool and a chat assistant; a paid plan only once the list grows.",
+        "risk": "It most often fails by stopping: publishing fades after a few weeks, long before an audience has formed."
+      },
+      {
+        "id": "P3",
+        "name": "Brand & social design service",
+        "sells": "Brand kits and ready-to-post social graphics for small businesses, made with AI image and layout tools and finished by hand.",
+        "buyer": "Local shops, coaches and small online sellers who post regularly and are not happy with how their feed looks.",
+        "first_client": "Plan on 2–6 weeks, with a small portfolio of sample sets made for businesses like theirs.",
+        "startup": "The free tier of a design tool to begin; a paid plan for an image tool once clients need commercial-use output.",
+        "risk": "It most often fails on revisions: unclear scope turns one set into endless rounds, so agree the number of rounds first."
+      },
+      {
+        "id": "P4",
+        "name": "Digital products: templates and printables",
+        "sells": "Downloadable files people use as they are — planners, templates, checklists or prompt packs for one specific job.",
+        "buyer": "Individuals searching a marketplace for a ready-made answer to a small, specific need.",
+        "first_client": "Plan on 4–12 weeks to a first sale, because listings need time and several products before they are found.",
+        "startup": "The free tier of design and chat tools is enough; a paid plan is optional, and marketplaces charge a fee per listing or sale.",
+        "risk": "It most often fails by copying what already fills the marketplace, where a new shop with similar products is rarely seen."
+      },
+      {
+        "id": "P5",
+        "name": "Workflow automation for small businesses",
+        "sells": "A repetitive task taken off somebody's desk — intake forms, follow-up emails, report building — wired together with no-code and AI tools.",
+        "buyer": "Owners of small service businesses who lose hours every week to the same manual steps.",
+        "first_client": "Plan on 3–8 weeks, usually through somebody who lets you watch how their week actually runs.",
+        "startup": "The free tier of an automation tool for the first build; a paid plan once a client's volume passes the free limits.",
+        "risk": "It most often fails after delivery: automations break quietly when a connected app changes, and nobody agreed who maintains them."
+      },
+      {
+        "id": "P6",
+        "name": "Small AI tools and custom assistants",
+        "sells": "A small tool or assistant built for one job, such as answering questions from a company's own documents or drafting one kind of reply.",
+        "buyer": "Teams with one narrow, repeated task and documents that already hold the answers.",
+        "first_client": "Plan on 4–12 weeks, because a working demo on their own material usually has to come first.",
+        "startup": "A paid plan from the start in most cases, since building and running a tool uses metered model access.",
+        "risk": "It most often fails by building before asking: a finished tool for a problem nobody confirmed they have."
+      },
+      {
+        "id": "P7",
+        "name": "Outreach & lead-research service",
+        "sells": "Researched prospect lists and personalised first messages, prepared with AI and checked by you before anything is sent.",
+        "buyer": "Small sales teams, agencies and consultants who need conversations with one specific kind of customer.",
+        "first_client": "Plan on 2–6 weeks, since the same method finds your own first client.",
+        "startup": "The free tier of a chat assistant and a spreadsheet; a paid plan for a data or sending tool comes later.",
+        "risk": "It most often fails on quality: generic messages sent in bulk are ignored and can damage the client's sender reputation."
+      },
+      {
+        "id": "P8",
+        "name": "AI setup consulting for local businesses",
+        "sells": "A few sessions that set a small business up with AI tools for its own everyday tasks, with short written how-tos to keep.",
+        "buyer": "Local business owners who keep hearing about AI and have no time to work out where it fits.",
+        "first_client": "Plan on 2–6 weeks, most often through a business you already know or use.",
+        "startup": "The free tier of the tools you will be showing; the client pays for any paid plan they decide to keep.",
+        "risk": "It most often fails by staying vague: AI consulting with no named task and no finished result is hard to buy."
+      },
+      {
+        "id": "P9",
+        "name": "AI-powered virtual assistant and ops support",
+        "sells": "Ongoing admin support — inbox, calendar, documents, follow-ups — done faster because you use AI tools well.",
+        "buyer": "Busy solo professionals and small teams who need reliable help for a few hours every week.",
+        "first_client": "Plan on 2–6 weeks, often starting with one small recurring task for one person.",
+        "startup": "The free tier of a chat assistant and the client's own apps; a paid plan is optional.",
+        "risk": "It most often fails on boundaries: an open-ended role of helping with everything grows until the hours stop making sense."
+      },
+      {
+        "id": "P10",
+        "name": "Workshops & tutoring: AI for a niche you know",
+        "sells": "Live sessions or one-to-one tutoring that teach people in one field how to use AI for their actual work.",
+        "buyer": "People in a profession or community you know well, who want a guide who speaks their language.",
+        "first_client": "Plan on 3–8 weeks, starting with a free or low-cost pilot session for a small group.",
+        "startup": "The free tier of the tools you teach and of a video-call app; a paid plan only if a session needs it.",
+        "risk": "It most often fails by teaching tools instead of tasks: sessions about features are forgotten, sessions about their own work are not."
+      },
+      {
+        "id": "P11",
+        "name": "Productize what you already do at work",
+        "sells": "The thing you are already good at in your job, done faster with AI and offered as a clear internal service or a defined outside offer.",
+        "buyer": "Your current employer or team first; later, other companies with the same recurring need.",
+        "first_client": "Plan on 1–4 weeks to a first internal user, since the people who need it already know you.",
+        "startup": "The free tier, or whichever paid plan your employer already approves; check their rules before using anything else.",
+        "risk": "It most often fails on permission: putting company or client data into tools your employer has not approved."
+      }
+    ],
+    "rules": {
+      "by_skill": {
+        "writing": [
+          "P1",
+          "P2",
+          "P10"
+        ],
+        "design": [
+          "P3",
+          "P4",
+          "P1"
+        ],
+        "tech": [
+          "P5",
+          "P6",
+          "P8"
+        ],
+        "sales": [
+          "P7",
+          "P8",
+          "P10"
+        ],
+        "organizing": [
+          "P9",
+          "P5",
+          "P8"
+        ],
+        "teaching": [
+          "P10",
+          "P2",
+          "P8"
+        ]
+      },
+      "skip_by_skill": {
+        "writing": [
+          "P6",
+          "P5"
+        ],
+        "design": [
+          "P6",
+          "P7"
+        ],
+        "tech": [
+          "P2",
+          "P3"
+        ],
+        "sales": [
+          "P6",
+          "P4"
+        ],
+        "organizing": [
+          "P6",
+          "P2"
+        ],
+        "teaching": [
+          "P6",
+          "P7"
+        ]
+      },
+      "goal_levelup": {
+        "when": "goal_levelup",
+        "primary": "P11"
+      },
+      "time_under_3": {
+        "when": "time_under3",
+        "not_in_works": "P2",
+        "replace_with": [
+          "P8",
+          "P10",
+          "P1",
+          "P9",
+          "P5"
+        ]
+      },
+      "format_by_level": {
+        "explorer": "one small done-for-you service, one niche",
+        "builder": "a productized service with fixed scope",
+        "operator": "a system or product: retainer, tool or library"
+      },
+      "default_skill_by_type": {
+        "mechanic": "tech",
+        "director": "writing",
+        "editor": "organizing",
+        "dealmaker": "sales"
+      }
+    }
+  }
+}

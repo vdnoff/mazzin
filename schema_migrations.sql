@@ -222,3 +222,21 @@ CREATE TABLE loan_leads (
   UNIQUE KEY uq_loan_lead_session (session_id),
   INDEX idx_loan_lead_created (created_at)
 );
+
+-- Whether a purchase was a live payment, by Stripe's own word.
+--
+-- An in-page payment leaves only a `pi_` on the row, and a `pi_` looks the
+-- same in both modes, so until now nothing on a purchase said whether real
+-- money moved. payments.py writes this at the moment the webhook confirms
+-- the purchase, from the event's `livemode`: 1 for a live payment, 0 for a
+-- test one. NULL is every row written before this column existed, and a row
+-- whose event did not say; NULL is read as "not live".
+--
+-- It gates one thing: the Meta Purchase, browser and server, for a funnel
+-- with a `pixel` block of its own. Nothing else reads it, no existing row is
+-- rewritten, and there is no backfill.
+--
+-- Safe in either order with the deploy: without the column the purchase is
+-- still recorded and the report still delivered; only that Purchase event
+-- waits for it.
+ALTER TABLE purchases ADD COLUMN livemode TINYINT(1) NULL;

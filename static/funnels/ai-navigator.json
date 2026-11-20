@@ -36,7 +36,7 @@
     "x": "M6 6l12 12M18 6L6 18",
     "arrow": "M4 12h16M14 6l6 6-6 6"
   },
-  "stripe_mode": "test",
+  "stripe_mode": "live",
   "pixel": {
     "id": "762004311984135",
     "capi_token_env": "META_CAPI_TOKEN_VISYMO",
