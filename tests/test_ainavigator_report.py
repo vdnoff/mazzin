@@ -720,7 +720,7 @@ check("the paths page: three with all five facts, two to skip",
       and "Two to skip for now" in html_doc)
 check("the eight scenarios: theirs, the right move and why",
       html_doc.count('class="ai-key-row"') == 8
-      and "Your 8 scenarios" in html_doc and "Answer Key" not in html_doc
+      and "Your 8 traps" in html_doc and "Answer Key" not in html_doc
       and all(reports._e(r["why"]) in html_doc
               and reports._e(r["right"]) in html_doc for r in rows)
       and html_doc.count(">RIGHT CALL<") == 5
@@ -746,7 +746,7 @@ copy = reports._email_copy(content)
 check("the mail is this product's",
       copy is reports.COPY_AI and "AI Navigator Report" in copy["subject"]
       and "three best-fit strategies" in copy["body"]
-      and "your 8 scenarios" in copy["body"])
+      and "your 8 traps" in copy["body"])
 real_price = reports._price_paid
 try:
     reports._price_paid = lambda content, purchase_id=None: None
@@ -793,6 +793,56 @@ check("the article slot reads the report first, session storage second",
       KEYS_FN.index("ctx.visuals.brain") < KEYS_FN.index("sessionStorage"
                                                          ".getItem")
       and 'typeof run.skill === "string"' in KEYS_FN)
+
+print("\n--- the same answers give the same result as before the new copy ---")
+import subprocess                                          # noqa: E402
+try:
+    BEFORE = json.loads(subprocess.check_output(
+        ["git", "show", "origin/main:funnels/%s.json" % SLUG], cwd=REPO,
+        stderr=subprocess.DEVNULL))
+except Exception:
+    BEFORE = None
+if BEFORE and BEFORE["swipe"]["pairs_count"] == 12:
+    def card_ids(cfg_):
+        return [[(c["id"], c["tags"]) for c in s_["pairs"][0]["images"]]
+                for s_ in cfg_["swipe"]["steps"]]
+    check("every step, card id and tag is the one main has, in main's order",
+          [s_["id"] for s_ in BEFORE["swipe"]["steps"]]
+          == [s_["id"] for s_ in STEPS] and card_ids(BEFORE) == card_ids(CFG))
+    check("  so are the number block, the types, the rules and the catalog",
+          BEFORE["brain_age"] == CFG["brain_age"]
+          and BEFORE["paths"] == CFG["paths"]
+          and [(s_["id"], s_["name"], s_["tags"]) for s_ in BEFORE["styles"]]
+          == [(s_["id"], s_["name"], s_["tags"]) for s_ in CFG["styles"]])
+    differ = []
+    runs = 0
+    for combo in itertools.product(range(3), repeat=4):
+        for skill, time_, goal, predict in (
+                ("skill_design", "time_3_7", "goal_side", "predict_5_6"),
+                ("skill_tech", "time_under3", "goal_levelup", "predict_0_2"),
+                (None, "time_15plus", "goal_business", None)):
+            ch, sc = run_of(dict(zip(DOMAINS, combo)), skill=skill,
+                            time=time_, goal=goal, predict=predict)
+            out = []
+            for cfg_ in (BEFORE, CFG):
+                style_ = cfg_["styles"][0]
+                n = reports._ai_numbers(cfg_, style_, sc, ch)
+                paths_ = reports._ai_paths(cfg_, ch, n)
+                out.append(([n[k] for k in ("hits", "counts", "level",
+                                            "calibration", "weakest",
+                                            "strongest", "predict", "skill",
+                                            "time", "goal")],
+                            n["said"],
+                            [c["id"] for c in paths_["works"]],
+                            [c["id"] for c in paths_["avoid"]],
+                            paths_["format"]))
+            runs += 1
+            if out[0] != out[1]:
+                differ.append((combo, skill, out))
+    check("score, level, calibration, words and paths: identical (%d runs)"
+          % runs, runs == 243 and not differ, str(differ[:1]))
+else:
+    print("  (main's config is not readable here, or is an older shape)")
 
 print("\n--- nobody else grew any of it ---")
 OTHERS = (("brain", {"mem_hit": 4}), ("focus", {"mem_hit": 3}),

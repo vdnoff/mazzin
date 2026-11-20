@@ -169,12 +169,12 @@ def advance(page, until=None):
                     "^" + re.escape(label_for(step)) + "$"))).first.click()
             done.append(step["id"])
             idle = 0
-            # A scenario answers the tap with a panel that moves on by itself;
-            # its Next button moves on at once, which is what a walk wants.
+            # A trap answers the tap with a panel that moves on by itself;
+            # a tap anywhere moves on at once, which is what a walk wants.
             if step.get("why"):
                 page.wait_for_timeout(450)
                 try:
-                    page.locator(".step-feedback-next").click(timeout=1500)
+                    page.locator("#step-wait").click(timeout=1500)
                 except Exception:
                     pass                     # it had already moved on
             page.wait_for_timeout(500)

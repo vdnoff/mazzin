@@ -4,6 +4,38 @@
   "locale": "en",
   "theme": "ai",
   "theme_css": "/static/css/result_ai.css",
+  "icons": {
+    "pen": "M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1zM14.5 6.5l3 3",
+    "shapes": "M4 4h6.5v6.5H4zM14 7.5a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0M12 14l4.5 7h-9z",
+    "code": "M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 5l-3 14",
+    "chat": "M4 5h16v11H10l-4 4v-4H4z",
+    "grid": "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
+    "book": "M4 5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2zM4 20a2 2 0 0 0 2 2h13v-4M9 7h6",
+    "cup": "M5 8h11v6a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5zM16 9h1.5a2.5 2.5 0 0 1 0 5H16M8 2v3M12 2v3",
+    "moon": "M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z",
+    "calendar": "M4 6h16v14H4zM4 10h16M8 3v4M16 3v4",
+    "bolt": "M13 2L5 13.5h6L10 22l9-12h-6.5z",
+    "coins": "M3.5 9a5.5 5.5 0 1 0 11 0a5.5 5.5 0 1 0-11 0M14.6 9.6A5.5 5.5 0 1 1 9.4 15",
+    "storefront": "M4 10v10h16V10M3 10l2-6h14l2 6a3 3 0 0 1-6 0a3 3 0 0 1-6 0a3 3 0 0 1-6 0M10 20v-5h4v5",
+    "trending-up": "M3 17l6-6 4 4 8-8M15 7h6v6",
+    "compass": "M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M15.5 8.5l-2 5-5 2 2-5z",
+    "bars-1": "M5 20v-4M10 20h.01M15 20h.01M20 20h.01",
+    "bars-2": "M5 20v-4M10 20v-8M15 20h.01M20 20h.01",
+    "bars-3": "M5 20v-4M10 20v-8M15 20v-12M20 20h.01",
+    "bars-4": "M5 20v-4M10 20v-8M15 20v-12M20 20V4",
+    "megaphone": "M4 10v4h3l7 4V6l-7 4zM17.5 9a4 4 0 0 1 0 6M7 14l1 5h2.5",
+    "file-half": "M6 3h8l4 4v14H6zM14 3v4h4M9 11h6M9 14h6M9 18h2",
+    "clock": "M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M12 7v5l3.5 2",
+    "voice": "M9 6a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0zM5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6",
+    "chart": "M4 4v16h16M8 16v-4M12 16V8M16 16v-6",
+    "image": "M4 5h16v14H4zM4 16l4.5-4.5 4 4 2.5-2.5 5 5M14 9.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0",
+    "thumbs-up": "M7 11v9H4v-9zM7 11l4-8a2.5 2.5 0 0 1 2.5 3L13 9.5h5a2 2 0 0 1 2 2.4l-1.3 6.5a2 2 0 0 1-2 1.6H7",
+    "question": "M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8M12 17h.01",
+    "lock": "M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3",
+    "check": "M5 12.5l4.5 4.5L19 7.5",
+    "x": "M6 6l12 12M18 6L6 18",
+    "arrow": "M4 12h16M14 6l6 6-6 6"
+  },
   "stripe_mode": "test",
   "result_module": "/static/js/result_ai.js",
   "result_css": "/static/css/result_ai.css",
@@ -12,24 +44,42 @@
   },
   "intro": {
     "kicker": "AI NAVIGATOR",
-    "headline": "People make money with AI in 11 ways. Which one is yours?",
-    "sub": "12 quick taps. We match your skill, your free hours and how well you really know AI to the strategy that fits you.",
-    "chips": [
-      "Content service",
-      "Automation for small businesses",
-      "Design service",
-      "Workshops and tutoring",
-      "Outreach service",
-      "+ 6 more"
+    "headline": "11 ways to make money with AI. One has your name on it.",
+    "sub": "12 taps. 8 money traps. Find the move that fits your skill and your week.",
+    "tiles": [
+      {
+        "icon": "pen",
+        "label": "Content"
+      },
+      {
+        "icon": "bolt",
+        "label": "Automation"
+      },
+      {
+        "icon": "shapes",
+        "label": "Design"
+      },
+      {
+        "icon": "book",
+        "label": "Workshops"
+      },
+      {
+        "icon": "chat",
+        "label": "Outreach"
+      },
+      {
+        "label": "+6 more"
+      }
     ],
-    "cta": "Find my strategy",
+    "cta": "Find my money move",
+    "cta_icon": "arrow",
     "foot": "No sign-up. The test and your profile are free. Your full personal strategy is optional.",
     "foot_note": "Educational content. No income is promised or guaranteed — results depend on your effort, skills and market."
   },
   "swipe": {
     "pairs_count": 12,
-    "headline": "People make money with AI in 11 ways. Which one is yours?",
-    "subtext": "12 quick taps. No sign-up.",
+    "headline": "11 ways to make money with AI. One has your name on it.",
+    "subtext": "12 taps. No sign-up.",
     "subtext_accent": "No sign-up.",
     "hint": "Tap your answer.",
     "label_mode": "check",
@@ -38,8 +88,8 @@
       {
         "id": "skill",
         "chip": "11 strategies still in play",
-        "question": "What could people pay you for today?",
-        "sub": "Pick the closest one. AI multiplies a skill you already have, so this decides which strategies stay.",
+        "question": "Which one would a stranger pay you for?",
+        "sub": "Be honest. AI multiplies what you are already good at.",
         "format": "text6",
         "shuffle": false,
         "pairs": [
@@ -50,6 +100,7 @@
                 "id": "skill_writing",
                 "label": "Writing",
                 "sub": "Words that get read",
+                "icon": "pen",
                 "tags": [
                   "skill_writing"
                 ]
@@ -58,6 +109,7 @@
                 "id": "skill_design",
                 "label": "Design",
                 "sub": "Things that look right",
+                "icon": "shapes",
                 "tags": [
                   "skill_design"
                 ]
@@ -66,6 +118,7 @@
                 "id": "skill_tech",
                 "label": "Tech",
                 "sub": "Making tools talk",
+                "icon": "code",
                 "tags": [
                   "skill_tech"
                 ]
@@ -74,6 +127,7 @@
                 "id": "skill_sales",
                 "label": "Sales",
                 "sub": "Getting a yes",
+                "icon": "chat",
                 "tags": [
                   "skill_sales"
                 ]
@@ -82,6 +136,7 @@
                 "id": "skill_organizing",
                 "label": "Organizing",
                 "sub": "Order out of chaos",
+                "icon": "grid",
                 "tags": [
                   "skill_organizing"
                 ]
@@ -90,6 +145,7 @@
                 "id": "skill_teaching",
                 "label": "Teaching",
                 "sub": "Making it click",
+                "icon": "book",
                 "tags": [
                   "skill_teaching"
                 ]
@@ -101,7 +157,8 @@
       {
         "id": "time",
         "chip": "11 strategies still in play",
-        "question": "How many hours a week can you really put in?",
+        "question": "How much of your week can AI money have?",
+        "sub": "The real number, not the ambitious one.",
         "format": "text4",
         "shuffle": false,
         "pairs": [
@@ -110,28 +167,44 @@
             "images": [
               {
                 "id": "time_under3",
-                "label": "Under 3",
+                "label": "Lunch breaks",
+                "sub": "Small, steady moves",
+                "icon": "cup",
+                "badge": "under 3h",
+                "said": "Under 3",
                 "tags": [
                   "time_under3"
                 ]
               },
               {
                 "id": "time_3_7",
-                "label": "3–7",
+                "label": "A few evenings",
+                "sub": "A side-project pace",
+                "icon": "moon",
+                "badge": "3–7h",
+                "said": "3–7",
                 "tags": [
                   "time_3_7"
                 ]
               },
               {
                 "id": "time_8_15",
-                "label": "8–15",
+                "label": "Every weekend",
+                "sub": "Room to build something",
+                "icon": "calendar",
+                "badge": "8–15h",
+                "said": "8–15",
                 "tags": [
                   "time_8_15"
                 ]
               },
               {
                 "id": "time_15plus",
-                "label": "15+",
+                "label": "I'm all in",
+                "sub": "This is the plan",
+                "icon": "bolt",
+                "badge": "15h+",
+                "said": "15+",
                 "tags": [
                   "time_15plus"
                 ]
@@ -143,7 +216,7 @@
       {
         "id": "goal",
         "chip": "11 strategies still in play",
-        "question": "What should AI money be for you?",
+        "question": "What's the dream?",
         "format": "text4",
         "shuffle": false,
         "pairs": [
@@ -152,28 +225,40 @@
             "images": [
               {
                 "id": "goal_side",
-                "label": "A side income",
+                "label": "Extra cash on the side",
+                "sub": "Something small that pays",
+                "icon": "coins",
+                "said": "A side income",
                 "tags": [
                   "goal_side"
                 ]
               },
               {
                 "id": "goal_business",
-                "label": "A full business",
+                "label": "My own business",
+                "sub": "The long game",
+                "icon": "storefront",
+                "said": "A full business",
                 "tags": [
                   "goal_business"
                 ]
               },
               {
                 "id": "goal_levelup",
-                "label": "More from my current job",
+                "label": "Getting paid more at my job",
+                "sub": "Same job, better at it",
+                "icon": "trending-up",
+                "said": "More from my current job",
                 "tags": [
                   "goal_levelup"
                 ]
               },
               {
                 "id": "goal_unsure",
-                "label": "Not sure yet",
+                "label": "Just curious, for now",
+                "sub": "Show me what's possible",
+                "icon": "compass",
+                "said": "Not sure yet",
                 "tags": [
                   "goal_unsure"
                 ]
@@ -185,7 +270,7 @@
       {
         "id": "predict",
         "chip": "3 strategies left",
-        "question": "8 money scenarios are next. How many will you get right?",
+        "question": "Gut check: how many of the 8 money traps will you dodge?",
         "format": "text4",
         "shuffle": false,
         "pairs": [
@@ -194,28 +279,36 @@
             "images": [
               {
                 "id": "predict_0_2",
-                "label": "0–2",
+                "label": "I'll walk into most",
+                "icon": "bars-1",
+                "badge": "0–2",
                 "tags": [
                   "predict_0_2"
                 ]
               },
               {
                 "id": "predict_3_4",
-                "label": "3–4",
+                "label": "About half",
+                "icon": "bars-2",
+                "badge": "3–4",
                 "tags": [
                   "predict_3_4"
                 ]
               },
               {
                 "id": "predict_5_6",
-                "label": "5–6",
+                "label": "Most of them",
+                "icon": "bars-3",
+                "badge": "5–6",
                 "tags": [
                   "predict_5_6"
                 ]
               },
               {
                 "id": "predict_7_8",
-                "label": "7–8",
+                "label": "Nearly all. Watch me.",
+                "icon": "bars-4",
+                "badge": "7–8",
                 "tags": [
                   "predict_7_8"
                 ]
@@ -226,39 +319,42 @@
       },
       {
         "id": "mem1",
-        "kicker": "YOUR NAME IS ON IT",
-        "chip": "3 strategies left",
-        "progress_label": "Scenario 1 of 8",
-        "question": "A client asks if a fact in your AI draft is true. The AI sounded very sure. What does that tell you?",
+        "title_kicker": "MONEY TRAP #1",
+        "title": "The Confident Liar",
+        "icon": "megaphone",
+        "progress_label": "Trap 1 of 8",
+        "question": "The AI says it with total confidence. Your client asks: \"Is this true?\" What do you actually know?",
         "format": "text4",
+        "letters": true,
+        "foot": "Tap the move you would actually make.",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
                 "id": "mem1_c1",
-                "label": "Nothing. Sounding sure isn't proof",
+                "label": "Nothing. Sure isn't the same as right",
                 "tags": [
                   "mem_hit"
                 ]
               },
               {
                 "id": "mem1_c2",
-                "label": "It's almost certainly right",
+                "label": "It's solid. Look how sure it is",
                 "tags": [
                   "mem_miss"
                 ]
               },
               {
                 "id": "mem1_c3",
-                "label": "It checked the internet",
+                "label": "It must have checked online",
                 "tags": [
                   "mem_miss"
                 ]
               },
               {
                 "id": "mem1_c4",
-                "label": "Detailed means accurate",
+                "label": "That much detail can't be wrong",
                 "tags": [
                   "mem_miss"
                 ]
@@ -266,22 +362,25 @@
             ]
           }
         ],
-        "why": "AI sounds just as sure when it's wrong. Your name is on the work."
+        "why": "AI is just as confident when it's wrong. And your name is on the invoice."
       },
       {
         "id": "mem2",
-        "kicker": "HALF A JOB",
-        "chip": "3 strategies left",
-        "progress_label": "Scenario 2 of 8",
-        "question": "You paste a client's 80-page file. The AI's summary skips the second half. Why?",
+        "title_kicker": "MONEY TRAP #2",
+        "title": "The 80-Page Blind Spot",
+        "icon": "file-half",
+        "progress_label": "Trap 2 of 8",
+        "question": "You feed it a client's 80-page file. The summary quietly ignores the second half. What happened?",
         "format": "text4",
+        "letters": true,
+        "foot": "Tap the move you would actually make.",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
                 "id": "mem2_c1",
-                "label": "It can only hold so much text at once",
+                "label": "It ran out of room. It can only hold so much",
                 "tags": [
                   "mem_hit"
                 ]
@@ -295,7 +394,7 @@
               },
               {
                 "id": "mem2_c3",
-                "label": "It skips what it finds boring",
+                "label": "It got bored and skipped ahead",
                 "tags": [
                   "mem_miss"
                 ]
@@ -310,43 +409,46 @@
             ]
           }
         ],
-        "why": "Split long material into parts, or you deliver half a job."
+        "why": "Feed long files in parts, or you bill for half a job."
       },
       {
         "id": "foc1",
-        "kicker": "THE CLOCK IS RUNNING",
-        "chip": "3 strategies left",
-        "progress_label": "Scenario 3 of 8",
-        "question": "Deadline in an hour. The first draft is about 70% right. Fastest way to something you can bill?",
+        "title_kicker": "MONEY TRAP #3",
+        "title": "The One-Hour Deadline",
+        "icon": "clock",
+        "progress_label": "Trap 3 of 8",
+        "question": "60 minutes to deadline. The draft is 70% there. What gets you paid on time?",
         "format": "text4",
+        "letters": true,
+        "foot": "Tap the move you would actually make.",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
                 "id": "foc1_c1",
-                "label": "Tell it exactly what to change",
+                "label": "Tell it exactly what to fix",
                 "tags": [
                   "foc_hit"
                 ]
               },
               {
                 "id": "foc1_c2",
-                "label": "Start over in a new chat",
+                "label": "Burn it down. New chat",
                 "tags": [
                   "foc_miss"
                 ]
               },
               {
                 "id": "foc1_c3",
-                "label": "Send it as it is",
+                "label": "Send it and pray",
                 "tags": [
                   "foc_miss"
                 ]
               },
               {
                 "id": "foc1_c4",
-                "label": "Switch to another tool",
+                "label": "Try a different AI",
                 "tags": [
                   "foc_miss"
                 ]
@@ -354,43 +456,46 @@
             ]
           }
         ],
-        "why": "Editing keeps the 70%. Starting over throws paid time away."
+        "why": "Fixing keeps the 70%. Starting over spends the hour."
       },
       {
         "id": "foc2",
-        "kicker": "A CLIENT'S VOICE",
-        "chip": "3 strategies left",
-        "progress_label": "Scenario 4 of 8",
-        "question": "A client wants posts that sound like their brand. Most reliable move?",
+        "title_kicker": "MONEY TRAP #4",
+        "title": "The Borrowed Voice",
+        "icon": "voice",
+        "progress_label": "Trap 4 of 8",
+        "question": "A client wants posts that sound exactly like them. What do you hand the AI?",
         "format": "text4",
+        "letters": true,
+        "foot": "Tap the move you would actually make.",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
                 "id": "foc2_c1",
-                "label": "Give it 2–3 of their real posts",
+                "label": "Two or three of their real posts",
                 "tags": [
                   "foc_hit"
                 ]
               },
               {
                 "id": "foc2_c2",
-                "label": "Ask it to \"be creative\"",
+                "label": "The words \"be creative\"",
                 "tags": [
                   "foc_miss"
                 ]
               },
               {
                 "id": "foc2_c3",
-                "label": "Just name the brand",
+                "label": "Just their brand name",
                 "tags": [
                   "foc_miss"
                 ]
               },
               {
                 "id": "foc2_c4",
-                "label": "Write a longer prompt",
+                "label": "A much longer prompt",
                 "tags": [
                   "foc_miss"
                 ]
@@ -402,18 +507,21 @@
       },
       {
         "id": "chg1",
-        "kicker": "A CLIENT'S MONEY IS ON THE LINE",
-        "chip": "3 strategies left",
-        "progress_label": "Scenario 5 of 8",
-        "question": "A client is paying you for a market report. AI hands you the perfect statistic, with a source. You…",
+        "title_kicker": "MONEY TRAP #5",
+        "title": "The Perfect Statistic",
+        "icon": "chart",
+        "progress_label": "Trap 5 of 8",
+        "question": "You need one killer number for a paid report. AI delivers it, source and all. Your move?",
         "format": "text4",
+        "letters": true,
+        "foot": "Tap the move you would actually make.",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
                 "id": "chg1_c1",
-                "label": "Open the source and check it first",
+                "label": "Open the source. Check it",
                 "tags": [
                   "chg_hit"
                 ]
@@ -427,14 +535,14 @@
               },
               {
                 "id": "chg1_c3",
-                "label": "Ask the AI if it is sure",
+                "label": "Ask the AI if it's sure",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
                 "id": "chg1_c4",
-                "label": "Round the number to be safe",
+                "label": "Round it and move on",
                 "tags": [
                   "chg_miss"
                 ]
@@ -442,36 +550,39 @@
             ]
           }
         ],
-        "why": "AI can invent sources that look real. One made-up number in paid work, and the client does not come back."
+        "why": "AI can invent sources that look real. One fake number in paid work, and the client is gone."
       },
       {
         "id": "chg2",
-        "kicker": "BEFORE YOU TAKE THE MONEY",
-        "chip": "3 strategies left",
-        "progress_label": "Scenario 6 of 8",
-        "question": "You made a set of AI images and a shop wants to buy them. First thing to check?",
+        "title_kicker": "MONEY TRAP #6",
+        "title": "The Images Nobody Checked",
+        "icon": "image",
+        "progress_label": "Trap 6 of 8",
+        "question": "A shop wants to buy your AI images. Cash is on the table. What do you check before you say yes?",
         "format": "text4",
+        "letters": true,
+        "foot": "Tap the move you would actually make.",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
                 "id": "chg2_c1",
-                "label": "The tool's terms for commercial use",
+                "label": "The tool's rules on selling",
                 "tags": [
                   "chg_hit"
                 ]
               },
               {
                 "id": "chg2_c2",
-                "label": "Nothing. AI output is free to sell",
+                "label": "Nothing. AI art is free to sell",
                 "tags": [
                   "chg_miss"
                 ]
               },
               {
                 "id": "chg2_c3",
-                "label": "Whether they look original",
+                "label": "Whether they look original enough",
                 "tags": [
                   "chg_miss"
                 ]
@@ -486,43 +597,46 @@
             ]
           }
         ],
-        "why": "Some tools and plans don't allow selling the output. Check before you take the money."
+        "why": "Some tools and plans don't let you sell the output. Check before you take the money."
       },
       {
         "id": "spa1",
-        "kicker": "BEFORE YOU BUILD",
-        "chip": "3 strategies left",
-        "progress_label": "Scenario 7 of 8",
-        "question": "You have an idea for an AI service. Cheapest honest way to know if it will sell?",
+        "title_kicker": "MONEY TRAP #7",
+        "title": "The Idea Everyone Loves",
+        "icon": "thumbs-up",
+        "progress_label": "Trap 7 of 8",
+        "question": "Your friends say your AI service idea is genius. How do you find out if anyone will pay?",
         "format": "text4",
+        "letters": true,
+        "foot": "Tap the move you would actually make.",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
                 "id": "spa1_c1",
-                "label": "Get a few people to pay or commit first",
+                "label": "Ask a few people to pay up front",
                 "tags": [
                   "spa_hit"
                 ]
               },
               {
                 "id": "spa1_c2",
-                "label": "Build the whole thing",
+                "label": "Build the whole thing first",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
                 "id": "spa1_c3",
-                "label": "Ask friends if it's cool",
+                "label": "Ask more friends",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
                 "id": "spa1_c4",
-                "label": "Design the logo",
+                "label": "Design a great logo",
                 "tags": [
                   "spa_miss"
                 ]
@@ -530,22 +644,25 @@
             ]
           }
         ],
-        "why": "Opinions cost people nothing. A yes with money behind it is the only real signal."
+        "why": "Compliments are free. A yes with money behind it is the only vote that counts."
       },
       {
         "id": "spa2",
-        "kicker": "THE HARD QUESTION",
-        "chip": "3 strategies left",
-        "progress_label": "Scenario 8 of 8",
-        "question": "A client says: \"I can use the same AI tool myself. Why pay you?\" Best answer?",
+        "title_kicker": "MONEY TRAP #8",
+        "title": "“Why Should I Pay You?”",
+        "icon": "question",
+        "progress_label": "Trap 8 of 8",
+        "question": "The client leans back: \"I have the same AI. Why would I pay you?\" What do you say?",
         "format": "text4",
+        "letters": true,
+        "foot": "Tap the move you would actually make.",
         "pairs": [
           {
             "id": "p1",
             "images": [
               {
                 "id": "spa2_c1",
-                "label": "You pay for judgment and a result I answer for",
+                "label": "You're paying for judgment and a result I stand behind",
                 "tags": [
                   "spa_hit"
                 ]
@@ -559,14 +676,14 @@
               },
               {
                 "id": "spa2_c3",
-                "label": "You're right, never mind",
+                "label": "Fair point. Never mind",
                 "tags": [
                   "spa_miss"
                 ]
               },
               {
                 "id": "spa2_c4",
-                "label": "I type faster",
+                "label": "I type faster than you",
                 "tags": [
                   "spa_miss"
                 ]
@@ -579,13 +696,21 @@
     ],
     "hold_ms": 450,
     "feedback": {
-      "right": "Right",
+      "good": "Trap dodged.",
+      "bad": "You walked into it.",
+      "right": "Right answer",
       "yours": "Your pick",
-      "good": "Right call.",
-      "bad": "Costly move.",
-      "next": "Next"
+      "flags": false,
+      "next": false,
+      "streak": "{n} in a row",
+      "wait": "Next trap in a moment. Tap to skip.",
+      "wait_last": "Your result in a moment."
     },
-    "feedback_ms": 2000
+    "feedback_ms": 2000,
+    "score_strip": {
+      "label": "{n} dodged",
+      "aria": "{hit} dodged, {miss} walked into, {left} still to come"
+    }
   },
   "interstitials": [
     {
@@ -602,8 +727,8 @@
         ]
       },
       "line": "Your skill, hours and goal just cut 11 strategies down to 3.",
-      "sub": "Next: 8 real money situations. How you handle them shapes your plan: where to start, what to offer and what to skip.",
-      "cta": "Show me scenario 1",
+      "sub": "Next: 8 money traps. How you handle them shapes your plan: where to start, what to offer and what to skip.",
+      "cta": "Show me trap #1",
       "hold": true
     }
   ],
@@ -741,7 +866,7 @@
     "duration_ms": 2500,
     "text": "Building your profile",
     "messages": [
-      "Adding up your eight scenarios…",
+      "Adding up your eight traps…",
       "Setting your score against your own prediction…",
       "Matching your strategy…"
     ],
@@ -797,9 +922,9 @@
   },
   "report": {
     "generating_messages": [
-      "Reading your eight scenarios against the four zones…",
+      "Reading your eight traps against the four zones…",
       "Matching strategies to your skill, your hours and your goal…",
-      "Writing up your 8 scenarios…",
+      "Writing up your 8 traps…",
       "Almost there — putting your first seven days in order…"
     ],
     "sections": [
@@ -877,8 +1002,8 @@
           "hook": "Seven days, one task each, sized to your hours."
         },
         {
-          "title": "Your 8 Scenarios",
-          "hook": "Every scenario, your move, the right move, and what it means for your plan."
+          "title": "Your 8 Traps",
+          "hook": "Every trap, your move, the right move, and what it means for your plan."
         }
       ]
     },
@@ -949,7 +1074,7 @@
   },
   "result": {
     "mistakes_teaser": "You have seen strength #1. The other four are what the report builds on — and one of them helps the zone with the most room on its own.",
-    "value_banner": "Four chapters, your first seven days and your 8 scenarios — built from your own answers, yours to keep."
+    "value_banner": "Four chapters, your first seven days and your 8 traps — built from your own answers, yours to keep."
   },
   "result_copy": {
     "kicker": "YOUR AI MONEY PROFILE",
@@ -962,7 +1087,7 @@
     },
     "balance_title": "Your four zones",
     "zone_of": "{n} of {total}",
-    "head_caption": "Four zones, two scenarios each, scored off your own answers.",
+    "head_caption": "Four zones, two traps each, scored off your own answers.",
     "offer_sub": "Your complete AI Navigator Report — once, yours to keep.",
     "disclaimer": "Educational content. No income is promised or guaranteed — results depend on your effort, skills and market.",
     "delivery_line": "Your PDF was sent to {email}",
@@ -1008,8 +1133,8 @@
         },
         {
           "icon": "key",
-          "title": "Your 8 scenarios",
-          "sub": "Every scenario, the right move, and why"
+          "title": "Your 8 traps",
+          "sub": "Every trap, the right move, and why"
         }
       ],
       "offer_chips": [
@@ -1046,9 +1171,9 @@
         }
       ],
       "answer_key": {
-        "key": "Your 8 scenarios",
-        "title": "Your 8 Scenarios",
-        "hook": "Every scenario, your move, the right move, and what it means for your plan."
+        "key": "Your 8 traps",
+        "title": "Your 8 Traps",
+        "hook": "Every trap, your move, the right move, and what it means for your plan."
       }
     },
     "paths_card": {
@@ -1067,8 +1192,8 @@
       "badge_avoid": "Skip for now"
     },
     "key_card": {
-      "title": "Your 8 scenarios",
-      "lead": "Every scenario, your move, the right move, and what it means for your plan.",
+      "title": "Your 8 traps",
+      "lead": "Every trap, your move, the right move, and what it means for your plan.",
       "yours": "Your move:",
       "right": "The right move:",
       "none": "not answered",
@@ -1092,7 +1217,7 @@
         "The strategy for making money with AI that fits you, matched to your answers",
         "What to sell, and who pays for it",
         "Your first 7 days, sized to your {hours} a week",
-        "2 backup strategies, 2 to skip, and your 8 scenarios explained"
+        "2 backup strategies, 2 to skip, and your 8 traps explained"
       ],
       "under": "{price} one-time. No subscription. PDF copy to your email."
     },
