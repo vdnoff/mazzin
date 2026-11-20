@@ -702,6 +702,10 @@ MIRRORED_EVENTS = {
     "paywall_view": "InitiateCheckout",
     "paywall_open": "InitiateCheckout",
     "pay_tap": "AddPaymentInfo",
+    # A guide tap on a funnel whose own pixel lists AddToCart. Only such a
+    # funnel's module sends the id, and payments.send_pixel_event refuses the
+    # name for every funnel without a pixel block.
+    "article_tap": "AddToCart",
 }
 
 UA_MAX = 512

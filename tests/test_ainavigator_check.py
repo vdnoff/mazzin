@@ -209,24 +209,27 @@ print("\n--- cut from focus: what is kept and what is dropped ---")
 DROPPED = ["track_timing", "result_template", "preview_gallery",
            "style_elements", "analyzing_echo", "sale", "pairings",
            "share_cards", "interstitial_working"]
-# Five keys are this funnel's own: `theme_css` and `icons`, beside the theme
-# they belong to; `pixel`, beside the Stripe mode that silences its Purchase;
-# and, last, `rsoc`, the partner-article block, and `paths`, the table its
+# Six keys are this funnel's own: `theme_css` and `icons`, beside the theme
+# they belong to; `pixel`, beside the Stripe mode that silences its Purchase,
+# and `subid_fallback` after it; and, last, `rsoc`, the partner-article block, and `paths`, the table its
 # report matches a reader's strategies from.
-OWN = ["theme_css", "icons", "pixel", "rsoc", "paths"]
-check("every top-level key is one focus carries, bar its own five",
+OWN = ["theme_css", "icons", "pixel", "subid_fallback", "rsoc", "paths"]
+check("every top-level key is one focus carries, bar its own six",
       [k for k in cfg if k not in FOCUS] == OWN,
       str([k for k in cfg if k not in FOCUS]))
 check("  in focus's order, the theme's stylesheet beside the theme",
-      [k for k in cfg if k not in ("theme_css", "icons", "pixel")]
-      == [k for k in FOCUS if k in cfg] + OWN[3:]
+      [k for k in cfg if k not in ("theme_css", "icons", "pixel",
+                                   "subid_fallback")]
+      == [k for k in FOCUS if k in cfg] + OWN[4:]
       and list(cfg)[list(cfg).index("theme"):][:3]
       == ["theme", "theme_css", "icons"]
-      and list(cfg)[list(cfg).index("stripe_mode") + 1] == "pixel")
-check("its own pixel: the id, the token's variable by name, three events",
+      and list(cfg)[list(cfg).index("stripe_mode") + 1:][:2]
+      == ["pixel", "subid_fallback"] and cfg["subid_fallback"] == "ad_id")
+check("its own pixel: the id, the token's variable by name, four events",
       cfg["pixel"] == {"id": "762004311984135",
                        "capi_token_env": "META_CAPI_TOKEN_VISYMO",
-                       "events": ["PageView", "Lead", "Purchase"]}
+                       "events": ["PageView", "Lead", "Purchase",
+                                  "AddToCart"]}
       and re.match(r"^[0-9]{5,20}$", cfg["pixel"]["id"]) is not None)
 check("  no ViewContent, no InitiateCheckout, and no token in the file",
       "ViewContent" not in cfg["pixel"]["events"]
@@ -1075,7 +1078,11 @@ check("  which is sessionStorage, under the funnel's own name",
       and "localStorage" not in KEEP and "document.cookie" not in KEEP)
 check("  and the contexts carry the key only on such a funnel",
       "if (cfg.rsoc) ctx.passthrough = heldPassthrough();" in ENGINE
-      and ENGINE.count("heldPassthrough()") == 4)
+      # The fifth reader is the subid fallback, which takes the ad id and
+      # nothing else, on a funnel that asks for it.
+      and ENGINE.count("heldPassthrough()") == 5
+      and 'var subid = own || heldPassthrough().ad_id || "";' in ENGINE
+      and 'if (!cfg || cfg.subid_fallback !== "ad_id") return;' in ENGINE)
 check("the tracker does not send them",
       "passthrough" not in ENGINE.split("function track(event,", 1)[1]
       .split("\n  }\n", 1)[0]

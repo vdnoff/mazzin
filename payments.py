@@ -1084,6 +1084,11 @@ MIRRORED_EVENT_NAMES = frozenset(
     ("PageView", "Lead", "InitiateCheckout", "AddPaymentInfo"))
 
 
+# Mirrored only for a funnel with a pixel block that lists the event, to that
+# pixel with that funnel's token. Never to the default pixel.
+OWN_PIXEL_MIRRORED = frozenset(("AddToCart",))
+
+
 def send_pixel_event(event_name, event_id, slug, session_id, client_ip=None,
                      client_ua=None, meta_ids=None, event_time=None):
     """Tell Meta the browser pixel's event happened, under the pixel's own
@@ -1093,9 +1098,13 @@ def send_pixel_event(event_name, event_id, slug, session_id, client_ip=None,
     makes the pair one event to Meta: the copy with the better match wins
     and the other is dropped, on either side, in either order.
     """
-    if event_name not in MIRRORED_EVENT_NAMES:
+    if event_name not in MIRRORED_EVENT_NAMES \
+            and event_name not in OWN_PIXEL_MIRRORED:
         return False
     own = funnel_pixel(slug)
+    if not own and event_name not in MIRRORED_EVENT_NAMES:
+        # An own-pixel event from a funnel with no pixel of its own.
+        return False
     if own:
         # Only what the funnel's block lists, only to its own pixel, only
         # with its own token, and nothing at all while it is in test mode.

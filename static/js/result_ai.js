@@ -643,8 +643,17 @@
       link.rel = "noopener";
       link.setAttribute("data-article", item.key);
       link.addEventListener("click", function () {
+        // The funnel's own pixel hears of a guide once per tab; the id it
+        // fired under rides on the tap's own event. Neither is waited for:
+        // the link opens as it always did.
+        var cart = typeof ctx.pixelOnce === "function"
+          ? ctx.pixelOnce("AddToCart",
+                          { content_name: item.key, content_category: slot },
+                          item.key)
+          : null;
         if (typeof ctx.track === "function") {
-          ctx.track("article_tap", { article: item.key, slot: slot });
+          if (cart) ctx.track("article_tap", { article: item.key, slot: slot }, cart);
+          else ctx.track("article_tap", { article: item.key, slot: slot });
         }
       });
       list.appendChild(link);

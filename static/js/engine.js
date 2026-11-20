@@ -309,6 +309,30 @@
     } catch (e) { /* private mode: held for this page load only */ }
   }
 
+  // --- a subid for traffic that arrives without one ---------------------------
+  //
+  // Opt-in: `"subid_fallback": "ad_id"` on the funnel. Its campaign link
+  // carries the ad's id and no subid, and every number this site keeps is
+  // filtered by subid, so the validated ad id held above stands in for it.
+  // A subid the landing URL does carry still wins, and is remembered for the
+  // tab so a later load on a bare URL does not swap it for the ad id; an
+  // unresolved "{{…}}" macro is not a subid. No ad id held: no subid, as
+  // before. A funnel without the key never reaches the body of this.
+  function applySubidFallback(params) {
+    if (!cfg || cfg.subid_fallback !== "ad_id") return;
+    var key = "mazzin_subid_" + slug;
+    var own = params.get("subid") || "";
+    if (own.indexOf("{{") !== -1 || own.indexOf("}}") !== -1) own = "";
+    if (own) {
+      try { sessionStorage.setItem(key, own); } catch (e) { /* this load */ }
+    } else {
+      try { own = sessionStorage.getItem(key) || ""; } catch (e) { own = ""; }
+    }
+    var subid = own || heldPassthrough().ad_id || "";
+    if (subid) attribution.subid = subid;
+    else delete attribution.subid;
+  }
+
   // --- Meta pixel ----------------------------------------------------------
 
   // Off unless the server hands back an id. The id is fetched rather than
@@ -379,6 +403,32 @@
   }
   var pixelParams = {};
   var leadMuted = false;      // own pixel, and this session's Lead is spent
+
+  // One event, once a session per `key`, on a funnel with its own pixel that
+  // lists the event. Returns the eventID it fired under, for the tracking
+  // event of the same moment to carry, or null when nothing was fired: no
+  // own pixel, an event the block does not list, or a key already spent.
+  // Synchronous and never thrown out of — the tap that calls it goes on.
+  function ownPixelOnce(name, params, key) {
+    try {
+      if (!ownPixel() || !pixelAllows(name)) return null;
+      var store = "mazzin_px_" + slug;
+      var spent = {};
+      try { spent = JSON.parse(sessionStorage.getItem(store) || "{}") || {}; }
+      catch (e) { spent = {}; }
+      var mark = name + ":" + key;
+      if (spent[mark] || ownPixelSpent[mark]) return null;
+      ownPixelSpent[mark] = true;
+      spent[mark] = 1;
+      try { sessionStorage.setItem(store, JSON.stringify(spent)); }
+      catch (e) { /* private mode: once a load */ }
+      var id = uuid();
+      pixelParams[id] = params || {};
+      pixelTrack(name, id);
+      return id;
+    } catch (e) { return null; }
+  }
+  var ownPixelSpent = {};
 
   // --- a funnel's own pixel ------------------------------------------------
   //
@@ -4779,7 +4829,9 @@
         wallet: xpBlock, walletSummary: el.xpSummary
       },
       checkout: startCheckout,
-      track: function (name, extra) { track(name, null, extra); },
+      track: function (name, extra, pixelId) {
+        track(name, null, extra, pixelId);
+      },
       // The email gate, when this funnel has one, and the call that submits
       // it. Null on every priced funnel, which is what keeps their modules'
       // pages exactly what they were.
@@ -4796,6 +4848,8 @@
     if (timingTracked()) ctx.elapsed = JSON.parse(JSON.stringify(stepTimes));
     // The click identifiers, on the funnels that pass them on and no other.
     if (cfg.rsoc) ctx.passthrough = heldPassthrough();
+    // And the once-a-session pixel event, on a funnel with its own pixel.
+    if (ownPixel()) ctx.pixelOnce = ownPixelOnce;
     return ctx;
   }
 
@@ -4850,8 +4904,11 @@
     // the context it always was.
     if (cfg && cfg.rsoc) {
       out.passthrough = heldPassthrough();
-      out.track = function (name, extra) { track(name, null, extra); };
+      out.track = function (name, extra, pixelId) {
+        track(name, null, extra, pixelId);
+      };
     }
+    if (ownPixel()) out.pixelOnce = ownPixelOnce;
     return out;
   }
 
@@ -9091,6 +9148,7 @@
         cfg = data;
         cfgSettle();
         keepPassthrough(params);
+        applySubidFallback(params);
         document.title = (cfg.meta && cfg.meta.title) || document.title;
         applyTheme();
         // A theme that lives in the funnel's own stylesheet has to be on the

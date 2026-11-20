@@ -100,12 +100,14 @@ def server_half():
     print("\n--- the config block ---")
     check("the funnel names its pixel, the token's variable, three events",
           CFG.get("pixel") == {"id": PIXEL, "capi_token_env": ENV,
-                               "events": ["PageView", "Lead", "Purchase"]},
+                               "events": ["PageView", "Lead", "Purchase",
+                                          "AddToCart"]},
           CFG.get("pixel"))
     own = payments.funnel_pixel("ai-navigator")
     check("payments reads it", own == {
         "id": PIXEL, "token_env": ENV,
-        "events": frozenset(("PageView", "Lead", "Purchase"))}, own)
+        "events": frozenset(("PageView", "Lead", "Purchase", "AddToCart"))},
+        own)
     check("  a block with a bad id is no block",
           payments.funnel_pixel("x", {"pixel": {"id": "abc"}}) is None
           and payments.funnel_pixel("x", {"pixel": {"id": "1234"}}) is None
@@ -278,9 +280,27 @@ def server_half():
           twin("ai-navigator", "InitiateCheckout") is False and calls == []
           and twin("ai-navigator", "AddPaymentInfo") is False
           and calls == [])
+    check("AddToCart goes to this pixel with this token, under the same id",
+          twin("ai-navigator", "AddToCart") is True and len(calls) == 1
+          and PIXEL in calls[0]["url"]
+          and calls[0]["params"] == {"access_token": FAKE}
+          and calls[0]["json"]["data"][0]["event_name"] == "AddToCart"
+          and calls[0]["json"]["data"][0]["event_id"]
+          == "0f8fad5b-d9cb-469f-a165-70867728950e", calls)
+    check("  with nothing about the visitor beyond what a twin always has",
+          sorted(calls[0]["json"]["data"][0]) == [
+              "action_source", "event_id", "event_name", "event_source_url",
+              "event_time", "user_data"])
+    check("ViewContent goes nowhere, for any funnel",
+          twin("ai-navigator", "ViewContent") is False and calls == []
+          and twin("kitchen", "ViewContent") is False and calls == [])
+    check("a funnel with no pixel block never mirrors AddToCart",
+          twin("kitchen", "AddToCart") is False and calls == []
+          and twin("focus", "AddToCart") is False and calls == [])
     os.environ.pop(ENV, None)
     check("with the variable unset the twin is not sent, to either pixel",
-          twin("ai-navigator", "Lead") is False and calls == [])
+          twin("ai-navigator", "Lead") is False and calls == []
+          and twin("ai-navigator", "AddToCart") is False and calls == [])
     check("kitchen's twins are the default pixel's, all four",
           all(twin("kitchen", n) is True and DEFAULT in calls[0]["url"]
               and calls[0]["params"] == {"access_token": "default-token"}
@@ -421,6 +441,16 @@ class Handler(walk.Handler):
         return super().do_POST()
 
 
+def fresh(browser):
+    ctx = browser.new_context(viewport={"width": 390, "height": 844},
+                              is_mobile=True, has_touch=True)
+    ctx.route(lambda url: not url.startswith(BASE), lambda r: r.abort())
+    ctx.route("https://connect.facebook.net/en_US/fbevents.js",
+              lambda r: r.fulfill(status=200, content_type="text/javascript",
+                                  body=FBEVENTS))
+    return ctx, ctx.new_page()
+
+
 def fbq(page):
     return page.evaluate(
         "() => JSON.parse(sessionStorage.getItem('__fbq') || '[]')")
@@ -494,14 +524,63 @@ def browser_half():
               len(views) == 2 and "pixel_event_id" not in views[1], views)
 
         print("\n--- an article tap, then a pay tap ---")
-        with ctx.expect_page() as popup:
-            page.locator(".ai-rsoc-link").first.click()
-        popup.value.close()
-        page.wait_for_timeout(600)
-        check("the article tap is tracked, and fires nothing on the pixel",
-              [e for e in walk.events if e.get("event") == "article_tap"]
-              and names(fbq(page)) == ["PageView", "Lead", "PageView"],
-              names(fbq(page)))
+        LINK = ("() => [...document.querySelectorAll('.ai-rsoc-link')].map("
+                "a => [a.dataset.article, a.href, a.target, a.rel])")
+        links = page.evaluate(LINK)
+        first, second = links[0][0], links[1][0]
+
+        def tap(key):
+            with ctx.expect_page() as popup:
+                page.locator('.ai-rsoc-link[data-article="%s"]' % key).click()
+            popup.value.close()
+            page.wait_for_timeout(600)
+
+        def taps():
+            return [e for e in walk.events if e.get("event") == "article_tap"]
+
+        tap(first)
+        calls = fbq(page)
+        cart = [c for c in calls if c[1] == "AddToCart"]
+        check("a guide tap: one AddToCart on the funnel's pixel",
+              names(calls) == ["PageView", "Lead", "PageView", "AddToCart"],
+              names(calls))
+        check("  content_name the article's key, content_category the slot, "
+              "and nothing else",
+              cart and cart[0][2] == {"content_name": first,
+                                      "content_category": "below_paywall"},
+              cart)
+        check("  under an event id of its own, which the article_tap carries",
+              cart and sorted(cart[0][3]) == ["eventID"]
+              and len(cart[0][3]["eventID"]) == 36 and len(taps()) == 1
+              and taps()[0].get("pixel_event_id") == cart[0][3]["eventID"]
+              and taps()[0]["extra"] == {"article": first,
+                                         "slot": "below_paywall"}, taps())
+        tap(first)
+        check("the same guide again: article_tap posts, no second AddToCart",
+              len(taps()) == 2 and "pixel_event_id" not in taps()[1]
+              and taps()[1]["extra"] == taps()[0]["extra"]
+              and names(fbq(page)).count("AddToCart") == 1, names(fbq(page)))
+        tap(second)
+        cart = [c for c in fbq(page) if c[1] == "AddToCart"]
+        check("the other guide: its own AddToCart, under its own key and id",
+              len(cart) == 2 and cart[1][2] == {
+                  "content_name": second, "content_category": "below_paywall"}
+              and cart[1][3]["eventID"] != cart[0][3]["eventID"]
+              and len(taps()) == 3, cart)
+        check("the links are what they were: href, target and rel",
+              page.evaluate(LINK) == links
+              and all(l[2] == "_blank" and l[3] == "noopener"
+                      and l[1] == CFG["rsoc"]["articles"][l[0]]["link"] + TAIL
+                      for l in links), links)
+        page.reload()
+        walk.advance(page)
+        walk.wait_result(page)
+        tap(first)
+        check("after a reload and the quiz again: still no second AddToCart",
+              names(fbq(page)).count("AddToCart") == 2
+              and names(fbq(page)).count("Lead") == 1, names(fbq(page)))
+        SEEN = ["PageView", "Lead", "PageView", "AddToCart", "AddToCart",
+                "PageView"]
         page.evaluate("() => document.querySelector('#pay-button')"
                       ".scrollIntoView()")
         page.wait_for_timeout(500)
@@ -516,13 +595,12 @@ def browser_half():
               and [e for e in walk.events
                    if e.get("event") in ("paywall_view", "paywall_open")],
               [e.get("event") for e in walk.events][-8:])
-        check("no pixel event before leaving for the checkout",
-              before == ["PageView", "Lead", "PageView"], before)
+        check("no pixel event for seeing the offer or tapping pay",
+              before == SEEN, before)
 
         print("\n--- the delivered page: a confirmed live purchase ---")
         check("one Purchase, after the server's word, and one PageView",
-              names(calls) == ["PageView", "Lead", "PageView", "PageView",
-                               "Purchase"], names(calls))
+              names(calls) == SEEN + ["PageView", "Purchase"], names(calls))
         bought = [c for c in calls if c[1] == "Purchase"]
         check("  value 6.00, currency USD, eventID the payment intent",
               bought and bought[0][2] == {"value": 6, "currency": "USD"}
@@ -539,13 +617,13 @@ def browser_half():
         calls = fbq(page)
         check("a reload adds a PageView and no Purchase",
               names(calls).count("Purchase") == 1
-              and names(calls).count("PageView") == 4, names(calls))
+              and names(calls).count("PageView") == 5, names(calls))
         check("no ViewContent and no InitiateCheckout anywhere in the walk",
               not [n for n in names(calls)
-                   if n not in ("PageView", "Lead", "Purchase")],
+                   if n not in ("PageView", "Lead", "Purchase", "AddToCart")],
               names(calls))
         check("  and one init a page load, always this pixel",
-              [c[1] for c in calls if c[0] == "init"] == [PIXEL] * 4,
+              [c[1] for c in calls if c[0] == "init"] == [PIXEL] * 5,
               [c[1] for c in calls if c[0] == "init"])
         check("no script errors", not errors, errors)
 
@@ -578,7 +656,119 @@ def browser_half():
               names(calls) == ["PageView"], names(calls))
         check("  on this funnel's pixel",
               [c[1] for c in calls if c[0] == "init"] == [PIXEL])
+        check("  with no fbclid held there is no guides card to tap",
+              page.locator(".ai-rsoc-link").count() == 0)
         ctx.close()
+
+        print("\n--- a guide tap after the money, on a test purchase ---")
+        ctx, page = fresh(browser)
+        del walk.events[:]
+        page.goto(BASE + "/ai-navigator?cs=" + PI_TEST + "&" + TAIL[1:])
+        page.wait_for_selector("#result-module.is-delivered .ai-rsoc-link",
+                               timeout=30000)
+        page.wait_for_timeout(900)
+        key = page.evaluate("() => document.querySelector('.ai-rsoc-link')"
+                            ".dataset.article")
+        with ctx.expect_page() as popup:
+            page.locator(".ai-rsoc-link").first.click()
+        popup.value.close()
+        page.wait_for_timeout(600)
+        calls = fbq(page)
+        check("AddToCart fires in the delivered slot, test purchase or not",
+              names(calls) == ["PageView", "AddToCart"]
+              and calls[-1][2] == {"content_name": key,
+                                   "content_category": "delivered"}, calls)
+        hit = [e for e in walk.events if e.get("event") == "article_tap"]
+        check("  beside its article_tap, which carries the same id",
+              len(hit) == 1 and hit[0]["extra"] == {"article": key,
+                                                    "slot": "delivered"}
+              and hit[0].get("pixel_event_id") == calls[-1][3]["eventID"],
+              hit)
+        ctx.close()
+
+        print("\n--- a walk with no fbclid ---")
+        ctx, page = fresh(browser)
+        del walk.events[:]
+        page.goto(BASE + "/ai-navigator?ad_id=111&asid=222")
+        walk.advance(page)
+        walk.wait_result(page)
+        check("no guides card, and nothing on the pixel but PageView and Lead",
+              page.locator(".ai-rsoc-link").count() == 0
+              and names(fbq(page)) == ["PageView", "Lead"], names(fbq(page)))
+        ctx.close()
+
+        print("\n--- subid from ad_id ---")
+        check("the funnel asks for it, and no other funnel does",
+              CFG.get("subid_fallback") == "ad_id"
+              and not [n for n in os.listdir(os.path.join(REPO, "funnels"))
+                       if not n.startswith("ai-navigator")
+                       and "subid_fallback" in open(os.path.join(
+                           REPO, "funnels", n)).read()])
+
+        def subids(since=0):
+            return sorted(set(str(e.get("subid")) for e in walk.events[since:]))
+
+        ctx, page = fresh(browser)
+        del walk.events[:]
+        page.goto(BASE + "/ai-navigator?ad_id=111&asid=222&fbclid=AbC")
+        walk.advance(page)
+        walk.wait_result(page)
+        with ctx.expect_page() as popup:
+            page.locator(".ai-rsoc-link").first.click()
+        popup.value.close()
+        page.wait_for_timeout(500)
+        kinds = set(e.get("event") for e in walk.events)
+        check("no subid on the URL: every tracked event carries the ad id",
+              subids() == ["111"] and {"funnel_start", "swipe", "result_view",
+                                       "article_tap"} <= kinds
+              and len(walk.events) > 14, [subids(), sorted(kinds)])
+        check("  and the partner link is what it was, subid and all",
+              "subid" not in page.evaluate(
+                  "() => document.querySelector('.ai-rsoc-link').href"))
+        mark = len(walk.events)
+        page.goto(BASE + "/ai-navigator")
+        walk.advance(page, until="skill")
+        page.wait_for_timeout(400)
+        check("a later arrival on a bare URL: still the ad id",
+              len(walk.events) > mark and subids(mark) == ["111"],
+              subids(mark))
+        mark = len(walk.events)
+        page.evaluate("() => document.querySelector('#pay-button') && 0")
+        page.goto(BASE + "/ai-navigator?cs=" + PI_TEST)
+        page.wait_for_selector("#result-module.is-delivered .ai-rsoc-link",
+                               timeout=30000)
+        with ctx.expect_page() as popup:
+            page.locator(".ai-rsoc-link").nth(1).click()
+        popup.value.close()
+        page.wait_for_timeout(500)
+        check("back from the payment page, on a URL with only a token: the "
+              "same",
+              len(walk.events) > mark and subids(mark) == ["111"],
+              [subids(mark), [e.get("event") for e in walk.events[mark:]]])
+        ctx.close()
+
+        for label, query, want in (
+                ("an explicit subid wins", "?subid=X&ad_id=111", ["X"]),
+                ("an unresolved ad macro is no subid",
+                 "?ad_id={{ad.id}}&asid={{campaign.id}}", ["None"]),
+                ("a macro for a subid falls back to the ad id",
+                 "?subid={{x}}&ad_id=111", ["111"]),
+                ("no ad id and no subid: none", "", ["None"])):
+            ctx, page = fresh(browser)
+            del walk.events[:]
+            page.goto(BASE + "/ai-navigator" + query)
+            walk.advance(page, until="skill")
+            page.wait_for_timeout(400)
+            got = subids()
+            if label.startswith("an explicit"):
+                mark = len(walk.events)
+                page.goto(BASE + "/ai-navigator?ad_id=111")
+                walk.advance(page, until="skill")
+                page.wait_for_timeout(400)
+                got = sorted(set(got + subids(mark)))
+            check("%s: %s" % (label, want), got == want
+                  and len(walk.events) >= 2, got)
+            ctx.close()
         browser.close()
     server.shutdown()
 

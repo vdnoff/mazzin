@@ -43,9 +43,11 @@
     "events": [
       "PageView",
       "Lead",
-      "Purchase"
+      "Purchase",
+      "AddToCart"
     ]
   },
+  "subid_fallback": "ad_id",
   "result_module": "/static/js/result_ai.js",
   "result_css": "/static/css/result_ai.css",
   "meta": {
