@@ -952,14 +952,11 @@ def send_purchase_event(purchase_id, slug, amount_cents, currency,
                      own["token_env"] or "the funnel's token variable")
             return False
         pixel_id = own["id"]
-        # The test event code belongs to the default pixel.
-        test_code = ""
     else:
         if not (config.META_PIXEL_ID and config.META_CAPI_TOKEN):
             return False
         pixel_id = None
         capi_token = config.META_CAPI_TOKEN
-        test_code = config.META_TEST_EVENT_CODE
 
     try:
         import requests
@@ -1030,8 +1027,9 @@ def send_purchase_event(purchase_id, slug, amount_cents, currency,
             },
         }],
     }
-    if test_code:
-        payload["test_event_code"] = test_code
+    # The test event code belongs to the default pixel, and stays with it.
+    if config.META_TEST_EVENT_CODE and not own:
+        payload["test_event_code"] = config.META_TEST_EVENT_CODE
 
     try:
         response = requests.post(

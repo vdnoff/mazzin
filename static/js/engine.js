@@ -364,19 +364,21 @@
     return id;
   }
 
-  function pixelTrack(name, eventId, params) {
+  function pixelTrack(name, eventId) {
     var id = eventId || pixelEventId(name);
-    if (!pixelReady) {
-      pixelQueue.push({ name: name, id: id, params: params });
-      return;
-    }
+    if (!pixelReady) { pixelQueue.push({ name: name, id: id }); return; }
     // A funnel with a pixel of its own fires what its block lists and
     // nothing else. Every other funnel passes straight through.
     if (!pixelAllows(name)) return;
+    if (name === "Lead" && leadMuted) return;
     try {
-      fbq()("track", name, params || {}, { eventID: id });
+      // Only the own-pixel Purchase has parameters, held under its id.
+      if (pixelParams[id]) fbq()("track", name, pixelParams[id], { eventID: id });
+      else fbq()("track", name, {}, { eventID: id });
     } catch (e) { /* measurement must never break the funnel */ }
   }
+  var pixelParams = {};
+  var leadMuted = false;      // own pixel, and this session's Lead is spent
 
   // --- a funnel's own pixel ------------------------------------------------
   //
@@ -445,7 +447,8 @@
       } catch (e) { /* no storage: once a load */ }
       if (ownPurchaseFired[id]) return;
       ownPurchaseFired[id] = true;
-      pixelTrack("Purchase", id, { value: value, currency: currency });
+      pixelParams[id] = { value: value, currency: currency };
+      pixelTrack("Purchase", id);
     });
   }
   var ownPurchaseFired = {};
@@ -508,7 +511,7 @@
         pixelTrack("PageView", pixelEventId("PageView"));
         var queued = pixelQueue.slice();
         pixelQueue = [];
-        queued.forEach(function (q) { pixelTrack(q.name, q.id, q.params); });
+        queued.forEach(function (q) { pixelTrack(q.name, q.id); });
       })
       .catch(function () { /* no pixel, no funnel impact */ });
   }
@@ -546,7 +549,7 @@
     if (stepNo) body.step = stepNo;
     if (extra) body.extra = extra;
     for (var k in attribution) body[k] = attribution[k];
-    if (pixelId) {
+    if (pixelId && !(leadMuted && event === "result_view")) {
       body.pixel_event_id = pixelId;
       var ids = metaIds();
       for (var m in ids) body[m] = ids[m];
@@ -5038,12 +5041,12 @@
     // A finished quiz with a result on screen is the qualified visitor Meta
     // should be optimising towards, so Lead sits exactly here and nowhere
     // earlier — and the tracking event of the same moment carries its id.
-    var lead = pixelEventId("Lead");
     // Once a session where the funnel has a pixel of its own; every other
     // funnel fires it on each result, under the session's one id.
-    if (ownPixel() && ownLeadSpent()) lead = null;
+    leadMuted = !!ownPixel() && ownLeadSpent();
+    var lead = pixelEventId("Lead");
     track("result_view", null, null, lead);
-    if (lead) pixelTrack("Lead", lead);
+    pixelTrack("Lead", lead);
     if (singlePage) {
       watchCommerce();
       watchScroll();
