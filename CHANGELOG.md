@@ -720,3 +720,6 @@ bottom.
 
 ## 2026-11-20 — claude/ai-navigator-live
 - AI Navigator: live payments, livemode on purchases, Terms sections
+
+## 2026-11-20 — claude/loans-visymo-pixel
+- Loans — Visymo RSOC pixel: PageView, Lead on summary, AddToCart on article tap
