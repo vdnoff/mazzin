@@ -37,6 +37,15 @@
     "arrow": "M4 12h16M14 6l6 6-6 6"
   },
   "stripe_mode": "test",
+  "pixel": {
+    "id": "762004311984135",
+    "capi_token_env": "META_CAPI_TOKEN_VISYMO",
+    "events": [
+      "PageView",
+      "Lead",
+      "Purchase"
+    ]
+  },
   "result_module": "/static/js/result_ai.js",
   "result_css": "/static/css/result_ai.css",
   "meta": {
@@ -1235,11 +1244,11 @@
       "ad_id",
       "asid"
     ],
-    "kicker": "NOT READY TO PAY YET?",
+    "kicker": "NOT READY TO UNLOCK YET?",
     "kicker_delivered": "KEEP GOING",
-    "head": "Learn how people make money with AI. Free.",
+    "head": "Get the basics first. Free.",
     "head_delivered": "Keep going: free guides for your profile",
-    "sub": "{n} free guides, picked from your answers. Read them first, start when you are ready.",
+    "sub": "{n} free guides on the tools and skills behind your profile. Your money strategy stays in your report.",
     "tag_start": "START HERE",
     "tag_skill": "PICKED FOR YOUR SKILL: {skill}",
     "tag_zone": "PICKED FOR WHERE YOU HAVE THE MOST ROOM",

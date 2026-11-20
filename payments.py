@@ -30,6 +30,7 @@ import hashlib
 import ipaddress
 import json
 import logging
+import os
 import re
 import time
 import urllib.parse
@@ -852,9 +853,71 @@ def _sha256(value):
     return hashlib.sha256(value.strip().lower().encode("utf-8")).hexdigest()
 
 
-def _capi_url():
+def _capi_url(pixel_id=None):
     return "https://graph.facebook.com/%s/%s/events" % (
-        config.META_API_VERSION, config.META_PIXEL_ID)
+        config.META_API_VERSION, pixel_id or config.META_PIXEL_ID)
+
+
+# --- a funnel's own pixel ----------------------------------------------------
+#
+# A funnel may name a pixel of its own in a `pixel` block:
+#
+#     "pixel": {"id": "…", "capi_token_env": "META_CAPI_TOKEN_…",
+#               "events": ["PageView", "Lead", "Purchase"]}
+#
+# It replaces the default pixel for that funnel, on both sides: the browser is
+# handed this id by /api/pixel-config, and every server event for the funnel
+# goes to this id with the token the block names, or does not go. There is no
+# falling back to the default pixel's token — a token is a credential for one
+# pixel, and an event sent with the wrong one is an event in somebody else's
+# account.
+#
+# The block names an environment variable rather than holding a token: the
+# config is a public file. And the name has to look like one of ours, so a
+# config cannot point this at the Stripe key and have it posted to Meta as an
+# access token.
+#
+# A funnel without the block is untouched by any of this.
+PIXEL_ID_RE = re.compile(r"^[0-9]{5,20}$")
+PIXEL_TOKEN_ENV_RE = re.compile(r"^META_CAPI_TOKEN_[A-Z0-9_]{1,40}$")
+PIXEL_EVENT_RE = re.compile(r"^[A-Za-z]{1,40}$")
+# Reserved for the partner's article page, whatever a config says.
+PIXEL_NEVER = frozenset(("ViewContent",))
+
+
+def funnel_pixel(slug, cfg=None):
+    """The funnel's own pixel, or None when it uses the default one.
+
+    `{"id", "token_env", "events"}`. A block whose id is not a pixel id is no
+    block at all: the funnel falls back to behaving like every other one.
+    """
+    if cfg is None:
+        try:
+            cfg = config.load_funnel(slug)
+        except Exception:                         # noqa: BLE001 - no config
+            return None
+    block = cfg.get("pixel") if isinstance(cfg, dict) else None
+    if not isinstance(block, dict):
+        return None
+    pixel_id = block.get("id")
+    if not isinstance(pixel_id, str) or not PIXEL_ID_RE.match(pixel_id):
+        return None
+    env = block.get("capi_token_env")
+    if not isinstance(env, str) or not PIXEL_TOKEN_ENV_RE.match(env):
+        env = ""
+    events = block.get("events")
+    events = frozenset(
+        name for name in (events if isinstance(events, list) else [])
+        if isinstance(name, str) and PIXEL_EVENT_RE.match(name)
+        and name not in PIXEL_NEVER)
+    return {"id": pixel_id, "token_env": env, "events": events}
+
+
+def _pixel_token(own):
+    """The token the block's variable holds right now, or ""."""
+    if not own["token_env"]:
+        return ""
+    return (os.environ.get(own["token_env"]) or "").strip()
 
 
 def send_purchase_event(purchase_id, slug, amount_cents, currency,
@@ -873,8 +936,30 @@ def send_purchase_event(purchase_id, slug, amount_cents, currency,
     browser-side Purchase collapses into one conversion rather than inflating
     the number the ad spend is judged against.
     """
-    if not (config.META_PIXEL_ID and config.META_CAPI_TOKEN):
-        return False
+    own = funnel_pixel(slug)
+    if own:
+        # The funnel's own pixel, its own token, or nothing.
+        if "Purchase" not in own["events"]:
+            return False
+        if effective_mode(slug) == TEST:
+            log.info("purchase %s: funnel is in test mode — Meta purchase "
+                     "event skipped", purchase_id)
+            return False
+        capi_token = _pixel_token(own)
+        if not capi_token:
+            log.info("purchase %s: %s is not set — Meta purchase event "
+                     "skipped", purchase_id,
+                     own["token_env"] or "the funnel's token variable")
+            return False
+        pixel_id = own["id"]
+        # The test event code belongs to the default pixel.
+        test_code = ""
+    else:
+        if not (config.META_PIXEL_ID and config.META_CAPI_TOKEN):
+            return False
+        pixel_id = None
+        capi_token = config.META_CAPI_TOKEN
+        test_code = config.META_TEST_EVENT_CODE
 
     try:
         import requests
@@ -945,14 +1030,14 @@ def send_purchase_event(purchase_id, slug, amount_cents, currency,
             },
         }],
     }
-    if config.META_TEST_EVENT_CODE:
-        payload["test_event_code"] = config.META_TEST_EVENT_CODE
+    if test_code:
+        payload["test_event_code"] = test_code
 
     try:
         response = requests.post(
-            _capi_url(),
+            _capi_url(pixel_id) if pixel_id else _capi_url(),
             json=payload,
-            params={"access_token": config.META_CAPI_TOKEN},
+            params={"access_token": capi_token},
             timeout=config.META_TIMEOUT_S,
         )
     except Exception as exc:
@@ -1005,6 +1090,20 @@ def send_pixel_event(event_name, event_id, slug, session_id, client_ip=None,
     """
     if event_name not in MIRRORED_EVENT_NAMES:
         return False
+    own = funnel_pixel(slug)
+    if own:
+        # Only what the funnel's block lists, only to its own pixel, only
+        # with its own token, and nothing at all while it is in test mode.
+        if event_name not in own["events"]:
+            return False
+        capi_token = _pixel_token(own)
+        if not capi_token or effective_mode(slug) == TEST:
+            log.debug("Meta %s twin skipped for %s: own pixel, no token or "
+                      "test mode", event_name, slug)
+            return False
+        return _send_twin(event_name, event_id, slug, session_id, client_ip,
+                          client_ua, meta_ids, event_time, own["id"],
+                          capi_token, "")
     if not (config.META_PIXEL_ID and config.META_CAPI_TOKEN):
         return False
     # Nothing from a test-mode funnel counts as live. The Purchase sender
@@ -1018,7 +1117,14 @@ def send_pixel_event(event_name, event_id, slug, session_id, client_ip=None,
         log.debug("Meta %s twin skipped for %s: test-mode funnel and no "
                   "test event code", event_name, slug)
         return False
+    return _send_twin(event_name, event_id, slug, session_id, client_ip,
+                      client_ua, meta_ids, event_time, None,
+                      config.META_CAPI_TOKEN, test_code)
 
+
+def _send_twin(event_name, event_id, slug, session_id, client_ip, client_ua,
+               meta_ids, event_time, pixel_id, capi_token, test_code):
+    """The one request a twin is, to whichever pixel the caller resolved."""
     try:
         import requests
     except ImportError:
@@ -1054,9 +1160,9 @@ def send_pixel_event(event_name, event_id, slug, session_id, client_ip=None,
 
     try:
         response = requests.post(
-            _capi_url(),
+            _capi_url(pixel_id) if pixel_id else _capi_url(),
             json=payload,
-            params={"access_token": config.META_CAPI_TOKEN},
+            params={"access_token": capi_token},
             timeout=MIRROR_TIMEOUT_S,
         )
     except Exception as exc:
@@ -1090,7 +1196,15 @@ def pixel_config():
     The token is never exposed: it is a server credential and the browser has
     no use for it.
     """
-    response = jsonify({"pixel_id": config.META_PIXEL_ID or None})
+    pixel_id = config.META_PIXEL_ID or None
+    # A funnel that names its own pixel gets that one, asked for by slug. The
+    # bare URL every other funnel asks is answered as it always was.
+    slug = request.args.get("slug", "")
+    if slug and config.valid_slug(slug):
+        own = funnel_pixel(slug)
+        if own:
+            pixel_id = own["id"]
+    response = jsonify({"pixel_id": pixel_id})
     response.headers["Cache-Control"] = (
         "public, max-age=%d" % config.PIXEL_CONFIG_MAX_AGE)
     return response
@@ -1965,4 +2079,55 @@ def report():
     # mail are built from — and only once there is a report to deliver, so the
     # pending poll keeps showing the masked form it always did.
     body["report"] = reports.delivered_content(content, purchase.get("email"))
+    paid = _browser_purchase(purchase)
+    if paid:
+        body["purchase"] = paid
     return jsonify(body), 200
+
+
+SELECT_PURCHASE_AMOUNT_SQL = (
+    "SELECT amount_cents, currency, payment_intent, checkout_session "
+    "FROM purchases WHERE id = %s"
+)
+PAYMENT_INTENT_RE = re.compile(r"^pi_[A-Za-z0-9_]{1,250}$")
+
+
+def _browser_purchase(purchase):
+    """What the funnel's own pixel may say about this purchase, or None.
+
+    Only for a funnel whose `pixel` block lists Purchase, only once the
+    purchase is a row the webhook wrote, and never for a test one: the funnel
+    in test mode, or a session Stripe itself marked as test. What is charged
+    is read off the row — the amount Stripe reported, not the config's price —
+    and the payment intent is the id the server's own Purchase goes out
+    under, so Meta counts the pair once. No address, no session: three fields.
+
+    Best effort. A failure here is a missing pixel event, never a missing
+    report.
+    """
+    try:
+        slug = purchase.get("funnel")
+        own = funnel_pixel(slug)
+        if not own or "Purchase" not in own["events"]:
+            return None
+        if effective_mode(slug) == TEST:
+            return None
+        row = database.query_one(SELECT_PURCHASE_AMOUNT_SQL, (purchase["id"],))
+        if not row:
+            return None
+        intent = row.get("payment_intent") or ""
+        if not PAYMENT_INTENT_RE.match(intent):
+            return None
+        if str(row.get("checkout_session") or "").startswith("cs_test_"):
+            return None
+        cents = int(row["amount_cents"])
+        currency = str(row.get("currency") or "").upper()
+        if cents <= 0 or not re.match(r"^[A-Z]{3}$", currency):
+            return None
+        value = (decimal.Decimal(cents) / decimal.Decimal(100)).quantize(
+            decimal.Decimal("0.01"))
+        return {"event_id": intent, "value": str(value), "currency": currency}
+    except Exception as exc:                      # noqa: BLE001 - best effort
+        log.warning("pixel purchase fields unavailable: %s",
+                    type(exc).__name__)
+        return None

@@ -229,6 +229,7 @@ PAGE = """() => {
       - links[i].getBoundingClientRect().bottom)),
     money: [offer.textContent, box ? box.textContent : '']
       .map(t => /make money with ai/i.test(t)),
+    guidesMoney: box ? /make money/i.test(box.textContent) : false,
     unlock: (() => { const list = offer.querySelector('.ai-checks');
       return { rows: list ? [...list.children].map(r => r.textContent) : [],
                first: list ? getComputedStyle(list.children[0]).fontWeight
@@ -456,8 +457,9 @@ def main():
                                     "rgb(74, 85, 99)", "rgb(11, 15, 20)",
                                     "17px", False]] * 2
               and got["linkGaps"] == [10], [got["linkStyle"], got["linkGaps"]])
-        check("both cards say it is about making money with AI",
-              got["money"] == [True, True]
+        check("the offer card says \"make money with AI\"; the guides card "
+              "does not say \"make money\"",
+              got["money"] == [True, False] and got["guidesMoney"] is False
               and got["offerLabel"] == "YOUR WAY TO MAKE MONEY WITH AI"
               and got["offerHead"] == "Your answers point to one strategy "
               "for making money with AI.", got["money"])
@@ -642,7 +644,7 @@ def main():
         print("\n--- 5. a featured guide, when the config has one ---")
         # Not shipped: its link does not exist yet. The config is handed to
         # the page with one more article under the key the module looks for.
-        START = {"label": "How people make money with AI: the 11 ways",
+        START = {"label": "AI basics: the 11 ways people use it",
                  "link": "https://topiclisting.com/AaStartFixture_0123-xyz"}
         fixture = json.loads(json.dumps(CFG))
         fixture["rsoc"]["articles"]["start"] = START
