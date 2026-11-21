@@ -6,10 +6,11 @@ makes can be read back; every request off the machine is recorded and then
 aborted.
 
   1. A load initialises pixel 762004311984135 and sends one PageView.
-  2. The summary sends one Lead, once a session: not again on a reload, on
+  2. The summary sends one QuizComplete, once a session: not again on a
+     reload, on
      "Edit answers" and back, or on browser back and forward. It is sent with
      or without an fbclid.
-  3. A tap on an article row sends one AddToCart with that article's key and
+  3. A tap on an article row sends one ArticleTap with that article's key and
      the category "loans", and the new tab still opens. Every tap.
   4. Nothing else is ever sent: no article-view event, no purchase event.
   5. No event carries a session id, the subid, a click identifier or any
@@ -109,8 +110,21 @@ def fbq(page):
         "() => JSON.parse(sessionStorage.getItem('__fbq') || '[]')")
 
 
+# How each event may be sent: the page view as the standard event it is, and
+# the two of ours as custom events, so they never count with the partner's.
+METHOD = {"PageView": "trackSingle", "QuizComplete": "trackSingleCustom",
+          "ArticleTap": "trackSingleCustom"}
+TRACKS = ("track", "trackCustom", "trackSingle", "trackSingleCustom")
+NEVER = ("Lead", "AddToCart", "ViewContent", "Purchase")
+
+
 def names(calls):
-    return [c[2] for c in calls if c[0] == "trackSingle"]
+    return [c[2] for c in calls if c[0] in ("trackSingle",
+                                            "trackSingleCustom")]
+
+
+def methods_right(calls):
+    return all(c[0] == METHOD.get(c[2]) for c in calls if c[0] in TRACKS)
 
 
 def walk(page, purpose="medical", credit="fair"):
@@ -151,42 +165,44 @@ def main():
                                 "'resource').filter(r => r.name.includes("
                                 "'pixel-config')).length") == 0)
 
-        print("\n--- 2. the summary: one Lead a session ---")
+        print("\n--- 2. the summary: one QuizComplete a session ---")
         walk(page)
         check("the walk reaches the summary", rsoc.view(page) == "options",
               rsoc.view(page))
         calls = fbq(page)
-        check("exactly one Lead, with no parameters",
-              names(calls) == ["PageView", "Lead"]
-              and calls[-1] == ["trackSingle", PIXEL, "Lead"], calls)
+        check("exactly one QuizComplete, custom, with no parameters",
+              names(calls) == ["PageView", "QuizComplete"]
+              and calls[-1] == ["trackSingleCustom", PIXEL, "QuizComplete"],
+              calls)
         page.reload()
         page.wait_for_timeout(500)
-        check("a reload on the summary: a PageView, no second Lead",
+        check("a reload on the summary: a PageView, no second QuizComplete",
               rsoc.view(page) == "options"
-              and names(fbq(page)) == ["PageView", "Lead", "PageView"],
+              and names(fbq(page)) == ["PageView", "QuizComplete",
+                                       "PageView"],
               names(fbq(page)))
         rsoc.tap(page, "#top-link")
         back_at = rsoc.view(page)
         rsoc.tap(page, '#credit-rows button[data-value="good"]')
         rsoc.tap(page, "#go-options")
-        check("Edit answers, a changed answer, and back: still one Lead",
+        check("Edit answers, a changed answer, and back: one QuizComplete",
               back_at == "credit" and rsoc.view(page) == "options"
-              and names(fbq(page)).count("Lead") == 1,
+              and names(fbq(page)).count("QuizComplete") == 1,
               [back_at, names(fbq(page))])
         page.go_back()
         page.wait_for_timeout(300)
         mid = rsoc.view(page)
         page.go_forward()
         page.wait_for_timeout(300)
-        check("browser back and forward: still one Lead",
+        check("browser back and forward: still one QuizComplete",
               mid == "credit" and rsoc.view(page) == "options"
-              and names(fbq(page)).count("Lead") == 1,
+              and names(fbq(page)).count("QuizComplete") == 1,
               [mid, names(fbq(page))])
         page.goto(BASE + "/loans")
         page.wait_for_timeout(500)
-        check("a second arrival in the same tab: a PageView, no second Lead",
+        check("a second arrival in the tab: a PageView, no 2nd QuizComplete",
               rsoc.view(page) == "options"
-              and names(fbq(page)) == ["PageView", "Lead", "PageView",
+              and names(fbq(page)) == ["PageView", "QuizComplete", "PageView",
                                        "PageView"], names(fbq(page)))
 
         print("\n--- 3. a tap on an article row ---")
@@ -200,9 +216,9 @@ def main():
         popup.value.close()
         page.wait_for_timeout(400)
         added = fbq(page)[before:]
-        check("one AddToCart, addressed to the pixel",
-              len(added) == 1 and added[0][:3] == ["trackSingle", PIXEL,
-                                                   "AddToCart"], added)
+        check("one ArticleTap, custom, addressed to the pixel",
+              len(added) == 1 and added[0][:3] == ["trackSingleCustom", PIXEL,
+                                                   "ArticleTap"], added)
         check("  content_name the article's key, content_category loans, "
               "and nothing else",
               added and added[0][3:] == [{"content_name": key,
@@ -223,27 +239,38 @@ def main():
         popup.value.close()
         page.wait_for_timeout(400)
         added = fbq(page)[before:]
-        check("every tap: a second row is a second AddToCart, under its key",
-              [c[2] for c in added] == ["AddToCart", "AddToCart"]
+        check("every tap: a second row is a second ArticleTap, under its key",
+              [c[2] for c in added] == ["ArticleTap", "ArticleTap"]
               and added[1][3] == {"content_name": other,
                                   "content_category": "loans"}, added)
 
         print("\n--- 4 and 5. what is never sent ---")
         calls = fbq(page)
         check("three event names and no others, anywhere in the session",
-              sorted(set(names(calls))) == ["AddToCart", "Lead", "PageView"],
+              sorted(set(names(calls)))
+              == ["ArticleTap", "PageView", "QuizComplete"],
               sorted(set(names(calls))))
-        check("every event is a trackSingle to this pixel; one init a load",
-              all(c[0] in ("init", "trackSingle") and c[1] == PIXEL
-                  for c in calls)
+        check("no Lead, AddToCart, ViewContent or Purchase, by any method",
+              not [c for c in calls if c[0] in TRACKS and c[2] in NEVER]
+              and not [w for w in NEVER if '"%s"' % w in json.dumps(calls)],
+              [c[:3] for c in calls])
+        check("PageView by trackSingle; the other two by trackSingleCustom",
+              methods_right(calls)
+              and not [c for c in calls if c[0] in ("track", "trackCustom")],
+              [c[:3] for c in calls])
+        check("every event goes to this pixel by name; one init a load",
+              all(c[0] in ("init", "trackSingle", "trackSingleCustom")
+                  and c[1] == PIXEL for c in calls)
               and [c for c in calls if c[0] == "init"]
               == [["init", PIXEL]] * 3, [c[:2] for c in calls])
-        check("only AddToCart has parameters, and only the two it may",
-              all(len(c) == 3 for c in calls if c[0] == "trackSingle"
-                  and c[2] != "AddToCart")
+        check("only ArticleTap has parameters, and only the two it may",
+              all(len(c) == 3 for c in calls if c[0] in TRACKS
+                  and c[2] != "ArticleTap")
               and all(sorted(c[3]) == ["content_category", "content_name"]
+                      and c[3]["content_category"] == "loans"
+                      and c[3]["content_name"] in ARTICLES
                       and len(c) == 4 for c in calls
-                      if c[0] == "trackSingle" and c[2] == "AddToCart"))
+                      if c[0] in TRACKS and c[2] == "ArticleTap"))
         sid = page.evaluate("() => JSON.parse(sessionStorage.getItem("
                             "'mazzin_loans')).sid")
         flat = json.dumps(calls)
@@ -269,9 +296,9 @@ def main():
         print("\n--- 2b. a visit with no fbclid ---")
         ctx, page, seen = arrive(browser, "")
         walk(page)
-        check("the summary has no article rows, and the Lead is sent anyway",
+        check("no article rows without an fbclid, and QuizComplete anyway",
               rsoc.view(page) == "options" and hrefs(page) == []
-              and names(fbq(page)) == ["PageView", "Lead"],
+              and names(fbq(page)) == ["PageView", "QuizComplete"],
               [hrefs(page), names(fbq(page))])
         ctx.close()
 
@@ -288,6 +315,16 @@ def main():
             page.locator("a.guide").first.click()
         popup.value.close()
         page.wait_for_timeout(400)
+        # Read before the reload: the queue is the page's own, and a reload
+        # starts a fresh one.
+        queued = page.evaluate("() => [...window.fbq.queue].map(a => [...a]"
+                               ".slice(0, 3))")
+        check("the queue holds the renamed events, by their own methods",
+              ["trackSingleCustom", PIXEL, "QuizComplete"] in queued
+              and ["trackSingleCustom", PIXEL, "ArticleTap"] in queued
+              and methods_right(queued)
+              and not [c for c in queued if c[0] in TRACKS
+                       and c[2] in NEVER], queued)
         page.reload()
         page.wait_for_timeout(400)
         rsoc.tap(page, "#top-link")

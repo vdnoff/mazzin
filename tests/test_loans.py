@@ -560,25 +560,40 @@ check("  and in no other static file but /ai-navigator's own config",
 for word in ("ViewContent", "Purchase"):
     check("  %r appears in neither loans.html nor loans.js" % word,
           word not in PAGE and word not in JS)
-check("  every event names the pixel: init once, trackSingle for the rest",
+# The partner fires standard events on its own pages under this same pixel,
+# so ours are custom: no standard name of theirs is ever sent from here.
+for word in ("Lead", "AddToCart"):
+    check("  %r is no event name in loans.js" % word,
+          not re.search(r'"%s"' % word, JS)
+          and not re.search(r"\b%s\b" % word, JS), word)
+check("  every event names the pixel: init once, the single forms for the rest",
       JS.count('pixel("init", PIXEL_ID);') == 1
       and JS.count('"trackSingle"') == 2
       and 'pixel("trackSingle", PIXEL_ID, name, params);' in JS
       and 'pixel("trackSingle", PIXEL_ID, name);' in JS
-      and not re.search(r'pixel\("track"', JS)
+      and JS.count('"trackSingleCustom"') == 2
+      and 'pixel("trackSingleCustom", PIXEL_ID, name, params);' in JS
+      and 'pixel("trackSingleCustom", PIXEL_ID, name);' in JS
+      and not re.search(r'pixel\("track(?:Custom)?"', JS)
       and not re.search(r'\bfbq\(', JS.replace("window.fbq.apply(", "")))
-check("  three event names and no others",
-      sorted(re.findall(r'pixel(?:Event|Once)\((?:"\w+", )?"([A-Z]\w+)"', JS))
-      == ["AddToCart", "Lead", "PageView"])
+check("  PageView is the one standard event; QuizComplete and ArticleTap "
+      "are custom",
+      re.findall(r'pixelEvent\("([A-Z]\w+)"', JS) == ["PageView"]
+      and sorted(re.findall(r'pixel(?:Custom|Once)\((?:"\w+", )?'
+                            r'"([A-Z]\w+)"', JS))
+      == ["ArticleTap", "QuizComplete"]
+      and "pixelCustom(name);" in JS.split("function pixelOnce", 1)[1]
+      .split("\n  }\n", 1)[0])
 check("  init carries no second argument: no advanced matching",
       'pixel("init", PIXEL_ID);' in JS and "external_id" not in JS
       and "/api/pixel-config" not in JS)
 check("  the tap's parameters are the article key and the category, only",
-      'pixelEvent("AddToCart",\n                     { content_name: key, '
+      'pixelCustom("ArticleTap",\n                      { content_name: key, '
       'content_category: "loans" });' in JS)
-check("  Lead rides the once-a-session ledger result_view uses",
-      'trackOnce("result", "result_view");\n      pixelOnce("px_lead", "Lead");'
-      in JS and "if (state.sent[key]) return;" in JS)
+check("  QuizComplete rides the once-a-session ledger result_view uses",
+      'trackOnce("result", "result_view");\n'
+      '      pixelOnce("px_quiz", "QuizComplete");' in JS
+      and "if (state.sent[key]) return;" in JS)
 check("  every call is guarded, and the script is asked for after the view",
       "try {\n      if (typeof window.fbq === \"function\") "
       "window.fbq.apply(window, arguments);\n    } catch (e)" in JS
