@@ -723,3 +723,6 @@ bottom.
 
 ## 2026-11-20 — claude/loans-visymo-pixel
 - Loans — Visymo RSOC pixel: PageView, Lead on summary, AddToCart on article tap
+
+## 2026-11-21 — claude/loans-pixel-custom-events
+- Loans — pixel events renamed to QuizComplete and ArticleTap
