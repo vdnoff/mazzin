@@ -311,13 +311,17 @@
   // pixel and shares nothing with it: the id is the constant below, nothing
   // is asked of the server, and nothing is sent from the server.
   //
-  // Three events and no others: a page view on load, a lead when the summary
-  // is shown (once a session), and an add-to-cart when an article row is
+  // Three events and no others: a page view on load, QuizComplete when the
+  // summary is shown (once a session), and ArticleTap when an article row is
   // tapped. The view of the article itself is the partner's page's event to
   // send, on this same pixel, and is never sent from here.
   //
-  // Every call names the pixel (`trackSingle`), so nothing here can land on
-  // another one. No advanced matching and no user data: an event carries its
+  // The two of ours are custom events. The partner fires standard events on
+  // its own pages under this same pixel, and a standard name from here would
+  // be counted together with theirs; a name of our own cannot be.
+  //
+  // Every call names the pixel (`trackSingle`, `trackSingleCustom`), so
+  // nothing here can land on another one. No advanced matching and no user data: an event carries its
   // name and, for a tap, the article's key. Meta's script is fetched async
   // after the first view is on screen; if it never arrives the calls below
   // sit in a queue nobody reads and the page is exactly what it was.
@@ -332,6 +336,11 @@
   function pixelEvent(name, params) {
     if (params) pixel("trackSingle", PIXEL_ID, name, params);
     else pixel("trackSingle", PIXEL_ID, name);
+  }
+
+  function pixelCustom(name, params) {
+    if (params) pixel("trackSingleCustom", PIXEL_ID, name, params);
+    else pixel("trackSingleCustom", PIXEL_ID, name);
   }
 
   // Meta's base loader: a queueing stub now, their script when it lands.
@@ -367,7 +376,7 @@
     if (state.sent[key]) return;
     state.sent[key] = 1;
     save();
-    pixelEvent(name);
+    pixelCustom(name);
   }
 
   // --- views ---------------------------------------------------------------
@@ -486,8 +495,8 @@
         // whatever becomes of the request.
         row.addEventListener("click", function () {
           track("offer_tap", null, { slot: key });
-          pixelEvent("AddToCart",
-                     { content_name: key, content_category: "loans" });
+          pixelCustom("ArticleTap",
+                      { content_name: key, content_category: "loans" });
         });
         li.appendChild(row);
         list.appendChild(li);
@@ -532,7 +541,7 @@
     }
     if (view === "options") {
       trackOnce("result", "result_view");
-      pixelOnce("px_lead", "Lead");
+      pixelOnce("px_quiz", "QuizComplete");
     }
   }
 
