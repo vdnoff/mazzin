@@ -726,3 +726,6 @@ bottom.
 
 ## 2026-11-21 — claude/loans-pixel-custom-events
 - Loans — pixel events renamed to QuizComplete and ArticleTap
+
+## 2026-11-24 — claude/rsoc-quiz-phase1
+- RSOC quiz engine + /benefits config (phase 1, pre-feed)
