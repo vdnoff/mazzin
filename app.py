@@ -18,6 +18,7 @@ from leads import bp as leads_bp
 from loans import bp as loans_bp
 from payments import bp as payments_bp
 from router import bp as router_bp
+from rsoc import bp as rsoc_bp
 from tracking import bp as tracking_bp
 from visualizer import bp as visualizer_bp
 
@@ -54,6 +55,9 @@ app.register_blueprint(admin_bp)
 # /<slug> whatever the registration order; the mapping and the queue write
 # live in router.py, where a module may hold SQL.
 app.register_blueprint(router_bp)
+# The RSOC quizzes: one static rule per funnels/rsoc/*.json, so each wins
+# over /<slug> the way /loans does, and POST /api/rsoc/<slug>/event.
+app.register_blueprint(rsoc_bp)
 
 
 @app.errorhandler(413)

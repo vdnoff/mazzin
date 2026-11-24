@@ -1,0 +1,465 @@
+{
+  "slug": "benefits",
+  "title": "Benefits Finder",
+  "headline": "Which assistance programs fit your household?",
+  "sub": "Answer 4 quick questions. No application, no sign-up, no SSN.",
+  "pixel_id": "762004311984135",
+  "pixel_events": {
+    "result": {
+      "name": "QuizComplete",
+      "custom": true
+    },
+    "tap": {
+      "name": "ArticleTap",
+      "custom": true
+    }
+  },
+  "labels": {
+    "edit": "Edit answers",
+    "back": "Back",
+    "logo": "mazzin home"
+  },
+  "steps": [
+    {
+      "id": "need",
+      "eyebrow": "Step 1 of 4",
+      "question": "What do you need help with most right now?",
+      "type": "tiles",
+      "options": [
+        {
+          "id": "food",
+          "label": "Food & groceries",
+          "icon": "M4 10h16l-1.6 9.2a1 1 0 0 1-1 .8H6.6a1 1 0 0 1-1-.8zM8.5 10 12 4l3.5 6M9 14v3M12 14v3M15 14v3"
+        },
+        {
+          "id": "utilities",
+          "label": "Energy & utility bills",
+          "icon": "M13 2 4 14h7l-1 8 9-12h-7l1-8z"
+        },
+        {
+          "id": "medical",
+          "label": "Medical costs",
+          "icon": "M6 3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3zM12 8v8M8 12h8"
+        },
+        {
+          "id": "debt",
+          "label": "Debt & overdue bills",
+          "icon": "M5 5h14a2.5 2.5 0 0 1 2.5 2.5v9A2.5 2.5 0 0 1 19 19H5a2.5 2.5 0 0 1-2.5-2.5v-9A2.5 2.5 0 0 1 5 5zM2.5 10h19M6.5 15h4"
+        }
+      ]
+    },
+    {
+      "id": "household",
+      "eyebrow": "Step 2 of 4",
+      "question": "Who's in your household?",
+      "type": "tiles",
+      "options": [
+        {
+          "id": "solo",
+          "label": "Just me or my partner",
+          "icon": "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0"
+        },
+        {
+          "id": "kids",
+          "label": "Kids under 18",
+          "icon": "M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20a6 6 0 0 1 12 0M17 13a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM16 20h5.5a4.5 4.5 0 0 0-6.6-4"
+        },
+        {
+          "id": "senior",
+          "label": "Someone 60 or older",
+          "icon": "M12 20s-7-4.3-7-9.6A4 4 0 0 1 12 8a4 4 0 0 1 7 2.4c0 5.3-7 9.6-7 9.6z"
+        },
+        {
+          "id": "disability",
+          "label": "Someone with a disability",
+          "icon": "M12 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM5 8.5h14M12 8.5v5.5M8.5 21.5 12 14l3.5 7.5"
+        }
+      ]
+    },
+    {
+      "id": "income",
+      "eyebrow": "Step 3 of 4",
+      "question": "Household income per month, before tax",
+      "type": "tiles",
+      "helper": "A range is enough. We never ask for exact figures.",
+      "options": [
+        {
+          "id": "i1",
+          "label": "Under $1,000"
+        },
+        {
+          "id": "i2",
+          "label": "$1,000 – $2,000"
+        },
+        {
+          "id": "i3",
+          "label": "$2,000 – $3,000"
+        },
+        {
+          "id": "i4",
+          "label": "Over $3,000"
+        }
+      ]
+    },
+    {
+      "id": "situation",
+      "eyebrow": "Step 4 of 4",
+      "question": "Your situation",
+      "type": "tiles",
+      "options": [
+        {
+          "id": "employed",
+          "label": "Employed"
+        },
+        {
+          "id": "gig",
+          "label": "Self-employed or gig work"
+        },
+        {
+          "id": "unemployed",
+          "label": "Unemployed"
+        },
+        {
+          "id": "retired",
+          "label": "Retired"
+        },
+        {
+          "id": "unable",
+          "label": "Unable to work"
+        }
+      ]
+    }
+  ],
+  "state_select": {
+    "step": "situation",
+    "label": "State",
+    "placeholder": "Select your state",
+    "button": "Show my programs",
+    "consent": [
+      "By continuing you agree to the ",
+      {
+        "label": "Terms",
+        "href": "/terms"
+      },
+      " and ",
+      {
+        "label": "Privacy Policy",
+        "href": "/privacy"
+      },
+      "."
+    ],
+    "options": [
+      [
+        "AL",
+        "Alabama"
+      ],
+      [
+        "AK",
+        "Alaska"
+      ],
+      [
+        "AZ",
+        "Arizona"
+      ],
+      [
+        "AR",
+        "Arkansas"
+      ],
+      [
+        "CA",
+        "California"
+      ],
+      [
+        "CO",
+        "Colorado"
+      ],
+      [
+        "CT",
+        "Connecticut"
+      ],
+      [
+        "DE",
+        "Delaware"
+      ],
+      [
+        "DC",
+        "District of Columbia"
+      ],
+      [
+        "FL",
+        "Florida"
+      ],
+      [
+        "GA",
+        "Georgia"
+      ],
+      [
+        "HI",
+        "Hawaii"
+      ],
+      [
+        "ID",
+        "Idaho"
+      ],
+      [
+        "IL",
+        "Illinois"
+      ],
+      [
+        "IN",
+        "Indiana"
+      ],
+      [
+        "IA",
+        "Iowa"
+      ],
+      [
+        "KS",
+        "Kansas"
+      ],
+      [
+        "KY",
+        "Kentucky"
+      ],
+      [
+        "LA",
+        "Louisiana"
+      ],
+      [
+        "ME",
+        "Maine"
+      ],
+      [
+        "MD",
+        "Maryland"
+      ],
+      [
+        "MA",
+        "Massachusetts"
+      ],
+      [
+        "MI",
+        "Michigan"
+      ],
+      [
+        "MN",
+        "Minnesota"
+      ],
+      [
+        "MS",
+        "Mississippi"
+      ],
+      [
+        "MO",
+        "Missouri"
+      ],
+      [
+        "MT",
+        "Montana"
+      ],
+      [
+        "NE",
+        "Nebraska"
+      ],
+      [
+        "NV",
+        "Nevada"
+      ],
+      [
+        "NH",
+        "New Hampshire"
+      ],
+      [
+        "NJ",
+        "New Jersey"
+      ],
+      [
+        "NM",
+        "New Mexico"
+      ],
+      [
+        "NY",
+        "New York"
+      ],
+      [
+        "NC",
+        "North Carolina"
+      ],
+      [
+        "ND",
+        "North Dakota"
+      ],
+      [
+        "OH",
+        "Ohio"
+      ],
+      [
+        "OK",
+        "Oklahoma"
+      ],
+      [
+        "OR",
+        "Oregon"
+      ],
+      [
+        "PA",
+        "Pennsylvania"
+      ],
+      [
+        "RI",
+        "Rhode Island"
+      ],
+      [
+        "SC",
+        "South Carolina"
+      ],
+      [
+        "SD",
+        "South Dakota"
+      ],
+      [
+        "TN",
+        "Tennessee"
+      ],
+      [
+        "TX",
+        "Texas"
+      ],
+      [
+        "UT",
+        "Utah"
+      ],
+      [
+        "VT",
+        "Vermont"
+      ],
+      [
+        "VA",
+        "Virginia"
+      ],
+      [
+        "WA",
+        "Washington"
+      ],
+      [
+        "WV",
+        "West Virginia"
+      ],
+      [
+        "WI",
+        "Wisconsin"
+      ],
+      [
+        "WY",
+        "Wyoming"
+      ]
+    ]
+  },
+  "articles": {
+    "snap": {
+      "label": "Food assistance (SNAP): how to apply",
+      "link": "https://example.test/snap"
+    },
+    "liheap": {
+      "label": "Help with heating and electric bills",
+      "link": "https://example.test/liheap"
+    },
+    "medicaid": {
+      "label": "Medicaid: who it covers and how to apply",
+      "link": "https://example.test/medicaid"
+    },
+    "debt_relief": {
+      "label": "Debt relief and consolidation options",
+      "link": "https://example.test/debt_relief"
+    },
+    "wic_chip": {
+      "label": "WIC and CHIP for families with kids",
+      "link": "https://example.test/wic_chip"
+    },
+    "medicare": {
+      "label": "Medicare plans and Extra Help",
+      "link": "https://example.test/medicare"
+    },
+    "ssdi": {
+      "label": "Disability benefits (SSI/SSDI): how to apply",
+      "link": "https://example.test/ssdi"
+    },
+    "car_insurance": {
+      "label": "Lower-cost car insurance on a tight budget",
+      "link": "https://example.test/car_insurance"
+    }
+  },
+  "rules": {
+    "rows": [
+      {
+        "by": "need",
+        "map": {
+          "food": "snap",
+          "utilities": "liheap",
+          "medical": "medicaid",
+          "debt": "debt_relief"
+        }
+      },
+      {
+        "by": "household",
+        "map": {
+          "kids": "wic_chip",
+          "senior": "medicare",
+          "disability": "ssdi"
+        },
+        "else": {
+          "by": "situation",
+          "map": {
+            "retired": "medicare",
+            "unable": "ssdi"
+          },
+          "default": "medicaid"
+        },
+        "fallback": [
+          "medicaid",
+          "debt_relief",
+          "liheap"
+        ]
+      },
+      {
+        "always": "car_insurance"
+      }
+    ]
+  },
+  "result": {
+    "eyebrow": "Your results",
+    "headline": "Programs worth checking for your household",
+    "chips": [
+      "need",
+      "household",
+      "income",
+      "state"
+    ],
+    "chips_label": "Your answers",
+    "line": "Based on your answers. Availability and rules vary by state.",
+    "pill": "Sponsored",
+    "prefeed_line": "Offers are not available yet.",
+    "no_id_line": "Offers are not available for this visit.",
+    "disclaimer": "Mazzin is not a government agency and does not provide benefits. We show links to third-party content and may earn money when you click them. Program rules change — check with the agency that runs a program before applying."
+  },
+  "footer": [
+    {
+      "label": "Privacy",
+      "href": "/privacy"
+    },
+    {
+      "label": "Terms",
+      "href": "/terms"
+    }
+  ],
+  "banned": [
+    "guarantee",
+    "guaranteed",
+    "you qualify",
+    "free money",
+    "official",
+    "approved by",
+    "government-approved",
+    "$"
+  ]
+}

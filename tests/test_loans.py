@@ -552,10 +552,18 @@ for folder, _dirs, files in os.walk(os.path.join(REPO, "static")):
         with open(path, encoding="utf-8", errors="replace") as fh:
             if PIXEL_ID in fh.read():
                 elsewhere.append(rel)
-check("  and in no other static file but /ai-navigator's own config",
-      sorted(elsewhere) == [
+# The RSOC quizzes name the same partner pixel in their configs, which the
+# RSOC engine reads; like /ai-navigator's, a config and not a page.
+rsoc_configs = sorted(
+    os.path.join("static", "funnels", "rsoc", n)
+    for n in os.listdir(os.path.join(REPO, "static", "funnels", "rsoc"))
+    if n.endswith(".json")) if os.path.isdir(
+        os.path.join(REPO, "static", "funnels", "rsoc")) else []
+check("  and in no other static file but /ai-navigator's and the RSOC configs",
+      sorted(elsewhere) == sorted([
           os.path.join("static", "funnels", "ai-navigator-test.json"),
-          os.path.join("static", "funnels", "ai-navigator.json")],
+          os.path.join("static", "funnels", "ai-navigator.json")]
+          + rsoc_configs),
       elsewhere)
 for word in ("ViewContent", "Purchase"):
     check("  %r appears in neither loans.html nor loans.js" % word,
