@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """The RSOC quiz in a real browser: views, events and the identifiers.
 
-/benefits is served from static/rsoc.html with the test config
-(tests/fixtures/rsoc_test.json: the real config with a fake
-https://example.test/<key> link on every article), so the passthrough can be
-held to /loans's rules before the partner's links exist. One scenario uses
-the real config, whose links are all empty, for the pre-feed page.
+/benefits is served from static/rsoc.html with the real config and its eight
+partner links, so the passthrough is held to /loans's rules on the links
+that ship. One scenario serves the same config with every link emptied, for
+the pre-feed page the engine still supports.
 
   1. Arrival with fbclid, ad_id and asid: they are held from the first view,
      through a reload, back and forward, and the result shows three anchors
@@ -16,10 +15,11 @@ the real config, whose links are all empty, for the pre-feed page.
   3. No fbclid: no anchor at all, and the line that says so.
   4. An unresolved macro is dropped; an unresolved fbclid means no anchors.
   5. No identifier reaches any /api request, in any scenario.
-  6. Every step posts its `step` event once, quiz_start and result_view
-     once, whatever is reloaded, edited or walked again.
-  7. The real, pre-feed config: muted rows that are not links, the "not
-     available yet" line, and a tap still counted.
+  6. The /loans vocabulary: funnel_start once, a swipe for each step once
+     with its number, result_view once, offer_tap with the key — whatever
+     is reloaded, edited or walked again.
+  7. A pre-feed config (links emptied): muted rows that are not links, the
+     "not available yet" line, and a tap still counted.
   8. At 390 and 360 wide: no horizontal scroll, every target 44px or more.
 
 Nothing leaves the machine: every request off 127.0.0.1 is aborted.
@@ -51,7 +51,13 @@ def read(rel):
 SHELL = read("static/rsoc.html")
 FIXTURE = read("tests/fixtures/rsoc_test.json")
 REAL = read("funnels/rsoc/benefits.json")
-CFG = json.loads(FIXTURE)
+CFG = json.loads(REAL)
+# The same config with every link emptied: what the engine draws before a
+# vertical's links exist.
+_prefeed = json.loads(REAL)
+for _a in _prefeed["articles"].values():
+    _a["link"] = ""
+PREFEED = json.dumps(_prefeed, indent=2, ensure_ascii=False) + "\n"
 ARTICLES = CFG["articles"]
 STEPS = CFG["steps"]
 
@@ -63,7 +69,7 @@ HELD = {"fbclid": FBCLID, "ad_id": AD_ID, "asid": ASID}
 TAIL = "?fbclid=%s&ad_id=%s&asid=%s" % (FBCLID, AD_ID, ASID)
 
 posts = []
-served = {"config": FIXTURE}
+served = {"config": REAL}
 fails = []
 checks = [0]
 
@@ -317,17 +323,21 @@ def main():
         evs = events()
         names = [(e["event"], e.get("step"), json.dumps(e.get("extra")))
                  for e in evs]
-        # quiz_start and step 1 leave on the same tap, as two beacons, and
-        # either can land first: the pair is checked, not its order.
-        check("quiz_start once, on the first tap, beside step 1",
-              [n for n in names if n[0] == "quiz_start"]
-              == [("quiz_start", None, "null")]
-              and {names[0][0], names[1][0]} == {"quiz_start", "step"},
+        # funnel_start and swipe 1 leave on the same tap, as two beacons,
+        # and either can land first: the pair is checked, not its order.
+        check("funnel_start once, on the first tap, beside swipe 1",
+              [n for n in names if n[0] == "funnel_start"]
+              == [("funnel_start", None, "null")]
+              and {names[0][0], names[1][0]} == {"funnel_start", "swipe"},
               names[:2])
-        check("each step's event once, numbered, carrying its id only",
-              [n for n in names if n[0] == "step"]
-              == [("step", i + 1, json.dumps({"step": s["id"]}))
-                  for i, s in enumerate(STEPS)], names)
+        check("a swipe for each step once, its number in step, nothing in "
+              "extra",
+              [n for n in names if n[0] == "swipe"]
+              == [("swipe", i + 1, "null") for i in range(len(STEPS))],
+              names)
+        check("only the /loans vocabulary: no quiz_start, no step",
+              {n[0] for n in names} <= {"funnel_start", "swipe",
+                                        "result_view", "offer_tap"}, names)
         check("result_view once, through a reload and an edit",
               [n[0] for n in names].count("result_view") == 1)
         check("every event carries the subid and the session, no answer",
@@ -380,8 +390,8 @@ def main():
               {p for p, _ in posts} == {"/api/rsoc/benefits/event"},
               {p for p, _ in posts})
 
-        print("\n--- 7. the real config: pre-feed ---")
-        served["config"] = REAL
+        print("\n--- 7. a pre-feed config: links emptied ---")
+        served["config"] = PREFEED
         mark = len(posts)
         ctx, page, errors = arrive(browser, FULL)
         to_result(page)
@@ -399,7 +409,7 @@ def main():
             "() => [...document.querySelectorAll('#result-rows .guides-none')]"
             ".map(p => p.textContent)")
         check("  the 'not available yet' line, once, under the card",
-              lines == [json.loads(REAL)["result"]["prefeed_line"]], lines)
+              lines == [CFG["result"]["prefeed_line"]], lines)
         check("  and no anchor anywhere in the result",
               page.locator("#view-result a[href^='https']").count() == 0)
         page.locator('#result-rows .guide[data-article="debt_relief"]').click()
@@ -410,7 +420,7 @@ def main():
               and len(ctx.pages) == 1, taps)
         check("  and opens nothing", view(page) == "result")
         ctx.close()
-        served["config"] = FIXTURE
+        served["config"] = REAL
 
         print("\n--- 7b. step 1's tiles above the fold, on load ---")
         for width, height in ((390, 844), (360, 780)):

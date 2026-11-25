@@ -144,8 +144,30 @@ check("eight article keys, each labelled",
       list(ART) == ["snap", "liheap", "medicaid", "debt_relief", "wic_chip",
                     "medicare", "ssdi", "car_insurance"]
       and all(a["label"] for a in ART.values()))
-check("  and every link is empty in this phase",
-      all(a["link"] == "" for a in ART.values()))
+# The eight Campaign Links, as given. Pinned by a digest over "key link"
+# lines, so a single changed byte in either copy fails here.
+LINKS_DIGEST = ("13046d5d16d0bc1c55bcf267c37691828ef2ed263e6af2e9ab1ce3b81508"
+                "28eb")
+for name, text in (("funnels/", SRC), ("static/funnels/", MIRROR)):
+    arts = json.loads(text)["articles"]
+    blob = "\n".join("%s %s" % (k, arts[k]["link"]) for k in arts)
+    check("  the eight partner links in %s, pinned by digest" % name,
+          hashlib.sha256(blob.encode("utf-8")).hexdigest() == LINKS_DIGEST)
+check("  every link a bare https URL: no query, no fragment",
+      all(re.fullmatch(r"https://[a-z]+\.com/[A-Za-z0-9_-]{300,600}",
+                       a["link"]) for a in ART.values()),
+      [k for k, a in ART.items() if not re.fullmatch(
+          r"https://[a-z]+\.com/[A-Za-z0-9_-]{300,600}", a["link"])])
+check("  and the row labels are as they were",
+      [a["label"] for a in ART.values()] == [
+          "Food assistance (SNAP): how to apply",
+          "Help with heating and electric bills",
+          "Medicaid: who it covers and how to apply",
+          "Debt relief and consolidation options",
+          "WIC and CHIP for families with kids",
+          "Medicare plans and Extra Help",
+          "Disability benefits (SSI/SSDI): how to apply",
+          "Lower-cost car insurance on a tight budget"])
 R = CFG["result"]
 check("the result copy",
       R["eyebrow"] == "Your results"
@@ -356,12 +378,12 @@ def post(slug, body, raw=None):
     return r.status_code, list(writes)
 
 
+# The /loans vocabulary, stored as loans.py stores it: a swipe's number in
+# the integer step column and nothing in extra.
 ok = [
-    ({"event": "quiz_start"}, None, None),
-    ({"event": "step", "step": 1, "extra": {"step": "need"}}, 1,
-     '{"step":"need"}'),
-    ({"event": "step", "step": 4, "extra": {"step": "situation"}}, 4,
-     '{"step":"situation"}'),
+    ({"event": "funnel_start"}, None, None),
+    ({"event": "swipe", "step": 1}, 1, None),
+    ({"event": "swipe", "step": 4}, 4, None),
     ({"event": "result_view"}, None, None),
     ({"event": "offer_tap", "extra": {"slot": "snap"}}, None,
      '{"slot":"snap"}'),
@@ -375,28 +397,32 @@ for body, step, extra in ok:
           and got[0][1] == ("benefits", SID, body["event"], step, "sub-9",
                             "fb", None, None, None, extra), got)
 bad = [
-    ("an unknown slug", "nope", {"event": "quiz_start"}),
+    ("an unknown slug", "nope", {"event": "funnel_start"}),
     ("an unknown event", "benefits", {"event": "purchase"}),
-    ("an event loans uses but this does not", "benefits",
-     {"event": "swipe", "step": 1}),
-    ("a step with the wrong id", "benefits",
-     {"event": "step", "step": 2, "extra": {"step": "need"}}),
-    ("a step past the last", "benefits",
-     {"event": "step", "step": 5, "extra": {"step": "result"}}),
-    ("a step with an answer in it", "benefits",
-     {"event": "step", "step": 1, "extra": {"step": "need",
-                                            "answer": "food"}}),
+    ("the old quiz_start", "benefits", {"event": "quiz_start"}),
+    ("the old step", "benefits",
+     {"event": "step", "step": 1, "extra": {"step": "need"}}),
+    ("swipe with no step", "benefits", {"event": "swipe"}),
+    ("swipe 0", "benefits", {"event": "swipe", "step": 0}),
+    ("swipe 5", "benefits", {"event": "swipe", "step": 5}),
+    ("swipe with a string step", "benefits", {"event": "swipe", "step": "1"}),
+    ("swipe with extra", "benefits",
+     {"event": "swipe", "step": 1, "extra": {"step": "need"}}),
+    ("a step on funnel_start", "benefits",
+     {"event": "funnel_start", "step": 1}),
+    ("a slot over 40 characters", "benefits",
+     {"event": "offer_tap", "extra": {"slot": "x" * 41}}),
     ("a tap on a key that is no article", "benefits",
      {"event": "offer_tap", "extra": {"slot": "lottery"}}),
     ("extra on result_view", "benefits",
      {"event": "result_view", "extra": {"slot": "snap"}}),
-    ("fbclid in the body", "benefits", {"event": "quiz_start",
+    ("fbclid in the body", "benefits", {"event": "funnel_start",
                                         "fbclid": "AbC"}),
-    ("ad_id in the body", "benefits", {"event": "quiz_start", "ad_id": "1"}),
-    ("asid in the body", "benefits", {"event": "quiz_start", "asid": "2"}),
-    ("an answer in the body", "benefits", {"event": "quiz_start",
+    ("ad_id in the body", "benefits", {"event": "funnel_start", "ad_id": "1"}),
+    ("asid in the body", "benefits", {"event": "funnel_start", "asid": "2"}),
+    ("an answer in the body", "benefits", {"event": "funnel_start",
                                            "need": "food"}),
-    ("a bad session id", "benefits", {"event": "quiz_start",
+    ("a bad session id", "benefits", {"event": "funnel_start",
                                       "session_id": "x"}),
 ]
 for label, slug, body in bad:
@@ -405,7 +431,7 @@ for label, slug, body in bad:
     check("refused, nothing written: %s" % label,
           status == 400 and got == [], [status, got])
 status, got = post("benefits", None, raw=json.dumps(
-    {"session_id": SID, "event": "quiz_start", "subid": "x" * 5000}))
+    {"session_id": SID, "event": "funnel_start", "subid": "x" * 5000}))
 check("refused, nothing written: a body over 4 KB",
       status == 400 and got == [], status)
 status, got = post("benefits", None, raw="not json")
@@ -478,7 +504,12 @@ server.shutdown()
 shown = "\n".join(texts)
 check("every view was drawn: four questions and the result",
       all(s["question"] in whole for s in STEPS)
-      and R["headline"] in shown and "Offers are not available yet." in shown)
+      and R["headline"] in shown
+      # Links are live: the rows are anchors and the pre-feed line is gone.
+      and "Offers are not available yet." not in shown
+      and all(a["label"] in shown for k, a in ART.items()
+              # The first answer on every step: food, solo, employed.
+              if k in ("snap", "medicaid", "car_insurance")))
 check("nothing banned in the drawn page, every view and every option",
       not scan(shown) and not scan(whole), [scan(shown), scan(whole)])
 

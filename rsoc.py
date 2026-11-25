@@ -56,11 +56,13 @@ RESERVED = frozenset((
     "loans", "go", "health", "admin", "api", "static", "about", "terms",
     "privacy", "refund", "persona", "favicon.ico", "robots.txt"))
 
-# The vocabulary. `quiz_start` is the first tap; `step` is an answered step,
-# carrying its number in the column and its id in `extra`; `result_view` is
-# the result shown; `offer_tap` is a tap on an article row, carrying the
-# article's key. Nothing else, and no answer anywhere in it.
-EVENTS = frozenset(("quiz_start", "step", "result_view", "offer_tap"))
+# The vocabulary /api/loans/event stores, so the dashboard counts an RSOC quiz
+# the way it counts /loans: `funnel_start` is the first tap on step 1;
+# `swipe` is a completed step, its 1-based number in the integer `step`
+# column and nothing in `extra`; `result_view` is the result shown;
+# `offer_tap` is a tap on an article row, carrying the article's key.
+# Nothing else, and no answer anywhere in it.
+EVENTS = frozenset(("funnel_start", "swipe", "result_view", "offer_tap"))
 ATTRIBUTION = tuple(tracking.ATTRIBUTION_FIELDS)
 EVENT_KEYS = frozenset(("session_id", "event", "step", "extra") + ATTRIBUTION)
 TOKEN_RE = re.compile(r"[a-z0-9_-]{1,40}")
@@ -179,17 +181,13 @@ def event(slug):
     extra = body.get("extra")
     extra_json = None
 
-    if name == "step":
-        # The number and the id have to agree with the config: step 2 is
-        # the second step's id and nothing else.
+    if name == "swipe":
+        # As loans.py writes it: a number in the column, nothing in extra.
+        # The quiz's own step count is the ceiling.
         if type(step) is not int or not 1 <= step <= len(steps):
             return "", 400
-        if not isinstance(extra, dict) or set(extra) != {"step"}:
+        if extra is not None:
             return "", 400
-        if extra["step"] != steps[step - 1]:
-            return "", 400
-        extra_json = json.dumps({"step": steps[step - 1]},
-                                separators=(",", ":"))
     elif step is not None:
         return "", 400
     elif name == "offer_tap":
