@@ -729,3 +729,6 @@ bottom.
 
 ## 2026-11-24 — claude/rsoc-quiz-phase1
 - RSOC quiz engine + /benefits config (phase 1, pre-feed)
+
+## 2026-11-25 — claude/rsoc-tiles-polish
+- Benefits quiz: redesigned answer tiles and icons
