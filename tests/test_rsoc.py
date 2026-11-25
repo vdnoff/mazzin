@@ -60,15 +60,15 @@ LOANS_CSS = read("static/css/loans.css")
 
 print("\n--- the config ---")
 check("both copies are byte for byte the same", SRC == MIRROR)
-check("the slug, title, headline and sub",
+# No separate headline and no subtitle: the first step's question is the
+# headline, so the first screen is one context line, the question, the tiles.
+check("the slug and title; no headline or sub of its own",
       CFG["slug"] == "benefits" and CFG["title"] == "Benefits Finder"
-      and CFG["headline"] == "Which assistance programs fit your household?"
-      and CFG["sub"] == "Answer 4 quick questions. No application, no "
-      "sign-up, no SSN.")
+      and "headline" not in CFG and "sub" not in CFG)
 check("the partner's pixel", CFG["pixel_id"] == "762004311984135")
 STEPS = CFG["steps"]
 WANT = [
-    ("need", "What do you need help with most right now?",
+    ("need", "What do you need help with most?",
      [("food", "Food & groceries"), ("utilities", "Energy & utility bills"),
       ("medical", "Medical costs"), ("debt", "Debt & overdue bills")]),
     ("household", "Who's in your household?",
@@ -86,12 +86,29 @@ WANT = [
 check("four steps, their questions and answers, in order",
       [(s["id"], s["question"], [(o["id"], o["label"]) for o in s["options"]])
        for s in STEPS] == WANT)
-check("  every step is tiles, with its own 'Step N of 4' eyebrow",
-      all(s["type"] == "tiles" and s["eyebrow"] == "Step %d of 4" % (i + 1)
-          for i, s in enumerate(STEPS)))
+check("  every step is tiles; step 1's eyebrow is the context line",
+      all(s["type"] == "tiles" for s in STEPS)
+      and STEPS[0]["eyebrow"] == "Benefits Finder · 4 quick questions"
+      and [s["eyebrow"] for s in STEPS[1:]]
+      == ["Step 2 of 4", "Step 3 of 4", "Step 4 of 4"])
+check("  a footnote under step 1's tiles, and on no other step",
+      STEPS[0]["footnote"] == "No sign-up · No SSN · Takes about a minute"
+      and not any("footnote" in s for s in STEPS[1:]))
+
+
+def words(text):
+    return [w for w in re.split(r"\s+", text) if re.search(r"\w", w)]
+
+
+ABOVE = words(STEPS[0]["eyebrow"]) + words(STEPS[0]["question"])
+# The brief's target was nine words above the tiles; its own two strings
+# come to twelve (five in the eyebrow, seven in the question). The strings
+# are shipped as written and the count is held where they put it.
+check("  above step 1's tiles: the question in 9 words or fewer, 12 in all",
+      len(words(STEPS[0]["question"])) <= 9 and len(ABOVE) == 12,
+      [len(words(STEPS[0]["question"])), len(ABOVE)])
 check("  the income helper",
-      STEPS[2]["helper"] == "A range is enough. We never ask for exact "
-      "figures.")
+      STEPS[2]["helper"] == "A rough range is fine.")
 ICON_RE = r"[MmLlHhVvCcSsQqTtAaZz0-9 .,\-]{1,1200}"
 check("  every need and household answer has an icon or a badge text",
       all(("icon" in o) != ("badge_text" in o)
@@ -199,7 +216,8 @@ check("the rules are data: no article key and no answer id in the script",
       and not [o["id"] for s in STEPS for o in s["options"]
                if '"%s"' % o["id"] in JS])
 check("  and no word of the page's copy either",
-      not [t for t in (CFG["headline"], R["headline"], R["line"],
+      not [t for t in (STEPS[0]["question"], STEPS[0]["footnote"],
+                       R["headline"], R["line"],
                        R["disclaimer"], R["no_id_line"], R["prefeed_line"],
                        SS["button"], "Edit answers", "Sponsored",
                        "Show my programs", "Your answers", "Select your state")

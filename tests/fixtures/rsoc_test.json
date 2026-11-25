@@ -1,8 +1,6 @@
 {
   "slug": "benefits",
   "title": "Benefits Finder",
-  "headline": "Which assistance programs fit your household?",
-  "sub": "Answer 4 quick questions. No application, no sign-up, no SSN.",
   "pixel_id": "762004311984135",
   "pixel_events": {
     "result": {
@@ -22,8 +20,8 @@
   "steps": [
     {
       "id": "need",
-      "eyebrow": "Step 1 of 4",
-      "question": "What do you need help with most right now?",
+      "eyebrow": "Benefits Finder · 4 quick questions",
+      "question": "What do you need help with most?",
       "type": "tiles",
       "options": [
         {
@@ -46,7 +44,8 @@
           "label": "Debt & overdue bills",
           "icon": "M12 17V7M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8M4 3a1 1 0 0 1 1-1 1.3 1.3 0 0 1 .7.2l.933.6a1.3 1.3 0 0 0 1.4 0l.934-.6a1.3 1.3 0 0 1 1.4 0l.933.6a1.3 1.3 0 0 0 1.4 0l.933-.6a1.3 1.3 0 0 1 1.4 0l.934.6a1.3 1.3 0 0 0 1.4 0l.933-.6A1.3 1.3 0 0 1 19 2a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1 1.3 1.3 0 0 1-.7-.2l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.934.6a1.3 1.3 0 0 1-1.4 0l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-1.4 0l-.934-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-.7.2 1 1 0 0 1-1-1z"
         }
-      ]
+      ],
+      "footnote": "No sign-up · No SSN · Takes about a minute"
     },
     {
       "id": "household",
@@ -81,7 +80,7 @@
       "eyebrow": "Step 3 of 4",
       "question": "Household income per month, before tax",
       "type": "tiles",
-      "helper": "A range is enough. We never ask for exact figures.",
+      "helper": "A rough range is fine.",
       "options": [
         {
           "id": "i1",
