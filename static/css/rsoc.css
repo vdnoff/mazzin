@@ -507,3 +507,16 @@ h1:focus { outline: none; }
   font-size: 16px;
   color: var(--ink-2);
 }
+
+/* The first screen: one context line, the question as the headline, the
+   tiles straight under it, and one quiet line beneath them. */
+.view.is-first .eyebrow { margin-bottom: 0; }
+.view.is-first .h1 { margin-top: 10px; }
+.view.is-first .tiles { margin-top: 16px; }
+
+.footnote {
+  margin: 14px 0 0;
+  font-size: 13px;
+  text-align: center;
+  color: var(--muted);
+}

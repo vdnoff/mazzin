@@ -420,7 +420,7 @@
   }
 
   function buildStep(step, index) {
-    var section = elm("section", "view");
+    var section = elm("section", index === 0 ? "view is-first" : "view");
     section.id = "view-" + step.id;
     section.setAttribute("data-view", step.id);
     section.hidden = true;
@@ -466,6 +466,7 @@
     });
     section.appendChild(list);
     if (step.helper) section.appendChild(elm("p", "helper", step.helper));
+    if (step.footnote) section.appendChild(elm("p", "footnote", step.footnote));
 
     if (step.id === stateStep) {
       var ss = cfg.state_select;

@@ -214,11 +214,16 @@ def main():
 
         print("\n--- 1. all three identifiers, a reload, back and forward ---")
         ctx, page, errors = arrive(browser, FULL + "&subid=s1")
-        check("the first screen is step 1: headline, sub and four tiles",
+        check("the first screen is step 1: the question as h1, four tiles",
               view(page) == "need"
               and page.locator("#view-need h1").text_content()
-              == CFG["headline"]
+              == STEPS[0]["question"]
+              and page.locator("#view-need .lede, #view-need h2").count() == 0
               and page.locator("#choices-need .tile").count() == 4)
+        check("  the footnote under the tiles on step 1, and on no other step",
+              page.locator(".footnote").count() == 1
+              and page.locator("#view-need .tiles + .footnote").text_content()
+              == STEPS[0]["footnote"])
         check("held on the first view, before any tap", held(page) == HELD,
               held(page))
         check("no event before the first tap", events() == [], events())
@@ -406,6 +411,23 @@ def main():
         check("  and opens nothing", view(page) == "result")
         ctx.close()
         served["config"] = FIXTURE
+
+        print("\n--- 7b. step 1's tiles above the fold, on load ---")
+        for width, height in ((390, 844), (360, 780)):
+            ctx, page, errors = arrive(browser, FULL, width=width,
+                                       height=height)
+            got = page.evaluate(
+                "() => ({ y: scrollY, h: innerHeight, bottom: Math.round("
+                "[...document.querySelectorAll('#choices-need .tile')][3]"
+                ".getBoundingClientRect().bottom), lines: Math.round("
+                "document.querySelector('#view-need h1').getBoundingClientRect()"
+                ".height / parseFloat(getComputedStyle(document.querySelector("
+                "'#view-need h1')).lineHeight)) })")
+            check("%dx%d: all four need tiles visible with no scroll, h1 in "
+                  "2 lines or fewer" % (width, height),
+                  got["y"] == 0 and got["bottom"] <= got["h"]
+                  and got["lines"] <= 2, got)
+            ctx.close()
 
         print("\n--- 8. 390 and 360 wide ---")
         for width in (390, 360):
