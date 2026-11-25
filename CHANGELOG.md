@@ -732,3 +732,6 @@ bottom.
 
 ## 2026-11-25 — claude/rsoc-tiles-polish
 - Benefits quiz: redesigned answer tiles and icons
+
+## 2026-11-25 — claude/rsoc-step1-copy
+- Benefits quiz: question-as-headline on step 1, shorter copy
