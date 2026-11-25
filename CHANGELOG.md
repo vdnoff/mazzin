@@ -735,3 +735,6 @@ bottom.
 
 ## 2026-11-25 — claude/rsoc-step1-copy
 - Benefits quiz: question-as-headline on step 1, shorter copy
+
+## 2026-11-25 — claude/rsoc-benefits-links
+- Benefits phase 2 — partner links + loans event vocabulary
