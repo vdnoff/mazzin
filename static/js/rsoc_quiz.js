@@ -113,7 +113,8 @@
 
   var SLUG_RE = /^[a-z0-9_-]{1,32}$/;
   var ATTRIBUTION = ["subid", "utm_source", "utm_campaign", "utm_content", "utm_term"];
-  var ICON_RE = /^[MmLlHhVvCcSsQqTtAaZz0-9 .,\-]{1,400}$/;
+  var ICON_RE = /^[MmLlHhVvCcSsQqTtAaZz0-9 .,\-]{1,1200}$/;
+  var BADGE_RE = /^.{1,4}$/;
   var PIXEL_RE = /^[0-9]{5,20}$/;
   var EVENT_NAME_RE = /^[A-Za-z]{1,40}$/;
   var SVG_NS = "http://www.w3.org/2000/svg";
@@ -437,21 +438,29 @@
     }
     h1.tabIndex = -1;
 
+    // Every step is tiles. A tile whose option names an icon or a short
+    // badge text gets the round badge above its label; one with neither is
+    // the same tile, shorter, label alone.
     var opts = step.options || [];
-    var withIcons = opts.length && opts.every(function (o) {
-      return typeof o.icon === "string" && ICON_RE.test(o.icon);
-    });
-    var list = elm("div", withIcons ? "tiles" : "rows");
+    var list = elm("div", "tiles");
     list.id = "choices-" + step.id;
     list.setAttribute("role", "group");
     list.setAttribute("aria-label", step.question);
     opts.forEach(function (o) {
-      var btn = elm("button", withIcons ? "tile" : "row-toggle");
+      var mark = null;
+      if (typeof o.icon === "string" && ICON_RE.test(o.icon)) {
+        mark = elm("span", "ico-wrap");
+        mark.appendChild(icon(o.icon));
+      } else if (typeof o.badge_text === "string" && BADGE_RE.test(o.badge_text)) {
+        mark = elm("span", "ico-wrap ico-text", o.badge_text);
+        mark.setAttribute("aria-hidden", "true");
+      }
+      var btn = elm("button", mark ? "tile" : "tile tile-plain");
       btn.type = "button";
       btn.setAttribute("data-value", o.id);
       btn.setAttribute("aria-pressed", "false");
-      if (withIcons) btn.appendChild(icon(o.icon));
-      btn.appendChild(elm("span", "", o.label));
+      if (mark) btn.appendChild(mark);
+      btn.appendChild(elm("span", "tile-label", o.label));
       btn.addEventListener("click", function () { choose(step, index, o.id); });
       list.appendChild(btn);
     });

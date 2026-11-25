@@ -1,6 +1,6 @@
 /* RSOC quiz engine (/benefits and every funnels/rsoc/*.json). The /loans
    stylesheet's look, rule for rule, so the two read as one site: the same
-   fonts, tokens, radii, tiles, rows and guide rows. Self-contained; nothing
+   fonts, tokens, radii and guide rows. Self-contained; nothing
    here depends on mazzin.css or loans.css. Mobile portrait only. */
 
 @font-face {
@@ -280,6 +280,11 @@ h1:focus { outline: none; }
   cursor: pointer;
 }
 
+/* --- answer tiles ------------------------------------------------------- */
+
+/* Every step's answers. Content centred both ways: a round badge on top (an
+   icon, or a short text such as "60+"), the label under it. A tile with no
+   badge is the same tile, shorter. An odd last tile spans both columns. */
 .tiles {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -289,65 +294,81 @@ h1:focus { outline: none; }
 .tile {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: flex-start;
-  min-height: 112px;
-  padding: 16px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 132px;
+  padding: 18px 14px;
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--card);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.2;
-  text-align: left;
+  box-shadow: 0 1px 2px rgba(19, 26, 43, 0.06);
+  text-align: center;
   color: var(--ink);
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-.tile .ico { color: var(--accent); }
+.tile-plain { min-height: 76px; }
+.tiles > .tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
 
-.tile[aria-pressed="true"],
-.row-toggle[aria-pressed="true"] {
+.tile-label {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+}
+
+.ico-wrap {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--tint);
+  color: var(--accent);
+}
+.ico-wrap .ico {
+  width: 28px;
+  height: 28px;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ico-text {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+@media (hover: hover) {
+  .tile:not([aria-pressed="true"]):hover { border-color: var(--line-input); }
+}
+
+.tile[aria-pressed="true"] {
   border: 2px solid var(--accent);
   background: var(--tint);
-  color: var(--accent-ink);
+  /* The selected border is a pixel thicker; take it back out of the padding
+     so nothing shifts when a choice is made. */
+  padding: 17px 13px;
 }
-/* The selected border is a pixel thicker; take it back out of the padding so
-   nothing shifts when a choice is made. */
-.tile[aria-pressed="true"] { padding: 15px; }
+.tile[aria-pressed="true"] .ico-wrap { background: var(--accent); color: #fff; }
+.tile[aria-pressed="true"] .tile-label { color: var(--accent-ink); }
 
-/* --- V4 rows ------------------------------------------------------------- */
-
-.rows {
-  display: grid;
-  gap: 10px;
-  margin-top: 20px;
+.tile:focus-visible {
+  outline: 3px solid var(--navy-soft);
+  outline-offset: 2px;
 }
-.row-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  min-height: 52px;
-  padding: 0 16px;
-  border: 1px solid var(--line-input);
-  border-radius: 14px;
-  background: var(--card);
-  font-size: 16px;
-  font-weight: 600;
-  text-align: left;
-  color: var(--ink);
-  cursor: pointer;
-}
-.row-toggle[aria-pressed="true"] { padding: 0 15px; }
-.row-range {
-  flex: none;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-.row-toggle[aria-pressed="true"] .row-range { color: var(--accent-ink); }
 
 .consent {
   margin: 14px 0 0;
@@ -454,7 +475,10 @@ h1:focus { outline: none; }
 .consent a { display: inline-block; padding: 14px 5px; margin: -14px -5px; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .btn, .tile, .row-toggle { transition: background-color 0.15s ease, border-color 0.15s ease; }
+  .btn { transition: background-color 0.15s ease, border-color 0.15s ease; }
+  .tile { transition: border-color 0.12s ease, background-color 0.12s ease, transform 0.12s ease; }
+  .ico-wrap { transition: background-color 0.12s ease, color 0.12s ease; }
+  .tile:active { transform: scale(0.98); }
 }
 
 /* --- the RSOC engine's own --------------------------------------------- */

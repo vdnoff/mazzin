@@ -92,10 +92,23 @@ check("  every step is tiles, with its own 'Step N of 4' eyebrow",
 check("  the income helper",
       STEPS[2]["helper"] == "A range is enough. We never ask for exact "
       "figures.")
-check("  icons on the first two steps, as 24-grid paths",
-      all(re.fullmatch(r"[MmLlHhVvCcSsQqTtAaZz0-9 .,\-]{1,400}", o["icon"])
+ICON_RE = r"[MmLlHhVvCcSsQqTtAaZz0-9 .,\-]{1,1200}"
+check("  every need and household answer has an icon or a badge text",
+      all(("icon" in o) != ("badge_text" in o)
           for s in STEPS[:2] for o in s["options"])
-      and not any("icon" in o for s in STEPS[2:] for o in s["options"]))
+      and all(re.fullmatch(ICON_RE, o["icon"])
+              for s in STEPS[:2] for o in s["options"] if "icon" in o)
+      and not any("icon" in o or "badge_text" in o
+                  for s in STEPS[2:] for o in s["options"]))
+check("  the icons are single paths, each sub-path starting absolute",
+      all(o["icon"].startswith("M") and not re.search(r"(?<![\d.])m", o["icon"])
+          for s in STEPS[:2] for o in s["options"] if "icon" in o))
+check("  60+ is the one badge text, on the senior answer",
+      [(o["id"], o["badge_text"]) for s in STEPS[:2] for o in s["options"]
+       if "badge_text" in o] == [("senior", "60+")])
+check("  the script draws either, under a length limit that fits them",
+      "var ICON_RE = /^[MmLlHhVvCcSsQqTtAaZz0-9 .,\\-]{1,1200}$/;" in JS
+      and '"ico-wrap ico-text", o.badge_text' in JS)
 SS = CFG["state_select"]
 check("the state select: on step 4, 50 states and DC, two letters each",
       SS["step"] == "situation" and SS["label"] == "State"

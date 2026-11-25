@@ -188,6 +188,24 @@ def want_hrefs(keys, tail=TAIL):
              ARTICLES[k]["label"]] for k in keys]
 
 
+TILES = """() => Object.fromEntries([...document.querySelectorAll(
+  '.view:not([hidden]) .tiles')]
+  .map(list => [list.id.replace('choices-', ''),
+    [...list.querySelectorAll('.tile')].map(t => {
+      const b = t.getBoundingClientRect();
+      const lb = t.querySelector('.tile-label').getBoundingClientRect();
+      const wrap = t.querySelector('.ico-wrap');
+      return { wrap: !!wrap, svg: !!t.querySelector('.ico-wrap svg.ico'),
+               hidden: t.querySelector('svg') ? t.querySelector('svg')
+                 .getAttribute('aria-hidden') : null,
+               text: wrap ? wrap.textContent : '',
+               span: getComputedStyle(t).gridColumnStart + '/'
+                 + getComputedStyle(t).gridColumnEnd,
+               w: Math.round(b.width), h: Math.round(b.height),
+               inside: lb.left >= b.left - 0.5 && lb.right <= b.right + 0.5,
+               cls: t.className }; })]))"""
+
+
 def main():
     server = Server(("127.0.0.1", PORT), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -393,6 +411,7 @@ def main():
         for width in (390, 360):
             ctx, page, errors = arrive(browser, FULL, width=width)
             bad = []
+            tiles = {}
             for step, value in (("need", "utilities"), ("household",
                                                         "senior"),
                                 ("income", "i1"), ("situation", None)):
@@ -405,6 +424,7 @@ def main():
                     "n.offsetParent !== null && !n.closest('.consent'))"
                     ".filter(n => n.getBoundingClientRect().height < 44)"
                     ".map(n => n.className || n.tagName))")
+                tiles.update(page.evaluate(TILES))
                 if value:
                     choose(page, step, value)
             choose(page, "situation", "unable")
@@ -418,6 +438,29 @@ def main():
                 "n.offsetParent !== null)"
                 ".filter(n => n.getBoundingClientRect().height < 44)"
                 ".map(n => n.className || n.tagName))")
+            # The tiles, measured on each step while it was on screen.
+            check("%dpx: badge on every need and household tile, none on "
+                  "income or situation" % width,
+                  all(t["wrap"] for t in tiles["need"] + tiles["household"])
+                  and not any(t["wrap"] for t in tiles["income"]
+                              + tiles["situation"])
+                  and [t["text"] for t in tiles["household"]]
+                  == ["", "", "60+", ""]
+                  and all(t["svg"] and t["hidden"] == "true" for t in
+                          tiles["need"] + tiles["household"]
+                          if not t["text"]), tiles["household"])
+            sit = tiles["situation"]
+            check("  the fifth situation tile spans both columns",
+                  [t["span"] for t in sit] == ["auto/auto"] * 4
+                  + ["1/-1"] and sit[4]["w"] > sit[0]["w"] * 1.9, sit)
+            check("  every tile is 44px or more and holds its label",
+                  all(t["h"] >= 44 and t["inside"]
+                      for ts in tiles.values() for t in ts),
+                  [t for ts in tiles.values() for t in ts
+                   if t["h"] < 44 or not t["inside"]][:2])
+            check("  badge tiles 132px tall or more, plain tiles 76px or more",
+                  all(t["h"] >= (132 if t["wrap"] else 76)
+                      for ts in tiles.values() for t in ts))
             check("%dpx: no horizontal scroll, every target 44px or more"
                   % width, not bad and anchors(page) == want_hrefs(
                       ["liheap", "medicare", "car_insurance"]), bad)
