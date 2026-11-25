@@ -413,9 +413,12 @@
     a[step.id] = value;
     save();
     setPressed($("choices-" + step.id), value);
-    trackOnce("start", "quiz_start");
+    // The /loans vocabulary, so the dashboard counts this funnel as it
+    // counts that one: funnel_start on the first tap on step 1, swipe with
+    // the step's 1-based number when a step is completed, once each.
+    if (index === 0) trackOnce("start", "funnel_start");
     if (step.id === stateStep) { syncButton(); return; }
-    trackOnce("s_" + step.id, "step", index + 1, { step: step.id });
+    trackOnce("s_" + step.id, "swipe", index + 1);
     go(VIEWS[index + 1]);
   }
 
@@ -499,7 +502,7 @@
       go_.disabled = true;
       go_.addEventListener("click", function () {
         if (!ready("result")) return;
-        trackOnce("s_" + step.id, "step", index + 1, { step: step.id });
+        trackOnce("s_" + step.id, "swipe", index + 1);
         go("result");
       });
       section.appendChild(go_);

@@ -248,7 +248,7 @@ def main():
         ctx.close()
 
         print("\n--- 3b. a muted pre-feed row ---")
-        walk.served["config"] = walk.REAL
+        walk.served["config"] = walk.PREFEED
         ctx, page, seen = arrive(browser, FULL)
         walk.to_result(page)
         page.locator('#result-rows .guide[data-article="car_insurance"]'
@@ -260,7 +260,7 @@ def main():
                        {"content_name": "car_insurance",
                         "content_category": "benefits"}], last)
         ctx.close()
-        walk.served["config"] = walk.FIXTURE
+        walk.served["config"] = walk.REAL
 
         print("\n--- 5. Meta's script blocked ---")
         ctx, page, seen = arrive(browser, FULL, meta="block")
